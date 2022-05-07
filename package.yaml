@@ -1,0 +1,32 @@
+name: cdp-hs
+version: 0.0.1.0
+synopsis: Project synopsis
+description: See README at <https://github.com/arsalan0c/cdp-hs
+author: Arsalan Cheema
+github: arsalan0c/cdp-hs
+category: Package.Category
+license: BSD-3-Clause
+
+dependencies:
+  - base >=4.11 && < 5
+
+library:
+  source-dirs: src
+
+executables:
+  cdp-hs-exe:
+    source-dirs: app
+    main: Main.hs
+    dependencies:
+      - cdp-hs
+
+tests:
+  cdp-hs-test:
+    source-dirs: test
+    main: Main.hs
+    ghc-options:
+      - -Wall
+      - -threaded
+    dependencies:
+      - cdp-hs
+      - hedgehog

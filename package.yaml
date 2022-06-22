@@ -9,6 +9,15 @@ license: BSD-3-Clause
 
 dependencies:
   - base >=4.11 && < 5
+  - websockets
+  - aeson
+  - network-uri
+  - http-conduit
+  - vector
+  - text
+  - containers
+  - mtl
+  - data-default
 
 library:
   source-dirs: src

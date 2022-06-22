@@ -2,5 +2,6 @@ module Main where
 
 import ChromeDevtoolsProtocol
 
-main =
+main = do
   print $ "Hello from " ++ doChromeDevtoolsProtocol ++ "!"
+  perform

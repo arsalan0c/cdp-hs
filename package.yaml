@@ -8,13 +8,23 @@ category: Package.Category
 license: BSD-3-Clause
 
 dependencies:
-  - base >=4.11 && < 5
+  - base
+  - aeson
+  - text
+  - json-autotype
+  - bytestring
+  - json-alt
 
 library:
   source-dirs: src
 
 executables:
   cdp-hs-exe:
+    source-dirs: app
+    main: Main2.hs
+    dependencies:
+      - cdp-hs
+  jat-exe:
     source-dirs: app
     main: Main.hs
     dependencies:

@@ -14,6 +14,15 @@ dependencies:
   - json-autotype
   - bytestring
   - json-alt
+  - containers
+  - data-default
+  - http-conduit
+  - mtl
+  - network-uri
+  - text
+  - vector
+  - websockets
+  - casing
 
 library:
   source-dirs: src
@@ -21,12 +30,15 @@ library:
 executables:
   cdp-hs-exe:
     source-dirs: app
-    main: Main2.hs
+    main: Main.hs
     dependencies:
       - cdp-hs
   jat-exe:
+    source-dirs: src
+    main: Protocol.hs
+  cdp:
     source-dirs: app
-    main: Main.hs
+    main: CDP.hs
     dependencies:
       - cdp-hs
 

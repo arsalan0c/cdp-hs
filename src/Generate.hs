@@ -1,133 +1,133 @@
-{-# LANGUAGE OverloadedStrings, FlexibleContexts   #-}
+{-# LANGUAGE OverloadedStrings, FlexibleContexts, TupleSections #-}
 
 module Generate where
 
 import Control.Arrow
 import Data.List
 import Data.Maybe
+import Data.Char
 import Data.Text (unpack)
-import Text.Casing (camel, pascal)
+import Text.Casing (camel)
 import Data.Aeson.AutoType.Alternative ((:|:)(AltLeft, AltRight))
 
 import qualified Protocol as P
-
-type Program = String
 
 newtype StringAlt = StringAlt String
 instance Show StringAlt where
     show (StringAlt s) = s
 
-generate :: P.TopLevel -> Program
-generate = (prelude <>) . unlines . map genDomain . P.topLevelDomains
-  where
-    genDomain de = (genTypes . P.domainsEltTypes $ de) <> 
-        (unlines . map (genReturns (unpack $ P.domainsEltDomain de)) . map (\(Just p,q) -> (p,q)) . filter (isJust . fst) . map (P.commandsEltReturns &&& unpack . P.commandsEltName) . filter (not . isTrue . P.commandsEltExperimental) . P.domainsEltCommands $ de) <>
-        (unlines . map (genCommand . unpack $ P.domainsEltDomain de) . 
-            filter (not . isTrue . P.commandsEltExperimental) . 
-            P.domainsEltCommands $ de)
-    genCommand dn ce = genCommandName dn (unpack . P.commandsEltName $ ce) <>
-        " conn " <>
-        (intercalate " " $ genParams ce) <>
-        " = " <> 
-        genBody dn (unpack $ P.commandsEltName ce) (genParams ce)
+type Program = String
 
-    genCommandName dn cn = (camel dn) <> (pascal cn)
-  
-    genReturns dn (rets, cn) = 
-        let name = genReturnTypeName dn cn in
+generate :: P.TopLevel -> Program
+generate = ("\n\n" <>) . unlines . map genDomain . P.topLevelDomains
+  where
+    genDomain de = 
+        let domainName = unpack $ P.domainsEltDomain de
+            validCommands = 
+                filter (not . isTrue . P.commandsEltDeprecated) . 
+                filter (not . isTrue . P.commandsEltExperimental) . 
+                P.domainsEltCommands $ de 
+        in
         unlines
-        [ "data " <> name <> " = " <> name <> " {"
-        , intercalate ",\n" . map (\ret -> "    " <> (unpack $ P.returnsEltName ret) <> " :: " <> 
-            ((if isTrue (P.returnsEltOptional ret) then "Maybe " else "") <> (convertType . unpack . getLeft $ P.returnsEltType ret))) $ rets  
-        , "} deriving Show"
-        , genJSONInstance name 
-            (map (unpack . P.returnsEltName) . filter (not . isTrue . P.returnsEltOptional) $ rets) 
-            (map (unpack . P.returnsEltName) . filter (isTrue . P.returnsEltOptional) $ rets)
+        [ genTypes . P.domainsEltTypes $ de
+        , unlines . map (genCommand domainName) $ validCommands
         ]
-    genReturnTypeName dn cn = pascal $ genCommandName dn cn
+
+    genCommand dn ce = 
+        let commandName = unpack . P.commandsEltName $ ce
+            name = genCommandName dn commandName
+            params = filter (not . isTrue . P.parametersEltDeprecated) . 
+                filter (not . isTrue . P.parametersEltExperimental) . 
+                fromMaybe [] . P.commandsEltParameters $ ce
+            paramNames = map (unpack . P.parametersEltName) params
+            paramOptionals = map (isTrue . P.parametersEltOptional) params
+            paramTypes = map (uncurry genEltType) . zip paramOptionals . map P.parametersEltType $ params
+            (returnTypeDecl, returnTypeSig, isEmptyReturn) = (maybe ("","IO (Maybe Error)", True) (tupleToTriple False . fmap (<> ")") . fmap ("IO (Either Error " <>) . genReturnType dn . (,commandName))) . P.commandsEltReturns $ ce
+        in 
+        unlines [ returnTypeDecl
+            , intercalate " " 
+                [ name, "::"
+                , intercalate " -> " ("Session":paramTypes ++ [returnTypeSig])
+                ]
+            , intercalate " "
+                [ name, "session", (intercalate " " paramNames), "="
+                , genBody isEmptyReturn dn commandName $ zip paramNames paramOptionals
+                ]
+        ]
+
+    genCommandName dn cn = (camel dn) <> (capitalizeFirst cn)
+    capitalizeFirst [] = []
+    capitalizeFirst (hd:tl) = toUpper hd : tl
+    uncapitalizeFirst [] = []
+    uncapitalizeFirst (hd:tl) = toLower hd : tl
+  
+    genReturnType dn (rets, cn) = 
+        let name = genReturnTypeName dn cn
+            validRets = 
+                filter (not . isTrue . P.returnsEltDeprecated) . 
+                filter (not . isTrue . P.returnsEltExperimental) $ rets 
+        in
+        (,name) . unlines $
+                [ "data " <> name <> " = " <> name <> " {"
+                , intercalate ",\n" . 
+                    map (\ret -> "    " <> ((uncapitalizeFirst name <>) . 
+                    capitalizeFirst . unpack $ P.returnsEltName ret) <> " :: " <> 
+                    (genEltType (isTrue . P.returnsEltOptional $ ret) (P.returnsEltType ret))) $ validRets  
+                , "} deriving Show"
+                , genJSONInstance name
+                        (map (unpack . P.returnsEltName) . filter (not . isTrue . P.returnsEltOptional) $ validRets) 
+                        (map (unpack . P.returnsEltName) . filter (isTrue . P.returnsEltOptional) $ validRets)]
+                        
+    genReturnTypeName dn cn = capitalizeFirst $ genCommandName dn cn
+
     genJSONInstance name reqFields optFields = 
         let fields = map (id &&& (const False)) reqFields ++ map (id &&& (const True)) optFields
             headField = head fields
             sep isOpt = if isOpt then ".:? " else ".: " in
         unlines
         [ "instance FromJSON " <> name <> " where"
-        , "    parseJSON = A.withObject " <> quote name <> " $ \\v -> "
-        , "        " <> name <> " <$> v " <> sep (snd headField) <> quote (fst headField)
-        , unlines . map ("            " <>) . map (\(field, isOpt) -> "<*> v " <> sep isOpt <> quote field) $ tail fields
+        , "    parseJSON = A.withObject " <> show name <> " $ \\v -> "
+        , "        " <> name <> " <$> v " <> sep (snd headField) <> show (fst headField)
+        , unlines . map ("            " <>) . map (\(field, isOpt) -> "<*> v " <> sep isOpt <> show field) $ tail fields
 
         ]
 
-    genParams ce = fromMaybe [] $ fmap (map genParam) $ P.commandsEltParameters ce
-    genParam pe = unpack . P.parametersEltName $ pe
-    genBody dn methodName params = "sendReceiveCommand conn " <>
-        "(" <> ("\"") <> dn <> ("\"") <> "," <> ("\"") <> methodName <> ("\"") <> ") " <>
-        show (map (id &&& StringAlt) params)
-    genTypes Nothing = []
-    genTypes (Just tes) = intercalate "\n\n" . map genType . filter (not . isTrue . P.typesEltExperimental) $ tes
-    genType te = unpack . P.typesEltId $ te
+    genBody isEmptyReturn dn commandName paramsOpts = 
+        intercalate " " 
+        [ if isEmptyReturn then "sendReceiveCommand" else "sendReceiveCommandResult" 
+        , "(conn session)"
+        ,"(" <> ("\"") <> dn <> ("\"") <> "," <> ("\"") <> commandName <> ("\"") <> ")"
+        , genBodyArgs paramsOpts
+        ]
+        
 
-    getLeft (Just (AltLeft v)) = v
-    getLeft _ = "()"
+    genBodyArgs paramsOpts = 
+        let optArgs = map fst . filter (not . snd) $ paramsOpts
+            reqArgs = map fst . filter (snd) $ paramsOpts
+            optArgsGen =  ("[" <>) . (<> "]") . intercalate ", " . map genOptArg $ optArgs
+            reqArgsGen =  ("catMaybes [" <>) . (<> "]") . intercalate ", " . map genReqArg $ reqArgs in
+        wrapRoundBrackets . intercalate " " $ [optArgsGen, "++", wrapRoundBrackets reqArgsGen]
+            
+    genOptArg param = "(" <> show param <> ", ToJSONEx " <> param <> ")"
+    genReqArg param = "fmap ((" <> show param <> ",) . ToJSONEx) " <> param
+        
+    genTypes Nothing = []
+    genTypes (Just tes) = [] -- intercalate "\n\n" . map genType . filter (not . isTrue . P.typesEltDeprecated) . filter (not . isTrue . P.typesEltExperimental) $ tes
+    genType te = unpack . P.typesEltId $ te
+    -- TODO: ToJSON instances for types
+
+    genEltType isOptional eltt = (if isOptional then "Maybe " else "") <> (convertType . unpack . leftType $ eltt)
+    leftType (Just (AltLeft ty)) = ty
+    leftType _ = "()"
     isTrue = (== (Just $ AltLeft True))
-    quote s = "\"" <> s <> "\""
+    tupleToTriple c (a, b) = (a, b, c)
+    wrapRoundBrackets s = "(" <> s <> ")"
 
 convertType "string" = "String"
+convertType "integer" = "Int"
+convertType "boolean" = "Bool"
+convertType "number" = "Int" -- TODO
 convertType "()" = "()"
-convertType "" = "()"
+convertType "array" = "[String]" -- TODO
+convertType "" = "object"
 convertType s = error $ "unsupported type for conversion: " <> s
-
-prelude = intercalate "\n\n" $
-    [ commandTy
-    , sendCommand
-    , commandResponse
-    , sendReceiveCommand
-    , commandResult
-    , ""
-    ]
-
-commandTy = "\
-    \data Command = Command\n\
-    \    { commandId :: Int\n\
-    \    , commandMethod :: String\n\
-    \    , commandParams :: [(String, String)]\n\
-    \    } deriving Show\n\
-
-    \instance ToJSON Command where\n\
-    \   toJSON cmd = A.object\n\
-    \        [ \"id\"     .= commandId cmd\n\
-    \        , \"method\" .= commandMethod cmd\n\
-    \        , \"params\" .= (M.fromList $ commandParams cmd)\n\
-    \        ]"
-
-sendCommand = "\
-    \sendCommand :: WS.Connection -> (String, String) -> [(String, String)] -> IO ()\n\
-    \sendCommand conn (domain, method) params = WS.sendTextData conn $\n\
-    \    A.encode $\n\ 
-    \    Command { commandId = 1\n\
-    \            , commandMethod = domain <> \".\" <> method\n\
-    \            , commandParams = params\n\
-    \            }"
-
-commandResponse = "\
-    \receiveCommandResponse :: (FromJSON a) => WS.Connection -> IO (Maybe a)\n\
-    \receiveCommandResponse conn = A.decode <$> do\n\
-    \     dm <- WS.receiveDataMessage conn\n\
-    \     pure $ WS.fromDataMessage dm"
-
-
-sendReceiveCommand = "\
-    \sendReceiveCommand :: (FromJSON a) =>\n\
-    \    WS.Connection ->\n\
-    \         (String, String) -> [(String, String)]\n\ 
-    \         -> IO (Maybe a)\n\
-    \sendReceiveCommand conn domain_method params = do\n\ 
-    \     sendCommand conn domain_method params\n\
-    \     receiveCommandResponse conn"
-
-commandResult = "\
-    \data CommandResult a = CommandResult { id :: Int, result :: a }\n\
-    \instance (Show a) => Show (CommandResult a) where\n\
-    \    show = show . result\n\
-    \instance (FromJSON a) => FromJSON (CommandResult a) where\n\
-    \    parseJSON = A.withObject \"CommandResult\" $ \\v ->\n\
-    \        CommandResult <$> v .: \"id\" <*> v .: \"result\""

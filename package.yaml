@@ -32,15 +32,11 @@ executables:
     source-dirs: app
     main: Main.hs
     dependencies:
+      - cdp
       - cdp-hs
   jat-exe:
     source-dirs: src
     main: Protocol.hs
-  cdp:
-    source-dirs: app
-    main: CDP.hs
-    dependencies:
-      - cdp-hs
 
 tests:
   cdp-hs-test:

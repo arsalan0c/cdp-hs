@@ -19,7 +19,13 @@ import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 
 
-defaultEndpoint = ("http://127.0.0.1", 9222)
+defaultHostPort :: (String, Int)
+defaultHostPort = ("http://127.0.0.1", 9222)
+
+hostPortToEndpoint :: (String, Int) -> Http.Request
+hostPortToEndpoint (host, port) = Http.parseRequest_ . 
+    ("GET " <>) . 
+    mconcat $ [host, ":", show port, "/json"]
 
 type ClientApp a = Session -> IO a
 newtype Session = MkSession 
@@ -27,8 +33,9 @@ newtype Session = MkSession
     }
 
 runClient :: Maybe (String, Int) -> ClientApp a -> IO a
-runClient ep f = do
-    pi <- getPageInfo "http://127.0.0.1:9222/json" -- host <> ":" <> show port <> "/" <> path
+runClient hostPort f = do
+    let endpoint = hostPortToEndpoint . fromMaybe defaultHostPort $ hostPort
+    pi <- getPageInfo endpoint
     let (host, port, path) = parseUri . debuggerUrl $ pi
     WS.runClient host port path (f . MkSession)
 

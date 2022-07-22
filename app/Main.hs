@@ -13,9 +13,9 @@ main :: IO ()
 main = do
   program <- doChromeDevtoolsProtocol
   -- putStrLn . show $ (A.decode "{\"id\":1,\"result\":{}}" :: Maybe (CDP.CommandResponse)) 
-  -- putStrLn program
+  putStrLn program
   CDP.runClient Nothing $ \session -> do
-      bv <- CDP.pageStopLoading session
-      -- bv <- CDP.pagePrintToPDF session Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing -- :: IO (Either String CDP.PagePrintToPDF)
+      -- bv <- CDP.pageStopLoading session
+      bv <- CDP.pagePrintToPDF session Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing -- :: IO (Either String CDP.PagePrintToPDF)
       print bv
   

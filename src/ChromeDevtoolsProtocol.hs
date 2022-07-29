@@ -2,12 +2,13 @@
 
 module ChromeDevtoolsProtocol where
 
+import Data.List
+
 import qualified Protocol as P
 import qualified Generate as Gen
 
 doChromeDevtoolsProtocol :: IO String
-doChromeDevtoolsProtocol = do
-    tl <- P.parse "protocol/browser_protocol.json"
-    let domains = ["Browser", "Page"]
-        stl = tl{P.topLevelDomains = filter ((`elem` domains) . P.domainsEltDomain) . P.topLevelDomains $ tl}
-    pure $ Gen.generate stl
+doChromeDevtoolsProtocol = do 
+    generatedBrowserProtocol <- Gen.generate <$> P.parse "protocol/browser_protocol.json"
+    generatedJSProtocol <- Gen.generate <$> P.parse "protocol/js_protocol.json"
+    pure . intercalate "\n" $ [generatedBrowserProtocol, generatedJSProtocol]

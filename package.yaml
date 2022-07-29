@@ -19,6 +19,7 @@ dependencies:
   - http-conduit
   - mtl
   - network-uri
+  - extra
   - text
   - vector
   - websockets

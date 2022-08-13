@@ -12,7 +12,9 @@ let
         hself.callCabal2nix
           "cdp-hs"
           (gitignore ./.)
-          {};
+          {}
+          "cdp"
+          ;
     };
   };
 

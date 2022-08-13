@@ -10,13 +10,18 @@ import           Data.Maybe           (catMaybes, fromMaybe)
 import Data.Functor.Identity
 import Data.String
 import qualified Data.Text as T
+import qualified Data.List as List
 import qualified Data.Text.IO         as TI
 import qualified Data.Vector          as V
+import Data.Aeson.Types (Parser(..))
 import           Data.Aeson           (FromJSON (..), ToJSON (..), (.:), (.:?), (.=), (.!=), (.:!))
 import qualified Data.Aeson           as A
 import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
+import Control.Concurrent
+import qualified Text.Casing as C
+import qualified Data.ByteString.Lazy as BS
 
 
 defaultHostPort :: (String, Int)
@@ -28,16 +33,50 @@ hostPortToEndpoint (host, port) = Http.parseRequest_ .
     mconcat $ [host, ":", show port, "/json"]
 
 type ClientApp a = Session -> IO a
-newtype Session = MkSession 
-    { conn :: WS.Connection
+type Handler = EventReturn -> IO ()
+
+data Session = MkSession 
+    { events       :: MVar [(EventName, Handler)]
+    , conn         :: WS.Connection
+    , listenThread :: ThreadId
     }
 
 runClient :: Maybe (String, Int) -> ClientApp a -> IO a
-runClient hostPort f = do
+runClient hostPort app = do
     let endpoint = hostPortToEndpoint . fromMaybe defaultHostPort $ hostPort
-    pi <- getPageInfo endpoint
+    pi   <- getPageInfo endpoint
+    eventsM <- newMVar []
     let (host, port, path) = parseUri . debuggerUrl $ pi
-    WS.runClient host port path (f . MkSession)
+    
+    WS.runClient host port path $ \conn -> do
+        listenThread <- forkIO $ forever $ do
+            res <- WS.fromDataMessage <$> WS.receiveDataMessage conn
+            let eventResponse = fromMaybe (error "could not parse event") (A.decode res)
+            handler <- withMVar eventsM $ \evs -> do
+                let ev = erEvent eventResponse
+                pure . fromMaybe (putStrLn . const ("received event: " <> show ev)) . flip lookup evs $ ev 
+            
+            let eventResponseResult = fromMaybe (error "could not parse event") (A.decode res)
+            (\h -> h . errParams $ eventResponseResult) handler                    
+        
+        let session = MkSession eventsM conn listenThread
+        result <- app session
+        killThread listenThread
+        pure result
+
+updateEvents :: ([(EventName, Handler)] -> [(EventName, Handler)]) -> Session -> IO ()
+updateEvents f = ($ pure . f) . modifyMVar_ . events
+
+eventSubscribe :: EventName -> Handler -> Session -> IO ()
+eventSubscribe ev newHandler session = do
+    evs <- readMVar (events session) 
+    case lookup ev evs of
+        Just _   -> error "event already subscribed" -- TODO: replace handler
+        Nothing  -> updateEvents ((ev,newHandler):) session
+
+eventUnsubscribe :: EventName -> Session -> IO ()
+eventUnsubscribe ev session = error "TODO" --
+
 
 data PageInfo = PageInfo
     { debuggerUrl :: String
@@ -73,13 +112,29 @@ data Command = Command {
       commandId :: Int
     , commandMethod :: String
     , commandParams :: [(String, ToJSONEx)]
-    }
+    } deriving Show
 instance ToJSON Command where
    toJSON cmd = A.object
         [ "id"     .= commandId cmd
         , "method" .= commandMethod cmd
-        , "params" .= (M.fromList $ commandParams cmd)
+        , "params" .= commandParams cmd
         ]
+
+
+
+methodToName :: T.Text -> String
+methodToName md = let [domain, method] = T.splitOn "." md in
+    mconcat [T.unpack domain, C.pascal . T.unpack $ method]
+
+
+
+data EventResponseResult = EventResponseResult { errEvent :: EventName, errParams :: EventReturn }
+
+data EventResponse = EventResponse { erEvent :: EventName }
+instance FromJSON (EventResponse) where
+    parseJSON = A.withObject "EventResponse" $ \obj -> do
+        erEvent <- obj .: "method"
+        pure EventResponse{..}
 
 data CommandResponseResult a = CommandResponseResult { crrId :: Int, crrResult :: a }
 data CommandResponse = CommandResponse { crId :: Int }
@@ -114,12 +169,22 @@ commandToStr Command{..} = unlines
         else ""
     ]
 
-sendCommand :: WS.Connection -> Command -> IO ()
-sendCommand conn command = WS.sendTextData conn . A.encode $ command
+sendCommand :: WS.Connection -> (String, String) -> [(String, ToJSONEx)] -> IO Command
+sendCommand conn (domain,method) paramArgs = do
+    putStrLn . show $ (domain, method)
+    id <- pure 1  -- TODO: randomly generate
+    let c = command id
+    WS.sendTextData conn . A.encode $ c
+    pure c
+  where
+    command id = Command id 
+        (domain <> "." <> method)
+        paramArgs
    
 receiveResponse :: (FromJSON a) => WS.Connection -> IO (Maybe a)
 receiveResponse conn = A.decode <$> do
     dm <- WS.receiveDataMessage conn
+    putStrLn . show $ dm
     pure $ WS.fromDataMessage dm
 
 sendReceiveCommandResult :: FromJSON b =>
@@ -127,33 +192,169 @@ sendReceiveCommandResult :: FromJSON b =>
          (String, String) -> [(String, ToJSONEx)]
          -> IO (Either Error b)
 sendReceiveCommandResult conn (domain,method) paramArgs = do
-    sendCommand conn command
-    res <- receiveResponse conn
+    command <- sendCommand conn (domain,method) paramArgs
+    res     <- receiveResponse conn
     pure $ maybe (Left . responseParseError $ command) 
         (maybe (Left . responseParseError $ command) Right . crrResult) res 
-  where
-    command = Command 1 -- TODO: increment
-        (domain <> "." <> method)
-        paramArgs
 
 sendReceiveCommand ::
     WS.Connection ->
          (String, String) -> [(String, ToJSONEx)]
          -> IO (Maybe Error)
 sendReceiveCommand conn (domain,method) paramArgs = do
-    sendCommand conn command
-    res <- receiveResponse conn
+    command <- sendCommand conn (domain, method) paramArgs
+    res     <- receiveResponse conn
     pure $ maybe (Just . responseParseError $ command) 
         (const Nothing . crId) res
-  where
-    command = Command 1 -- TODO: increment
-        (domain <> "." <> method)
-        paramArgs
 
 responseParseError :: Command -> Error
 responseParseError c = Error . unlines $
     ["unable to parse response", commandToStr c]
 
+data EventResult where
+    EventResult :: (FromJSON a, Eq a, Show a, Read a) => a -> EventResult
+
+
+data EventName = EventNameDOMAttributeModified | EventNameDOMAttributeRemoved | EventNameDOMCharacterDataModified | EventNameDOMChildNodeCountUpdated | EventNameDOMChildNodeInserted | EventNameDOMChildNodeRemoved | EventNameDOMDocumentUpdated | EventNameDOMSetChildNodes | EventNameLogEntryAdded | EventNameNetworkDataReceived | EventNameNetworkEventSourceMessageReceived | EventNameNetworkLoadingFailed | EventNameNetworkLoadingFinished | EventNameNetworkRequestServedFromCache | EventNameNetworkRequestWillBeSent | EventNameNetworkResponseReceived | EventNameNetworkWebSocketClosed | EventNameNetworkWebSocketCreated | EventNameNetworkWebSocketFrameError | EventNameNetworkWebSocketFrameReceived | EventNameNetworkWebSocketFrameSent | EventNameNetworkWebSocketHandshakeResponseReceived | EventNameNetworkWebSocketWillSendHandshakeRequest | EventNameNetworkWebTransportCreated | EventNameNetworkWebTransportConnectionEstablished | EventNameNetworkWebTransportClosed | EventNamePageDomContentEventFired | EventNamePageFileChooserOpened | EventNamePageFrameAttached | EventNamePageFrameDetached | EventNamePageFrameNavigated | EventNamePageInterstitialHidden | EventNamePageInterstitialShown | EventNamePageJavascriptDialogClosed | EventNamePageJavascriptDialogOpening | EventNamePageLifecycleEvent | EventNamePagePrerenderAttemptCompleted | EventNamePageLoadEventFired | EventNamePageWindowOpen | EventNamePerformanceMetrics | EventNameTargetReceivedMessageFromTarget | EventNameTargetTargetCreated | EventNameTargetTargetDestroyed | EventNameTargetTargetCrashed | EventNameTargetTargetInfoChanged | EventNameFetchRequestPaused | EventNameFetchAuthRequired | EventNameConsoleMessageAdded | EventNameDebuggerBreakpointResolved | EventNameDebuggerPaused | EventNameDebuggerResumed | EventNameDebuggerScriptFailedToParse | EventNameDebuggerScriptParsed | EventNameProfilerConsoleProfileFinished | EventNameProfilerConsoleProfileStarted | EventNameRuntimeConsoleApiCalled | EventNameRuntimeExceptionRevoked | EventNameRuntimeExceptionThrown | EventNameRuntimeExecutionContextCreated | EventNameRuntimeExecutionContextDestroyed | EventNameRuntimeExecutionContextsCleared | EventNameRuntimeInspectRequested
+    deriving (Eq, Show, Read)
+instance FromJSON EventName where
+    parseJSON = A.withText  "EventName"  $ \v -> do
+        pure $ case v of
+                "DOMAttributeModified" -> EventNameDOMAttributeModified
+                "DOMAttributeRemoved" -> EventNameDOMAttributeRemoved
+                "DOMCharacterDataModified" -> EventNameDOMCharacterDataModified
+                "DOMChildNodeCountUpdated" -> EventNameDOMChildNodeCountUpdated
+                "DOMChildNodeInserted" -> EventNameDOMChildNodeInserted
+                "DOMChildNodeRemoved" -> EventNameDOMChildNodeRemoved
+                "DOMDocumentUpdated" -> EventNameDOMDocumentUpdated
+                "DOMSetChildNodes" -> EventNameDOMSetChildNodes
+                "LogEntryAdded" -> EventNameLogEntryAdded
+                "NetworkDataReceived" -> EventNameNetworkDataReceived
+                "NetworkEventSourceMessageReceived" -> EventNameNetworkEventSourceMessageReceived
+                "NetworkLoadingFailed" -> EventNameNetworkLoadingFailed
+                "NetworkLoadingFinished" -> EventNameNetworkLoadingFinished
+                "NetworkRequestServedFromCache" -> EventNameNetworkRequestServedFromCache
+                "NetworkRequestWillBeSent" -> EventNameNetworkRequestWillBeSent
+                "NetworkResponseReceived" -> EventNameNetworkResponseReceived
+                "NetworkWebSocketClosed" -> EventNameNetworkWebSocketClosed
+                "NetworkWebSocketCreated" -> EventNameNetworkWebSocketCreated
+                "NetworkWebSocketFrameError" -> EventNameNetworkWebSocketFrameError
+                "NetworkWebSocketFrameReceived" -> EventNameNetworkWebSocketFrameReceived
+                "NetworkWebSocketFrameSent" -> EventNameNetworkWebSocketFrameSent
+                "NetworkWebSocketHandshakeResponseReceived" -> EventNameNetworkWebSocketHandshakeResponseReceived
+                "NetworkWebSocketWillSendHandshakeRequest" -> EventNameNetworkWebSocketWillSendHandshakeRequest
+                "NetworkWebTransportCreated" -> EventNameNetworkWebTransportCreated
+                "NetworkWebTransportConnectionEstablished" -> EventNameNetworkWebTransportConnectionEstablished
+                "NetworkWebTransportClosed" -> EventNameNetworkWebTransportClosed
+                "PageDomContentEventFired" -> EventNamePageDomContentEventFired
+                "PageFileChooserOpened" -> EventNamePageFileChooserOpened
+                "PageFrameAttached" -> EventNamePageFrameAttached
+                "PageFrameDetached" -> EventNamePageFrameDetached
+                "PageFrameNavigated" -> EventNamePageFrameNavigated
+                "PageInterstitialHidden" -> EventNamePageInterstitialHidden
+                "PageInterstitialShown" -> EventNamePageInterstitialShown
+                "PageJavascriptDialogClosed" -> EventNamePageJavascriptDialogClosed
+                "PageJavascriptDialogOpening" -> EventNamePageJavascriptDialogOpening
+                "PageLifecycleEvent" -> EventNamePageLifecycleEvent
+                "PagePrerenderAttemptCompleted" -> EventNamePagePrerenderAttemptCompleted
+                "PageLoadEventFired" -> EventNamePageLoadEventFired
+                "PageWindowOpen" -> EventNamePageWindowOpen
+                "PerformanceMetrics" -> EventNamePerformanceMetrics
+                "TargetReceivedMessageFromTarget" -> EventNameTargetReceivedMessageFromTarget
+                "TargetTargetCreated" -> EventNameTargetTargetCreated
+                "TargetTargetDestroyed" -> EventNameTargetTargetDestroyed
+                "TargetTargetCrashed" -> EventNameTargetTargetCrashed
+                "TargetTargetInfoChanged" -> EventNameTargetTargetInfoChanged
+                "FetchRequestPaused" -> EventNameFetchRequestPaused
+                "FetchAuthRequired" -> EventNameFetchAuthRequired
+                "ConsoleMessageAdded" -> EventNameConsoleMessageAdded
+                "DebuggerBreakpointResolved" -> EventNameDebuggerBreakpointResolved
+                "DebuggerPaused" -> EventNameDebuggerPaused
+                "DebuggerResumed" -> EventNameDebuggerResumed
+                "DebuggerScriptFailedToParse" -> EventNameDebuggerScriptFailedToParse
+                "DebuggerScriptParsed" -> EventNameDebuggerScriptParsed
+                "ProfilerConsoleProfileFinished" -> EventNameProfilerConsoleProfileFinished
+                "ProfilerConsoleProfileStarted" -> EventNameProfilerConsoleProfileStarted
+                "RuntimeConsoleApiCalled" -> EventNameRuntimeConsoleApiCalled
+                "RuntimeExceptionRevoked" -> EventNameRuntimeExceptionRevoked
+                "RuntimeExceptionThrown" -> EventNameRuntimeExceptionThrown
+                "RuntimeExecutionContextCreated" -> EventNameRuntimeExecutionContextCreated
+                "RuntimeExecutionContextDestroyed" -> EventNameRuntimeExecutionContextDestroyed
+                "RuntimeExecutionContextsCleared" -> EventNameRuntimeExecutionContextsCleared
+                "RuntimeInspectRequested" -> EventNameRuntimeInspectRequested
+                _ -> error "failed to parse EventName"
+
+data EventReturn = EventReturnDOMAttributeModified DOMAttributeModified | EventReturnDOMAttributeRemoved DOMAttributeRemoved | EventReturnDOMCharacterDataModified DOMCharacterDataModified | EventReturnDOMChildNodeCountUpdated DOMChildNodeCountUpdated | EventReturnDOMChildNodeInserted DOMChildNodeInserted | EventReturnDOMChildNodeRemoved DOMChildNodeRemoved | EventReturnDOMDocumentUpdated DOMDocumentUpdated | EventReturnDOMSetChildNodes DOMSetChildNodes | EventReturnLogEntryAdded LogEntryAdded | EventReturnNetworkDataReceived NetworkDataReceived | EventReturnNetworkEventSourceMessageReceived NetworkEventSourceMessageReceived | EventReturnNetworkLoadingFailed NetworkLoadingFailed | EventReturnNetworkLoadingFinished NetworkLoadingFinished | EventReturnNetworkRequestServedFromCache NetworkRequestServedFromCache | EventReturnNetworkRequestWillBeSent NetworkRequestWillBeSent | EventReturnNetworkResponseReceived NetworkResponseReceived | EventReturnNetworkWebSocketClosed NetworkWebSocketClosed | EventReturnNetworkWebSocketCreated NetworkWebSocketCreated | EventReturnNetworkWebSocketFrameError NetworkWebSocketFrameError | EventReturnNetworkWebSocketFrameReceived NetworkWebSocketFrameReceived | EventReturnNetworkWebSocketFrameSent NetworkWebSocketFrameSent | EventReturnNetworkWebSocketHandshakeResponseReceived NetworkWebSocketHandshakeResponseReceived | EventReturnNetworkWebSocketWillSendHandshakeRequest NetworkWebSocketWillSendHandshakeRequest | EventReturnNetworkWebTransportCreated NetworkWebTransportCreated | EventReturnNetworkWebTransportConnectionEstablished NetworkWebTransportConnectionEstablished | EventReturnNetworkWebTransportClosed NetworkWebTransportClosed | EventReturnPageDomContentEventFired PageDomContentEventFired | EventReturnPageFileChooserOpened PageFileChooserOpened | EventReturnPageFrameAttached PageFrameAttached | EventReturnPageFrameDetached PageFrameDetached | EventReturnPageFrameNavigated PageFrameNavigated | EventReturnPageInterstitialHidden PageInterstitialHidden | EventReturnPageInterstitialShown PageInterstitialShown | EventReturnPageJavascriptDialogClosed PageJavascriptDialogClosed | EventReturnPageJavascriptDialogOpening PageJavascriptDialogOpening | EventReturnPageLifecycleEvent PageLifecycleEvent | EventReturnPagePrerenderAttemptCompleted PagePrerenderAttemptCompleted | EventReturnPageLoadEventFired PageLoadEventFired | EventReturnPageWindowOpen PageWindowOpen | EventReturnPerformanceMetrics PerformanceMetrics | EventReturnTargetReceivedMessageFromTarget TargetReceivedMessageFromTarget | EventReturnTargetTargetCreated TargetTargetCreated | EventReturnTargetTargetDestroyed TargetTargetDestroyed | EventReturnTargetTargetCrashed TargetTargetCrashed | EventReturnTargetTargetInfoChanged TargetTargetInfoChanged | EventReturnFetchRequestPaused FetchRequestPaused | EventReturnFetchAuthRequired FetchAuthRequired | EventReturnConsoleMessageAdded ConsoleMessageAdded | EventReturnDebuggerBreakpointResolved DebuggerBreakpointResolved | EventReturnDebuggerPaused DebuggerPaused | EventReturnDebuggerResumed DebuggerResumed | EventReturnDebuggerScriptFailedToParse DebuggerScriptFailedToParse | EventReturnDebuggerScriptParsed DebuggerScriptParsed | EventReturnProfilerConsoleProfileFinished ProfilerConsoleProfileFinished | EventReturnProfilerConsoleProfileStarted ProfilerConsoleProfileStarted | EventReturnRuntimeConsoleApiCalled RuntimeConsoleApiCalled | EventReturnRuntimeExceptionRevoked RuntimeExceptionRevoked | EventReturnRuntimeExceptionThrown RuntimeExceptionThrown | EventReturnRuntimeExecutionContextCreated RuntimeExecutionContextCreated | EventReturnRuntimeExecutionContextDestroyed RuntimeExecutionContextDestroyed | EventReturnRuntimeExecutionContextsCleared RuntimeExecutionContextsCleared | EventReturnRuntimeInspectRequested RuntimeInspectRequested
+    deriving (Eq, Show, Read)
+instance FromJSON EventResponseResult where
+    parseJSON = A.withObject  "EventResponseResult"  $ \obj -> do
+        errEvent <- obj .: "method"
+        evn <- methodToName <$> obj .: "method"
+        errParams <- case evn of
+                "DOMAttributeModified" -> EventReturnDOMAttributeModified <$> obj .: "params"
+                "DOMAttributeRemoved" -> EventReturnDOMAttributeRemoved <$> obj .: "params"
+                "DOMCharacterDataModified" -> EventReturnDOMCharacterDataModified <$> obj .: "params"
+                "DOMChildNodeCountUpdated" -> EventReturnDOMChildNodeCountUpdated <$> obj .: "params"
+                "DOMChildNodeInserted" -> EventReturnDOMChildNodeInserted <$> obj .: "params"
+                "DOMChildNodeRemoved" -> EventReturnDOMChildNodeRemoved <$> obj .: "params"
+                "DOMDocumentUpdated" -> EventReturnDOMDocumentUpdated <$> obj .: "params"
+                "DOMSetChildNodes" -> EventReturnDOMSetChildNodes <$> obj .: "params"
+                "LogEntryAdded" -> EventReturnLogEntryAdded <$> obj .: "params"
+                "NetworkDataReceived" -> EventReturnNetworkDataReceived <$> obj .: "params"
+                "NetworkEventSourceMessageReceived" -> EventReturnNetworkEventSourceMessageReceived <$> obj .: "params"
+                "NetworkLoadingFailed" -> EventReturnNetworkLoadingFailed <$> obj .: "params"
+                "NetworkLoadingFinished" -> EventReturnNetworkLoadingFinished <$> obj .: "params"
+                "NetworkRequestServedFromCache" -> EventReturnNetworkRequestServedFromCache <$> obj .: "params"
+                "NetworkRequestWillBeSent" -> EventReturnNetworkRequestWillBeSent <$> obj .: "params"
+                "NetworkResponseReceived" -> EventReturnNetworkResponseReceived <$> obj .: "params"
+                "NetworkWebSocketClosed" -> EventReturnNetworkWebSocketClosed <$> obj .: "params"
+                "NetworkWebSocketCreated" -> EventReturnNetworkWebSocketCreated <$> obj .: "params"
+                "NetworkWebSocketFrameError" -> EventReturnNetworkWebSocketFrameError <$> obj .: "params"
+                "NetworkWebSocketFrameReceived" -> EventReturnNetworkWebSocketFrameReceived <$> obj .: "params"
+                "NetworkWebSocketFrameSent" -> EventReturnNetworkWebSocketFrameSent <$> obj .: "params"
+                "NetworkWebSocketHandshakeResponseReceived" -> EventReturnNetworkWebSocketHandshakeResponseReceived <$> obj .: "params"
+                "NetworkWebSocketWillSendHandshakeRequest" -> EventReturnNetworkWebSocketWillSendHandshakeRequest <$> obj .: "params"
+                "NetworkWebTransportCreated" -> EventReturnNetworkWebTransportCreated <$> obj .: "params"
+                "NetworkWebTransportConnectionEstablished" -> EventReturnNetworkWebTransportConnectionEstablished <$> obj .: "params"
+                "NetworkWebTransportClosed" -> EventReturnNetworkWebTransportClosed <$> obj .: "params"
+                "PageDomContentEventFired" -> EventReturnPageDomContentEventFired <$> obj .: "params"
+                "PageFileChooserOpened" -> EventReturnPageFileChooserOpened <$> obj .: "params"
+                "PageFrameAttached" -> EventReturnPageFrameAttached <$> obj .: "params"
+                "PageFrameDetached" -> EventReturnPageFrameDetached <$> obj .: "params"
+                "PageFrameNavigated" -> EventReturnPageFrameNavigated <$> obj .: "params"
+                "PageInterstitialHidden" -> EventReturnPageInterstitialHidden <$> obj .: "params"
+                "PageInterstitialShown" -> EventReturnPageInterstitialShown <$> obj .: "params"
+                "PageJavascriptDialogClosed" -> EventReturnPageJavascriptDialogClosed <$> obj .: "params"
+                "PageJavascriptDialogOpening" -> EventReturnPageJavascriptDialogOpening <$> obj .: "params"
+                "PageLifecycleEvent" -> EventReturnPageLifecycleEvent <$> obj .: "params"
+                "PagePrerenderAttemptCompleted" -> EventReturnPagePrerenderAttemptCompleted <$> obj .: "params"
+                "PageLoadEventFired" -> EventReturnPageLoadEventFired <$> obj .: "params"
+                "PageWindowOpen" -> EventReturnPageWindowOpen <$> obj .: "params"
+                "PerformanceMetrics" -> EventReturnPerformanceMetrics <$> obj .: "params"
+                "TargetReceivedMessageFromTarget" -> EventReturnTargetReceivedMessageFromTarget <$> obj .: "params"
+                "TargetTargetCreated" -> EventReturnTargetTargetCreated <$> obj .: "params"
+                "TargetTargetDestroyed" -> EventReturnTargetTargetDestroyed <$> obj .: "params"
+                "TargetTargetCrashed" -> EventReturnTargetTargetCrashed <$> obj .: "params"
+                "TargetTargetInfoChanged" -> EventReturnTargetTargetInfoChanged <$> obj .: "params"
+                "FetchRequestPaused" -> EventReturnFetchRequestPaused <$> obj .: "params"
+                "FetchAuthRequired" -> EventReturnFetchAuthRequired <$> obj .: "params"
+                "ConsoleMessageAdded" -> EventReturnConsoleMessageAdded <$> obj .: "params"
+                "DebuggerBreakpointResolved" -> EventReturnDebuggerBreakpointResolved <$> obj .: "params"
+                "DebuggerPaused" -> EventReturnDebuggerPaused <$> obj .: "params"
+                "DebuggerResumed" -> EventReturnDebuggerResumed <$> obj .: "params"
+                "DebuggerScriptFailedToParse" -> EventReturnDebuggerScriptFailedToParse <$> obj .: "params"
+                "DebuggerScriptParsed" -> EventReturnDebuggerScriptParsed <$> obj .: "params"
+                "ProfilerConsoleProfileFinished" -> EventReturnProfilerConsoleProfileFinished <$> obj .: "params"
+                "ProfilerConsoleProfileStarted" -> EventReturnProfilerConsoleProfileStarted <$> obj .: "params"
+                "RuntimeConsoleApiCalled" -> EventReturnRuntimeConsoleApiCalled <$> obj .: "params"
+                "RuntimeExceptionRevoked" -> EventReturnRuntimeExceptionRevoked <$> obj .: "params"
+                "RuntimeExceptionThrown" -> EventReturnRuntimeExceptionThrown <$> obj .: "params"
+                "RuntimeExecutionContextCreated" -> EventReturnRuntimeExecutionContextCreated <$> obj .: "params"
+                "RuntimeExecutionContextDestroyed" -> EventReturnRuntimeExecutionContextDestroyed <$> obj .: "params"
+                "RuntimeExecutionContextsCleared" -> EventReturnRuntimeExecutionContextsCleared <$> obj .: "params"
+                "RuntimeInspectRequested" -> EventReturnRuntimeInspectRequested <$> obj .: "params"
+                _ -> error "failed to parse EventResponseResult"
+        pure EventResponseResult{..}
 
 
 
@@ -167,7 +368,7 @@ data BrowserGetVersion = BrowserGetVersion {
     browserGetVersionRevision :: String,
     browserGetVersionUserAgent :: String,
     browserGetVersionJsVersion :: String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  BrowserGetVersion where
     parseJSON = A.withObject "BrowserGetVersion" $ \v ->
          BrowserGetVersion <$> v .:  "protocolVersion"
@@ -183,6 +384,140 @@ browserGetVersion session  = sendReceiveCommandResult (conn session) ("Browser",
 
 
 
+data DOMAttributeModified = DOMAttributeModified {
+    domAttributeModifiedNodeId :: DOMNodeId,
+    domAttributeModifiedName :: String,
+    domAttributeModifiedValue :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  DOMAttributeModified where
+    parseJSON = A.withObject "DOMAttributeModified" $ \v ->
+         DOMAttributeModified <$> v .:  "nodeId"
+            <*> v  .:  "name"
+            <*> v  .:  "value"
+
+
+instance ToJSON DOMAttributeModified  where
+    toJSON v = A.object
+        [ "nodeId" .= domAttributeModifiedNodeId v
+        , "name" .= domAttributeModifiedName v
+        , "value" .= domAttributeModifiedValue v
+        ]
+
+
+data DOMAttributeRemoved = DOMAttributeRemoved {
+    domAttributeRemovedNodeId :: DOMNodeId,
+    domAttributeRemovedName :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  DOMAttributeRemoved where
+    parseJSON = A.withObject "DOMAttributeRemoved" $ \v ->
+         DOMAttributeRemoved <$> v .:  "nodeId"
+            <*> v  .:  "name"
+
+
+instance ToJSON DOMAttributeRemoved  where
+    toJSON v = A.object
+        [ "nodeId" .= domAttributeRemovedNodeId v
+        , "name" .= domAttributeRemovedName v
+        ]
+
+
+data DOMCharacterDataModified = DOMCharacterDataModified {
+    domCharacterDataModifiedNodeId :: DOMNodeId,
+    domCharacterDataModifiedCharacterData :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  DOMCharacterDataModified where
+    parseJSON = A.withObject "DOMCharacterDataModified" $ \v ->
+         DOMCharacterDataModified <$> v .:  "nodeId"
+            <*> v  .:  "characterData"
+
+
+instance ToJSON DOMCharacterDataModified  where
+    toJSON v = A.object
+        [ "nodeId" .= domCharacterDataModifiedNodeId v
+        , "characterData" .= domCharacterDataModifiedCharacterData v
+        ]
+
+
+data DOMChildNodeCountUpdated = DOMChildNodeCountUpdated {
+    domChildNodeCountUpdatedNodeId :: DOMNodeId,
+    domChildNodeCountUpdatedChildNodeCount :: Int
+} deriving (Eq, Show, Read)
+instance FromJSON  DOMChildNodeCountUpdated where
+    parseJSON = A.withObject "DOMChildNodeCountUpdated" $ \v ->
+         DOMChildNodeCountUpdated <$> v .:  "nodeId"
+            <*> v  .:  "childNodeCount"
+
+
+instance ToJSON DOMChildNodeCountUpdated  where
+    toJSON v = A.object
+        [ "nodeId" .= domChildNodeCountUpdatedNodeId v
+        , "childNodeCount" .= domChildNodeCountUpdatedChildNodeCount v
+        ]
+
+
+data DOMChildNodeInserted = DOMChildNodeInserted {
+    domChildNodeInsertedParentNodeId :: DOMNodeId,
+    domChildNodeInsertedPreviousNodeId :: DOMNodeId,
+    domChildNodeInsertedNode :: DOMNode
+} deriving (Eq, Show, Read)
+instance FromJSON  DOMChildNodeInserted where
+    parseJSON = A.withObject "DOMChildNodeInserted" $ \v ->
+         DOMChildNodeInserted <$> v .:  "parentNodeId"
+            <*> v  .:  "previousNodeId"
+            <*> v  .:  "node"
+
+
+instance ToJSON DOMChildNodeInserted  where
+    toJSON v = A.object
+        [ "parentNodeId" .= domChildNodeInsertedParentNodeId v
+        , "previousNodeId" .= domChildNodeInsertedPreviousNodeId v
+        , "node" .= domChildNodeInsertedNode v
+        ]
+
+
+data DOMChildNodeRemoved = DOMChildNodeRemoved {
+    domChildNodeRemovedParentNodeId :: DOMNodeId,
+    domChildNodeRemovedNodeId :: DOMNodeId
+} deriving (Eq, Show, Read)
+instance FromJSON  DOMChildNodeRemoved where
+    parseJSON = A.withObject "DOMChildNodeRemoved" $ \v ->
+         DOMChildNodeRemoved <$> v .:  "parentNodeId"
+            <*> v  .:  "nodeId"
+
+
+instance ToJSON DOMChildNodeRemoved  where
+    toJSON v = A.object
+        [ "parentNodeId" .= domChildNodeRemovedParentNodeId v
+        , "nodeId" .= domChildNodeRemovedNodeId v
+        ]
+
+
+data DOMDocumentUpdated = DOMDocumentUpdated
+    deriving (Eq, Show, Read)
+instance FromJSON DOMDocumentUpdated where
+    parseJSON = A.withText  "DOMDocumentUpdated"  $ \v -> do
+        pure $ case v of
+                "DOMDocumentUpdated" -> DOMDocumentUpdated
+                _ -> error "failed to parse DOMDocumentUpdated"
+
+data DOMSetChildNodes = DOMSetChildNodes {
+    domSetChildNodesParentId :: DOMNodeId,
+    domSetChildNodesNodes :: [DOMNode]
+} deriving (Eq, Show, Read)
+instance FromJSON  DOMSetChildNodes where
+    parseJSON = A.withObject "DOMSetChildNodes" $ \v ->
+         DOMSetChildNodes <$> v .:  "parentId"
+            <*> v  .:  "nodes"
+
+
+instance ToJSON DOMSetChildNodes  where
+    toJSON v = A.object
+        [ "parentId" .= domSetChildNodesParentId v
+        , "nodes" .= domSetChildNodesNodes v
+        ]
+
+
+
 type DOMNodeId = Int
 
 type DOMBackendNodeId = Int
@@ -191,7 +526,7 @@ data DOMBackendNode = DOMBackendNode {
     domBackendNodeNodeType :: Int,
     domBackendNodeNodeName :: String,
     domBackendNodeBackendNodeId :: DOMBackendNodeId
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DOMBackendNode where
     parseJSON = A.withObject "DOMBackendNode" $ \v ->
          DOMBackendNode <$> v .:  "nodeType"
@@ -209,9 +544,9 @@ instance ToJSON DOMBackendNode  where
 
 
 data DOMPseudoType = DOMPseudoTypeFirstLine | DOMPseudoTypeFirstLetter | DOMPseudoTypeBefore | DOMPseudoTypeAfter | DOMPseudoTypeMarker | DOMPseudoTypeBackdrop | DOMPseudoTypeSelection | DOMPseudoTypeTargetText | DOMPseudoTypeSpellingError | DOMPseudoTypeGrammarError | DOMPseudoTypeHighlight | DOMPseudoTypeFirstLineInherited | DOMPseudoTypeScrollbar | DOMPseudoTypeScrollbarThumb | DOMPseudoTypeScrollbarButton | DOMPseudoTypeScrollbarTrack | DOMPseudoTypeScrollbarTrackPiece | DOMPseudoTypeScrollbarCorner | DOMPseudoTypeResizer | DOMPseudoTypeInputListButton | DOMPseudoTypePageTransition | DOMPseudoTypePageTransitionContainer | DOMPseudoTypePageTransitionImageWrapper | DOMPseudoTypePageTransitionOutgoingImage | DOMPseudoTypePageTransitionIncomingImage
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON DOMPseudoType where
-    parseJSON = A.withText  "DOMPseudoType"  $ \v -> 
+    parseJSON = A.withText  "DOMPseudoType"  $ \v -> do
         pure $ case v of
                 "first-line" -> DOMPseudoTypeFirstLine
                 "first-letter" -> DOMPseudoTypeFirstLetter
@@ -238,6 +573,7 @@ instance FromJSON DOMPseudoType where
                 "page-transition-image-wrapper" -> DOMPseudoTypePageTransitionImageWrapper
                 "page-transition-outgoing-image" -> DOMPseudoTypePageTransitionOutgoingImage
                 "page-transition-incoming-image" -> DOMPseudoTypePageTransitionIncomingImage
+                _ -> error "failed to parse DOMPseudoType"
 
 instance ToJSON DOMPseudoType where
     toJSON v = A.String $
@@ -271,13 +607,14 @@ instance ToJSON DOMPseudoType where
 
 
 data DOMShadowRootType = DOMShadowRootTypeUserAgent | DOMShadowRootTypeOpen | DOMShadowRootTypeClosed
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON DOMShadowRootType where
-    parseJSON = A.withText  "DOMShadowRootType"  $ \v -> 
+    parseJSON = A.withText  "DOMShadowRootType"  $ \v -> do
         pure $ case v of
                 "user-agent" -> DOMShadowRootTypeUserAgent
                 "open" -> DOMShadowRootTypeOpen
                 "closed" -> DOMShadowRootTypeClosed
+                _ -> error "failed to parse DOMShadowRootType"
 
 instance ToJSON DOMShadowRootType where
     toJSON v = A.String $
@@ -289,13 +626,14 @@ instance ToJSON DOMShadowRootType where
 
 
 data DOMCompatibilityMode = DOMCompatibilityModeQuirksMode | DOMCompatibilityModeLimitedQuirksMode | DOMCompatibilityModeNoQuirksMode
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON DOMCompatibilityMode where
-    parseJSON = A.withText  "DOMCompatibilityMode"  $ \v -> 
+    parseJSON = A.withText  "DOMCompatibilityMode"  $ \v -> do
         pure $ case v of
                 "QuirksMode" -> DOMCompatibilityModeQuirksMode
                 "LimitedQuirksMode" -> DOMCompatibilityModeLimitedQuirksMode
                 "NoQuirksMode" -> DOMCompatibilityModeNoQuirksMode
+                _ -> error "failed to parse DOMCompatibilityMode"
 
 instance ToJSON DOMCompatibilityMode where
     toJSON v = A.String $
@@ -336,7 +674,7 @@ data DOMNode = DOMNode {
     domNodeIsSvg :: Maybe Bool,
     domNodeCompatibilityMode :: Maybe DOMCompatibilityMode,
     domNodeAssignedSlot :: Maybe DOMBackendNode
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DOMNode where
     parseJSON = A.withObject "DOMNode" $ \v ->
          DOMNode <$> v .:  "nodeId"
@@ -410,7 +748,7 @@ data DOMRGBA = DOMRGBA {
     domrgbaG :: Int,
     domrgbaB :: Int,
     domrgbaA :: Maybe Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DOMRGBA where
     parseJSON = A.withObject "DOMRGBA" $ \v ->
          DOMRGBA <$> v .:  "r"
@@ -439,7 +777,7 @@ data DOMBoxModel = DOMBoxModel {
     domBoxModelWidth :: Int,
     domBoxModelHeight :: Int,
     domBoxModelShapeOutside :: Maybe DOMShapeOutsideInfo
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DOMBoxModel where
     parseJSON = A.withObject "DOMBoxModel" $ \v ->
          DOMBoxModel <$> v .:  "content"
@@ -468,7 +806,7 @@ data DOMShapeOutsideInfo = DOMShapeOutsideInfo {
     domShapeOutsideInfoBounds :: DOMQuad,
     domShapeOutsideInfoShape :: [Int],
     domShapeOutsideInfoMarginShape :: [Int]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DOMShapeOutsideInfo where
     parseJSON = A.withObject "DOMShapeOutsideInfo" $ \v ->
          DOMShapeOutsideInfo <$> v .:  "bounds"
@@ -490,7 +828,7 @@ data DOMRect = DOMRect {
     domRectY :: Int,
     domRectWidth :: Int,
     domRectHeight :: Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DOMRect where
     parseJSON = A.withObject "DOMRect" $ \v ->
          DOMRect <$> v .:  "x"
@@ -512,7 +850,7 @@ instance ToJSON DOMRect  where
 data DOMCSSComputedStyleProperty = DOMCSSComputedStyleProperty {
     domcssComputedStylePropertyName :: String,
     domcssComputedStylePropertyValue :: String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DOMCSSComputedStyleProperty where
     parseJSON = A.withObject "DOMCSSComputedStyleProperty" $ \v ->
          DOMCSSComputedStyleProperty <$> v .:  "name"
@@ -528,7 +866,7 @@ instance ToJSON DOMCSSComputedStyleProperty  where
 
 data DomDescribeNode = DomDescribeNode {
     domDescribeNodeNode :: DOMNode
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DomDescribeNode where
     parseJSON = A.withObject "DomDescribeNode" $ \v ->
          DomDescribeNode <$> v .:  "node"
@@ -536,7 +874,7 @@ instance FromJSON  DomDescribeNode where
 
 
 domDescribeNode :: Session -> Maybe DOMNodeId -> Maybe DOMBackendNodeId -> Maybe RuntimeRemoteObjectId -> Maybe Int -> Maybe Bool -> IO (Either Error DomDescribeNode)
-domDescribeNode session domDescribeNodeNodeId domDescribeNodeBackendNodeId domDescribeNodeObjectId domDescribeNodeDepth domDescribeNodePierce = sendReceiveCommandResult (conn session) ("DOM","describeNode") ([] ++ (catMaybes [fmap (("domDescribeNodeNodeId",) . ToJSONEx) domDescribeNodeNodeId, fmap (("domDescribeNodeBackendNodeId",) . ToJSONEx) domDescribeNodeBackendNodeId, fmap (("domDescribeNodeObjectId",) . ToJSONEx) domDescribeNodeObjectId, fmap (("domDescribeNodeDepth",) . ToJSONEx) domDescribeNodeDepth, fmap (("domDescribeNodePierce",) . ToJSONEx) domDescribeNodePierce]))
+domDescribeNode session domDescribeNodeNodeId domDescribeNodeBackendNodeId domDescribeNodeObjectId domDescribeNodeDepth domDescribeNodePierce = sendReceiveCommandResult (conn session) ("DOM","describeNode") ([] ++ (catMaybes [fmap (("nodeId",) . ToJSONEx) domDescribeNodeNodeId, fmap (("backendNodeId",) . ToJSONEx) domDescribeNodeBackendNodeId, fmap (("objectId",) . ToJSONEx) domDescribeNodeObjectId, fmap (("depth",) . ToJSONEx) domDescribeNodeDepth, fmap (("pierce",) . ToJSONEx) domDescribeNodePierce]))
 
 
 domDisable :: Session -> IO (Maybe Error)
@@ -548,11 +886,11 @@ domEnable session  = sendReceiveCommand (conn session) ("DOM","enable") ([] ++ (
 
 
 domFocus :: Session -> Maybe DOMNodeId -> Maybe DOMBackendNodeId -> Maybe RuntimeRemoteObjectId -> IO (Maybe Error)
-domFocus session domFocusNodeId domFocusBackendNodeId domFocusObjectId = sendReceiveCommand (conn session) ("DOM","focus") ([] ++ (catMaybes [fmap (("domFocusNodeId",) . ToJSONEx) domFocusNodeId, fmap (("domFocusBackendNodeId",) . ToJSONEx) domFocusBackendNodeId, fmap (("domFocusObjectId",) . ToJSONEx) domFocusObjectId]))
+domFocus session domFocusNodeId domFocusBackendNodeId domFocusObjectId = sendReceiveCommand (conn session) ("DOM","focus") ([] ++ (catMaybes [fmap (("nodeId",) . ToJSONEx) domFocusNodeId, fmap (("backendNodeId",) . ToJSONEx) domFocusBackendNodeId, fmap (("objectId",) . ToJSONEx) domFocusObjectId]))
 
 data DomGetAttributes = DomGetAttributes {
     domGetAttributesAttributes :: [String]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DomGetAttributes where
     parseJSON = A.withObject "DomGetAttributes" $ \v ->
          DomGetAttributes <$> v .:  "attributes"
@@ -560,11 +898,11 @@ instance FromJSON  DomGetAttributes where
 
 
 domGetAttributes :: Session -> DOMNodeId -> IO (Either Error DomGetAttributes)
-domGetAttributes session domGetAttributesNodeId = sendReceiveCommandResult (conn session) ("DOM","getAttributes") ([("domGetAttributesNodeId", ToJSONEx domGetAttributesNodeId)] ++ (catMaybes []))
+domGetAttributes session domGetAttributesNodeId = sendReceiveCommandResult (conn session) ("DOM","getAttributes") ([("nodeId", ToJSONEx domGetAttributesNodeId)] ++ (catMaybes []))
 
 data DomGetBoxModel = DomGetBoxModel {
     domGetBoxModelModel :: DOMBoxModel
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DomGetBoxModel where
     parseJSON = A.withObject "DomGetBoxModel" $ \v ->
          DomGetBoxModel <$> v .:  "model"
@@ -572,11 +910,11 @@ instance FromJSON  DomGetBoxModel where
 
 
 domGetBoxModel :: Session -> Maybe DOMNodeId -> Maybe DOMBackendNodeId -> Maybe RuntimeRemoteObjectId -> IO (Either Error DomGetBoxModel)
-domGetBoxModel session domGetBoxModelNodeId domGetBoxModelBackendNodeId domGetBoxModelObjectId = sendReceiveCommandResult (conn session) ("DOM","getBoxModel") ([] ++ (catMaybes [fmap (("domGetBoxModelNodeId",) . ToJSONEx) domGetBoxModelNodeId, fmap (("domGetBoxModelBackendNodeId",) . ToJSONEx) domGetBoxModelBackendNodeId, fmap (("domGetBoxModelObjectId",) . ToJSONEx) domGetBoxModelObjectId]))
+domGetBoxModel session domGetBoxModelNodeId domGetBoxModelBackendNodeId domGetBoxModelObjectId = sendReceiveCommandResult (conn session) ("DOM","getBoxModel") ([] ++ (catMaybes [fmap (("nodeId",) . ToJSONEx) domGetBoxModelNodeId, fmap (("backendNodeId",) . ToJSONEx) domGetBoxModelBackendNodeId, fmap (("objectId",) . ToJSONEx) domGetBoxModelObjectId]))
 
 data DomGetDocument = DomGetDocument {
     domGetDocumentRoot :: DOMNode
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DomGetDocument where
     parseJSON = A.withObject "DomGetDocument" $ \v ->
          DomGetDocument <$> v .:  "root"
@@ -584,13 +922,13 @@ instance FromJSON  DomGetDocument where
 
 
 domGetDocument :: Session -> Maybe Int -> Maybe Bool -> IO (Either Error DomGetDocument)
-domGetDocument session domGetDocumentDepth domGetDocumentPierce = sendReceiveCommandResult (conn session) ("DOM","getDocument") ([] ++ (catMaybes [fmap (("domGetDocumentDepth",) . ToJSONEx) domGetDocumentDepth, fmap (("domGetDocumentPierce",) . ToJSONEx) domGetDocumentPierce]))
+domGetDocument session domGetDocumentDepth domGetDocumentPierce = sendReceiveCommandResult (conn session) ("DOM","getDocument") ([] ++ (catMaybes [fmap (("depth",) . ToJSONEx) domGetDocumentDepth, fmap (("pierce",) . ToJSONEx) domGetDocumentPierce]))
 
 data DomGetNodeForLocation = DomGetNodeForLocation {
     domGetNodeForLocationBackendNodeId :: DOMBackendNodeId,
     domGetNodeForLocationFrameId :: PageFrameId,
     domGetNodeForLocationNodeId :: Maybe DOMNodeId
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DomGetNodeForLocation where
     parseJSON = A.withObject "DomGetNodeForLocation" $ \v ->
          DomGetNodeForLocation <$> v .:  "backendNodeId"
@@ -600,11 +938,11 @@ instance FromJSON  DomGetNodeForLocation where
 
 
 domGetNodeForLocation :: Session -> Int -> Int -> Maybe Bool -> Maybe Bool -> IO (Either Error DomGetNodeForLocation)
-domGetNodeForLocation session domGetNodeForLocationX domGetNodeForLocationY domGetNodeForLocationIncludeUserAgentShadowDom domGetNodeForLocationIgnorePointerEventsNone = sendReceiveCommandResult (conn session) ("DOM","getNodeForLocation") ([("domGetNodeForLocationX", ToJSONEx domGetNodeForLocationX), ("domGetNodeForLocationY", ToJSONEx domGetNodeForLocationY)] ++ (catMaybes [fmap (("domGetNodeForLocationIncludeUserAgentShadowDom",) . ToJSONEx) domGetNodeForLocationIncludeUserAgentShadowDom, fmap (("domGetNodeForLocationIgnorePointerEventsNone",) . ToJSONEx) domGetNodeForLocationIgnorePointerEventsNone]))
+domGetNodeForLocation session domGetNodeForLocationX domGetNodeForLocationY domGetNodeForLocationIncludeUserAgentShadowDom domGetNodeForLocationIgnorePointerEventsNone = sendReceiveCommandResult (conn session) ("DOM","getNodeForLocation") ([("x", ToJSONEx domGetNodeForLocationX), ("y", ToJSONEx domGetNodeForLocationY)] ++ (catMaybes [fmap (("includeUserAgentShadowDOM",) . ToJSONEx) domGetNodeForLocationIncludeUserAgentShadowDom, fmap (("ignorePointerEventsNone",) . ToJSONEx) domGetNodeForLocationIgnorePointerEventsNone]))
 
 data DomGetOuterHTML = DomGetOuterHTML {
     domGetOuterHTMLOuterHtml :: String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DomGetOuterHTML where
     parseJSON = A.withObject "DomGetOuterHTML" $ \v ->
          DomGetOuterHTML <$> v .:  "outerHTML"
@@ -612,7 +950,7 @@ instance FromJSON  DomGetOuterHTML where
 
 
 domGetOuterHTML :: Session -> Maybe DOMNodeId -> Maybe DOMBackendNodeId -> Maybe RuntimeRemoteObjectId -> IO (Either Error DomGetOuterHTML)
-domGetOuterHTML session domGetOuterHTMLNodeId domGetOuterHTMLBackendNodeId domGetOuterHTMLObjectId = sendReceiveCommandResult (conn session) ("DOM","getOuterHTML") ([] ++ (catMaybes [fmap (("domGetOuterHTMLNodeId",) . ToJSONEx) domGetOuterHTMLNodeId, fmap (("domGetOuterHTMLBackendNodeId",) . ToJSONEx) domGetOuterHTMLBackendNodeId, fmap (("domGetOuterHTMLObjectId",) . ToJSONEx) domGetOuterHTMLObjectId]))
+domGetOuterHTML session domGetOuterHtmlNodeId domGetOuterHtmlBackendNodeId domGetOuterHtmlObjectId = sendReceiveCommandResult (conn session) ("DOM","getOuterHTML") ([] ++ (catMaybes [fmap (("nodeId",) . ToJSONEx) domGetOuterHtmlNodeId, fmap (("backendNodeId",) . ToJSONEx) domGetOuterHtmlBackendNodeId, fmap (("objectId",) . ToJSONEx) domGetOuterHtmlObjectId]))
 
 
 domHideHighlight :: Session -> IO (Maybe Error)
@@ -628,7 +966,7 @@ domHighlightRect session  = sendReceiveCommand (conn session) ("DOM","highlightR
 
 data DomMoveTo = DomMoveTo {
     domMoveToNodeId :: DOMNodeId
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DomMoveTo where
     parseJSON = A.withObject "DomMoveTo" $ \v ->
          DomMoveTo <$> v .:  "nodeId"
@@ -636,11 +974,11 @@ instance FromJSON  DomMoveTo where
 
 
 domMoveTo :: Session -> DOMNodeId -> DOMNodeId -> Maybe DOMNodeId -> IO (Either Error DomMoveTo)
-domMoveTo session domMoveToNodeId domMoveToTargetNodeId domMoveToInsertBeforeNodeId = sendReceiveCommandResult (conn session) ("DOM","moveTo") ([("domMoveToNodeId", ToJSONEx domMoveToNodeId), ("domMoveToTargetNodeId", ToJSONEx domMoveToTargetNodeId)] ++ (catMaybes [fmap (("domMoveToInsertBeforeNodeId",) . ToJSONEx) domMoveToInsertBeforeNodeId]))
+domMoveTo session domMoveToNodeId domMoveToTargetNodeId domMoveToInsertBeforeNodeId = sendReceiveCommandResult (conn session) ("DOM","moveTo") ([("nodeId", ToJSONEx domMoveToNodeId), ("targetNodeId", ToJSONEx domMoveToTargetNodeId)] ++ (catMaybes [fmap (("insertBeforeNodeId",) . ToJSONEx) domMoveToInsertBeforeNodeId]))
 
 data DomQuerySelector = DomQuerySelector {
     domQuerySelectorNodeId :: DOMNodeId
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DomQuerySelector where
     parseJSON = A.withObject "DomQuerySelector" $ \v ->
          DomQuerySelector <$> v .:  "nodeId"
@@ -648,11 +986,11 @@ instance FromJSON  DomQuerySelector where
 
 
 domQuerySelector :: Session -> DOMNodeId -> String -> IO (Either Error DomQuerySelector)
-domQuerySelector session domQuerySelectorNodeId domQuerySelectorSelector = sendReceiveCommandResult (conn session) ("DOM","querySelector") ([("domQuerySelectorNodeId", ToJSONEx domQuerySelectorNodeId), ("domQuerySelectorSelector", ToJSONEx domQuerySelectorSelector)] ++ (catMaybes []))
+domQuerySelector session domQuerySelectorNodeId domQuerySelectorSelector = sendReceiveCommandResult (conn session) ("DOM","querySelector") ([("nodeId", ToJSONEx domQuerySelectorNodeId), ("selector", ToJSONEx domQuerySelectorSelector)] ++ (catMaybes []))
 
 data DomQuerySelectorAll = DomQuerySelectorAll {
     domQuerySelectorAllNodeIds :: [DOMNodeId]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DomQuerySelectorAll where
     parseJSON = A.withObject "DomQuerySelectorAll" $ \v ->
          DomQuerySelectorAll <$> v .:  "nodeIds"
@@ -660,23 +998,23 @@ instance FromJSON  DomQuerySelectorAll where
 
 
 domQuerySelectorAll :: Session -> DOMNodeId -> String -> IO (Either Error DomQuerySelectorAll)
-domQuerySelectorAll session domQuerySelectorAllNodeId domQuerySelectorAllSelector = sendReceiveCommandResult (conn session) ("DOM","querySelectorAll") ([("domQuerySelectorAllNodeId", ToJSONEx domQuerySelectorAllNodeId), ("domQuerySelectorAllSelector", ToJSONEx domQuerySelectorAllSelector)] ++ (catMaybes []))
+domQuerySelectorAll session domQuerySelectorAllNodeId domQuerySelectorAllSelector = sendReceiveCommandResult (conn session) ("DOM","querySelectorAll") ([("nodeId", ToJSONEx domQuerySelectorAllNodeId), ("selector", ToJSONEx domQuerySelectorAllSelector)] ++ (catMaybes []))
 
 
 domRemoveAttribute :: Session -> DOMNodeId -> String -> IO (Maybe Error)
-domRemoveAttribute session domRemoveAttributeNodeId domRemoveAttributeName = sendReceiveCommand (conn session) ("DOM","removeAttribute") ([("domRemoveAttributeNodeId", ToJSONEx domRemoveAttributeNodeId), ("domRemoveAttributeName", ToJSONEx domRemoveAttributeName)] ++ (catMaybes []))
+domRemoveAttribute session domRemoveAttributeNodeId domRemoveAttributeName = sendReceiveCommand (conn session) ("DOM","removeAttribute") ([("nodeId", ToJSONEx domRemoveAttributeNodeId), ("name", ToJSONEx domRemoveAttributeName)] ++ (catMaybes []))
 
 
 domRemoveNode :: Session -> DOMNodeId -> IO (Maybe Error)
-domRemoveNode session domRemoveNodeNodeId = sendReceiveCommand (conn session) ("DOM","removeNode") ([("domRemoveNodeNodeId", ToJSONEx domRemoveNodeNodeId)] ++ (catMaybes []))
+domRemoveNode session domRemoveNodeNodeId = sendReceiveCommand (conn session) ("DOM","removeNode") ([("nodeId", ToJSONEx domRemoveNodeNodeId)] ++ (catMaybes []))
 
 
 domRequestChildNodes :: Session -> DOMNodeId -> Maybe Int -> Maybe Bool -> IO (Maybe Error)
-domRequestChildNodes session domRequestChildNodesNodeId domRequestChildNodesDepth domRequestChildNodesPierce = sendReceiveCommand (conn session) ("DOM","requestChildNodes") ([("domRequestChildNodesNodeId", ToJSONEx domRequestChildNodesNodeId)] ++ (catMaybes [fmap (("domRequestChildNodesDepth",) . ToJSONEx) domRequestChildNodesDepth, fmap (("domRequestChildNodesPierce",) . ToJSONEx) domRequestChildNodesPierce]))
+domRequestChildNodes session domRequestChildNodesNodeId domRequestChildNodesDepth domRequestChildNodesPierce = sendReceiveCommand (conn session) ("DOM","requestChildNodes") ([("nodeId", ToJSONEx domRequestChildNodesNodeId)] ++ (catMaybes [fmap (("depth",) . ToJSONEx) domRequestChildNodesDepth, fmap (("pierce",) . ToJSONEx) domRequestChildNodesPierce]))
 
 data DomRequestNode = DomRequestNode {
     domRequestNodeNodeId :: DOMNodeId
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DomRequestNode where
     parseJSON = A.withObject "DomRequestNode" $ \v ->
          DomRequestNode <$> v .:  "nodeId"
@@ -684,11 +1022,11 @@ instance FromJSON  DomRequestNode where
 
 
 domRequestNode :: Session -> RuntimeRemoteObjectId -> IO (Either Error DomRequestNode)
-domRequestNode session domRequestNodeObjectId = sendReceiveCommandResult (conn session) ("DOM","requestNode") ([("domRequestNodeObjectId", ToJSONEx domRequestNodeObjectId)] ++ (catMaybes []))
+domRequestNode session domRequestNodeObjectId = sendReceiveCommandResult (conn session) ("DOM","requestNode") ([("objectId", ToJSONEx domRequestNodeObjectId)] ++ (catMaybes []))
 
 data DomResolveNode = DomResolveNode {
     domResolveNodeObject :: RuntimeRemoteObject
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DomResolveNode where
     parseJSON = A.withObject "DomResolveNode" $ \v ->
          DomResolveNode <$> v .:  "object"
@@ -696,23 +1034,23 @@ instance FromJSON  DomResolveNode where
 
 
 domResolveNode :: Session -> Maybe DOMNodeId -> Maybe DOMBackendNodeId -> Maybe String -> Maybe RuntimeExecutionContextId -> IO (Either Error DomResolveNode)
-domResolveNode session domResolveNodeNodeId domResolveNodeBackendNodeId domResolveNodeObjectGroup domResolveNodeExecutionContextId = sendReceiveCommandResult (conn session) ("DOM","resolveNode") ([] ++ (catMaybes [fmap (("domResolveNodeNodeId",) . ToJSONEx) domResolveNodeNodeId, fmap (("domResolveNodeBackendNodeId",) . ToJSONEx) domResolveNodeBackendNodeId, fmap (("domResolveNodeObjectGroup",) . ToJSONEx) domResolveNodeObjectGroup, fmap (("domResolveNodeExecutionContextId",) . ToJSONEx) domResolveNodeExecutionContextId]))
+domResolveNode session domResolveNodeNodeId domResolveNodeBackendNodeId domResolveNodeObjectGroup domResolveNodeExecutionContextId = sendReceiveCommandResult (conn session) ("DOM","resolveNode") ([] ++ (catMaybes [fmap (("nodeId",) . ToJSONEx) domResolveNodeNodeId, fmap (("backendNodeId",) . ToJSONEx) domResolveNodeBackendNodeId, fmap (("objectGroup",) . ToJSONEx) domResolveNodeObjectGroup, fmap (("executionContextId",) . ToJSONEx) domResolveNodeExecutionContextId]))
 
 
 domSetAttributeValue :: Session -> DOMNodeId -> String -> String -> IO (Maybe Error)
-domSetAttributeValue session domSetAttributeValueNodeId domSetAttributeValueName domSetAttributeValueValue = sendReceiveCommand (conn session) ("DOM","setAttributeValue") ([("domSetAttributeValueNodeId", ToJSONEx domSetAttributeValueNodeId), ("domSetAttributeValueName", ToJSONEx domSetAttributeValueName), ("domSetAttributeValueValue", ToJSONEx domSetAttributeValueValue)] ++ (catMaybes []))
+domSetAttributeValue session domSetAttributeValueNodeId domSetAttributeValueName domSetAttributeValueValue = sendReceiveCommand (conn session) ("DOM","setAttributeValue") ([("nodeId", ToJSONEx domSetAttributeValueNodeId), ("name", ToJSONEx domSetAttributeValueName), ("value", ToJSONEx domSetAttributeValueValue)] ++ (catMaybes []))
 
 
 domSetAttributesAsText :: Session -> DOMNodeId -> String -> Maybe String -> IO (Maybe Error)
-domSetAttributesAsText session domSetAttributesAsTextNodeId domSetAttributesAsTextText domSetAttributesAsTextName = sendReceiveCommand (conn session) ("DOM","setAttributesAsText") ([("domSetAttributesAsTextNodeId", ToJSONEx domSetAttributesAsTextNodeId), ("domSetAttributesAsTextText", ToJSONEx domSetAttributesAsTextText)] ++ (catMaybes [fmap (("domSetAttributesAsTextName",) . ToJSONEx) domSetAttributesAsTextName]))
+domSetAttributesAsText session domSetAttributesAsTextNodeId domSetAttributesAsTextText domSetAttributesAsTextName = sendReceiveCommand (conn session) ("DOM","setAttributesAsText") ([("nodeId", ToJSONEx domSetAttributesAsTextNodeId), ("text", ToJSONEx domSetAttributesAsTextText)] ++ (catMaybes [fmap (("name",) . ToJSONEx) domSetAttributesAsTextName]))
 
 
 domSetFileInputFiles :: Session -> [String] -> Maybe DOMNodeId -> Maybe DOMBackendNodeId -> Maybe RuntimeRemoteObjectId -> IO (Maybe Error)
-domSetFileInputFiles session domSetFileInputFilesFiles domSetFileInputFilesNodeId domSetFileInputFilesBackendNodeId domSetFileInputFilesObjectId = sendReceiveCommand (conn session) ("DOM","setFileInputFiles") ([("domSetFileInputFilesFiles", ToJSONEx domSetFileInputFilesFiles)] ++ (catMaybes [fmap (("domSetFileInputFilesNodeId",) . ToJSONEx) domSetFileInputFilesNodeId, fmap (("domSetFileInputFilesBackendNodeId",) . ToJSONEx) domSetFileInputFilesBackendNodeId, fmap (("domSetFileInputFilesObjectId",) . ToJSONEx) domSetFileInputFilesObjectId]))
+domSetFileInputFiles session domSetFileInputFilesFiles domSetFileInputFilesNodeId domSetFileInputFilesBackendNodeId domSetFileInputFilesObjectId = sendReceiveCommand (conn session) ("DOM","setFileInputFiles") ([("files", ToJSONEx domSetFileInputFilesFiles)] ++ (catMaybes [fmap (("nodeId",) . ToJSONEx) domSetFileInputFilesNodeId, fmap (("backendNodeId",) . ToJSONEx) domSetFileInputFilesBackendNodeId, fmap (("objectId",) . ToJSONEx) domSetFileInputFilesObjectId]))
 
 data DomSetNodeName = DomSetNodeName {
     domSetNodeNameNodeId :: DOMNodeId
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DomSetNodeName where
     parseJSON = A.withObject "DomSetNodeName" $ \v ->
          DomSetNodeName <$> v .:  "nodeId"
@@ -720,26 +1058,28 @@ instance FromJSON  DomSetNodeName where
 
 
 domSetNodeName :: Session -> DOMNodeId -> String -> IO (Either Error DomSetNodeName)
-domSetNodeName session domSetNodeNameNodeId domSetNodeNameName = sendReceiveCommandResult (conn session) ("DOM","setNodeName") ([("domSetNodeNameNodeId", ToJSONEx domSetNodeNameNodeId), ("domSetNodeNameName", ToJSONEx domSetNodeNameName)] ++ (catMaybes []))
+domSetNodeName session domSetNodeNameNodeId domSetNodeNameName = sendReceiveCommandResult (conn session) ("DOM","setNodeName") ([("nodeId", ToJSONEx domSetNodeNameNodeId), ("name", ToJSONEx domSetNodeNameName)] ++ (catMaybes []))
 
 
 domSetNodeValue :: Session -> DOMNodeId -> String -> IO (Maybe Error)
-domSetNodeValue session domSetNodeValueNodeId domSetNodeValueValue = sendReceiveCommand (conn session) ("DOM","setNodeValue") ([("domSetNodeValueNodeId", ToJSONEx domSetNodeValueNodeId), ("domSetNodeValueValue", ToJSONEx domSetNodeValueValue)] ++ (catMaybes []))
+domSetNodeValue session domSetNodeValueNodeId domSetNodeValueValue = sendReceiveCommand (conn session) ("DOM","setNodeValue") ([("nodeId", ToJSONEx domSetNodeValueNodeId), ("value", ToJSONEx domSetNodeValueValue)] ++ (catMaybes []))
 
 
 domSetOuterHTML :: Session -> DOMNodeId -> String -> IO (Maybe Error)
-domSetOuterHTML session domSetOuterHTMLNodeId domSetOuterHTMLOuterHtml = sendReceiveCommand (conn session) ("DOM","setOuterHTML") ([("domSetOuterHTMLNodeId", ToJSONEx domSetOuterHTMLNodeId), ("domSetOuterHTMLOuterHtml", ToJSONEx domSetOuterHTMLOuterHtml)] ++ (catMaybes []))
+domSetOuterHTML session domSetOuterHtmlNodeId domSetOuterHtmlOuterHtml = sendReceiveCommand (conn session) ("DOM","setOuterHTML") ([("nodeId", ToJSONEx domSetOuterHtmlNodeId), ("outerHTML", ToJSONEx domSetOuterHtmlOuterHtml)] ++ (catMaybes []))
+
 
 
 
 data DOMDebuggerDOMBreakpointType = DOMDebuggerDOMBreakpointTypeSubtreeModified | DOMDebuggerDOMBreakpointTypeAttributeModified | DOMDebuggerDOMBreakpointTypeNodeRemoved
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON DOMDebuggerDOMBreakpointType where
-    parseJSON = A.withText  "DOMDebuggerDOMBreakpointType"  $ \v -> 
+    parseJSON = A.withText  "DOMDebuggerDOMBreakpointType"  $ \v -> do
         pure $ case v of
                 "subtree-modified" -> DOMDebuggerDOMBreakpointTypeSubtreeModified
                 "attribute-modified" -> DOMDebuggerDOMBreakpointTypeAttributeModified
                 "node-removed" -> DOMDebuggerDOMBreakpointTypeNodeRemoved
+                _ -> error "failed to parse DOMDebuggerDOMBreakpointType"
 
 instance ToJSON DOMDebuggerDOMBreakpointType where
     toJSON v = A.String $
@@ -761,7 +1101,7 @@ data DOMDebuggerEventListener = DOMDebuggerEventListener {
     domDebuggerEventListenerHandler :: Maybe RuntimeRemoteObject,
     domDebuggerEventListenerOriginalHandler :: Maybe RuntimeRemoteObject,
     domDebuggerEventListenerBackendNodeId :: Maybe DOMBackendNodeId
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DOMDebuggerEventListener where
     parseJSON = A.withObject "DOMDebuggerEventListener" $ \v ->
          DOMDebuggerEventListener <$> v .:  "type"
@@ -793,7 +1133,7 @@ instance ToJSON DOMDebuggerEventListener  where
 
 data DomDebuggerGetEventListeners = DomDebuggerGetEventListeners {
     domDebuggerGetEventListenersListeners :: [DOMDebuggerEventListener]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DomDebuggerGetEventListeners where
     parseJSON = A.withObject "DomDebuggerGetEventListeners" $ \v ->
          DomDebuggerGetEventListeners <$> v .:  "listeners"
@@ -801,38 +1141,39 @@ instance FromJSON  DomDebuggerGetEventListeners where
 
 
 domDebuggerGetEventListeners :: Session -> RuntimeRemoteObjectId -> Maybe Int -> Maybe Bool -> IO (Either Error DomDebuggerGetEventListeners)
-domDebuggerGetEventListeners session domDebuggerGetEventListenersObjectId domDebuggerGetEventListenersDepth domDebuggerGetEventListenersPierce = sendReceiveCommandResult (conn session) ("DOMDebugger","getEventListeners") ([("domDebuggerGetEventListenersObjectId", ToJSONEx domDebuggerGetEventListenersObjectId)] ++ (catMaybes [fmap (("domDebuggerGetEventListenersDepth",) . ToJSONEx) domDebuggerGetEventListenersDepth, fmap (("domDebuggerGetEventListenersPierce",) . ToJSONEx) domDebuggerGetEventListenersPierce]))
+domDebuggerGetEventListeners session domDebuggerGetEventListenersObjectId domDebuggerGetEventListenersDepth domDebuggerGetEventListenersPierce = sendReceiveCommandResult (conn session) ("DOMDebugger","getEventListeners") ([("objectId", ToJSONEx domDebuggerGetEventListenersObjectId)] ++ (catMaybes [fmap (("depth",) . ToJSONEx) domDebuggerGetEventListenersDepth, fmap (("pierce",) . ToJSONEx) domDebuggerGetEventListenersPierce]))
 
 
 domDebuggerRemoveDOMBreakpoint :: Session -> DOMNodeId -> DOMDebuggerDOMBreakpointType -> IO (Maybe Error)
-domDebuggerRemoveDOMBreakpoint session domDebuggerRemoveDOMBreakpointNodeId domDebuggerRemoveDOMBreakpointType = sendReceiveCommand (conn session) ("DOMDebugger","removeDOMBreakpoint") ([("domDebuggerRemoveDOMBreakpointNodeId", ToJSONEx domDebuggerRemoveDOMBreakpointNodeId), ("domDebuggerRemoveDOMBreakpointType", ToJSONEx domDebuggerRemoveDOMBreakpointType)] ++ (catMaybes []))
+domDebuggerRemoveDOMBreakpoint session domDebuggerRemoveDomBreakpointNodeId domDebuggerRemoveDomBreakpointType = sendReceiveCommand (conn session) ("DOMDebugger","removeDOMBreakpoint") ([("nodeId", ToJSONEx domDebuggerRemoveDomBreakpointNodeId), ("type", ToJSONEx domDebuggerRemoveDomBreakpointType)] ++ (catMaybes []))
 
 
 domDebuggerRemoveEventListenerBreakpoint :: Session -> String -> IO (Maybe Error)
-domDebuggerRemoveEventListenerBreakpoint session domDebuggerRemoveEventListenerBreakpointEventName = sendReceiveCommand (conn session) ("DOMDebugger","removeEventListenerBreakpoint") ([("domDebuggerRemoveEventListenerBreakpointEventName", ToJSONEx domDebuggerRemoveEventListenerBreakpointEventName)] ++ (catMaybes []))
+domDebuggerRemoveEventListenerBreakpoint session domDebuggerRemoveEventListenerBreakpointEventName = sendReceiveCommand (conn session) ("DOMDebugger","removeEventListenerBreakpoint") ([("eventName", ToJSONEx domDebuggerRemoveEventListenerBreakpointEventName)] ++ (catMaybes []))
 
 
 domDebuggerRemoveXHRBreakpoint :: Session -> String -> IO (Maybe Error)
-domDebuggerRemoveXHRBreakpoint session domDebuggerRemoveXHRBreakpointUrl = sendReceiveCommand (conn session) ("DOMDebugger","removeXHRBreakpoint") ([("domDebuggerRemoveXHRBreakpointUrl", ToJSONEx domDebuggerRemoveXHRBreakpointUrl)] ++ (catMaybes []))
+domDebuggerRemoveXHRBreakpoint session domDebuggerRemoveXhrBreakpointUrl = sendReceiveCommand (conn session) ("DOMDebugger","removeXHRBreakpoint") ([("url", ToJSONEx domDebuggerRemoveXhrBreakpointUrl)] ++ (catMaybes []))
 
 
 domDebuggerSetDOMBreakpoint :: Session -> DOMNodeId -> DOMDebuggerDOMBreakpointType -> IO (Maybe Error)
-domDebuggerSetDOMBreakpoint session domDebuggerSetDOMBreakpointNodeId domDebuggerSetDOMBreakpointType = sendReceiveCommand (conn session) ("DOMDebugger","setDOMBreakpoint") ([("domDebuggerSetDOMBreakpointNodeId", ToJSONEx domDebuggerSetDOMBreakpointNodeId), ("domDebuggerSetDOMBreakpointType", ToJSONEx domDebuggerSetDOMBreakpointType)] ++ (catMaybes []))
+domDebuggerSetDOMBreakpoint session domDebuggerSetDomBreakpointNodeId domDebuggerSetDomBreakpointType = sendReceiveCommand (conn session) ("DOMDebugger","setDOMBreakpoint") ([("nodeId", ToJSONEx domDebuggerSetDomBreakpointNodeId), ("type", ToJSONEx domDebuggerSetDomBreakpointType)] ++ (catMaybes []))
 
 
 domDebuggerSetEventListenerBreakpoint :: Session -> String -> IO (Maybe Error)
-domDebuggerSetEventListenerBreakpoint session domDebuggerSetEventListenerBreakpointEventName = sendReceiveCommand (conn session) ("DOMDebugger","setEventListenerBreakpoint") ([("domDebuggerSetEventListenerBreakpointEventName", ToJSONEx domDebuggerSetEventListenerBreakpointEventName)] ++ (catMaybes []))
+domDebuggerSetEventListenerBreakpoint session domDebuggerSetEventListenerBreakpointEventName = sendReceiveCommand (conn session) ("DOMDebugger","setEventListenerBreakpoint") ([("eventName", ToJSONEx domDebuggerSetEventListenerBreakpointEventName)] ++ (catMaybes []))
 
 
 domDebuggerSetXHRBreakpoint :: Session -> String -> IO (Maybe Error)
-domDebuggerSetXHRBreakpoint session domDebuggerSetXHRBreakpointUrl = sendReceiveCommand (conn session) ("DOMDebugger","setXHRBreakpoint") ([("domDebuggerSetXHRBreakpointUrl", ToJSONEx domDebuggerSetXHRBreakpointUrl)] ++ (catMaybes []))
+domDebuggerSetXHRBreakpoint session domDebuggerSetXhrBreakpointUrl = sendReceiveCommand (conn session) ("DOMDebugger","setXHRBreakpoint") ([("url", ToJSONEx domDebuggerSetXhrBreakpointUrl)] ++ (catMaybes []))
+
 
 
 
 data EmulationScreenOrientation = EmulationScreenOrientation {
     emulationScreenOrientationType :: String,
     emulationScreenOrientationAngle :: Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  EmulationScreenOrientation where
     parseJSON = A.withObject "EmulationScreenOrientation" $ \v ->
          EmulationScreenOrientation <$> v .:  "type"
@@ -851,7 +1192,7 @@ data EmulationDisplayFeature = EmulationDisplayFeature {
     emulationDisplayFeatureOrientation :: String,
     emulationDisplayFeatureOffset :: Int,
     emulationDisplayFeatureMaskLength :: Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  EmulationDisplayFeature where
     parseJSON = A.withObject "EmulationDisplayFeature" $ \v ->
          EmulationDisplayFeature <$> v .:  "orientation"
@@ -871,7 +1212,7 @@ instance ToJSON EmulationDisplayFeature  where
 data EmulationMediaFeature = EmulationMediaFeature {
     emulationMediaFeatureName :: String,
     emulationMediaFeatureValue :: String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  EmulationMediaFeature where
     parseJSON = A.withObject "EmulationMediaFeature" $ \v ->
          EmulationMediaFeature <$> v .:  "name"
@@ -887,7 +1228,7 @@ instance ToJSON EmulationMediaFeature  where
 
 data EmulationCanEmulate = EmulationCanEmulate {
     emulationCanEmulateResult :: Bool
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  EmulationCanEmulate where
     parseJSON = A.withObject "EmulationCanEmulate" $ \v ->
          EmulationCanEmulate <$> v .:  "result"
@@ -907,44 +1248,45 @@ emulationClearGeolocationOverride session  = sendReceiveCommand (conn session) (
 
 
 emulationSetDefaultBackgroundColorOverride :: Session -> Maybe DOMRGBA -> IO (Maybe Error)
-emulationSetDefaultBackgroundColorOverride session emulationSetDefaultBackgroundColorOverrideColor = sendReceiveCommand (conn session) ("Emulation","setDefaultBackgroundColorOverride") ([] ++ (catMaybes [fmap (("emulationSetDefaultBackgroundColorOverrideColor",) . ToJSONEx) emulationSetDefaultBackgroundColorOverrideColor]))
+emulationSetDefaultBackgroundColorOverride session emulationSetDefaultBackgroundColorOverrideColor = sendReceiveCommand (conn session) ("Emulation","setDefaultBackgroundColorOverride") ([] ++ (catMaybes [fmap (("color",) . ToJSONEx) emulationSetDefaultBackgroundColorOverrideColor]))
 
 
 emulationSetDeviceMetricsOverride :: Session -> Int -> Int -> Int -> Bool -> Maybe EmulationScreenOrientation -> IO (Maybe Error)
-emulationSetDeviceMetricsOverride session emulationSetDeviceMetricsOverrideWidth emulationSetDeviceMetricsOverrideHeight emulationSetDeviceMetricsOverrideDeviceScaleFactor emulationSetDeviceMetricsOverrideMobile emulationSetDeviceMetricsOverrideScreenOrientation = sendReceiveCommand (conn session) ("Emulation","setDeviceMetricsOverride") ([("emulationSetDeviceMetricsOverrideWidth", ToJSONEx emulationSetDeviceMetricsOverrideWidth), ("emulationSetDeviceMetricsOverrideHeight", ToJSONEx emulationSetDeviceMetricsOverrideHeight), ("emulationSetDeviceMetricsOverrideDeviceScaleFactor", ToJSONEx emulationSetDeviceMetricsOverrideDeviceScaleFactor), ("emulationSetDeviceMetricsOverrideMobile", ToJSONEx emulationSetDeviceMetricsOverrideMobile)] ++ (catMaybes [fmap (("emulationSetDeviceMetricsOverrideScreenOrientation",) . ToJSONEx) emulationSetDeviceMetricsOverrideScreenOrientation]))
+emulationSetDeviceMetricsOverride session emulationSetDeviceMetricsOverrideWidth emulationSetDeviceMetricsOverrideHeight emulationSetDeviceMetricsOverrideDeviceScaleFactor emulationSetDeviceMetricsOverrideMobile emulationSetDeviceMetricsOverrideScreenOrientation = sendReceiveCommand (conn session) ("Emulation","setDeviceMetricsOverride") ([("width", ToJSONEx emulationSetDeviceMetricsOverrideWidth), ("height", ToJSONEx emulationSetDeviceMetricsOverrideHeight), ("deviceScaleFactor", ToJSONEx emulationSetDeviceMetricsOverrideDeviceScaleFactor), ("mobile", ToJSONEx emulationSetDeviceMetricsOverrideMobile)] ++ (catMaybes [fmap (("screenOrientation",) . ToJSONEx) emulationSetDeviceMetricsOverrideScreenOrientation]))
 
 
 emulationSetEmulatedMedia :: Session -> Maybe String -> Maybe [EmulationMediaFeature] -> IO (Maybe Error)
-emulationSetEmulatedMedia session emulationSetEmulatedMediaMedia emulationSetEmulatedMediaFeatures = sendReceiveCommand (conn session) ("Emulation","setEmulatedMedia") ([] ++ (catMaybes [fmap (("emulationSetEmulatedMediaMedia",) . ToJSONEx) emulationSetEmulatedMediaMedia, fmap (("emulationSetEmulatedMediaFeatures",) . ToJSONEx) emulationSetEmulatedMediaFeatures]))
+emulationSetEmulatedMedia session emulationSetEmulatedMediaMedia emulationSetEmulatedMediaFeatures = sendReceiveCommand (conn session) ("Emulation","setEmulatedMedia") ([] ++ (catMaybes [fmap (("media",) . ToJSONEx) emulationSetEmulatedMediaMedia, fmap (("features",) . ToJSONEx) emulationSetEmulatedMediaFeatures]))
 
 
 emulationSetGeolocationOverride :: Session -> Maybe Int -> Maybe Int -> Maybe Int -> IO (Maybe Error)
-emulationSetGeolocationOverride session emulationSetGeolocationOverrideLatitude emulationSetGeolocationOverrideLongitude emulationSetGeolocationOverrideAccuracy = sendReceiveCommand (conn session) ("Emulation","setGeolocationOverride") ([] ++ (catMaybes [fmap (("emulationSetGeolocationOverrideLatitude",) . ToJSONEx) emulationSetGeolocationOverrideLatitude, fmap (("emulationSetGeolocationOverrideLongitude",) . ToJSONEx) emulationSetGeolocationOverrideLongitude, fmap (("emulationSetGeolocationOverrideAccuracy",) . ToJSONEx) emulationSetGeolocationOverrideAccuracy]))
+emulationSetGeolocationOverride session emulationSetGeolocationOverrideLatitude emulationSetGeolocationOverrideLongitude emulationSetGeolocationOverrideAccuracy = sendReceiveCommand (conn session) ("Emulation","setGeolocationOverride") ([] ++ (catMaybes [fmap (("latitude",) . ToJSONEx) emulationSetGeolocationOverrideLatitude, fmap (("longitude",) . ToJSONEx) emulationSetGeolocationOverrideLongitude, fmap (("accuracy",) . ToJSONEx) emulationSetGeolocationOverrideAccuracy]))
 
 
 emulationSetScriptExecutionDisabled :: Session -> Bool -> IO (Maybe Error)
-emulationSetScriptExecutionDisabled session emulationSetScriptExecutionDisabledValue = sendReceiveCommand (conn session) ("Emulation","setScriptExecutionDisabled") ([("emulationSetScriptExecutionDisabledValue", ToJSONEx emulationSetScriptExecutionDisabledValue)] ++ (catMaybes []))
+emulationSetScriptExecutionDisabled session emulationSetScriptExecutionDisabledValue = sendReceiveCommand (conn session) ("Emulation","setScriptExecutionDisabled") ([("value", ToJSONEx emulationSetScriptExecutionDisabledValue)] ++ (catMaybes []))
 
 
 emulationSetTouchEmulationEnabled :: Session -> Bool -> Maybe Int -> IO (Maybe Error)
-emulationSetTouchEmulationEnabled session emulationSetTouchEmulationEnabledEnabled emulationSetTouchEmulationEnabledMaxTouchPoints = sendReceiveCommand (conn session) ("Emulation","setTouchEmulationEnabled") ([("emulationSetTouchEmulationEnabledEnabled", ToJSONEx emulationSetTouchEmulationEnabledEnabled)] ++ (catMaybes [fmap (("emulationSetTouchEmulationEnabledMaxTouchPoints",) . ToJSONEx) emulationSetTouchEmulationEnabledMaxTouchPoints]))
+emulationSetTouchEmulationEnabled session emulationSetTouchEmulationEnabledEnabled emulationSetTouchEmulationEnabledMaxTouchPoints = sendReceiveCommand (conn session) ("Emulation","setTouchEmulationEnabled") ([("enabled", ToJSONEx emulationSetTouchEmulationEnabledEnabled)] ++ (catMaybes [fmap (("maxTouchPoints",) . ToJSONEx) emulationSetTouchEmulationEnabledMaxTouchPoints]))
 
 
 emulationSetUserAgentOverride :: Session -> String -> Maybe String -> Maybe String -> IO (Maybe Error)
-emulationSetUserAgentOverride session emulationSetUserAgentOverrideUserAgent emulationSetUserAgentOverrideAcceptLanguage emulationSetUserAgentOverridePlatform = sendReceiveCommand (conn session) ("Emulation","setUserAgentOverride") ([("emulationSetUserAgentOverrideUserAgent", ToJSONEx emulationSetUserAgentOverrideUserAgent)] ++ (catMaybes [fmap (("emulationSetUserAgentOverrideAcceptLanguage",) . ToJSONEx) emulationSetUserAgentOverrideAcceptLanguage, fmap (("emulationSetUserAgentOverridePlatform",) . ToJSONEx) emulationSetUserAgentOverridePlatform]))
+emulationSetUserAgentOverride session emulationSetUserAgentOverrideUserAgent emulationSetUserAgentOverrideAcceptLanguage emulationSetUserAgentOverridePlatform = sendReceiveCommand (conn session) ("Emulation","setUserAgentOverride") ([("userAgent", ToJSONEx emulationSetUserAgentOverrideUserAgent)] ++ (catMaybes [fmap (("acceptLanguage",) . ToJSONEx) emulationSetUserAgentOverrideAcceptLanguage, fmap (("platform",) . ToJSONEx) emulationSetUserAgentOverridePlatform]))
+
 
 
 
 type IOStreamHandle = String
 
 ioClose :: Session -> IOStreamHandle -> IO (Maybe Error)
-ioClose session ioCloseHandle = sendReceiveCommand (conn session) ("IO","close") ([("ioCloseHandle", ToJSONEx ioCloseHandle)] ++ (catMaybes []))
+ioClose session ioCloseHandle = sendReceiveCommand (conn session) ("IO","close") ([("handle", ToJSONEx ioCloseHandle)] ++ (catMaybes []))
 
 data IoRead = IoRead {
     ioReadData :: String,
     ioReadEof :: Bool,
     ioReadBase64Encoded :: Maybe Bool
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  IoRead where
     parseJSON = A.withObject "IoRead" $ \v ->
          IoRead <$> v .:  "data"
@@ -954,11 +1296,11 @@ instance FromJSON  IoRead where
 
 
 ioRead :: Session -> IOStreamHandle -> Maybe Int -> Maybe Int -> IO (Either Error IoRead)
-ioRead session ioReadHandle ioReadOffset ioReadSize = sendReceiveCommandResult (conn session) ("IO","read") ([("ioReadHandle", ToJSONEx ioReadHandle)] ++ (catMaybes [fmap (("ioReadOffset",) . ToJSONEx) ioReadOffset, fmap (("ioReadSize",) . ToJSONEx) ioReadSize]))
+ioRead session ioReadHandle ioReadOffset ioReadSize = sendReceiveCommandResult (conn session) ("IO","read") ([("handle", ToJSONEx ioReadHandle)] ++ (catMaybes [fmap (("offset",) . ToJSONEx) ioReadOffset, fmap (("size",) . ToJSONEx) ioReadSize]))
 
 data IoResolveBlob = IoResolveBlob {
     ioResolveBlobUuid :: String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  IoResolveBlob where
     parseJSON = A.withObject "IoResolveBlob" $ \v ->
          IoResolveBlob <$> v .:  "uuid"
@@ -966,7 +1308,8 @@ instance FromJSON  IoResolveBlob where
 
 
 ioResolveBlob :: Session -> RuntimeRemoteObjectId -> IO (Either Error IoResolveBlob)
-ioResolveBlob session ioResolveBlobObjectId = sendReceiveCommandResult (conn session) ("IO","resolveBlob") ([("ioResolveBlobObjectId", ToJSONEx ioResolveBlobObjectId)] ++ (catMaybes []))
+ioResolveBlob session ioResolveBlobObjectId = sendReceiveCommandResult (conn session) ("IO","resolveBlob") ([("objectId", ToJSONEx ioResolveBlobObjectId)] ++ (catMaybes []))
+
 
 
 
@@ -978,7 +1321,7 @@ data InputTouchPoint = InputTouchPoint {
     inputTouchPointRotationAngle :: Maybe Int,
     inputTouchPointForce :: Maybe Int,
     inputTouchPointId :: Maybe Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  InputTouchPoint where
     parseJSON = A.withObject "InputTouchPoint" $ \v ->
          InputTouchPoint <$> v .:  "x"
@@ -1004,9 +1347,9 @@ instance ToJSON InputTouchPoint  where
 
 
 data InputMouseButton = InputMouseButtonNone | InputMouseButtonLeft | InputMouseButtonMiddle | InputMouseButtonRight | InputMouseButtonBack | InputMouseButtonForward
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON InputMouseButton where
-    parseJSON = A.withText  "InputMouseButton"  $ \v -> 
+    parseJSON = A.withText  "InputMouseButton"  $ \v -> do
         pure $ case v of
                 "none" -> InputMouseButtonNone
                 "left" -> InputMouseButtonLeft
@@ -1014,6 +1357,7 @@ instance FromJSON InputMouseButton where
                 "right" -> InputMouseButtonRight
                 "back" -> InputMouseButtonBack
                 "forward" -> InputMouseButtonForward
+                _ -> error "failed to parse InputMouseButton"
 
 instance ToJSON InputMouseButton where
     toJSON v = A.String $
@@ -1030,19 +1374,34 @@ instance ToJSON InputMouseButton where
 type InputTimeSinceEpoch = Int
 
 inputDispatchKeyEvent :: Session -> String -> Maybe Int -> Maybe InputTimeSinceEpoch -> Maybe String -> Maybe String -> Maybe String -> Maybe String -> Maybe String -> Maybe Int -> Maybe Int -> Maybe Bool -> Maybe Bool -> Maybe Bool -> Maybe Int -> IO (Maybe Error)
-inputDispatchKeyEvent session inputDispatchKeyEventType inputDispatchKeyEventModifiers inputDispatchKeyEventTimestamp inputDispatchKeyEventText inputDispatchKeyEventUnmodifiedText inputDispatchKeyEventKeyIdentifier inputDispatchKeyEventCode inputDispatchKeyEventKey inputDispatchKeyEventWindowsVirtualKeyCode inputDispatchKeyEventNativeVirtualKeyCode inputDispatchKeyEventAutoRepeat inputDispatchKeyEventIsKeypad inputDispatchKeyEventIsSystemKey inputDispatchKeyEventLocation = sendReceiveCommand (conn session) ("Input","dispatchKeyEvent") ([("inputDispatchKeyEventType", ToJSONEx inputDispatchKeyEventType)] ++ (catMaybes [fmap (("inputDispatchKeyEventModifiers",) . ToJSONEx) inputDispatchKeyEventModifiers, fmap (("inputDispatchKeyEventTimestamp",) . ToJSONEx) inputDispatchKeyEventTimestamp, fmap (("inputDispatchKeyEventText",) . ToJSONEx) inputDispatchKeyEventText, fmap (("inputDispatchKeyEventUnmodifiedText",) . ToJSONEx) inputDispatchKeyEventUnmodifiedText, fmap (("inputDispatchKeyEventKeyIdentifier",) . ToJSONEx) inputDispatchKeyEventKeyIdentifier, fmap (("inputDispatchKeyEventCode",) . ToJSONEx) inputDispatchKeyEventCode, fmap (("inputDispatchKeyEventKey",) . ToJSONEx) inputDispatchKeyEventKey, fmap (("inputDispatchKeyEventWindowsVirtualKeyCode",) . ToJSONEx) inputDispatchKeyEventWindowsVirtualKeyCode, fmap (("inputDispatchKeyEventNativeVirtualKeyCode",) . ToJSONEx) inputDispatchKeyEventNativeVirtualKeyCode, fmap (("inputDispatchKeyEventAutoRepeat",) . ToJSONEx) inputDispatchKeyEventAutoRepeat, fmap (("inputDispatchKeyEventIsKeypad",) . ToJSONEx) inputDispatchKeyEventIsKeypad, fmap (("inputDispatchKeyEventIsSystemKey",) . ToJSONEx) inputDispatchKeyEventIsSystemKey, fmap (("inputDispatchKeyEventLocation",) . ToJSONEx) inputDispatchKeyEventLocation]))
+inputDispatchKeyEvent session inputDispatchKeyEventType inputDispatchKeyEventModifiers inputDispatchKeyEventTimestamp inputDispatchKeyEventText inputDispatchKeyEventUnmodifiedText inputDispatchKeyEventKeyIdentifier inputDispatchKeyEventCode inputDispatchKeyEventKey inputDispatchKeyEventWindowsVirtualKeyCode inputDispatchKeyEventNativeVirtualKeyCode inputDispatchKeyEventAutoRepeat inputDispatchKeyEventIsKeypad inputDispatchKeyEventIsSystemKey inputDispatchKeyEventLocation = sendReceiveCommand (conn session) ("Input","dispatchKeyEvent") ([("type", ToJSONEx inputDispatchKeyEventType)] ++ (catMaybes [fmap (("modifiers",) . ToJSONEx) inputDispatchKeyEventModifiers, fmap (("timestamp",) . ToJSONEx) inputDispatchKeyEventTimestamp, fmap (("text",) . ToJSONEx) inputDispatchKeyEventText, fmap (("unmodifiedText",) . ToJSONEx) inputDispatchKeyEventUnmodifiedText, fmap (("keyIdentifier",) . ToJSONEx) inputDispatchKeyEventKeyIdentifier, fmap (("code",) . ToJSONEx) inputDispatchKeyEventCode, fmap (("key",) . ToJSONEx) inputDispatchKeyEventKey, fmap (("windowsVirtualKeyCode",) . ToJSONEx) inputDispatchKeyEventWindowsVirtualKeyCode, fmap (("nativeVirtualKeyCode",) . ToJSONEx) inputDispatchKeyEventNativeVirtualKeyCode, fmap (("autoRepeat",) . ToJSONEx) inputDispatchKeyEventAutoRepeat, fmap (("isKeypad",) . ToJSONEx) inputDispatchKeyEventIsKeypad, fmap (("isSystemKey",) . ToJSONEx) inputDispatchKeyEventIsSystemKey, fmap (("location",) . ToJSONEx) inputDispatchKeyEventLocation]))
 
 
 inputDispatchMouseEvent :: Session -> String -> Int -> Int -> Maybe Int -> Maybe InputTimeSinceEpoch -> Maybe InputMouseButton -> Maybe Int -> Maybe Int -> Maybe Int -> Maybe Int -> Maybe String -> IO (Maybe Error)
-inputDispatchMouseEvent session inputDispatchMouseEventType inputDispatchMouseEventX inputDispatchMouseEventY inputDispatchMouseEventModifiers inputDispatchMouseEventTimestamp inputDispatchMouseEventButton inputDispatchMouseEventButtons inputDispatchMouseEventClickCount inputDispatchMouseEventDeltaX inputDispatchMouseEventDeltaY inputDispatchMouseEventPointerType = sendReceiveCommand (conn session) ("Input","dispatchMouseEvent") ([("inputDispatchMouseEventType", ToJSONEx inputDispatchMouseEventType), ("inputDispatchMouseEventX", ToJSONEx inputDispatchMouseEventX), ("inputDispatchMouseEventY", ToJSONEx inputDispatchMouseEventY)] ++ (catMaybes [fmap (("inputDispatchMouseEventModifiers",) . ToJSONEx) inputDispatchMouseEventModifiers, fmap (("inputDispatchMouseEventTimestamp",) . ToJSONEx) inputDispatchMouseEventTimestamp, fmap (("inputDispatchMouseEventButton",) . ToJSONEx) inputDispatchMouseEventButton, fmap (("inputDispatchMouseEventButtons",) . ToJSONEx) inputDispatchMouseEventButtons, fmap (("inputDispatchMouseEventClickCount",) . ToJSONEx) inputDispatchMouseEventClickCount, fmap (("inputDispatchMouseEventDeltaX",) . ToJSONEx) inputDispatchMouseEventDeltaX, fmap (("inputDispatchMouseEventDeltaY",) . ToJSONEx) inputDispatchMouseEventDeltaY, fmap (("inputDispatchMouseEventPointerType",) . ToJSONEx) inputDispatchMouseEventPointerType]))
+inputDispatchMouseEvent session inputDispatchMouseEventType inputDispatchMouseEventX inputDispatchMouseEventY inputDispatchMouseEventModifiers inputDispatchMouseEventTimestamp inputDispatchMouseEventButton inputDispatchMouseEventButtons inputDispatchMouseEventClickCount inputDispatchMouseEventDeltaX inputDispatchMouseEventDeltaY inputDispatchMouseEventPointerType = sendReceiveCommand (conn session) ("Input","dispatchMouseEvent") ([("type", ToJSONEx inputDispatchMouseEventType), ("x", ToJSONEx inputDispatchMouseEventX), ("y", ToJSONEx inputDispatchMouseEventY)] ++ (catMaybes [fmap (("modifiers",) . ToJSONEx) inputDispatchMouseEventModifiers, fmap (("timestamp",) . ToJSONEx) inputDispatchMouseEventTimestamp, fmap (("button",) . ToJSONEx) inputDispatchMouseEventButton, fmap (("buttons",) . ToJSONEx) inputDispatchMouseEventButtons, fmap (("clickCount",) . ToJSONEx) inputDispatchMouseEventClickCount, fmap (("deltaX",) . ToJSONEx) inputDispatchMouseEventDeltaX, fmap (("deltaY",) . ToJSONEx) inputDispatchMouseEventDeltaY, fmap (("pointerType",) . ToJSONEx) inputDispatchMouseEventPointerType]))
 
 
 inputDispatchTouchEvent :: Session -> String -> [InputTouchPoint] -> Maybe Int -> Maybe InputTimeSinceEpoch -> IO (Maybe Error)
-inputDispatchTouchEvent session inputDispatchTouchEventType inputDispatchTouchEventTouchPoints inputDispatchTouchEventModifiers inputDispatchTouchEventTimestamp = sendReceiveCommand (conn session) ("Input","dispatchTouchEvent") ([("inputDispatchTouchEventType", ToJSONEx inputDispatchTouchEventType), ("inputDispatchTouchEventTouchPoints", ToJSONEx inputDispatchTouchEventTouchPoints)] ++ (catMaybes [fmap (("inputDispatchTouchEventModifiers",) . ToJSONEx) inputDispatchTouchEventModifiers, fmap (("inputDispatchTouchEventTimestamp",) . ToJSONEx) inputDispatchTouchEventTimestamp]))
+inputDispatchTouchEvent session inputDispatchTouchEventType inputDispatchTouchEventTouchPoints inputDispatchTouchEventModifiers inputDispatchTouchEventTimestamp = sendReceiveCommand (conn session) ("Input","dispatchTouchEvent") ([("type", ToJSONEx inputDispatchTouchEventType), ("touchPoints", ToJSONEx inputDispatchTouchEventTouchPoints)] ++ (catMaybes [fmap (("modifiers",) . ToJSONEx) inputDispatchTouchEventModifiers, fmap (("timestamp",) . ToJSONEx) inputDispatchTouchEventTimestamp]))
 
 
 inputSetIgnoreInputEvents :: Session -> Bool -> IO (Maybe Error)
-inputSetIgnoreInputEvents session inputSetIgnoreInputEventsIgnore = sendReceiveCommand (conn session) ("Input","setIgnoreInputEvents") ([("inputSetIgnoreInputEventsIgnore", ToJSONEx inputSetIgnoreInputEventsIgnore)] ++ (catMaybes []))
+inputSetIgnoreInputEvents session inputSetIgnoreInputEventsIgnore = sendReceiveCommand (conn session) ("Input","setIgnoreInputEvents") ([("ignore", ToJSONEx inputSetIgnoreInputEventsIgnore)] ++ (catMaybes []))
+
+
+
+data LogEntryAdded = LogEntryAdded {
+    logEntryAddedEntry :: LogLogEntry
+} deriving (Eq, Show, Read)
+instance FromJSON  LogEntryAdded where
+    parseJSON = A.withObject "LogEntryAdded" $ \v ->
+         LogEntryAdded <$> v .:  "entry"
+
+
+instance ToJSON LogEntryAdded  where
+    toJSON v = A.object
+        [ "entry" .= logEntryAddedEntry v
+        ]
 
 
 
@@ -1058,7 +1417,7 @@ data LogLogEntry = LogLogEntry {
     logLogEntryNetworkRequestId :: Maybe NetworkRequestId,
     logLogEntryWorkerId :: Maybe String,
     logLogEntryArgs :: Maybe [RuntimeRemoteObject]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  LogLogEntry where
     parseJSON = A.withObject "LogLogEntry" $ \v ->
          LogLogEntry <$> v .:  "source"
@@ -1094,7 +1453,7 @@ instance ToJSON LogLogEntry  where
 data LogViolationSetting = LogViolationSetting {
     logViolationSettingName :: String,
     logViolationSettingThreshold :: Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  LogViolationSetting where
     parseJSON = A.withObject "LogViolationSetting" $ \v ->
          LogViolationSetting <$> v .:  "name"
@@ -1122,7 +1481,7 @@ logEnable session  = sendReceiveCommand (conn session) ("Log","enable") ([] ++ (
 
 
 logStartViolationsReport :: Session -> [LogViolationSetting] -> IO (Maybe Error)
-logStartViolationsReport session logStartViolationsReportConfig = sendReceiveCommand (conn session) ("Log","startViolationsReport") ([("logStartViolationsReportConfig", ToJSONEx logStartViolationsReportConfig)] ++ (catMaybes []))
+logStartViolationsReport session logStartViolationsReportConfig = sendReceiveCommand (conn session) ("Log","startViolationsReport") ([("config", ToJSONEx logStartViolationsReportConfig)] ++ (catMaybes []))
 
 
 logStopViolationsReport :: Session -> IO (Maybe Error)
@@ -1130,10 +1489,399 @@ logStopViolationsReport session  = sendReceiveCommand (conn session) ("Log","sto
 
 
 
+data NetworkDataReceived = NetworkDataReceived {
+    networkDataReceivedRequestId :: NetworkRequestId,
+    networkDataReceivedTimestamp :: NetworkMonotonicTime,
+    networkDataReceivedDataLength :: Int,
+    networkDataReceivedEncodedDataLength :: Int
+} deriving (Eq, Show, Read)
+instance FromJSON  NetworkDataReceived where
+    parseJSON = A.withObject "NetworkDataReceived" $ \v ->
+         NetworkDataReceived <$> v .:  "requestId"
+            <*> v  .:  "timestamp"
+            <*> v  .:  "dataLength"
+            <*> v  .:  "encodedDataLength"
+
+
+instance ToJSON NetworkDataReceived  where
+    toJSON v = A.object
+        [ "requestId" .= networkDataReceivedRequestId v
+        , "timestamp" .= networkDataReceivedTimestamp v
+        , "dataLength" .= networkDataReceivedDataLength v
+        , "encodedDataLength" .= networkDataReceivedEncodedDataLength v
+        ]
+
+
+data NetworkEventSourceMessageReceived = NetworkEventSourceMessageReceived {
+    networkEventSourceMessageReceivedRequestId :: NetworkRequestId,
+    networkEventSourceMessageReceivedTimestamp :: NetworkMonotonicTime,
+    networkEventSourceMessageReceivedEventName :: String,
+    networkEventSourceMessageReceivedEventId :: String,
+    networkEventSourceMessageReceivedData :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  NetworkEventSourceMessageReceived where
+    parseJSON = A.withObject "NetworkEventSourceMessageReceived" $ \v ->
+         NetworkEventSourceMessageReceived <$> v .:  "requestId"
+            <*> v  .:  "timestamp"
+            <*> v  .:  "eventName"
+            <*> v  .:  "eventId"
+            <*> v  .:  "data"
+
+
+instance ToJSON NetworkEventSourceMessageReceived  where
+    toJSON v = A.object
+        [ "requestId" .= networkEventSourceMessageReceivedRequestId v
+        , "timestamp" .= networkEventSourceMessageReceivedTimestamp v
+        , "eventName" .= networkEventSourceMessageReceivedEventName v
+        , "eventId" .= networkEventSourceMessageReceivedEventId v
+        , "data" .= networkEventSourceMessageReceivedData v
+        ]
+
+
+data NetworkLoadingFailed = NetworkLoadingFailed {
+    networkLoadingFailedRequestId :: NetworkRequestId,
+    networkLoadingFailedTimestamp :: NetworkMonotonicTime,
+    networkLoadingFailedType :: NetworkResourceType,
+    networkLoadingFailedErrorText :: String,
+    networkLoadingFailedCanceled :: Maybe Bool,
+    networkLoadingFailedBlockedReason :: Maybe NetworkBlockedReason,
+    networkLoadingFailedCorsErrorStatus :: Maybe NetworkCorsErrorStatus
+} deriving (Eq, Show, Read)
+instance FromJSON  NetworkLoadingFailed where
+    parseJSON = A.withObject "NetworkLoadingFailed" $ \v ->
+         NetworkLoadingFailed <$> v .:  "requestId"
+            <*> v  .:  "timestamp"
+            <*> v  .:  "type"
+            <*> v  .:  "errorText"
+            <*> v  .:?  "canceled"
+            <*> v  .:?  "blockedReason"
+            <*> v  .:?  "corsErrorStatus"
+
+
+instance ToJSON NetworkLoadingFailed  where
+    toJSON v = A.object
+        [ "requestId" .= networkLoadingFailedRequestId v
+        , "timestamp" .= networkLoadingFailedTimestamp v
+        , "type" .= networkLoadingFailedType v
+        , "errorText" .= networkLoadingFailedErrorText v
+        , "canceled" .= networkLoadingFailedCanceled v
+        , "blockedReason" .= networkLoadingFailedBlockedReason v
+        , "corsErrorStatus" .= networkLoadingFailedCorsErrorStatus v
+        ]
+
+
+data NetworkLoadingFinished = NetworkLoadingFinished {
+    networkLoadingFinishedRequestId :: NetworkRequestId,
+    networkLoadingFinishedTimestamp :: NetworkMonotonicTime,
+    networkLoadingFinishedEncodedDataLength :: Int,
+    networkLoadingFinishedShouldReportCorbBlocking :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  NetworkLoadingFinished where
+    parseJSON = A.withObject "NetworkLoadingFinished" $ \v ->
+         NetworkLoadingFinished <$> v .:  "requestId"
+            <*> v  .:  "timestamp"
+            <*> v  .:  "encodedDataLength"
+            <*> v  .:?  "shouldReportCorbBlocking"
+
+
+instance ToJSON NetworkLoadingFinished  where
+    toJSON v = A.object
+        [ "requestId" .= networkLoadingFinishedRequestId v
+        , "timestamp" .= networkLoadingFinishedTimestamp v
+        , "encodedDataLength" .= networkLoadingFinishedEncodedDataLength v
+        , "shouldReportCorbBlocking" .= networkLoadingFinishedShouldReportCorbBlocking v
+        ]
+
+
+data NetworkRequestServedFromCache = NetworkRequestServedFromCache {
+    networkRequestServedFromCacheRequestId :: NetworkRequestId
+} deriving (Eq, Show, Read)
+instance FromJSON  NetworkRequestServedFromCache where
+    parseJSON = A.withObject "NetworkRequestServedFromCache" $ \v ->
+         NetworkRequestServedFromCache <$> v .:  "requestId"
+
+
+instance ToJSON NetworkRequestServedFromCache  where
+    toJSON v = A.object
+        [ "requestId" .= networkRequestServedFromCacheRequestId v
+        ]
+
+
+data NetworkRequestWillBeSent = NetworkRequestWillBeSent {
+    networkRequestWillBeSentRequestId :: NetworkRequestId,
+    networkRequestWillBeSentLoaderId :: NetworkLoaderId,
+    networkRequestWillBeSentDocumentUrl :: String,
+    networkRequestWillBeSentRequest :: NetworkRequest,
+    networkRequestWillBeSentTimestamp :: NetworkMonotonicTime,
+    networkRequestWillBeSentWallTime :: NetworkTimeSinceEpoch,
+    networkRequestWillBeSentInitiator :: NetworkInitiator,
+    networkRequestWillBeSentRedirectResponse :: Maybe NetworkResponse,
+    networkRequestWillBeSentType :: Maybe NetworkResourceType,
+    networkRequestWillBeSentFrameId :: Maybe PageFrameId,
+    networkRequestWillBeSentHasUserGesture :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  NetworkRequestWillBeSent where
+    parseJSON = A.withObject "NetworkRequestWillBeSent" $ \v ->
+         NetworkRequestWillBeSent <$> v .:  "requestId"
+            <*> v  .:  "loaderId"
+            <*> v  .:  "documentURL"
+            <*> v  .:  "request"
+            <*> v  .:  "timestamp"
+            <*> v  .:  "wallTime"
+            <*> v  .:  "initiator"
+            <*> v  .:?  "redirectResponse"
+            <*> v  .:?  "type"
+            <*> v  .:?  "frameId"
+            <*> v  .:?  "hasUserGesture"
+
+
+instance ToJSON NetworkRequestWillBeSent  where
+    toJSON v = A.object
+        [ "requestId" .= networkRequestWillBeSentRequestId v
+        , "loaderId" .= networkRequestWillBeSentLoaderId v
+        , "documentURL" .= networkRequestWillBeSentDocumentUrl v
+        , "request" .= networkRequestWillBeSentRequest v
+        , "timestamp" .= networkRequestWillBeSentTimestamp v
+        , "wallTime" .= networkRequestWillBeSentWallTime v
+        , "initiator" .= networkRequestWillBeSentInitiator v
+        , "redirectResponse" .= networkRequestWillBeSentRedirectResponse v
+        , "type" .= networkRequestWillBeSentType v
+        , "frameId" .= networkRequestWillBeSentFrameId v
+        , "hasUserGesture" .= networkRequestWillBeSentHasUserGesture v
+        ]
+
+
+data NetworkResponseReceived = NetworkResponseReceived {
+    networkResponseReceivedRequestId :: NetworkRequestId,
+    networkResponseReceivedLoaderId :: NetworkLoaderId,
+    networkResponseReceivedTimestamp :: NetworkMonotonicTime,
+    networkResponseReceivedType :: NetworkResourceType,
+    networkResponseReceivedResponse :: NetworkResponse,
+    networkResponseReceivedFrameId :: Maybe PageFrameId
+} deriving (Eq, Show, Read)
+instance FromJSON  NetworkResponseReceived where
+    parseJSON = A.withObject "NetworkResponseReceived" $ \v ->
+         NetworkResponseReceived <$> v .:  "requestId"
+            <*> v  .:  "loaderId"
+            <*> v  .:  "timestamp"
+            <*> v  .:  "type"
+            <*> v  .:  "response"
+            <*> v  .:?  "frameId"
+
+
+instance ToJSON NetworkResponseReceived  where
+    toJSON v = A.object
+        [ "requestId" .= networkResponseReceivedRequestId v
+        , "loaderId" .= networkResponseReceivedLoaderId v
+        , "timestamp" .= networkResponseReceivedTimestamp v
+        , "type" .= networkResponseReceivedType v
+        , "response" .= networkResponseReceivedResponse v
+        , "frameId" .= networkResponseReceivedFrameId v
+        ]
+
+
+data NetworkWebSocketClosed = NetworkWebSocketClosed {
+    networkWebSocketClosedRequestId :: NetworkRequestId,
+    networkWebSocketClosedTimestamp :: NetworkMonotonicTime
+} deriving (Eq, Show, Read)
+instance FromJSON  NetworkWebSocketClosed where
+    parseJSON = A.withObject "NetworkWebSocketClosed" $ \v ->
+         NetworkWebSocketClosed <$> v .:  "requestId"
+            <*> v  .:  "timestamp"
+
+
+instance ToJSON NetworkWebSocketClosed  where
+    toJSON v = A.object
+        [ "requestId" .= networkWebSocketClosedRequestId v
+        , "timestamp" .= networkWebSocketClosedTimestamp v
+        ]
+
+
+data NetworkWebSocketCreated = NetworkWebSocketCreated {
+    networkWebSocketCreatedRequestId :: NetworkRequestId,
+    networkWebSocketCreatedUrl :: String,
+    networkWebSocketCreatedInitiator :: Maybe NetworkInitiator
+} deriving (Eq, Show, Read)
+instance FromJSON  NetworkWebSocketCreated where
+    parseJSON = A.withObject "NetworkWebSocketCreated" $ \v ->
+         NetworkWebSocketCreated <$> v .:  "requestId"
+            <*> v  .:  "url"
+            <*> v  .:?  "initiator"
+
+
+instance ToJSON NetworkWebSocketCreated  where
+    toJSON v = A.object
+        [ "requestId" .= networkWebSocketCreatedRequestId v
+        , "url" .= networkWebSocketCreatedUrl v
+        , "initiator" .= networkWebSocketCreatedInitiator v
+        ]
+
+
+data NetworkWebSocketFrameError = NetworkWebSocketFrameError {
+    networkWebSocketFrameErrorRequestId :: NetworkRequestId,
+    networkWebSocketFrameErrorTimestamp :: NetworkMonotonicTime,
+    networkWebSocketFrameErrorErrorMessage :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  NetworkWebSocketFrameError where
+    parseJSON = A.withObject "NetworkWebSocketFrameError" $ \v ->
+         NetworkWebSocketFrameError <$> v .:  "requestId"
+            <*> v  .:  "timestamp"
+            <*> v  .:  "errorMessage"
+
+
+instance ToJSON NetworkWebSocketFrameError  where
+    toJSON v = A.object
+        [ "requestId" .= networkWebSocketFrameErrorRequestId v
+        , "timestamp" .= networkWebSocketFrameErrorTimestamp v
+        , "errorMessage" .= networkWebSocketFrameErrorErrorMessage v
+        ]
+
+
+data NetworkWebSocketFrameReceived = NetworkWebSocketFrameReceived {
+    networkWebSocketFrameReceivedRequestId :: NetworkRequestId,
+    networkWebSocketFrameReceivedTimestamp :: NetworkMonotonicTime,
+    networkWebSocketFrameReceivedResponse :: NetworkWebSocketFrame
+} deriving (Eq, Show, Read)
+instance FromJSON  NetworkWebSocketFrameReceived where
+    parseJSON = A.withObject "NetworkWebSocketFrameReceived" $ \v ->
+         NetworkWebSocketFrameReceived <$> v .:  "requestId"
+            <*> v  .:  "timestamp"
+            <*> v  .:  "response"
+
+
+instance ToJSON NetworkWebSocketFrameReceived  where
+    toJSON v = A.object
+        [ "requestId" .= networkWebSocketFrameReceivedRequestId v
+        , "timestamp" .= networkWebSocketFrameReceivedTimestamp v
+        , "response" .= networkWebSocketFrameReceivedResponse v
+        ]
+
+
+data NetworkWebSocketFrameSent = NetworkWebSocketFrameSent {
+    networkWebSocketFrameSentRequestId :: NetworkRequestId,
+    networkWebSocketFrameSentTimestamp :: NetworkMonotonicTime,
+    networkWebSocketFrameSentResponse :: NetworkWebSocketFrame
+} deriving (Eq, Show, Read)
+instance FromJSON  NetworkWebSocketFrameSent where
+    parseJSON = A.withObject "NetworkWebSocketFrameSent" $ \v ->
+         NetworkWebSocketFrameSent <$> v .:  "requestId"
+            <*> v  .:  "timestamp"
+            <*> v  .:  "response"
+
+
+instance ToJSON NetworkWebSocketFrameSent  where
+    toJSON v = A.object
+        [ "requestId" .= networkWebSocketFrameSentRequestId v
+        , "timestamp" .= networkWebSocketFrameSentTimestamp v
+        , "response" .= networkWebSocketFrameSentResponse v
+        ]
+
+
+data NetworkWebSocketHandshakeResponseReceived = NetworkWebSocketHandshakeResponseReceived {
+    networkWebSocketHandshakeResponseReceivedRequestId :: NetworkRequestId,
+    networkWebSocketHandshakeResponseReceivedTimestamp :: NetworkMonotonicTime,
+    networkWebSocketHandshakeResponseReceivedResponse :: NetworkWebSocketResponse
+} deriving (Eq, Show, Read)
+instance FromJSON  NetworkWebSocketHandshakeResponseReceived where
+    parseJSON = A.withObject "NetworkWebSocketHandshakeResponseReceived" $ \v ->
+         NetworkWebSocketHandshakeResponseReceived <$> v .:  "requestId"
+            <*> v  .:  "timestamp"
+            <*> v  .:  "response"
+
+
+instance ToJSON NetworkWebSocketHandshakeResponseReceived  where
+    toJSON v = A.object
+        [ "requestId" .= networkWebSocketHandshakeResponseReceivedRequestId v
+        , "timestamp" .= networkWebSocketHandshakeResponseReceivedTimestamp v
+        , "response" .= networkWebSocketHandshakeResponseReceivedResponse v
+        ]
+
+
+data NetworkWebSocketWillSendHandshakeRequest = NetworkWebSocketWillSendHandshakeRequest {
+    networkWebSocketWillSendHandshakeRequestRequestId :: NetworkRequestId,
+    networkWebSocketWillSendHandshakeRequestTimestamp :: NetworkMonotonicTime,
+    networkWebSocketWillSendHandshakeRequestWallTime :: NetworkTimeSinceEpoch,
+    networkWebSocketWillSendHandshakeRequestRequest :: NetworkWebSocketRequest
+} deriving (Eq, Show, Read)
+instance FromJSON  NetworkWebSocketWillSendHandshakeRequest where
+    parseJSON = A.withObject "NetworkWebSocketWillSendHandshakeRequest" $ \v ->
+         NetworkWebSocketWillSendHandshakeRequest <$> v .:  "requestId"
+            <*> v  .:  "timestamp"
+            <*> v  .:  "wallTime"
+            <*> v  .:  "request"
+
+
+instance ToJSON NetworkWebSocketWillSendHandshakeRequest  where
+    toJSON v = A.object
+        [ "requestId" .= networkWebSocketWillSendHandshakeRequestRequestId v
+        , "timestamp" .= networkWebSocketWillSendHandshakeRequestTimestamp v
+        , "wallTime" .= networkWebSocketWillSendHandshakeRequestWallTime v
+        , "request" .= networkWebSocketWillSendHandshakeRequestRequest v
+        ]
+
+
+data NetworkWebTransportCreated = NetworkWebTransportCreated {
+    networkWebTransportCreatedTransportId :: NetworkRequestId,
+    networkWebTransportCreatedUrl :: String,
+    networkWebTransportCreatedTimestamp :: NetworkMonotonicTime,
+    networkWebTransportCreatedInitiator :: Maybe NetworkInitiator
+} deriving (Eq, Show, Read)
+instance FromJSON  NetworkWebTransportCreated where
+    parseJSON = A.withObject "NetworkWebTransportCreated" $ \v ->
+         NetworkWebTransportCreated <$> v .:  "transportId"
+            <*> v  .:  "url"
+            <*> v  .:  "timestamp"
+            <*> v  .:?  "initiator"
+
+
+instance ToJSON NetworkWebTransportCreated  where
+    toJSON v = A.object
+        [ "transportId" .= networkWebTransportCreatedTransportId v
+        , "url" .= networkWebTransportCreatedUrl v
+        , "timestamp" .= networkWebTransportCreatedTimestamp v
+        , "initiator" .= networkWebTransportCreatedInitiator v
+        ]
+
+
+data NetworkWebTransportConnectionEstablished = NetworkWebTransportConnectionEstablished {
+    networkWebTransportConnectionEstablishedTransportId :: NetworkRequestId,
+    networkWebTransportConnectionEstablishedTimestamp :: NetworkMonotonicTime
+} deriving (Eq, Show, Read)
+instance FromJSON  NetworkWebTransportConnectionEstablished where
+    parseJSON = A.withObject "NetworkWebTransportConnectionEstablished" $ \v ->
+         NetworkWebTransportConnectionEstablished <$> v .:  "transportId"
+            <*> v  .:  "timestamp"
+
+
+instance ToJSON NetworkWebTransportConnectionEstablished  where
+    toJSON v = A.object
+        [ "transportId" .= networkWebTransportConnectionEstablishedTransportId v
+        , "timestamp" .= networkWebTransportConnectionEstablishedTimestamp v
+        ]
+
+
+data NetworkWebTransportClosed = NetworkWebTransportClosed {
+    networkWebTransportClosedTransportId :: NetworkRequestId,
+    networkWebTransportClosedTimestamp :: NetworkMonotonicTime
+} deriving (Eq, Show, Read)
+instance FromJSON  NetworkWebTransportClosed where
+    parseJSON = A.withObject "NetworkWebTransportClosed" $ \v ->
+         NetworkWebTransportClosed <$> v .:  "transportId"
+            <*> v  .:  "timestamp"
+
+
+instance ToJSON NetworkWebTransportClosed  where
+    toJSON v = A.object
+        [ "transportId" .= networkWebTransportClosedTransportId v
+        , "timestamp" .= networkWebTransportClosedTimestamp v
+        ]
+
+
+
 data NetworkResourceType = NetworkResourceTypeDocument | NetworkResourceTypeStylesheet | NetworkResourceTypeImage | NetworkResourceTypeMedia | NetworkResourceTypeFont | NetworkResourceTypeScript | NetworkResourceTypeTextTrack | NetworkResourceTypeXhr | NetworkResourceTypeFetch | NetworkResourceTypeEventSource | NetworkResourceTypeWebSocket | NetworkResourceTypeManifest | NetworkResourceTypeSignedExchange | NetworkResourceTypePing | NetworkResourceTypeCspViolationReport | NetworkResourceTypePreflight | NetworkResourceTypeOther
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON NetworkResourceType where
-    parseJSON = A.withText  "NetworkResourceType"  $ \v -> 
+    parseJSON = A.withText  "NetworkResourceType"  $ \v -> do
         pure $ case v of
                 "Document" -> NetworkResourceTypeDocument
                 "Stylesheet" -> NetworkResourceTypeStylesheet
@@ -1152,6 +1900,7 @@ instance FromJSON NetworkResourceType where
                 "CSPViolationReport" -> NetworkResourceTypeCspViolationReport
                 "Preflight" -> NetworkResourceTypePreflight
                 "Other" -> NetworkResourceTypeOther
+                _ -> error "failed to parse NetworkResourceType"
 
 instance ToJSON NetworkResourceType where
     toJSON v = A.String $
@@ -1183,9 +1932,9 @@ type NetworkRequestId = String
 type NetworkInterceptionId = String
 
 data NetworkErrorReason = NetworkErrorReasonFailed | NetworkErrorReasonAborted | NetworkErrorReasonTimedOut | NetworkErrorReasonAccessDenied | NetworkErrorReasonConnectionClosed | NetworkErrorReasonConnectionReset | NetworkErrorReasonConnectionRefused | NetworkErrorReasonConnectionAborted | NetworkErrorReasonConnectionFailed | NetworkErrorReasonNameNotResolved | NetworkErrorReasonInternetDisconnected | NetworkErrorReasonAddressUnreachable | NetworkErrorReasonBlockedByClient | NetworkErrorReasonBlockedByResponse
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON NetworkErrorReason where
-    parseJSON = A.withText  "NetworkErrorReason"  $ \v -> 
+    parseJSON = A.withText  "NetworkErrorReason"  $ \v -> do
         pure $ case v of
                 "Failed" -> NetworkErrorReasonFailed
                 "Aborted" -> NetworkErrorReasonAborted
@@ -1201,6 +1950,7 @@ instance FromJSON NetworkErrorReason where
                 "AddressUnreachable" -> NetworkErrorReasonAddressUnreachable
                 "BlockedByClient" -> NetworkErrorReasonBlockedByClient
                 "BlockedByResponse" -> NetworkErrorReasonBlockedByResponse
+                _ -> error "failed to parse NetworkErrorReason"
 
 instance ToJSON NetworkErrorReason where
     toJSON v = A.String $
@@ -1229,9 +1979,9 @@ type NetworkMonotonicTime = Int
 type NetworkHeaders = [(String, String)]
 
 data NetworkConnectionType = NetworkConnectionTypeNone | NetworkConnectionTypeCellular2g | NetworkConnectionTypeCellular3g | NetworkConnectionTypeCellular4g | NetworkConnectionTypeBluetooth | NetworkConnectionTypeEthernet | NetworkConnectionTypeWifi | NetworkConnectionTypeWimax | NetworkConnectionTypeOther
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON NetworkConnectionType where
-    parseJSON = A.withText  "NetworkConnectionType"  $ \v -> 
+    parseJSON = A.withText  "NetworkConnectionType"  $ \v -> do
         pure $ case v of
                 "none" -> NetworkConnectionTypeNone
                 "cellular2g" -> NetworkConnectionTypeCellular2g
@@ -1242,6 +1992,7 @@ instance FromJSON NetworkConnectionType where
                 "wifi" -> NetworkConnectionTypeWifi
                 "wimax" -> NetworkConnectionTypeWimax
                 "other" -> NetworkConnectionTypeOther
+                _ -> error "failed to parse NetworkConnectionType"
 
 instance ToJSON NetworkConnectionType where
     toJSON v = A.String $
@@ -1259,13 +2010,14 @@ instance ToJSON NetworkConnectionType where
 
 
 data NetworkCookieSameSite = NetworkCookieSameSiteStrict | NetworkCookieSameSiteLax | NetworkCookieSameSiteNone
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON NetworkCookieSameSite where
-    parseJSON = A.withText  "NetworkCookieSameSite"  $ \v -> 
+    parseJSON = A.withText  "NetworkCookieSameSite"  $ \v -> do
         pure $ case v of
                 "Strict" -> NetworkCookieSameSiteStrict
                 "Lax" -> NetworkCookieSameSiteLax
                 "None" -> NetworkCookieSameSiteNone
+                _ -> error "failed to parse NetworkCookieSameSite"
 
 instance ToJSON NetworkCookieSameSite where
     toJSON v = A.String $
@@ -1289,7 +2041,7 @@ data NetworkResourceTiming = NetworkResourceTiming {
     networkResourceTimingSendStart :: Int,
     networkResourceTimingSendEnd :: Int,
     networkResourceTimingReceiveHeadersEnd :: Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  NetworkResourceTiming where
     parseJSON = A.withObject "NetworkResourceTiming" $ \v ->
          NetworkResourceTiming <$> v .:  "requestTime"
@@ -1325,15 +2077,16 @@ instance ToJSON NetworkResourceTiming  where
 
 
 data NetworkResourcePriority = NetworkResourcePriorityVeryLow | NetworkResourcePriorityLow | NetworkResourcePriorityMedium | NetworkResourcePriorityHigh | NetworkResourcePriorityVeryHigh
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON NetworkResourcePriority where
-    parseJSON = A.withText  "NetworkResourcePriority"  $ \v -> 
+    parseJSON = A.withText  "NetworkResourcePriority"  $ \v -> do
         pure $ case v of
                 "VeryLow" -> NetworkResourcePriorityVeryLow
                 "Low" -> NetworkResourcePriorityLow
                 "Medium" -> NetworkResourcePriorityMedium
                 "High" -> NetworkResourcePriorityHigh
                 "VeryHigh" -> NetworkResourcePriorityVeryHigh
+                _ -> error "failed to parse NetworkResourcePriority"
 
 instance ToJSON NetworkResourcePriority where
     toJSON v = A.String $
@@ -1348,7 +2101,7 @@ instance ToJSON NetworkResourcePriority where
 
 data NetworkPostDataEntry = NetworkPostDataEntry {
     networkPostDataEntryBytes :: Maybe String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  NetworkPostDataEntry where
     parseJSON = A.withObject "NetworkPostDataEntry" $ \v ->
          NetworkPostDataEntry <$> v .:?  "bytes"
@@ -1372,7 +2125,7 @@ data NetworkRequest = NetworkRequest {
     networkRequestHasPostData :: Maybe Bool,
     networkRequestMixedContentType :: Maybe SecurityMixedContentType,
     networkRequestIsLinkPreload :: Maybe Bool
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  NetworkRequest where
     parseJSON = A.withObject "NetworkRequest" $ \v ->
          NetworkRequest <$> v .:  "url"
@@ -1412,7 +2165,7 @@ data NetworkSignedCertificateTimestamp = NetworkSignedCertificateTimestamp {
     networkSignedCertificateTimestampHashAlgorithm :: String,
     networkSignedCertificateTimestampSignatureAlgorithm :: String,
     networkSignedCertificateTimestampSignatureData :: String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  NetworkSignedCertificateTimestamp where
     parseJSON = A.withObject "NetworkSignedCertificateTimestamp" $ \v ->
          NetworkSignedCertificateTimestamp <$> v .:  "status"
@@ -1453,7 +2206,7 @@ data NetworkSecurityDetails = NetworkSecurityDetails {
     networkSecurityDetailsCertificateTransparencyCompliance :: NetworkCertificateTransparencyCompliance,
     networkSecurityDetailsKeyExchangeGroup :: Maybe String,
     networkSecurityDetailsMac :: Maybe String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  NetworkSecurityDetails where
     parseJSON = A.withObject "NetworkSecurityDetails" $ \v ->
          NetworkSecurityDetails <$> v .:  "protocol"
@@ -1491,13 +2244,14 @@ instance ToJSON NetworkSecurityDetails  where
 
 
 data NetworkCertificateTransparencyCompliance = NetworkCertificateTransparencyComplianceUnknown | NetworkCertificateTransparencyComplianceNotCompliant | NetworkCertificateTransparencyComplianceCompliant
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON NetworkCertificateTransparencyCompliance where
-    parseJSON = A.withText  "NetworkCertificateTransparencyCompliance"  $ \v -> 
+    parseJSON = A.withText  "NetworkCertificateTransparencyCompliance"  $ \v -> do
         pure $ case v of
                 "unknown" -> NetworkCertificateTransparencyComplianceUnknown
                 "not-compliant" -> NetworkCertificateTransparencyComplianceNotCompliant
                 "compliant" -> NetworkCertificateTransparencyComplianceCompliant
+                _ -> error "failed to parse NetworkCertificateTransparencyCompliance"
 
 instance ToJSON NetworkCertificateTransparencyCompliance where
     toJSON v = A.String $
@@ -1509,9 +2263,9 @@ instance ToJSON NetworkCertificateTransparencyCompliance where
 
 
 data NetworkBlockedReason = NetworkBlockedReasonOther | NetworkBlockedReasonCsp | NetworkBlockedReasonMixedContent | NetworkBlockedReasonOrigin | NetworkBlockedReasonInspector | NetworkBlockedReasonSubresourceFilter | NetworkBlockedReasonContentType | NetworkBlockedReasonCoepFrameResourceNeedsCoepHeader | NetworkBlockedReasonCoopSandboxedIframeCannotNavigateToCoopPage | NetworkBlockedReasonCorpNotSameOrigin | NetworkBlockedReasonCorpNotSameOriginAfterDefaultedToSameOriginByCoep | NetworkBlockedReasonCorpNotSameSite
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON NetworkBlockedReason where
-    parseJSON = A.withText  "NetworkBlockedReason"  $ \v -> 
+    parseJSON = A.withText  "NetworkBlockedReason"  $ \v -> do
         pure $ case v of
                 "other" -> NetworkBlockedReasonOther
                 "csp" -> NetworkBlockedReasonCsp
@@ -1525,6 +2279,7 @@ instance FromJSON NetworkBlockedReason where
                 "corp-not-same-origin" -> NetworkBlockedReasonCorpNotSameOrigin
                 "corp-not-same-origin-after-defaulted-to-same-origin-by-coep" -> NetworkBlockedReasonCorpNotSameOriginAfterDefaultedToSameOriginByCoep
                 "corp-not-same-site" -> NetworkBlockedReasonCorpNotSameSite
+                _ -> error "failed to parse NetworkBlockedReason"
 
 instance ToJSON NetworkBlockedReason where
     toJSON v = A.String $
@@ -1545,9 +2300,9 @@ instance ToJSON NetworkBlockedReason where
 
 
 data NetworkCorsError = NetworkCorsErrorDisallowedByMode | NetworkCorsErrorInvalidResponse | NetworkCorsErrorWildcardOriginNotAllowed | NetworkCorsErrorMissingAllowOriginHeader | NetworkCorsErrorMultipleAllowOriginValues | NetworkCorsErrorInvalidAllowOriginValue | NetworkCorsErrorAllowOriginMismatch | NetworkCorsErrorInvalidAllowCredentials | NetworkCorsErrorCorsDisabledScheme | NetworkCorsErrorPreflightInvalidStatus | NetworkCorsErrorPreflightDisallowedRedirect | NetworkCorsErrorPreflightWildcardOriginNotAllowed | NetworkCorsErrorPreflightMissingAllowOriginHeader | NetworkCorsErrorPreflightMultipleAllowOriginValues | NetworkCorsErrorPreflightInvalidAllowOriginValue | NetworkCorsErrorPreflightAllowOriginMismatch | NetworkCorsErrorPreflightInvalidAllowCredentials | NetworkCorsErrorPreflightMissingAllowExternal | NetworkCorsErrorPreflightInvalidAllowExternal | NetworkCorsErrorPreflightMissingAllowPrivateNetwork | NetworkCorsErrorPreflightInvalidAllowPrivateNetwork | NetworkCorsErrorInvalidAllowMethodsPreflightResponse | NetworkCorsErrorInvalidAllowHeadersPreflightResponse | NetworkCorsErrorMethodDisallowedByPreflightResponse | NetworkCorsErrorHeaderDisallowedByPreflightResponse | NetworkCorsErrorRedirectContainsCredentials | NetworkCorsErrorInsecurePrivateNetwork | NetworkCorsErrorInvalidPrivateNetworkAccess | NetworkCorsErrorUnexpectedPrivateNetworkAccess | NetworkCorsErrorNoCorsRedirectModeNotFollow
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON NetworkCorsError where
-    parseJSON = A.withText  "NetworkCorsError"  $ \v -> 
+    parseJSON = A.withText  "NetworkCorsError"  $ \v -> do
         pure $ case v of
                 "DisallowedByMode" -> NetworkCorsErrorDisallowedByMode
                 "InvalidResponse" -> NetworkCorsErrorInvalidResponse
@@ -1579,6 +2334,7 @@ instance FromJSON NetworkCorsError where
                 "InvalidPrivateNetworkAccess" -> NetworkCorsErrorInvalidPrivateNetworkAccess
                 "UnexpectedPrivateNetworkAccess" -> NetworkCorsErrorUnexpectedPrivateNetworkAccess
                 "NoCorsRedirectModeNotFollow" -> NetworkCorsErrorNoCorsRedirectModeNotFollow
+                _ -> error "failed to parse NetworkCorsError"
 
 instance ToJSON NetworkCorsError where
     toJSON v = A.String $
@@ -1619,7 +2375,7 @@ instance ToJSON NetworkCorsError where
 data NetworkCorsErrorStatus = NetworkCorsErrorStatus {
     networkCorsErrorStatusCorsError :: NetworkCorsError,
     networkCorsErrorStatusFailedParameter :: String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  NetworkCorsErrorStatus where
     parseJSON = A.withObject "NetworkCorsErrorStatus" $ \v ->
          NetworkCorsErrorStatus <$> v .:  "corsError"
@@ -1635,14 +2391,15 @@ instance ToJSON NetworkCorsErrorStatus  where
 
 
 data NetworkServiceWorkerResponseSource = NetworkServiceWorkerResponseSourceCacheStorage | NetworkServiceWorkerResponseSourceHttpCache | NetworkServiceWorkerResponseSourceFallbackCode | NetworkServiceWorkerResponseSourceNetwork
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON NetworkServiceWorkerResponseSource where
-    parseJSON = A.withText  "NetworkServiceWorkerResponseSource"  $ \v -> 
+    parseJSON = A.withText  "NetworkServiceWorkerResponseSource"  $ \v -> do
         pure $ case v of
                 "cache-storage" -> NetworkServiceWorkerResponseSourceCacheStorage
                 "http-cache" -> NetworkServiceWorkerResponseSourceHttpCache
                 "fallback-code" -> NetworkServiceWorkerResponseSourceFallbackCode
                 "network" -> NetworkServiceWorkerResponseSourceNetwork
+                _ -> error "failed to parse NetworkServiceWorkerResponseSource"
 
 instance ToJSON NetworkServiceWorkerResponseSource where
     toJSON v = A.String $
@@ -1676,7 +2433,7 @@ data NetworkResponse = NetworkResponse {
     networkResponseCacheStorageCacheName :: Maybe String,
     networkResponseProtocol :: Maybe String,
     networkResponseSecurityDetails :: Maybe NetworkSecurityDetails
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  NetworkResponse where
     parseJSON = A.withObject "NetworkResponse" $ \v ->
          NetworkResponse <$> v .:  "url"
@@ -1731,7 +2488,7 @@ instance ToJSON NetworkResponse  where
 
 data NetworkWebSocketRequest = NetworkWebSocketRequest {
     networkWebSocketRequestHeaders :: NetworkHeaders
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  NetworkWebSocketRequest where
     parseJSON = A.withObject "NetworkWebSocketRequest" $ \v ->
          NetworkWebSocketRequest <$> v .:  "headers"
@@ -1751,7 +2508,7 @@ data NetworkWebSocketResponse = NetworkWebSocketResponse {
     networkWebSocketResponseHeadersText :: Maybe String,
     networkWebSocketResponseRequestHeaders :: Maybe NetworkHeaders,
     networkWebSocketResponseRequestHeadersText :: Maybe String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  NetworkWebSocketResponse where
     parseJSON = A.withObject "NetworkWebSocketResponse" $ \v ->
          NetworkWebSocketResponse <$> v .:  "status"
@@ -1778,7 +2535,7 @@ data NetworkWebSocketFrame = NetworkWebSocketFrame {
     networkWebSocketFrameOpcode :: Int,
     networkWebSocketFrameMask :: Bool,
     networkWebSocketFramePayloadData :: String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  NetworkWebSocketFrame where
     parseJSON = A.withObject "NetworkWebSocketFrame" $ \v ->
          NetworkWebSocketFrame <$> v .:  "opcode"
@@ -1800,7 +2557,7 @@ data NetworkCachedResource = NetworkCachedResource {
     networkCachedResourceType :: NetworkResourceType,
     networkCachedResourceBodySize :: Int,
     networkCachedResourceResponse :: Maybe NetworkResponse
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  NetworkCachedResource where
     parseJSON = A.withObject "NetworkCachedResource" $ \v ->
          NetworkCachedResource <$> v .:  "url"
@@ -1826,7 +2583,7 @@ data NetworkInitiator = NetworkInitiator {
     networkInitiatorLineNumber :: Maybe Int,
     networkInitiatorColumnNumber :: Maybe Int,
     networkInitiatorRequestId :: Maybe NetworkRequestId
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  NetworkInitiator where
     parseJSON = A.withObject "NetworkInitiator" $ \v ->
          NetworkInitiator <$> v .:  "type"
@@ -1860,7 +2617,7 @@ data NetworkCookie = NetworkCookie {
     networkCookieSecure :: Bool,
     networkCookieSession :: Bool,
     networkCookieSameSite :: Maybe NetworkCookieSameSite
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  NetworkCookie where
     parseJSON = A.withObject "NetworkCookie" $ \v ->
          NetworkCookie <$> v .:  "name"
@@ -1901,7 +2658,7 @@ data NetworkCookieParam = NetworkCookieParam {
     networkCookieParamHttpOnly :: Maybe Bool,
     networkCookieParamSameSite :: Maybe NetworkCookieSameSite,
     networkCookieParamExpires :: Maybe NetworkTimeSinceEpoch
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  NetworkCookieParam where
     parseJSON = A.withObject "NetworkCookieParam" $ \v ->
          NetworkCookieParam <$> v .:  "name"
@@ -1939,7 +2696,7 @@ networkClearBrowserCookies session  = sendReceiveCommand (conn session) ("Networ
 
 
 networkDeleteCookies :: Session -> String -> Maybe String -> Maybe String -> Maybe String -> IO (Maybe Error)
-networkDeleteCookies session networkDeleteCookiesName networkDeleteCookiesUrl networkDeleteCookiesDomain networkDeleteCookiesPath = sendReceiveCommand (conn session) ("Network","deleteCookies") ([("networkDeleteCookiesName", ToJSONEx networkDeleteCookiesName)] ++ (catMaybes [fmap (("networkDeleteCookiesUrl",) . ToJSONEx) networkDeleteCookiesUrl, fmap (("networkDeleteCookiesDomain",) . ToJSONEx) networkDeleteCookiesDomain, fmap (("networkDeleteCookiesPath",) . ToJSONEx) networkDeleteCookiesPath]))
+networkDeleteCookies session networkDeleteCookiesName networkDeleteCookiesUrl networkDeleteCookiesDomain networkDeleteCookiesPath = sendReceiveCommand (conn session) ("Network","deleteCookies") ([("name", ToJSONEx networkDeleteCookiesName)] ++ (catMaybes [fmap (("url",) . ToJSONEx) networkDeleteCookiesUrl, fmap (("domain",) . ToJSONEx) networkDeleteCookiesDomain, fmap (("path",) . ToJSONEx) networkDeleteCookiesPath]))
 
 
 networkDisable :: Session -> IO (Maybe Error)
@@ -1947,15 +2704,15 @@ networkDisable session  = sendReceiveCommand (conn session) ("Network","disable"
 
 
 networkEmulateNetworkConditions :: Session -> Bool -> Int -> Int -> Int -> Maybe NetworkConnectionType -> IO (Maybe Error)
-networkEmulateNetworkConditions session networkEmulateNetworkConditionsOffline networkEmulateNetworkConditionsLatency networkEmulateNetworkConditionsDownloadThroughput networkEmulateNetworkConditionsUploadThroughput networkEmulateNetworkConditionsConnectionType = sendReceiveCommand (conn session) ("Network","emulateNetworkConditions") ([("networkEmulateNetworkConditionsOffline", ToJSONEx networkEmulateNetworkConditionsOffline), ("networkEmulateNetworkConditionsLatency", ToJSONEx networkEmulateNetworkConditionsLatency), ("networkEmulateNetworkConditionsDownloadThroughput", ToJSONEx networkEmulateNetworkConditionsDownloadThroughput), ("networkEmulateNetworkConditionsUploadThroughput", ToJSONEx networkEmulateNetworkConditionsUploadThroughput)] ++ (catMaybes [fmap (("networkEmulateNetworkConditionsConnectionType",) . ToJSONEx) networkEmulateNetworkConditionsConnectionType]))
+networkEmulateNetworkConditions session networkEmulateNetworkConditionsOffline networkEmulateNetworkConditionsLatency networkEmulateNetworkConditionsDownloadThroughput networkEmulateNetworkConditionsUploadThroughput networkEmulateNetworkConditionsConnectionType = sendReceiveCommand (conn session) ("Network","emulateNetworkConditions") ([("offline", ToJSONEx networkEmulateNetworkConditionsOffline), ("latency", ToJSONEx networkEmulateNetworkConditionsLatency), ("downloadThroughput", ToJSONEx networkEmulateNetworkConditionsDownloadThroughput), ("uploadThroughput", ToJSONEx networkEmulateNetworkConditionsUploadThroughput)] ++ (catMaybes [fmap (("connectionType",) . ToJSONEx) networkEmulateNetworkConditionsConnectionType]))
 
 
 networkEnable :: Session -> Maybe Int -> IO (Maybe Error)
-networkEnable session networkEnableMaxPostDataSize = sendReceiveCommand (conn session) ("Network","enable") ([] ++ (catMaybes [fmap (("networkEnableMaxPostDataSize",) . ToJSONEx) networkEnableMaxPostDataSize]))
+networkEnable session networkEnableMaxPostDataSize = sendReceiveCommand (conn session) ("Network","enable") ([] ++ (catMaybes [fmap (("maxPostDataSize",) . ToJSONEx) networkEnableMaxPostDataSize]))
 
 data NetworkGetAllCookies = NetworkGetAllCookies {
     networkGetAllCookiesCookies :: [NetworkCookie]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  NetworkGetAllCookies where
     parseJSON = A.withObject "NetworkGetAllCookies" $ \v ->
          NetworkGetAllCookies <$> v .:  "cookies"
@@ -1967,7 +2724,7 @@ networkGetAllCookies session  = sendReceiveCommandResult (conn session) ("Networ
 
 data NetworkGetCookies = NetworkGetCookies {
     networkGetCookiesCookies :: [NetworkCookie]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  NetworkGetCookies where
     parseJSON = A.withObject "NetworkGetCookies" $ \v ->
          NetworkGetCookies <$> v .:  "cookies"
@@ -1975,12 +2732,12 @@ instance FromJSON  NetworkGetCookies where
 
 
 networkGetCookies :: Session -> Maybe [String] -> IO (Either Error NetworkGetCookies)
-networkGetCookies session networkGetCookiesUrls = sendReceiveCommandResult (conn session) ("Network","getCookies") ([] ++ (catMaybes [fmap (("networkGetCookiesUrls",) . ToJSONEx) networkGetCookiesUrls]))
+networkGetCookies session networkGetCookiesUrls = sendReceiveCommandResult (conn session) ("Network","getCookies") ([] ++ (catMaybes [fmap (("urls",) . ToJSONEx) networkGetCookiesUrls]))
 
 data NetworkGetResponseBody = NetworkGetResponseBody {
     networkGetResponseBodyBody :: String,
     networkGetResponseBodyBase64Encoded :: Bool
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  NetworkGetResponseBody where
     parseJSON = A.withObject "NetworkGetResponseBody" $ \v ->
          NetworkGetResponseBody <$> v .:  "body"
@@ -1989,11 +2746,11 @@ instance FromJSON  NetworkGetResponseBody where
 
 
 networkGetResponseBody :: Session -> NetworkRequestId -> IO (Either Error NetworkGetResponseBody)
-networkGetResponseBody session networkGetResponseBodyRequestId = sendReceiveCommandResult (conn session) ("Network","getResponseBody") ([("networkGetResponseBodyRequestId", ToJSONEx networkGetResponseBodyRequestId)] ++ (catMaybes []))
+networkGetResponseBody session networkGetResponseBodyRequestId = sendReceiveCommandResult (conn session) ("Network","getResponseBody") ([("requestId", ToJSONEx networkGetResponseBodyRequestId)] ++ (catMaybes []))
 
 data NetworkGetRequestPostData = NetworkGetRequestPostData {
     networkGetRequestPostDataPostData :: String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  NetworkGetRequestPostData where
     parseJSON = A.withObject "NetworkGetRequestPostData" $ \v ->
          NetworkGetRequestPostData <$> v .:  "postData"
@@ -2001,27 +2758,243 @@ instance FromJSON  NetworkGetRequestPostData where
 
 
 networkGetRequestPostData :: Session -> NetworkRequestId -> IO (Either Error NetworkGetRequestPostData)
-networkGetRequestPostData session networkGetRequestPostDataRequestId = sendReceiveCommandResult (conn session) ("Network","getRequestPostData") ([("networkGetRequestPostDataRequestId", ToJSONEx networkGetRequestPostDataRequestId)] ++ (catMaybes []))
+networkGetRequestPostData session networkGetRequestPostDataRequestId = sendReceiveCommandResult (conn session) ("Network","getRequestPostData") ([("requestId", ToJSONEx networkGetRequestPostDataRequestId)] ++ (catMaybes []))
 
 
 networkSetCacheDisabled :: Session -> Bool -> IO (Maybe Error)
-networkSetCacheDisabled session networkSetCacheDisabledCacheDisabled = sendReceiveCommand (conn session) ("Network","setCacheDisabled") ([("networkSetCacheDisabledCacheDisabled", ToJSONEx networkSetCacheDisabledCacheDisabled)] ++ (catMaybes []))
+networkSetCacheDisabled session networkSetCacheDisabledCacheDisabled = sendReceiveCommand (conn session) ("Network","setCacheDisabled") ([("cacheDisabled", ToJSONEx networkSetCacheDisabledCacheDisabled)] ++ (catMaybes []))
 
 
 networkSetCookie :: Session -> String -> String -> Maybe String -> Maybe String -> Maybe String -> Maybe Bool -> Maybe Bool -> Maybe NetworkCookieSameSite -> Maybe NetworkTimeSinceEpoch -> IO (Maybe Error)
-networkSetCookie session networkSetCookieName networkSetCookieValue networkSetCookieUrl networkSetCookieDomain networkSetCookiePath networkSetCookieSecure networkSetCookieHttpOnly networkSetCookieSameSite networkSetCookieExpires = sendReceiveCommand (conn session) ("Network","setCookie") ([("networkSetCookieName", ToJSONEx networkSetCookieName), ("networkSetCookieValue", ToJSONEx networkSetCookieValue)] ++ (catMaybes [fmap (("networkSetCookieUrl",) . ToJSONEx) networkSetCookieUrl, fmap (("networkSetCookieDomain",) . ToJSONEx) networkSetCookieDomain, fmap (("networkSetCookiePath",) . ToJSONEx) networkSetCookiePath, fmap (("networkSetCookieSecure",) . ToJSONEx) networkSetCookieSecure, fmap (("networkSetCookieHttpOnly",) . ToJSONEx) networkSetCookieHttpOnly, fmap (("networkSetCookieSameSite",) . ToJSONEx) networkSetCookieSameSite, fmap (("networkSetCookieExpires",) . ToJSONEx) networkSetCookieExpires]))
+networkSetCookie session networkSetCookieName networkSetCookieValue networkSetCookieUrl networkSetCookieDomain networkSetCookiePath networkSetCookieSecure networkSetCookieHttpOnly networkSetCookieSameSite networkSetCookieExpires = sendReceiveCommand (conn session) ("Network","setCookie") ([("name", ToJSONEx networkSetCookieName), ("value", ToJSONEx networkSetCookieValue)] ++ (catMaybes [fmap (("url",) . ToJSONEx) networkSetCookieUrl, fmap (("domain",) . ToJSONEx) networkSetCookieDomain, fmap (("path",) . ToJSONEx) networkSetCookiePath, fmap (("secure",) . ToJSONEx) networkSetCookieSecure, fmap (("httpOnly",) . ToJSONEx) networkSetCookieHttpOnly, fmap (("sameSite",) . ToJSONEx) networkSetCookieSameSite, fmap (("expires",) . ToJSONEx) networkSetCookieExpires]))
 
 
 networkSetCookies :: Session -> [NetworkCookieParam] -> IO (Maybe Error)
-networkSetCookies session networkSetCookiesCookies = sendReceiveCommand (conn session) ("Network","setCookies") ([("networkSetCookiesCookies", ToJSONEx networkSetCookiesCookies)] ++ (catMaybes []))
+networkSetCookies session networkSetCookiesCookies = sendReceiveCommand (conn session) ("Network","setCookies") ([("cookies", ToJSONEx networkSetCookiesCookies)] ++ (catMaybes []))
 
 
 networkSetExtraHTTPHeaders :: Session -> NetworkHeaders -> IO (Maybe Error)
-networkSetExtraHTTPHeaders session networkSetExtraHTTPHeadersHeaders = sendReceiveCommand (conn session) ("Network","setExtraHTTPHeaders") ([("networkSetExtraHTTPHeadersHeaders", ToJSONEx networkSetExtraHTTPHeadersHeaders)] ++ (catMaybes []))
+networkSetExtraHTTPHeaders session networkSetExtraHttpHeadersHeaders = sendReceiveCommand (conn session) ("Network","setExtraHTTPHeaders") ([("headers", ToJSONEx networkSetExtraHttpHeadersHeaders)] ++ (catMaybes []))
 
 
 networkSetUserAgentOverride :: Session -> String -> Maybe String -> Maybe String -> IO (Maybe Error)
-networkSetUserAgentOverride session networkSetUserAgentOverrideUserAgent networkSetUserAgentOverrideAcceptLanguage networkSetUserAgentOverridePlatform = sendReceiveCommand (conn session) ("Network","setUserAgentOverride") ([("networkSetUserAgentOverrideUserAgent", ToJSONEx networkSetUserAgentOverrideUserAgent)] ++ (catMaybes [fmap (("networkSetUserAgentOverrideAcceptLanguage",) . ToJSONEx) networkSetUserAgentOverrideAcceptLanguage, fmap (("networkSetUserAgentOverridePlatform",) . ToJSONEx) networkSetUserAgentOverridePlatform]))
+networkSetUserAgentOverride session networkSetUserAgentOverrideUserAgent networkSetUserAgentOverrideAcceptLanguage networkSetUserAgentOverridePlatform = sendReceiveCommand (conn session) ("Network","setUserAgentOverride") ([("userAgent", ToJSONEx networkSetUserAgentOverrideUserAgent)] ++ (catMaybes [fmap (("acceptLanguage",) . ToJSONEx) networkSetUserAgentOverrideAcceptLanguage, fmap (("platform",) . ToJSONEx) networkSetUserAgentOverridePlatform]))
+
+
+
+data PageDomContentEventFired = PageDomContentEventFired {
+    pageDomContentEventFiredTimestamp :: NetworkMonotonicTime
+} deriving (Eq, Show, Read)
+instance FromJSON  PageDomContentEventFired where
+    parseJSON = A.withObject "PageDomContentEventFired" $ \v ->
+         PageDomContentEventFired <$> v .:  "timestamp"
+
+
+instance ToJSON PageDomContentEventFired  where
+    toJSON v = A.object
+        [ "timestamp" .= pageDomContentEventFiredTimestamp v
+        ]
+
+
+data PageFileChooserOpened = PageFileChooserOpened {
+    pageFileChooserOpenedMode :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PageFileChooserOpened where
+    parseJSON = A.withObject "PageFileChooserOpened" $ \v ->
+         PageFileChooserOpened <$> v .:  "mode"
+
+
+instance ToJSON PageFileChooserOpened  where
+    toJSON v = A.object
+        [ "mode" .= pageFileChooserOpenedMode v
+        ]
+
+
+data PageFrameAttached = PageFrameAttached {
+    pageFrameAttachedFrameId :: PageFrameId,
+    pageFrameAttachedParentFrameId :: PageFrameId,
+    pageFrameAttachedStack :: Maybe RuntimeStackTrace
+} deriving (Eq, Show, Read)
+instance FromJSON  PageFrameAttached where
+    parseJSON = A.withObject "PageFrameAttached" $ \v ->
+         PageFrameAttached <$> v .:  "frameId"
+            <*> v  .:  "parentFrameId"
+            <*> v  .:?  "stack"
+
+
+instance ToJSON PageFrameAttached  where
+    toJSON v = A.object
+        [ "frameId" .= pageFrameAttachedFrameId v
+        , "parentFrameId" .= pageFrameAttachedParentFrameId v
+        , "stack" .= pageFrameAttachedStack v
+        ]
+
+
+data PageFrameDetached = PageFrameDetached {
+    pageFrameDetachedFrameId :: PageFrameId
+} deriving (Eq, Show, Read)
+instance FromJSON  PageFrameDetached where
+    parseJSON = A.withObject "PageFrameDetached" $ \v ->
+         PageFrameDetached <$> v .:  "frameId"
+
+
+instance ToJSON PageFrameDetached  where
+    toJSON v = A.object
+        [ "frameId" .= pageFrameDetachedFrameId v
+        ]
+
+
+data PageFrameNavigated = PageFrameNavigated {
+    pageFrameNavigatedFrame :: PageFrame
+} deriving (Eq, Show, Read)
+instance FromJSON  PageFrameNavigated where
+    parseJSON = A.withObject "PageFrameNavigated" $ \v ->
+         PageFrameNavigated <$> v .:  "frame"
+
+
+instance ToJSON PageFrameNavigated  where
+    toJSON v = A.object
+        [ "frame" .= pageFrameNavigatedFrame v
+        ]
+
+
+data PageInterstitialHidden = PageInterstitialHidden
+    deriving (Eq, Show, Read)
+instance FromJSON PageInterstitialHidden where
+    parseJSON = A.withText  "PageInterstitialHidden"  $ \v -> do
+        pure $ case v of
+                "PageInterstitialHidden" -> PageInterstitialHidden
+                _ -> error "failed to parse PageInterstitialHidden"
+
+data PageInterstitialShown = PageInterstitialShown
+    deriving (Eq, Show, Read)
+instance FromJSON PageInterstitialShown where
+    parseJSON = A.withText  "PageInterstitialShown"  $ \v -> do
+        pure $ case v of
+                "PageInterstitialShown" -> PageInterstitialShown
+                _ -> error "failed to parse PageInterstitialShown"
+
+data PageJavascriptDialogClosed = PageJavascriptDialogClosed {
+    pageJavascriptDialogClosedResult :: Bool,
+    pageJavascriptDialogClosedUserInput :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PageJavascriptDialogClosed where
+    parseJSON = A.withObject "PageJavascriptDialogClosed" $ \v ->
+         PageJavascriptDialogClosed <$> v .:  "result"
+            <*> v  .:  "userInput"
+
+
+instance ToJSON PageJavascriptDialogClosed  where
+    toJSON v = A.object
+        [ "result" .= pageJavascriptDialogClosedResult v
+        , "userInput" .= pageJavascriptDialogClosedUserInput v
+        ]
+
+
+data PageJavascriptDialogOpening = PageJavascriptDialogOpening {
+    pageJavascriptDialogOpeningUrl :: String,
+    pageJavascriptDialogOpeningMessage :: String,
+    pageJavascriptDialogOpeningType :: PageDialogType,
+    pageJavascriptDialogOpeningHasBrowserHandler :: Bool,
+    pageJavascriptDialogOpeningDefaultPrompt :: Maybe String
+} deriving (Eq, Show, Read)
+instance FromJSON  PageJavascriptDialogOpening where
+    parseJSON = A.withObject "PageJavascriptDialogOpening" $ \v ->
+         PageJavascriptDialogOpening <$> v .:  "url"
+            <*> v  .:  "message"
+            <*> v  .:  "type"
+            <*> v  .:  "hasBrowserHandler"
+            <*> v  .:?  "defaultPrompt"
+
+
+instance ToJSON PageJavascriptDialogOpening  where
+    toJSON v = A.object
+        [ "url" .= pageJavascriptDialogOpeningUrl v
+        , "message" .= pageJavascriptDialogOpeningMessage v
+        , "type" .= pageJavascriptDialogOpeningType v
+        , "hasBrowserHandler" .= pageJavascriptDialogOpeningHasBrowserHandler v
+        , "defaultPrompt" .= pageJavascriptDialogOpeningDefaultPrompt v
+        ]
+
+
+data PageLifecycleEvent = PageLifecycleEvent {
+    pageLifecycleEventFrameId :: PageFrameId,
+    pageLifecycleEventLoaderId :: NetworkLoaderId,
+    pageLifecycleEventName :: String,
+    pageLifecycleEventTimestamp :: NetworkMonotonicTime
+} deriving (Eq, Show, Read)
+instance FromJSON  PageLifecycleEvent where
+    parseJSON = A.withObject "PageLifecycleEvent" $ \v ->
+         PageLifecycleEvent <$> v .:  "frameId"
+            <*> v  .:  "loaderId"
+            <*> v  .:  "name"
+            <*> v  .:  "timestamp"
+
+
+instance ToJSON PageLifecycleEvent  where
+    toJSON v = A.object
+        [ "frameId" .= pageLifecycleEventFrameId v
+        , "loaderId" .= pageLifecycleEventLoaderId v
+        , "name" .= pageLifecycleEventName v
+        , "timestamp" .= pageLifecycleEventTimestamp v
+        ]
+
+
+data PagePrerenderAttemptCompleted = PagePrerenderAttemptCompleted {
+    pagePrerenderAttemptCompletedInitiatingFrameId :: PageFrameId,
+    pagePrerenderAttemptCompletedPrerenderingUrl :: String,
+    pagePrerenderAttemptCompletedFinalStatus :: PagePrerenderFinalStatus
+} deriving (Eq, Show, Read)
+instance FromJSON  PagePrerenderAttemptCompleted where
+    parseJSON = A.withObject "PagePrerenderAttemptCompleted" $ \v ->
+         PagePrerenderAttemptCompleted <$> v .:  "initiatingFrameId"
+            <*> v  .:  "prerenderingUrl"
+            <*> v  .:  "finalStatus"
+
+
+instance ToJSON PagePrerenderAttemptCompleted  where
+    toJSON v = A.object
+        [ "initiatingFrameId" .= pagePrerenderAttemptCompletedInitiatingFrameId v
+        , "prerenderingUrl" .= pagePrerenderAttemptCompletedPrerenderingUrl v
+        , "finalStatus" .= pagePrerenderAttemptCompletedFinalStatus v
+        ]
+
+
+data PageLoadEventFired = PageLoadEventFired {
+    pageLoadEventFiredTimestamp :: NetworkMonotonicTime
+} deriving (Eq, Show, Read)
+instance FromJSON  PageLoadEventFired where
+    parseJSON = A.withObject "PageLoadEventFired" $ \v ->
+         PageLoadEventFired <$> v .:  "timestamp"
+
+
+instance ToJSON PageLoadEventFired  where
+    toJSON v = A.object
+        [ "timestamp" .= pageLoadEventFiredTimestamp v
+        ]
+
+
+data PageWindowOpen = PageWindowOpen {
+    pageWindowOpenUrl :: String,
+    pageWindowOpenWindowName :: String,
+    pageWindowOpenWindowFeatures :: [String],
+    pageWindowOpenUserGesture :: Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PageWindowOpen where
+    parseJSON = A.withObject "PageWindowOpen" $ \v ->
+         PageWindowOpen <$> v .:  "url"
+            <*> v  .:  "windowName"
+            <*> v  .:  "windowFeatures"
+            <*> v  .:  "userGesture"
+
+
+instance ToJSON PageWindowOpen  where
+    toJSON v = A.object
+        [ "url" .= pageWindowOpenUrl v
+        , "windowName" .= pageWindowOpenWindowName v
+        , "windowFeatures" .= pageWindowOpenWindowFeatures v
+        , "userGesture" .= pageWindowOpenUserGesture v
+        ]
 
 
 
@@ -2035,7 +3008,7 @@ data PageFrame = PageFrame {
     pageFrameMimeType :: String,
     pageFrameParentId :: Maybe PageFrameId,
     pageFrameName :: Maybe String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  PageFrame where
     parseJSON = A.withObject "PageFrame" $ \v ->
          PageFrame <$> v .:  "id"
@@ -2063,7 +3036,7 @@ instance ToJSON PageFrame  where
 data PageFrameTree = PageFrameTree {
     pageFrameTreeFrame :: PageFrame,
     pageFrameTreeChildFrames :: Maybe [PageFrameTree]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  PageFrameTree where
     parseJSON = A.withObject "PageFrameTree" $ \v ->
          PageFrameTree <$> v .:  "frame"
@@ -2081,9 +3054,9 @@ instance ToJSON PageFrameTree  where
 type PageScriptIdentifier = String
 
 data PageTransitionType = PageTransitionTypeLink | PageTransitionTypeTyped | PageTransitionTypeAddressBar | PageTransitionTypeAutoBookmark | PageTransitionTypeAutoSubframe | PageTransitionTypeManualSubframe | PageTransitionTypeGenerated | PageTransitionTypeAutoToplevel | PageTransitionTypeFormSubmit | PageTransitionTypeReload | PageTransitionTypeKeyword | PageTransitionTypeKeywordGenerated | PageTransitionTypeOther
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON PageTransitionType where
-    parseJSON = A.withText  "PageTransitionType"  $ \v -> 
+    parseJSON = A.withText  "PageTransitionType"  $ \v -> do
         pure $ case v of
                 "link" -> PageTransitionTypeLink
                 "typed" -> PageTransitionTypeTyped
@@ -2098,6 +3071,7 @@ instance FromJSON PageTransitionType where
                 "keyword" -> PageTransitionTypeKeyword
                 "keyword_generated" -> PageTransitionTypeKeywordGenerated
                 "other" -> PageTransitionTypeOther
+                _ -> error "failed to parse PageTransitionType"
 
 instance ToJSON PageTransitionType where
     toJSON v = A.String $
@@ -2124,7 +3098,7 @@ data PageNavigationEntry = PageNavigationEntry {
     pageNavigationEntryUserTypedUrl :: String,
     pageNavigationEntryTitle :: String,
     pageNavigationEntryTransitionType :: PageTransitionType
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  PageNavigationEntry where
     parseJSON = A.withObject "PageNavigationEntry" $ \v ->
          PageNavigationEntry <$> v .:  "id"
@@ -2146,14 +3120,15 @@ instance ToJSON PageNavigationEntry  where
 
 
 data PageDialogType = PageDialogTypeAlert | PageDialogTypeConfirm | PageDialogTypePrompt | PageDialogTypeBeforeunload
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON PageDialogType where
-    parseJSON = A.withText  "PageDialogType"  $ \v -> 
+    parseJSON = A.withText  "PageDialogType"  $ \v -> do
         pure $ case v of
                 "alert" -> PageDialogTypeAlert
                 "confirm" -> PageDialogTypeConfirm
                 "prompt" -> PageDialogTypePrompt
                 "beforeunload" -> PageDialogTypeBeforeunload
+                _ -> error "failed to parse PageDialogType"
 
 instance ToJSON PageDialogType where
     toJSON v = A.String $
@@ -2170,7 +3145,7 @@ data PageAppManifestError = PageAppManifestError {
     pageAppManifestErrorCritical :: Int,
     pageAppManifestErrorLine :: Int,
     pageAppManifestErrorColumn :: Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  PageAppManifestError where
     parseJSON = A.withObject "PageAppManifestError" $ \v ->
          PageAppManifestError <$> v .:  "message"
@@ -2194,7 +3169,7 @@ data PageLayoutViewport = PageLayoutViewport {
     pageLayoutViewportPageY :: Int,
     pageLayoutViewportClientWidth :: Int,
     pageLayoutViewportClientHeight :: Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  PageLayoutViewport where
     parseJSON = A.withObject "PageLayoutViewport" $ \v ->
          PageLayoutViewport <$> v .:  "pageX"
@@ -2222,7 +3197,7 @@ data PageVisualViewport = PageVisualViewport {
     pageVisualViewportClientHeight :: Int,
     pageVisualViewportScale :: Int,
     pageVisualViewportZoom :: Maybe Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  PageVisualViewport where
     parseJSON = A.withObject "PageVisualViewport" $ \v ->
          PageVisualViewport <$> v .:  "offsetX"
@@ -2255,7 +3230,7 @@ data PageViewport = PageViewport {
     pageViewportWidth :: Int,
     pageViewportHeight :: Int,
     pageViewportScale :: Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  PageViewport where
     parseJSON = A.withObject "PageViewport" $ \v ->
          PageViewport <$> v .:  "x"
@@ -2277,9 +3252,9 @@ instance ToJSON PageViewport  where
 
 
 data PagePrerenderFinalStatus = PagePrerenderFinalStatusActivated | PagePrerenderFinalStatusDestroyed | PagePrerenderFinalStatusLowEndDevice | PagePrerenderFinalStatusCrossOriginRedirect | PagePrerenderFinalStatusCrossOriginNavigation | PagePrerenderFinalStatusInvalidSchemeRedirect | PagePrerenderFinalStatusInvalidSchemeNavigation | PagePrerenderFinalStatusInProgressNavigation | PagePrerenderFinalStatusNavigationRequestBlockedByCsp | PagePrerenderFinalStatusMainFrameNavigation | PagePrerenderFinalStatusMojoBinderPolicy | PagePrerenderFinalStatusRendererProcessCrashed | PagePrerenderFinalStatusRendererProcessKilled | PagePrerenderFinalStatusDownload | PagePrerenderFinalStatusTriggerDestroyed | PagePrerenderFinalStatusNavigationNotCommitted | PagePrerenderFinalStatusNavigationBadHttpStatus | PagePrerenderFinalStatusClientCertRequested | PagePrerenderFinalStatusNavigationRequestNetworkError | PagePrerenderFinalStatusMaxNumOfRunningPrerendersExceeded | PagePrerenderFinalStatusCancelAllHostsForTesting | PagePrerenderFinalStatusDidFailLoad | PagePrerenderFinalStatusStop | PagePrerenderFinalStatusSslCertificateError | PagePrerenderFinalStatusLoginAuthRequested | PagePrerenderFinalStatusUaChangeRequiresReload | PagePrerenderFinalStatusBlockedByClient | PagePrerenderFinalStatusAudioOutputDeviceRequested | PagePrerenderFinalStatusMixedContent | PagePrerenderFinalStatusTriggerBackgrounded | PagePrerenderFinalStatusEmbedderTriggeredAndSameOriginRedirected | PagePrerenderFinalStatusEmbedderTriggeredAndCrossOriginRedirected | PagePrerenderFinalStatusEmbedderTriggeredAndDestroyed
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON PagePrerenderFinalStatus where
-    parseJSON = A.withText  "PagePrerenderFinalStatus"  $ \v -> 
+    parseJSON = A.withText  "PagePrerenderFinalStatus"  $ \v -> do
         pure $ case v of
                 "Activated" -> PagePrerenderFinalStatusActivated
                 "Destroyed" -> PagePrerenderFinalStatusDestroyed
@@ -2314,6 +3289,7 @@ instance FromJSON PagePrerenderFinalStatus where
                 "EmbedderTriggeredAndSameOriginRedirected" -> PagePrerenderFinalStatusEmbedderTriggeredAndSameOriginRedirected
                 "EmbedderTriggeredAndCrossOriginRedirected" -> PagePrerenderFinalStatusEmbedderTriggeredAndCrossOriginRedirected
                 "EmbedderTriggeredAndDestroyed" -> PagePrerenderFinalStatusEmbedderTriggeredAndDestroyed
+                _ -> error "failed to parse PagePrerenderFinalStatus"
 
 instance ToJSON PagePrerenderFinalStatus where
     toJSON v = A.String $
@@ -2355,7 +3331,7 @@ instance ToJSON PagePrerenderFinalStatus where
 
 data PageAddScriptToEvaluateOnNewDocument = PageAddScriptToEvaluateOnNewDocument {
     pageAddScriptToEvaluateOnNewDocumentIdentifier :: PageScriptIdentifier
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  PageAddScriptToEvaluateOnNewDocument where
     parseJSON = A.withObject "PageAddScriptToEvaluateOnNewDocument" $ \v ->
          PageAddScriptToEvaluateOnNewDocument <$> v .:  "identifier"
@@ -2363,7 +3339,7 @@ instance FromJSON  PageAddScriptToEvaluateOnNewDocument where
 
 
 pageAddScriptToEvaluateOnNewDocument :: Session -> String -> IO (Either Error PageAddScriptToEvaluateOnNewDocument)
-pageAddScriptToEvaluateOnNewDocument session pageAddScriptToEvaluateOnNewDocumentSource = sendReceiveCommandResult (conn session) ("Page","addScriptToEvaluateOnNewDocument") ([("pageAddScriptToEvaluateOnNewDocumentSource", ToJSONEx pageAddScriptToEvaluateOnNewDocumentSource)] ++ (catMaybes []))
+pageAddScriptToEvaluateOnNewDocument session pageAddScriptToEvaluateOnNewDocumentSource = sendReceiveCommandResult (conn session) ("Page","addScriptToEvaluateOnNewDocument") ([("source", ToJSONEx pageAddScriptToEvaluateOnNewDocumentSource)] ++ (catMaybes []))
 
 
 pageBringToFront :: Session -> IO (Maybe Error)
@@ -2371,7 +3347,7 @@ pageBringToFront session  = sendReceiveCommand (conn session) ("Page","bringToFr
 
 data PageCaptureScreenshot = PageCaptureScreenshot {
     pageCaptureScreenshotData :: String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  PageCaptureScreenshot where
     parseJSON = A.withObject "PageCaptureScreenshot" $ \v ->
          PageCaptureScreenshot <$> v .:  "data"
@@ -2379,11 +3355,11 @@ instance FromJSON  PageCaptureScreenshot where
 
 
 pageCaptureScreenshot :: Session -> Maybe String -> Maybe Int -> Maybe PageViewport -> IO (Either Error PageCaptureScreenshot)
-pageCaptureScreenshot session pageCaptureScreenshotFormat pageCaptureScreenshotQuality pageCaptureScreenshotClip = sendReceiveCommandResult (conn session) ("Page","captureScreenshot") ([] ++ (catMaybes [fmap (("pageCaptureScreenshotFormat",) . ToJSONEx) pageCaptureScreenshotFormat, fmap (("pageCaptureScreenshotQuality",) . ToJSONEx) pageCaptureScreenshotQuality, fmap (("pageCaptureScreenshotClip",) . ToJSONEx) pageCaptureScreenshotClip]))
+pageCaptureScreenshot session pageCaptureScreenshotFormat pageCaptureScreenshotQuality pageCaptureScreenshotClip = sendReceiveCommandResult (conn session) ("Page","captureScreenshot") ([] ++ (catMaybes [fmap (("format",) . ToJSONEx) pageCaptureScreenshotFormat, fmap (("quality",) . ToJSONEx) pageCaptureScreenshotQuality, fmap (("clip",) . ToJSONEx) pageCaptureScreenshotClip]))
 
 data PageCreateIsolatedWorld = PageCreateIsolatedWorld {
     pageCreateIsolatedWorldExecutionContextId :: RuntimeExecutionContextId
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  PageCreateIsolatedWorld where
     parseJSON = A.withObject "PageCreateIsolatedWorld" $ \v ->
          PageCreateIsolatedWorld <$> v .:  "executionContextId"
@@ -2391,7 +3367,7 @@ instance FromJSON  PageCreateIsolatedWorld where
 
 
 pageCreateIsolatedWorld :: Session -> PageFrameId -> Maybe String -> Maybe Bool -> IO (Either Error PageCreateIsolatedWorld)
-pageCreateIsolatedWorld session pageCreateIsolatedWorldFrameId pageCreateIsolatedWorldWorldName pageCreateIsolatedWorldGrantUniveralAccess = sendReceiveCommandResult (conn session) ("Page","createIsolatedWorld") ([("pageCreateIsolatedWorldFrameId", ToJSONEx pageCreateIsolatedWorldFrameId)] ++ (catMaybes [fmap (("pageCreateIsolatedWorldWorldName",) . ToJSONEx) pageCreateIsolatedWorldWorldName, fmap (("pageCreateIsolatedWorldGrantUniveralAccess",) . ToJSONEx) pageCreateIsolatedWorldGrantUniveralAccess]))
+pageCreateIsolatedWorld session pageCreateIsolatedWorldFrameId pageCreateIsolatedWorldWorldName pageCreateIsolatedWorldGrantUniveralAccess = sendReceiveCommandResult (conn session) ("Page","createIsolatedWorld") ([("frameId", ToJSONEx pageCreateIsolatedWorldFrameId)] ++ (catMaybes [fmap (("worldName",) . ToJSONEx) pageCreateIsolatedWorldWorldName, fmap (("grantUniveralAccess",) . ToJSONEx) pageCreateIsolatedWorldGrantUniveralAccess]))
 
 
 pageDisable :: Session -> IO (Maybe Error)
@@ -2405,7 +3381,7 @@ data PageGetAppManifest = PageGetAppManifest {
     pageGetAppManifestUrl :: String,
     pageGetAppManifestErrors :: [PageAppManifestError],
     pageGetAppManifestData :: Maybe String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  PageGetAppManifest where
     parseJSON = A.withObject "PageGetAppManifest" $ \v ->
          PageGetAppManifest <$> v .:  "url"
@@ -2419,7 +3395,7 @@ pageGetAppManifest session  = sendReceiveCommandResult (conn session) ("Page","g
 
 data PageGetFrameTree = PageGetFrameTree {
     pageGetFrameTreeFrameTree :: PageFrameTree
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  PageGetFrameTree where
     parseJSON = A.withObject "PageGetFrameTree" $ \v ->
          PageGetFrameTree <$> v .:  "frameTree"
@@ -2433,7 +3409,7 @@ data PageGetLayoutMetrics = PageGetLayoutMetrics {
     pageGetLayoutMetricsCssLayoutViewport :: PageLayoutViewport,
     pageGetLayoutMetricsCssVisualViewport :: PageVisualViewport,
     pageGetLayoutMetricsCssContentSize :: DOMRect
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  PageGetLayoutMetrics where
     parseJSON = A.withObject "PageGetLayoutMetrics" $ \v ->
          PageGetLayoutMetrics <$> v .:  "cssLayoutViewport"
@@ -2448,7 +3424,7 @@ pageGetLayoutMetrics session  = sendReceiveCommandResult (conn session) ("Page",
 data PageGetNavigationHistory = PageGetNavigationHistory {
     pageGetNavigationHistoryCurrentIndex :: Int,
     pageGetNavigationHistoryEntries :: [PageNavigationEntry]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  PageGetNavigationHistory where
     parseJSON = A.withObject "PageGetNavigationHistory" $ \v ->
          PageGetNavigationHistory <$> v .:  "currentIndex"
@@ -2465,13 +3441,13 @@ pageResetNavigationHistory session  = sendReceiveCommand (conn session) ("Page",
 
 
 pageHandleJavaScriptDialog :: Session -> Bool -> Maybe String -> IO (Maybe Error)
-pageHandleJavaScriptDialog session pageHandleJavaScriptDialogAccept pageHandleJavaScriptDialogPromptText = sendReceiveCommand (conn session) ("Page","handleJavaScriptDialog") ([("pageHandleJavaScriptDialogAccept", ToJSONEx pageHandleJavaScriptDialogAccept)] ++ (catMaybes [fmap (("pageHandleJavaScriptDialogPromptText",) . ToJSONEx) pageHandleJavaScriptDialogPromptText]))
+pageHandleJavaScriptDialog session pageHandleJavaScriptDialogAccept pageHandleJavaScriptDialogPromptText = sendReceiveCommand (conn session) ("Page","handleJavaScriptDialog") ([("accept", ToJSONEx pageHandleJavaScriptDialogAccept)] ++ (catMaybes [fmap (("promptText",) . ToJSONEx) pageHandleJavaScriptDialogPromptText]))
 
 data PageNavigate = PageNavigate {
     pageNavigateFrameId :: PageFrameId,
     pageNavigateLoaderId :: Maybe NetworkLoaderId,
     pageNavigateErrorText :: Maybe String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  PageNavigate where
     parseJSON = A.withObject "PageNavigate" $ \v ->
          PageNavigate <$> v .:  "frameId"
@@ -2481,15 +3457,15 @@ instance FromJSON  PageNavigate where
 
 
 pageNavigate :: Session -> String -> Maybe String -> Maybe PageTransitionType -> Maybe PageFrameId -> IO (Either Error PageNavigate)
-pageNavigate session pageNavigateUrl pageNavigateReferrer pageNavigateTransitionType pageNavigateFrameId = sendReceiveCommandResult (conn session) ("Page","navigate") ([("pageNavigateUrl", ToJSONEx pageNavigateUrl)] ++ (catMaybes [fmap (("pageNavigateReferrer",) . ToJSONEx) pageNavigateReferrer, fmap (("pageNavigateTransitionType",) . ToJSONEx) pageNavigateTransitionType, fmap (("pageNavigateFrameId",) . ToJSONEx) pageNavigateFrameId]))
+pageNavigate session pageNavigateUrl pageNavigateReferrer pageNavigateTransitionType pageNavigateFrameId = sendReceiveCommandResult (conn session) ("Page","navigate") ([("url", ToJSONEx pageNavigateUrl)] ++ (catMaybes [fmap (("referrer",) . ToJSONEx) pageNavigateReferrer, fmap (("transitionType",) . ToJSONEx) pageNavigateTransitionType, fmap (("frameId",) . ToJSONEx) pageNavigateFrameId]))
 
 
 pageNavigateToHistoryEntry :: Session -> Int -> IO (Maybe Error)
-pageNavigateToHistoryEntry session pageNavigateToHistoryEntryEntryId = sendReceiveCommand (conn session) ("Page","navigateToHistoryEntry") ([("pageNavigateToHistoryEntryEntryId", ToJSONEx pageNavigateToHistoryEntryEntryId)] ++ (catMaybes []))
+pageNavigateToHistoryEntry session pageNavigateToHistoryEntryEntryId = sendReceiveCommand (conn session) ("Page","navigateToHistoryEntry") ([("entryId", ToJSONEx pageNavigateToHistoryEntryEntryId)] ++ (catMaybes []))
 
 data PagePrintToPDF = PagePrintToPDF {
     pagePrintToPDFData :: String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  PagePrintToPDF where
     parseJSON = A.withObject "PagePrintToPDF" $ \v ->
          PagePrintToPDF <$> v .:  "data"
@@ -2497,19 +3473,19 @@ instance FromJSON  PagePrintToPDF where
 
 
 pagePrintToPDF :: Session -> Maybe Bool -> Maybe Bool -> Maybe Bool -> Maybe Int -> Maybe Int -> Maybe Int -> Maybe Int -> Maybe Int -> Maybe Int -> Maybe Int -> Maybe String -> Maybe String -> Maybe String -> Maybe Bool -> IO (Either Error PagePrintToPDF)
-pagePrintToPDF session pagePrintToPDFLandscape pagePrintToPDFDisplayHeaderFooter pagePrintToPDFPrintBackground pagePrintToPDFScale pagePrintToPDFPaperWidth pagePrintToPDFPaperHeight pagePrintToPDFMarginTop pagePrintToPDFMarginBottom pagePrintToPDFMarginLeft pagePrintToPDFMarginRight pagePrintToPDFPageRanges pagePrintToPDFHeaderTemplate pagePrintToPDFFooterTemplate pagePrintToPDFPreferCssPageSize = sendReceiveCommandResult (conn session) ("Page","printToPDF") ([] ++ (catMaybes [fmap (("pagePrintToPDFLandscape",) . ToJSONEx) pagePrintToPDFLandscape, fmap (("pagePrintToPDFDisplayHeaderFooter",) . ToJSONEx) pagePrintToPDFDisplayHeaderFooter, fmap (("pagePrintToPDFPrintBackground",) . ToJSONEx) pagePrintToPDFPrintBackground, fmap (("pagePrintToPDFScale",) . ToJSONEx) pagePrintToPDFScale, fmap (("pagePrintToPDFPaperWidth",) . ToJSONEx) pagePrintToPDFPaperWidth, fmap (("pagePrintToPDFPaperHeight",) . ToJSONEx) pagePrintToPDFPaperHeight, fmap (("pagePrintToPDFMarginTop",) . ToJSONEx) pagePrintToPDFMarginTop, fmap (("pagePrintToPDFMarginBottom",) . ToJSONEx) pagePrintToPDFMarginBottom, fmap (("pagePrintToPDFMarginLeft",) . ToJSONEx) pagePrintToPDFMarginLeft, fmap (("pagePrintToPDFMarginRight",) . ToJSONEx) pagePrintToPDFMarginRight, fmap (("pagePrintToPDFPageRanges",) . ToJSONEx) pagePrintToPDFPageRanges, fmap (("pagePrintToPDFHeaderTemplate",) . ToJSONEx) pagePrintToPDFHeaderTemplate, fmap (("pagePrintToPDFFooterTemplate",) . ToJSONEx) pagePrintToPDFFooterTemplate, fmap (("pagePrintToPDFPreferCssPageSize",) . ToJSONEx) pagePrintToPDFPreferCssPageSize]))
+pagePrintToPDF session pagePrintToPdfLandscape pagePrintToPdfDisplayHeaderFooter pagePrintToPdfPrintBackground pagePrintToPdfScale pagePrintToPdfPaperWidth pagePrintToPdfPaperHeight pagePrintToPdfMarginTop pagePrintToPdfMarginBottom pagePrintToPdfMarginLeft pagePrintToPdfMarginRight pagePrintToPdfPageRanges pagePrintToPdfHeaderTemplate pagePrintToPdfFooterTemplate pagePrintToPdfPreferCssPageSize = sendReceiveCommandResult (conn session) ("Page","printToPDF") ([] ++ (catMaybes [fmap (("landscape",) . ToJSONEx) pagePrintToPdfLandscape, fmap (("displayHeaderFooter",) . ToJSONEx) pagePrintToPdfDisplayHeaderFooter, fmap (("printBackground",) . ToJSONEx) pagePrintToPdfPrintBackground, fmap (("scale",) . ToJSONEx) pagePrintToPdfScale, fmap (("paperWidth",) . ToJSONEx) pagePrintToPdfPaperWidth, fmap (("paperHeight",) . ToJSONEx) pagePrintToPdfPaperHeight, fmap (("marginTop",) . ToJSONEx) pagePrintToPdfMarginTop, fmap (("marginBottom",) . ToJSONEx) pagePrintToPdfMarginBottom, fmap (("marginLeft",) . ToJSONEx) pagePrintToPdfMarginLeft, fmap (("marginRight",) . ToJSONEx) pagePrintToPdfMarginRight, fmap (("pageRanges",) . ToJSONEx) pagePrintToPdfPageRanges, fmap (("headerTemplate",) . ToJSONEx) pagePrintToPdfHeaderTemplate, fmap (("footerTemplate",) . ToJSONEx) pagePrintToPdfFooterTemplate, fmap (("preferCSSPageSize",) . ToJSONEx) pagePrintToPdfPreferCssPageSize]))
 
 
 pageReload :: Session -> Maybe Bool -> Maybe String -> IO (Maybe Error)
-pageReload session pageReloadIgnoreCache pageReloadScriptToEvaluateOnLoad = sendReceiveCommand (conn session) ("Page","reload") ([] ++ (catMaybes [fmap (("pageReloadIgnoreCache",) . ToJSONEx) pageReloadIgnoreCache, fmap (("pageReloadScriptToEvaluateOnLoad",) . ToJSONEx) pageReloadScriptToEvaluateOnLoad]))
+pageReload session pageReloadIgnoreCache pageReloadScriptToEvaluateOnLoad = sendReceiveCommand (conn session) ("Page","reload") ([] ++ (catMaybes [fmap (("ignoreCache",) . ToJSONEx) pageReloadIgnoreCache, fmap (("scriptToEvaluateOnLoad",) . ToJSONEx) pageReloadScriptToEvaluateOnLoad]))
 
 
 pageRemoveScriptToEvaluateOnNewDocument :: Session -> PageScriptIdentifier -> IO (Maybe Error)
-pageRemoveScriptToEvaluateOnNewDocument session pageRemoveScriptToEvaluateOnNewDocumentIdentifier = sendReceiveCommand (conn session) ("Page","removeScriptToEvaluateOnNewDocument") ([("pageRemoveScriptToEvaluateOnNewDocumentIdentifier", ToJSONEx pageRemoveScriptToEvaluateOnNewDocumentIdentifier)] ++ (catMaybes []))
+pageRemoveScriptToEvaluateOnNewDocument session pageRemoveScriptToEvaluateOnNewDocumentIdentifier = sendReceiveCommand (conn session) ("Page","removeScriptToEvaluateOnNewDocument") ([("identifier", ToJSONEx pageRemoveScriptToEvaluateOnNewDocumentIdentifier)] ++ (catMaybes []))
 
 
 pageSetDocumentContent :: Session -> PageFrameId -> String -> IO (Maybe Error)
-pageSetDocumentContent session pageSetDocumentContentFrameId pageSetDocumentContentHtml = sendReceiveCommand (conn session) ("Page","setDocumentContent") ([("pageSetDocumentContentFrameId", ToJSONEx pageSetDocumentContentFrameId), ("pageSetDocumentContentHtml", ToJSONEx pageSetDocumentContentHtml)] ++ (catMaybes []))
+pageSetDocumentContent session pageSetDocumentContentFrameId pageSetDocumentContentHtml = sendReceiveCommand (conn session) ("Page","setDocumentContent") ([("frameId", ToJSONEx pageSetDocumentContentFrameId), ("html", ToJSONEx pageSetDocumentContentHtml)] ++ (catMaybes []))
 
 
 pageStopLoading :: Session -> IO (Maybe Error)
@@ -2517,10 +3493,28 @@ pageStopLoading session  = sendReceiveCommand (conn session) ("Page","stopLoadin
 
 
 
+data PerformanceMetrics = PerformanceMetrics {
+    performanceMetricsMetrics :: [PerformanceMetric],
+    performanceMetricsTitle :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PerformanceMetrics where
+    parseJSON = A.withObject "PerformanceMetrics" $ \v ->
+         PerformanceMetrics <$> v .:  "metrics"
+            <*> v  .:  "title"
+
+
+instance ToJSON PerformanceMetrics  where
+    toJSON v = A.object
+        [ "metrics" .= performanceMetricsMetrics v
+        , "title" .= performanceMetricsTitle v
+        ]
+
+
+
 data PerformanceMetric = PerformanceMetric {
     performanceMetricName :: String,
     performanceMetricValue :: Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  PerformanceMetric where
     parseJSON = A.withObject "PerformanceMetric" $ \v ->
          PerformanceMetric <$> v .:  "name"
@@ -2540,11 +3534,11 @@ performanceDisable session  = sendReceiveCommand (conn session) ("Performance","
 
 
 performanceEnable :: Session -> Maybe String -> IO (Maybe Error)
-performanceEnable session performanceEnableTimeDomain = sendReceiveCommand (conn session) ("Performance","enable") ([] ++ (catMaybes [fmap (("performanceEnableTimeDomain",) . ToJSONEx) performanceEnableTimeDomain]))
+performanceEnable session performanceEnableTimeDomain = sendReceiveCommand (conn session) ("Performance","enable") ([] ++ (catMaybes [fmap (("timeDomain",) . ToJSONEx) performanceEnableTimeDomain]))
 
 data PerformanceGetMetrics = PerformanceGetMetrics {
     performanceGetMetricsMetrics :: [PerformanceMetric]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  PerformanceGetMetrics where
     parseJSON = A.withObject "PerformanceGetMetrics" $ \v ->
          PerformanceGetMetrics <$> v .:  "metrics"
@@ -2556,16 +3550,18 @@ performanceGetMetrics session  = sendReceiveCommandResult (conn session) ("Perfo
 
 
 
+
 type SecurityCertificateId = Int
 
 data SecurityMixedContentType = SecurityMixedContentTypeBlockable | SecurityMixedContentTypeOptionallyBlockable | SecurityMixedContentTypeNone
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON SecurityMixedContentType where
-    parseJSON = A.withText  "SecurityMixedContentType"  $ \v -> 
+    parseJSON = A.withText  "SecurityMixedContentType"  $ \v -> do
         pure $ case v of
                 "blockable" -> SecurityMixedContentTypeBlockable
                 "optionally-blockable" -> SecurityMixedContentTypeOptionallyBlockable
                 "none" -> SecurityMixedContentTypeNone
+                _ -> error "failed to parse SecurityMixedContentType"
 
 instance ToJSON SecurityMixedContentType where
     toJSON v = A.String $
@@ -2577,9 +3573,9 @@ instance ToJSON SecurityMixedContentType where
 
 
 data SecuritySecurityState = SecuritySecurityStateUnknown | SecuritySecurityStateNeutral | SecuritySecurityStateInsecure | SecuritySecurityStateSecure | SecuritySecurityStateInfo | SecuritySecurityStateInsecureBroken
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON SecuritySecurityState where
-    parseJSON = A.withText  "SecuritySecurityState"  $ \v -> 
+    parseJSON = A.withText  "SecuritySecurityState"  $ \v -> do
         pure $ case v of
                 "unknown" -> SecuritySecurityStateUnknown
                 "neutral" -> SecuritySecurityStateNeutral
@@ -2587,6 +3583,7 @@ instance FromJSON SecuritySecurityState where
                 "secure" -> SecuritySecurityStateSecure
                 "info" -> SecuritySecurityStateInfo
                 "insecure-broken" -> SecuritySecurityStateInsecureBroken
+                _ -> error "failed to parse SecuritySecurityState"
 
 instance ToJSON SecuritySecurityState where
     toJSON v = A.String $
@@ -2608,7 +3605,7 @@ data SecuritySecurityStateExplanation = SecuritySecurityStateExplanation {
     securitySecurityStateExplanationMixedContentType :: SecurityMixedContentType,
     securitySecurityStateExplanationCertificate :: [String],
     securitySecurityStateExplanationRecommendations :: Maybe [String]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  SecuritySecurityStateExplanation where
     parseJSON = A.withObject "SecuritySecurityStateExplanation" $ \v ->
          SecuritySecurityStateExplanation <$> v .:  "securityState"
@@ -2634,12 +3631,13 @@ instance ToJSON SecuritySecurityStateExplanation  where
 
 
 data SecurityCertificateErrorAction = SecurityCertificateErrorActionContinue | SecurityCertificateErrorActionCancel
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON SecurityCertificateErrorAction where
-    parseJSON = A.withText  "SecurityCertificateErrorAction"  $ \v -> 
+    parseJSON = A.withText  "SecurityCertificateErrorAction"  $ \v -> do
         pure $ case v of
                 "continue" -> SecurityCertificateErrorActionContinue
                 "cancel" -> SecurityCertificateErrorActionCancel
+                _ -> error "failed to parse SecurityCertificateErrorAction"
 
 instance ToJSON SecurityCertificateErrorAction where
     toJSON v = A.String $
@@ -2658,6 +3656,86 @@ securityEnable session  = sendReceiveCommand (conn session) ("Security","enable"
 
 
 
+data TargetReceivedMessageFromTarget = TargetReceivedMessageFromTarget {
+    targetReceivedMessageFromTargetSessionId :: TargetSessionID,
+    targetReceivedMessageFromTargetMessage :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  TargetReceivedMessageFromTarget where
+    parseJSON = A.withObject "TargetReceivedMessageFromTarget" $ \v ->
+         TargetReceivedMessageFromTarget <$> v .:  "sessionId"
+            <*> v  .:  "message"
+
+
+instance ToJSON TargetReceivedMessageFromTarget  where
+    toJSON v = A.object
+        [ "sessionId" .= targetReceivedMessageFromTargetSessionId v
+        , "message" .= targetReceivedMessageFromTargetMessage v
+        ]
+
+
+data TargetTargetCreated = TargetTargetCreated {
+    targetTargetCreatedTargetInfo :: TargetTargetInfo
+} deriving (Eq, Show, Read)
+instance FromJSON  TargetTargetCreated where
+    parseJSON = A.withObject "TargetTargetCreated" $ \v ->
+         TargetTargetCreated <$> v .:  "targetInfo"
+
+
+instance ToJSON TargetTargetCreated  where
+    toJSON v = A.object
+        [ "targetInfo" .= targetTargetCreatedTargetInfo v
+        ]
+
+
+data TargetTargetDestroyed = TargetTargetDestroyed {
+    targetTargetDestroyedTargetId :: TargetTargetID
+} deriving (Eq, Show, Read)
+instance FromJSON  TargetTargetDestroyed where
+    parseJSON = A.withObject "TargetTargetDestroyed" $ \v ->
+         TargetTargetDestroyed <$> v .:  "targetId"
+
+
+instance ToJSON TargetTargetDestroyed  where
+    toJSON v = A.object
+        [ "targetId" .= targetTargetDestroyedTargetId v
+        ]
+
+
+data TargetTargetCrashed = TargetTargetCrashed {
+    targetTargetCrashedTargetId :: TargetTargetID,
+    targetTargetCrashedStatus :: String,
+    targetTargetCrashedErrorCode :: Int
+} deriving (Eq, Show, Read)
+instance FromJSON  TargetTargetCrashed where
+    parseJSON = A.withObject "TargetTargetCrashed" $ \v ->
+         TargetTargetCrashed <$> v .:  "targetId"
+            <*> v  .:  "status"
+            <*> v  .:  "errorCode"
+
+
+instance ToJSON TargetTargetCrashed  where
+    toJSON v = A.object
+        [ "targetId" .= targetTargetCrashedTargetId v
+        , "status" .= targetTargetCrashedStatus v
+        , "errorCode" .= targetTargetCrashedErrorCode v
+        ]
+
+
+data TargetTargetInfoChanged = TargetTargetInfoChanged {
+    targetTargetInfoChangedTargetInfo :: TargetTargetInfo
+} deriving (Eq, Show, Read)
+instance FromJSON  TargetTargetInfoChanged where
+    parseJSON = A.withObject "TargetTargetInfoChanged" $ \v ->
+         TargetTargetInfoChanged <$> v .:  "targetInfo"
+
+
+instance ToJSON TargetTargetInfoChanged  where
+    toJSON v = A.object
+        [ "targetInfo" .= targetTargetInfoChangedTargetInfo v
+        ]
+
+
+
 type TargetTargetID = String
 
 type TargetSessionID = String
@@ -2669,7 +3747,7 @@ data TargetTargetInfo = TargetTargetInfo {
     targetTargetInfoUrl :: String,
     targetTargetInfoAttached :: Bool,
     targetTargetInfoOpenerId :: Maybe TargetTargetID
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  TargetTargetInfo where
     parseJSON = A.withObject "TargetTargetInfo" $ \v ->
          TargetTargetInfo <$> v .:  "targetId"
@@ -2693,11 +3771,11 @@ instance ToJSON TargetTargetInfo  where
 
 
 targetActivateTarget :: Session -> TargetTargetID -> IO (Maybe Error)
-targetActivateTarget session targetActivateTargetTargetId = sendReceiveCommand (conn session) ("Target","activateTarget") ([("targetActivateTargetTargetId", ToJSONEx targetActivateTargetTargetId)] ++ (catMaybes []))
+targetActivateTarget session targetActivateTargetTargetId = sendReceiveCommand (conn session) ("Target","activateTarget") ([("targetId", ToJSONEx targetActivateTargetTargetId)] ++ (catMaybes []))
 
 data TargetAttachToTarget = TargetAttachToTarget {
     targetAttachToTargetSessionId :: TargetSessionID
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  TargetAttachToTarget where
     parseJSON = A.withObject "TargetAttachToTarget" $ \v ->
          TargetAttachToTarget <$> v .:  "sessionId"
@@ -2705,15 +3783,15 @@ instance FromJSON  TargetAttachToTarget where
 
 
 targetAttachToTarget :: Session -> TargetTargetID -> Maybe Bool -> IO (Either Error TargetAttachToTarget)
-targetAttachToTarget session targetAttachToTargetTargetId targetAttachToTargetFlatten = sendReceiveCommandResult (conn session) ("Target","attachToTarget") ([("targetAttachToTargetTargetId", ToJSONEx targetAttachToTargetTargetId)] ++ (catMaybes [fmap (("targetAttachToTargetFlatten",) . ToJSONEx) targetAttachToTargetFlatten]))
+targetAttachToTarget session targetAttachToTargetTargetId targetAttachToTargetFlatten = sendReceiveCommandResult (conn session) ("Target","attachToTarget") ([("targetId", ToJSONEx targetAttachToTargetTargetId)] ++ (catMaybes [fmap (("flatten",) . ToJSONEx) targetAttachToTargetFlatten]))
 
 
 targetCloseTarget :: Session -> TargetTargetID -> IO (Maybe Error)
-targetCloseTarget session targetCloseTargetTargetId = sendReceiveCommand (conn session) ("Target","closeTarget") ([("targetCloseTargetTargetId", ToJSONEx targetCloseTargetTargetId)] ++ (catMaybes []))
+targetCloseTarget session targetCloseTargetTargetId = sendReceiveCommand (conn session) ("Target","closeTarget") ([("targetId", ToJSONEx targetCloseTargetTargetId)] ++ (catMaybes []))
 
 data TargetCreateTarget = TargetCreateTarget {
     targetCreateTargetTargetId :: TargetTargetID
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  TargetCreateTarget where
     parseJSON = A.withObject "TargetCreateTarget" $ \v ->
          TargetCreateTarget <$> v .:  "targetId"
@@ -2721,15 +3799,15 @@ instance FromJSON  TargetCreateTarget where
 
 
 targetCreateTarget :: Session -> String -> Maybe Int -> Maybe Int -> Maybe Bool -> Maybe Bool -> IO (Either Error TargetCreateTarget)
-targetCreateTarget session targetCreateTargetUrl targetCreateTargetWidth targetCreateTargetHeight targetCreateTargetNewWindow targetCreateTargetBackground = sendReceiveCommandResult (conn session) ("Target","createTarget") ([("targetCreateTargetUrl", ToJSONEx targetCreateTargetUrl)] ++ (catMaybes [fmap (("targetCreateTargetWidth",) . ToJSONEx) targetCreateTargetWidth, fmap (("targetCreateTargetHeight",) . ToJSONEx) targetCreateTargetHeight, fmap (("targetCreateTargetNewWindow",) . ToJSONEx) targetCreateTargetNewWindow, fmap (("targetCreateTargetBackground",) . ToJSONEx) targetCreateTargetBackground]))
+targetCreateTarget session targetCreateTargetUrl targetCreateTargetWidth targetCreateTargetHeight targetCreateTargetNewWindow targetCreateTargetBackground = sendReceiveCommandResult (conn session) ("Target","createTarget") ([("url", ToJSONEx targetCreateTargetUrl)] ++ (catMaybes [fmap (("width",) . ToJSONEx) targetCreateTargetWidth, fmap (("height",) . ToJSONEx) targetCreateTargetHeight, fmap (("newWindow",) . ToJSONEx) targetCreateTargetNewWindow, fmap (("background",) . ToJSONEx) targetCreateTargetBackground]))
 
 
 targetDetachFromTarget :: Session -> Maybe TargetSessionID -> IO (Maybe Error)
-targetDetachFromTarget session targetDetachFromTargetSessionId = sendReceiveCommand (conn session) ("Target","detachFromTarget") ([] ++ (catMaybes [fmap (("targetDetachFromTargetSessionId",) . ToJSONEx) targetDetachFromTargetSessionId]))
+targetDetachFromTarget session targetDetachFromTargetSessionId = sendReceiveCommand (conn session) ("Target","detachFromTarget") ([] ++ (catMaybes [fmap (("sessionId",) . ToJSONEx) targetDetachFromTargetSessionId]))
 
 data TargetGetTargets = TargetGetTargets {
     targetGetTargetsTargetInfos :: [TargetTargetInfo]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  TargetGetTargets where
     parseJSON = A.withObject "TargetGetTargets" $ \v ->
          TargetGetTargets <$> v .:  "targetInfos"
@@ -2741,19 +3819,85 @@ targetGetTargets session  = sendReceiveCommandResult (conn session) ("Target","g
 
 
 targetSetDiscoverTargets :: Session -> Bool -> IO (Maybe Error)
-targetSetDiscoverTargets session targetSetDiscoverTargetsDiscover = sendReceiveCommand (conn session) ("Target","setDiscoverTargets") ([("targetSetDiscoverTargetsDiscover", ToJSONEx targetSetDiscoverTargetsDiscover)] ++ (catMaybes []))
+targetSetDiscoverTargets session targetSetDiscoverTargetsDiscover = sendReceiveCommand (conn session) ("Target","setDiscoverTargets") ([("discover", ToJSONEx targetSetDiscoverTargetsDiscover)] ++ (catMaybes []))
+
+
+
+data FetchRequestPaused = FetchRequestPaused {
+    fetchRequestPausedRequestId :: FetchRequestId,
+    fetchRequestPausedRequest :: NetworkRequest,
+    fetchRequestPausedFrameId :: PageFrameId,
+    fetchRequestPausedResourceType :: NetworkResourceType,
+    fetchRequestPausedResponseErrorReason :: Maybe NetworkErrorReason,
+    fetchRequestPausedResponseStatusCode :: Maybe Int,
+    fetchRequestPausedResponseStatusText :: Maybe String,
+    fetchRequestPausedResponseHeaders :: Maybe [FetchHeaderEntry],
+    fetchRequestPausedNetworkId :: Maybe FetchRequestId
+} deriving (Eq, Show, Read)
+instance FromJSON  FetchRequestPaused where
+    parseJSON = A.withObject "FetchRequestPaused" $ \v ->
+         FetchRequestPaused <$> v .:  "requestId"
+            <*> v  .:  "request"
+            <*> v  .:  "frameId"
+            <*> v  .:  "resourceType"
+            <*> v  .:?  "responseErrorReason"
+            <*> v  .:?  "responseStatusCode"
+            <*> v  .:?  "responseStatusText"
+            <*> v  .:?  "responseHeaders"
+            <*> v  .:?  "networkId"
+
+
+instance ToJSON FetchRequestPaused  where
+    toJSON v = A.object
+        [ "requestId" .= fetchRequestPausedRequestId v
+        , "request" .= fetchRequestPausedRequest v
+        , "frameId" .= fetchRequestPausedFrameId v
+        , "resourceType" .= fetchRequestPausedResourceType v
+        , "responseErrorReason" .= fetchRequestPausedResponseErrorReason v
+        , "responseStatusCode" .= fetchRequestPausedResponseStatusCode v
+        , "responseStatusText" .= fetchRequestPausedResponseStatusText v
+        , "responseHeaders" .= fetchRequestPausedResponseHeaders v
+        , "networkId" .= fetchRequestPausedNetworkId v
+        ]
+
+
+data FetchAuthRequired = FetchAuthRequired {
+    fetchAuthRequiredRequestId :: FetchRequestId,
+    fetchAuthRequiredRequest :: NetworkRequest,
+    fetchAuthRequiredFrameId :: PageFrameId,
+    fetchAuthRequiredResourceType :: NetworkResourceType,
+    fetchAuthRequiredAuthChallenge :: FetchAuthChallenge
+} deriving (Eq, Show, Read)
+instance FromJSON  FetchAuthRequired where
+    parseJSON = A.withObject "FetchAuthRequired" $ \v ->
+         FetchAuthRequired <$> v .:  "requestId"
+            <*> v  .:  "request"
+            <*> v  .:  "frameId"
+            <*> v  .:  "resourceType"
+            <*> v  .:  "authChallenge"
+
+
+instance ToJSON FetchAuthRequired  where
+    toJSON v = A.object
+        [ "requestId" .= fetchAuthRequiredRequestId v
+        , "request" .= fetchAuthRequiredRequest v
+        , "frameId" .= fetchAuthRequiredFrameId v
+        , "resourceType" .= fetchAuthRequiredResourceType v
+        , "authChallenge" .= fetchAuthRequiredAuthChallenge v
+        ]
 
 
 
 type FetchRequestId = String
 
 data FetchRequestStage = FetchRequestStageRequest | FetchRequestStageResponse
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON FetchRequestStage where
-    parseJSON = A.withText  "FetchRequestStage"  $ \v -> 
+    parseJSON = A.withText  "FetchRequestStage"  $ \v -> do
         pure $ case v of
                 "Request" -> FetchRequestStageRequest
                 "Response" -> FetchRequestStageResponse
+                _ -> error "failed to parse FetchRequestStage"
 
 instance ToJSON FetchRequestStage where
     toJSON v = A.String $
@@ -2767,7 +3911,7 @@ data FetchRequestPattern = FetchRequestPattern {
     fetchRequestPatternUrlPattern :: Maybe String,
     fetchRequestPatternResourceType :: Maybe NetworkResourceType,
     fetchRequestPatternRequestStage :: Maybe FetchRequestStage
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  FetchRequestPattern where
     parseJSON = A.withObject "FetchRequestPattern" $ \v ->
          FetchRequestPattern <$> v .:?  "urlPattern"
@@ -2787,7 +3931,7 @@ instance ToJSON FetchRequestPattern  where
 data FetchHeaderEntry = FetchHeaderEntry {
     fetchHeaderEntryName :: String,
     fetchHeaderEntryValue :: String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  FetchHeaderEntry where
     parseJSON = A.withObject "FetchHeaderEntry" $ \v ->
          FetchHeaderEntry <$> v .:  "name"
@@ -2807,7 +3951,7 @@ data FetchAuthChallenge = FetchAuthChallenge {
     fetchAuthChallengeScheme :: String,
     fetchAuthChallengeRealm :: String,
     fetchAuthChallengeSource :: Maybe String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  FetchAuthChallenge where
     parseJSON = A.withObject "FetchAuthChallenge" $ \v ->
          FetchAuthChallenge <$> v .:  "origin"
@@ -2830,7 +3974,7 @@ data FetchAuthChallengeResponse = FetchAuthChallengeResponse {
     fetchAuthChallengeResponseResponse :: String,
     fetchAuthChallengeResponseUsername :: Maybe String,
     fetchAuthChallengeResponsePassword :: Maybe String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  FetchAuthChallengeResponse where
     parseJSON = A.withObject "FetchAuthChallengeResponse" $ \v ->
          FetchAuthChallengeResponse <$> v .:  "response"
@@ -2852,28 +3996,28 @@ fetchDisable session  = sendReceiveCommand (conn session) ("Fetch","disable") ([
 
 
 fetchEnable :: Session -> Maybe [FetchRequestPattern] -> Maybe Bool -> IO (Maybe Error)
-fetchEnable session fetchEnablePatterns fetchEnableHandleAuthRequests = sendReceiveCommand (conn session) ("Fetch","enable") ([] ++ (catMaybes [fmap (("fetchEnablePatterns",) . ToJSONEx) fetchEnablePatterns, fmap (("fetchEnableHandleAuthRequests",) . ToJSONEx) fetchEnableHandleAuthRequests]))
+fetchEnable session fetchEnablePatterns fetchEnableHandleAuthRequests = sendReceiveCommand (conn session) ("Fetch","enable") ([] ++ (catMaybes [fmap (("patterns",) . ToJSONEx) fetchEnablePatterns, fmap (("handleAuthRequests",) . ToJSONEx) fetchEnableHandleAuthRequests]))
 
 
 fetchFailRequest :: Session -> FetchRequestId -> NetworkErrorReason -> IO (Maybe Error)
-fetchFailRequest session fetchFailRequestRequestId fetchFailRequestErrorReason = sendReceiveCommand (conn session) ("Fetch","failRequest") ([("fetchFailRequestRequestId", ToJSONEx fetchFailRequestRequestId), ("fetchFailRequestErrorReason", ToJSONEx fetchFailRequestErrorReason)] ++ (catMaybes []))
+fetchFailRequest session fetchFailRequestRequestId fetchFailRequestErrorReason = sendReceiveCommand (conn session) ("Fetch","failRequest") ([("requestId", ToJSONEx fetchFailRequestRequestId), ("errorReason", ToJSONEx fetchFailRequestErrorReason)] ++ (catMaybes []))
 
 
 fetchFulfillRequest :: Session -> FetchRequestId -> Int -> Maybe [FetchHeaderEntry] -> Maybe String -> Maybe String -> Maybe String -> IO (Maybe Error)
-fetchFulfillRequest session fetchFulfillRequestRequestId fetchFulfillRequestResponseCode fetchFulfillRequestResponseHeaders fetchFulfillRequestBinaryResponseHeaders fetchFulfillRequestBody fetchFulfillRequestResponsePhrase = sendReceiveCommand (conn session) ("Fetch","fulfillRequest") ([("fetchFulfillRequestRequestId", ToJSONEx fetchFulfillRequestRequestId), ("fetchFulfillRequestResponseCode", ToJSONEx fetchFulfillRequestResponseCode)] ++ (catMaybes [fmap (("fetchFulfillRequestResponseHeaders",) . ToJSONEx) fetchFulfillRequestResponseHeaders, fmap (("fetchFulfillRequestBinaryResponseHeaders",) . ToJSONEx) fetchFulfillRequestBinaryResponseHeaders, fmap (("fetchFulfillRequestBody",) . ToJSONEx) fetchFulfillRequestBody, fmap (("fetchFulfillRequestResponsePhrase",) . ToJSONEx) fetchFulfillRequestResponsePhrase]))
+fetchFulfillRequest session fetchFulfillRequestRequestId fetchFulfillRequestResponseCode fetchFulfillRequestResponseHeaders fetchFulfillRequestBinaryResponseHeaders fetchFulfillRequestBody fetchFulfillRequestResponsePhrase = sendReceiveCommand (conn session) ("Fetch","fulfillRequest") ([("requestId", ToJSONEx fetchFulfillRequestRequestId), ("responseCode", ToJSONEx fetchFulfillRequestResponseCode)] ++ (catMaybes [fmap (("responseHeaders",) . ToJSONEx) fetchFulfillRequestResponseHeaders, fmap (("binaryResponseHeaders",) . ToJSONEx) fetchFulfillRequestBinaryResponseHeaders, fmap (("body",) . ToJSONEx) fetchFulfillRequestBody, fmap (("responsePhrase",) . ToJSONEx) fetchFulfillRequestResponsePhrase]))
 
 
 fetchContinueRequest :: Session -> FetchRequestId -> Maybe String -> Maybe String -> Maybe String -> Maybe [FetchHeaderEntry] -> IO (Maybe Error)
-fetchContinueRequest session fetchContinueRequestRequestId fetchContinueRequestUrl fetchContinueRequestMethod fetchContinueRequestPostData fetchContinueRequestHeaders = sendReceiveCommand (conn session) ("Fetch","continueRequest") ([("fetchContinueRequestRequestId", ToJSONEx fetchContinueRequestRequestId)] ++ (catMaybes [fmap (("fetchContinueRequestUrl",) . ToJSONEx) fetchContinueRequestUrl, fmap (("fetchContinueRequestMethod",) . ToJSONEx) fetchContinueRequestMethod, fmap (("fetchContinueRequestPostData",) . ToJSONEx) fetchContinueRequestPostData, fmap (("fetchContinueRequestHeaders",) . ToJSONEx) fetchContinueRequestHeaders]))
+fetchContinueRequest session fetchContinueRequestRequestId fetchContinueRequestUrl fetchContinueRequestMethod fetchContinueRequestPostData fetchContinueRequestHeaders = sendReceiveCommand (conn session) ("Fetch","continueRequest") ([("requestId", ToJSONEx fetchContinueRequestRequestId)] ++ (catMaybes [fmap (("url",) . ToJSONEx) fetchContinueRequestUrl, fmap (("method",) . ToJSONEx) fetchContinueRequestMethod, fmap (("postData",) . ToJSONEx) fetchContinueRequestPostData, fmap (("headers",) . ToJSONEx) fetchContinueRequestHeaders]))
 
 
 fetchContinueWithAuth :: Session -> FetchRequestId -> FetchAuthChallengeResponse -> IO (Maybe Error)
-fetchContinueWithAuth session fetchContinueWithAuthRequestId fetchContinueWithAuthAuthChallengeResponse = sendReceiveCommand (conn session) ("Fetch","continueWithAuth") ([("fetchContinueWithAuthRequestId", ToJSONEx fetchContinueWithAuthRequestId), ("fetchContinueWithAuthAuthChallengeResponse", ToJSONEx fetchContinueWithAuthAuthChallengeResponse)] ++ (catMaybes []))
+fetchContinueWithAuth session fetchContinueWithAuthRequestId fetchContinueWithAuthAuthChallengeResponse = sendReceiveCommand (conn session) ("Fetch","continueWithAuth") ([("requestId", ToJSONEx fetchContinueWithAuthRequestId), ("authChallengeResponse", ToJSONEx fetchContinueWithAuthAuthChallengeResponse)] ++ (catMaybes []))
 
 data FetchGetResponseBody = FetchGetResponseBody {
     fetchGetResponseBodyBody :: String,
     fetchGetResponseBodyBase64Encoded :: Bool
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  FetchGetResponseBody where
     parseJSON = A.withObject "FetchGetResponseBody" $ \v ->
          FetchGetResponseBody <$> v .:  "body"
@@ -2882,11 +4026,11 @@ instance FromJSON  FetchGetResponseBody where
 
 
 fetchGetResponseBody :: Session -> FetchRequestId -> IO (Either Error FetchGetResponseBody)
-fetchGetResponseBody session fetchGetResponseBodyRequestId = sendReceiveCommandResult (conn session) ("Fetch","getResponseBody") ([("fetchGetResponseBodyRequestId", ToJSONEx fetchGetResponseBodyRequestId)] ++ (catMaybes []))
+fetchGetResponseBody session fetchGetResponseBodyRequestId = sendReceiveCommandResult (conn session) ("Fetch","getResponseBody") ([("requestId", ToJSONEx fetchGetResponseBodyRequestId)] ++ (catMaybes []))
 
 data FetchTakeResponseBodyAsStream = FetchTakeResponseBodyAsStream {
     fetchTakeResponseBodyAsStreamStream :: IOStreamHandle
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  FetchTakeResponseBodyAsStream where
     parseJSON = A.withObject "FetchTakeResponseBodyAsStream" $ \v ->
          FetchTakeResponseBodyAsStream <$> v .:  "stream"
@@ -2894,10 +4038,22 @@ instance FromJSON  FetchTakeResponseBodyAsStream where
 
 
 fetchTakeResponseBodyAsStream :: Session -> FetchRequestId -> IO (Either Error FetchTakeResponseBodyAsStream)
-fetchTakeResponseBodyAsStream session fetchTakeResponseBodyAsStreamRequestId = sendReceiveCommandResult (conn session) ("Fetch","takeResponseBodyAsStream") ([("fetchTakeResponseBodyAsStreamRequestId", ToJSONEx fetchTakeResponseBodyAsStreamRequestId)] ++ (catMaybes []))
+fetchTakeResponseBodyAsStream session fetchTakeResponseBodyAsStreamRequestId = sendReceiveCommandResult (conn session) ("Fetch","takeResponseBodyAsStream") ([("requestId", ToJSONEx fetchTakeResponseBodyAsStreamRequestId)] ++ (catMaybes []))
 
 
 
+data ConsoleMessageAdded = ConsoleMessageAdded {
+    consoleMessageAddedMessage :: ConsoleConsoleMessage
+} deriving (Eq, Show, Read)
+instance FromJSON  ConsoleMessageAdded where
+    parseJSON = A.withObject "ConsoleMessageAdded" $ \v ->
+         ConsoleMessageAdded <$> v .:  "message"
+
+
+instance ToJSON ConsoleMessageAdded  where
+    toJSON v = A.object
+        [ "message" .= consoleMessageAddedMessage v
+        ]
 
 
 
@@ -2908,7 +4064,7 @@ data ConsoleConsoleMessage = ConsoleConsoleMessage {
     consoleConsoleMessageUrl :: Maybe String,
     consoleConsoleMessageLine :: Maybe Int,
     consoleConsoleMessageColumn :: Maybe Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  ConsoleConsoleMessage where
     parseJSON = A.withObject "ConsoleConsoleMessage" $ \v ->
          ConsoleConsoleMessage <$> v .:  "source"
@@ -2944,6 +4100,158 @@ consoleEnable session  = sendReceiveCommand (conn session) ("Console","enable") 
 
 
 
+data DebuggerBreakpointResolved = DebuggerBreakpointResolved {
+    debuggerBreakpointResolvedBreakpointId :: DebuggerBreakpointId,
+    debuggerBreakpointResolvedLocation :: DebuggerLocation
+} deriving (Eq, Show, Read)
+instance FromJSON  DebuggerBreakpointResolved where
+    parseJSON = A.withObject "DebuggerBreakpointResolved" $ \v ->
+         DebuggerBreakpointResolved <$> v .:  "breakpointId"
+            <*> v  .:  "location"
+
+
+instance ToJSON DebuggerBreakpointResolved  where
+    toJSON v = A.object
+        [ "breakpointId" .= debuggerBreakpointResolvedBreakpointId v
+        , "location" .= debuggerBreakpointResolvedLocation v
+        ]
+
+
+data DebuggerPaused = DebuggerPaused {
+    debuggerPausedCallFrames :: [DebuggerCallFrame],
+    debuggerPausedReason :: String,
+    debuggerPausedData :: Maybe [(String, String)],
+    debuggerPausedHitBreakpoints :: Maybe [String],
+    debuggerPausedAsyncStackTrace :: Maybe RuntimeStackTrace
+} deriving (Eq, Show, Read)
+instance FromJSON  DebuggerPaused where
+    parseJSON = A.withObject "DebuggerPaused" $ \v ->
+         DebuggerPaused <$> v .:  "callFrames"
+            <*> v  .:  "reason"
+            <*> v  .:?  "data"
+            <*> v  .:?  "hitBreakpoints"
+            <*> v  .:?  "asyncStackTrace"
+
+
+instance ToJSON DebuggerPaused  where
+    toJSON v = A.object
+        [ "callFrames" .= debuggerPausedCallFrames v
+        , "reason" .= debuggerPausedReason v
+        , "data" .= debuggerPausedData v
+        , "hitBreakpoints" .= debuggerPausedHitBreakpoints v
+        , "asyncStackTrace" .= debuggerPausedAsyncStackTrace v
+        ]
+
+
+data DebuggerResumed = DebuggerResumed
+    deriving (Eq, Show, Read)
+instance FromJSON DebuggerResumed where
+    parseJSON = A.withText  "DebuggerResumed"  $ \v -> do
+        pure $ case v of
+                "DebuggerResumed" -> DebuggerResumed
+                _ -> error "failed to parse DebuggerResumed"
+
+data DebuggerScriptFailedToParse = DebuggerScriptFailedToParse {
+    debuggerScriptFailedToParseScriptId :: RuntimeScriptId,
+    debuggerScriptFailedToParseUrl :: String,
+    debuggerScriptFailedToParseStartLine :: Int,
+    debuggerScriptFailedToParseStartColumn :: Int,
+    debuggerScriptFailedToParseEndLine :: Int,
+    debuggerScriptFailedToParseEndColumn :: Int,
+    debuggerScriptFailedToParseExecutionContextId :: RuntimeExecutionContextId,
+    debuggerScriptFailedToParseHash :: String,
+    debuggerScriptFailedToParseExecutionContextAuxData :: Maybe [(String, String)],
+    debuggerScriptFailedToParseSourceMapUrl :: Maybe String,
+    debuggerScriptFailedToParseHasSourceUrl :: Maybe Bool,
+    debuggerScriptFailedToParseIsModule :: Maybe Bool,
+    debuggerScriptFailedToParseLength :: Maybe Int
+} deriving (Eq, Show, Read)
+instance FromJSON  DebuggerScriptFailedToParse where
+    parseJSON = A.withObject "DebuggerScriptFailedToParse" $ \v ->
+         DebuggerScriptFailedToParse <$> v .:  "scriptId"
+            <*> v  .:  "url"
+            <*> v  .:  "startLine"
+            <*> v  .:  "startColumn"
+            <*> v  .:  "endLine"
+            <*> v  .:  "endColumn"
+            <*> v  .:  "executionContextId"
+            <*> v  .:  "hash"
+            <*> v  .:?  "executionContextAuxData"
+            <*> v  .:?  "sourceMapURL"
+            <*> v  .:?  "hasSourceURL"
+            <*> v  .:?  "isModule"
+            <*> v  .:?  "length"
+
+
+instance ToJSON DebuggerScriptFailedToParse  where
+    toJSON v = A.object
+        [ "scriptId" .= debuggerScriptFailedToParseScriptId v
+        , "url" .= debuggerScriptFailedToParseUrl v
+        , "startLine" .= debuggerScriptFailedToParseStartLine v
+        , "startColumn" .= debuggerScriptFailedToParseStartColumn v
+        , "endLine" .= debuggerScriptFailedToParseEndLine v
+        , "endColumn" .= debuggerScriptFailedToParseEndColumn v
+        , "executionContextId" .= debuggerScriptFailedToParseExecutionContextId v
+        , "hash" .= debuggerScriptFailedToParseHash v
+        , "executionContextAuxData" .= debuggerScriptFailedToParseExecutionContextAuxData v
+        , "sourceMapURL" .= debuggerScriptFailedToParseSourceMapUrl v
+        , "hasSourceURL" .= debuggerScriptFailedToParseHasSourceUrl v
+        , "isModule" .= debuggerScriptFailedToParseIsModule v
+        , "length" .= debuggerScriptFailedToParseLength v
+        ]
+
+
+data DebuggerScriptParsed = DebuggerScriptParsed {
+    debuggerScriptParsedScriptId :: RuntimeScriptId,
+    debuggerScriptParsedUrl :: String,
+    debuggerScriptParsedStartLine :: Int,
+    debuggerScriptParsedStartColumn :: Int,
+    debuggerScriptParsedEndLine :: Int,
+    debuggerScriptParsedEndColumn :: Int,
+    debuggerScriptParsedExecutionContextId :: RuntimeExecutionContextId,
+    debuggerScriptParsedHash :: String,
+    debuggerScriptParsedExecutionContextAuxData :: Maybe [(String, String)],
+    debuggerScriptParsedSourceMapUrl :: Maybe String,
+    debuggerScriptParsedHasSourceUrl :: Maybe Bool,
+    debuggerScriptParsedIsModule :: Maybe Bool,
+    debuggerScriptParsedLength :: Maybe Int
+} deriving (Eq, Show, Read)
+instance FromJSON  DebuggerScriptParsed where
+    parseJSON = A.withObject "DebuggerScriptParsed" $ \v ->
+         DebuggerScriptParsed <$> v .:  "scriptId"
+            <*> v  .:  "url"
+            <*> v  .:  "startLine"
+            <*> v  .:  "startColumn"
+            <*> v  .:  "endLine"
+            <*> v  .:  "endColumn"
+            <*> v  .:  "executionContextId"
+            <*> v  .:  "hash"
+            <*> v  .:?  "executionContextAuxData"
+            <*> v  .:?  "sourceMapURL"
+            <*> v  .:?  "hasSourceURL"
+            <*> v  .:?  "isModule"
+            <*> v  .:?  "length"
+
+
+instance ToJSON DebuggerScriptParsed  where
+    toJSON v = A.object
+        [ "scriptId" .= debuggerScriptParsedScriptId v
+        , "url" .= debuggerScriptParsedUrl v
+        , "startLine" .= debuggerScriptParsedStartLine v
+        , "startColumn" .= debuggerScriptParsedStartColumn v
+        , "endLine" .= debuggerScriptParsedEndLine v
+        , "endColumn" .= debuggerScriptParsedEndColumn v
+        , "executionContextId" .= debuggerScriptParsedExecutionContextId v
+        , "hash" .= debuggerScriptParsedHash v
+        , "executionContextAuxData" .= debuggerScriptParsedExecutionContextAuxData v
+        , "sourceMapURL" .= debuggerScriptParsedSourceMapUrl v
+        , "hasSourceURL" .= debuggerScriptParsedHasSourceUrl v
+        , "isModule" .= debuggerScriptParsedIsModule v
+        , "length" .= debuggerScriptParsedLength v
+        ]
+
+
+
 type DebuggerBreakpointId = String
 
 type DebuggerCallFrameId = String
@@ -2952,7 +4260,7 @@ data DebuggerLocation = DebuggerLocation {
     debuggerLocationScriptId :: RuntimeScriptId,
     debuggerLocationLineNumber :: Int,
     debuggerLocationColumnNumber :: Maybe Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DebuggerLocation where
     parseJSON = A.withObject "DebuggerLocation" $ \v ->
          DebuggerLocation <$> v .:  "scriptId"
@@ -2977,7 +4285,7 @@ data DebuggerCallFrame = DebuggerCallFrame {
     debuggerCallFrameThis :: RuntimeRemoteObject,
     debuggerCallFrameFunctionLocation :: Maybe DebuggerLocation,
     debuggerCallFrameReturnValue :: Maybe RuntimeRemoteObject
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DebuggerCallFrame where
     parseJSON = A.withObject "DebuggerCallFrame" $ \v ->
          DebuggerCallFrame <$> v .:  "callFrameId"
@@ -3008,7 +4316,7 @@ data DebuggerScope = DebuggerScope {
     debuggerScopeName :: Maybe String,
     debuggerScopeStartLocation :: Maybe DebuggerLocation,
     debuggerScopeEndLocation :: Maybe DebuggerLocation
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DebuggerScope where
     parseJSON = A.withObject "DebuggerScope" $ \v ->
          DebuggerScope <$> v .:  "type"
@@ -3032,7 +4340,7 @@ instance ToJSON DebuggerScope  where
 data DebuggerSearchMatch = DebuggerSearchMatch {
     debuggerSearchMatchLineNumber :: Int,
     debuggerSearchMatchLineContent :: String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DebuggerSearchMatch where
     parseJSON = A.withObject "DebuggerSearchMatch" $ \v ->
          DebuggerSearchMatch <$> v .:  "lineNumber"
@@ -3052,7 +4360,7 @@ data DebuggerBreakLocation = DebuggerBreakLocation {
     debuggerBreakLocationLineNumber :: Int,
     debuggerBreakLocationColumnNumber :: Maybe Int,
     debuggerBreakLocationType :: Maybe String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DebuggerBreakLocation where
     parseJSON = A.withObject "DebuggerBreakLocation" $ \v ->
          DebuggerBreakLocation <$> v .:  "scriptId"
@@ -3072,12 +4380,13 @@ instance ToJSON DebuggerBreakLocation  where
 
 
 data DebuggerScriptLanguage = DebuggerScriptLanguageJavaScript | DebuggerScriptLanguageWebAssembly
-    deriving Show
+    deriving (Eq, Show, Read)
 instance FromJSON DebuggerScriptLanguage where
-    parseJSON = A.withText  "DebuggerScriptLanguage"  $ \v -> 
+    parseJSON = A.withText  "DebuggerScriptLanguage"  $ \v -> do
         pure $ case v of
                 "JavaScript" -> DebuggerScriptLanguageJavaScript
                 "WebAssembly" -> DebuggerScriptLanguageWebAssembly
+                _ -> error "failed to parse DebuggerScriptLanguage"
 
 instance ToJSON DebuggerScriptLanguage where
     toJSON v = A.String $
@@ -3090,7 +4399,7 @@ instance ToJSON DebuggerScriptLanguage where
 data DebuggerDebugSymbols = DebuggerDebugSymbols {
     debuggerDebugSymbolsType :: String,
     debuggerDebugSymbolsExternalUrl :: Maybe String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DebuggerDebugSymbols where
     parseJSON = A.withObject "DebuggerDebugSymbols" $ \v ->
          DebuggerDebugSymbols <$> v .:  "type"
@@ -3106,7 +4415,7 @@ instance ToJSON DebuggerDebugSymbols  where
 
 
 debuggerContinueToLocation :: Session -> DebuggerLocation -> Maybe String -> IO (Maybe Error)
-debuggerContinueToLocation session debuggerContinueToLocationLocation debuggerContinueToLocationTargetCallFrames = sendReceiveCommand (conn session) ("Debugger","continueToLocation") ([("debuggerContinueToLocationLocation", ToJSONEx debuggerContinueToLocationLocation)] ++ (catMaybes [fmap (("debuggerContinueToLocationTargetCallFrames",) . ToJSONEx) debuggerContinueToLocationTargetCallFrames]))
+debuggerContinueToLocation session debuggerContinueToLocationLocation debuggerContinueToLocationTargetCallFrames = sendReceiveCommand (conn session) ("Debugger","continueToLocation") ([("location", ToJSONEx debuggerContinueToLocationLocation)] ++ (catMaybes [fmap (("targetCallFrames",) . ToJSONEx) debuggerContinueToLocationTargetCallFrames]))
 
 
 debuggerDisable :: Session -> IO (Maybe Error)
@@ -3119,7 +4428,7 @@ debuggerEnable session  = sendReceiveCommand (conn session) ("Debugger","enable"
 data DebuggerEvaluateOnCallFrame = DebuggerEvaluateOnCallFrame {
     debuggerEvaluateOnCallFrameResult :: RuntimeRemoteObject,
     debuggerEvaluateOnCallFrameExceptionDetails :: Maybe RuntimeExceptionDetails
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DebuggerEvaluateOnCallFrame where
     parseJSON = A.withObject "DebuggerEvaluateOnCallFrame" $ \v ->
          DebuggerEvaluateOnCallFrame <$> v .:  "result"
@@ -3128,11 +4437,11 @@ instance FromJSON  DebuggerEvaluateOnCallFrame where
 
 
 debuggerEvaluateOnCallFrame :: Session -> DebuggerCallFrameId -> String -> Maybe String -> Maybe Bool -> Maybe Bool -> Maybe Bool -> Maybe Bool -> IO (Either Error DebuggerEvaluateOnCallFrame)
-debuggerEvaluateOnCallFrame session debuggerEvaluateOnCallFrameCallFrameId debuggerEvaluateOnCallFrameExpression debuggerEvaluateOnCallFrameObjectGroup debuggerEvaluateOnCallFrameIncludeCommandLineApi debuggerEvaluateOnCallFrameSilent debuggerEvaluateOnCallFrameReturnByValue debuggerEvaluateOnCallFrameThrowOnSideEffect = sendReceiveCommandResult (conn session) ("Debugger","evaluateOnCallFrame") ([("debuggerEvaluateOnCallFrameCallFrameId", ToJSONEx debuggerEvaluateOnCallFrameCallFrameId), ("debuggerEvaluateOnCallFrameExpression", ToJSONEx debuggerEvaluateOnCallFrameExpression)] ++ (catMaybes [fmap (("debuggerEvaluateOnCallFrameObjectGroup",) . ToJSONEx) debuggerEvaluateOnCallFrameObjectGroup, fmap (("debuggerEvaluateOnCallFrameIncludeCommandLineApi",) . ToJSONEx) debuggerEvaluateOnCallFrameIncludeCommandLineApi, fmap (("debuggerEvaluateOnCallFrameSilent",) . ToJSONEx) debuggerEvaluateOnCallFrameSilent, fmap (("debuggerEvaluateOnCallFrameReturnByValue",) . ToJSONEx) debuggerEvaluateOnCallFrameReturnByValue, fmap (("debuggerEvaluateOnCallFrameThrowOnSideEffect",) . ToJSONEx) debuggerEvaluateOnCallFrameThrowOnSideEffect]))
+debuggerEvaluateOnCallFrame session debuggerEvaluateOnCallFrameCallFrameId debuggerEvaluateOnCallFrameExpression debuggerEvaluateOnCallFrameObjectGroup debuggerEvaluateOnCallFrameIncludeCommandLineApi debuggerEvaluateOnCallFrameSilent debuggerEvaluateOnCallFrameReturnByValue debuggerEvaluateOnCallFrameThrowOnSideEffect = sendReceiveCommandResult (conn session) ("Debugger","evaluateOnCallFrame") ([("callFrameId", ToJSONEx debuggerEvaluateOnCallFrameCallFrameId), ("expression", ToJSONEx debuggerEvaluateOnCallFrameExpression)] ++ (catMaybes [fmap (("objectGroup",) . ToJSONEx) debuggerEvaluateOnCallFrameObjectGroup, fmap (("includeCommandLineAPI",) . ToJSONEx) debuggerEvaluateOnCallFrameIncludeCommandLineApi, fmap (("silent",) . ToJSONEx) debuggerEvaluateOnCallFrameSilent, fmap (("returnByValue",) . ToJSONEx) debuggerEvaluateOnCallFrameReturnByValue, fmap (("throwOnSideEffect",) . ToJSONEx) debuggerEvaluateOnCallFrameThrowOnSideEffect]))
 
 data DebuggerGetPossibleBreakpoints = DebuggerGetPossibleBreakpoints {
     debuggerGetPossibleBreakpointsLocations :: [DebuggerBreakLocation]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DebuggerGetPossibleBreakpoints where
     parseJSON = A.withObject "DebuggerGetPossibleBreakpoints" $ \v ->
          DebuggerGetPossibleBreakpoints <$> v .:  "locations"
@@ -3140,12 +4449,12 @@ instance FromJSON  DebuggerGetPossibleBreakpoints where
 
 
 debuggerGetPossibleBreakpoints :: Session -> DebuggerLocation -> Maybe DebuggerLocation -> Maybe Bool -> IO (Either Error DebuggerGetPossibleBreakpoints)
-debuggerGetPossibleBreakpoints session debuggerGetPossibleBreakpointsStart debuggerGetPossibleBreakpointsEnd debuggerGetPossibleBreakpointsRestrictToFunction = sendReceiveCommandResult (conn session) ("Debugger","getPossibleBreakpoints") ([("debuggerGetPossibleBreakpointsStart", ToJSONEx debuggerGetPossibleBreakpointsStart)] ++ (catMaybes [fmap (("debuggerGetPossibleBreakpointsEnd",) . ToJSONEx) debuggerGetPossibleBreakpointsEnd, fmap (("debuggerGetPossibleBreakpointsRestrictToFunction",) . ToJSONEx) debuggerGetPossibleBreakpointsRestrictToFunction]))
+debuggerGetPossibleBreakpoints session debuggerGetPossibleBreakpointsStart debuggerGetPossibleBreakpointsEnd debuggerGetPossibleBreakpointsRestrictToFunction = sendReceiveCommandResult (conn session) ("Debugger","getPossibleBreakpoints") ([("start", ToJSONEx debuggerGetPossibleBreakpointsStart)] ++ (catMaybes [fmap (("end",) . ToJSONEx) debuggerGetPossibleBreakpointsEnd, fmap (("restrictToFunction",) . ToJSONEx) debuggerGetPossibleBreakpointsRestrictToFunction]))
 
 data DebuggerGetScriptSource = DebuggerGetScriptSource {
     debuggerGetScriptSourceScriptSource :: String,
     debuggerGetScriptSourceBytecode :: Maybe String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DebuggerGetScriptSource where
     parseJSON = A.withObject "DebuggerGetScriptSource" $ \v ->
          DebuggerGetScriptSource <$> v .:  "scriptSource"
@@ -3154,7 +4463,7 @@ instance FromJSON  DebuggerGetScriptSource where
 
 
 debuggerGetScriptSource :: Session -> RuntimeScriptId -> IO (Either Error DebuggerGetScriptSource)
-debuggerGetScriptSource session debuggerGetScriptSourceScriptId = sendReceiveCommandResult (conn session) ("Debugger","getScriptSource") ([("debuggerGetScriptSourceScriptId", ToJSONEx debuggerGetScriptSourceScriptId)] ++ (catMaybes []))
+debuggerGetScriptSource session debuggerGetScriptSourceScriptId = sendReceiveCommandResult (conn session) ("Debugger","getScriptSource") ([("scriptId", ToJSONEx debuggerGetScriptSourceScriptId)] ++ (catMaybes []))
 
 
 debuggerPause :: Session -> IO (Maybe Error)
@@ -3162,15 +4471,15 @@ debuggerPause session  = sendReceiveCommand (conn session) ("Debugger","pause") 
 
 
 debuggerRemoveBreakpoint :: Session -> DebuggerBreakpointId -> IO (Maybe Error)
-debuggerRemoveBreakpoint session debuggerRemoveBreakpointBreakpointId = sendReceiveCommand (conn session) ("Debugger","removeBreakpoint") ([("debuggerRemoveBreakpointBreakpointId", ToJSONEx debuggerRemoveBreakpointBreakpointId)] ++ (catMaybes []))
+debuggerRemoveBreakpoint session debuggerRemoveBreakpointBreakpointId = sendReceiveCommand (conn session) ("Debugger","removeBreakpoint") ([("breakpointId", ToJSONEx debuggerRemoveBreakpointBreakpointId)] ++ (catMaybes []))
 
 
 debuggerResume :: Session -> Maybe Bool -> IO (Maybe Error)
-debuggerResume session debuggerResumeTerminateOnResume = sendReceiveCommand (conn session) ("Debugger","resume") ([] ++ (catMaybes [fmap (("debuggerResumeTerminateOnResume",) . ToJSONEx) debuggerResumeTerminateOnResume]))
+debuggerResume session debuggerResumeTerminateOnResume = sendReceiveCommand (conn session) ("Debugger","resume") ([] ++ (catMaybes [fmap (("terminateOnResume",) . ToJSONEx) debuggerResumeTerminateOnResume]))
 
 data DebuggerSearchInContent = DebuggerSearchInContent {
     debuggerSearchInContentResult :: [DebuggerSearchMatch]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DebuggerSearchInContent where
     parseJSON = A.withObject "DebuggerSearchInContent" $ \v ->
          DebuggerSearchInContent <$> v .:  "result"
@@ -3178,16 +4487,16 @@ instance FromJSON  DebuggerSearchInContent where
 
 
 debuggerSearchInContent :: Session -> RuntimeScriptId -> String -> Maybe Bool -> Maybe Bool -> IO (Either Error DebuggerSearchInContent)
-debuggerSearchInContent session debuggerSearchInContentScriptId debuggerSearchInContentQuery debuggerSearchInContentCaseSensitive debuggerSearchInContentIsRegex = sendReceiveCommandResult (conn session) ("Debugger","searchInContent") ([("debuggerSearchInContentScriptId", ToJSONEx debuggerSearchInContentScriptId), ("debuggerSearchInContentQuery", ToJSONEx debuggerSearchInContentQuery)] ++ (catMaybes [fmap (("debuggerSearchInContentCaseSensitive",) . ToJSONEx) debuggerSearchInContentCaseSensitive, fmap (("debuggerSearchInContentIsRegex",) . ToJSONEx) debuggerSearchInContentIsRegex]))
+debuggerSearchInContent session debuggerSearchInContentScriptId debuggerSearchInContentQuery debuggerSearchInContentCaseSensitive debuggerSearchInContentIsRegex = sendReceiveCommandResult (conn session) ("Debugger","searchInContent") ([("scriptId", ToJSONEx debuggerSearchInContentScriptId), ("query", ToJSONEx debuggerSearchInContentQuery)] ++ (catMaybes [fmap (("caseSensitive",) . ToJSONEx) debuggerSearchInContentCaseSensitive, fmap (("isRegex",) . ToJSONEx) debuggerSearchInContentIsRegex]))
 
 
 debuggerSetAsyncCallStackDepth :: Session -> Int -> IO (Maybe Error)
-debuggerSetAsyncCallStackDepth session debuggerSetAsyncCallStackDepthMaxDepth = sendReceiveCommand (conn session) ("Debugger","setAsyncCallStackDepth") ([("debuggerSetAsyncCallStackDepthMaxDepth", ToJSONEx debuggerSetAsyncCallStackDepthMaxDepth)] ++ (catMaybes []))
+debuggerSetAsyncCallStackDepth session debuggerSetAsyncCallStackDepthMaxDepth = sendReceiveCommand (conn session) ("Debugger","setAsyncCallStackDepth") ([("maxDepth", ToJSONEx debuggerSetAsyncCallStackDepthMaxDepth)] ++ (catMaybes []))
 
 data DebuggerSetBreakpoint = DebuggerSetBreakpoint {
     debuggerSetBreakpointBreakpointId :: DebuggerBreakpointId,
     debuggerSetBreakpointActualLocation :: DebuggerLocation
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DebuggerSetBreakpoint where
     parseJSON = A.withObject "DebuggerSetBreakpoint" $ \v ->
          DebuggerSetBreakpoint <$> v .:  "breakpointId"
@@ -3196,11 +4505,11 @@ instance FromJSON  DebuggerSetBreakpoint where
 
 
 debuggerSetBreakpoint :: Session -> DebuggerLocation -> Maybe String -> IO (Either Error DebuggerSetBreakpoint)
-debuggerSetBreakpoint session debuggerSetBreakpointLocation debuggerSetBreakpointCondition = sendReceiveCommandResult (conn session) ("Debugger","setBreakpoint") ([("debuggerSetBreakpointLocation", ToJSONEx debuggerSetBreakpointLocation)] ++ (catMaybes [fmap (("debuggerSetBreakpointCondition",) . ToJSONEx) debuggerSetBreakpointCondition]))
+debuggerSetBreakpoint session debuggerSetBreakpointLocation debuggerSetBreakpointCondition = sendReceiveCommandResult (conn session) ("Debugger","setBreakpoint") ([("location", ToJSONEx debuggerSetBreakpointLocation)] ++ (catMaybes [fmap (("condition",) . ToJSONEx) debuggerSetBreakpointCondition]))
 
 data DebuggerSetInstrumentationBreakpoint = DebuggerSetInstrumentationBreakpoint {
     debuggerSetInstrumentationBreakpointBreakpointId :: DebuggerBreakpointId
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DebuggerSetInstrumentationBreakpoint where
     parseJSON = A.withObject "DebuggerSetInstrumentationBreakpoint" $ \v ->
          DebuggerSetInstrumentationBreakpoint <$> v .:  "breakpointId"
@@ -3208,12 +4517,12 @@ instance FromJSON  DebuggerSetInstrumentationBreakpoint where
 
 
 debuggerSetInstrumentationBreakpoint :: Session -> String -> IO (Either Error DebuggerSetInstrumentationBreakpoint)
-debuggerSetInstrumentationBreakpoint session debuggerSetInstrumentationBreakpointInstrumentation = sendReceiveCommandResult (conn session) ("Debugger","setInstrumentationBreakpoint") ([("debuggerSetInstrumentationBreakpointInstrumentation", ToJSONEx debuggerSetInstrumentationBreakpointInstrumentation)] ++ (catMaybes []))
+debuggerSetInstrumentationBreakpoint session debuggerSetInstrumentationBreakpointInstrumentation = sendReceiveCommandResult (conn session) ("Debugger","setInstrumentationBreakpoint") ([("instrumentation", ToJSONEx debuggerSetInstrumentationBreakpointInstrumentation)] ++ (catMaybes []))
 
 data DebuggerSetBreakpointByUrl = DebuggerSetBreakpointByUrl {
     debuggerSetBreakpointByUrlBreakpointId :: DebuggerBreakpointId,
     debuggerSetBreakpointByUrlLocations :: [DebuggerLocation]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DebuggerSetBreakpointByUrl where
     parseJSON = A.withObject "DebuggerSetBreakpointByUrl" $ \v ->
          DebuggerSetBreakpointByUrl <$> v .:  "breakpointId"
@@ -3222,22 +4531,22 @@ instance FromJSON  DebuggerSetBreakpointByUrl where
 
 
 debuggerSetBreakpointByUrl :: Session -> Int -> Maybe String -> Maybe String -> Maybe String -> Maybe Int -> Maybe String -> IO (Either Error DebuggerSetBreakpointByUrl)
-debuggerSetBreakpointByUrl session debuggerSetBreakpointByUrlLineNumber debuggerSetBreakpointByUrlUrl debuggerSetBreakpointByUrlUrlRegex debuggerSetBreakpointByUrlScriptHash debuggerSetBreakpointByUrlColumnNumber debuggerSetBreakpointByUrlCondition = sendReceiveCommandResult (conn session) ("Debugger","setBreakpointByUrl") ([("debuggerSetBreakpointByUrlLineNumber", ToJSONEx debuggerSetBreakpointByUrlLineNumber)] ++ (catMaybes [fmap (("debuggerSetBreakpointByUrlUrl",) . ToJSONEx) debuggerSetBreakpointByUrlUrl, fmap (("debuggerSetBreakpointByUrlUrlRegex",) . ToJSONEx) debuggerSetBreakpointByUrlUrlRegex, fmap (("debuggerSetBreakpointByUrlScriptHash",) . ToJSONEx) debuggerSetBreakpointByUrlScriptHash, fmap (("debuggerSetBreakpointByUrlColumnNumber",) . ToJSONEx) debuggerSetBreakpointByUrlColumnNumber, fmap (("debuggerSetBreakpointByUrlCondition",) . ToJSONEx) debuggerSetBreakpointByUrlCondition]))
+debuggerSetBreakpointByUrl session debuggerSetBreakpointByUrlLineNumber debuggerSetBreakpointByUrlUrl debuggerSetBreakpointByUrlUrlRegex debuggerSetBreakpointByUrlScriptHash debuggerSetBreakpointByUrlColumnNumber debuggerSetBreakpointByUrlCondition = sendReceiveCommandResult (conn session) ("Debugger","setBreakpointByUrl") ([("lineNumber", ToJSONEx debuggerSetBreakpointByUrlLineNumber)] ++ (catMaybes [fmap (("url",) . ToJSONEx) debuggerSetBreakpointByUrlUrl, fmap (("urlRegex",) . ToJSONEx) debuggerSetBreakpointByUrlUrlRegex, fmap (("scriptHash",) . ToJSONEx) debuggerSetBreakpointByUrlScriptHash, fmap (("columnNumber",) . ToJSONEx) debuggerSetBreakpointByUrlColumnNumber, fmap (("condition",) . ToJSONEx) debuggerSetBreakpointByUrlCondition]))
 
 
 debuggerSetBreakpointsActive :: Session -> Bool -> IO (Maybe Error)
-debuggerSetBreakpointsActive session debuggerSetBreakpointsActiveActive = sendReceiveCommand (conn session) ("Debugger","setBreakpointsActive") ([("debuggerSetBreakpointsActiveActive", ToJSONEx debuggerSetBreakpointsActiveActive)] ++ (catMaybes []))
+debuggerSetBreakpointsActive session debuggerSetBreakpointsActiveActive = sendReceiveCommand (conn session) ("Debugger","setBreakpointsActive") ([("active", ToJSONEx debuggerSetBreakpointsActiveActive)] ++ (catMaybes []))
 
 
 debuggerSetPauseOnExceptions :: Session -> String -> IO (Maybe Error)
-debuggerSetPauseOnExceptions session debuggerSetPauseOnExceptionsState = sendReceiveCommand (conn session) ("Debugger","setPauseOnExceptions") ([("debuggerSetPauseOnExceptionsState", ToJSONEx debuggerSetPauseOnExceptionsState)] ++ (catMaybes []))
+debuggerSetPauseOnExceptions session debuggerSetPauseOnExceptionsState = sendReceiveCommand (conn session) ("Debugger","setPauseOnExceptions") ([("state", ToJSONEx debuggerSetPauseOnExceptionsState)] ++ (catMaybes []))
 
 data DebuggerSetScriptSource = DebuggerSetScriptSource {
     debuggerSetScriptSourceCallFrames :: Maybe [DebuggerCallFrame],
     debuggerSetScriptSourceStackChanged :: Maybe Bool,
     debuggerSetScriptSourceAsyncStackTrace :: Maybe RuntimeStackTrace,
     debuggerSetScriptSourceExceptionDetails :: Maybe RuntimeExceptionDetails
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  DebuggerSetScriptSource where
     parseJSON = A.withObject "DebuggerSetScriptSource" $ \v ->
          DebuggerSetScriptSource <$> v .:?  "callFrames"
@@ -3248,15 +4557,15 @@ instance FromJSON  DebuggerSetScriptSource where
 
 
 debuggerSetScriptSource :: Session -> RuntimeScriptId -> String -> Maybe Bool -> IO (Either Error DebuggerSetScriptSource)
-debuggerSetScriptSource session debuggerSetScriptSourceScriptId debuggerSetScriptSourceScriptSource debuggerSetScriptSourceDryRun = sendReceiveCommandResult (conn session) ("Debugger","setScriptSource") ([("debuggerSetScriptSourceScriptId", ToJSONEx debuggerSetScriptSourceScriptId), ("debuggerSetScriptSourceScriptSource", ToJSONEx debuggerSetScriptSourceScriptSource)] ++ (catMaybes [fmap (("debuggerSetScriptSourceDryRun",) . ToJSONEx) debuggerSetScriptSourceDryRun]))
+debuggerSetScriptSource session debuggerSetScriptSourceScriptId debuggerSetScriptSourceScriptSource debuggerSetScriptSourceDryRun = sendReceiveCommandResult (conn session) ("Debugger","setScriptSource") ([("scriptId", ToJSONEx debuggerSetScriptSourceScriptId), ("scriptSource", ToJSONEx debuggerSetScriptSourceScriptSource)] ++ (catMaybes [fmap (("dryRun",) . ToJSONEx) debuggerSetScriptSourceDryRun]))
 
 
 debuggerSetSkipAllPauses :: Session -> Bool -> IO (Maybe Error)
-debuggerSetSkipAllPauses session debuggerSetSkipAllPausesSkip = sendReceiveCommand (conn session) ("Debugger","setSkipAllPauses") ([("debuggerSetSkipAllPausesSkip", ToJSONEx debuggerSetSkipAllPausesSkip)] ++ (catMaybes []))
+debuggerSetSkipAllPauses session debuggerSetSkipAllPausesSkip = sendReceiveCommand (conn session) ("Debugger","setSkipAllPauses") ([("skip", ToJSONEx debuggerSetSkipAllPausesSkip)] ++ (catMaybes []))
 
 
 debuggerSetVariableValue :: Session -> Int -> String -> RuntimeCallArgument -> DebuggerCallFrameId -> IO (Maybe Error)
-debuggerSetVariableValue session debuggerSetVariableValueScopeNumber debuggerSetVariableValueVariableName debuggerSetVariableValueNewValue debuggerSetVariableValueCallFrameId = sendReceiveCommand (conn session) ("Debugger","setVariableValue") ([("debuggerSetVariableValueScopeNumber", ToJSONEx debuggerSetVariableValueScopeNumber), ("debuggerSetVariableValueVariableName", ToJSONEx debuggerSetVariableValueVariableName), ("debuggerSetVariableValueNewValue", ToJSONEx debuggerSetVariableValueNewValue), ("debuggerSetVariableValueCallFrameId", ToJSONEx debuggerSetVariableValueCallFrameId)] ++ (catMaybes []))
+debuggerSetVariableValue session debuggerSetVariableValueScopeNumber debuggerSetVariableValueVariableName debuggerSetVariableValueNewValue debuggerSetVariableValueCallFrameId = sendReceiveCommand (conn session) ("Debugger","setVariableValue") ([("scopeNumber", ToJSONEx debuggerSetVariableValueScopeNumber), ("variableName", ToJSONEx debuggerSetVariableValueVariableName), ("newValue", ToJSONEx debuggerSetVariableValueNewValue), ("callFrameId", ToJSONEx debuggerSetVariableValueCallFrameId)] ++ (catMaybes []))
 
 
 debuggerStepInto :: Session -> IO (Maybe Error)
@@ -3272,6 +4581,50 @@ debuggerStepOver session  = sendReceiveCommand (conn session) ("Debugger","stepO
 
 
 
+data ProfilerConsoleProfileFinished = ProfilerConsoleProfileFinished {
+    profilerConsoleProfileFinishedId :: String,
+    profilerConsoleProfileFinishedLocation :: DebuggerLocation,
+    profilerConsoleProfileFinishedProfile :: ProfilerProfile,
+    profilerConsoleProfileFinishedTitle :: Maybe String
+} deriving (Eq, Show, Read)
+instance FromJSON  ProfilerConsoleProfileFinished where
+    parseJSON = A.withObject "ProfilerConsoleProfileFinished" $ \v ->
+         ProfilerConsoleProfileFinished <$> v .:  "id"
+            <*> v  .:  "location"
+            <*> v  .:  "profile"
+            <*> v  .:?  "title"
+
+
+instance ToJSON ProfilerConsoleProfileFinished  where
+    toJSON v = A.object
+        [ "id" .= profilerConsoleProfileFinishedId v
+        , "location" .= profilerConsoleProfileFinishedLocation v
+        , "profile" .= profilerConsoleProfileFinishedProfile v
+        , "title" .= profilerConsoleProfileFinishedTitle v
+        ]
+
+
+data ProfilerConsoleProfileStarted = ProfilerConsoleProfileStarted {
+    profilerConsoleProfileStartedId :: String,
+    profilerConsoleProfileStartedLocation :: DebuggerLocation,
+    profilerConsoleProfileStartedTitle :: Maybe String
+} deriving (Eq, Show, Read)
+instance FromJSON  ProfilerConsoleProfileStarted where
+    parseJSON = A.withObject "ProfilerConsoleProfileStarted" $ \v ->
+         ProfilerConsoleProfileStarted <$> v .:  "id"
+            <*> v  .:  "location"
+            <*> v  .:?  "title"
+
+
+instance ToJSON ProfilerConsoleProfileStarted  where
+    toJSON v = A.object
+        [ "id" .= profilerConsoleProfileStartedId v
+        , "location" .= profilerConsoleProfileStartedLocation v
+        , "title" .= profilerConsoleProfileStartedTitle v
+        ]
+
+
+
 data ProfilerProfileNode = ProfilerProfileNode {
     profilerProfileNodeId :: Int,
     profilerProfileNodeCallFrame :: RuntimeCallFrame,
@@ -3279,7 +4632,7 @@ data ProfilerProfileNode = ProfilerProfileNode {
     profilerProfileNodeChildren :: Maybe [Int],
     profilerProfileNodeDeoptReason :: Maybe String,
     profilerProfileNodePositionTicks :: Maybe [ProfilerPositionTickInfo]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  ProfilerProfileNode where
     parseJSON = A.withObject "ProfilerProfileNode" $ \v ->
          ProfilerProfileNode <$> v .:  "id"
@@ -3308,7 +4661,7 @@ data ProfilerProfile = ProfilerProfile {
     profilerProfileEndTime :: Int,
     profilerProfileSamples :: Maybe [Int],
     profilerProfileTimeDeltas :: Maybe [Int]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  ProfilerProfile where
     parseJSON = A.withObject "ProfilerProfile" $ \v ->
          ProfilerProfile <$> v .:  "nodes"
@@ -3332,7 +4685,7 @@ instance ToJSON ProfilerProfile  where
 data ProfilerPositionTickInfo = ProfilerPositionTickInfo {
     profilerPositionTickInfoLine :: Int,
     profilerPositionTickInfoTicks :: Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  ProfilerPositionTickInfo where
     parseJSON = A.withObject "ProfilerPositionTickInfo" $ \v ->
          ProfilerPositionTickInfo <$> v .:  "line"
@@ -3351,7 +4704,7 @@ data ProfilerCoverageRange = ProfilerCoverageRange {
     profilerCoverageRangeStartOffset :: Int,
     profilerCoverageRangeEndOffset :: Int,
     profilerCoverageRangeCount :: Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  ProfilerCoverageRange where
     parseJSON = A.withObject "ProfilerCoverageRange" $ \v ->
          ProfilerCoverageRange <$> v .:  "startOffset"
@@ -3372,7 +4725,7 @@ data ProfilerFunctionCoverage = ProfilerFunctionCoverage {
     profilerFunctionCoverageFunctionName :: String,
     profilerFunctionCoverageRanges :: [ProfilerCoverageRange],
     profilerFunctionCoverageIsBlockCoverage :: Bool
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  ProfilerFunctionCoverage where
     parseJSON = A.withObject "ProfilerFunctionCoverage" $ \v ->
          ProfilerFunctionCoverage <$> v .:  "functionName"
@@ -3393,7 +4746,7 @@ data ProfilerScriptCoverage = ProfilerScriptCoverage {
     profilerScriptCoverageScriptId :: RuntimeScriptId,
     profilerScriptCoverageUrl :: String,
     profilerScriptCoverageFunctions :: [ProfilerFunctionCoverage]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  ProfilerScriptCoverage where
     parseJSON = A.withObject "ProfilerScriptCoverage" $ \v ->
          ProfilerScriptCoverage <$> v .:  "scriptId"
@@ -3419,7 +4772,7 @@ profilerEnable session  = sendReceiveCommand (conn session) ("Profiler","enable"
 
 data ProfilerGetBestEffortCoverage = ProfilerGetBestEffortCoverage {
     profilerGetBestEffortCoverageResult :: [ProfilerScriptCoverage]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  ProfilerGetBestEffortCoverage where
     parseJSON = A.withObject "ProfilerGetBestEffortCoverage" $ \v ->
          ProfilerGetBestEffortCoverage <$> v .:  "result"
@@ -3431,7 +4784,7 @@ profilerGetBestEffortCoverage session  = sendReceiveCommandResult (conn session)
 
 
 profilerSetSamplingInterval :: Session -> Int -> IO (Maybe Error)
-profilerSetSamplingInterval session profilerSetSamplingIntervalInterval = sendReceiveCommand (conn session) ("Profiler","setSamplingInterval") ([("profilerSetSamplingIntervalInterval", ToJSONEx profilerSetSamplingIntervalInterval)] ++ (catMaybes []))
+profilerSetSamplingInterval session profilerSetSamplingIntervalInterval = sendReceiveCommand (conn session) ("Profiler","setSamplingInterval") ([("interval", ToJSONEx profilerSetSamplingIntervalInterval)] ++ (catMaybes []))
 
 
 profilerStart :: Session -> IO (Maybe Error)
@@ -3439,7 +4792,7 @@ profilerStart session  = sendReceiveCommand (conn session) ("Profiler","start") 
 
 data ProfilerStartPreciseCoverage = ProfilerStartPreciseCoverage {
     profilerStartPreciseCoverageTimestamp :: Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  ProfilerStartPreciseCoverage where
     parseJSON = A.withObject "ProfilerStartPreciseCoverage" $ \v ->
          ProfilerStartPreciseCoverage <$> v .:  "timestamp"
@@ -3447,11 +4800,11 @@ instance FromJSON  ProfilerStartPreciseCoverage where
 
 
 profilerStartPreciseCoverage :: Session -> Maybe Bool -> Maybe Bool -> Maybe Bool -> IO (Either Error ProfilerStartPreciseCoverage)
-profilerStartPreciseCoverage session profilerStartPreciseCoverageCallCount profilerStartPreciseCoverageDetailed profilerStartPreciseCoverageAllowTriggeredUpdates = sendReceiveCommandResult (conn session) ("Profiler","startPreciseCoverage") ([] ++ (catMaybes [fmap (("profilerStartPreciseCoverageCallCount",) . ToJSONEx) profilerStartPreciseCoverageCallCount, fmap (("profilerStartPreciseCoverageDetailed",) . ToJSONEx) profilerStartPreciseCoverageDetailed, fmap (("profilerStartPreciseCoverageAllowTriggeredUpdates",) . ToJSONEx) profilerStartPreciseCoverageAllowTriggeredUpdates]))
+profilerStartPreciseCoverage session profilerStartPreciseCoverageCallCount profilerStartPreciseCoverageDetailed profilerStartPreciseCoverageAllowTriggeredUpdates = sendReceiveCommandResult (conn session) ("Profiler","startPreciseCoverage") ([] ++ (catMaybes [fmap (("callCount",) . ToJSONEx) profilerStartPreciseCoverageCallCount, fmap (("detailed",) . ToJSONEx) profilerStartPreciseCoverageDetailed, fmap (("allowTriggeredUpdates",) . ToJSONEx) profilerStartPreciseCoverageAllowTriggeredUpdates]))
 
 data ProfilerStop = ProfilerStop {
     profilerStopProfile :: ProfilerProfile
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  ProfilerStop where
     parseJSON = A.withObject "ProfilerStop" $ \v ->
          ProfilerStop <$> v .:  "profile"
@@ -3468,7 +4821,7 @@ profilerStopPreciseCoverage session  = sendReceiveCommand (conn session) ("Profi
 data ProfilerTakePreciseCoverage = ProfilerTakePreciseCoverage {
     profilerTakePreciseCoverageResult :: [ProfilerScriptCoverage],
     profilerTakePreciseCoverageTimestamp :: Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  ProfilerTakePreciseCoverage where
     parseJSON = A.withObject "ProfilerTakePreciseCoverage" $ \v ->
          ProfilerTakePreciseCoverage <$> v .:  "result"
@@ -3481,13 +4834,127 @@ profilerTakePreciseCoverage session  = sendReceiveCommandResult (conn session) (
 
 
 
+data RuntimeConsoleApiCalled = RuntimeConsoleApiCalled {
+    runtimeConsoleApiCalledType :: String,
+    runtimeConsoleApiCalledArgs :: [RuntimeRemoteObject],
+    runtimeConsoleApiCalledExecutionContextId :: RuntimeExecutionContextId,
+    runtimeConsoleApiCalledTimestamp :: RuntimeTimestamp,
+    runtimeConsoleApiCalledStackTrace :: Maybe RuntimeStackTrace
+} deriving (Eq, Show, Read)
+instance FromJSON  RuntimeConsoleApiCalled where
+    parseJSON = A.withObject "RuntimeConsoleApiCalled" $ \v ->
+         RuntimeConsoleApiCalled <$> v .:  "type"
+            <*> v  .:  "args"
+            <*> v  .:  "executionContextId"
+            <*> v  .:  "timestamp"
+            <*> v  .:?  "stackTrace"
+
+
+instance ToJSON RuntimeConsoleApiCalled  where
+    toJSON v = A.object
+        [ "type" .= runtimeConsoleApiCalledType v
+        , "args" .= runtimeConsoleApiCalledArgs v
+        , "executionContextId" .= runtimeConsoleApiCalledExecutionContextId v
+        , "timestamp" .= runtimeConsoleApiCalledTimestamp v
+        , "stackTrace" .= runtimeConsoleApiCalledStackTrace v
+        ]
+
+
+data RuntimeExceptionRevoked = RuntimeExceptionRevoked {
+    runtimeExceptionRevokedReason :: String,
+    runtimeExceptionRevokedExceptionId :: Int
+} deriving (Eq, Show, Read)
+instance FromJSON  RuntimeExceptionRevoked where
+    parseJSON = A.withObject "RuntimeExceptionRevoked" $ \v ->
+         RuntimeExceptionRevoked <$> v .:  "reason"
+            <*> v  .:  "exceptionId"
+
+
+instance ToJSON RuntimeExceptionRevoked  where
+    toJSON v = A.object
+        [ "reason" .= runtimeExceptionRevokedReason v
+        , "exceptionId" .= runtimeExceptionRevokedExceptionId v
+        ]
+
+
+data RuntimeExceptionThrown = RuntimeExceptionThrown {
+    runtimeExceptionThrownTimestamp :: RuntimeTimestamp,
+    runtimeExceptionThrownExceptionDetails :: RuntimeExceptionDetails
+} deriving (Eq, Show, Read)
+instance FromJSON  RuntimeExceptionThrown where
+    parseJSON = A.withObject "RuntimeExceptionThrown" $ \v ->
+         RuntimeExceptionThrown <$> v .:  "timestamp"
+            <*> v  .:  "exceptionDetails"
+
+
+instance ToJSON RuntimeExceptionThrown  where
+    toJSON v = A.object
+        [ "timestamp" .= runtimeExceptionThrownTimestamp v
+        , "exceptionDetails" .= runtimeExceptionThrownExceptionDetails v
+        ]
+
+
+data RuntimeExecutionContextCreated = RuntimeExecutionContextCreated {
+    runtimeExecutionContextCreatedContext :: RuntimeExecutionContextDescription
+} deriving (Eq, Show, Read)
+instance FromJSON  RuntimeExecutionContextCreated where
+    parseJSON = A.withObject "RuntimeExecutionContextCreated" $ \v ->
+         RuntimeExecutionContextCreated <$> v .:  "context"
+
+
+instance ToJSON RuntimeExecutionContextCreated  where
+    toJSON v = A.object
+        [ "context" .= runtimeExecutionContextCreatedContext v
+        ]
+
+
+data RuntimeExecutionContextDestroyed = RuntimeExecutionContextDestroyed {
+    runtimeExecutionContextDestroyedExecutionContextId :: RuntimeExecutionContextId
+} deriving (Eq, Show, Read)
+instance FromJSON  RuntimeExecutionContextDestroyed where
+    parseJSON = A.withObject "RuntimeExecutionContextDestroyed" $ \v ->
+         RuntimeExecutionContextDestroyed <$> v .:  "executionContextId"
+
+
+instance ToJSON RuntimeExecutionContextDestroyed  where
+    toJSON v = A.object
+        [ "executionContextId" .= runtimeExecutionContextDestroyedExecutionContextId v
+        ]
+
+
+data RuntimeExecutionContextsCleared = RuntimeExecutionContextsCleared
+    deriving (Eq, Show, Read)
+instance FromJSON RuntimeExecutionContextsCleared where
+    parseJSON = A.withText  "RuntimeExecutionContextsCleared"  $ \v -> do
+        pure $ case v of
+                "RuntimeExecutionContextsCleared" -> RuntimeExecutionContextsCleared
+                _ -> error "failed to parse RuntimeExecutionContextsCleared"
+
+data RuntimeInspectRequested = RuntimeInspectRequested {
+    runtimeInspectRequestedObject :: RuntimeRemoteObject,
+    runtimeInspectRequestedHints :: [(String, String)]
+} deriving (Eq, Show, Read)
+instance FromJSON  RuntimeInspectRequested where
+    parseJSON = A.withObject "RuntimeInspectRequested" $ \v ->
+         RuntimeInspectRequested <$> v .:  "object"
+            <*> v  .:  "hints"
+
+
+instance ToJSON RuntimeInspectRequested  where
+    toJSON v = A.object
+        [ "object" .= runtimeInspectRequestedObject v
+        , "hints" .= runtimeInspectRequestedHints v
+        ]
+
+
+
 type RuntimeScriptId = String
 
 data RuntimeWebDriverValue = RuntimeWebDriverValue {
     runtimeWebDriverValueType :: String,
     runtimeWebDriverValueValue :: Maybe Int,
     runtimeWebDriverValueObjectId :: Maybe String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  RuntimeWebDriverValue where
     parseJSON = A.withObject "RuntimeWebDriverValue" $ \v ->
          RuntimeWebDriverValue <$> v .:  "type"
@@ -3516,7 +4983,7 @@ data RuntimeRemoteObject = RuntimeRemoteObject {
     runtimeRemoteObjectUnserializableValue :: Maybe RuntimeUnserializableValue,
     runtimeRemoteObjectDescription :: Maybe String,
     runtimeRemoteObjectObjectId :: Maybe RuntimeRemoteObjectId
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  RuntimeRemoteObject where
     parseJSON = A.withObject "RuntimeRemoteObject" $ \v ->
          RuntimeRemoteObject <$> v .:  "type"
@@ -3552,7 +5019,7 @@ data RuntimePropertyDescriptor = RuntimePropertyDescriptor {
     runtimePropertyDescriptorWasThrown :: Maybe Bool,
     runtimePropertyDescriptorIsOwn :: Maybe Bool,
     runtimePropertyDescriptorSymbol :: Maybe RuntimeRemoteObject
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  RuntimePropertyDescriptor where
     parseJSON = A.withObject "RuntimePropertyDescriptor" $ \v ->
          RuntimePropertyDescriptor <$> v .:  "name"
@@ -3586,7 +5053,7 @@ instance ToJSON RuntimePropertyDescriptor  where
 data RuntimeInternalPropertyDescriptor = RuntimeInternalPropertyDescriptor {
     runtimeInternalPropertyDescriptorName :: String,
     runtimeInternalPropertyDescriptorValue :: Maybe RuntimeRemoteObject
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  RuntimeInternalPropertyDescriptor where
     parseJSON = A.withObject "RuntimeInternalPropertyDescriptor" $ \v ->
          RuntimeInternalPropertyDescriptor <$> v .:  "name"
@@ -3605,7 +5072,7 @@ data RuntimeCallArgument = RuntimeCallArgument {
     runtimeCallArgumentValue :: Maybe Int,
     runtimeCallArgumentUnserializableValue :: Maybe RuntimeUnserializableValue,
     runtimeCallArgumentObjectId :: Maybe RuntimeRemoteObjectId
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  RuntimeCallArgument where
     parseJSON = A.withObject "RuntimeCallArgument" $ \v ->
          RuntimeCallArgument <$> v .:?  "value"
@@ -3629,7 +5096,7 @@ data RuntimeExecutionContextDescription = RuntimeExecutionContextDescription {
     runtimeExecutionContextDescriptionOrigin :: String,
     runtimeExecutionContextDescriptionName :: String,
     runtimeExecutionContextDescriptionAuxData :: Maybe [(String, String)]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  RuntimeExecutionContextDescription where
     parseJSON = A.withObject "RuntimeExecutionContextDescription" $ \v ->
          RuntimeExecutionContextDescription <$> v .:  "id"
@@ -3658,7 +5125,7 @@ data RuntimeExceptionDetails = RuntimeExceptionDetails {
     runtimeExceptionDetailsStackTrace :: Maybe RuntimeStackTrace,
     runtimeExceptionDetailsException :: Maybe RuntimeRemoteObject,
     runtimeExceptionDetailsExecutionContextId :: Maybe RuntimeExecutionContextId
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  RuntimeExceptionDetails where
     parseJSON = A.withObject "RuntimeExceptionDetails" $ \v ->
          RuntimeExceptionDetails <$> v .:  "exceptionId"
@@ -3697,7 +5164,7 @@ data RuntimeCallFrame = RuntimeCallFrame {
     runtimeCallFrameUrl :: String,
     runtimeCallFrameLineNumber :: Int,
     runtimeCallFrameColumnNumber :: Int
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  RuntimeCallFrame where
     parseJSON = A.withObject "RuntimeCallFrame" $ \v ->
          RuntimeCallFrame <$> v .:  "functionName"
@@ -3722,7 +5189,7 @@ data RuntimeStackTrace = RuntimeStackTrace {
     runtimeStackTraceCallFrames :: [RuntimeCallFrame],
     runtimeStackTraceDescription :: Maybe String,
     runtimeStackTraceParent :: Maybe RuntimeStackTrace
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  RuntimeStackTrace where
     parseJSON = A.withObject "RuntimeStackTrace" $ \v ->
          RuntimeStackTrace <$> v .:  "callFrames"
@@ -3741,7 +5208,7 @@ instance ToJSON RuntimeStackTrace  where
 data RuntimeAwaitPromise = RuntimeAwaitPromise {
     runtimeAwaitPromiseResult :: RuntimeRemoteObject,
     runtimeAwaitPromiseExceptionDetails :: Maybe RuntimeExceptionDetails
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  RuntimeAwaitPromise where
     parseJSON = A.withObject "RuntimeAwaitPromise" $ \v ->
          RuntimeAwaitPromise <$> v .:  "result"
@@ -3750,12 +5217,12 @@ instance FromJSON  RuntimeAwaitPromise where
 
 
 runtimeAwaitPromise :: Session -> RuntimeRemoteObjectId -> Maybe Bool -> Maybe Bool -> IO (Either Error RuntimeAwaitPromise)
-runtimeAwaitPromise session runtimeAwaitPromisePromiseObjectId runtimeAwaitPromiseReturnByValue runtimeAwaitPromiseGeneratePreview = sendReceiveCommandResult (conn session) ("Runtime","awaitPromise") ([("runtimeAwaitPromisePromiseObjectId", ToJSONEx runtimeAwaitPromisePromiseObjectId)] ++ (catMaybes [fmap (("runtimeAwaitPromiseReturnByValue",) . ToJSONEx) runtimeAwaitPromiseReturnByValue, fmap (("runtimeAwaitPromiseGeneratePreview",) . ToJSONEx) runtimeAwaitPromiseGeneratePreview]))
+runtimeAwaitPromise session runtimeAwaitPromisePromiseObjectId runtimeAwaitPromiseReturnByValue runtimeAwaitPromiseGeneratePreview = sendReceiveCommandResult (conn session) ("Runtime","awaitPromise") ([("promiseObjectId", ToJSONEx runtimeAwaitPromisePromiseObjectId)] ++ (catMaybes [fmap (("returnByValue",) . ToJSONEx) runtimeAwaitPromiseReturnByValue, fmap (("generatePreview",) . ToJSONEx) runtimeAwaitPromiseGeneratePreview]))
 
 data RuntimeCallFunctionOn = RuntimeCallFunctionOn {
     runtimeCallFunctionOnResult :: RuntimeRemoteObject,
     runtimeCallFunctionOnExceptionDetails :: Maybe RuntimeExceptionDetails
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  RuntimeCallFunctionOn where
     parseJSON = A.withObject "RuntimeCallFunctionOn" $ \v ->
          RuntimeCallFunctionOn <$> v .:  "result"
@@ -3764,12 +5231,12 @@ instance FromJSON  RuntimeCallFunctionOn where
 
 
 runtimeCallFunctionOn :: Session -> String -> Maybe RuntimeRemoteObjectId -> Maybe [RuntimeCallArgument] -> Maybe Bool -> Maybe Bool -> Maybe Bool -> Maybe Bool -> Maybe RuntimeExecutionContextId -> Maybe String -> IO (Either Error RuntimeCallFunctionOn)
-runtimeCallFunctionOn session runtimeCallFunctionOnFunctionDeclaration runtimeCallFunctionOnObjectId runtimeCallFunctionOnArguments runtimeCallFunctionOnSilent runtimeCallFunctionOnReturnByValue runtimeCallFunctionOnUserGesture runtimeCallFunctionOnAwaitPromise runtimeCallFunctionOnExecutionContextId runtimeCallFunctionOnObjectGroup = sendReceiveCommandResult (conn session) ("Runtime","callFunctionOn") ([("runtimeCallFunctionOnFunctionDeclaration", ToJSONEx runtimeCallFunctionOnFunctionDeclaration)] ++ (catMaybes [fmap (("runtimeCallFunctionOnObjectId",) . ToJSONEx) runtimeCallFunctionOnObjectId, fmap (("runtimeCallFunctionOnArguments",) . ToJSONEx) runtimeCallFunctionOnArguments, fmap (("runtimeCallFunctionOnSilent",) . ToJSONEx) runtimeCallFunctionOnSilent, fmap (("runtimeCallFunctionOnReturnByValue",) . ToJSONEx) runtimeCallFunctionOnReturnByValue, fmap (("runtimeCallFunctionOnUserGesture",) . ToJSONEx) runtimeCallFunctionOnUserGesture, fmap (("runtimeCallFunctionOnAwaitPromise",) . ToJSONEx) runtimeCallFunctionOnAwaitPromise, fmap (("runtimeCallFunctionOnExecutionContextId",) . ToJSONEx) runtimeCallFunctionOnExecutionContextId, fmap (("runtimeCallFunctionOnObjectGroup",) . ToJSONEx) runtimeCallFunctionOnObjectGroup]))
+runtimeCallFunctionOn session runtimeCallFunctionOnFunctionDeclaration runtimeCallFunctionOnObjectId runtimeCallFunctionOnArguments runtimeCallFunctionOnSilent runtimeCallFunctionOnReturnByValue runtimeCallFunctionOnUserGesture runtimeCallFunctionOnAwaitPromise runtimeCallFunctionOnExecutionContextId runtimeCallFunctionOnObjectGroup = sendReceiveCommandResult (conn session) ("Runtime","callFunctionOn") ([("functionDeclaration", ToJSONEx runtimeCallFunctionOnFunctionDeclaration)] ++ (catMaybes [fmap (("objectId",) . ToJSONEx) runtimeCallFunctionOnObjectId, fmap (("arguments",) . ToJSONEx) runtimeCallFunctionOnArguments, fmap (("silent",) . ToJSONEx) runtimeCallFunctionOnSilent, fmap (("returnByValue",) . ToJSONEx) runtimeCallFunctionOnReturnByValue, fmap (("userGesture",) . ToJSONEx) runtimeCallFunctionOnUserGesture, fmap (("awaitPromise",) . ToJSONEx) runtimeCallFunctionOnAwaitPromise, fmap (("executionContextId",) . ToJSONEx) runtimeCallFunctionOnExecutionContextId, fmap (("objectGroup",) . ToJSONEx) runtimeCallFunctionOnObjectGroup]))
 
 data RuntimeCompileScript = RuntimeCompileScript {
     runtimeCompileScriptScriptId :: Maybe RuntimeScriptId,
     runtimeCompileScriptExceptionDetails :: Maybe RuntimeExceptionDetails
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  RuntimeCompileScript where
     parseJSON = A.withObject "RuntimeCompileScript" $ \v ->
          RuntimeCompileScript <$> v .:?  "scriptId"
@@ -3778,7 +5245,7 @@ instance FromJSON  RuntimeCompileScript where
 
 
 runtimeCompileScript :: Session -> String -> String -> Bool -> Maybe RuntimeExecutionContextId -> IO (Either Error RuntimeCompileScript)
-runtimeCompileScript session runtimeCompileScriptExpression runtimeCompileScriptSourceUrl runtimeCompileScriptPersistScript runtimeCompileScriptExecutionContextId = sendReceiveCommandResult (conn session) ("Runtime","compileScript") ([("runtimeCompileScriptExpression", ToJSONEx runtimeCompileScriptExpression), ("runtimeCompileScriptSourceUrl", ToJSONEx runtimeCompileScriptSourceUrl), ("runtimeCompileScriptPersistScript", ToJSONEx runtimeCompileScriptPersistScript)] ++ (catMaybes [fmap (("runtimeCompileScriptExecutionContextId",) . ToJSONEx) runtimeCompileScriptExecutionContextId]))
+runtimeCompileScript session runtimeCompileScriptExpression runtimeCompileScriptSourceUrl runtimeCompileScriptPersistScript runtimeCompileScriptExecutionContextId = sendReceiveCommandResult (conn session) ("Runtime","compileScript") ([("expression", ToJSONEx runtimeCompileScriptExpression), ("sourceURL", ToJSONEx runtimeCompileScriptSourceUrl), ("persistScript", ToJSONEx runtimeCompileScriptPersistScript)] ++ (catMaybes [fmap (("executionContextId",) . ToJSONEx) runtimeCompileScriptExecutionContextId]))
 
 
 runtimeDisable :: Session -> IO (Maybe Error)
@@ -3795,7 +5262,7 @@ runtimeEnable session  = sendReceiveCommand (conn session) ("Runtime","enable") 
 data RuntimeEvaluate = RuntimeEvaluate {
     runtimeEvaluateResult :: RuntimeRemoteObject,
     runtimeEvaluateExceptionDetails :: Maybe RuntimeExceptionDetails
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  RuntimeEvaluate where
     parseJSON = A.withObject "RuntimeEvaluate" $ \v ->
          RuntimeEvaluate <$> v .:  "result"
@@ -3804,13 +5271,13 @@ instance FromJSON  RuntimeEvaluate where
 
 
 runtimeEvaluate :: Session -> String -> Maybe String -> Maybe Bool -> Maybe Bool -> Maybe RuntimeExecutionContextId -> Maybe Bool -> Maybe Bool -> Maybe Bool -> IO (Either Error RuntimeEvaluate)
-runtimeEvaluate session runtimeEvaluateExpression runtimeEvaluateObjectGroup runtimeEvaluateIncludeCommandLineApi runtimeEvaluateSilent runtimeEvaluateContextId runtimeEvaluateReturnByValue runtimeEvaluateUserGesture runtimeEvaluateAwaitPromise = sendReceiveCommandResult (conn session) ("Runtime","evaluate") ([("runtimeEvaluateExpression", ToJSONEx runtimeEvaluateExpression)] ++ (catMaybes [fmap (("runtimeEvaluateObjectGroup",) . ToJSONEx) runtimeEvaluateObjectGroup, fmap (("runtimeEvaluateIncludeCommandLineApi",) . ToJSONEx) runtimeEvaluateIncludeCommandLineApi, fmap (("runtimeEvaluateSilent",) . ToJSONEx) runtimeEvaluateSilent, fmap (("runtimeEvaluateContextId",) . ToJSONEx) runtimeEvaluateContextId, fmap (("runtimeEvaluateReturnByValue",) . ToJSONEx) runtimeEvaluateReturnByValue, fmap (("runtimeEvaluateUserGesture",) . ToJSONEx) runtimeEvaluateUserGesture, fmap (("runtimeEvaluateAwaitPromise",) . ToJSONEx) runtimeEvaluateAwaitPromise]))
+runtimeEvaluate session runtimeEvaluateExpression runtimeEvaluateObjectGroup runtimeEvaluateIncludeCommandLineApi runtimeEvaluateSilent runtimeEvaluateContextId runtimeEvaluateReturnByValue runtimeEvaluateUserGesture runtimeEvaluateAwaitPromise = sendReceiveCommandResult (conn session) ("Runtime","evaluate") ([("expression", ToJSONEx runtimeEvaluateExpression)] ++ (catMaybes [fmap (("objectGroup",) . ToJSONEx) runtimeEvaluateObjectGroup, fmap (("includeCommandLineAPI",) . ToJSONEx) runtimeEvaluateIncludeCommandLineApi, fmap (("silent",) . ToJSONEx) runtimeEvaluateSilent, fmap (("contextId",) . ToJSONEx) runtimeEvaluateContextId, fmap (("returnByValue",) . ToJSONEx) runtimeEvaluateReturnByValue, fmap (("userGesture",) . ToJSONEx) runtimeEvaluateUserGesture, fmap (("awaitPromise",) . ToJSONEx) runtimeEvaluateAwaitPromise]))
 
 data RuntimeGetProperties = RuntimeGetProperties {
     runtimeGetPropertiesResult :: [RuntimePropertyDescriptor],
     runtimeGetPropertiesInternalProperties :: Maybe [RuntimeInternalPropertyDescriptor],
     runtimeGetPropertiesExceptionDetails :: Maybe RuntimeExceptionDetails
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  RuntimeGetProperties where
     parseJSON = A.withObject "RuntimeGetProperties" $ \v ->
          RuntimeGetProperties <$> v .:  "result"
@@ -3820,11 +5287,11 @@ instance FromJSON  RuntimeGetProperties where
 
 
 runtimeGetProperties :: Session -> RuntimeRemoteObjectId -> Maybe Bool -> IO (Either Error RuntimeGetProperties)
-runtimeGetProperties session runtimeGetPropertiesObjectId runtimeGetPropertiesOwnProperties = sendReceiveCommandResult (conn session) ("Runtime","getProperties") ([("runtimeGetPropertiesObjectId", ToJSONEx runtimeGetPropertiesObjectId)] ++ (catMaybes [fmap (("runtimeGetPropertiesOwnProperties",) . ToJSONEx) runtimeGetPropertiesOwnProperties]))
+runtimeGetProperties session runtimeGetPropertiesObjectId runtimeGetPropertiesOwnProperties = sendReceiveCommandResult (conn session) ("Runtime","getProperties") ([("objectId", ToJSONEx runtimeGetPropertiesObjectId)] ++ (catMaybes [fmap (("ownProperties",) . ToJSONEx) runtimeGetPropertiesOwnProperties]))
 
 data RuntimeGlobalLexicalScopeNames = RuntimeGlobalLexicalScopeNames {
     runtimeGlobalLexicalScopeNamesNames :: [String]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  RuntimeGlobalLexicalScopeNames where
     parseJSON = A.withObject "RuntimeGlobalLexicalScopeNames" $ \v ->
          RuntimeGlobalLexicalScopeNames <$> v .:  "names"
@@ -3832,11 +5299,11 @@ instance FromJSON  RuntimeGlobalLexicalScopeNames where
 
 
 runtimeGlobalLexicalScopeNames :: Session -> Maybe RuntimeExecutionContextId -> IO (Either Error RuntimeGlobalLexicalScopeNames)
-runtimeGlobalLexicalScopeNames session runtimeGlobalLexicalScopeNamesExecutionContextId = sendReceiveCommandResult (conn session) ("Runtime","globalLexicalScopeNames") ([] ++ (catMaybes [fmap (("runtimeGlobalLexicalScopeNamesExecutionContextId",) . ToJSONEx) runtimeGlobalLexicalScopeNamesExecutionContextId]))
+runtimeGlobalLexicalScopeNames session runtimeGlobalLexicalScopeNamesExecutionContextId = sendReceiveCommandResult (conn session) ("Runtime","globalLexicalScopeNames") ([] ++ (catMaybes [fmap (("executionContextId",) . ToJSONEx) runtimeGlobalLexicalScopeNamesExecutionContextId]))
 
 data RuntimeQueryObjects = RuntimeQueryObjects {
     runtimeQueryObjectsObjects :: RuntimeRemoteObject
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  RuntimeQueryObjects where
     parseJSON = A.withObject "RuntimeQueryObjects" $ \v ->
          RuntimeQueryObjects <$> v .:  "objects"
@@ -3844,15 +5311,15 @@ instance FromJSON  RuntimeQueryObjects where
 
 
 runtimeQueryObjects :: Session -> RuntimeRemoteObjectId -> Maybe String -> IO (Either Error RuntimeQueryObjects)
-runtimeQueryObjects session runtimeQueryObjectsPrototypeObjectId runtimeQueryObjectsObjectGroup = sendReceiveCommandResult (conn session) ("Runtime","queryObjects") ([("runtimeQueryObjectsPrototypeObjectId", ToJSONEx runtimeQueryObjectsPrototypeObjectId)] ++ (catMaybes [fmap (("runtimeQueryObjectsObjectGroup",) . ToJSONEx) runtimeQueryObjectsObjectGroup]))
+runtimeQueryObjects session runtimeQueryObjectsPrototypeObjectId runtimeQueryObjectsObjectGroup = sendReceiveCommandResult (conn session) ("Runtime","queryObjects") ([("prototypeObjectId", ToJSONEx runtimeQueryObjectsPrototypeObjectId)] ++ (catMaybes [fmap (("objectGroup",) . ToJSONEx) runtimeQueryObjectsObjectGroup]))
 
 
 runtimeReleaseObject :: Session -> RuntimeRemoteObjectId -> IO (Maybe Error)
-runtimeReleaseObject session runtimeReleaseObjectObjectId = sendReceiveCommand (conn session) ("Runtime","releaseObject") ([("runtimeReleaseObjectObjectId", ToJSONEx runtimeReleaseObjectObjectId)] ++ (catMaybes []))
+runtimeReleaseObject session runtimeReleaseObjectObjectId = sendReceiveCommand (conn session) ("Runtime","releaseObject") ([("objectId", ToJSONEx runtimeReleaseObjectObjectId)] ++ (catMaybes []))
 
 
 runtimeReleaseObjectGroup :: Session -> String -> IO (Maybe Error)
-runtimeReleaseObjectGroup session runtimeReleaseObjectGroupObjectGroup = sendReceiveCommand (conn session) ("Runtime","releaseObjectGroup") ([("runtimeReleaseObjectGroupObjectGroup", ToJSONEx runtimeReleaseObjectGroupObjectGroup)] ++ (catMaybes []))
+runtimeReleaseObjectGroup session runtimeReleaseObjectGroupObjectGroup = sendReceiveCommand (conn session) ("Runtime","releaseObjectGroup") ([("objectGroup", ToJSONEx runtimeReleaseObjectGroupObjectGroup)] ++ (catMaybes []))
 
 
 runtimeRunIfWaitingForDebugger :: Session -> IO (Maybe Error)
@@ -3861,7 +5328,7 @@ runtimeRunIfWaitingForDebugger session  = sendReceiveCommand (conn session) ("Ru
 data RuntimeRunScript = RuntimeRunScript {
     runtimeRunScriptResult :: RuntimeRemoteObject,
     runtimeRunScriptExceptionDetails :: Maybe RuntimeExceptionDetails
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  RuntimeRunScript where
     parseJSON = A.withObject "RuntimeRunScript" $ \v ->
          RuntimeRunScript <$> v .:  "result"
@@ -3870,18 +5337,19 @@ instance FromJSON  RuntimeRunScript where
 
 
 runtimeRunScript :: Session -> RuntimeScriptId -> Maybe RuntimeExecutionContextId -> Maybe String -> Maybe Bool -> Maybe Bool -> Maybe Bool -> Maybe Bool -> Maybe Bool -> IO (Either Error RuntimeRunScript)
-runtimeRunScript session runtimeRunScriptScriptId runtimeRunScriptExecutionContextId runtimeRunScriptObjectGroup runtimeRunScriptSilent runtimeRunScriptIncludeCommandLineApi runtimeRunScriptReturnByValue runtimeRunScriptGeneratePreview runtimeRunScriptAwaitPromise = sendReceiveCommandResult (conn session) ("Runtime","runScript") ([("runtimeRunScriptScriptId", ToJSONEx runtimeRunScriptScriptId)] ++ (catMaybes [fmap (("runtimeRunScriptExecutionContextId",) . ToJSONEx) runtimeRunScriptExecutionContextId, fmap (("runtimeRunScriptObjectGroup",) . ToJSONEx) runtimeRunScriptObjectGroup, fmap (("runtimeRunScriptSilent",) . ToJSONEx) runtimeRunScriptSilent, fmap (("runtimeRunScriptIncludeCommandLineApi",) . ToJSONEx) runtimeRunScriptIncludeCommandLineApi, fmap (("runtimeRunScriptReturnByValue",) . ToJSONEx) runtimeRunScriptReturnByValue, fmap (("runtimeRunScriptGeneratePreview",) . ToJSONEx) runtimeRunScriptGeneratePreview, fmap (("runtimeRunScriptAwaitPromise",) . ToJSONEx) runtimeRunScriptAwaitPromise]))
+runtimeRunScript session runtimeRunScriptScriptId runtimeRunScriptExecutionContextId runtimeRunScriptObjectGroup runtimeRunScriptSilent runtimeRunScriptIncludeCommandLineApi runtimeRunScriptReturnByValue runtimeRunScriptGeneratePreview runtimeRunScriptAwaitPromise = sendReceiveCommandResult (conn session) ("Runtime","runScript") ([("scriptId", ToJSONEx runtimeRunScriptScriptId)] ++ (catMaybes [fmap (("executionContextId",) . ToJSONEx) runtimeRunScriptExecutionContextId, fmap (("objectGroup",) . ToJSONEx) runtimeRunScriptObjectGroup, fmap (("silent",) . ToJSONEx) runtimeRunScriptSilent, fmap (("includeCommandLineAPI",) . ToJSONEx) runtimeRunScriptIncludeCommandLineApi, fmap (("returnByValue",) . ToJSONEx) runtimeRunScriptReturnByValue, fmap (("generatePreview",) . ToJSONEx) runtimeRunScriptGeneratePreview, fmap (("awaitPromise",) . ToJSONEx) runtimeRunScriptAwaitPromise]))
 
 
 runtimeSetAsyncCallStackDepth :: Session -> Int -> IO (Maybe Error)
-runtimeSetAsyncCallStackDepth session runtimeSetAsyncCallStackDepthMaxDepth = sendReceiveCommand (conn session) ("Runtime","setAsyncCallStackDepth") ([("runtimeSetAsyncCallStackDepthMaxDepth", ToJSONEx runtimeSetAsyncCallStackDepthMaxDepth)] ++ (catMaybes []))
+runtimeSetAsyncCallStackDepth session runtimeSetAsyncCallStackDepthMaxDepth = sendReceiveCommand (conn session) ("Runtime","setAsyncCallStackDepth") ([("maxDepth", ToJSONEx runtimeSetAsyncCallStackDepthMaxDepth)] ++ (catMaybes []))
+
 
 
 
 data SchemaDomain = SchemaDomain {
     schemaDomainName :: String,
     schemaDomainVersion :: String
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  SchemaDomain where
     parseJSON = A.withObject "SchemaDomain" $ \v ->
          SchemaDomain <$> v .:  "name"
@@ -3897,7 +5365,7 @@ instance ToJSON SchemaDomain  where
 
 data SchemaGetDomains = SchemaGetDomains {
     schemaGetDomainsDomains :: [SchemaDomain]
-} deriving Show
+} deriving (Eq, Show, Read)
 instance FromJSON  SchemaGetDomains where
     parseJSON = A.withObject "SchemaGetDomains" $ \v ->
          SchemaGetDomains <$> v .:  "domains"
@@ -3906,6 +5374,7 @@ instance FromJSON  SchemaGetDomains where
 
 schemaGetDomains :: Session -> IO (Either Error SchemaGetDomains)
 schemaGetDomains session  = sendReceiveCommandResult (conn session) ("Schema","getDomains") ([] ++ (catMaybes []))
+
 
 
 

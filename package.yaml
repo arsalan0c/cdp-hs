@@ -29,6 +29,12 @@ library:
   source-dirs: src
 
 executables:
+  examples-exe:
+    source-dirs: app
+    main: PrintPDF.hs
+    dependencies:
+      - cdp
+      - cdp-hs
   cdp-hs-exe:
     source-dirs: app
     main: Main.hs

@@ -66,7 +66,7 @@ getPageInfo request = do
         Just mpis -> pure $ head . catMaybes $ mpis
         Nothing   -> error "getPageInfo: Parse error"
 
-runClient :: Maybe (String, Int) -> ClientApp a b c -> IO c
+runClient :: (Read a, Ord a, Show a, FromJSON a, FromJSON b) => Maybe (String, Int) -> ClientApp a b c -> IO c
 runClient hostPort app = do
     let endpoint = hostPortToEndpoint . fromMaybe defaultHostPort $ hostPort
     pi   <- getPageInfo endpoint
@@ -81,8 +81,8 @@ runClient hostPort app = do
                 let (EventResponse ev) = eventResponse
                 pure . fromMaybe (putStrLn . const ("received event: " <> show ev)) . Map.lookup ev $ evs 
             
-            let eventResponseResult = fromMaybe (error "could not parse event") (A.decode res)
-            (\h -> h . errParams $ eventResponseResult) handler                    
+            let (EventResponseResult _ errParams) = fromMaybe (error "could not parse event") (A.decode res)
+            handler errParams                    
         
         killThread listenThread
         let session = MkSession eventsM conn listenThread
@@ -102,10 +102,16 @@ eventSubscribe ev newHandler session = updateEvents
 eventUnsubscribe :: (Ord a) => a -> Session a b -> IO ()
 eventUnsubscribe ev = updateEvents (Map.delete ev)
 
-errParams :: EventResponseResult -> b
+errParams :: EventResponseResult a b -> b
 errParams (EventResponseResult _ params) = params
-data EventResponseResult where
-    EventResponseResult :: (FromJSON a, Show a, Eq a, Ord a, Read a, FromJSON b) => a -> b -> EventResponseResult
+data EventResponseResult a b where
+    EventResponseResult :: (FromJSON a, Show a, Eq a, Ord a, Read a, FromJSON b) => a -> b -> EventResponseResult a b
+
+instance (FromJSON a, FromJSON b, Show a, Eq a, Ord a, Read a) => FromJSON (EventResponseResult a b) where
+    parseJSON = A.withObject "EventResponseResult" $ \obj -> do
+        errEvent  <- obj .: "method"
+        errParams <- obj .: "params"
+        pure $ EventResponseResult errEvent errParams
 
 data EventResponse a where
     EventResponse :: (FromJSON a, Show a, Eq a, Ord a, Read a) => a -> EventResponse a

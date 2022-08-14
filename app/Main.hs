@@ -14,7 +14,7 @@ import qualified CDP as CDP
 
 main :: IO ()
 main = do
-    putStrLn "Starting"
+    putStrLn "Starting CDP"
     CDP.runClient Nothing $ \session -> do
         CDP.eventSubscribe (CDP.EventNamePageWindowOpen) (putStrLn . CDP.pageWindowOpenUrl . f) session
         

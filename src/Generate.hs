@@ -44,7 +44,7 @@ generate des = ("\n\n" <>) $
 
     allEventConstructors = concatMap (\d -> map (eventName (domainName d)) . (validEvents . fromMaybe []) $ P.domainsEltEvents d) $ validDomains 
             
-    allEventsType = (<> "\n    deriving (Eq, Show, Read)") . 
+    allEventsType = (<> "\n    deriving (Ord, Eq, Show, Read)") . 
         ("data EventName = "<>) . 
         intercalate " | " . 
         map ("EventName" <>) $ 

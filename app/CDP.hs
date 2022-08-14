@@ -22,6 +22,7 @@ import qualified Network.WebSockets as WS
 import Control.Concurrent
 import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
+import qualified Data.Map as Map
 
 
 defaultHostPort :: (String, Int)
@@ -36,7 +37,7 @@ type ClientApp a = Session -> IO a
 type Handler = EventReturn -> IO ()
 
 data Session = MkSession 
-    { events       :: MVar [(EventName, Handler)]
+    { events       :: MVar (Map.Map EventName Handler)
     , conn         :: WS.Connection
     , listenThread :: ThreadId
     }
@@ -45,7 +46,7 @@ runClient :: Maybe (String, Int) -> ClientApp a -> IO a
 runClient hostPort app = do
     let endpoint = hostPortToEndpoint . fromMaybe defaultHostPort $ hostPort
     pi   <- getPageInfo endpoint
-    eventsM <- newMVar []
+    eventsM <- newMVar Map.empty
     let (host, port, path) = parseUri . debuggerUrl $ pi
     
     WS.runClient host port path $ \conn -> do
@@ -54,7 +55,7 @@ runClient hostPort app = do
             let eventResponse = fromMaybe (error "could not parse event") (A.decode res)
             handler <- withMVar eventsM $ \evs -> do
                 let ev = erEvent eventResponse
-                pure . fromMaybe (putStrLn . const ("received event: " <> show ev)) . flip lookup evs $ ev 
+                pure . fromMaybe (putStrLn . const ("received event: " <> show ev)) . Map.lookup ev $ evs 
             
             let eventResponseResult = fromMaybe (error "could not parse event") (A.decode res)
             (\h -> h . errParams $ eventResponseResult) handler                    
@@ -64,18 +65,16 @@ runClient hostPort app = do
         killThread listenThread
         pure result
 
-updateEvents :: ([(EventName, Handler)] -> [(EventName, Handler)]) -> Session -> IO ()
+updateEvents :: (Map.Map EventName Handler -> Map.Map EventName Handler) -> Session -> IO ()
 updateEvents f = ($ pure . f) . modifyMVar_ . events
 
 eventSubscribe :: EventName -> Handler -> Session -> IO ()
-eventSubscribe ev newHandler session = do
-    evs <- readMVar (events session) 
-    case lookup ev evs of
-        Just _   -> error "event already subscribed" -- TODO: replace handler
-        Nothing  -> updateEvents ((ev,newHandler):) session
+eventSubscribe ev newHandler session = updateEvents
+    (Map.alter (const . Just $ newHandler) ev)
+    session
 
 eventUnsubscribe :: EventName -> Session -> IO ()
-eventUnsubscribe ev session = error "TODO" --
+eventUnsubscribe ev = updateEvents (Map.delete ev)
 
 
 data PageInfo = PageInfo
@@ -216,7 +215,7 @@ data EventResult where
 
 
 data EventName = EventNameDOMAttributeModified | EventNameDOMAttributeRemoved | EventNameDOMCharacterDataModified | EventNameDOMChildNodeCountUpdated | EventNameDOMChildNodeInserted | EventNameDOMChildNodeRemoved | EventNameDOMDocumentUpdated | EventNameDOMSetChildNodes | EventNameLogEntryAdded | EventNameNetworkDataReceived | EventNameNetworkEventSourceMessageReceived | EventNameNetworkLoadingFailed | EventNameNetworkLoadingFinished | EventNameNetworkRequestServedFromCache | EventNameNetworkRequestWillBeSent | EventNameNetworkResponseReceived | EventNameNetworkWebSocketClosed | EventNameNetworkWebSocketCreated | EventNameNetworkWebSocketFrameError | EventNameNetworkWebSocketFrameReceived | EventNameNetworkWebSocketFrameSent | EventNameNetworkWebSocketHandshakeResponseReceived | EventNameNetworkWebSocketWillSendHandshakeRequest | EventNameNetworkWebTransportCreated | EventNameNetworkWebTransportConnectionEstablished | EventNameNetworkWebTransportClosed | EventNamePageDomContentEventFired | EventNamePageFileChooserOpened | EventNamePageFrameAttached | EventNamePageFrameDetached | EventNamePageFrameNavigated | EventNamePageInterstitialHidden | EventNamePageInterstitialShown | EventNamePageJavascriptDialogClosed | EventNamePageJavascriptDialogOpening | EventNamePageLifecycleEvent | EventNamePagePrerenderAttemptCompleted | EventNamePageLoadEventFired | EventNamePageWindowOpen | EventNamePerformanceMetrics | EventNameTargetReceivedMessageFromTarget | EventNameTargetTargetCreated | EventNameTargetTargetDestroyed | EventNameTargetTargetCrashed | EventNameTargetTargetInfoChanged | EventNameFetchRequestPaused | EventNameFetchAuthRequired | EventNameConsoleMessageAdded | EventNameDebuggerBreakpointResolved | EventNameDebuggerPaused | EventNameDebuggerResumed | EventNameDebuggerScriptFailedToParse | EventNameDebuggerScriptParsed | EventNameProfilerConsoleProfileFinished | EventNameProfilerConsoleProfileStarted | EventNameRuntimeConsoleApiCalled | EventNameRuntimeExceptionRevoked | EventNameRuntimeExceptionThrown | EventNameRuntimeExecutionContextCreated | EventNameRuntimeExecutionContextDestroyed | EventNameRuntimeExecutionContextsCleared | EventNameRuntimeInspectRequested
-    deriving (Eq, Show, Read)
+    deriving (Ord, Eq, Show, Read)
 instance FromJSON EventName where
     parseJSON = A.withText  "EventName"  $ \v -> do
         pure $ case v of

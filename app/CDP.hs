@@ -24,194 +24,12 @@ import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 
-
-defaultHostPort :: (String, Int)
-defaultHostPort = ("http://127.0.0.1", 9222)
-
-hostPortToEndpoint :: (String, Int) -> Http.Request
-hostPortToEndpoint (host, port) = Http.parseRequest_ . 
-    ("GET " <>) . 
-    mconcat $ [host, ":", show port, "/json"]
-
-type ClientApp a = Session -> IO a
-type Handler = EventReturn -> IO ()
-
-data Session = MkSession 
-    { events       :: MVar (Map.Map EventName Handler)
-    , conn         :: WS.Connection
-    , listenThread :: ThreadId
-    }
-
-runClient :: Maybe (String, Int) -> ClientApp a -> IO a
-runClient hostPort app = do
-    let endpoint = hostPortToEndpoint . fromMaybe defaultHostPort $ hostPort
-    pi   <- getPageInfo endpoint
-    eventsM <- newMVar Map.empty
-    let (host, port, path) = parseUri . debuggerUrl $ pi
-    
-    WS.runClient host port path $ \conn -> do
-        listenThread <- forkIO $ forever $ do
-            res <- WS.fromDataMessage <$> WS.receiveDataMessage conn
-            let eventResponse = fromMaybe (error "could not parse event") (A.decode res)
-            handler <- withMVar eventsM $ \evs -> do
-                let ev = erEvent eventResponse
-                pure . fromMaybe (putStrLn . const ("received event: " <> show ev)) . Map.lookup ev $ evs 
-            
-            let eventResponseResult = fromMaybe (error "could not parse event") (A.decode res)
-            (\h -> h . errParams $ eventResponseResult) handler                    
-        
-        let session = MkSession eventsM conn listenThread
-        result <- app session
-        killThread listenThread
-        pure result
-
-updateEvents :: (Map.Map EventName Handler -> Map.Map EventName Handler) -> Session -> IO ()
-updateEvents f = ($ pure . f) . modifyMVar_ . events
-
-eventSubscribe :: EventName -> Handler -> Session -> IO ()
-eventSubscribe ev newHandler session = updateEvents
-    (Map.alter (const . Just $ newHandler) ev)
-    session
-
-eventUnsubscribe :: EventName -> Session -> IO ()
-eventUnsubscribe ev = updateEvents (Map.delete ev)
-
-
-data PageInfo = PageInfo
-    { debuggerUrl :: String
-    } deriving Show
-instance FromJSON PageInfo where
-    parseJSON = A.withObject "PageInfo" $ \v ->
-        PageInfo <$> v .: "webSocketDebuggerUrl"
-
-parseUri :: String -> (String, Int, String)
-parseUri uri = fromMaybe (error "parseUri: Invalid URI") $ do
-    u    <- Uri.parseURI uri
-    auth <- Uri.uriAuthority u
-    let port = case Uri.uriPort auth of
-            (':':str)   -> read str
-            _           -> 80
-    pure (Uri.uriRegName auth, port, Uri.uriPath u)
-
-getPageInfo :: Http.Request -> IO PageInfo
-getPageInfo request = do
-    response <- Http.httpLBS request
-    let body = Http.getResponseBody response
-    case A.decode body of
-        Just mpis -> pure $ head . catMaybes $ mpis
-        Nothing   -> error "getPageInfo: Parse error"
-
-data ToJSONEx where
-   ToJSONEx :: (ToJSON a, Show a) => a -> ToJSONEx
-instance ToJSON ToJSONEx where
-    toJSON (ToJSONEx v) = toJSON v
-instance Show ToJSONEx where
-    show (ToJSONEx v) = show v
-data Command = Command {
-      commandId :: Int
-    , commandMethod :: String
-    , commandParams :: [(String, ToJSONEx)]
-    } deriving Show
-instance ToJSON Command where
-   toJSON cmd = A.object
-        [ "id"     .= commandId cmd
-        , "method" .= commandMethod cmd
-        , "params" .= commandParams cmd
-        ]
+import Run
 
 
 
-methodToName :: T.Text -> String
-methodToName md = let [domain, method] = T.splitOn "." md in
-    mconcat [T.unpack domain, C.pascal . T.unpack $ method]
 
 
-
-data EventResponseResult = EventResponseResult { errEvent :: EventName, errParams :: EventReturn }
-
-data EventResponse = EventResponse { erEvent :: EventName }
-instance FromJSON (EventResponse) where
-    parseJSON = A.withObject "EventResponse" $ \obj -> do
-        erEvent <- obj .: "method"
-        pure EventResponse{..}
-
-data CommandResponseResult a = CommandResponseResult { crrId :: Int, crrResult :: a }
-data CommandResponse = CommandResponse { crId :: Int }
-
-instance (Show a) => Show (CommandResponseResult a) where
-    show CommandResponseResult{..} = "\nid: " <> show crrId <> "\nresult: " <> show crrResult
-instance Show CommandResponse where
-    show CommandResponse{..} = "\nid: " <> show crId
-
-instance (FromJSON a) => FromJSON (CommandResponseResult a) where
-    parseJSON = A.withObject "CommandResponseResult" $ \obj -> do
-        crrId <- obj .: "id"
-        crrResult <- obj .: "result"
-        pure CommandResponseResult{..}
-
-instance FromJSON CommandResponse where
-    parseJSON = A.withObject "CommandResponse" $ \obj -> do
-        crId <- obj .: "id"
-        pure CommandResponse{..}
-
-newtype Error = Error String
-    deriving Show
-
-indent :: Int -> String -> String
-indent = (<>) . flip replicate ' '
-
-commandToStr :: Command -> String
-commandToStr Command{..} = unlines 
-    [ "command: " <> commandMethod
-    , if (not . null) commandParams 
-        then "arguments: " <> (unlines . map (indent 2 . (\(f,s) -> f <> ":" <> s) . fmap show) $ commandParams)
-        else ""
-    ]
-
-sendCommand :: WS.Connection -> (String, String) -> [(String, ToJSONEx)] -> IO Command
-sendCommand conn (domain,method) paramArgs = do
-    putStrLn . show $ (domain, method)
-    id <- pure 1  -- TODO: randomly generate
-    let c = command id
-    WS.sendTextData conn . A.encode $ c
-    pure c
-  where
-    command id = Command id 
-        (domain <> "." <> method)
-        paramArgs
-   
-receiveResponse :: (FromJSON a) => WS.Connection -> IO (Maybe a)
-receiveResponse conn = A.decode <$> do
-    dm <- WS.receiveDataMessage conn
-    putStrLn . show $ dm
-    pure $ WS.fromDataMessage dm
-
-sendReceiveCommandResult :: FromJSON b =>
-    WS.Connection ->
-         (String, String) -> [(String, ToJSONEx)]
-         -> IO (Either Error b)
-sendReceiveCommandResult conn (domain,method) paramArgs = do
-    command <- sendCommand conn (domain,method) paramArgs
-    res     <- receiveResponse conn
-    pure $ maybe (Left . responseParseError $ command) 
-        (maybe (Left . responseParseError $ command) Right . crrResult) res 
-
-sendReceiveCommand ::
-    WS.Connection ->
-         (String, String) -> [(String, ToJSONEx)]
-         -> IO (Maybe Error)
-sendReceiveCommand conn (domain,method) paramArgs = do
-    command <- sendCommand conn (domain, method) paramArgs
-    res     <- receiveResponse conn
-    pure $ maybe (Just . responseParseError $ command) 
-        (const Nothing . crId) res
-
-responseParseError :: Command -> Error
-responseParseError c = Error . unlines $
-    ["unable to parse response", commandToStr c]
-
-data EventResult where
-    EventResult :: (FromJSON a, Eq a, Show a, Read a) => a -> EventResult
 
 
 data EventName = EventNameDOMAttributeModified | EventNameDOMAttributeRemoved | EventNameDOMCharacterDataModified | EventNameDOMChildNodeCountUpdated | EventNameDOMChildNodeInserted | EventNameDOMChildNodeRemoved | EventNameDOMDocumentUpdated | EventNameDOMSetChildNodes | EventNameLogEntryAdded | EventNameNetworkDataReceived | EventNameNetworkEventSourceMessageReceived | EventNameNetworkLoadingFailed | EventNameNetworkLoadingFinished | EventNameNetworkRequestServedFromCache | EventNameNetworkRequestWillBeSent | EventNameNetworkResponseReceived | EventNameNetworkWebSocketClosed | EventNameNetworkWebSocketCreated | EventNameNetworkWebSocketFrameError | EventNameNetworkWebSocketFrameReceived | EventNameNetworkWebSocketFrameSent | EventNameNetworkWebSocketHandshakeResponseReceived | EventNameNetworkWebSocketWillSendHandshakeRequest | EventNameNetworkWebTransportCreated | EventNameNetworkWebTransportConnectionEstablished | EventNameNetworkWebTransportClosed | EventNamePageDomContentEventFired | EventNamePageFileChooserOpened | EventNamePageFrameAttached | EventNamePageFrameDetached | EventNamePageFrameNavigated | EventNamePageInterstitialHidden | EventNamePageInterstitialShown | EventNamePageJavascriptDialogClosed | EventNamePageJavascriptDialogOpening | EventNamePageLifecycleEvent | EventNamePagePrerenderAttemptCompleted | EventNamePageLoadEventFired | EventNamePageWindowOpen | EventNamePerformanceMetrics | EventNameTargetReceivedMessageFromTarget | EventNameTargetTargetCreated | EventNameTargetTargetDestroyed | EventNameTargetTargetCrashed | EventNameTargetTargetInfoChanged | EventNameFetchRequestPaused | EventNameFetchAuthRequired | EventNameConsoleMessageAdded | EventNameDebuggerBreakpointResolved | EventNameDebuggerPaused | EventNameDebuggerResumed | EventNameDebuggerScriptFailedToParse | EventNameDebuggerScriptParsed | EventNameProfilerConsoleProfileFinished | EventNameProfilerConsoleProfileStarted | EventNameRuntimeConsoleApiCalled | EventNameRuntimeExceptionRevoked | EventNameRuntimeExceptionThrown | EventNameRuntimeExecutionContextCreated | EventNameRuntimeExecutionContextDestroyed | EventNameRuntimeExecutionContextsCleared | EventNameRuntimeInspectRequested
@@ -285,7 +103,7 @@ instance FromJSON EventName where
 
 data EventReturn = EventReturnDOMAttributeModified DOMAttributeModified | EventReturnDOMAttributeRemoved DOMAttributeRemoved | EventReturnDOMCharacterDataModified DOMCharacterDataModified | EventReturnDOMChildNodeCountUpdated DOMChildNodeCountUpdated | EventReturnDOMChildNodeInserted DOMChildNodeInserted | EventReturnDOMChildNodeRemoved DOMChildNodeRemoved | EventReturnDOMDocumentUpdated DOMDocumentUpdated | EventReturnDOMSetChildNodes DOMSetChildNodes | EventReturnLogEntryAdded LogEntryAdded | EventReturnNetworkDataReceived NetworkDataReceived | EventReturnNetworkEventSourceMessageReceived NetworkEventSourceMessageReceived | EventReturnNetworkLoadingFailed NetworkLoadingFailed | EventReturnNetworkLoadingFinished NetworkLoadingFinished | EventReturnNetworkRequestServedFromCache NetworkRequestServedFromCache | EventReturnNetworkRequestWillBeSent NetworkRequestWillBeSent | EventReturnNetworkResponseReceived NetworkResponseReceived | EventReturnNetworkWebSocketClosed NetworkWebSocketClosed | EventReturnNetworkWebSocketCreated NetworkWebSocketCreated | EventReturnNetworkWebSocketFrameError NetworkWebSocketFrameError | EventReturnNetworkWebSocketFrameReceived NetworkWebSocketFrameReceived | EventReturnNetworkWebSocketFrameSent NetworkWebSocketFrameSent | EventReturnNetworkWebSocketHandshakeResponseReceived NetworkWebSocketHandshakeResponseReceived | EventReturnNetworkWebSocketWillSendHandshakeRequest NetworkWebSocketWillSendHandshakeRequest | EventReturnNetworkWebTransportCreated NetworkWebTransportCreated | EventReturnNetworkWebTransportConnectionEstablished NetworkWebTransportConnectionEstablished | EventReturnNetworkWebTransportClosed NetworkWebTransportClosed | EventReturnPageDomContentEventFired PageDomContentEventFired | EventReturnPageFileChooserOpened PageFileChooserOpened | EventReturnPageFrameAttached PageFrameAttached | EventReturnPageFrameDetached PageFrameDetached | EventReturnPageFrameNavigated PageFrameNavigated | EventReturnPageInterstitialHidden PageInterstitialHidden | EventReturnPageInterstitialShown PageInterstitialShown | EventReturnPageJavascriptDialogClosed PageJavascriptDialogClosed | EventReturnPageJavascriptDialogOpening PageJavascriptDialogOpening | EventReturnPageLifecycleEvent PageLifecycleEvent | EventReturnPagePrerenderAttemptCompleted PagePrerenderAttemptCompleted | EventReturnPageLoadEventFired PageLoadEventFired | EventReturnPageWindowOpen PageWindowOpen | EventReturnPerformanceMetrics PerformanceMetrics | EventReturnTargetReceivedMessageFromTarget TargetReceivedMessageFromTarget | EventReturnTargetTargetCreated TargetTargetCreated | EventReturnTargetTargetDestroyed TargetTargetDestroyed | EventReturnTargetTargetCrashed TargetTargetCrashed | EventReturnTargetTargetInfoChanged TargetTargetInfoChanged | EventReturnFetchRequestPaused FetchRequestPaused | EventReturnFetchAuthRequired FetchAuthRequired | EventReturnConsoleMessageAdded ConsoleMessageAdded | EventReturnDebuggerBreakpointResolved DebuggerBreakpointResolved | EventReturnDebuggerPaused DebuggerPaused | EventReturnDebuggerResumed DebuggerResumed | EventReturnDebuggerScriptFailedToParse DebuggerScriptFailedToParse | EventReturnDebuggerScriptParsed DebuggerScriptParsed | EventReturnProfilerConsoleProfileFinished ProfilerConsoleProfileFinished | EventReturnProfilerConsoleProfileStarted ProfilerConsoleProfileStarted | EventReturnRuntimeConsoleApiCalled RuntimeConsoleApiCalled | EventReturnRuntimeExceptionRevoked RuntimeExceptionRevoked | EventReturnRuntimeExceptionThrown RuntimeExceptionThrown | EventReturnRuntimeExecutionContextCreated RuntimeExecutionContextCreated | EventReturnRuntimeExecutionContextDestroyed RuntimeExecutionContextDestroyed | EventReturnRuntimeExecutionContextsCleared RuntimeExecutionContextsCleared | EventReturnRuntimeInspectRequested RuntimeInspectRequested
     deriving (Eq, Show, Read)
-instance FromJSON EventResponseResult where
+instance FromJSON (EventResponseResult EventName EventReturn) where
     parseJSON = A.withObject  "EventResponseResult"  $ \obj -> do
         errEvent <- obj .: "method"
         evn <- methodToName <$> obj .: "method"

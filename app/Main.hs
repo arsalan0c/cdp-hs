@@ -14,12 +14,13 @@ import qualified CDP as CDP
 
 main :: IO ()
 main = do
-    putStrLn "Starting CDP"
+    putStrLn "Starting"
     CDP.runClient Nothing $ \session -> do
-        CDP.eventSubscribe (CDP.EventNamePageWindowOpen) (putStrLn . CDP.pageWindowOpenUrl . f) session
+      print =<< CDP.pagePrintToPDF session Nothing (Just True) (Just True) Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+      -- CDP.eventSubscribe (CDP.EventNamePageWindowOpen) (putStrLn . CDP.pageWindowOpenUrl . f) session
         
-        forever $ do
-            threadDelay 1000
+        -- forever $ do
+        --     threadDelay 1000
   where
     f (CDP.EventReturnPageWindowOpen v) = v
 

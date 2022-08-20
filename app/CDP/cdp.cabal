@@ -1,0 +1,93 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.35.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           cdp
+version:        0.0.1.0
+synopsis:       Project synopsis
+description:    See README at <https://github.com/arsalan0c/cdp-hs
+category:       Package.Category
+homepage:       https://github.com/arsalan0c/cdp-hs#readme
+bug-reports:    https://github.com/arsalan0c/cdp-hs/issues
+author:         Arsalan Cheema
+maintainer:     Arsalan Cheema
+license:        BSD-3-Clause
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/arsalan0c/cdp-hs
+
+library
+  exposed-modules:
+      CDP
+      Domains.Browser
+      Domains.Console
+      Domains.Debugger
+      Domains.DOM
+      Domains.DOMDebugger
+      Domains.Emulation
+      Domains.Fetch
+      Domains.Input
+      Domains.IO
+      Domains.Log
+      Domains.Network
+      Domains.Page
+      Domains.Performance
+      Domains.Profiler
+      Domains.Runtime
+      Domains.Schema
+      Domains.Security
+      Domains.Target
+  other-modules:
+      Paths_cdp
+  autogen-modules:
+      Paths_cdp
+  hs-source-dirs:
+      src
+  build-depends:
+      aeson
+    , base
+    , bytestring
+    , casing
+    , containers
+    , data-default
+    , extra
+    , http-conduit
+    , json-alt
+    , json-autotype
+    , mtl
+    , network-uri
+    , text
+    , vector
+    , websockets
+  default-language: Haskell2010
+
+executable cdp-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_cdp
+  autogen-modules:
+      Paths_cdp
+  hs-source-dirs:
+      app
+  build-depends:
+      aeson
+    , base
+    , bytestring
+    , casing
+    , cdp
+    , containers
+    , data-default
+    , extra
+    , http-conduit
+    , json-alt
+    , json-autotype
+    , mtl
+    , network-uri
+    , text
+    , vector
+    , websockets
+  default-language: Haskell2010

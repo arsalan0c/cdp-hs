@@ -10,6 +10,8 @@ import Data.Text (Text(..), unpack)
 import qualified Text.Casing as C
 import Data.Aeson.AutoType.Alternative ((:|:)(AltLeft, AltRight))
 import qualified Data.Aeson as A
+import qualified Data.Set as Set
+import qualified Data.Map.Strict as Map
 
 import qualified Protocol as P
 
@@ -17,23 +19,37 @@ newtype StringAlt = StringAlt String
 instance Show StringAlt where
     show (StringAlt s) = s
 
-type Program = String
+type Program = (String, [(Text, String)])
 
-supportedDomains :: [Text]
-supportedDomains = ["Browser", "Page"]
+supportedDomains :: Set.Set Text
+supportedDomains = Set.fromList ["Target", "Browser", "Page"]
 
-generate :: [P.DomainsElt] -> Program
-generate des = ("\n\n" <>) $
-    unlines 
-        [ allEventsType
+generate :: String -> String -> String -> String -> [P.DomainsElt] -> Program
+generate extensions imports prelude utils des = (main, domains)
+  where
+    main = unlines 
+        [ extensions
+        , moduleHeader "CDP"
+        , imports
+        , ""
+        , allDomainImports
+        , ""
+        , utils
+        , ""
+        , prelude
+        , ""
+        , allEventsType
         , allEventsFromJSON
         , allEventReturns
         , allEventReturnsFromJSON
         -- , allEventReturnsDeconstruct
-        , unlines . map genDomain $ validDomains
         ]
-  where
-    validDomains = 
+
+    domains = map (P.domainsEltDomain &&& genDomain) $ validDomains 
+    allDomainImports = unlines . map (importDomain . unpack . P.domainsEltDomain) $ validDomains
+
+    validDomains =
+        -- filter (flip Set.member supportedDomains . P.domainsEltDomain) .
         filter (not . hasExperimentalDependencies) . 
         filter (not . isTrue . P.domainsEltExperimental) $ 
         des
@@ -42,9 +58,10 @@ generate des = ("\n\n" <>) $
     experimentalDomains = map P.domainsEltDomain . filter (isTrue . P.domainsEltExperimental) $ des
     
 
-    allEventConstructors = concatMap (\d -> map (eventName (domainName d)) . (validEvents . fromMaybe []) $ P.domainsEltEvents d) $ validDomains 
+    allEventConstructors = concatMap (\d -> map (eventNameDomain (domainName d)) . (validEvents . fromMaybe []) $ P.domainsEltEvents d) $ validDomains
+    allEventTypes = concatMap (\d -> map (eventNameQualified (domainName d)) . (validEvents . fromMaybe []) $ P.domainsEltEvents d) $ validDomains  
             
-    allEventsType = (<> "\n    deriving (Ord, Eq, Show, Read)") . 
+    allEventsType = (<> ("\n    " <> derivingStr)) . 
         ("data EventName = "<>) . 
         intercalate " | " . 
         map ("EventName" <>) $ 
@@ -52,9 +69,9 @@ generate des = ("\n\n" <>) $
 
     allEventsFromJSON = genFromJSONInstanceEnum "EventName" allEventConstructors (map ("EventName"<>) allEventConstructors)
   
-    allEventReturns = (<> "\n    deriving (Eq, Show, Read)") . ("data EventReturn = "<>) . intercalate " | " .
-        map (\c -> unwords ["EventReturn" <> c, c]) $ 
-        allEventConstructors
+    allEventReturns = (<> ("\n    " <> derivingStr)) . ("data EventReturn = "<>) . intercalate " | " .
+        map (\(c,qc) -> unwords ["EventReturn" <> c, qc]) $ 
+        zip allEventConstructors allEventTypes
     allEventReturnsFromJSON = unlines $
         [ unwords ["instance FromJSON", "EventResponseResult", "where"]
         , unwords ["    parseJSON = A.withObject ", show "EventResponseResult", " $ \\obj -> do"]
@@ -76,7 +93,10 @@ generate des = ("\n\n" <>) $
 
     validEvents  = filter (not . isTrue . P.eventsEltExperimental) . filter (not . isTrue . P.eventsEltDeprecated)
 
-    eventName domainName ev = (domainName <>) . C.pascal . unpack . P.eventsEltName $ ev
+    eventNameQualified domainName ev = (domainName <>) . ("." <>) . C.pascal . unpack . P.eventsEltName $ ev
+    eventNameDomain domainName ev = (domainName <>) . C.pascal . unpack . P.eventsEltName $ ev
+    eventName ev = C.pascal . unpack . P.eventsEltName $ ev
+
     domainName = unpack . P.domainsEltDomain
     genDomain de = 
         let 
@@ -85,19 +105,29 @@ generate des = ("\n\n" <>) $
                 filter (not . isTrue . P.commandsEltExperimental) . 
                 P.domainsEltCommands $ de
             events = maybe "" (unlines . (map eventReturnType) . validEvents) . P.domainsEltEvents $ de
-            eventReturnType ev = let evn = eventName (domainName de) ev in
-                maybe ((<> "\n" <> genFromJSONInstanceEnum evn [evn] [evn]) . (<> "\n    deriving (Eq, Show, Read)") $ unwords ["data", evn, "=", evn]) (genTypeObj dn evn) . P.eventsEltParameters $ ev
+            eventReturnType ev = let evn = eventName ev in
+                maybe ((<> "\n" <> genFromJSONInstanceEnum evn [evn] [evn]) . (<> ("\n    " <> derivingStr)) $ unwords ["data", evn, "=", evn]) (genTypeObj dn evn) . P.eventsEltParameters $ ev
             dn = domainName de 
+            domainImports = unlines . map importDomain . maybe [] (map unpack) . P.domainsEltDependencies $ de
+            -- unlines . map importDomain . filter (/= dn) . map (unpack . P.domainsEltDomain) $ validDomains
         in
         unlines
-        [ events
+        [ extensions
+        , domainModuleHeader dn
+        , imports
+        , ""
+        , domainImports
+        , ""
+        , utils
+        , ""
+        , events
         , genTypes dn . P.domainsEltTypes $ de
         , unlines . map (genCommand dn) $ validCommands
         ]
 
     genCommand dn ce = 
         let cn = unpack . P.commandsEltName $ ce
-            name = genCommandName dn cn
+            name = cn -- genCommandName dn cn
             params = filter (not . isTrue . P.parametersEltDeprecated) . 
                 filter (not . isTrue . P.parametersEltExperimental) . 
                 fromMaybe [] . P.commandsEltParameters $ ce
@@ -122,7 +152,7 @@ generate des = ("\n\n" <>) $
         unlines [ returnTypeDecl
             , unwords 
                 [ name, "::"
-                , intercalate " -> " ("Session":paramTypes ++ [returnTypeSig])
+                , intercalate " -> " ("Session a":paramTypes ++ [returnTypeSig])
                 ]
             , unwords
                 [ name, "session", (unwords paramHSNames), "="
@@ -152,7 +182,7 @@ generate des = ("\n\n" <>) $
                                 (P.returnsEltType ret)
                                 (P.returnsEltRef ret) 
                                 (P.returnsEltItems ret))) $ reqRets ++ optRets
-                , "} deriving (Eq, Show, Read)"
+                , "} " <> derivingStr 
                 , genFromJSONInstance name 
                     (map (unpack . P.returnsEltName) reqRets) 
                     (map (unpack . P.returnsEltName) optRets)
@@ -219,7 +249,7 @@ generate des = ("\n\n" <>) $
         , unwords ["        case v of"]
         ] ++ (map (\(v, hsv) -> unwords ["               ", hsv, "->", show v]) $ zip vals hsVals)
     
-    genTypeName dn tn = dn <> tn
+    genTypeName dn tn = tn -- dn <> tn
     genTypes _ Nothing    = []
     genTypes dn (Just tes) = intercalate "\n\n" . map (genType dn) . filter (not . isTrue . P.typesEltDeprecated) . filter (not . isTrue . P.typesEltExperimental) $ tes
     genType dn te = let name = genTypeName dn (unpack . P.typesEltId $ te) in
@@ -237,7 +267,7 @@ generate des = ("\n\n" <>) $
         unlines
             [ unwords 
                 ["data", name, "=", intercalate " | " hsValues]
-            , "    deriving (Eq, Show, Read)"
+            , "    " <> derivingStr
             , genFromJSONInstanceEnum name values hsValues
             , genToJSONInstanceEnum name values hsValues
             ]
@@ -264,7 +294,7 @@ generate des = ("\n\n" <>) $
                                 (P.parametersEltType param)
                                 (P.parametersEltRef param) 
                                 (P.parametersEltItems param))) $ reqParams ++ optParams
-                , "} deriving (Eq, Show, Read)"
+                , "} " <> derivingStr
                 , genFromJSONInstance name reqParamNames optParamNames
                 , genToJSONInstance name 
                     (zip reqParamNames (map paramNameToHSName reqParamNames)) 
@@ -300,8 +330,8 @@ convertType _ "array" = error "got array conversion" -- TODO
 convertType _ "object" = error "got object type"
 convertType _ "" = error "got empty type"
 convertType domain s = case splitOn "." s of
-    [otherDomain, ty] -> otherDomain <> ty
-    _ -> domain <> s 
+    [otherDomain, ty] -> s -- otherDomain <> ty
+    _ -> s -- domain <> s 
 
 -- TODO: use Data.List.Extra
 breakOn :: Eq a => [a] -> [a] -> ([a], [a])
@@ -314,3 +344,10 @@ splitOn [] _ = error "splitOn, needle may not be empty"
 splitOn _ [] = [[]]
 splitOn needle haystack = a : if null b then [] else splitOn needle $ drop (length needle) b
     where (a,b) = breakOn needle haystack
+
+domainModuleName dn = intercalate "." ["Domains", dn]
+moduleHeader dn = unwords ["module", dn, "(module", dn <>")", "where"]
+domainModuleHeader dn = unwords ["module", domainModuleName dn, "(module", domainModuleName dn <>")", "where"]
+importDomain dn = unwords ["import", "qualified", domainModuleName dn, "as", dn]
+
+derivingStr = "deriving (Ord, Eq, Show, Prelude.Read)"

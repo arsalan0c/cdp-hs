@@ -10,17 +10,13 @@ import Control.Concurrent
 import Control.Monad
 
 import ChromeDevtoolsProtocol
-import qualified CDP as CDP
+-- import qualified CDP as CDP
 
 main :: IO ()
 main = do
-    putStrLn "Starting CDP"
-    CDP.runClient Nothing $ \session -> do
-        CDP.eventSubscribe (CDP.EventNamePageWindowOpen) (putStrLn . CDP.pageWindowOpenUrl . f) session
-        
-        forever $ do
-            threadDelay 1000
+    doChromeDevtoolsProtocol
+    -- putStrLn "Starting CDP Gen"
   where
-    f (CDP.EventReturnPageWindowOpen v) = v
+    a = 10
 
      

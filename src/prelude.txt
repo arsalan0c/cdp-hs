@@ -1,0 +1,82 @@
+defaultHostPort :: (String, Int)
+defaultHostPort = ("http://127.0.0.1", 9222)
+
+hostPortToEndpoint :: (String, Int) -> Http.Request
+hostPortToEndpoint (host, port) = Http.parseRequest_ . 
+    ("GET " <>) . 
+    mconcat $ [host, ":", show port, "/json"]
+
+type ClientApp a = Session (MVar (Map.Map EventName Handler)) -> IO a
+
+runClient :: Maybe (String, Int) -> ClientApp a -> IO a
+runClient hostPort app = do
+    let endpoint = hostPortToEndpoint . fromMaybe defaultHostPort $ hostPort
+    pi   <- getPageInfo endpoint
+    eventsM <- newMVar Map.empty
+    let (host, port, path) = parseUri . debuggerUrl $ pi
+    
+    WS.runClient host port path $ \conn -> do
+        listenThread <- forkIO $ do
+            WS.runClient host port path $ \conn -> forever $ do
+                res <- WS.fromDataMessage <$> WS.receiveDataMessage conn
+
+
+                let eventResponse = fromMaybe (error "could not parse event") (A.decode res)
+                handler <- withMVar eventsM $ \evs -> do
+                    let ev = erEvent eventResponse
+                    pure . fromMaybe (putStrLn . const ("received event: " <> show ev)) . Map.lookup ev $ evs 
+                
+                let eventResponseResult = fromMaybe (error "event does not have params") (A.decode res)
+                (\h -> h . errParams $ eventResponseResult) handler                    
+        
+        let session = MkSession eventsM conn listenThread
+        result <- app session
+        killThread listenThread
+        pure result
+
+data PageInfo = PageInfo
+    { debuggerUrl :: String
+    } deriving Show
+instance FromJSON PageInfo where
+    parseJSON = A.withObject "PageInfo" $ \v ->
+        PageInfo <$> v .: "webSocketDebuggerUrl"
+
+parseUri :: String -> (String, Int, String)
+parseUri uri = fromMaybe (error "parseUri: Invalid URI") $ do
+    u    <- Uri.parseURI uri
+    auth <- Uri.uriAuthority u
+    let port = case Uri.uriPort auth of
+            (':':str)   -> read str
+            _           -> 80
+    pure (Uri.uriRegName auth, port, Uri.uriPath u)
+
+getPageInfo :: Http.Request -> IO PageInfo
+getPageInfo request = do
+    response <- Http.httpLBS request
+    let body = Http.getResponseBody response
+    case A.decode body of
+        Just mpis -> pure $ head . catMaybes $ mpis
+        Nothing   -> error "getPageInfo: Parse error"
+
+
+type Handler = EventReturn -> IO ()
+
+updateEvents :: (Map.Map EventName Handler -> Map.Map EventName Handler) -> Session (MVar (Map.Map EventName Handler)) -> IO ()
+updateEvents f = ($ pure . f) . modifyMVar_ . events
+
+eventSubscribe :: EventName -> Handler -> Session (MVar (Map.Map EventName Handler)) -> IO ()
+eventSubscribe ev newHandler session = updateEvents
+    (Map.alter (const . Just $ newHandler) ev)
+    session
+
+eventUnsubscribe :: EventName -> Session (MVar (Map.Map EventName Handler)) -> IO ()
+eventUnsubscribe ev = updateEvents (Map.delete ev)
+
+
+data EventResponseResult = EventResponseResult { errEvent :: EventName, errParams :: EventReturn }
+
+data EventResponse = EventResponse { erEvent :: EventName }
+instance FromJSON (EventResponse) where
+    parseJSON = A.withObject "EventResponse" $ \obj -> do
+        erEvent <- obj .: "method"
+        pure EventResponse{..}

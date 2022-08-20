@@ -1,4 +1,4 @@
-name: cdp-gen
+name: cdp
 version: 0.0.1.0
 synopsis: Project synopsis
 description: See README at <https://github.com/arsalan0c/cdp-hs
@@ -29,22 +29,19 @@ library:
   source-dirs: src
 
 executables:
-  cdp-gen-exe:
+  cdp-exe:
     source-dirs: app
     main: Main.hs
     dependencies:
-      - cdp-gen
-  jat-exe:
-    source-dirs: src
-    main: Protocol.hs
+      - cdp
 
-tests:
-  cdp-gen-test:
-    source-dirs: test
-    main: Main.hs
-    ghc-options:
-      - -Wall
-      - -threaded
-    dependencies:
-      - cdp-gen
-      - hedgehog
+# tests:
+#   cdp-gen-test:
+#     source-dirs: test
+#     main: Main.hs
+#     ghc-options:
+#       - -Wall
+#       - -threaded
+#     dependencies:
+#       - cdp-gen
+#       - hedgehog

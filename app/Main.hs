@@ -8,19 +8,23 @@ import Data.Maybe (fromMaybe)
 import Data.Map
 import Control.Concurrent
 import Control.Monad
+import Data.Proxy
 
 import ChromeDevtoolsProtocol
 import qualified CDP as CDP
 
 main :: IO ()
 main = do
-    putStrLn "Starting CDP"
+    putStrLn "Starting CDP example"
+    -- doChromeDevtoolsProtocol >>= appendFile "app/CDP.hs"
+
     CDP.runClient Nothing $ \session -> do
-        CDP.eventSubscribe (CDP.EventNamePageWindowOpen) (putStrLn . CDP.pageWindowOpenUrl . f) session
-        
+        -- print =<< CDP.browserGetVersion session
+        CDP.subscribe   session (print . CDP.pageWindowOpenUrl)
+        CDP.unsubscribe session (Proxy :: Proxy CDP.PageWindowOpen)
         forever $ do
             threadDelay 1000
   where
-    f (CDP.EventReturnPageWindowOpen v) = v
+    a = 10
 
      

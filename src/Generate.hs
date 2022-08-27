@@ -25,11 +25,8 @@ supportedDomains = ["Browser", "Page"]
 generate :: [P.DomainsElt] -> Program
 generate des = ("\n\n" <>) $
     unlines 
-        [ allEventsType
-        , allEventsFromJSON
-        , allEventReturns
-        , allEventReturnsFromJSON
-        -- , allEventReturnsDeconstruct
+        [ eventHandlerSumType
+        , eventResponseFromJSON
         , unlines . map genDomain $ validDomains
         ]
   where
@@ -43,6 +40,14 @@ generate des = ("\n\n" <>) $
     
 
     allEventConstructors = concatMap (\d -> map (eventName (domainName d)) . (validEvents . fromMaybe []) $ P.domainsEltEvents d) $ validDomains 
+    allEventStrs = concatMap (\d -> map (eventStr (domainName d)) . (validEvents . fromMaybe []) $ P.domainsEltEvents d) $ validDomains 
+
+    eventHandlerSumType = ("data Handler = " <>) $   
+        intercalate " | " . 
+        map (\c -> unwords [eventHandlerConstructor c, "(" <> c, "-> IO ())"]) $ 
+        allEventConstructors
+
+    eventHandlerConstructor = ("H" <>)
             
     allEventsType = (<> "\n    deriving (Ord, Eq, Show, Read)") . 
         ("data EventName = "<>) . 
@@ -55,46 +60,46 @@ generate des = ("\n\n" <>) $
     allEventReturns = (<> "\n    deriving (Eq, Show, Read)") . ("data EventReturn = "<>) . intercalate " | " .
         map (\c -> unwords ["EventReturn" <> c, c]) $ 
         allEventConstructors
-    allEventReturnsFromJSON = unlines $
-        [ unwords ["instance FromJSON", "EventResponseResult", "where"]
-        , unwords ["    parseJSON = A.withObject ", show "EventResponseResult", " $ \\obj -> do"]
-        , unwords ["        errEvent", "<-", "obj", ".:", show "method"]
-        , unwords ["        evn", "<-", "methodToName", "<$>", "obj", ".:", show "method"]
-        , unwords ["        errParams <- case evn of"]
+    eventResponseFromJSON = unlines $
+        [ unwords ["instance FromJSON", "EventResponse", "where"]
+        , unwords ["    parseJSON = A.withObject ", show "EventResponse", " $ \\obj -> do"]
+        , unwords ["        name", "<-", "obj", ".:", show "method"]
+        , unwords ["        case (name :: String) of"]
         ] ++ 
-            (map (\(l,r) -> unwords ["               ", l, "->", r]) $ 
-                map (show &&& (\c -> unwords ["EventReturn" <> c, "<$> obj .:", show "params"])) allEventConstructors ++ 
-                [emptyCase "EventResponseResult"]) ++
-                [unwords ["        pure EventResponseResult{..}"]]
-    allEventReturnsDeconstruct = unlines $
-        [ unwords ["deconstructEventReturn", "::", "EventReturn", "->", "EventResult"]
-        , unwords ["deconstructEventReturn", "er", "=", "EventResult", "$", "case er of"]
-        ] ++ 
-            (map (\(l,r) -> unwords ["       ", l, "->", r]) $ 
-                map ((\c -> unwords ["EventReturn" <> c, "val"]) &&& (const "val")) allEventConstructors)
-
+            (map (\(l,r) -> unwords ["               ", l, "->", r]) $ zip (map show allEventStrs)
+                (map ((\c -> unwords ["EventResponse " <> proxy c, "<$> obj .:?", show "params"])) allEventConstructors) ++ 
+                [emptyCase "EventResponse"])
+    proxy s = "(Proxy :: Proxy " <> s <> ")"
 
     validEvents  = filter (not . isTrue . P.eventsEltExperimental) . filter (not . isTrue . P.eventsEltDeprecated)
 
+    eventStr domainName ev  = (domainName <>) . ("." <>) . unpack . P.eventsEltName $ ev
     eventName domainName ev = (domainName <>) . C.pascal . unpack . P.eventsEltName $ ev
     domainName = unpack . P.domainsEltDomain
-    genDomain de = 
-        let 
-            validCommands = 
-                filter (not . isTrue . P.commandsEltDeprecated) . 
-                filter (not . isTrue . P.commandsEltExperimental) . 
-                P.domainsEltCommands $ de
-            events = maybe "" (unlines . (map eventReturnType) . validEvents) . P.domainsEltEvents $ de
-            eventReturnType ev = let evn = eventName (domainName de) ev in
-                maybe ((<> "\n" <> genFromJSONInstanceEnum evn [evn] [evn]) . (<> "\n    deriving (Eq, Show, Read)") $ unwords ["data", evn, "=", evn]) (genTypeObj dn evn) . P.eventsEltParameters $ ev
-            dn = domainName de 
-        in
-        unlines
+    genDomain de = unlines
         [ events
         , genTypes dn . P.domainsEltTypes $ de
         , unlines . map (genCommand dn) $ validCommands
         ]
-
+      where
+        validCommands = 
+            filter (not . isTrue . P.commandsEltDeprecated) . 
+            filter (not . isTrue . P.commandsEltExperimental) . 
+            P.domainsEltCommands $ de
+        events = maybe "" (unlines . concatMap (\ev -> [eventReturnType ev, eventInstance ev]) . validEvents) . P.domainsEltEvents $ de
+        eventReturnType ev = let evn = eventName (domainName de) ev in
+            maybe ((<> "\n" <> genFromJSONInstanceEnum evn [evn] [evn]) . (<> "\n    deriving (Eq, Show, Read)") $ unwords ["data", evn, "=", evn]) (genTypeObj dn evn) . P.eventsEltParameters $ ev
+        dn = domainName de 
+        eventInstance ev = 
+            let evn = eventName (domainName de) ev
+                evh = eventHandlerConstructor evn in
+            unlines $
+                [ unwords ["instance Event ", evn, "where"]
+                , unwords ["   ", "eventName  _   = ", show $ eventStr dn ev]
+                , unwords ["   ", "fToHandler _   = ", evh]
+                , unwords ["   ", "handlerToF _ h = ", "case h of", evh, "f -> Just f; _ -> Nothing"] 
+                ]
+            
     genCommand dn ce = 
         let cn = unpack . P.commandsEltName $ ce
             name = genCommandName dn cn

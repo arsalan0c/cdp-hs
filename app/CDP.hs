@@ -147,14 +147,6 @@ instance ToJSON Command where
         , "params" .= commandParams cmd
         ]
 
-
-
-methodToName :: T.Text -> String
-methodToName md = let [domain, method] = T.splitOn "." md in
-    mconcat [T.unpack domain, C.pascal . T.unpack $ method]
-
-
-
 data EventResponse where
     EventResponse :: Event a => Proxy a -> Maybe a -> EventResponse
 

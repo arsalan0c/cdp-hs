@@ -24,6 +24,7 @@ dependencies:
   - vector
   - websockets
   - casing
+  - random
 
 library:
   source-dirs: src

@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, RecordWildCards, TupleSections  #-}
+{-# LANGUAGE OverloadedStrings, RecordWildCards, TupleSections, GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE AllowAmbiguousTypes    #-}
 {-# LANGUAGE DataKinds              #-}
 {-# LANGUAGE FlexibleContexts       #-}
@@ -17,9 +17,10 @@ module CDP (module CDP) where
 
 import           Control.Applicative  ((<$>))
 import           Control.Monad
+import           Control.Monad.Loops
 import           Control.Monad.Trans  (liftIO)
 import qualified Data.Map             as M
-import           Data.Maybe           (catMaybes, fromMaybe)
+import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
 import qualified Data.Text as T
@@ -37,73 +38,17 @@ import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
+import System.Random
 
 
 defaultHostPort :: (String, Int)
-defaultHostPort = ("http://127.0.0.1", 9222)
+defaultHostPort = ("http://127.0.0.1", 9222) 
 
+-- :CONFIG
 hostPortToEndpoint :: (String, Int) -> Http.Request
 hostPortToEndpoint (host, port) = Http.parseRequest_ . 
     ("GET " <>) . 
     mconcat $ [host, ":", show port, "/json"]
-
-type ClientApp a = Session -> IO a
-
-data Session = MkSession 
-    { events       :: MVar (Map.Map String Handler)
-    , conn         :: WS.Connection
-    , listenThread :: ThreadId
-    }
-
-runClient :: Maybe (String, Int) -> ClientApp a -> IO a
-runClient hostPort app = do
-    let endpoint = hostPortToEndpoint . fromMaybe defaultHostPort $ hostPort
-    pi   <- getPageInfo endpoint
-    eventsM <- newMVar Map.empty
-    let (host, port, path) = parseUri . debuggerUrl $ pi
-    
-    WS.runClient host port path $ \conn -> do
-        listenThread <- forkIO $ forever $ do
-            res <- WS.fromDataMessage <$> WS.receiveDataMessage conn
-            dispatchEventResponse eventsM res
-                
-        
-        let session = MkSession eventsM conn listenThread
-        result <- app session
-        killThread listenThread
-        pure result
-
-decodeEvent :: BS.ByteString -> Maybe (EventResponse)
-decodeEvent = A.decode
-
-dispatchEventResponse :: MVar (Map.Map String Handler) -> BS.ByteString -> IO ()
-dispatchEventResponse handlers res = do
-    void $ go handlers . decodeEvent $ res
-  where
-    go :: MVar (Map.Map String Handler) -> Maybe EventResponse -> IO ()
-    go handlers evr = maybe (pure ()) f evr
-      where
-        f (EventResponse p v) = do
-            evs <- readMVar handlers
-            let handler = maybe print id $ Map.lookup (eventName p) evs >>= handlerToF p
-            maybe (pure ()) handler v
-    
-class (FromJSON a, Show a, Eq a) => Event a where
-    eventName   :: Proxy a  -> String
-    fToHandler  :: Proxy a  -> ((a -> IO ()) -> Handler)
-    handlerToF  :: Proxy a  -> Handler -> Maybe (a -> IO ())
-
-updateEvents :: Session -> (Map.Map String Handler -> Map.Map String Handler) -> IO ()
-updateEvents session f = ($ pure . f) . modifyMVar_ . events $ session
-
-subscribe :: forall a. Event a => Session -> (a -> IO ()) -> IO ()
-subscribe session h = updateEvents session $ Map.insert (eventName p) $ fToHandler p h
-  where
-    p = (Proxy :: Proxy a)
-
-unsubscribe :: Event a => Session -> Proxy a -> IO ()
-unsubscribe session p = updateEvents session (Map.delete (eventName p))
-
 
 data PageInfo = PageInfo
     { debuggerUrl :: String
@@ -135,95 +80,181 @@ instance ToJSON ToJSONEx where
     toJSON (ToJSONEx v) = toJSON v
 instance Show ToJSONEx where
     show (ToJSONEx v) = show v
-data Command = Command {
-      commandId :: Int
-    , commandMethod :: String
-    , commandParams :: [(String, ToJSONEx)]
+
+newtype CommandId = CommandId { unCommandId :: Int }
+    deriving (Eq, Ord, Show, ToJSON)
+
+instance FromJSON CommandId where
+    parseJSON = A.withObject "CommandId" $ \obj -> do
+        CommandId <$> obj .: "id"
+
+data CommandObj a = CommandObj {
+      coId :: CommandId
+    , coMethod :: String
+    , coParams :: Maybe a
     } deriving Show
-instance ToJSON Command where
-   toJSON cmd = A.object
-        [ "id"     .= commandId cmd
-        , "method" .= commandMethod cmd
-        , "params" .= commandParams cmd
+
+instance (ToJSON a) => ToJSON (CommandObj a) where
+   toJSON cmd = A.object . concat $
+        [ [ "id"     .= coId cmd ]
+        , [ "method" .= coMethod cmd ]
+        , maybe [] (\p -> [ "params" .= p ]) $ coParams cmd
         ]
+
+randomCommandId :: MVar StdGen -> IO CommandId
+randomCommandId mg = modifyMVar mg $ \g -> do
+    let (id, g2) = uniformR (0 :: Int, 1000 :: Int) g
+    pure (g2, CommandId id)
+
+type ClientApp a = Session -> IO a
+data Session = MkSession 
+    { randomGen      :: MVar StdGen
+    , events         :: MVar (Map.Map String Handler)
+    , commandBuffer  :: MVar CommandBuffer
+    , conn           :: WS.Connection
+    , listenThread   :: ThreadId
+    }
+    
+runClient :: Maybe (String, Int) -> ClientApp a -> IO a
+runClient hostPort app = do
+    let endpoint = hostPortToEndpoint . fromMaybe defaultHostPort $ hostPort
+    pi             <- getPageInfo endpoint
+    randomGen      <- newMVar . mkStdGen $ 42
+    eventsM        <- newMVar Map.empty
+    commandBuffer  <- newMVar Map.empty
+    let (host, port, path) = parseUri . debuggerUrl $ pi
+    
+    WS.runClient host port path $ \conn -> do
+        let act = forever $ do
+                res <- WS.fromDataMessage <$> WS.receiveDataMessage conn
+                if isCommand res
+                    then dispatchCommandResponse commandBuffer res
+                    else dispatchEventResponse eventsM res 
+            
+        listenThread <- forkIO act
+        let session = MkSession randomGen eventsM commandBuffer conn listenThread
+        result <- app session
+        killThread listenThread
+        pure result
+
+type CommandBuffer = Map.Map CommandId BS.ByteString
+
+isCommand :: BS.ByteString -> Bool
+isCommand res = do
+    case A.decode res of
+        Nothing            -> False
+        Just (CommandId _) -> True
+        
+dispatchCommandResponse :: MVar CommandBuffer -> BS.ByteString -> IO ()
+dispatchCommandResponse commandBuffer res = do
+    case A.decode res of
+        Nothing  -> error "not a command"
+        Just cid@(CommandId id)  -> do
+            updateCommandBuffer commandBuffer (Map.insert cid res)
+            
+updateCommandBuffer :: MVar CommandBuffer -> (CommandBuffer -> CommandBuffer) -> IO ()
+updateCommandBuffer commandBuffer f = ($ pure . f) . modifyMVar_ $ commandBuffer
+
+dispatchEventResponse :: MVar (Map.Map String Handler) -> BS.ByteString -> IO ()
+dispatchEventResponse handlers res = do
+    void $ go handlers . A.decode $ res
+  where
+    go :: MVar (Map.Map String Handler) -> Maybe EventResponse -> IO ()
+    go handlers evr = maybe (pure ()) f evr
+      where
+        f (EventResponse p v) = do
+            evs <- readMVar handlers
+            let handler = maybe print id $ Map.lookup (eventName p) evs >>= handlerToF p
+            maybe (pure ()) handler v
+
+updateEvents :: Session -> (Map.Map String Handler -> Map.Map String Handler) -> IO ()
+updateEvents session f = ($ pure . f) . modifyMVar_ . events $ session
+
+subscribe :: forall a. Event a => Session -> (a -> IO ()) -> IO ()
+subscribe session h = updateEvents session $ Map.insert (eventName p) $ fToHandler p h
+  where
+    p = (Proxy :: Proxy a)
+
+unsubscribe :: Event a => Session -> Proxy a -> IO ()
+unsubscribe session p = updateEvents session (Map.delete (eventName p))
+
+class (FromJSON a, Show a, Eq a) => Event a where
+    eventName         :: Proxy a  -> String
+    fToHandler  :: Proxy a  -> ((a -> IO ()) -> Handler)
+    handlerToF        :: Proxy a  -> Handler -> Maybe (a -> IO ())
 
 data EventResponse where
     EventResponse :: Event a => Proxy a -> Maybe a -> EventResponse
 
-data CommandResponseResult a = CommandResponseResult { crrId :: Int, crrResult :: a }
-data CommandResponse = CommandResponse { crId :: Int }
+class (FromJSON b) => Command b where
+    commandName               :: Proxy b -> String
 
-instance (Show a) => Show (CommandResponseResult a) where
-    show CommandResponseResult{..} = "\nid: " <> show crrId <> "\nresult: " <> show crrResult
-instance Show CommandResponse where
-    show CommandResponse{..} = "\nid: " <> show crId
-
-instance (FromJSON a) => FromJSON (CommandResponseResult a) where
-    parseJSON = A.withObject "CommandResponseResult" $ \obj -> do
-        crrId <- obj .: "id"
-        crrResult <- obj .: "result"
-        pure CommandResponseResult{..}
-
-instance FromJSON CommandResponse where
-    parseJSON = A.withObject "CommandResponse" $ \obj -> do
-        crId <- obj .: "id"
-        pure CommandResponse{..}
+data CommandResponse b where
+    CommandResponse :: Command b => CommandId -> Maybe b -> CommandResponse b
+instance (Show b) => Show (CommandResponse b) where
+    show (CommandResponse id result) = "\nid: " <> show id <> "\nresult: " <> show result
 
 newtype Error = Error String
+    deriving Show
+
+newtype InternalError = InternalError String
     deriving Show
 
 indent :: Int -> String -> String
 indent = (<>) . flip replicate ' '
 
-commandToStr :: Command -> String
-commandToStr Command{..} = unlines 
-    [ "command: " <> commandMethod
-    , if (not . null) commandParams 
-        then "arguments: " <> (unlines . map (indent 2 . (\(f,s) -> f <> ":" <> s) . fmap show) $ commandParams)
-        else ""
-    ]
-
-sendCommand :: WS.Connection -> (String, String) -> [(String, ToJSONEx)] -> IO Command
-sendCommand conn (domain,method) paramArgs = do
-    putStrLn . show $ (domain, method)
-    id <- pure 1  -- TODO: randomly generate
-    let c = command id
-    WS.sendTextData conn . A.encode $ c
-    pure c
+sendCommand :: forall a. (ToJSON a) => WS.Connection -> CommandId -> String -> Maybe a -> IO ()
+sendCommand conn id name params = do
+    let co = CommandObj id name params
+    WS.sendTextData conn . A.encode $ co
   where
-    command id = Command id 
-        (domain <> "." <> method)
-        paramArgs
-   
-receiveResponse :: (FromJSON a) => WS.Connection -> IO (Maybe a)
-receiveResponse conn = A.decode <$> do
-    dm <- WS.receiveDataMessage conn
-    putStrLn . show $ dm
-    pure $ WS.fromDataMessage dm
+    paramsProxy = Proxy :: Proxy a
+       
+receiveResponse :: forall b. Command b => MVar CommandBuffer -> CommandId -> IO (Either InternalError (CommandResponse b))
+receiveResponse buffer id = do
+    bs <- untilJust $ do
+            bsM <- Map.lookup id <$> readMVar buffer
+            if isNothing bsM
+                then threadDelay 1000 -- :CONFIG
+                else pure ()
 
-sendReceiveCommandResult :: FromJSON b =>
-    WS.Connection ->
-         (String, String) -> [(String, ToJSONEx)]
-         -> IO (Either Error b)
-sendReceiveCommandResult conn (domain,method) paramArgs = do
-    command <- sendCommand conn (domain,method) paramArgs
-    res     <- receiveResponse conn
-    pure $ maybe (Left . responseParseError $ command) 
-        (maybe (Left . responseParseError $ command) Right . crrResult) res 
+            pure bsM
 
-sendReceiveCommand ::
-    WS.Connection ->
-         (String, String) -> [(String, ToJSONEx)]
-         -> IO (Maybe Error)
-sendReceiveCommand conn (domain,method) paramArgs = do
-    command <- sendCommand conn (domain, method) paramArgs
-    res     <- receiveResponse conn
-    pure $ maybe (Just . responseParseError $ command) 
-        (const Nothing . crId) res
+    pure $ maybe (Left . InternalError $ "error in parsing response") Right . A.decode $ bs
+  where
+    p = Proxy :: Proxy b
 
-responseParseError :: Command -> Error
-responseParseError c = Error . unlines $
-    ["unable to parse response", commandToStr c]
+sendReceiveCommandResult :: forall a b. (ToJSON a, Command b) => Session -> String -> Maybe a -> IO (Either Error b)
+sendReceiveCommandResult session name params = do
+    id <- randomCommandId $ randomGen session
+    sendCommand (conn session) id name params
+    response <- receiveResponse (commandBuffer session) id
+    pure $ case response of
+        Left _ -> Left . Error $ "internal error"
+        Right (CommandResponse _ resultM) -> maybe (Left . Error $ "error in parsing result") Right $ resultM    
+  where
+    resultProxy = Proxy :: Proxy b
+    
+sendReceiveCommand :: (ToJSON a) => Session -> String -> Maybe a -> IO (Maybe Error)
+sendReceiveCommand session name params = do
+    id <- randomCommandId $ randomGen session
+    sendCommand (conn session) id name params
+    response <- receiveResponse (commandBuffer session) id :: IO (Either InternalError (CommandResponse NoResponse))
+    pure $ case response of
+        Left _                            -> Just . Error $ "internal error"
+        Right (CommandResponse _ resultM) -> maybe Nothing (const . Just . Error $ "got an unexpected result") $ resultM  
+
+instance (Command b) => FromJSON (CommandResponse b) where
+    parseJSON = A.withObject "CommandResponse" $ \obj -> do
+        crId <- CommandId <$> obj .: "id"
+        CommandResponse (crId :: CommandId) <$> obj .:? "result"
+
+data NoResponse = NoResponse
+instance Command NoResponse where
+    commandName _ = "noresponse"
+instance FromJSON NoResponse where
+    parseJSON _ = fail "noresponse"
+
 
 data Handler = HDOMAttributeModified (DOMAttributeModified -> IO ()) | HDOMAttributeRemoved (DOMAttributeRemoved -> IO ()) | HDOMCharacterDataModified (DOMCharacterDataModified -> IO ()) | HDOMChildNodeCountUpdated (DOMChildNodeCountUpdated -> IO ()) | HDOMChildNodeInserted (DOMChildNodeInserted -> IO ()) | HDOMChildNodeRemoved (DOMChildNodeRemoved -> IO ()) | HDOMDocumentUpdated (DOMDocumentUpdated -> IO ()) | HDOMSetChildNodes (DOMSetChildNodes -> IO ()) | HLogEntryAdded (LogEntryAdded -> IO ()) | HNetworkDataReceived (NetworkDataReceived -> IO ()) | HNetworkEventSourceMessageReceived (NetworkEventSourceMessageReceived -> IO ()) | HNetworkLoadingFailed (NetworkLoadingFailed -> IO ()) | HNetworkLoadingFinished (NetworkLoadingFinished -> IO ()) | HNetworkRequestServedFromCache (NetworkRequestServedFromCache -> IO ()) | HNetworkRequestWillBeSent (NetworkRequestWillBeSent -> IO ()) | HNetworkResponseReceived (NetworkResponseReceived -> IO ()) | HNetworkWebSocketClosed (NetworkWebSocketClosed -> IO ()) | HNetworkWebSocketCreated (NetworkWebSocketCreated -> IO ()) | HNetworkWebSocketFrameError (NetworkWebSocketFrameError -> IO ()) | HNetworkWebSocketFrameReceived (NetworkWebSocketFrameReceived -> IO ()) | HNetworkWebSocketFrameSent (NetworkWebSocketFrameSent -> IO ()) | HNetworkWebSocketHandshakeResponseReceived (NetworkWebSocketHandshakeResponseReceived -> IO ()) | HNetworkWebSocketWillSendHandshakeRequest (NetworkWebSocketWillSendHandshakeRequest -> IO ()) | HNetworkWebTransportCreated (NetworkWebTransportCreated -> IO ()) | HNetworkWebTransportConnectionEstablished (NetworkWebTransportConnectionEstablished -> IO ()) | HNetworkWebTransportClosed (NetworkWebTransportClosed -> IO ()) | HPageDomContentEventFired (PageDomContentEventFired -> IO ()) | HPageFileChooserOpened (PageFileChooserOpened -> IO ()) | HPageFrameAttached (PageFrameAttached -> IO ()) | HPageFrameDetached (PageFrameDetached -> IO ()) | HPageFrameNavigated (PageFrameNavigated -> IO ()) | HPageInterstitialHidden (PageInterstitialHidden -> IO ()) | HPageInterstitialShown (PageInterstitialShown -> IO ()) | HPageJavascriptDialogClosed (PageJavascriptDialogClosed -> IO ()) | HPageJavascriptDialogOpening (PageJavascriptDialogOpening -> IO ()) | HPageLifecycleEvent (PageLifecycleEvent -> IO ()) | HPagePrerenderAttemptCompleted (PagePrerenderAttemptCompleted -> IO ()) | HPageLoadEventFired (PageLoadEventFired -> IO ()) | HPageWindowOpen (PageWindowOpen -> IO ()) | HPerformanceMetrics (PerformanceMetrics -> IO ()) | HTargetReceivedMessageFromTarget (TargetReceivedMessageFromTarget -> IO ()) | HTargetTargetCreated (TargetTargetCreated -> IO ()) | HTargetTargetDestroyed (TargetTargetDestroyed -> IO ()) | HTargetTargetCrashed (TargetTargetCrashed -> IO ()) | HTargetTargetInfoChanged (TargetTargetInfoChanged -> IO ()) | HFetchRequestPaused (FetchRequestPaused -> IO ()) | HFetchAuthRequired (FetchAuthRequired -> IO ()) | HConsoleMessageAdded (ConsoleMessageAdded -> IO ()) | HDebuggerBreakpointResolved (DebuggerBreakpointResolved -> IO ()) | HDebuggerPaused (DebuggerPaused -> IO ()) | HDebuggerResumed (DebuggerResumed -> IO ()) | HDebuggerScriptFailedToParse (DebuggerScriptFailedToParse -> IO ()) | HDebuggerScriptParsed (DebuggerScriptParsed -> IO ()) | HProfilerConsoleProfileFinished (ProfilerConsoleProfileFinished -> IO ()) | HProfilerConsoleProfileStarted (ProfilerConsoleProfileStarted -> IO ()) | HRuntimeConsoleApiCalled (RuntimeConsoleApiCalled -> IO ()) | HRuntimeExceptionRevoked (RuntimeExceptionRevoked -> IO ()) | HRuntimeExceptionThrown (RuntimeExceptionThrown -> IO ()) | HRuntimeExecutionContextCreated (RuntimeExecutionContextCreated -> IO ()) | HRuntimeExecutionContextDestroyed (RuntimeExecutionContextDestroyed -> IO ()) | HRuntimeExecutionContextsCleared (RuntimeExecutionContextsCleared -> IO ()) | HRuntimeInspectRequested (RuntimeInspectRequested -> IO ())
 instance FromJSON EventResponse where
@@ -292,13 +323,15 @@ instance FromJSON EventResponse where
                 "Runtime.executionContextDestroyed" -> EventResponse (Proxy :: Proxy RuntimeExecutionContextDestroyed) <$> obj .:? "params"
                 "Runtime.executionContextsCleared" -> EventResponse (Proxy :: Proxy RuntimeExecutionContextsCleared) <$> obj .:? "params"
                 "Runtime.inspectRequested" -> EventResponse (Proxy :: Proxy RuntimeInspectRequested) <$> obj .:? "params"
-                _ -> error "failed to parse EventResponse"
+                _ -> fail "failed to parse EventResponse"
+
+
 
 
 
 
 browserClose :: Session -> IO (Maybe Error)
-browserClose session  = sendReceiveCommand (conn session) ("Browser","close") ([] ++ (catMaybes []))
+browserClose session = sendReceiveCommand session "Browser.close" (Nothing :: Maybe ())
 
 data BrowserGetVersion = BrowserGetVersion {
     browserGetVersionProtocolVersion :: String,
@@ -317,8 +350,12 @@ instance FromJSON  BrowserGetVersion where
 
 
 
+instance Command  BrowserGetVersion where
+    commandName _ = "Browser.getVersion"
+
+
 browserGetVersion :: Session -> IO (Either Error BrowserGetVersion)
-browserGetVersion session  = sendReceiveCommandResult (conn session) ("Browser","getVersion") ([] ++ (catMaybes []))
+browserGetVersion session = sendReceiveCommandResult session "Browser.getVersion" (Nothing :: Maybe ())
 
 
 
@@ -464,9 +501,9 @@ data DOMDocumentUpdated = DOMDocumentUpdated
     deriving (Eq, Show, Read)
 instance FromJSON DOMDocumentUpdated where
     parseJSON = A.withText  "DOMDocumentUpdated"  $ \v -> do
-        pure $ case v of
-                "DOMDocumentUpdated" -> DOMDocumentUpdated
-                _ -> error "failed to parse DOMDocumentUpdated"
+        case v of
+                "DOMDocumentUpdated" -> pure $ DOMDocumentUpdated
+                _ -> fail "failed to parse DOMDocumentUpdated"
 
 instance Event  DOMDocumentUpdated where
     eventName  _   =  "DOM.documentUpdated"
@@ -525,33 +562,33 @@ data DOMPseudoType = DOMPseudoTypeFirstLine | DOMPseudoTypeFirstLetter | DOMPseu
     deriving (Eq, Show, Read)
 instance FromJSON DOMPseudoType where
     parseJSON = A.withText  "DOMPseudoType"  $ \v -> do
-        pure $ case v of
-                "first-line" -> DOMPseudoTypeFirstLine
-                "first-letter" -> DOMPseudoTypeFirstLetter
-                "before" -> DOMPseudoTypeBefore
-                "after" -> DOMPseudoTypeAfter
-                "marker" -> DOMPseudoTypeMarker
-                "backdrop" -> DOMPseudoTypeBackdrop
-                "selection" -> DOMPseudoTypeSelection
-                "target-text" -> DOMPseudoTypeTargetText
-                "spelling-error" -> DOMPseudoTypeSpellingError
-                "grammar-error" -> DOMPseudoTypeGrammarError
-                "highlight" -> DOMPseudoTypeHighlight
-                "first-line-inherited" -> DOMPseudoTypeFirstLineInherited
-                "scrollbar" -> DOMPseudoTypeScrollbar
-                "scrollbar-thumb" -> DOMPseudoTypeScrollbarThumb
-                "scrollbar-button" -> DOMPseudoTypeScrollbarButton
-                "scrollbar-track" -> DOMPseudoTypeScrollbarTrack
-                "scrollbar-track-piece" -> DOMPseudoTypeScrollbarTrackPiece
-                "scrollbar-corner" -> DOMPseudoTypeScrollbarCorner
-                "resizer" -> DOMPseudoTypeResizer
-                "input-list-button" -> DOMPseudoTypeInputListButton
-                "page-transition" -> DOMPseudoTypePageTransition
-                "page-transition-container" -> DOMPseudoTypePageTransitionContainer
-                "page-transition-image-wrapper" -> DOMPseudoTypePageTransitionImageWrapper
-                "page-transition-outgoing-image" -> DOMPseudoTypePageTransitionOutgoingImage
-                "page-transition-incoming-image" -> DOMPseudoTypePageTransitionIncomingImage
-                _ -> error "failed to parse DOMPseudoType"
+        case v of
+                "first-line" -> pure $ DOMPseudoTypeFirstLine
+                "first-letter" -> pure $ DOMPseudoTypeFirstLetter
+                "before" -> pure $ DOMPseudoTypeBefore
+                "after" -> pure $ DOMPseudoTypeAfter
+                "marker" -> pure $ DOMPseudoTypeMarker
+                "backdrop" -> pure $ DOMPseudoTypeBackdrop
+                "selection" -> pure $ DOMPseudoTypeSelection
+                "target-text" -> pure $ DOMPseudoTypeTargetText
+                "spelling-error" -> pure $ DOMPseudoTypeSpellingError
+                "grammar-error" -> pure $ DOMPseudoTypeGrammarError
+                "highlight" -> pure $ DOMPseudoTypeHighlight
+                "first-line-inherited" -> pure $ DOMPseudoTypeFirstLineInherited
+                "scrollbar" -> pure $ DOMPseudoTypeScrollbar
+                "scrollbar-thumb" -> pure $ DOMPseudoTypeScrollbarThumb
+                "scrollbar-button" -> pure $ DOMPseudoTypeScrollbarButton
+                "scrollbar-track" -> pure $ DOMPseudoTypeScrollbarTrack
+                "scrollbar-track-piece" -> pure $ DOMPseudoTypeScrollbarTrackPiece
+                "scrollbar-corner" -> pure $ DOMPseudoTypeScrollbarCorner
+                "resizer" -> pure $ DOMPseudoTypeResizer
+                "input-list-button" -> pure $ DOMPseudoTypeInputListButton
+                "page-transition" -> pure $ DOMPseudoTypePageTransition
+                "page-transition-container" -> pure $ DOMPseudoTypePageTransitionContainer
+                "page-transition-image-wrapper" -> pure $ DOMPseudoTypePageTransitionImageWrapper
+                "page-transition-outgoing-image" -> pure $ DOMPseudoTypePageTransitionOutgoingImage
+                "page-transition-incoming-image" -> pure $ DOMPseudoTypePageTransitionIncomingImage
+                _ -> fail "failed to parse DOMPseudoType"
 
 instance ToJSON DOMPseudoType where
     toJSON v = A.String $
@@ -588,11 +625,11 @@ data DOMShadowRootType = DOMShadowRootTypeUserAgent | DOMShadowRootTypeOpen | DO
     deriving (Eq, Show, Read)
 instance FromJSON DOMShadowRootType where
     parseJSON = A.withText  "DOMShadowRootType"  $ \v -> do
-        pure $ case v of
-                "user-agent" -> DOMShadowRootTypeUserAgent
-                "open" -> DOMShadowRootTypeOpen
-                "closed" -> DOMShadowRootTypeClosed
-                _ -> error "failed to parse DOMShadowRootType"
+        case v of
+                "user-agent" -> pure $ DOMShadowRootTypeUserAgent
+                "open" -> pure $ DOMShadowRootTypeOpen
+                "closed" -> pure $ DOMShadowRootTypeClosed
+                _ -> fail "failed to parse DOMShadowRootType"
 
 instance ToJSON DOMShadowRootType where
     toJSON v = A.String $
@@ -607,11 +644,11 @@ data DOMCompatibilityMode = DOMCompatibilityModeQuirksMode | DOMCompatibilityMod
     deriving (Eq, Show, Read)
 instance FromJSON DOMCompatibilityMode where
     parseJSON = A.withText  "DOMCompatibilityMode"  $ \v -> do
-        pure $ case v of
-                "QuirksMode" -> DOMCompatibilityModeQuirksMode
-                "LimitedQuirksMode" -> DOMCompatibilityModeLimitedQuirksMode
-                "NoQuirksMode" -> DOMCompatibilityModeNoQuirksMode
-                _ -> error "failed to parse DOMCompatibilityMode"
+        case v of
+                "QuirksMode" -> pure $ DOMCompatibilityModeQuirksMode
+                "LimitedQuirksMode" -> pure $ DOMCompatibilityModeLimitedQuirksMode
+                "NoQuirksMode" -> pure $ DOMCompatibilityModeNoQuirksMode
+                _ -> fail "failed to parse DOMCompatibilityMode"
 
 instance ToJSON DOMCompatibilityMode where
     toJSON v = A.String $
@@ -722,10 +759,10 @@ instance ToJSON DOMNode  where
 
 
 data DOMRGBA = DOMRGBA {
-    domrgbaR :: Int,
-    domrgbaG :: Int,
-    domrgbaB :: Int,
-    domrgbaA :: Maybe Int
+    domrgbar :: Int,
+    domrgbag :: Int,
+    domrgbab :: Int,
+    domrgbaa :: Maybe Int
 } deriving (Eq, Show, Read)
 instance FromJSON  DOMRGBA where
     parseJSON = A.withObject "DOMRGBA" $ \v ->
@@ -737,10 +774,10 @@ instance FromJSON  DOMRGBA where
 
 instance ToJSON DOMRGBA  where
     toJSON v = A.object
-        [ "r" .= domrgbaR v
-        , "g" .= domrgbaG v
-        , "b" .= domrgbaB v
-        , "a" .= domrgbaA v
+        [ "r" .= domrgbar v
+        , "g" .= domrgbag v
+        , "b" .= domrgbab v
+        , "a" .= domrgbaa v
         ]
 
 
@@ -842,209 +879,660 @@ instance ToJSON DOMCSSComputedStyleProperty  where
         ]
 
 
-data DomDescribeNode = DomDescribeNode {
-    domDescribeNodeNode :: DOMNode
+data DOMDescribeNode = DOMDescribeNode {
+    dOMDescribeNodeNode :: DOMNode
 } deriving (Eq, Show, Read)
-instance FromJSON  DomDescribeNode where
-    parseJSON = A.withObject "DomDescribeNode" $ \v ->
-         DomDescribeNode <$> v .:  "node"
+instance FromJSON  DOMDescribeNode where
+    parseJSON = A.withObject "DOMDescribeNode" $ \v ->
+         DOMDescribeNode <$> v .:  "node"
 
 
 
-domDescribeNode :: Session -> Maybe DOMNodeId -> Maybe DOMBackendNodeId -> Maybe RuntimeRemoteObjectId -> Maybe Int -> Maybe Bool -> IO (Either Error DomDescribeNode)
-domDescribeNode session domDescribeNodeNodeId domDescribeNodeBackendNodeId domDescribeNodeObjectId domDescribeNodeDepth domDescribeNodePierce = sendReceiveCommandResult (conn session) ("DOM","describeNode") ([] ++ (catMaybes [fmap (("nodeId",) . ToJSONEx) domDescribeNodeNodeId, fmap (("backendNodeId",) . ToJSONEx) domDescribeNodeBackendNodeId, fmap (("objectId",) . ToJSONEx) domDescribeNodeObjectId, fmap (("depth",) . ToJSONEx) domDescribeNodeDepth, fmap (("pierce",) . ToJSONEx) domDescribeNodePierce]))
+instance Command  DOMDescribeNode where
+    commandName _ = "DOM.describeNode"
 
-
-domDisable :: Session -> IO (Maybe Error)
-domDisable session  = sendReceiveCommand (conn session) ("DOM","disable") ([] ++ (catMaybes []))
-
-
-domEnable :: Session -> IO (Maybe Error)
-domEnable session  = sendReceiveCommand (conn session) ("DOM","enable") ([] ++ (catMaybes []))
-
-
-domFocus :: Session -> Maybe DOMNodeId -> Maybe DOMBackendNodeId -> Maybe RuntimeRemoteObjectId -> IO (Maybe Error)
-domFocus session domFocusNodeId domFocusBackendNodeId domFocusObjectId = sendReceiveCommand (conn session) ("DOM","focus") ([] ++ (catMaybes [fmap (("nodeId",) . ToJSONEx) domFocusNodeId, fmap (("backendNodeId",) . ToJSONEx) domFocusBackendNodeId, fmap (("objectId",) . ToJSONEx) domFocusObjectId]))
-
-data DomGetAttributes = DomGetAttributes {
-    domGetAttributesAttributes :: [String]
+data PDOMDescribeNode = PDOMDescribeNode {
+    pdomDescribeNodeNodeId :: Maybe DOMNodeId,
+    pdomDescribeNodeBackendNodeId :: Maybe DOMBackendNodeId,
+    pdomDescribeNodeObjectId :: Maybe RuntimeRemoteObjectId,
+    pdomDescribeNodeDepth :: Maybe Int,
+    pdomDescribeNodePierce :: Maybe Bool
 } deriving (Eq, Show, Read)
-instance FromJSON  DomGetAttributes where
-    parseJSON = A.withObject "DomGetAttributes" $ \v ->
-         DomGetAttributes <$> v .:  "attributes"
+instance FromJSON  PDOMDescribeNode where
+    parseJSON = A.withObject "PDOMDescribeNode" $ \v ->
+         PDOMDescribeNode <$> v .:?  "nodeId"
+            <*> v  .:?  "backendNodeId"
+            <*> v  .:?  "objectId"
+            <*> v  .:?  "depth"
+            <*> v  .:?  "pierce"
+
+
+instance ToJSON PDOMDescribeNode  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomDescribeNodeNodeId v
+        , "backendNodeId" .= pdomDescribeNodeBackendNodeId v
+        , "objectId" .= pdomDescribeNodeObjectId v
+        , "depth" .= pdomDescribeNodeDepth v
+        , "pierce" .= pdomDescribeNodePierce v
+        ]
+
+
+dOMDescribeNode :: Session -> PDOMDescribeNode -> IO (Either Error DOMDescribeNode)
+dOMDescribeNode session params = sendReceiveCommandResult session "DOM.describeNode" (Just params)
 
 
 
-domGetAttributes :: Session -> DOMNodeId -> IO (Either Error DomGetAttributes)
-domGetAttributes session domGetAttributesNodeId = sendReceiveCommandResult (conn session) ("DOM","getAttributes") ([("nodeId", ToJSONEx domGetAttributesNodeId)] ++ (catMaybes []))
 
-data DomGetBoxModel = DomGetBoxModel {
-    domGetBoxModelModel :: DOMBoxModel
+dOMDisable :: Session -> IO (Maybe Error)
+dOMDisable session = sendReceiveCommand session "DOM.disable" (Nothing :: Maybe ())
+
+
+
+
+dOMEnable :: Session -> IO (Maybe Error)
+dOMEnable session = sendReceiveCommand session "DOM.enable" (Nothing :: Maybe ())
+
+
+
+data PDOMFocus = PDOMFocus {
+    pdomFocusNodeId :: Maybe DOMNodeId,
+    pdomFocusBackendNodeId :: Maybe DOMBackendNodeId,
+    pdomFocusObjectId :: Maybe RuntimeRemoteObjectId
 } deriving (Eq, Show, Read)
-instance FromJSON  DomGetBoxModel where
-    parseJSON = A.withObject "DomGetBoxModel" $ \v ->
-         DomGetBoxModel <$> v .:  "model"
+instance FromJSON  PDOMFocus where
+    parseJSON = A.withObject "PDOMFocus" $ \v ->
+         PDOMFocus <$> v .:?  "nodeId"
+            <*> v  .:?  "backendNodeId"
+            <*> v  .:?  "objectId"
 
 
+instance ToJSON PDOMFocus  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomFocusNodeId v
+        , "backendNodeId" .= pdomFocusBackendNodeId v
+        , "objectId" .= pdomFocusObjectId v
+        ]
 
-domGetBoxModel :: Session -> Maybe DOMNodeId -> Maybe DOMBackendNodeId -> Maybe RuntimeRemoteObjectId -> IO (Either Error DomGetBoxModel)
-domGetBoxModel session domGetBoxModelNodeId domGetBoxModelBackendNodeId domGetBoxModelObjectId = sendReceiveCommandResult (conn session) ("DOM","getBoxModel") ([] ++ (catMaybes [fmap (("nodeId",) . ToJSONEx) domGetBoxModelNodeId, fmap (("backendNodeId",) . ToJSONEx) domGetBoxModelBackendNodeId, fmap (("objectId",) . ToJSONEx) domGetBoxModelObjectId]))
 
-data DomGetDocument = DomGetDocument {
-    domGetDocumentRoot :: DOMNode
+dOMFocus :: Session -> PDOMFocus -> IO (Maybe Error)
+dOMFocus session params = sendReceiveCommand session "DOM.focus" (Just params)
+
+data DOMGetAttributes = DOMGetAttributes {
+    dOMGetAttributesAttributes :: [String]
 } deriving (Eq, Show, Read)
-instance FromJSON  DomGetDocument where
-    parseJSON = A.withObject "DomGetDocument" $ \v ->
-         DomGetDocument <$> v .:  "root"
+instance FromJSON  DOMGetAttributes where
+    parseJSON = A.withObject "DOMGetAttributes" $ \v ->
+         DOMGetAttributes <$> v .:  "attributes"
 
 
 
-domGetDocument :: Session -> Maybe Int -> Maybe Bool -> IO (Either Error DomGetDocument)
-domGetDocument session domGetDocumentDepth domGetDocumentPierce = sendReceiveCommandResult (conn session) ("DOM","getDocument") ([] ++ (catMaybes [fmap (("depth",) . ToJSONEx) domGetDocumentDepth, fmap (("pierce",) . ToJSONEx) domGetDocumentPierce]))
+instance Command  DOMGetAttributes where
+    commandName _ = "DOM.getAttributes"
 
-data DomGetNodeForLocation = DomGetNodeForLocation {
-    domGetNodeForLocationBackendNodeId :: DOMBackendNodeId,
-    domGetNodeForLocationFrameId :: PageFrameId,
-    domGetNodeForLocationNodeId :: Maybe DOMNodeId
+data PDOMGetAttributes = PDOMGetAttributes {
+    pdomGetAttributesNodeId :: DOMNodeId
 } deriving (Eq, Show, Read)
-instance FromJSON  DomGetNodeForLocation where
-    parseJSON = A.withObject "DomGetNodeForLocation" $ \v ->
-         DomGetNodeForLocation <$> v .:  "backendNodeId"
+instance FromJSON  PDOMGetAttributes where
+    parseJSON = A.withObject "PDOMGetAttributes" $ \v ->
+         PDOMGetAttributes <$> v .:  "nodeId"
+
+
+instance ToJSON PDOMGetAttributes  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomGetAttributesNodeId v
+        ]
+
+
+dOMGetAttributes :: Session -> PDOMGetAttributes -> IO (Either Error DOMGetAttributes)
+dOMGetAttributes session params = sendReceiveCommandResult session "DOM.getAttributes" (Just params)
+
+data DOMGetBoxModel = DOMGetBoxModel {
+    dOMGetBoxModelModel :: DOMBoxModel
+} deriving (Eq, Show, Read)
+instance FromJSON  DOMGetBoxModel where
+    parseJSON = A.withObject "DOMGetBoxModel" $ \v ->
+         DOMGetBoxModel <$> v .:  "model"
+
+
+
+instance Command  DOMGetBoxModel where
+    commandName _ = "DOM.getBoxModel"
+
+data PDOMGetBoxModel = PDOMGetBoxModel {
+    pdomGetBoxModelNodeId :: Maybe DOMNodeId,
+    pdomGetBoxModelBackendNodeId :: Maybe DOMBackendNodeId,
+    pdomGetBoxModelObjectId :: Maybe RuntimeRemoteObjectId
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMGetBoxModel where
+    parseJSON = A.withObject "PDOMGetBoxModel" $ \v ->
+         PDOMGetBoxModel <$> v .:?  "nodeId"
+            <*> v  .:?  "backendNodeId"
+            <*> v  .:?  "objectId"
+
+
+instance ToJSON PDOMGetBoxModel  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomGetBoxModelNodeId v
+        , "backendNodeId" .= pdomGetBoxModelBackendNodeId v
+        , "objectId" .= pdomGetBoxModelObjectId v
+        ]
+
+
+dOMGetBoxModel :: Session -> PDOMGetBoxModel -> IO (Either Error DOMGetBoxModel)
+dOMGetBoxModel session params = sendReceiveCommandResult session "DOM.getBoxModel" (Just params)
+
+data DOMGetDocument = DOMGetDocument {
+    dOMGetDocumentRoot :: DOMNode
+} deriving (Eq, Show, Read)
+instance FromJSON  DOMGetDocument where
+    parseJSON = A.withObject "DOMGetDocument" $ \v ->
+         DOMGetDocument <$> v .:  "root"
+
+
+
+instance Command  DOMGetDocument where
+    commandName _ = "DOM.getDocument"
+
+data PDOMGetDocument = PDOMGetDocument {
+    pdomGetDocumentDepth :: Maybe Int,
+    pdomGetDocumentPierce :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMGetDocument where
+    parseJSON = A.withObject "PDOMGetDocument" $ \v ->
+         PDOMGetDocument <$> v .:?  "depth"
+            <*> v  .:?  "pierce"
+
+
+instance ToJSON PDOMGetDocument  where
+    toJSON v = A.object
+        [ "depth" .= pdomGetDocumentDepth v
+        , "pierce" .= pdomGetDocumentPierce v
+        ]
+
+
+dOMGetDocument :: Session -> PDOMGetDocument -> IO (Either Error DOMGetDocument)
+dOMGetDocument session params = sendReceiveCommandResult session "DOM.getDocument" (Just params)
+
+data DOMGetNodeForLocation = DOMGetNodeForLocation {
+    dOMGetNodeForLocationBackendNodeId :: DOMBackendNodeId,
+    dOMGetNodeForLocationFrameId :: PageFrameId,
+    dOMGetNodeForLocationNodeId :: Maybe DOMNodeId
+} deriving (Eq, Show, Read)
+instance FromJSON  DOMGetNodeForLocation where
+    parseJSON = A.withObject "DOMGetNodeForLocation" $ \v ->
+         DOMGetNodeForLocation <$> v .:  "backendNodeId"
             <*> v  .:  "frameId"
             <*> v  .:?  "nodeId"
 
 
 
-domGetNodeForLocation :: Session -> Int -> Int -> Maybe Bool -> Maybe Bool -> IO (Either Error DomGetNodeForLocation)
-domGetNodeForLocation session domGetNodeForLocationX domGetNodeForLocationY domGetNodeForLocationIncludeUserAgentShadowDom domGetNodeForLocationIgnorePointerEventsNone = sendReceiveCommandResult (conn session) ("DOM","getNodeForLocation") ([("x", ToJSONEx domGetNodeForLocationX), ("y", ToJSONEx domGetNodeForLocationY)] ++ (catMaybes [fmap (("includeUserAgentShadowDOM",) . ToJSONEx) domGetNodeForLocationIncludeUserAgentShadowDom, fmap (("ignorePointerEventsNone",) . ToJSONEx) domGetNodeForLocationIgnorePointerEventsNone]))
+instance Command  DOMGetNodeForLocation where
+    commandName _ = "DOM.getNodeForLocation"
 
-data DomGetOuterHTML = DomGetOuterHTML {
-    domGetOuterHTMLOuterHtml :: String
+data PDOMGetNodeForLocation = PDOMGetNodeForLocation {
+    pdomGetNodeForLocationX :: Int,
+    pdomGetNodeForLocationY :: Int,
+    pdomGetNodeForLocationIncludeUserAgentShadowDom :: Maybe Bool,
+    pdomGetNodeForLocationIgnorePointerEventsNone :: Maybe Bool
 } deriving (Eq, Show, Read)
-instance FromJSON  DomGetOuterHTML where
-    parseJSON = A.withObject "DomGetOuterHTML" $ \v ->
-         DomGetOuterHTML <$> v .:  "outerHTML"
+instance FromJSON  PDOMGetNodeForLocation where
+    parseJSON = A.withObject "PDOMGetNodeForLocation" $ \v ->
+         PDOMGetNodeForLocation <$> v .:  "x"
+            <*> v  .:  "y"
+            <*> v  .:?  "includeUserAgentShadowDOM"
+            <*> v  .:?  "ignorePointerEventsNone"
 
 
-
-domGetOuterHTML :: Session -> Maybe DOMNodeId -> Maybe DOMBackendNodeId -> Maybe RuntimeRemoteObjectId -> IO (Either Error DomGetOuterHTML)
-domGetOuterHTML session domGetOuterHtmlNodeId domGetOuterHtmlBackendNodeId domGetOuterHtmlObjectId = sendReceiveCommandResult (conn session) ("DOM","getOuterHTML") ([] ++ (catMaybes [fmap (("nodeId",) . ToJSONEx) domGetOuterHtmlNodeId, fmap (("backendNodeId",) . ToJSONEx) domGetOuterHtmlBackendNodeId, fmap (("objectId",) . ToJSONEx) domGetOuterHtmlObjectId]))
-
-
-domHideHighlight :: Session -> IO (Maybe Error)
-domHideHighlight session  = sendReceiveCommand (conn session) ("DOM","hideHighlight") ([] ++ (catMaybes []))
-
-
-domHighlightNode :: Session -> IO (Maybe Error)
-domHighlightNode session  = sendReceiveCommand (conn session) ("DOM","highlightNode") ([] ++ (catMaybes []))
+instance ToJSON PDOMGetNodeForLocation  where
+    toJSON v = A.object
+        [ "x" .= pdomGetNodeForLocationX v
+        , "y" .= pdomGetNodeForLocationY v
+        , "includeUserAgentShadowDOM" .= pdomGetNodeForLocationIncludeUserAgentShadowDom v
+        , "ignorePointerEventsNone" .= pdomGetNodeForLocationIgnorePointerEventsNone v
+        ]
 
 
-domHighlightRect :: Session -> IO (Maybe Error)
-domHighlightRect session  = sendReceiveCommand (conn session) ("DOM","highlightRect") ([] ++ (catMaybes []))
+dOMGetNodeForLocation :: Session -> PDOMGetNodeForLocation -> IO (Either Error DOMGetNodeForLocation)
+dOMGetNodeForLocation session params = sendReceiveCommandResult session "DOM.getNodeForLocation" (Just params)
 
-data DomMoveTo = DomMoveTo {
-    domMoveToNodeId :: DOMNodeId
+data DOMGetOuterHtml = DOMGetOuterHtml {
+    dOMGetOuterHtmlOuterHtml :: String
 } deriving (Eq, Show, Read)
-instance FromJSON  DomMoveTo where
-    parseJSON = A.withObject "DomMoveTo" $ \v ->
-         DomMoveTo <$> v .:  "nodeId"
+instance FromJSON  DOMGetOuterHtml where
+    parseJSON = A.withObject "DOMGetOuterHtml" $ \v ->
+         DOMGetOuterHtml <$> v .:  "outerHTML"
 
 
 
-domMoveTo :: Session -> DOMNodeId -> DOMNodeId -> Maybe DOMNodeId -> IO (Either Error DomMoveTo)
-domMoveTo session domMoveToNodeId domMoveToTargetNodeId domMoveToInsertBeforeNodeId = sendReceiveCommandResult (conn session) ("DOM","moveTo") ([("nodeId", ToJSONEx domMoveToNodeId), ("targetNodeId", ToJSONEx domMoveToTargetNodeId)] ++ (catMaybes [fmap (("insertBeforeNodeId",) . ToJSONEx) domMoveToInsertBeforeNodeId]))
+instance Command  DOMGetOuterHtml where
+    commandName _ = "DOM.getOuterHTML"
 
-data DomQuerySelector = DomQuerySelector {
-    domQuerySelectorNodeId :: DOMNodeId
+data PDOMGetOuterHtml = PDOMGetOuterHtml {
+    pdomGetOuterHtmlNodeId :: Maybe DOMNodeId,
+    pdomGetOuterHtmlBackendNodeId :: Maybe DOMBackendNodeId,
+    pdomGetOuterHtmlObjectId :: Maybe RuntimeRemoteObjectId
 } deriving (Eq, Show, Read)
-instance FromJSON  DomQuerySelector where
-    parseJSON = A.withObject "DomQuerySelector" $ \v ->
-         DomQuerySelector <$> v .:  "nodeId"
+instance FromJSON  PDOMGetOuterHtml where
+    parseJSON = A.withObject "PDOMGetOuterHtml" $ \v ->
+         PDOMGetOuterHtml <$> v .:?  "nodeId"
+            <*> v  .:?  "backendNodeId"
+            <*> v  .:?  "objectId"
+
+
+instance ToJSON PDOMGetOuterHtml  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomGetOuterHtmlNodeId v
+        , "backendNodeId" .= pdomGetOuterHtmlBackendNodeId v
+        , "objectId" .= pdomGetOuterHtmlObjectId v
+        ]
+
+
+dOMGetOuterHtml :: Session -> PDOMGetOuterHtml -> IO (Either Error DOMGetOuterHtml)
+dOMGetOuterHtml session params = sendReceiveCommandResult session "DOM.getOuterHTML" (Just params)
 
 
 
-domQuerySelector :: Session -> DOMNodeId -> String -> IO (Either Error DomQuerySelector)
-domQuerySelector session domQuerySelectorNodeId domQuerySelectorSelector = sendReceiveCommandResult (conn session) ("DOM","querySelector") ([("nodeId", ToJSONEx domQuerySelectorNodeId), ("selector", ToJSONEx domQuerySelectorSelector)] ++ (catMaybes []))
 
-data DomQuerySelectorAll = DomQuerySelectorAll {
-    domQuerySelectorAllNodeIds :: [DOMNodeId]
+dOMHideHighlight :: Session -> IO (Maybe Error)
+dOMHideHighlight session = sendReceiveCommand session "DOM.hideHighlight" (Nothing :: Maybe ())
+
+
+
+
+dOMHighlightNode :: Session -> IO (Maybe Error)
+dOMHighlightNode session = sendReceiveCommand session "DOM.highlightNode" (Nothing :: Maybe ())
+
+
+
+
+dOMHighlightRect :: Session -> IO (Maybe Error)
+dOMHighlightRect session = sendReceiveCommand session "DOM.highlightRect" (Nothing :: Maybe ())
+
+data DOMMoveTo = DOMMoveTo {
+    dOMMoveToNodeId :: DOMNodeId
 } deriving (Eq, Show, Read)
-instance FromJSON  DomQuerySelectorAll where
-    parseJSON = A.withObject "DomQuerySelectorAll" $ \v ->
-         DomQuerySelectorAll <$> v .:  "nodeIds"
+instance FromJSON  DOMMoveTo where
+    parseJSON = A.withObject "DOMMoveTo" $ \v ->
+         DOMMoveTo <$> v .:  "nodeId"
 
 
 
-domQuerySelectorAll :: Session -> DOMNodeId -> String -> IO (Either Error DomQuerySelectorAll)
-domQuerySelectorAll session domQuerySelectorAllNodeId domQuerySelectorAllSelector = sendReceiveCommandResult (conn session) ("DOM","querySelectorAll") ([("nodeId", ToJSONEx domQuerySelectorAllNodeId), ("selector", ToJSONEx domQuerySelectorAllSelector)] ++ (catMaybes []))
+instance Command  DOMMoveTo where
+    commandName _ = "DOM.moveTo"
 
-
-domRemoveAttribute :: Session -> DOMNodeId -> String -> IO (Maybe Error)
-domRemoveAttribute session domRemoveAttributeNodeId domRemoveAttributeName = sendReceiveCommand (conn session) ("DOM","removeAttribute") ([("nodeId", ToJSONEx domRemoveAttributeNodeId), ("name", ToJSONEx domRemoveAttributeName)] ++ (catMaybes []))
-
-
-domRemoveNode :: Session -> DOMNodeId -> IO (Maybe Error)
-domRemoveNode session domRemoveNodeNodeId = sendReceiveCommand (conn session) ("DOM","removeNode") ([("nodeId", ToJSONEx domRemoveNodeNodeId)] ++ (catMaybes []))
-
-
-domRequestChildNodes :: Session -> DOMNodeId -> Maybe Int -> Maybe Bool -> IO (Maybe Error)
-domRequestChildNodes session domRequestChildNodesNodeId domRequestChildNodesDepth domRequestChildNodesPierce = sendReceiveCommand (conn session) ("DOM","requestChildNodes") ([("nodeId", ToJSONEx domRequestChildNodesNodeId)] ++ (catMaybes [fmap (("depth",) . ToJSONEx) domRequestChildNodesDepth, fmap (("pierce",) . ToJSONEx) domRequestChildNodesPierce]))
-
-data DomRequestNode = DomRequestNode {
-    domRequestNodeNodeId :: DOMNodeId
+data PDOMMoveTo = PDOMMoveTo {
+    pdomMoveToNodeId :: DOMNodeId,
+    pdomMoveToTargetNodeId :: DOMNodeId,
+    pdomMoveToInsertBeforeNodeId :: Maybe DOMNodeId
 } deriving (Eq, Show, Read)
-instance FromJSON  DomRequestNode where
-    parseJSON = A.withObject "DomRequestNode" $ \v ->
-         DomRequestNode <$> v .:  "nodeId"
+instance FromJSON  PDOMMoveTo where
+    parseJSON = A.withObject "PDOMMoveTo" $ \v ->
+         PDOMMoveTo <$> v .:  "nodeId"
+            <*> v  .:  "targetNodeId"
+            <*> v  .:?  "insertBeforeNodeId"
 
 
+instance ToJSON PDOMMoveTo  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomMoveToNodeId v
+        , "targetNodeId" .= pdomMoveToTargetNodeId v
+        , "insertBeforeNodeId" .= pdomMoveToInsertBeforeNodeId v
+        ]
 
-domRequestNode :: Session -> RuntimeRemoteObjectId -> IO (Either Error DomRequestNode)
-domRequestNode session domRequestNodeObjectId = sendReceiveCommandResult (conn session) ("DOM","requestNode") ([("objectId", ToJSONEx domRequestNodeObjectId)] ++ (catMaybes []))
 
-data DomResolveNode = DomResolveNode {
-    domResolveNodeObject :: RuntimeRemoteObject
+dOMMoveTo :: Session -> PDOMMoveTo -> IO (Either Error DOMMoveTo)
+dOMMoveTo session params = sendReceiveCommandResult session "DOM.moveTo" (Just params)
+
+data DOMQuerySelector = DOMQuerySelector {
+    dOMQuerySelectorNodeId :: DOMNodeId
 } deriving (Eq, Show, Read)
-instance FromJSON  DomResolveNode where
-    parseJSON = A.withObject "DomResolveNode" $ \v ->
-         DomResolveNode <$> v .:  "object"
+instance FromJSON  DOMQuerySelector where
+    parseJSON = A.withObject "DOMQuerySelector" $ \v ->
+         DOMQuerySelector <$> v .:  "nodeId"
 
 
 
-domResolveNode :: Session -> Maybe DOMNodeId -> Maybe DOMBackendNodeId -> Maybe String -> Maybe RuntimeExecutionContextId -> IO (Either Error DomResolveNode)
-domResolveNode session domResolveNodeNodeId domResolveNodeBackendNodeId domResolveNodeObjectGroup domResolveNodeExecutionContextId = sendReceiveCommandResult (conn session) ("DOM","resolveNode") ([] ++ (catMaybes [fmap (("nodeId",) . ToJSONEx) domResolveNodeNodeId, fmap (("backendNodeId",) . ToJSONEx) domResolveNodeBackendNodeId, fmap (("objectGroup",) . ToJSONEx) domResolveNodeObjectGroup, fmap (("executionContextId",) . ToJSONEx) domResolveNodeExecutionContextId]))
+instance Command  DOMQuerySelector where
+    commandName _ = "DOM.querySelector"
 
-
-domSetAttributeValue :: Session -> DOMNodeId -> String -> String -> IO (Maybe Error)
-domSetAttributeValue session domSetAttributeValueNodeId domSetAttributeValueName domSetAttributeValueValue = sendReceiveCommand (conn session) ("DOM","setAttributeValue") ([("nodeId", ToJSONEx domSetAttributeValueNodeId), ("name", ToJSONEx domSetAttributeValueName), ("value", ToJSONEx domSetAttributeValueValue)] ++ (catMaybes []))
-
-
-domSetAttributesAsText :: Session -> DOMNodeId -> String -> Maybe String -> IO (Maybe Error)
-domSetAttributesAsText session domSetAttributesAsTextNodeId domSetAttributesAsTextText domSetAttributesAsTextName = sendReceiveCommand (conn session) ("DOM","setAttributesAsText") ([("nodeId", ToJSONEx domSetAttributesAsTextNodeId), ("text", ToJSONEx domSetAttributesAsTextText)] ++ (catMaybes [fmap (("name",) . ToJSONEx) domSetAttributesAsTextName]))
-
-
-domSetFileInputFiles :: Session -> [String] -> Maybe DOMNodeId -> Maybe DOMBackendNodeId -> Maybe RuntimeRemoteObjectId -> IO (Maybe Error)
-domSetFileInputFiles session domSetFileInputFilesFiles domSetFileInputFilesNodeId domSetFileInputFilesBackendNodeId domSetFileInputFilesObjectId = sendReceiveCommand (conn session) ("DOM","setFileInputFiles") ([("files", ToJSONEx domSetFileInputFilesFiles)] ++ (catMaybes [fmap (("nodeId",) . ToJSONEx) domSetFileInputFilesNodeId, fmap (("backendNodeId",) . ToJSONEx) domSetFileInputFilesBackendNodeId, fmap (("objectId",) . ToJSONEx) domSetFileInputFilesObjectId]))
-
-data DomSetNodeName = DomSetNodeName {
-    domSetNodeNameNodeId :: DOMNodeId
+data PDOMQuerySelector = PDOMQuerySelector {
+    pdomQuerySelectorNodeId :: DOMNodeId,
+    pdomQuerySelectorSelector :: String
 } deriving (Eq, Show, Read)
-instance FromJSON  DomSetNodeName where
-    parseJSON = A.withObject "DomSetNodeName" $ \v ->
-         DomSetNodeName <$> v .:  "nodeId"
+instance FromJSON  PDOMQuerySelector where
+    parseJSON = A.withObject "PDOMQuerySelector" $ \v ->
+         PDOMQuerySelector <$> v .:  "nodeId"
+            <*> v  .:  "selector"
+
+
+instance ToJSON PDOMQuerySelector  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomQuerySelectorNodeId v
+        , "selector" .= pdomQuerySelectorSelector v
+        ]
+
+
+dOMQuerySelector :: Session -> PDOMQuerySelector -> IO (Either Error DOMQuerySelector)
+dOMQuerySelector session params = sendReceiveCommandResult session "DOM.querySelector" (Just params)
+
+data DOMQuerySelectorAll = DOMQuerySelectorAll {
+    dOMQuerySelectorAllNodeIds :: [DOMNodeId]
+} deriving (Eq, Show, Read)
+instance FromJSON  DOMQuerySelectorAll where
+    parseJSON = A.withObject "DOMQuerySelectorAll" $ \v ->
+         DOMQuerySelectorAll <$> v .:  "nodeIds"
 
 
 
-domSetNodeName :: Session -> DOMNodeId -> String -> IO (Either Error DomSetNodeName)
-domSetNodeName session domSetNodeNameNodeId domSetNodeNameName = sendReceiveCommandResult (conn session) ("DOM","setNodeName") ([("nodeId", ToJSONEx domSetNodeNameNodeId), ("name", ToJSONEx domSetNodeNameName)] ++ (catMaybes []))
+instance Command  DOMQuerySelectorAll where
+    commandName _ = "DOM.querySelectorAll"
+
+data PDOMQuerySelectorAll = PDOMQuerySelectorAll {
+    pdomQuerySelectorAllNodeId :: DOMNodeId,
+    pdomQuerySelectorAllSelector :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMQuerySelectorAll where
+    parseJSON = A.withObject "PDOMQuerySelectorAll" $ \v ->
+         PDOMQuerySelectorAll <$> v .:  "nodeId"
+            <*> v  .:  "selector"
 
 
-domSetNodeValue :: Session -> DOMNodeId -> String -> IO (Maybe Error)
-domSetNodeValue session domSetNodeValueNodeId domSetNodeValueValue = sendReceiveCommand (conn session) ("DOM","setNodeValue") ([("nodeId", ToJSONEx domSetNodeValueNodeId), ("value", ToJSONEx domSetNodeValueValue)] ++ (catMaybes []))
+instance ToJSON PDOMQuerySelectorAll  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomQuerySelectorAllNodeId v
+        , "selector" .= pdomQuerySelectorAllSelector v
+        ]
 
 
-domSetOuterHTML :: Session -> DOMNodeId -> String -> IO (Maybe Error)
-domSetOuterHTML session domSetOuterHtmlNodeId domSetOuterHtmlOuterHtml = sendReceiveCommand (conn session) ("DOM","setOuterHTML") ([("nodeId", ToJSONEx domSetOuterHtmlNodeId), ("outerHTML", ToJSONEx domSetOuterHtmlOuterHtml)] ++ (catMaybes []))
+dOMQuerySelectorAll :: Session -> PDOMQuerySelectorAll -> IO (Either Error DOMQuerySelectorAll)
+dOMQuerySelectorAll session params = sendReceiveCommandResult session "DOM.querySelectorAll" (Just params)
+
+
+
+data PDOMRemoveAttribute = PDOMRemoveAttribute {
+    pdomRemoveAttributeNodeId :: DOMNodeId,
+    pdomRemoveAttributeName :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMRemoveAttribute where
+    parseJSON = A.withObject "PDOMRemoveAttribute" $ \v ->
+         PDOMRemoveAttribute <$> v .:  "nodeId"
+            <*> v  .:  "name"
+
+
+instance ToJSON PDOMRemoveAttribute  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomRemoveAttributeNodeId v
+        , "name" .= pdomRemoveAttributeName v
+        ]
+
+
+dOMRemoveAttribute :: Session -> PDOMRemoveAttribute -> IO (Maybe Error)
+dOMRemoveAttribute session params = sendReceiveCommand session "DOM.removeAttribute" (Just params)
+
+
+
+data PDOMRemoveNode = PDOMRemoveNode {
+    pdomRemoveNodeNodeId :: DOMNodeId
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMRemoveNode where
+    parseJSON = A.withObject "PDOMRemoveNode" $ \v ->
+         PDOMRemoveNode <$> v .:  "nodeId"
+
+
+instance ToJSON PDOMRemoveNode  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomRemoveNodeNodeId v
+        ]
+
+
+dOMRemoveNode :: Session -> PDOMRemoveNode -> IO (Maybe Error)
+dOMRemoveNode session params = sendReceiveCommand session "DOM.removeNode" (Just params)
+
+
+
+data PDOMRequestChildNodes = PDOMRequestChildNodes {
+    pdomRequestChildNodesNodeId :: DOMNodeId,
+    pdomRequestChildNodesDepth :: Maybe Int,
+    pdomRequestChildNodesPierce :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMRequestChildNodes where
+    parseJSON = A.withObject "PDOMRequestChildNodes" $ \v ->
+         PDOMRequestChildNodes <$> v .:  "nodeId"
+            <*> v  .:?  "depth"
+            <*> v  .:?  "pierce"
+
+
+instance ToJSON PDOMRequestChildNodes  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomRequestChildNodesNodeId v
+        , "depth" .= pdomRequestChildNodesDepth v
+        , "pierce" .= pdomRequestChildNodesPierce v
+        ]
+
+
+dOMRequestChildNodes :: Session -> PDOMRequestChildNodes -> IO (Maybe Error)
+dOMRequestChildNodes session params = sendReceiveCommand session "DOM.requestChildNodes" (Just params)
+
+data DOMRequestNode = DOMRequestNode {
+    dOMRequestNodeNodeId :: DOMNodeId
+} deriving (Eq, Show, Read)
+instance FromJSON  DOMRequestNode where
+    parseJSON = A.withObject "DOMRequestNode" $ \v ->
+         DOMRequestNode <$> v .:  "nodeId"
+
+
+
+instance Command  DOMRequestNode where
+    commandName _ = "DOM.requestNode"
+
+data PDOMRequestNode = PDOMRequestNode {
+    pdomRequestNodeObjectId :: RuntimeRemoteObjectId
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMRequestNode where
+    parseJSON = A.withObject "PDOMRequestNode" $ \v ->
+         PDOMRequestNode <$> v .:  "objectId"
+
+
+instance ToJSON PDOMRequestNode  where
+    toJSON v = A.object
+        [ "objectId" .= pdomRequestNodeObjectId v
+        ]
+
+
+dOMRequestNode :: Session -> PDOMRequestNode -> IO (Either Error DOMRequestNode)
+dOMRequestNode session params = sendReceiveCommandResult session "DOM.requestNode" (Just params)
+
+data DOMResolveNode = DOMResolveNode {
+    dOMResolveNodeObject :: RuntimeRemoteObject
+} deriving (Eq, Show, Read)
+instance FromJSON  DOMResolveNode where
+    parseJSON = A.withObject "DOMResolveNode" $ \v ->
+         DOMResolveNode <$> v .:  "object"
+
+
+
+instance Command  DOMResolveNode where
+    commandName _ = "DOM.resolveNode"
+
+data PDOMResolveNode = PDOMResolveNode {
+    pdomResolveNodeNodeId :: Maybe DOMNodeId,
+    pdomResolveNodeBackendNodeId :: Maybe DOMBackendNodeId,
+    pdomResolveNodeObjectGroup :: Maybe String,
+    pdomResolveNodeExecutionContextId :: Maybe RuntimeExecutionContextId
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMResolveNode where
+    parseJSON = A.withObject "PDOMResolveNode" $ \v ->
+         PDOMResolveNode <$> v .:?  "nodeId"
+            <*> v  .:?  "backendNodeId"
+            <*> v  .:?  "objectGroup"
+            <*> v  .:?  "executionContextId"
+
+
+instance ToJSON PDOMResolveNode  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomResolveNodeNodeId v
+        , "backendNodeId" .= pdomResolveNodeBackendNodeId v
+        , "objectGroup" .= pdomResolveNodeObjectGroup v
+        , "executionContextId" .= pdomResolveNodeExecutionContextId v
+        ]
+
+
+dOMResolveNode :: Session -> PDOMResolveNode -> IO (Either Error DOMResolveNode)
+dOMResolveNode session params = sendReceiveCommandResult session "DOM.resolveNode" (Just params)
+
+
+
+data PDOMSetAttributeValue = PDOMSetAttributeValue {
+    pdomSetAttributeValueNodeId :: DOMNodeId,
+    pdomSetAttributeValueName :: String,
+    pdomSetAttributeValueValue :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMSetAttributeValue where
+    parseJSON = A.withObject "PDOMSetAttributeValue" $ \v ->
+         PDOMSetAttributeValue <$> v .:  "nodeId"
+            <*> v  .:  "name"
+            <*> v  .:  "value"
+
+
+instance ToJSON PDOMSetAttributeValue  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomSetAttributeValueNodeId v
+        , "name" .= pdomSetAttributeValueName v
+        , "value" .= pdomSetAttributeValueValue v
+        ]
+
+
+dOMSetAttributeValue :: Session -> PDOMSetAttributeValue -> IO (Maybe Error)
+dOMSetAttributeValue session params = sendReceiveCommand session "DOM.setAttributeValue" (Just params)
+
+
+
+data PDOMSetAttributesAsText = PDOMSetAttributesAsText {
+    pdomSetAttributesAsTextNodeId :: DOMNodeId,
+    pdomSetAttributesAsTextText :: String,
+    pdomSetAttributesAsTextName :: Maybe String
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMSetAttributesAsText where
+    parseJSON = A.withObject "PDOMSetAttributesAsText" $ \v ->
+         PDOMSetAttributesAsText <$> v .:  "nodeId"
+            <*> v  .:  "text"
+            <*> v  .:?  "name"
+
+
+instance ToJSON PDOMSetAttributesAsText  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomSetAttributesAsTextNodeId v
+        , "text" .= pdomSetAttributesAsTextText v
+        , "name" .= pdomSetAttributesAsTextName v
+        ]
+
+
+dOMSetAttributesAsText :: Session -> PDOMSetAttributesAsText -> IO (Maybe Error)
+dOMSetAttributesAsText session params = sendReceiveCommand session "DOM.setAttributesAsText" (Just params)
+
+
+
+data PDOMSetFileInputFiles = PDOMSetFileInputFiles {
+    pdomSetFileInputFilesFiles :: [String],
+    pdomSetFileInputFilesNodeId :: Maybe DOMNodeId,
+    pdomSetFileInputFilesBackendNodeId :: Maybe DOMBackendNodeId,
+    pdomSetFileInputFilesObjectId :: Maybe RuntimeRemoteObjectId
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMSetFileInputFiles where
+    parseJSON = A.withObject "PDOMSetFileInputFiles" $ \v ->
+         PDOMSetFileInputFiles <$> v .:  "files"
+            <*> v  .:?  "nodeId"
+            <*> v  .:?  "backendNodeId"
+            <*> v  .:?  "objectId"
+
+
+instance ToJSON PDOMSetFileInputFiles  where
+    toJSON v = A.object
+        [ "files" .= pdomSetFileInputFilesFiles v
+        , "nodeId" .= pdomSetFileInputFilesNodeId v
+        , "backendNodeId" .= pdomSetFileInputFilesBackendNodeId v
+        , "objectId" .= pdomSetFileInputFilesObjectId v
+        ]
+
+
+dOMSetFileInputFiles :: Session -> PDOMSetFileInputFiles -> IO (Maybe Error)
+dOMSetFileInputFiles session params = sendReceiveCommand session "DOM.setFileInputFiles" (Just params)
+
+data DOMSetNodeName = DOMSetNodeName {
+    dOMSetNodeNameNodeId :: DOMNodeId
+} deriving (Eq, Show, Read)
+instance FromJSON  DOMSetNodeName where
+    parseJSON = A.withObject "DOMSetNodeName" $ \v ->
+         DOMSetNodeName <$> v .:  "nodeId"
+
+
+
+instance Command  DOMSetNodeName where
+    commandName _ = "DOM.setNodeName"
+
+data PDOMSetNodeName = PDOMSetNodeName {
+    pdomSetNodeNameNodeId :: DOMNodeId,
+    pdomSetNodeNameName :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMSetNodeName where
+    parseJSON = A.withObject "PDOMSetNodeName" $ \v ->
+         PDOMSetNodeName <$> v .:  "nodeId"
+            <*> v  .:  "name"
+
+
+instance ToJSON PDOMSetNodeName  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomSetNodeNameNodeId v
+        , "name" .= pdomSetNodeNameName v
+        ]
+
+
+dOMSetNodeName :: Session -> PDOMSetNodeName -> IO (Either Error DOMSetNodeName)
+dOMSetNodeName session params = sendReceiveCommandResult session "DOM.setNodeName" (Just params)
+
+
+
+data PDOMSetNodeValue = PDOMSetNodeValue {
+    pdomSetNodeValueNodeId :: DOMNodeId,
+    pdomSetNodeValueValue :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMSetNodeValue where
+    parseJSON = A.withObject "PDOMSetNodeValue" $ \v ->
+         PDOMSetNodeValue <$> v .:  "nodeId"
+            <*> v  .:  "value"
+
+
+instance ToJSON PDOMSetNodeValue  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomSetNodeValueNodeId v
+        , "value" .= pdomSetNodeValueValue v
+        ]
+
+
+dOMSetNodeValue :: Session -> PDOMSetNodeValue -> IO (Maybe Error)
+dOMSetNodeValue session params = sendReceiveCommand session "DOM.setNodeValue" (Just params)
+
+
+
+data PDOMSetOuterHtml = PDOMSetOuterHtml {
+    pdomSetOuterHtmlNodeId :: DOMNodeId,
+    pdomSetOuterHtmlOuterHtml :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMSetOuterHtml where
+    parseJSON = A.withObject "PDOMSetOuterHtml" $ \v ->
+         PDOMSetOuterHtml <$> v .:  "nodeId"
+            <*> v  .:  "outerHTML"
+
+
+instance ToJSON PDOMSetOuterHtml  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomSetOuterHtmlNodeId v
+        , "outerHTML" .= pdomSetOuterHtmlOuterHtml v
+        ]
+
+
+dOMSetOuterHtml :: Session -> PDOMSetOuterHtml -> IO (Maybe Error)
+dOMSetOuterHtml session params = sendReceiveCommand session "DOM.setOuterHTML" (Just params)
 
 
 
@@ -1053,11 +1541,11 @@ data DOMDebuggerDOMBreakpointType = DOMDebuggerDOMBreakpointTypeSubtreeModified 
     deriving (Eq, Show, Read)
 instance FromJSON DOMDebuggerDOMBreakpointType where
     parseJSON = A.withText  "DOMDebuggerDOMBreakpointType"  $ \v -> do
-        pure $ case v of
-                "subtree-modified" -> DOMDebuggerDOMBreakpointTypeSubtreeModified
-                "attribute-modified" -> DOMDebuggerDOMBreakpointTypeAttributeModified
-                "node-removed" -> DOMDebuggerDOMBreakpointTypeNodeRemoved
-                _ -> error "failed to parse DOMDebuggerDOMBreakpointType"
+        case v of
+                "subtree-modified" -> pure $ DOMDebuggerDOMBreakpointTypeSubtreeModified
+                "attribute-modified" -> pure $ DOMDebuggerDOMBreakpointTypeAttributeModified
+                "node-removed" -> pure $ DOMDebuggerDOMBreakpointTypeNodeRemoved
+                _ -> fail "failed to parse DOMDebuggerDOMBreakpointType"
 
 instance ToJSON DOMDebuggerDOMBreakpointType where
     toJSON v = A.String $
@@ -1109,41 +1597,160 @@ instance ToJSON DOMDebuggerEventListener  where
         ]
 
 
-data DomDebuggerGetEventListeners = DomDebuggerGetEventListeners {
-    domDebuggerGetEventListenersListeners :: [DOMDebuggerEventListener]
+data DOMDebuggerGetEventListeners = DOMDebuggerGetEventListeners {
+    dOMDebuggerGetEventListenersListeners :: [DOMDebuggerEventListener]
 } deriving (Eq, Show, Read)
-instance FromJSON  DomDebuggerGetEventListeners where
-    parseJSON = A.withObject "DomDebuggerGetEventListeners" $ \v ->
-         DomDebuggerGetEventListeners <$> v .:  "listeners"
+instance FromJSON  DOMDebuggerGetEventListeners where
+    parseJSON = A.withObject "DOMDebuggerGetEventListeners" $ \v ->
+         DOMDebuggerGetEventListeners <$> v .:  "listeners"
 
 
 
-domDebuggerGetEventListeners :: Session -> RuntimeRemoteObjectId -> Maybe Int -> Maybe Bool -> IO (Either Error DomDebuggerGetEventListeners)
-domDebuggerGetEventListeners session domDebuggerGetEventListenersObjectId domDebuggerGetEventListenersDepth domDebuggerGetEventListenersPierce = sendReceiveCommandResult (conn session) ("DOMDebugger","getEventListeners") ([("objectId", ToJSONEx domDebuggerGetEventListenersObjectId)] ++ (catMaybes [fmap (("depth",) . ToJSONEx) domDebuggerGetEventListenersDepth, fmap (("pierce",) . ToJSONEx) domDebuggerGetEventListenersPierce]))
+instance Command  DOMDebuggerGetEventListeners where
+    commandName _ = "DOMDebugger.getEventListeners"
+
+data PDOMDebuggerGetEventListeners = PDOMDebuggerGetEventListeners {
+    pdomDebuggerGetEventListenersObjectId :: RuntimeRemoteObjectId,
+    pdomDebuggerGetEventListenersDepth :: Maybe Int,
+    pdomDebuggerGetEventListenersPierce :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMDebuggerGetEventListeners where
+    parseJSON = A.withObject "PDOMDebuggerGetEventListeners" $ \v ->
+         PDOMDebuggerGetEventListeners <$> v .:  "objectId"
+            <*> v  .:?  "depth"
+            <*> v  .:?  "pierce"
 
 
-domDebuggerRemoveDOMBreakpoint :: Session -> DOMNodeId -> DOMDebuggerDOMBreakpointType -> IO (Maybe Error)
-domDebuggerRemoveDOMBreakpoint session domDebuggerRemoveDomBreakpointNodeId domDebuggerRemoveDomBreakpointType = sendReceiveCommand (conn session) ("DOMDebugger","removeDOMBreakpoint") ([("nodeId", ToJSONEx domDebuggerRemoveDomBreakpointNodeId), ("type", ToJSONEx domDebuggerRemoveDomBreakpointType)] ++ (catMaybes []))
+instance ToJSON PDOMDebuggerGetEventListeners  where
+    toJSON v = A.object
+        [ "objectId" .= pdomDebuggerGetEventListenersObjectId v
+        , "depth" .= pdomDebuggerGetEventListenersDepth v
+        , "pierce" .= pdomDebuggerGetEventListenersPierce v
+        ]
 
 
-domDebuggerRemoveEventListenerBreakpoint :: Session -> String -> IO (Maybe Error)
-domDebuggerRemoveEventListenerBreakpoint session domDebuggerRemoveEventListenerBreakpointEventName = sendReceiveCommand (conn session) ("DOMDebugger","removeEventListenerBreakpoint") ([("eventName", ToJSONEx domDebuggerRemoveEventListenerBreakpointEventName)] ++ (catMaybes []))
+dOMDebuggerGetEventListeners :: Session -> PDOMDebuggerGetEventListeners -> IO (Either Error DOMDebuggerGetEventListeners)
+dOMDebuggerGetEventListeners session params = sendReceiveCommandResult session "DOMDebugger.getEventListeners" (Just params)
 
 
-domDebuggerRemoveXHRBreakpoint :: Session -> String -> IO (Maybe Error)
-domDebuggerRemoveXHRBreakpoint session domDebuggerRemoveXhrBreakpointUrl = sendReceiveCommand (conn session) ("DOMDebugger","removeXHRBreakpoint") ([("url", ToJSONEx domDebuggerRemoveXhrBreakpointUrl)] ++ (catMaybes []))
+
+data PDOMDebuggerRemoveDomBreakpoint = PDOMDebuggerRemoveDomBreakpoint {
+    pdomDebuggerRemoveDomBreakpointNodeId :: DOMNodeId,
+    pdomDebuggerRemoveDomBreakpointType :: DOMDebuggerDOMBreakpointType
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMDebuggerRemoveDomBreakpoint where
+    parseJSON = A.withObject "PDOMDebuggerRemoveDomBreakpoint" $ \v ->
+         PDOMDebuggerRemoveDomBreakpoint <$> v .:  "nodeId"
+            <*> v  .:  "type"
 
 
-domDebuggerSetDOMBreakpoint :: Session -> DOMNodeId -> DOMDebuggerDOMBreakpointType -> IO (Maybe Error)
-domDebuggerSetDOMBreakpoint session domDebuggerSetDomBreakpointNodeId domDebuggerSetDomBreakpointType = sendReceiveCommand (conn session) ("DOMDebugger","setDOMBreakpoint") ([("nodeId", ToJSONEx domDebuggerSetDomBreakpointNodeId), ("type", ToJSONEx domDebuggerSetDomBreakpointType)] ++ (catMaybes []))
+instance ToJSON PDOMDebuggerRemoveDomBreakpoint  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomDebuggerRemoveDomBreakpointNodeId v
+        , "type" .= pdomDebuggerRemoveDomBreakpointType v
+        ]
 
 
-domDebuggerSetEventListenerBreakpoint :: Session -> String -> IO (Maybe Error)
-domDebuggerSetEventListenerBreakpoint session domDebuggerSetEventListenerBreakpointEventName = sendReceiveCommand (conn session) ("DOMDebugger","setEventListenerBreakpoint") ([("eventName", ToJSONEx domDebuggerSetEventListenerBreakpointEventName)] ++ (catMaybes []))
+dOMDebuggerRemoveDomBreakpoint :: Session -> PDOMDebuggerRemoveDomBreakpoint -> IO (Maybe Error)
+dOMDebuggerRemoveDomBreakpoint session params = sendReceiveCommand session "DOMDebugger.removeDOMBreakpoint" (Just params)
 
 
-domDebuggerSetXHRBreakpoint :: Session -> String -> IO (Maybe Error)
-domDebuggerSetXHRBreakpoint session domDebuggerSetXhrBreakpointUrl = sendReceiveCommand (conn session) ("DOMDebugger","setXHRBreakpoint") ([("url", ToJSONEx domDebuggerSetXhrBreakpointUrl)] ++ (catMaybes []))
+
+data PDOMDebuggerRemoveEventListenerBreakpoint = PDOMDebuggerRemoveEventListenerBreakpoint {
+    pdomDebuggerRemoveEventListenerBreakpointEventName :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMDebuggerRemoveEventListenerBreakpoint where
+    parseJSON = A.withObject "PDOMDebuggerRemoveEventListenerBreakpoint" $ \v ->
+         PDOMDebuggerRemoveEventListenerBreakpoint <$> v .:  "eventName"
+
+
+instance ToJSON PDOMDebuggerRemoveEventListenerBreakpoint  where
+    toJSON v = A.object
+        [ "eventName" .= pdomDebuggerRemoveEventListenerBreakpointEventName v
+        ]
+
+
+dOMDebuggerRemoveEventListenerBreakpoint :: Session -> PDOMDebuggerRemoveEventListenerBreakpoint -> IO (Maybe Error)
+dOMDebuggerRemoveEventListenerBreakpoint session params = sendReceiveCommand session "DOMDebugger.removeEventListenerBreakpoint" (Just params)
+
+
+
+data PDOMDebuggerRemoveXhrBreakpoint = PDOMDebuggerRemoveXhrBreakpoint {
+    pdomDebuggerRemoveXhrBreakpointUrl :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMDebuggerRemoveXhrBreakpoint where
+    parseJSON = A.withObject "PDOMDebuggerRemoveXhrBreakpoint" $ \v ->
+         PDOMDebuggerRemoveXhrBreakpoint <$> v .:  "url"
+
+
+instance ToJSON PDOMDebuggerRemoveXhrBreakpoint  where
+    toJSON v = A.object
+        [ "url" .= pdomDebuggerRemoveXhrBreakpointUrl v
+        ]
+
+
+dOMDebuggerRemoveXhrBreakpoint :: Session -> PDOMDebuggerRemoveXhrBreakpoint -> IO (Maybe Error)
+dOMDebuggerRemoveXhrBreakpoint session params = sendReceiveCommand session "DOMDebugger.removeXHRBreakpoint" (Just params)
+
+
+
+data PDOMDebuggerSetDomBreakpoint = PDOMDebuggerSetDomBreakpoint {
+    pdomDebuggerSetDomBreakpointNodeId :: DOMNodeId,
+    pdomDebuggerSetDomBreakpointType :: DOMDebuggerDOMBreakpointType
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMDebuggerSetDomBreakpoint where
+    parseJSON = A.withObject "PDOMDebuggerSetDomBreakpoint" $ \v ->
+         PDOMDebuggerSetDomBreakpoint <$> v .:  "nodeId"
+            <*> v  .:  "type"
+
+
+instance ToJSON PDOMDebuggerSetDomBreakpoint  where
+    toJSON v = A.object
+        [ "nodeId" .= pdomDebuggerSetDomBreakpointNodeId v
+        , "type" .= pdomDebuggerSetDomBreakpointType v
+        ]
+
+
+dOMDebuggerSetDomBreakpoint :: Session -> PDOMDebuggerSetDomBreakpoint -> IO (Maybe Error)
+dOMDebuggerSetDomBreakpoint session params = sendReceiveCommand session "DOMDebugger.setDOMBreakpoint" (Just params)
+
+
+
+data PDOMDebuggerSetEventListenerBreakpoint = PDOMDebuggerSetEventListenerBreakpoint {
+    pdomDebuggerSetEventListenerBreakpointEventName :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMDebuggerSetEventListenerBreakpoint where
+    parseJSON = A.withObject "PDOMDebuggerSetEventListenerBreakpoint" $ \v ->
+         PDOMDebuggerSetEventListenerBreakpoint <$> v .:  "eventName"
+
+
+instance ToJSON PDOMDebuggerSetEventListenerBreakpoint  where
+    toJSON v = A.object
+        [ "eventName" .= pdomDebuggerSetEventListenerBreakpointEventName v
+        ]
+
+
+dOMDebuggerSetEventListenerBreakpoint :: Session -> PDOMDebuggerSetEventListenerBreakpoint -> IO (Maybe Error)
+dOMDebuggerSetEventListenerBreakpoint session params = sendReceiveCommand session "DOMDebugger.setEventListenerBreakpoint" (Just params)
+
+
+
+data PDOMDebuggerSetXhrBreakpoint = PDOMDebuggerSetXhrBreakpoint {
+    pdomDebuggerSetXhrBreakpointUrl :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PDOMDebuggerSetXhrBreakpoint where
+    parseJSON = A.withObject "PDOMDebuggerSetXhrBreakpoint" $ \v ->
+         PDOMDebuggerSetXhrBreakpoint <$> v .:  "url"
+
+
+instance ToJSON PDOMDebuggerSetXhrBreakpoint  where
+    toJSON v = A.object
+        [ "url" .= pdomDebuggerSetXhrBreakpointUrl v
+        ]
+
+
+dOMDebuggerSetXhrBreakpoint :: Session -> PDOMDebuggerSetXhrBreakpoint -> IO (Maybe Error)
+dOMDebuggerSetXhrBreakpoint session params = sendReceiveCommand session "DOMDebugger.setXHRBreakpoint" (Just params)
 
 
 
@@ -1213,80 +1820,278 @@ instance FromJSON  EmulationCanEmulate where
 
 
 
+instance Command  EmulationCanEmulate where
+    commandName _ = "Emulation.canEmulate"
+
+
 emulationCanEmulate :: Session -> IO (Either Error EmulationCanEmulate)
-emulationCanEmulate session  = sendReceiveCommandResult (conn session) ("Emulation","canEmulate") ([] ++ (catMaybes []))
+emulationCanEmulate session = sendReceiveCommandResult session "Emulation.canEmulate" (Nothing :: Maybe ())
+
+
 
 
 emulationClearDeviceMetricsOverride :: Session -> IO (Maybe Error)
-emulationClearDeviceMetricsOverride session  = sendReceiveCommand (conn session) ("Emulation","clearDeviceMetricsOverride") ([] ++ (catMaybes []))
+emulationClearDeviceMetricsOverride session = sendReceiveCommand session "Emulation.clearDeviceMetricsOverride" (Nothing :: Maybe ())
+
+
 
 
 emulationClearGeolocationOverride :: Session -> IO (Maybe Error)
-emulationClearGeolocationOverride session  = sendReceiveCommand (conn session) ("Emulation","clearGeolocationOverride") ([] ++ (catMaybes []))
+emulationClearGeolocationOverride session = sendReceiveCommand session "Emulation.clearGeolocationOverride" (Nothing :: Maybe ())
 
 
-emulationSetDefaultBackgroundColorOverride :: Session -> Maybe DOMRGBA -> IO (Maybe Error)
-emulationSetDefaultBackgroundColorOverride session emulationSetDefaultBackgroundColorOverrideColor = sendReceiveCommand (conn session) ("Emulation","setDefaultBackgroundColorOverride") ([] ++ (catMaybes [fmap (("color",) . ToJSONEx) emulationSetDefaultBackgroundColorOverrideColor]))
+
+data PEmulationSetDefaultBackgroundColorOverride = PEmulationSetDefaultBackgroundColorOverride {
+    pEmulationSetDefaultBackgroundColorOverrideColor :: Maybe DOMRGBA
+} deriving (Eq, Show, Read)
+instance FromJSON  PEmulationSetDefaultBackgroundColorOverride where
+    parseJSON = A.withObject "PEmulationSetDefaultBackgroundColorOverride" $ \v ->
+         PEmulationSetDefaultBackgroundColorOverride <$> v .:?  "color"
 
 
-emulationSetDeviceMetricsOverride :: Session -> Int -> Int -> Int -> Bool -> Maybe EmulationScreenOrientation -> IO (Maybe Error)
-emulationSetDeviceMetricsOverride session emulationSetDeviceMetricsOverrideWidth emulationSetDeviceMetricsOverrideHeight emulationSetDeviceMetricsOverrideDeviceScaleFactor emulationSetDeviceMetricsOverrideMobile emulationSetDeviceMetricsOverrideScreenOrientation = sendReceiveCommand (conn session) ("Emulation","setDeviceMetricsOverride") ([("width", ToJSONEx emulationSetDeviceMetricsOverrideWidth), ("height", ToJSONEx emulationSetDeviceMetricsOverrideHeight), ("deviceScaleFactor", ToJSONEx emulationSetDeviceMetricsOverrideDeviceScaleFactor), ("mobile", ToJSONEx emulationSetDeviceMetricsOverrideMobile)] ++ (catMaybes [fmap (("screenOrientation",) . ToJSONEx) emulationSetDeviceMetricsOverrideScreenOrientation]))
+instance ToJSON PEmulationSetDefaultBackgroundColorOverride  where
+    toJSON v = A.object
+        [ "color" .= pEmulationSetDefaultBackgroundColorOverrideColor v
+        ]
 
 
-emulationSetEmulatedMedia :: Session -> Maybe String -> Maybe [EmulationMediaFeature] -> IO (Maybe Error)
-emulationSetEmulatedMedia session emulationSetEmulatedMediaMedia emulationSetEmulatedMediaFeatures = sendReceiveCommand (conn session) ("Emulation","setEmulatedMedia") ([] ++ (catMaybes [fmap (("media",) . ToJSONEx) emulationSetEmulatedMediaMedia, fmap (("features",) . ToJSONEx) emulationSetEmulatedMediaFeatures]))
+emulationSetDefaultBackgroundColorOverride :: Session -> PEmulationSetDefaultBackgroundColorOverride -> IO (Maybe Error)
+emulationSetDefaultBackgroundColorOverride session params = sendReceiveCommand session "Emulation.setDefaultBackgroundColorOverride" (Just params)
 
 
-emulationSetGeolocationOverride :: Session -> Maybe Int -> Maybe Int -> Maybe Int -> IO (Maybe Error)
-emulationSetGeolocationOverride session emulationSetGeolocationOverrideLatitude emulationSetGeolocationOverrideLongitude emulationSetGeolocationOverrideAccuracy = sendReceiveCommand (conn session) ("Emulation","setGeolocationOverride") ([] ++ (catMaybes [fmap (("latitude",) . ToJSONEx) emulationSetGeolocationOverrideLatitude, fmap (("longitude",) . ToJSONEx) emulationSetGeolocationOverrideLongitude, fmap (("accuracy",) . ToJSONEx) emulationSetGeolocationOverrideAccuracy]))
+
+data PEmulationSetDeviceMetricsOverride = PEmulationSetDeviceMetricsOverride {
+    pEmulationSetDeviceMetricsOverrideWidth :: Int,
+    pEmulationSetDeviceMetricsOverrideHeight :: Int,
+    pEmulationSetDeviceMetricsOverrideDeviceScaleFactor :: Int,
+    pEmulationSetDeviceMetricsOverrideMobile :: Bool,
+    pEmulationSetDeviceMetricsOverrideScreenOrientation :: Maybe EmulationScreenOrientation
+} deriving (Eq, Show, Read)
+instance FromJSON  PEmulationSetDeviceMetricsOverride where
+    parseJSON = A.withObject "PEmulationSetDeviceMetricsOverride" $ \v ->
+         PEmulationSetDeviceMetricsOverride <$> v .:  "width"
+            <*> v  .:  "height"
+            <*> v  .:  "deviceScaleFactor"
+            <*> v  .:  "mobile"
+            <*> v  .:?  "screenOrientation"
 
 
-emulationSetScriptExecutionDisabled :: Session -> Bool -> IO (Maybe Error)
-emulationSetScriptExecutionDisabled session emulationSetScriptExecutionDisabledValue = sendReceiveCommand (conn session) ("Emulation","setScriptExecutionDisabled") ([("value", ToJSONEx emulationSetScriptExecutionDisabledValue)] ++ (catMaybes []))
+instance ToJSON PEmulationSetDeviceMetricsOverride  where
+    toJSON v = A.object
+        [ "width" .= pEmulationSetDeviceMetricsOverrideWidth v
+        , "height" .= pEmulationSetDeviceMetricsOverrideHeight v
+        , "deviceScaleFactor" .= pEmulationSetDeviceMetricsOverrideDeviceScaleFactor v
+        , "mobile" .= pEmulationSetDeviceMetricsOverrideMobile v
+        , "screenOrientation" .= pEmulationSetDeviceMetricsOverrideScreenOrientation v
+        ]
 
 
-emulationSetTouchEmulationEnabled :: Session -> Bool -> Maybe Int -> IO (Maybe Error)
-emulationSetTouchEmulationEnabled session emulationSetTouchEmulationEnabledEnabled emulationSetTouchEmulationEnabledMaxTouchPoints = sendReceiveCommand (conn session) ("Emulation","setTouchEmulationEnabled") ([("enabled", ToJSONEx emulationSetTouchEmulationEnabledEnabled)] ++ (catMaybes [fmap (("maxTouchPoints",) . ToJSONEx) emulationSetTouchEmulationEnabledMaxTouchPoints]))
+emulationSetDeviceMetricsOverride :: Session -> PEmulationSetDeviceMetricsOverride -> IO (Maybe Error)
+emulationSetDeviceMetricsOverride session params = sendReceiveCommand session "Emulation.setDeviceMetricsOverride" (Just params)
 
 
-emulationSetUserAgentOverride :: Session -> String -> Maybe String -> Maybe String -> IO (Maybe Error)
-emulationSetUserAgentOverride session emulationSetUserAgentOverrideUserAgent emulationSetUserAgentOverrideAcceptLanguage emulationSetUserAgentOverridePlatform = sendReceiveCommand (conn session) ("Emulation","setUserAgentOverride") ([("userAgent", ToJSONEx emulationSetUserAgentOverrideUserAgent)] ++ (catMaybes [fmap (("acceptLanguage",) . ToJSONEx) emulationSetUserAgentOverrideAcceptLanguage, fmap (("platform",) . ToJSONEx) emulationSetUserAgentOverridePlatform]))
+
+data PEmulationSetEmulatedMedia = PEmulationSetEmulatedMedia {
+    pEmulationSetEmulatedMediaMedia :: Maybe String,
+    pEmulationSetEmulatedMediaFeatures :: Maybe [EmulationMediaFeature]
+} deriving (Eq, Show, Read)
+instance FromJSON  PEmulationSetEmulatedMedia where
+    parseJSON = A.withObject "PEmulationSetEmulatedMedia" $ \v ->
+         PEmulationSetEmulatedMedia <$> v .:?  "media"
+            <*> v  .:?  "features"
+
+
+instance ToJSON PEmulationSetEmulatedMedia  where
+    toJSON v = A.object
+        [ "media" .= pEmulationSetEmulatedMediaMedia v
+        , "features" .= pEmulationSetEmulatedMediaFeatures v
+        ]
+
+
+emulationSetEmulatedMedia :: Session -> PEmulationSetEmulatedMedia -> IO (Maybe Error)
+emulationSetEmulatedMedia session params = sendReceiveCommand session "Emulation.setEmulatedMedia" (Just params)
+
+
+
+data PEmulationSetGeolocationOverride = PEmulationSetGeolocationOverride {
+    pEmulationSetGeolocationOverrideLatitude :: Maybe Int,
+    pEmulationSetGeolocationOverrideLongitude :: Maybe Int,
+    pEmulationSetGeolocationOverrideAccuracy :: Maybe Int
+} deriving (Eq, Show, Read)
+instance FromJSON  PEmulationSetGeolocationOverride where
+    parseJSON = A.withObject "PEmulationSetGeolocationOverride" $ \v ->
+         PEmulationSetGeolocationOverride <$> v .:?  "latitude"
+            <*> v  .:?  "longitude"
+            <*> v  .:?  "accuracy"
+
+
+instance ToJSON PEmulationSetGeolocationOverride  where
+    toJSON v = A.object
+        [ "latitude" .= pEmulationSetGeolocationOverrideLatitude v
+        , "longitude" .= pEmulationSetGeolocationOverrideLongitude v
+        , "accuracy" .= pEmulationSetGeolocationOverrideAccuracy v
+        ]
+
+
+emulationSetGeolocationOverride :: Session -> PEmulationSetGeolocationOverride -> IO (Maybe Error)
+emulationSetGeolocationOverride session params = sendReceiveCommand session "Emulation.setGeolocationOverride" (Just params)
+
+
+
+data PEmulationSetScriptExecutionDisabled = PEmulationSetScriptExecutionDisabled {
+    pEmulationSetScriptExecutionDisabledValue :: Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PEmulationSetScriptExecutionDisabled where
+    parseJSON = A.withObject "PEmulationSetScriptExecutionDisabled" $ \v ->
+         PEmulationSetScriptExecutionDisabled <$> v .:  "value"
+
+
+instance ToJSON PEmulationSetScriptExecutionDisabled  where
+    toJSON v = A.object
+        [ "value" .= pEmulationSetScriptExecutionDisabledValue v
+        ]
+
+
+emulationSetScriptExecutionDisabled :: Session -> PEmulationSetScriptExecutionDisabled -> IO (Maybe Error)
+emulationSetScriptExecutionDisabled session params = sendReceiveCommand session "Emulation.setScriptExecutionDisabled" (Just params)
+
+
+
+data PEmulationSetTouchEmulationEnabled = PEmulationSetTouchEmulationEnabled {
+    pEmulationSetTouchEmulationEnabledEnabled :: Bool,
+    pEmulationSetTouchEmulationEnabledMaxTouchPoints :: Maybe Int
+} deriving (Eq, Show, Read)
+instance FromJSON  PEmulationSetTouchEmulationEnabled where
+    parseJSON = A.withObject "PEmulationSetTouchEmulationEnabled" $ \v ->
+         PEmulationSetTouchEmulationEnabled <$> v .:  "enabled"
+            <*> v  .:?  "maxTouchPoints"
+
+
+instance ToJSON PEmulationSetTouchEmulationEnabled  where
+    toJSON v = A.object
+        [ "enabled" .= pEmulationSetTouchEmulationEnabledEnabled v
+        , "maxTouchPoints" .= pEmulationSetTouchEmulationEnabledMaxTouchPoints v
+        ]
+
+
+emulationSetTouchEmulationEnabled :: Session -> PEmulationSetTouchEmulationEnabled -> IO (Maybe Error)
+emulationSetTouchEmulationEnabled session params = sendReceiveCommand session "Emulation.setTouchEmulationEnabled" (Just params)
+
+
+
+data PEmulationSetUserAgentOverride = PEmulationSetUserAgentOverride {
+    pEmulationSetUserAgentOverrideUserAgent :: String,
+    pEmulationSetUserAgentOverrideAcceptLanguage :: Maybe String,
+    pEmulationSetUserAgentOverridePlatform :: Maybe String
+} deriving (Eq, Show, Read)
+instance FromJSON  PEmulationSetUserAgentOverride where
+    parseJSON = A.withObject "PEmulationSetUserAgentOverride" $ \v ->
+         PEmulationSetUserAgentOverride <$> v .:  "userAgent"
+            <*> v  .:?  "acceptLanguage"
+            <*> v  .:?  "platform"
+
+
+instance ToJSON PEmulationSetUserAgentOverride  where
+    toJSON v = A.object
+        [ "userAgent" .= pEmulationSetUserAgentOverrideUserAgent v
+        , "acceptLanguage" .= pEmulationSetUserAgentOverrideAcceptLanguage v
+        , "platform" .= pEmulationSetUserAgentOverridePlatform v
+        ]
+
+
+emulationSetUserAgentOverride :: Session -> PEmulationSetUserAgentOverride -> IO (Maybe Error)
+emulationSetUserAgentOverride session params = sendReceiveCommand session "Emulation.setUserAgentOverride" (Just params)
 
 
 
 
 type IOStreamHandle = String
 
-ioClose :: Session -> IOStreamHandle -> IO (Maybe Error)
-ioClose session ioCloseHandle = sendReceiveCommand (conn session) ("IO","close") ([("handle", ToJSONEx ioCloseHandle)] ++ (catMaybes []))
 
-data IoRead = IoRead {
-    ioReadData :: String,
-    ioReadEof :: Bool,
-    ioReadBase64Encoded :: Maybe Bool
+data PIOClose = PIOClose {
+    pioCloseHandle :: IOStreamHandle
 } deriving (Eq, Show, Read)
-instance FromJSON  IoRead where
-    parseJSON = A.withObject "IoRead" $ \v ->
-         IoRead <$> v .:  "data"
+instance FromJSON  PIOClose where
+    parseJSON = A.withObject "PIOClose" $ \v ->
+         PIOClose <$> v .:  "handle"
+
+
+instance ToJSON PIOClose  where
+    toJSON v = A.object
+        [ "handle" .= pioCloseHandle v
+        ]
+
+
+iOClose :: Session -> PIOClose -> IO (Maybe Error)
+iOClose session params = sendReceiveCommand session "IO.close" (Just params)
+
+data IORead = IORead {
+    iOReadData :: String,
+    iOReadEof :: Bool,
+    iOReadBase64Encoded :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  IORead where
+    parseJSON = A.withObject "IORead" $ \v ->
+         IORead <$> v .:  "data"
             <*> v  .:  "eof"
             <*> v  .:?  "base64Encoded"
 
 
 
-ioRead :: Session -> IOStreamHandle -> Maybe Int -> Maybe Int -> IO (Either Error IoRead)
-ioRead session ioReadHandle ioReadOffset ioReadSize = sendReceiveCommandResult (conn session) ("IO","read") ([("handle", ToJSONEx ioReadHandle)] ++ (catMaybes [fmap (("offset",) . ToJSONEx) ioReadOffset, fmap (("size",) . ToJSONEx) ioReadSize]))
+instance Command  IORead where
+    commandName _ = "IO.read"
 
-data IoResolveBlob = IoResolveBlob {
-    ioResolveBlobUuid :: String
+data PIORead = PIORead {
+    pioReadHandle :: IOStreamHandle,
+    pioReadOffset :: Maybe Int,
+    pioReadSize :: Maybe Int
 } deriving (Eq, Show, Read)
-instance FromJSON  IoResolveBlob where
-    parseJSON = A.withObject "IoResolveBlob" $ \v ->
-         IoResolveBlob <$> v .:  "uuid"
+instance FromJSON  PIORead where
+    parseJSON = A.withObject "PIORead" $ \v ->
+         PIORead <$> v .:  "handle"
+            <*> v  .:?  "offset"
+            <*> v  .:?  "size"
+
+
+instance ToJSON PIORead  where
+    toJSON v = A.object
+        [ "handle" .= pioReadHandle v
+        , "offset" .= pioReadOffset v
+        , "size" .= pioReadSize v
+        ]
+
+
+iORead :: Session -> PIORead -> IO (Either Error IORead)
+iORead session params = sendReceiveCommandResult session "IO.read" (Just params)
+
+data IOResolveBlob = IOResolveBlob {
+    iOResolveBlobUuid :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  IOResolveBlob where
+    parseJSON = A.withObject "IOResolveBlob" $ \v ->
+         IOResolveBlob <$> v .:  "uuid"
 
 
 
-ioResolveBlob :: Session -> RuntimeRemoteObjectId -> IO (Either Error IoResolveBlob)
-ioResolveBlob session ioResolveBlobObjectId = sendReceiveCommandResult (conn session) ("IO","resolveBlob") ([("objectId", ToJSONEx ioResolveBlobObjectId)] ++ (catMaybes []))
+instance Command  IOResolveBlob where
+    commandName _ = "IO.resolveBlob"
+
+data PIOResolveBlob = PIOResolveBlob {
+    pioResolveBlobObjectId :: RuntimeRemoteObjectId
+} deriving (Eq, Show, Read)
+instance FromJSON  PIOResolveBlob where
+    parseJSON = A.withObject "PIOResolveBlob" $ \v ->
+         PIOResolveBlob <$> v .:  "objectId"
+
+
+instance ToJSON PIOResolveBlob  where
+    toJSON v = A.object
+        [ "objectId" .= pioResolveBlobObjectId v
+        ]
+
+
+iOResolveBlob :: Session -> PIOResolveBlob -> IO (Either Error IOResolveBlob)
+iOResolveBlob session params = sendReceiveCommandResult session "IO.resolveBlob" (Just params)
 
 
 
@@ -1328,14 +2133,14 @@ data InputMouseButton = InputMouseButtonNone | InputMouseButtonLeft | InputMouse
     deriving (Eq, Show, Read)
 instance FromJSON InputMouseButton where
     parseJSON = A.withText  "InputMouseButton"  $ \v -> do
-        pure $ case v of
-                "none" -> InputMouseButtonNone
-                "left" -> InputMouseButtonLeft
-                "middle" -> InputMouseButtonMiddle
-                "right" -> InputMouseButtonRight
-                "back" -> InputMouseButtonBack
-                "forward" -> InputMouseButtonForward
-                _ -> error "failed to parse InputMouseButton"
+        case v of
+                "none" -> pure $ InputMouseButtonNone
+                "left" -> pure $ InputMouseButtonLeft
+                "middle" -> pure $ InputMouseButtonMiddle
+                "right" -> pure $ InputMouseButtonRight
+                "back" -> pure $ InputMouseButtonBack
+                "forward" -> pure $ InputMouseButtonForward
+                _ -> fail "failed to parse InputMouseButton"
 
 instance ToJSON InputMouseButton where
     toJSON v = A.String $
@@ -1351,20 +2156,158 @@ instance ToJSON InputMouseButton where
 
 type InputTimeSinceEpoch = Int
 
-inputDispatchKeyEvent :: Session -> String -> Maybe Int -> Maybe InputTimeSinceEpoch -> Maybe String -> Maybe String -> Maybe String -> Maybe String -> Maybe String -> Maybe Int -> Maybe Int -> Maybe Bool -> Maybe Bool -> Maybe Bool -> Maybe Int -> IO (Maybe Error)
-inputDispatchKeyEvent session inputDispatchKeyEventType inputDispatchKeyEventModifiers inputDispatchKeyEventTimestamp inputDispatchKeyEventText inputDispatchKeyEventUnmodifiedText inputDispatchKeyEventKeyIdentifier inputDispatchKeyEventCode inputDispatchKeyEventKey inputDispatchKeyEventWindowsVirtualKeyCode inputDispatchKeyEventNativeVirtualKeyCode inputDispatchKeyEventAutoRepeat inputDispatchKeyEventIsKeypad inputDispatchKeyEventIsSystemKey inputDispatchKeyEventLocation = sendReceiveCommand (conn session) ("Input","dispatchKeyEvent") ([("type", ToJSONEx inputDispatchKeyEventType)] ++ (catMaybes [fmap (("modifiers",) . ToJSONEx) inputDispatchKeyEventModifiers, fmap (("timestamp",) . ToJSONEx) inputDispatchKeyEventTimestamp, fmap (("text",) . ToJSONEx) inputDispatchKeyEventText, fmap (("unmodifiedText",) . ToJSONEx) inputDispatchKeyEventUnmodifiedText, fmap (("keyIdentifier",) . ToJSONEx) inputDispatchKeyEventKeyIdentifier, fmap (("code",) . ToJSONEx) inputDispatchKeyEventCode, fmap (("key",) . ToJSONEx) inputDispatchKeyEventKey, fmap (("windowsVirtualKeyCode",) . ToJSONEx) inputDispatchKeyEventWindowsVirtualKeyCode, fmap (("nativeVirtualKeyCode",) . ToJSONEx) inputDispatchKeyEventNativeVirtualKeyCode, fmap (("autoRepeat",) . ToJSONEx) inputDispatchKeyEventAutoRepeat, fmap (("isKeypad",) . ToJSONEx) inputDispatchKeyEventIsKeypad, fmap (("isSystemKey",) . ToJSONEx) inputDispatchKeyEventIsSystemKey, fmap (("location",) . ToJSONEx) inputDispatchKeyEventLocation]))
+
+data PInputDispatchKeyEvent = PInputDispatchKeyEvent {
+    pInputDispatchKeyEventType :: String,
+    pInputDispatchKeyEventModifiers :: Maybe Int,
+    pInputDispatchKeyEventTimestamp :: Maybe InputTimeSinceEpoch,
+    pInputDispatchKeyEventText :: Maybe String,
+    pInputDispatchKeyEventUnmodifiedText :: Maybe String,
+    pInputDispatchKeyEventKeyIdentifier :: Maybe String,
+    pInputDispatchKeyEventCode :: Maybe String,
+    pInputDispatchKeyEventKey :: Maybe String,
+    pInputDispatchKeyEventWindowsVirtualKeyCode :: Maybe Int,
+    pInputDispatchKeyEventNativeVirtualKeyCode :: Maybe Int,
+    pInputDispatchKeyEventAutoRepeat :: Maybe Bool,
+    pInputDispatchKeyEventIsKeypad :: Maybe Bool,
+    pInputDispatchKeyEventIsSystemKey :: Maybe Bool,
+    pInputDispatchKeyEventLocation :: Maybe Int
+} deriving (Eq, Show, Read)
+instance FromJSON  PInputDispatchKeyEvent where
+    parseJSON = A.withObject "PInputDispatchKeyEvent" $ \v ->
+         PInputDispatchKeyEvent <$> v .:  "type"
+            <*> v  .:?  "modifiers"
+            <*> v  .:?  "timestamp"
+            <*> v  .:?  "text"
+            <*> v  .:?  "unmodifiedText"
+            <*> v  .:?  "keyIdentifier"
+            <*> v  .:?  "code"
+            <*> v  .:?  "key"
+            <*> v  .:?  "windowsVirtualKeyCode"
+            <*> v  .:?  "nativeVirtualKeyCode"
+            <*> v  .:?  "autoRepeat"
+            <*> v  .:?  "isKeypad"
+            <*> v  .:?  "isSystemKey"
+            <*> v  .:?  "location"
 
 
-inputDispatchMouseEvent :: Session -> String -> Int -> Int -> Maybe Int -> Maybe InputTimeSinceEpoch -> Maybe InputMouseButton -> Maybe Int -> Maybe Int -> Maybe Int -> Maybe Int -> Maybe String -> IO (Maybe Error)
-inputDispatchMouseEvent session inputDispatchMouseEventType inputDispatchMouseEventX inputDispatchMouseEventY inputDispatchMouseEventModifiers inputDispatchMouseEventTimestamp inputDispatchMouseEventButton inputDispatchMouseEventButtons inputDispatchMouseEventClickCount inputDispatchMouseEventDeltaX inputDispatchMouseEventDeltaY inputDispatchMouseEventPointerType = sendReceiveCommand (conn session) ("Input","dispatchMouseEvent") ([("type", ToJSONEx inputDispatchMouseEventType), ("x", ToJSONEx inputDispatchMouseEventX), ("y", ToJSONEx inputDispatchMouseEventY)] ++ (catMaybes [fmap (("modifiers",) . ToJSONEx) inputDispatchMouseEventModifiers, fmap (("timestamp",) . ToJSONEx) inputDispatchMouseEventTimestamp, fmap (("button",) . ToJSONEx) inputDispatchMouseEventButton, fmap (("buttons",) . ToJSONEx) inputDispatchMouseEventButtons, fmap (("clickCount",) . ToJSONEx) inputDispatchMouseEventClickCount, fmap (("deltaX",) . ToJSONEx) inputDispatchMouseEventDeltaX, fmap (("deltaY",) . ToJSONEx) inputDispatchMouseEventDeltaY, fmap (("pointerType",) . ToJSONEx) inputDispatchMouseEventPointerType]))
+instance ToJSON PInputDispatchKeyEvent  where
+    toJSON v = A.object
+        [ "type" .= pInputDispatchKeyEventType v
+        , "modifiers" .= pInputDispatchKeyEventModifiers v
+        , "timestamp" .= pInputDispatchKeyEventTimestamp v
+        , "text" .= pInputDispatchKeyEventText v
+        , "unmodifiedText" .= pInputDispatchKeyEventUnmodifiedText v
+        , "keyIdentifier" .= pInputDispatchKeyEventKeyIdentifier v
+        , "code" .= pInputDispatchKeyEventCode v
+        , "key" .= pInputDispatchKeyEventKey v
+        , "windowsVirtualKeyCode" .= pInputDispatchKeyEventWindowsVirtualKeyCode v
+        , "nativeVirtualKeyCode" .= pInputDispatchKeyEventNativeVirtualKeyCode v
+        , "autoRepeat" .= pInputDispatchKeyEventAutoRepeat v
+        , "isKeypad" .= pInputDispatchKeyEventIsKeypad v
+        , "isSystemKey" .= pInputDispatchKeyEventIsSystemKey v
+        , "location" .= pInputDispatchKeyEventLocation v
+        ]
 
 
-inputDispatchTouchEvent :: Session -> String -> [InputTouchPoint] -> Maybe Int -> Maybe InputTimeSinceEpoch -> IO (Maybe Error)
-inputDispatchTouchEvent session inputDispatchTouchEventType inputDispatchTouchEventTouchPoints inputDispatchTouchEventModifiers inputDispatchTouchEventTimestamp = sendReceiveCommand (conn session) ("Input","dispatchTouchEvent") ([("type", ToJSONEx inputDispatchTouchEventType), ("touchPoints", ToJSONEx inputDispatchTouchEventTouchPoints)] ++ (catMaybes [fmap (("modifiers",) . ToJSONEx) inputDispatchTouchEventModifiers, fmap (("timestamp",) . ToJSONEx) inputDispatchTouchEventTimestamp]))
+inputDispatchKeyEvent :: Session -> PInputDispatchKeyEvent -> IO (Maybe Error)
+inputDispatchKeyEvent session params = sendReceiveCommand session "Input.dispatchKeyEvent" (Just params)
 
 
-inputSetIgnoreInputEvents :: Session -> Bool -> IO (Maybe Error)
-inputSetIgnoreInputEvents session inputSetIgnoreInputEventsIgnore = sendReceiveCommand (conn session) ("Input","setIgnoreInputEvents") ([("ignore", ToJSONEx inputSetIgnoreInputEventsIgnore)] ++ (catMaybes []))
+
+data PInputDispatchMouseEvent = PInputDispatchMouseEvent {
+    pInputDispatchMouseEventType :: String,
+    pInputDispatchMouseEventX :: Int,
+    pInputDispatchMouseEventY :: Int,
+    pInputDispatchMouseEventModifiers :: Maybe Int,
+    pInputDispatchMouseEventTimestamp :: Maybe InputTimeSinceEpoch,
+    pInputDispatchMouseEventButton :: Maybe InputMouseButton,
+    pInputDispatchMouseEventButtons :: Maybe Int,
+    pInputDispatchMouseEventClickCount :: Maybe Int,
+    pInputDispatchMouseEventDeltaX :: Maybe Int,
+    pInputDispatchMouseEventDeltaY :: Maybe Int,
+    pInputDispatchMouseEventPointerType :: Maybe String
+} deriving (Eq, Show, Read)
+instance FromJSON  PInputDispatchMouseEvent where
+    parseJSON = A.withObject "PInputDispatchMouseEvent" $ \v ->
+         PInputDispatchMouseEvent <$> v .:  "type"
+            <*> v  .:  "x"
+            <*> v  .:  "y"
+            <*> v  .:?  "modifiers"
+            <*> v  .:?  "timestamp"
+            <*> v  .:?  "button"
+            <*> v  .:?  "buttons"
+            <*> v  .:?  "clickCount"
+            <*> v  .:?  "deltaX"
+            <*> v  .:?  "deltaY"
+            <*> v  .:?  "pointerType"
+
+
+instance ToJSON PInputDispatchMouseEvent  where
+    toJSON v = A.object
+        [ "type" .= pInputDispatchMouseEventType v
+        , "x" .= pInputDispatchMouseEventX v
+        , "y" .= pInputDispatchMouseEventY v
+        , "modifiers" .= pInputDispatchMouseEventModifiers v
+        , "timestamp" .= pInputDispatchMouseEventTimestamp v
+        , "button" .= pInputDispatchMouseEventButton v
+        , "buttons" .= pInputDispatchMouseEventButtons v
+        , "clickCount" .= pInputDispatchMouseEventClickCount v
+        , "deltaX" .= pInputDispatchMouseEventDeltaX v
+        , "deltaY" .= pInputDispatchMouseEventDeltaY v
+        , "pointerType" .= pInputDispatchMouseEventPointerType v
+        ]
+
+
+inputDispatchMouseEvent :: Session -> PInputDispatchMouseEvent -> IO (Maybe Error)
+inputDispatchMouseEvent session params = sendReceiveCommand session "Input.dispatchMouseEvent" (Just params)
+
+
+
+data PInputDispatchTouchEvent = PInputDispatchTouchEvent {
+    pInputDispatchTouchEventType :: String,
+    pInputDispatchTouchEventTouchPoints :: [InputTouchPoint],
+    pInputDispatchTouchEventModifiers :: Maybe Int,
+    pInputDispatchTouchEventTimestamp :: Maybe InputTimeSinceEpoch
+} deriving (Eq, Show, Read)
+instance FromJSON  PInputDispatchTouchEvent where
+    parseJSON = A.withObject "PInputDispatchTouchEvent" $ \v ->
+         PInputDispatchTouchEvent <$> v .:  "type"
+            <*> v  .:  "touchPoints"
+            <*> v  .:?  "modifiers"
+            <*> v  .:?  "timestamp"
+
+
+instance ToJSON PInputDispatchTouchEvent  where
+    toJSON v = A.object
+        [ "type" .= pInputDispatchTouchEventType v
+        , "touchPoints" .= pInputDispatchTouchEventTouchPoints v
+        , "modifiers" .= pInputDispatchTouchEventModifiers v
+        , "timestamp" .= pInputDispatchTouchEventTimestamp v
+        ]
+
+
+inputDispatchTouchEvent :: Session -> PInputDispatchTouchEvent -> IO (Maybe Error)
+inputDispatchTouchEvent session params = sendReceiveCommand session "Input.dispatchTouchEvent" (Just params)
+
+
+
+data PInputSetIgnoreInputEvents = PInputSetIgnoreInputEvents {
+    pInputSetIgnoreInputEventsIgnore :: Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PInputSetIgnoreInputEvents where
+    parseJSON = A.withObject "PInputSetIgnoreInputEvents" $ \v ->
+         PInputSetIgnoreInputEvents <$> v .:  "ignore"
+
+
+instance ToJSON PInputSetIgnoreInputEvents  where
+    toJSON v = A.object
+        [ "ignore" .= pInputSetIgnoreInputEventsIgnore v
+        ]
+
+
+inputSetIgnoreInputEvents :: Session -> PInputSetIgnoreInputEvents -> IO (Maybe Error)
+inputSetIgnoreInputEvents session params = sendReceiveCommand session "Input.setIgnoreInputEvents" (Just params)
 
 
 
@@ -1451,24 +2394,47 @@ instance ToJSON LogViolationSetting  where
 
 
 
+
+
 logClear :: Session -> IO (Maybe Error)
-logClear session  = sendReceiveCommand (conn session) ("Log","clear") ([] ++ (catMaybes []))
+logClear session = sendReceiveCommand session "Log.clear" (Nothing :: Maybe ())
+
+
 
 
 logDisable :: Session -> IO (Maybe Error)
-logDisable session  = sendReceiveCommand (conn session) ("Log","disable") ([] ++ (catMaybes []))
+logDisable session = sendReceiveCommand session "Log.disable" (Nothing :: Maybe ())
+
+
 
 
 logEnable :: Session -> IO (Maybe Error)
-logEnable session  = sendReceiveCommand (conn session) ("Log","enable") ([] ++ (catMaybes []))
+logEnable session = sendReceiveCommand session "Log.enable" (Nothing :: Maybe ())
 
 
-logStartViolationsReport :: Session -> [LogViolationSetting] -> IO (Maybe Error)
-logStartViolationsReport session logStartViolationsReportConfig = sendReceiveCommand (conn session) ("Log","startViolationsReport") ([("config", ToJSONEx logStartViolationsReportConfig)] ++ (catMaybes []))
+
+data PLogStartViolationsReport = PLogStartViolationsReport {
+    pLogStartViolationsReportConfig :: [LogViolationSetting]
+} deriving (Eq, Show, Read)
+instance FromJSON  PLogStartViolationsReport where
+    parseJSON = A.withObject "PLogStartViolationsReport" $ \v ->
+         PLogStartViolationsReport <$> v .:  "config"
+
+
+instance ToJSON PLogStartViolationsReport  where
+    toJSON v = A.object
+        [ "config" .= pLogStartViolationsReportConfig v
+        ]
+
+
+logStartViolationsReport :: Session -> PLogStartViolationsReport -> IO (Maybe Error)
+logStartViolationsReport session params = sendReceiveCommand session "Log.startViolationsReport" (Just params)
+
+
 
 
 logStopViolationsReport :: Session -> IO (Maybe Error)
-logStopViolationsReport session  = sendReceiveCommand (conn session) ("Log","stopViolationsReport") ([] ++ (catMaybes []))
+logStopViolationsReport session = sendReceiveCommand session "Log.stopViolationsReport" (Nothing :: Maybe ())
 
 
 
@@ -1950,25 +2916,25 @@ data NetworkResourceType = NetworkResourceTypeDocument | NetworkResourceTypeStyl
     deriving (Eq, Show, Read)
 instance FromJSON NetworkResourceType where
     parseJSON = A.withText  "NetworkResourceType"  $ \v -> do
-        pure $ case v of
-                "Document" -> NetworkResourceTypeDocument
-                "Stylesheet" -> NetworkResourceTypeStylesheet
-                "Image" -> NetworkResourceTypeImage
-                "Media" -> NetworkResourceTypeMedia
-                "Font" -> NetworkResourceTypeFont
-                "Script" -> NetworkResourceTypeScript
-                "TextTrack" -> NetworkResourceTypeTextTrack
-                "XHR" -> NetworkResourceTypeXhr
-                "Fetch" -> NetworkResourceTypeFetch
-                "EventSource" -> NetworkResourceTypeEventSource
-                "WebSocket" -> NetworkResourceTypeWebSocket
-                "Manifest" -> NetworkResourceTypeManifest
-                "SignedExchange" -> NetworkResourceTypeSignedExchange
-                "Ping" -> NetworkResourceTypePing
-                "CSPViolationReport" -> NetworkResourceTypeCspViolationReport
-                "Preflight" -> NetworkResourceTypePreflight
-                "Other" -> NetworkResourceTypeOther
-                _ -> error "failed to parse NetworkResourceType"
+        case v of
+                "Document" -> pure $ NetworkResourceTypeDocument
+                "Stylesheet" -> pure $ NetworkResourceTypeStylesheet
+                "Image" -> pure $ NetworkResourceTypeImage
+                "Media" -> pure $ NetworkResourceTypeMedia
+                "Font" -> pure $ NetworkResourceTypeFont
+                "Script" -> pure $ NetworkResourceTypeScript
+                "TextTrack" -> pure $ NetworkResourceTypeTextTrack
+                "XHR" -> pure $ NetworkResourceTypeXhr
+                "Fetch" -> pure $ NetworkResourceTypeFetch
+                "EventSource" -> pure $ NetworkResourceTypeEventSource
+                "WebSocket" -> pure $ NetworkResourceTypeWebSocket
+                "Manifest" -> pure $ NetworkResourceTypeManifest
+                "SignedExchange" -> pure $ NetworkResourceTypeSignedExchange
+                "Ping" -> pure $ NetworkResourceTypePing
+                "CSPViolationReport" -> pure $ NetworkResourceTypeCspViolationReport
+                "Preflight" -> pure $ NetworkResourceTypePreflight
+                "Other" -> pure $ NetworkResourceTypeOther
+                _ -> fail "failed to parse NetworkResourceType"
 
 instance ToJSON NetworkResourceType where
     toJSON v = A.String $
@@ -2003,22 +2969,22 @@ data NetworkErrorReason = NetworkErrorReasonFailed | NetworkErrorReasonAborted |
     deriving (Eq, Show, Read)
 instance FromJSON NetworkErrorReason where
     parseJSON = A.withText  "NetworkErrorReason"  $ \v -> do
-        pure $ case v of
-                "Failed" -> NetworkErrorReasonFailed
-                "Aborted" -> NetworkErrorReasonAborted
-                "TimedOut" -> NetworkErrorReasonTimedOut
-                "AccessDenied" -> NetworkErrorReasonAccessDenied
-                "ConnectionClosed" -> NetworkErrorReasonConnectionClosed
-                "ConnectionReset" -> NetworkErrorReasonConnectionReset
-                "ConnectionRefused" -> NetworkErrorReasonConnectionRefused
-                "ConnectionAborted" -> NetworkErrorReasonConnectionAborted
-                "ConnectionFailed" -> NetworkErrorReasonConnectionFailed
-                "NameNotResolved" -> NetworkErrorReasonNameNotResolved
-                "InternetDisconnected" -> NetworkErrorReasonInternetDisconnected
-                "AddressUnreachable" -> NetworkErrorReasonAddressUnreachable
-                "BlockedByClient" -> NetworkErrorReasonBlockedByClient
-                "BlockedByResponse" -> NetworkErrorReasonBlockedByResponse
-                _ -> error "failed to parse NetworkErrorReason"
+        case v of
+                "Failed" -> pure $ NetworkErrorReasonFailed
+                "Aborted" -> pure $ NetworkErrorReasonAborted
+                "TimedOut" -> pure $ NetworkErrorReasonTimedOut
+                "AccessDenied" -> pure $ NetworkErrorReasonAccessDenied
+                "ConnectionClosed" -> pure $ NetworkErrorReasonConnectionClosed
+                "ConnectionReset" -> pure $ NetworkErrorReasonConnectionReset
+                "ConnectionRefused" -> pure $ NetworkErrorReasonConnectionRefused
+                "ConnectionAborted" -> pure $ NetworkErrorReasonConnectionAborted
+                "ConnectionFailed" -> pure $ NetworkErrorReasonConnectionFailed
+                "NameNotResolved" -> pure $ NetworkErrorReasonNameNotResolved
+                "InternetDisconnected" -> pure $ NetworkErrorReasonInternetDisconnected
+                "AddressUnreachable" -> pure $ NetworkErrorReasonAddressUnreachable
+                "BlockedByClient" -> pure $ NetworkErrorReasonBlockedByClient
+                "BlockedByResponse" -> pure $ NetworkErrorReasonBlockedByResponse
+                _ -> fail "failed to parse NetworkErrorReason"
 
 instance ToJSON NetworkErrorReason where
     toJSON v = A.String $
@@ -2050,17 +3016,17 @@ data NetworkConnectionType = NetworkConnectionTypeNone | NetworkConnectionTypeCe
     deriving (Eq, Show, Read)
 instance FromJSON NetworkConnectionType where
     parseJSON = A.withText  "NetworkConnectionType"  $ \v -> do
-        pure $ case v of
-                "none" -> NetworkConnectionTypeNone
-                "cellular2g" -> NetworkConnectionTypeCellular2g
-                "cellular3g" -> NetworkConnectionTypeCellular3g
-                "cellular4g" -> NetworkConnectionTypeCellular4g
-                "bluetooth" -> NetworkConnectionTypeBluetooth
-                "ethernet" -> NetworkConnectionTypeEthernet
-                "wifi" -> NetworkConnectionTypeWifi
-                "wimax" -> NetworkConnectionTypeWimax
-                "other" -> NetworkConnectionTypeOther
-                _ -> error "failed to parse NetworkConnectionType"
+        case v of
+                "none" -> pure $ NetworkConnectionTypeNone
+                "cellular2g" -> pure $ NetworkConnectionTypeCellular2g
+                "cellular3g" -> pure $ NetworkConnectionTypeCellular3g
+                "cellular4g" -> pure $ NetworkConnectionTypeCellular4g
+                "bluetooth" -> pure $ NetworkConnectionTypeBluetooth
+                "ethernet" -> pure $ NetworkConnectionTypeEthernet
+                "wifi" -> pure $ NetworkConnectionTypeWifi
+                "wimax" -> pure $ NetworkConnectionTypeWimax
+                "other" -> pure $ NetworkConnectionTypeOther
+                _ -> fail "failed to parse NetworkConnectionType"
 
 instance ToJSON NetworkConnectionType where
     toJSON v = A.String $
@@ -2081,11 +3047,11 @@ data NetworkCookieSameSite = NetworkCookieSameSiteStrict | NetworkCookieSameSite
     deriving (Eq, Show, Read)
 instance FromJSON NetworkCookieSameSite where
     parseJSON = A.withText  "NetworkCookieSameSite"  $ \v -> do
-        pure $ case v of
-                "Strict" -> NetworkCookieSameSiteStrict
-                "Lax" -> NetworkCookieSameSiteLax
-                "None" -> NetworkCookieSameSiteNone
-                _ -> error "failed to parse NetworkCookieSameSite"
+        case v of
+                "Strict" -> pure $ NetworkCookieSameSiteStrict
+                "Lax" -> pure $ NetworkCookieSameSiteLax
+                "None" -> pure $ NetworkCookieSameSiteNone
+                _ -> fail "failed to parse NetworkCookieSameSite"
 
 instance ToJSON NetworkCookieSameSite where
     toJSON v = A.String $
@@ -2148,13 +3114,13 @@ data NetworkResourcePriority = NetworkResourcePriorityVeryLow | NetworkResourceP
     deriving (Eq, Show, Read)
 instance FromJSON NetworkResourcePriority where
     parseJSON = A.withText  "NetworkResourcePriority"  $ \v -> do
-        pure $ case v of
-                "VeryLow" -> NetworkResourcePriorityVeryLow
-                "Low" -> NetworkResourcePriorityLow
-                "Medium" -> NetworkResourcePriorityMedium
-                "High" -> NetworkResourcePriorityHigh
-                "VeryHigh" -> NetworkResourcePriorityVeryHigh
-                _ -> error "failed to parse NetworkResourcePriority"
+        case v of
+                "VeryLow" -> pure $ NetworkResourcePriorityVeryLow
+                "Low" -> pure $ NetworkResourcePriorityLow
+                "Medium" -> pure $ NetworkResourcePriorityMedium
+                "High" -> pure $ NetworkResourcePriorityHigh
+                "VeryHigh" -> pure $ NetworkResourcePriorityVeryHigh
+                _ -> fail "failed to parse NetworkResourcePriority"
 
 instance ToJSON NetworkResourcePriority where
     toJSON v = A.String $
@@ -2315,11 +3281,11 @@ data NetworkCertificateTransparencyCompliance = NetworkCertificateTransparencyCo
     deriving (Eq, Show, Read)
 instance FromJSON NetworkCertificateTransparencyCompliance where
     parseJSON = A.withText  "NetworkCertificateTransparencyCompliance"  $ \v -> do
-        pure $ case v of
-                "unknown" -> NetworkCertificateTransparencyComplianceUnknown
-                "not-compliant" -> NetworkCertificateTransparencyComplianceNotCompliant
-                "compliant" -> NetworkCertificateTransparencyComplianceCompliant
-                _ -> error "failed to parse NetworkCertificateTransparencyCompliance"
+        case v of
+                "unknown" -> pure $ NetworkCertificateTransparencyComplianceUnknown
+                "not-compliant" -> pure $ NetworkCertificateTransparencyComplianceNotCompliant
+                "compliant" -> pure $ NetworkCertificateTransparencyComplianceCompliant
+                _ -> fail "failed to parse NetworkCertificateTransparencyCompliance"
 
 instance ToJSON NetworkCertificateTransparencyCompliance where
     toJSON v = A.String $
@@ -2334,20 +3300,20 @@ data NetworkBlockedReason = NetworkBlockedReasonOther | NetworkBlockedReasonCsp 
     deriving (Eq, Show, Read)
 instance FromJSON NetworkBlockedReason where
     parseJSON = A.withText  "NetworkBlockedReason"  $ \v -> do
-        pure $ case v of
-                "other" -> NetworkBlockedReasonOther
-                "csp" -> NetworkBlockedReasonCsp
-                "mixed-content" -> NetworkBlockedReasonMixedContent
-                "origin" -> NetworkBlockedReasonOrigin
-                "inspector" -> NetworkBlockedReasonInspector
-                "subresource-filter" -> NetworkBlockedReasonSubresourceFilter
-                "content-type" -> NetworkBlockedReasonContentType
-                "coep-frame-resource-needs-coep-header" -> NetworkBlockedReasonCoepFrameResourceNeedsCoepHeader
-                "coop-sandboxed-iframe-cannot-navigate-to-coop-page" -> NetworkBlockedReasonCoopSandboxedIframeCannotNavigateToCoopPage
-                "corp-not-same-origin" -> NetworkBlockedReasonCorpNotSameOrigin
-                "corp-not-same-origin-after-defaulted-to-same-origin-by-coep" -> NetworkBlockedReasonCorpNotSameOriginAfterDefaultedToSameOriginByCoep
-                "corp-not-same-site" -> NetworkBlockedReasonCorpNotSameSite
-                _ -> error "failed to parse NetworkBlockedReason"
+        case v of
+                "other" -> pure $ NetworkBlockedReasonOther
+                "csp" -> pure $ NetworkBlockedReasonCsp
+                "mixed-content" -> pure $ NetworkBlockedReasonMixedContent
+                "origin" -> pure $ NetworkBlockedReasonOrigin
+                "inspector" -> pure $ NetworkBlockedReasonInspector
+                "subresource-filter" -> pure $ NetworkBlockedReasonSubresourceFilter
+                "content-type" -> pure $ NetworkBlockedReasonContentType
+                "coep-frame-resource-needs-coep-header" -> pure $ NetworkBlockedReasonCoepFrameResourceNeedsCoepHeader
+                "coop-sandboxed-iframe-cannot-navigate-to-coop-page" -> pure $ NetworkBlockedReasonCoopSandboxedIframeCannotNavigateToCoopPage
+                "corp-not-same-origin" -> pure $ NetworkBlockedReasonCorpNotSameOrigin
+                "corp-not-same-origin-after-defaulted-to-same-origin-by-coep" -> pure $ NetworkBlockedReasonCorpNotSameOriginAfterDefaultedToSameOriginByCoep
+                "corp-not-same-site" -> pure $ NetworkBlockedReasonCorpNotSameSite
+                _ -> fail "failed to parse NetworkBlockedReason"
 
 instance ToJSON NetworkBlockedReason where
     toJSON v = A.String $
@@ -2371,38 +3337,38 @@ data NetworkCorsError = NetworkCorsErrorDisallowedByMode | NetworkCorsErrorInval
     deriving (Eq, Show, Read)
 instance FromJSON NetworkCorsError where
     parseJSON = A.withText  "NetworkCorsError"  $ \v -> do
-        pure $ case v of
-                "DisallowedByMode" -> NetworkCorsErrorDisallowedByMode
-                "InvalidResponse" -> NetworkCorsErrorInvalidResponse
-                "WildcardOriginNotAllowed" -> NetworkCorsErrorWildcardOriginNotAllowed
-                "MissingAllowOriginHeader" -> NetworkCorsErrorMissingAllowOriginHeader
-                "MultipleAllowOriginValues" -> NetworkCorsErrorMultipleAllowOriginValues
-                "InvalidAllowOriginValue" -> NetworkCorsErrorInvalidAllowOriginValue
-                "AllowOriginMismatch" -> NetworkCorsErrorAllowOriginMismatch
-                "InvalidAllowCredentials" -> NetworkCorsErrorInvalidAllowCredentials
-                "CorsDisabledScheme" -> NetworkCorsErrorCorsDisabledScheme
-                "PreflightInvalidStatus" -> NetworkCorsErrorPreflightInvalidStatus
-                "PreflightDisallowedRedirect" -> NetworkCorsErrorPreflightDisallowedRedirect
-                "PreflightWildcardOriginNotAllowed" -> NetworkCorsErrorPreflightWildcardOriginNotAllowed
-                "PreflightMissingAllowOriginHeader" -> NetworkCorsErrorPreflightMissingAllowOriginHeader
-                "PreflightMultipleAllowOriginValues" -> NetworkCorsErrorPreflightMultipleAllowOriginValues
-                "PreflightInvalidAllowOriginValue" -> NetworkCorsErrorPreflightInvalidAllowOriginValue
-                "PreflightAllowOriginMismatch" -> NetworkCorsErrorPreflightAllowOriginMismatch
-                "PreflightInvalidAllowCredentials" -> NetworkCorsErrorPreflightInvalidAllowCredentials
-                "PreflightMissingAllowExternal" -> NetworkCorsErrorPreflightMissingAllowExternal
-                "PreflightInvalidAllowExternal" -> NetworkCorsErrorPreflightInvalidAllowExternal
-                "PreflightMissingAllowPrivateNetwork" -> NetworkCorsErrorPreflightMissingAllowPrivateNetwork
-                "PreflightInvalidAllowPrivateNetwork" -> NetworkCorsErrorPreflightInvalidAllowPrivateNetwork
-                "InvalidAllowMethodsPreflightResponse" -> NetworkCorsErrorInvalidAllowMethodsPreflightResponse
-                "InvalidAllowHeadersPreflightResponse" -> NetworkCorsErrorInvalidAllowHeadersPreflightResponse
-                "MethodDisallowedByPreflightResponse" -> NetworkCorsErrorMethodDisallowedByPreflightResponse
-                "HeaderDisallowedByPreflightResponse" -> NetworkCorsErrorHeaderDisallowedByPreflightResponse
-                "RedirectContainsCredentials" -> NetworkCorsErrorRedirectContainsCredentials
-                "InsecurePrivateNetwork" -> NetworkCorsErrorInsecurePrivateNetwork
-                "InvalidPrivateNetworkAccess" -> NetworkCorsErrorInvalidPrivateNetworkAccess
-                "UnexpectedPrivateNetworkAccess" -> NetworkCorsErrorUnexpectedPrivateNetworkAccess
-                "NoCorsRedirectModeNotFollow" -> NetworkCorsErrorNoCorsRedirectModeNotFollow
-                _ -> error "failed to parse NetworkCorsError"
+        case v of
+                "DisallowedByMode" -> pure $ NetworkCorsErrorDisallowedByMode
+                "InvalidResponse" -> pure $ NetworkCorsErrorInvalidResponse
+                "WildcardOriginNotAllowed" -> pure $ NetworkCorsErrorWildcardOriginNotAllowed
+                "MissingAllowOriginHeader" -> pure $ NetworkCorsErrorMissingAllowOriginHeader
+                "MultipleAllowOriginValues" -> pure $ NetworkCorsErrorMultipleAllowOriginValues
+                "InvalidAllowOriginValue" -> pure $ NetworkCorsErrorInvalidAllowOriginValue
+                "AllowOriginMismatch" -> pure $ NetworkCorsErrorAllowOriginMismatch
+                "InvalidAllowCredentials" -> pure $ NetworkCorsErrorInvalidAllowCredentials
+                "CorsDisabledScheme" -> pure $ NetworkCorsErrorCorsDisabledScheme
+                "PreflightInvalidStatus" -> pure $ NetworkCorsErrorPreflightInvalidStatus
+                "PreflightDisallowedRedirect" -> pure $ NetworkCorsErrorPreflightDisallowedRedirect
+                "PreflightWildcardOriginNotAllowed" -> pure $ NetworkCorsErrorPreflightWildcardOriginNotAllowed
+                "PreflightMissingAllowOriginHeader" -> pure $ NetworkCorsErrorPreflightMissingAllowOriginHeader
+                "PreflightMultipleAllowOriginValues" -> pure $ NetworkCorsErrorPreflightMultipleAllowOriginValues
+                "PreflightInvalidAllowOriginValue" -> pure $ NetworkCorsErrorPreflightInvalidAllowOriginValue
+                "PreflightAllowOriginMismatch" -> pure $ NetworkCorsErrorPreflightAllowOriginMismatch
+                "PreflightInvalidAllowCredentials" -> pure $ NetworkCorsErrorPreflightInvalidAllowCredentials
+                "PreflightMissingAllowExternal" -> pure $ NetworkCorsErrorPreflightMissingAllowExternal
+                "PreflightInvalidAllowExternal" -> pure $ NetworkCorsErrorPreflightInvalidAllowExternal
+                "PreflightMissingAllowPrivateNetwork" -> pure $ NetworkCorsErrorPreflightMissingAllowPrivateNetwork
+                "PreflightInvalidAllowPrivateNetwork" -> pure $ NetworkCorsErrorPreflightInvalidAllowPrivateNetwork
+                "InvalidAllowMethodsPreflightResponse" -> pure $ NetworkCorsErrorInvalidAllowMethodsPreflightResponse
+                "InvalidAllowHeadersPreflightResponse" -> pure $ NetworkCorsErrorInvalidAllowHeadersPreflightResponse
+                "MethodDisallowedByPreflightResponse" -> pure $ NetworkCorsErrorMethodDisallowedByPreflightResponse
+                "HeaderDisallowedByPreflightResponse" -> pure $ NetworkCorsErrorHeaderDisallowedByPreflightResponse
+                "RedirectContainsCredentials" -> pure $ NetworkCorsErrorRedirectContainsCredentials
+                "InsecurePrivateNetwork" -> pure $ NetworkCorsErrorInsecurePrivateNetwork
+                "InvalidPrivateNetworkAccess" -> pure $ NetworkCorsErrorInvalidPrivateNetworkAccess
+                "UnexpectedPrivateNetworkAccess" -> pure $ NetworkCorsErrorUnexpectedPrivateNetworkAccess
+                "NoCorsRedirectModeNotFollow" -> pure $ NetworkCorsErrorNoCorsRedirectModeNotFollow
+                _ -> fail "failed to parse NetworkCorsError"
 
 instance ToJSON NetworkCorsError where
     toJSON v = A.String $
@@ -2462,12 +3428,12 @@ data NetworkServiceWorkerResponseSource = NetworkServiceWorkerResponseSourceCach
     deriving (Eq, Show, Read)
 instance FromJSON NetworkServiceWorkerResponseSource where
     parseJSON = A.withText  "NetworkServiceWorkerResponseSource"  $ \v -> do
-        pure $ case v of
-                "cache-storage" -> NetworkServiceWorkerResponseSourceCacheStorage
-                "http-cache" -> NetworkServiceWorkerResponseSourceHttpCache
-                "fallback-code" -> NetworkServiceWorkerResponseSourceFallbackCode
-                "network" -> NetworkServiceWorkerResponseSourceNetwork
-                _ -> error "failed to parse NetworkServiceWorkerResponseSource"
+        case v of
+                "cache-storage" -> pure $ NetworkServiceWorkerResponseSourceCacheStorage
+                "http-cache" -> pure $ NetworkServiceWorkerResponseSourceHttpCache
+                "fallback-code" -> pure $ NetworkServiceWorkerResponseSourceFallbackCode
+                "network" -> pure $ NetworkServiceWorkerResponseSourceNetwork
+                _ -> fail "failed to parse NetworkServiceWorkerResponseSource"
 
 instance ToJSON NetworkServiceWorkerResponseSource where
     toJSON v = A.String $
@@ -2755,28 +3721,100 @@ instance ToJSON NetworkCookieParam  where
 
 
 
+
+
 networkClearBrowserCache :: Session -> IO (Maybe Error)
-networkClearBrowserCache session  = sendReceiveCommand (conn session) ("Network","clearBrowserCache") ([] ++ (catMaybes []))
+networkClearBrowserCache session = sendReceiveCommand session "Network.clearBrowserCache" (Nothing :: Maybe ())
+
+
 
 
 networkClearBrowserCookies :: Session -> IO (Maybe Error)
-networkClearBrowserCookies session  = sendReceiveCommand (conn session) ("Network","clearBrowserCookies") ([] ++ (catMaybes []))
+networkClearBrowserCookies session = sendReceiveCommand session "Network.clearBrowserCookies" (Nothing :: Maybe ())
 
 
-networkDeleteCookies :: Session -> String -> Maybe String -> Maybe String -> Maybe String -> IO (Maybe Error)
-networkDeleteCookies session networkDeleteCookiesName networkDeleteCookiesUrl networkDeleteCookiesDomain networkDeleteCookiesPath = sendReceiveCommand (conn session) ("Network","deleteCookies") ([("name", ToJSONEx networkDeleteCookiesName)] ++ (catMaybes [fmap (("url",) . ToJSONEx) networkDeleteCookiesUrl, fmap (("domain",) . ToJSONEx) networkDeleteCookiesDomain, fmap (("path",) . ToJSONEx) networkDeleteCookiesPath]))
+
+data PNetworkDeleteCookies = PNetworkDeleteCookies {
+    pNetworkDeleteCookiesName :: String,
+    pNetworkDeleteCookiesUrl :: Maybe String,
+    pNetworkDeleteCookiesDomain :: Maybe String,
+    pNetworkDeleteCookiesPath :: Maybe String
+} deriving (Eq, Show, Read)
+instance FromJSON  PNetworkDeleteCookies where
+    parseJSON = A.withObject "PNetworkDeleteCookies" $ \v ->
+         PNetworkDeleteCookies <$> v .:  "name"
+            <*> v  .:?  "url"
+            <*> v  .:?  "domain"
+            <*> v  .:?  "path"
+
+
+instance ToJSON PNetworkDeleteCookies  where
+    toJSON v = A.object
+        [ "name" .= pNetworkDeleteCookiesName v
+        , "url" .= pNetworkDeleteCookiesUrl v
+        , "domain" .= pNetworkDeleteCookiesDomain v
+        , "path" .= pNetworkDeleteCookiesPath v
+        ]
+
+
+networkDeleteCookies :: Session -> PNetworkDeleteCookies -> IO (Maybe Error)
+networkDeleteCookies session params = sendReceiveCommand session "Network.deleteCookies" (Just params)
+
+
 
 
 networkDisable :: Session -> IO (Maybe Error)
-networkDisable session  = sendReceiveCommand (conn session) ("Network","disable") ([] ++ (catMaybes []))
+networkDisable session = sendReceiveCommand session "Network.disable" (Nothing :: Maybe ())
 
 
-networkEmulateNetworkConditions :: Session -> Bool -> Int -> Int -> Int -> Maybe NetworkConnectionType -> IO (Maybe Error)
-networkEmulateNetworkConditions session networkEmulateNetworkConditionsOffline networkEmulateNetworkConditionsLatency networkEmulateNetworkConditionsDownloadThroughput networkEmulateNetworkConditionsUploadThroughput networkEmulateNetworkConditionsConnectionType = sendReceiveCommand (conn session) ("Network","emulateNetworkConditions") ([("offline", ToJSONEx networkEmulateNetworkConditionsOffline), ("latency", ToJSONEx networkEmulateNetworkConditionsLatency), ("downloadThroughput", ToJSONEx networkEmulateNetworkConditionsDownloadThroughput), ("uploadThroughput", ToJSONEx networkEmulateNetworkConditionsUploadThroughput)] ++ (catMaybes [fmap (("connectionType",) . ToJSONEx) networkEmulateNetworkConditionsConnectionType]))
+
+data PNetworkEmulateNetworkConditions = PNetworkEmulateNetworkConditions {
+    pNetworkEmulateNetworkConditionsOffline :: Bool,
+    pNetworkEmulateNetworkConditionsLatency :: Int,
+    pNetworkEmulateNetworkConditionsDownloadThroughput :: Int,
+    pNetworkEmulateNetworkConditionsUploadThroughput :: Int,
+    pNetworkEmulateNetworkConditionsConnectionType :: Maybe NetworkConnectionType
+} deriving (Eq, Show, Read)
+instance FromJSON  PNetworkEmulateNetworkConditions where
+    parseJSON = A.withObject "PNetworkEmulateNetworkConditions" $ \v ->
+         PNetworkEmulateNetworkConditions <$> v .:  "offline"
+            <*> v  .:  "latency"
+            <*> v  .:  "downloadThroughput"
+            <*> v  .:  "uploadThroughput"
+            <*> v  .:?  "connectionType"
 
 
-networkEnable :: Session -> Maybe Int -> IO (Maybe Error)
-networkEnable session networkEnableMaxPostDataSize = sendReceiveCommand (conn session) ("Network","enable") ([] ++ (catMaybes [fmap (("maxPostDataSize",) . ToJSONEx) networkEnableMaxPostDataSize]))
+instance ToJSON PNetworkEmulateNetworkConditions  where
+    toJSON v = A.object
+        [ "offline" .= pNetworkEmulateNetworkConditionsOffline v
+        , "latency" .= pNetworkEmulateNetworkConditionsLatency v
+        , "downloadThroughput" .= pNetworkEmulateNetworkConditionsDownloadThroughput v
+        , "uploadThroughput" .= pNetworkEmulateNetworkConditionsUploadThroughput v
+        , "connectionType" .= pNetworkEmulateNetworkConditionsConnectionType v
+        ]
+
+
+networkEmulateNetworkConditions :: Session -> PNetworkEmulateNetworkConditions -> IO (Maybe Error)
+networkEmulateNetworkConditions session params = sendReceiveCommand session "Network.emulateNetworkConditions" (Just params)
+
+
+
+data PNetworkEnable = PNetworkEnable {
+    pNetworkEnableMaxPostDataSize :: Maybe Int
+} deriving (Eq, Show, Read)
+instance FromJSON  PNetworkEnable where
+    parseJSON = A.withObject "PNetworkEnable" $ \v ->
+         PNetworkEnable <$> v .:?  "maxPostDataSize"
+
+
+instance ToJSON PNetworkEnable  where
+    toJSON v = A.object
+        [ "maxPostDataSize" .= pNetworkEnableMaxPostDataSize v
+        ]
+
+
+networkEnable :: Session -> PNetworkEnable -> IO (Maybe Error)
+networkEnable session params = sendReceiveCommand session "Network.enable" (Just params)
 
 data NetworkGetAllCookies = NetworkGetAllCookies {
     networkGetAllCookiesCookies :: [NetworkCookie]
@@ -2787,8 +3825,12 @@ instance FromJSON  NetworkGetAllCookies where
 
 
 
+instance Command  NetworkGetAllCookies where
+    commandName _ = "Network.getAllCookies"
+
+
 networkGetAllCookies :: Session -> IO (Either Error NetworkGetAllCookies)
-networkGetAllCookies session  = sendReceiveCommandResult (conn session) ("Network","getAllCookies") ([] ++ (catMaybes []))
+networkGetAllCookies session = sendReceiveCommandResult session "Network.getAllCookies" (Nothing :: Maybe ())
 
 data NetworkGetCookies = NetworkGetCookies {
     networkGetCookiesCookies :: [NetworkCookie]
@@ -2799,8 +3841,25 @@ instance FromJSON  NetworkGetCookies where
 
 
 
-networkGetCookies :: Session -> Maybe [String] -> IO (Either Error NetworkGetCookies)
-networkGetCookies session networkGetCookiesUrls = sendReceiveCommandResult (conn session) ("Network","getCookies") ([] ++ (catMaybes [fmap (("urls",) . ToJSONEx) networkGetCookiesUrls]))
+instance Command  NetworkGetCookies where
+    commandName _ = "Network.getCookies"
+
+data PNetworkGetCookies = PNetworkGetCookies {
+    pNetworkGetCookiesUrls :: Maybe [String]
+} deriving (Eq, Show, Read)
+instance FromJSON  PNetworkGetCookies where
+    parseJSON = A.withObject "PNetworkGetCookies" $ \v ->
+         PNetworkGetCookies <$> v .:?  "urls"
+
+
+instance ToJSON PNetworkGetCookies  where
+    toJSON v = A.object
+        [ "urls" .= pNetworkGetCookiesUrls v
+        ]
+
+
+networkGetCookies :: Session -> PNetworkGetCookies -> IO (Either Error NetworkGetCookies)
+networkGetCookies session params = sendReceiveCommandResult session "Network.getCookies" (Just params)
 
 data NetworkGetResponseBody = NetworkGetResponseBody {
     networkGetResponseBodyBody :: String,
@@ -2813,8 +3872,25 @@ instance FromJSON  NetworkGetResponseBody where
 
 
 
-networkGetResponseBody :: Session -> NetworkRequestId -> IO (Either Error NetworkGetResponseBody)
-networkGetResponseBody session networkGetResponseBodyRequestId = sendReceiveCommandResult (conn session) ("Network","getResponseBody") ([("requestId", ToJSONEx networkGetResponseBodyRequestId)] ++ (catMaybes []))
+instance Command  NetworkGetResponseBody where
+    commandName _ = "Network.getResponseBody"
+
+data PNetworkGetResponseBody = PNetworkGetResponseBody {
+    pNetworkGetResponseBodyRequestId :: NetworkRequestId
+} deriving (Eq, Show, Read)
+instance FromJSON  PNetworkGetResponseBody where
+    parseJSON = A.withObject "PNetworkGetResponseBody" $ \v ->
+         PNetworkGetResponseBody <$> v .:  "requestId"
+
+
+instance ToJSON PNetworkGetResponseBody  where
+    toJSON v = A.object
+        [ "requestId" .= pNetworkGetResponseBodyRequestId v
+        ]
+
+
+networkGetResponseBody :: Session -> PNetworkGetResponseBody -> IO (Either Error NetworkGetResponseBody)
+networkGetResponseBody session params = sendReceiveCommandResult session "Network.getResponseBody" (Just params)
 
 data NetworkGetRequestPostData = NetworkGetRequestPostData {
     networkGetRequestPostDataPostData :: String
@@ -2825,28 +3901,150 @@ instance FromJSON  NetworkGetRequestPostData where
 
 
 
-networkGetRequestPostData :: Session -> NetworkRequestId -> IO (Either Error NetworkGetRequestPostData)
-networkGetRequestPostData session networkGetRequestPostDataRequestId = sendReceiveCommandResult (conn session) ("Network","getRequestPostData") ([("requestId", ToJSONEx networkGetRequestPostDataRequestId)] ++ (catMaybes []))
+instance Command  NetworkGetRequestPostData where
+    commandName _ = "Network.getRequestPostData"
+
+data PNetworkGetRequestPostData = PNetworkGetRequestPostData {
+    pNetworkGetRequestPostDataRequestId :: NetworkRequestId
+} deriving (Eq, Show, Read)
+instance FromJSON  PNetworkGetRequestPostData where
+    parseJSON = A.withObject "PNetworkGetRequestPostData" $ \v ->
+         PNetworkGetRequestPostData <$> v .:  "requestId"
 
 
-networkSetCacheDisabled :: Session -> Bool -> IO (Maybe Error)
-networkSetCacheDisabled session networkSetCacheDisabledCacheDisabled = sendReceiveCommand (conn session) ("Network","setCacheDisabled") ([("cacheDisabled", ToJSONEx networkSetCacheDisabledCacheDisabled)] ++ (catMaybes []))
+instance ToJSON PNetworkGetRequestPostData  where
+    toJSON v = A.object
+        [ "requestId" .= pNetworkGetRequestPostDataRequestId v
+        ]
 
 
-networkSetCookie :: Session -> String -> String -> Maybe String -> Maybe String -> Maybe String -> Maybe Bool -> Maybe Bool -> Maybe NetworkCookieSameSite -> Maybe NetworkTimeSinceEpoch -> IO (Maybe Error)
-networkSetCookie session networkSetCookieName networkSetCookieValue networkSetCookieUrl networkSetCookieDomain networkSetCookiePath networkSetCookieSecure networkSetCookieHttpOnly networkSetCookieSameSite networkSetCookieExpires = sendReceiveCommand (conn session) ("Network","setCookie") ([("name", ToJSONEx networkSetCookieName), ("value", ToJSONEx networkSetCookieValue)] ++ (catMaybes [fmap (("url",) . ToJSONEx) networkSetCookieUrl, fmap (("domain",) . ToJSONEx) networkSetCookieDomain, fmap (("path",) . ToJSONEx) networkSetCookiePath, fmap (("secure",) . ToJSONEx) networkSetCookieSecure, fmap (("httpOnly",) . ToJSONEx) networkSetCookieHttpOnly, fmap (("sameSite",) . ToJSONEx) networkSetCookieSameSite, fmap (("expires",) . ToJSONEx) networkSetCookieExpires]))
+networkGetRequestPostData :: Session -> PNetworkGetRequestPostData -> IO (Either Error NetworkGetRequestPostData)
+networkGetRequestPostData session params = sendReceiveCommandResult session "Network.getRequestPostData" (Just params)
 
 
-networkSetCookies :: Session -> [NetworkCookieParam] -> IO (Maybe Error)
-networkSetCookies session networkSetCookiesCookies = sendReceiveCommand (conn session) ("Network","setCookies") ([("cookies", ToJSONEx networkSetCookiesCookies)] ++ (catMaybes []))
+
+data PNetworkSetCacheDisabled = PNetworkSetCacheDisabled {
+    pNetworkSetCacheDisabledCacheDisabled :: Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PNetworkSetCacheDisabled where
+    parseJSON = A.withObject "PNetworkSetCacheDisabled" $ \v ->
+         PNetworkSetCacheDisabled <$> v .:  "cacheDisabled"
 
 
-networkSetExtraHTTPHeaders :: Session -> NetworkHeaders -> IO (Maybe Error)
-networkSetExtraHTTPHeaders session networkSetExtraHttpHeadersHeaders = sendReceiveCommand (conn session) ("Network","setExtraHTTPHeaders") ([("headers", ToJSONEx networkSetExtraHttpHeadersHeaders)] ++ (catMaybes []))
+instance ToJSON PNetworkSetCacheDisabled  where
+    toJSON v = A.object
+        [ "cacheDisabled" .= pNetworkSetCacheDisabledCacheDisabled v
+        ]
 
 
-networkSetUserAgentOverride :: Session -> String -> Maybe String -> Maybe String -> IO (Maybe Error)
-networkSetUserAgentOverride session networkSetUserAgentOverrideUserAgent networkSetUserAgentOverrideAcceptLanguage networkSetUserAgentOverridePlatform = sendReceiveCommand (conn session) ("Network","setUserAgentOverride") ([("userAgent", ToJSONEx networkSetUserAgentOverrideUserAgent)] ++ (catMaybes [fmap (("acceptLanguage",) . ToJSONEx) networkSetUserAgentOverrideAcceptLanguage, fmap (("platform",) . ToJSONEx) networkSetUserAgentOverridePlatform]))
+networkSetCacheDisabled :: Session -> PNetworkSetCacheDisabled -> IO (Maybe Error)
+networkSetCacheDisabled session params = sendReceiveCommand session "Network.setCacheDisabled" (Just params)
+
+
+
+data PNetworkSetCookie = PNetworkSetCookie {
+    pNetworkSetCookieName :: String,
+    pNetworkSetCookieValue :: String,
+    pNetworkSetCookieUrl :: Maybe String,
+    pNetworkSetCookieDomain :: Maybe String,
+    pNetworkSetCookiePath :: Maybe String,
+    pNetworkSetCookieSecure :: Maybe Bool,
+    pNetworkSetCookieHttpOnly :: Maybe Bool,
+    pNetworkSetCookieSameSite :: Maybe NetworkCookieSameSite,
+    pNetworkSetCookieExpires :: Maybe NetworkTimeSinceEpoch
+} deriving (Eq, Show, Read)
+instance FromJSON  PNetworkSetCookie where
+    parseJSON = A.withObject "PNetworkSetCookie" $ \v ->
+         PNetworkSetCookie <$> v .:  "name"
+            <*> v  .:  "value"
+            <*> v  .:?  "url"
+            <*> v  .:?  "domain"
+            <*> v  .:?  "path"
+            <*> v  .:?  "secure"
+            <*> v  .:?  "httpOnly"
+            <*> v  .:?  "sameSite"
+            <*> v  .:?  "expires"
+
+
+instance ToJSON PNetworkSetCookie  where
+    toJSON v = A.object
+        [ "name" .= pNetworkSetCookieName v
+        , "value" .= pNetworkSetCookieValue v
+        , "url" .= pNetworkSetCookieUrl v
+        , "domain" .= pNetworkSetCookieDomain v
+        , "path" .= pNetworkSetCookiePath v
+        , "secure" .= pNetworkSetCookieSecure v
+        , "httpOnly" .= pNetworkSetCookieHttpOnly v
+        , "sameSite" .= pNetworkSetCookieSameSite v
+        , "expires" .= pNetworkSetCookieExpires v
+        ]
+
+
+networkSetCookie :: Session -> PNetworkSetCookie -> IO (Maybe Error)
+networkSetCookie session params = sendReceiveCommand session "Network.setCookie" (Just params)
+
+
+
+data PNetworkSetCookies = PNetworkSetCookies {
+    pNetworkSetCookiesCookies :: [NetworkCookieParam]
+} deriving (Eq, Show, Read)
+instance FromJSON  PNetworkSetCookies where
+    parseJSON = A.withObject "PNetworkSetCookies" $ \v ->
+         PNetworkSetCookies <$> v .:  "cookies"
+
+
+instance ToJSON PNetworkSetCookies  where
+    toJSON v = A.object
+        [ "cookies" .= pNetworkSetCookiesCookies v
+        ]
+
+
+networkSetCookies :: Session -> PNetworkSetCookies -> IO (Maybe Error)
+networkSetCookies session params = sendReceiveCommand session "Network.setCookies" (Just params)
+
+
+
+data PNetworkSetExtraHttpHeaders = PNetworkSetExtraHttpHeaders {
+    pNetworkSetExtraHttpHeadersHeaders :: NetworkHeaders
+} deriving (Eq, Show, Read)
+instance FromJSON  PNetworkSetExtraHttpHeaders where
+    parseJSON = A.withObject "PNetworkSetExtraHttpHeaders" $ \v ->
+         PNetworkSetExtraHttpHeaders <$> v .:  "headers"
+
+
+instance ToJSON PNetworkSetExtraHttpHeaders  where
+    toJSON v = A.object
+        [ "headers" .= pNetworkSetExtraHttpHeadersHeaders v
+        ]
+
+
+networkSetExtraHttpHeaders :: Session -> PNetworkSetExtraHttpHeaders -> IO (Maybe Error)
+networkSetExtraHttpHeaders session params = sendReceiveCommand session "Network.setExtraHTTPHeaders" (Just params)
+
+
+
+data PNetworkSetUserAgentOverride = PNetworkSetUserAgentOverride {
+    pNetworkSetUserAgentOverrideUserAgent :: String,
+    pNetworkSetUserAgentOverrideAcceptLanguage :: Maybe String,
+    pNetworkSetUserAgentOverridePlatform :: Maybe String
+} deriving (Eq, Show, Read)
+instance FromJSON  PNetworkSetUserAgentOverride where
+    parseJSON = A.withObject "PNetworkSetUserAgentOverride" $ \v ->
+         PNetworkSetUserAgentOverride <$> v .:  "userAgent"
+            <*> v  .:?  "acceptLanguage"
+            <*> v  .:?  "platform"
+
+
+instance ToJSON PNetworkSetUserAgentOverride  where
+    toJSON v = A.object
+        [ "userAgent" .= pNetworkSetUserAgentOverrideUserAgent v
+        , "acceptLanguage" .= pNetworkSetUserAgentOverrideAcceptLanguage v
+        , "platform" .= pNetworkSetUserAgentOverridePlatform v
+        ]
+
+
+networkSetUserAgentOverride :: Session -> PNetworkSetUserAgentOverride -> IO (Maybe Error)
+networkSetUserAgentOverride session params = sendReceiveCommand session "Network.setUserAgentOverride" (Just params)
 
 
 
@@ -2955,9 +4153,9 @@ data PageInterstitialHidden = PageInterstitialHidden
     deriving (Eq, Show, Read)
 instance FromJSON PageInterstitialHidden where
     parseJSON = A.withText  "PageInterstitialHidden"  $ \v -> do
-        pure $ case v of
-                "PageInterstitialHidden" -> PageInterstitialHidden
-                _ -> error "failed to parse PageInterstitialHidden"
+        case v of
+                "PageInterstitialHidden" -> pure $ PageInterstitialHidden
+                _ -> fail "failed to parse PageInterstitialHidden"
 
 instance Event  PageInterstitialHidden where
     eventName  _   =  "Page.interstitialHidden"
@@ -2968,9 +4166,9 @@ data PageInterstitialShown = PageInterstitialShown
     deriving (Eq, Show, Read)
 instance FromJSON PageInterstitialShown where
     parseJSON = A.withText  "PageInterstitialShown"  $ \v -> do
-        pure $ case v of
-                "PageInterstitialShown" -> PageInterstitialShown
-                _ -> error "failed to parse PageInterstitialShown"
+        case v of
+                "PageInterstitialShown" -> pure $ PageInterstitialShown
+                _ -> fail "failed to parse PageInterstitialShown"
 
 instance Event  PageInterstitialShown where
     eventName  _   =  "Page.interstitialShown"
@@ -3190,21 +4388,21 @@ data PageTransitionType = PageTransitionTypeLink | PageTransitionTypeTyped | Pag
     deriving (Eq, Show, Read)
 instance FromJSON PageTransitionType where
     parseJSON = A.withText  "PageTransitionType"  $ \v -> do
-        pure $ case v of
-                "link" -> PageTransitionTypeLink
-                "typed" -> PageTransitionTypeTyped
-                "address_bar" -> PageTransitionTypeAddressBar
-                "auto_bookmark" -> PageTransitionTypeAutoBookmark
-                "auto_subframe" -> PageTransitionTypeAutoSubframe
-                "manual_subframe" -> PageTransitionTypeManualSubframe
-                "generated" -> PageTransitionTypeGenerated
-                "auto_toplevel" -> PageTransitionTypeAutoToplevel
-                "form_submit" -> PageTransitionTypeFormSubmit
-                "reload" -> PageTransitionTypeReload
-                "keyword" -> PageTransitionTypeKeyword
-                "keyword_generated" -> PageTransitionTypeKeywordGenerated
-                "other" -> PageTransitionTypeOther
-                _ -> error "failed to parse PageTransitionType"
+        case v of
+                "link" -> pure $ PageTransitionTypeLink
+                "typed" -> pure $ PageTransitionTypeTyped
+                "address_bar" -> pure $ PageTransitionTypeAddressBar
+                "auto_bookmark" -> pure $ PageTransitionTypeAutoBookmark
+                "auto_subframe" -> pure $ PageTransitionTypeAutoSubframe
+                "manual_subframe" -> pure $ PageTransitionTypeManualSubframe
+                "generated" -> pure $ PageTransitionTypeGenerated
+                "auto_toplevel" -> pure $ PageTransitionTypeAutoToplevel
+                "form_submit" -> pure $ PageTransitionTypeFormSubmit
+                "reload" -> pure $ PageTransitionTypeReload
+                "keyword" -> pure $ PageTransitionTypeKeyword
+                "keyword_generated" -> pure $ PageTransitionTypeKeywordGenerated
+                "other" -> pure $ PageTransitionTypeOther
+                _ -> fail "failed to parse PageTransitionType"
 
 instance ToJSON PageTransitionType where
     toJSON v = A.String $
@@ -3256,12 +4454,12 @@ data PageDialogType = PageDialogTypeAlert | PageDialogTypeConfirm | PageDialogTy
     deriving (Eq, Show, Read)
 instance FromJSON PageDialogType where
     parseJSON = A.withText  "PageDialogType"  $ \v -> do
-        pure $ case v of
-                "alert" -> PageDialogTypeAlert
-                "confirm" -> PageDialogTypeConfirm
-                "prompt" -> PageDialogTypePrompt
-                "beforeunload" -> PageDialogTypeBeforeunload
-                _ -> error "failed to parse PageDialogType"
+        case v of
+                "alert" -> pure $ PageDialogTypeAlert
+                "confirm" -> pure $ PageDialogTypeConfirm
+                "prompt" -> pure $ PageDialogTypePrompt
+                "beforeunload" -> pure $ PageDialogTypeBeforeunload
+                _ -> fail "failed to parse PageDialogType"
 
 instance ToJSON PageDialogType where
     toJSON v = A.String $
@@ -3388,41 +4586,41 @@ data PagePrerenderFinalStatus = PagePrerenderFinalStatusActivated | PagePrerende
     deriving (Eq, Show, Read)
 instance FromJSON PagePrerenderFinalStatus where
     parseJSON = A.withText  "PagePrerenderFinalStatus"  $ \v -> do
-        pure $ case v of
-                "Activated" -> PagePrerenderFinalStatusActivated
-                "Destroyed" -> PagePrerenderFinalStatusDestroyed
-                "LowEndDevice" -> PagePrerenderFinalStatusLowEndDevice
-                "CrossOriginRedirect" -> PagePrerenderFinalStatusCrossOriginRedirect
-                "CrossOriginNavigation" -> PagePrerenderFinalStatusCrossOriginNavigation
-                "InvalidSchemeRedirect" -> PagePrerenderFinalStatusInvalidSchemeRedirect
-                "InvalidSchemeNavigation" -> PagePrerenderFinalStatusInvalidSchemeNavigation
-                "InProgressNavigation" -> PagePrerenderFinalStatusInProgressNavigation
-                "NavigationRequestBlockedByCsp" -> PagePrerenderFinalStatusNavigationRequestBlockedByCsp
-                "MainFrameNavigation" -> PagePrerenderFinalStatusMainFrameNavigation
-                "MojoBinderPolicy" -> PagePrerenderFinalStatusMojoBinderPolicy
-                "RendererProcessCrashed" -> PagePrerenderFinalStatusRendererProcessCrashed
-                "RendererProcessKilled" -> PagePrerenderFinalStatusRendererProcessKilled
-                "Download" -> PagePrerenderFinalStatusDownload
-                "TriggerDestroyed" -> PagePrerenderFinalStatusTriggerDestroyed
-                "NavigationNotCommitted" -> PagePrerenderFinalStatusNavigationNotCommitted
-                "NavigationBadHttpStatus" -> PagePrerenderFinalStatusNavigationBadHttpStatus
-                "ClientCertRequested" -> PagePrerenderFinalStatusClientCertRequested
-                "NavigationRequestNetworkError" -> PagePrerenderFinalStatusNavigationRequestNetworkError
-                "MaxNumOfRunningPrerendersExceeded" -> PagePrerenderFinalStatusMaxNumOfRunningPrerendersExceeded
-                "CancelAllHostsForTesting" -> PagePrerenderFinalStatusCancelAllHostsForTesting
-                "DidFailLoad" -> PagePrerenderFinalStatusDidFailLoad
-                "Stop" -> PagePrerenderFinalStatusStop
-                "SslCertificateError" -> PagePrerenderFinalStatusSslCertificateError
-                "LoginAuthRequested" -> PagePrerenderFinalStatusLoginAuthRequested
-                "UaChangeRequiresReload" -> PagePrerenderFinalStatusUaChangeRequiresReload
-                "BlockedByClient" -> PagePrerenderFinalStatusBlockedByClient
-                "AudioOutputDeviceRequested" -> PagePrerenderFinalStatusAudioOutputDeviceRequested
-                "MixedContent" -> PagePrerenderFinalStatusMixedContent
-                "TriggerBackgrounded" -> PagePrerenderFinalStatusTriggerBackgrounded
-                "EmbedderTriggeredAndSameOriginRedirected" -> PagePrerenderFinalStatusEmbedderTriggeredAndSameOriginRedirected
-                "EmbedderTriggeredAndCrossOriginRedirected" -> PagePrerenderFinalStatusEmbedderTriggeredAndCrossOriginRedirected
-                "EmbedderTriggeredAndDestroyed" -> PagePrerenderFinalStatusEmbedderTriggeredAndDestroyed
-                _ -> error "failed to parse PagePrerenderFinalStatus"
+        case v of
+                "Activated" -> pure $ PagePrerenderFinalStatusActivated
+                "Destroyed" -> pure $ PagePrerenderFinalStatusDestroyed
+                "LowEndDevice" -> pure $ PagePrerenderFinalStatusLowEndDevice
+                "CrossOriginRedirect" -> pure $ PagePrerenderFinalStatusCrossOriginRedirect
+                "CrossOriginNavigation" -> pure $ PagePrerenderFinalStatusCrossOriginNavigation
+                "InvalidSchemeRedirect" -> pure $ PagePrerenderFinalStatusInvalidSchemeRedirect
+                "InvalidSchemeNavigation" -> pure $ PagePrerenderFinalStatusInvalidSchemeNavigation
+                "InProgressNavigation" -> pure $ PagePrerenderFinalStatusInProgressNavigation
+                "NavigationRequestBlockedByCsp" -> pure $ PagePrerenderFinalStatusNavigationRequestBlockedByCsp
+                "MainFrameNavigation" -> pure $ PagePrerenderFinalStatusMainFrameNavigation
+                "MojoBinderPolicy" -> pure $ PagePrerenderFinalStatusMojoBinderPolicy
+                "RendererProcessCrashed" -> pure $ PagePrerenderFinalStatusRendererProcessCrashed
+                "RendererProcessKilled" -> pure $ PagePrerenderFinalStatusRendererProcessKilled
+                "Download" -> pure $ PagePrerenderFinalStatusDownload
+                "TriggerDestroyed" -> pure $ PagePrerenderFinalStatusTriggerDestroyed
+                "NavigationNotCommitted" -> pure $ PagePrerenderFinalStatusNavigationNotCommitted
+                "NavigationBadHttpStatus" -> pure $ PagePrerenderFinalStatusNavigationBadHttpStatus
+                "ClientCertRequested" -> pure $ PagePrerenderFinalStatusClientCertRequested
+                "NavigationRequestNetworkError" -> pure $ PagePrerenderFinalStatusNavigationRequestNetworkError
+                "MaxNumOfRunningPrerendersExceeded" -> pure $ PagePrerenderFinalStatusMaxNumOfRunningPrerendersExceeded
+                "CancelAllHostsForTesting" -> pure $ PagePrerenderFinalStatusCancelAllHostsForTesting
+                "DidFailLoad" -> pure $ PagePrerenderFinalStatusDidFailLoad
+                "Stop" -> pure $ PagePrerenderFinalStatusStop
+                "SslCertificateError" -> pure $ PagePrerenderFinalStatusSslCertificateError
+                "LoginAuthRequested" -> pure $ PagePrerenderFinalStatusLoginAuthRequested
+                "UaChangeRequiresReload" -> pure $ PagePrerenderFinalStatusUaChangeRequiresReload
+                "BlockedByClient" -> pure $ PagePrerenderFinalStatusBlockedByClient
+                "AudioOutputDeviceRequested" -> pure $ PagePrerenderFinalStatusAudioOutputDeviceRequested
+                "MixedContent" -> pure $ PagePrerenderFinalStatusMixedContent
+                "TriggerBackgrounded" -> pure $ PagePrerenderFinalStatusTriggerBackgrounded
+                "EmbedderTriggeredAndSameOriginRedirected" -> pure $ PagePrerenderFinalStatusEmbedderTriggeredAndSameOriginRedirected
+                "EmbedderTriggeredAndCrossOriginRedirected" -> pure $ PagePrerenderFinalStatusEmbedderTriggeredAndCrossOriginRedirected
+                "EmbedderTriggeredAndDestroyed" -> pure $ PagePrerenderFinalStatusEmbedderTriggeredAndDestroyed
+                _ -> fail "failed to parse PagePrerenderFinalStatus"
 
 instance ToJSON PagePrerenderFinalStatus where
     toJSON v = A.String $
@@ -3471,12 +4669,31 @@ instance FromJSON  PageAddScriptToEvaluateOnNewDocument where
 
 
 
-pageAddScriptToEvaluateOnNewDocument :: Session -> String -> IO (Either Error PageAddScriptToEvaluateOnNewDocument)
-pageAddScriptToEvaluateOnNewDocument session pageAddScriptToEvaluateOnNewDocumentSource = sendReceiveCommandResult (conn session) ("Page","addScriptToEvaluateOnNewDocument") ([("source", ToJSONEx pageAddScriptToEvaluateOnNewDocumentSource)] ++ (catMaybes []))
+instance Command  PageAddScriptToEvaluateOnNewDocument where
+    commandName _ = "Page.addScriptToEvaluateOnNewDocument"
+
+data PPageAddScriptToEvaluateOnNewDocument = PPageAddScriptToEvaluateOnNewDocument {
+    pPageAddScriptToEvaluateOnNewDocumentSource :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PPageAddScriptToEvaluateOnNewDocument where
+    parseJSON = A.withObject "PPageAddScriptToEvaluateOnNewDocument" $ \v ->
+         PPageAddScriptToEvaluateOnNewDocument <$> v .:  "source"
+
+
+instance ToJSON PPageAddScriptToEvaluateOnNewDocument  where
+    toJSON v = A.object
+        [ "source" .= pPageAddScriptToEvaluateOnNewDocumentSource v
+        ]
+
+
+pageAddScriptToEvaluateOnNewDocument :: Session -> PPageAddScriptToEvaluateOnNewDocument -> IO (Either Error PageAddScriptToEvaluateOnNewDocument)
+pageAddScriptToEvaluateOnNewDocument session params = sendReceiveCommandResult session "Page.addScriptToEvaluateOnNewDocument" (Just params)
+
+
 
 
 pageBringToFront :: Session -> IO (Maybe Error)
-pageBringToFront session  = sendReceiveCommand (conn session) ("Page","bringToFront") ([] ++ (catMaybes []))
+pageBringToFront session = sendReceiveCommand session "Page.bringToFront" (Nothing :: Maybe ())
 
 data PageCaptureScreenshot = PageCaptureScreenshot {
     pageCaptureScreenshotData :: String
@@ -3487,8 +4704,31 @@ instance FromJSON  PageCaptureScreenshot where
 
 
 
-pageCaptureScreenshot :: Session -> Maybe String -> Maybe Int -> Maybe PageViewport -> IO (Either Error PageCaptureScreenshot)
-pageCaptureScreenshot session pageCaptureScreenshotFormat pageCaptureScreenshotQuality pageCaptureScreenshotClip = sendReceiveCommandResult (conn session) ("Page","captureScreenshot") ([] ++ (catMaybes [fmap (("format",) . ToJSONEx) pageCaptureScreenshotFormat, fmap (("quality",) . ToJSONEx) pageCaptureScreenshotQuality, fmap (("clip",) . ToJSONEx) pageCaptureScreenshotClip]))
+instance Command  PageCaptureScreenshot where
+    commandName _ = "Page.captureScreenshot"
+
+data PPageCaptureScreenshot = PPageCaptureScreenshot {
+    pPageCaptureScreenshotFormat :: Maybe String,
+    pPageCaptureScreenshotQuality :: Maybe Int,
+    pPageCaptureScreenshotClip :: Maybe PageViewport
+} deriving (Eq, Show, Read)
+instance FromJSON  PPageCaptureScreenshot where
+    parseJSON = A.withObject "PPageCaptureScreenshot" $ \v ->
+         PPageCaptureScreenshot <$> v .:?  "format"
+            <*> v  .:?  "quality"
+            <*> v  .:?  "clip"
+
+
+instance ToJSON PPageCaptureScreenshot  where
+    toJSON v = A.object
+        [ "format" .= pPageCaptureScreenshotFormat v
+        , "quality" .= pPageCaptureScreenshotQuality v
+        , "clip" .= pPageCaptureScreenshotClip v
+        ]
+
+
+pageCaptureScreenshot :: Session -> PPageCaptureScreenshot -> IO (Either Error PageCaptureScreenshot)
+pageCaptureScreenshot session params = sendReceiveCommandResult session "Page.captureScreenshot" (Just params)
 
 data PageCreateIsolatedWorld = PageCreateIsolatedWorld {
     pageCreateIsolatedWorldExecutionContextId :: RuntimeExecutionContextId
@@ -3499,16 +4739,43 @@ instance FromJSON  PageCreateIsolatedWorld where
 
 
 
-pageCreateIsolatedWorld :: Session -> PageFrameId -> Maybe String -> Maybe Bool -> IO (Either Error PageCreateIsolatedWorld)
-pageCreateIsolatedWorld session pageCreateIsolatedWorldFrameId pageCreateIsolatedWorldWorldName pageCreateIsolatedWorldGrantUniveralAccess = sendReceiveCommandResult (conn session) ("Page","createIsolatedWorld") ([("frameId", ToJSONEx pageCreateIsolatedWorldFrameId)] ++ (catMaybes [fmap (("worldName",) . ToJSONEx) pageCreateIsolatedWorldWorldName, fmap (("grantUniveralAccess",) . ToJSONEx) pageCreateIsolatedWorldGrantUniveralAccess]))
+instance Command  PageCreateIsolatedWorld where
+    commandName _ = "Page.createIsolatedWorld"
+
+data PPageCreateIsolatedWorld = PPageCreateIsolatedWorld {
+    pPageCreateIsolatedWorldFrameId :: PageFrameId,
+    pPageCreateIsolatedWorldWorldName :: Maybe String,
+    pPageCreateIsolatedWorldGrantUniveralAccess :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PPageCreateIsolatedWorld where
+    parseJSON = A.withObject "PPageCreateIsolatedWorld" $ \v ->
+         PPageCreateIsolatedWorld <$> v .:  "frameId"
+            <*> v  .:?  "worldName"
+            <*> v  .:?  "grantUniveralAccess"
+
+
+instance ToJSON PPageCreateIsolatedWorld  where
+    toJSON v = A.object
+        [ "frameId" .= pPageCreateIsolatedWorldFrameId v
+        , "worldName" .= pPageCreateIsolatedWorldWorldName v
+        , "grantUniveralAccess" .= pPageCreateIsolatedWorldGrantUniveralAccess v
+        ]
+
+
+pageCreateIsolatedWorld :: Session -> PPageCreateIsolatedWorld -> IO (Either Error PageCreateIsolatedWorld)
+pageCreateIsolatedWorld session params = sendReceiveCommandResult session "Page.createIsolatedWorld" (Just params)
+
+
 
 
 pageDisable :: Session -> IO (Maybe Error)
-pageDisable session  = sendReceiveCommand (conn session) ("Page","disable") ([] ++ (catMaybes []))
+pageDisable session = sendReceiveCommand session "Page.disable" (Nothing :: Maybe ())
+
+
 
 
 pageEnable :: Session -> IO (Maybe Error)
-pageEnable session  = sendReceiveCommand (conn session) ("Page","enable") ([] ++ (catMaybes []))
+pageEnable session = sendReceiveCommand session "Page.enable" (Nothing :: Maybe ())
 
 data PageGetAppManifest = PageGetAppManifest {
     pageGetAppManifestUrl :: String,
@@ -3523,8 +4790,12 @@ instance FromJSON  PageGetAppManifest where
 
 
 
+instance Command  PageGetAppManifest where
+    commandName _ = "Page.getAppManifest"
+
+
 pageGetAppManifest :: Session -> IO (Either Error PageGetAppManifest)
-pageGetAppManifest session  = sendReceiveCommandResult (conn session) ("Page","getAppManifest") ([] ++ (catMaybes []))
+pageGetAppManifest session = sendReceiveCommandResult session "Page.getAppManifest" (Nothing :: Maybe ())
 
 data PageGetFrameTree = PageGetFrameTree {
     pageGetFrameTreeFrameTree :: PageFrameTree
@@ -3535,8 +4806,12 @@ instance FromJSON  PageGetFrameTree where
 
 
 
+instance Command  PageGetFrameTree where
+    commandName _ = "Page.getFrameTree"
+
+
 pageGetFrameTree :: Session -> IO (Either Error PageGetFrameTree)
-pageGetFrameTree session  = sendReceiveCommandResult (conn session) ("Page","getFrameTree") ([] ++ (catMaybes []))
+pageGetFrameTree session = sendReceiveCommandResult session "Page.getFrameTree" (Nothing :: Maybe ())
 
 data PageGetLayoutMetrics = PageGetLayoutMetrics {
     pageGetLayoutMetricsCssLayoutViewport :: PageLayoutViewport,
@@ -3551,8 +4826,12 @@ instance FromJSON  PageGetLayoutMetrics where
 
 
 
+instance Command  PageGetLayoutMetrics where
+    commandName _ = "Page.getLayoutMetrics"
+
+
 pageGetLayoutMetrics :: Session -> IO (Either Error PageGetLayoutMetrics)
-pageGetLayoutMetrics session  = sendReceiveCommandResult (conn session) ("Page","getLayoutMetrics") ([] ++ (catMaybes []))
+pageGetLayoutMetrics session = sendReceiveCommandResult session "Page.getLayoutMetrics" (Nothing :: Maybe ())
 
 data PageGetNavigationHistory = PageGetNavigationHistory {
     pageGetNavigationHistoryCurrentIndex :: Int,
@@ -3565,16 +4844,40 @@ instance FromJSON  PageGetNavigationHistory where
 
 
 
+instance Command  PageGetNavigationHistory where
+    commandName _ = "Page.getNavigationHistory"
+
+
 pageGetNavigationHistory :: Session -> IO (Either Error PageGetNavigationHistory)
-pageGetNavigationHistory session  = sendReceiveCommandResult (conn session) ("Page","getNavigationHistory") ([] ++ (catMaybes []))
+pageGetNavigationHistory session = sendReceiveCommandResult session "Page.getNavigationHistory" (Nothing :: Maybe ())
+
+
 
 
 pageResetNavigationHistory :: Session -> IO (Maybe Error)
-pageResetNavigationHistory session  = sendReceiveCommand (conn session) ("Page","resetNavigationHistory") ([] ++ (catMaybes []))
+pageResetNavigationHistory session = sendReceiveCommand session "Page.resetNavigationHistory" (Nothing :: Maybe ())
 
 
-pageHandleJavaScriptDialog :: Session -> Bool -> Maybe String -> IO (Maybe Error)
-pageHandleJavaScriptDialog session pageHandleJavaScriptDialogAccept pageHandleJavaScriptDialogPromptText = sendReceiveCommand (conn session) ("Page","handleJavaScriptDialog") ([("accept", ToJSONEx pageHandleJavaScriptDialogAccept)] ++ (catMaybes [fmap (("promptText",) . ToJSONEx) pageHandleJavaScriptDialogPromptText]))
+
+data PPageHandleJavaScriptDialog = PPageHandleJavaScriptDialog {
+    pPageHandleJavaScriptDialogAccept :: Bool,
+    pPageHandleJavaScriptDialogPromptText :: Maybe String
+} deriving (Eq, Show, Read)
+instance FromJSON  PPageHandleJavaScriptDialog where
+    parseJSON = A.withObject "PPageHandleJavaScriptDialog" $ \v ->
+         PPageHandleJavaScriptDialog <$> v .:  "accept"
+            <*> v  .:?  "promptText"
+
+
+instance ToJSON PPageHandleJavaScriptDialog  where
+    toJSON v = A.object
+        [ "accept" .= pPageHandleJavaScriptDialogAccept v
+        , "promptText" .= pPageHandleJavaScriptDialogPromptText v
+        ]
+
+
+pageHandleJavaScriptDialog :: Session -> PPageHandleJavaScriptDialog -> IO (Maybe Error)
+pageHandleJavaScriptDialog session params = sendReceiveCommand session "Page.handleJavaScriptDialog" (Just params)
 
 data PageNavigate = PageNavigate {
     pageNavigateFrameId :: PageFrameId,
@@ -3589,40 +4892,190 @@ instance FromJSON  PageNavigate where
 
 
 
-pageNavigate :: Session -> String -> Maybe String -> Maybe PageTransitionType -> Maybe PageFrameId -> IO (Either Error PageNavigate)
-pageNavigate session pageNavigateUrl pageNavigateReferrer pageNavigateTransitionType pageNavigateFrameId = sendReceiveCommandResult (conn session) ("Page","navigate") ([("url", ToJSONEx pageNavigateUrl)] ++ (catMaybes [fmap (("referrer",) . ToJSONEx) pageNavigateReferrer, fmap (("transitionType",) . ToJSONEx) pageNavigateTransitionType, fmap (("frameId",) . ToJSONEx) pageNavigateFrameId]))
+instance Command  PageNavigate where
+    commandName _ = "Page.navigate"
 
-
-pageNavigateToHistoryEntry :: Session -> Int -> IO (Maybe Error)
-pageNavigateToHistoryEntry session pageNavigateToHistoryEntryEntryId = sendReceiveCommand (conn session) ("Page","navigateToHistoryEntry") ([("entryId", ToJSONEx pageNavigateToHistoryEntryEntryId)] ++ (catMaybes []))
-
-data PagePrintToPDF = PagePrintToPDF {
-    pagePrintToPDFData :: String
+data PPageNavigate = PPageNavigate {
+    pPageNavigateUrl :: String,
+    pPageNavigateReferrer :: Maybe String,
+    pPageNavigateTransitionType :: Maybe PageTransitionType,
+    pPageNavigateFrameId :: Maybe PageFrameId
 } deriving (Eq, Show, Read)
-instance FromJSON  PagePrintToPDF where
-    parseJSON = A.withObject "PagePrintToPDF" $ \v ->
-         PagePrintToPDF <$> v .:  "data"
+instance FromJSON  PPageNavigate where
+    parseJSON = A.withObject "PPageNavigate" $ \v ->
+         PPageNavigate <$> v .:  "url"
+            <*> v  .:?  "referrer"
+            <*> v  .:?  "transitionType"
+            <*> v  .:?  "frameId"
+
+
+instance ToJSON PPageNavigate  where
+    toJSON v = A.object
+        [ "url" .= pPageNavigateUrl v
+        , "referrer" .= pPageNavigateReferrer v
+        , "transitionType" .= pPageNavigateTransitionType v
+        , "frameId" .= pPageNavigateFrameId v
+        ]
+
+
+pageNavigate :: Session -> PPageNavigate -> IO (Either Error PageNavigate)
+pageNavigate session params = sendReceiveCommandResult session "Page.navigate" (Just params)
 
 
 
-pagePrintToPDF :: Session -> Maybe Bool -> Maybe Bool -> Maybe Bool -> Maybe Int -> Maybe Int -> Maybe Int -> Maybe Int -> Maybe Int -> Maybe Int -> Maybe Int -> Maybe String -> Maybe String -> Maybe String -> Maybe Bool -> IO (Either Error PagePrintToPDF)
-pagePrintToPDF session pagePrintToPdfLandscape pagePrintToPdfDisplayHeaderFooter pagePrintToPdfPrintBackground pagePrintToPdfScale pagePrintToPdfPaperWidth pagePrintToPdfPaperHeight pagePrintToPdfMarginTop pagePrintToPdfMarginBottom pagePrintToPdfMarginLeft pagePrintToPdfMarginRight pagePrintToPdfPageRanges pagePrintToPdfHeaderTemplate pagePrintToPdfFooterTemplate pagePrintToPdfPreferCssPageSize = sendReceiveCommandResult (conn session) ("Page","printToPDF") ([] ++ (catMaybes [fmap (("landscape",) . ToJSONEx) pagePrintToPdfLandscape, fmap (("displayHeaderFooter",) . ToJSONEx) pagePrintToPdfDisplayHeaderFooter, fmap (("printBackground",) . ToJSONEx) pagePrintToPdfPrintBackground, fmap (("scale",) . ToJSONEx) pagePrintToPdfScale, fmap (("paperWidth",) . ToJSONEx) pagePrintToPdfPaperWidth, fmap (("paperHeight",) . ToJSONEx) pagePrintToPdfPaperHeight, fmap (("marginTop",) . ToJSONEx) pagePrintToPdfMarginTop, fmap (("marginBottom",) . ToJSONEx) pagePrintToPdfMarginBottom, fmap (("marginLeft",) . ToJSONEx) pagePrintToPdfMarginLeft, fmap (("marginRight",) . ToJSONEx) pagePrintToPdfMarginRight, fmap (("pageRanges",) . ToJSONEx) pagePrintToPdfPageRanges, fmap (("headerTemplate",) . ToJSONEx) pagePrintToPdfHeaderTemplate, fmap (("footerTemplate",) . ToJSONEx) pagePrintToPdfFooterTemplate, fmap (("preferCSSPageSize",) . ToJSONEx) pagePrintToPdfPreferCssPageSize]))
+data PPageNavigateToHistoryEntry = PPageNavigateToHistoryEntry {
+    pPageNavigateToHistoryEntryEntryId :: Int
+} deriving (Eq, Show, Read)
+instance FromJSON  PPageNavigateToHistoryEntry where
+    parseJSON = A.withObject "PPageNavigateToHistoryEntry" $ \v ->
+         PPageNavigateToHistoryEntry <$> v .:  "entryId"
 
 
-pageReload :: Session -> Maybe Bool -> Maybe String -> IO (Maybe Error)
-pageReload session pageReloadIgnoreCache pageReloadScriptToEvaluateOnLoad = sendReceiveCommand (conn session) ("Page","reload") ([] ++ (catMaybes [fmap (("ignoreCache",) . ToJSONEx) pageReloadIgnoreCache, fmap (("scriptToEvaluateOnLoad",) . ToJSONEx) pageReloadScriptToEvaluateOnLoad]))
+instance ToJSON PPageNavigateToHistoryEntry  where
+    toJSON v = A.object
+        [ "entryId" .= pPageNavigateToHistoryEntryEntryId v
+        ]
 
 
-pageRemoveScriptToEvaluateOnNewDocument :: Session -> PageScriptIdentifier -> IO (Maybe Error)
-pageRemoveScriptToEvaluateOnNewDocument session pageRemoveScriptToEvaluateOnNewDocumentIdentifier = sendReceiveCommand (conn session) ("Page","removeScriptToEvaluateOnNewDocument") ([("identifier", ToJSONEx pageRemoveScriptToEvaluateOnNewDocumentIdentifier)] ++ (catMaybes []))
+pageNavigateToHistoryEntry :: Session -> PPageNavigateToHistoryEntry -> IO (Maybe Error)
+pageNavigateToHistoryEntry session params = sendReceiveCommand session "Page.navigateToHistoryEntry" (Just params)
+
+data PagePrintToPdf = PagePrintToPdf {
+    pagePrintToPdfData :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PagePrintToPdf where
+    parseJSON = A.withObject "PagePrintToPdf" $ \v ->
+         PagePrintToPdf <$> v .:  "data"
 
 
-pageSetDocumentContent :: Session -> PageFrameId -> String -> IO (Maybe Error)
-pageSetDocumentContent session pageSetDocumentContentFrameId pageSetDocumentContentHtml = sendReceiveCommand (conn session) ("Page","setDocumentContent") ([("frameId", ToJSONEx pageSetDocumentContentFrameId), ("html", ToJSONEx pageSetDocumentContentHtml)] ++ (catMaybes []))
+
+instance Command  PagePrintToPdf where
+    commandName _ = "Page.printToPDF"
+
+data PPagePrintToPdf = PPagePrintToPdf {
+    pPagePrintToPdfLandscape :: Maybe Bool,
+    pPagePrintToPdfDisplayHeaderFooter :: Maybe Bool,
+    pPagePrintToPdfPrintBackground :: Maybe Bool,
+    pPagePrintToPdfScale :: Maybe Int,
+    pPagePrintToPdfPaperWidth :: Maybe Int,
+    pPagePrintToPdfPaperHeight :: Maybe Int,
+    pPagePrintToPdfMarginTop :: Maybe Int,
+    pPagePrintToPdfMarginBottom :: Maybe Int,
+    pPagePrintToPdfMarginLeft :: Maybe Int,
+    pPagePrintToPdfMarginRight :: Maybe Int,
+    pPagePrintToPdfPageRanges :: Maybe String,
+    pPagePrintToPdfHeaderTemplate :: Maybe String,
+    pPagePrintToPdfFooterTemplate :: Maybe String,
+    pPagePrintToPdfPreferCssPageSize :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PPagePrintToPdf where
+    parseJSON = A.withObject "PPagePrintToPdf" $ \v ->
+         PPagePrintToPdf <$> v .:?  "landscape"
+            <*> v  .:?  "displayHeaderFooter"
+            <*> v  .:?  "printBackground"
+            <*> v  .:?  "scale"
+            <*> v  .:?  "paperWidth"
+            <*> v  .:?  "paperHeight"
+            <*> v  .:?  "marginTop"
+            <*> v  .:?  "marginBottom"
+            <*> v  .:?  "marginLeft"
+            <*> v  .:?  "marginRight"
+            <*> v  .:?  "pageRanges"
+            <*> v  .:?  "headerTemplate"
+            <*> v  .:?  "footerTemplate"
+            <*> v  .:?  "preferCSSPageSize"
+
+
+instance ToJSON PPagePrintToPdf  where
+    toJSON v = A.object
+        [ "landscape" .= pPagePrintToPdfLandscape v
+        , "displayHeaderFooter" .= pPagePrintToPdfDisplayHeaderFooter v
+        , "printBackground" .= pPagePrintToPdfPrintBackground v
+        , "scale" .= pPagePrintToPdfScale v
+        , "paperWidth" .= pPagePrintToPdfPaperWidth v
+        , "paperHeight" .= pPagePrintToPdfPaperHeight v
+        , "marginTop" .= pPagePrintToPdfMarginTop v
+        , "marginBottom" .= pPagePrintToPdfMarginBottom v
+        , "marginLeft" .= pPagePrintToPdfMarginLeft v
+        , "marginRight" .= pPagePrintToPdfMarginRight v
+        , "pageRanges" .= pPagePrintToPdfPageRanges v
+        , "headerTemplate" .= pPagePrintToPdfHeaderTemplate v
+        , "footerTemplate" .= pPagePrintToPdfFooterTemplate v
+        , "preferCSSPageSize" .= pPagePrintToPdfPreferCssPageSize v
+        ]
+
+
+pagePrintToPdf :: Session -> PPagePrintToPdf -> IO (Either Error PagePrintToPdf)
+pagePrintToPdf session params = sendReceiveCommandResult session "Page.printToPDF" (Just params)
+
+
+
+data PPageReload = PPageReload {
+    pPageReloadIgnoreCache :: Maybe Bool,
+    pPageReloadScriptToEvaluateOnLoad :: Maybe String
+} deriving (Eq, Show, Read)
+instance FromJSON  PPageReload where
+    parseJSON = A.withObject "PPageReload" $ \v ->
+         PPageReload <$> v .:?  "ignoreCache"
+            <*> v  .:?  "scriptToEvaluateOnLoad"
+
+
+instance ToJSON PPageReload  where
+    toJSON v = A.object
+        [ "ignoreCache" .= pPageReloadIgnoreCache v
+        , "scriptToEvaluateOnLoad" .= pPageReloadScriptToEvaluateOnLoad v
+        ]
+
+
+pageReload :: Session -> PPageReload -> IO (Maybe Error)
+pageReload session params = sendReceiveCommand session "Page.reload" (Just params)
+
+
+
+data PPageRemoveScriptToEvaluateOnNewDocument = PPageRemoveScriptToEvaluateOnNewDocument {
+    pPageRemoveScriptToEvaluateOnNewDocumentIdentifier :: PageScriptIdentifier
+} deriving (Eq, Show, Read)
+instance FromJSON  PPageRemoveScriptToEvaluateOnNewDocument where
+    parseJSON = A.withObject "PPageRemoveScriptToEvaluateOnNewDocument" $ \v ->
+         PPageRemoveScriptToEvaluateOnNewDocument <$> v .:  "identifier"
+
+
+instance ToJSON PPageRemoveScriptToEvaluateOnNewDocument  where
+    toJSON v = A.object
+        [ "identifier" .= pPageRemoveScriptToEvaluateOnNewDocumentIdentifier v
+        ]
+
+
+pageRemoveScriptToEvaluateOnNewDocument :: Session -> PPageRemoveScriptToEvaluateOnNewDocument -> IO (Maybe Error)
+pageRemoveScriptToEvaluateOnNewDocument session params = sendReceiveCommand session "Page.removeScriptToEvaluateOnNewDocument" (Just params)
+
+
+
+data PPageSetDocumentContent = PPageSetDocumentContent {
+    pPageSetDocumentContentFrameId :: PageFrameId,
+    pPageSetDocumentContentHtml :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PPageSetDocumentContent where
+    parseJSON = A.withObject "PPageSetDocumentContent" $ \v ->
+         PPageSetDocumentContent <$> v .:  "frameId"
+            <*> v  .:  "html"
+
+
+instance ToJSON PPageSetDocumentContent  where
+    toJSON v = A.object
+        [ "frameId" .= pPageSetDocumentContentFrameId v
+        , "html" .= pPageSetDocumentContentHtml v
+        ]
+
+
+pageSetDocumentContent :: Session -> PPageSetDocumentContent -> IO (Maybe Error)
+pageSetDocumentContent session params = sendReceiveCommand session "Page.setDocumentContent" (Just params)
+
+
 
 
 pageStopLoading :: Session -> IO (Maybe Error)
-pageStopLoading session  = sendReceiveCommand (conn session) ("Page","stopLoading") ([] ++ (catMaybes []))
+pageStopLoading session = sendReceiveCommand session "Page.stopLoading" (Nothing :: Maybe ())
 
 
 
@@ -3667,12 +5120,29 @@ instance ToJSON PerformanceMetric  where
 
 
 
+
+
 performanceDisable :: Session -> IO (Maybe Error)
-performanceDisable session  = sendReceiveCommand (conn session) ("Performance","disable") ([] ++ (catMaybes []))
+performanceDisable session = sendReceiveCommand session "Performance.disable" (Nothing :: Maybe ())
 
 
-performanceEnable :: Session -> Maybe String -> IO (Maybe Error)
-performanceEnable session performanceEnableTimeDomain = sendReceiveCommand (conn session) ("Performance","enable") ([] ++ (catMaybes [fmap (("timeDomain",) . ToJSONEx) performanceEnableTimeDomain]))
+
+data PPerformanceEnable = PPerformanceEnable {
+    pPerformanceEnableTimeDomain :: Maybe String
+} deriving (Eq, Show, Read)
+instance FromJSON  PPerformanceEnable where
+    parseJSON = A.withObject "PPerformanceEnable" $ \v ->
+         PPerformanceEnable <$> v .:?  "timeDomain"
+
+
+instance ToJSON PPerformanceEnable  where
+    toJSON v = A.object
+        [ "timeDomain" .= pPerformanceEnableTimeDomain v
+        ]
+
+
+performanceEnable :: Session -> PPerformanceEnable -> IO (Maybe Error)
+performanceEnable session params = sendReceiveCommand session "Performance.enable" (Just params)
 
 data PerformanceGetMetrics = PerformanceGetMetrics {
     performanceGetMetricsMetrics :: [PerformanceMetric]
@@ -3683,8 +5153,12 @@ instance FromJSON  PerformanceGetMetrics where
 
 
 
+instance Command  PerformanceGetMetrics where
+    commandName _ = "Performance.getMetrics"
+
+
 performanceGetMetrics :: Session -> IO (Either Error PerformanceGetMetrics)
-performanceGetMetrics session  = sendReceiveCommandResult (conn session) ("Performance","getMetrics") ([] ++ (catMaybes []))
+performanceGetMetrics session = sendReceiveCommandResult session "Performance.getMetrics" (Nothing :: Maybe ())
 
 
 
@@ -3695,11 +5169,11 @@ data SecurityMixedContentType = SecurityMixedContentTypeBlockable | SecurityMixe
     deriving (Eq, Show, Read)
 instance FromJSON SecurityMixedContentType where
     parseJSON = A.withText  "SecurityMixedContentType"  $ \v -> do
-        pure $ case v of
-                "blockable" -> SecurityMixedContentTypeBlockable
-                "optionally-blockable" -> SecurityMixedContentTypeOptionallyBlockable
-                "none" -> SecurityMixedContentTypeNone
-                _ -> error "failed to parse SecurityMixedContentType"
+        case v of
+                "blockable" -> pure $ SecurityMixedContentTypeBlockable
+                "optionally-blockable" -> pure $ SecurityMixedContentTypeOptionallyBlockable
+                "none" -> pure $ SecurityMixedContentTypeNone
+                _ -> fail "failed to parse SecurityMixedContentType"
 
 instance ToJSON SecurityMixedContentType where
     toJSON v = A.String $
@@ -3714,14 +5188,14 @@ data SecuritySecurityState = SecuritySecurityStateUnknown | SecuritySecurityStat
     deriving (Eq, Show, Read)
 instance FromJSON SecuritySecurityState where
     parseJSON = A.withText  "SecuritySecurityState"  $ \v -> do
-        pure $ case v of
-                "unknown" -> SecuritySecurityStateUnknown
-                "neutral" -> SecuritySecurityStateNeutral
-                "insecure" -> SecuritySecurityStateInsecure
-                "secure" -> SecuritySecurityStateSecure
-                "info" -> SecuritySecurityStateInfo
-                "insecure-broken" -> SecuritySecurityStateInsecureBroken
-                _ -> error "failed to parse SecuritySecurityState"
+        case v of
+                "unknown" -> pure $ SecuritySecurityStateUnknown
+                "neutral" -> pure $ SecuritySecurityStateNeutral
+                "insecure" -> pure $ SecuritySecurityStateInsecure
+                "secure" -> pure $ SecuritySecurityStateSecure
+                "info" -> pure $ SecuritySecurityStateInfo
+                "insecure-broken" -> pure $ SecuritySecurityStateInsecureBroken
+                _ -> fail "failed to parse SecuritySecurityState"
 
 instance ToJSON SecuritySecurityState where
     toJSON v = A.String $
@@ -3772,10 +5246,10 @@ data SecurityCertificateErrorAction = SecurityCertificateErrorActionContinue | S
     deriving (Eq, Show, Read)
 instance FromJSON SecurityCertificateErrorAction where
     parseJSON = A.withText  "SecurityCertificateErrorAction"  $ \v -> do
-        pure $ case v of
-                "continue" -> SecurityCertificateErrorActionContinue
-                "cancel" -> SecurityCertificateErrorActionCancel
-                _ -> error "failed to parse SecurityCertificateErrorAction"
+        case v of
+                "continue" -> pure $ SecurityCertificateErrorActionContinue
+                "cancel" -> pure $ SecurityCertificateErrorActionCancel
+                _ -> fail "failed to parse SecurityCertificateErrorAction"
 
 instance ToJSON SecurityCertificateErrorAction where
     toJSON v = A.String $
@@ -3785,12 +5259,16 @@ instance ToJSON SecurityCertificateErrorAction where
 
 
 
+
+
 securityDisable :: Session -> IO (Maybe Error)
-securityDisable session  = sendReceiveCommand (conn session) ("Security","disable") ([] ++ (catMaybes []))
+securityDisable session = sendReceiveCommand session "Security.disable" (Nothing :: Maybe ())
+
+
 
 
 securityEnable :: Session -> IO (Maybe Error)
-securityEnable session  = sendReceiveCommand (conn session) ("Security","enable") ([] ++ (catMaybes []))
+securityEnable session = sendReceiveCommand session "Security.enable" (Nothing :: Maybe ())
 
 
 
@@ -3933,8 +5411,23 @@ instance ToJSON TargetTargetInfo  where
 
 
 
-targetActivateTarget :: Session -> TargetTargetID -> IO (Maybe Error)
-targetActivateTarget session targetActivateTargetTargetId = sendReceiveCommand (conn session) ("Target","activateTarget") ([("targetId", ToJSONEx targetActivateTargetTargetId)] ++ (catMaybes []))
+
+data PTargetActivateTarget = PTargetActivateTarget {
+    pTargetActivateTargetTargetId :: TargetTargetID
+} deriving (Eq, Show, Read)
+instance FromJSON  PTargetActivateTarget where
+    parseJSON = A.withObject "PTargetActivateTarget" $ \v ->
+         PTargetActivateTarget <$> v .:  "targetId"
+
+
+instance ToJSON PTargetActivateTarget  where
+    toJSON v = A.object
+        [ "targetId" .= pTargetActivateTargetTargetId v
+        ]
+
+
+targetActivateTarget :: Session -> PTargetActivateTarget -> IO (Maybe Error)
+targetActivateTarget session params = sendReceiveCommand session "Target.activateTarget" (Just params)
 
 data TargetAttachToTarget = TargetAttachToTarget {
     targetAttachToTargetSessionId :: TargetSessionID
@@ -3945,12 +5438,47 @@ instance FromJSON  TargetAttachToTarget where
 
 
 
-targetAttachToTarget :: Session -> TargetTargetID -> Maybe Bool -> IO (Either Error TargetAttachToTarget)
-targetAttachToTarget session targetAttachToTargetTargetId targetAttachToTargetFlatten = sendReceiveCommandResult (conn session) ("Target","attachToTarget") ([("targetId", ToJSONEx targetAttachToTargetTargetId)] ++ (catMaybes [fmap (("flatten",) . ToJSONEx) targetAttachToTargetFlatten]))
+instance Command  TargetAttachToTarget where
+    commandName _ = "Target.attachToTarget"
+
+data PTargetAttachToTarget = PTargetAttachToTarget {
+    pTargetAttachToTargetTargetId :: TargetTargetID,
+    pTargetAttachToTargetFlatten :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PTargetAttachToTarget where
+    parseJSON = A.withObject "PTargetAttachToTarget" $ \v ->
+         PTargetAttachToTarget <$> v .:  "targetId"
+            <*> v  .:?  "flatten"
 
 
-targetCloseTarget :: Session -> TargetTargetID -> IO (Maybe Error)
-targetCloseTarget session targetCloseTargetTargetId = sendReceiveCommand (conn session) ("Target","closeTarget") ([("targetId", ToJSONEx targetCloseTargetTargetId)] ++ (catMaybes []))
+instance ToJSON PTargetAttachToTarget  where
+    toJSON v = A.object
+        [ "targetId" .= pTargetAttachToTargetTargetId v
+        , "flatten" .= pTargetAttachToTargetFlatten v
+        ]
+
+
+targetAttachToTarget :: Session -> PTargetAttachToTarget -> IO (Either Error TargetAttachToTarget)
+targetAttachToTarget session params = sendReceiveCommandResult session "Target.attachToTarget" (Just params)
+
+
+
+data PTargetCloseTarget = PTargetCloseTarget {
+    pTargetCloseTargetTargetId :: TargetTargetID
+} deriving (Eq, Show, Read)
+instance FromJSON  PTargetCloseTarget where
+    parseJSON = A.withObject "PTargetCloseTarget" $ \v ->
+         PTargetCloseTarget <$> v .:  "targetId"
+
+
+instance ToJSON PTargetCloseTarget  where
+    toJSON v = A.object
+        [ "targetId" .= pTargetCloseTargetTargetId v
+        ]
+
+
+targetCloseTarget :: Session -> PTargetCloseTarget -> IO (Maybe Error)
+targetCloseTarget session params = sendReceiveCommand session "Target.closeTarget" (Just params)
 
 data TargetCreateTarget = TargetCreateTarget {
     targetCreateTargetTargetId :: TargetTargetID
@@ -3961,12 +5489,56 @@ instance FromJSON  TargetCreateTarget where
 
 
 
-targetCreateTarget :: Session -> String -> Maybe Int -> Maybe Int -> Maybe Bool -> Maybe Bool -> IO (Either Error TargetCreateTarget)
-targetCreateTarget session targetCreateTargetUrl targetCreateTargetWidth targetCreateTargetHeight targetCreateTargetNewWindow targetCreateTargetBackground = sendReceiveCommandResult (conn session) ("Target","createTarget") ([("url", ToJSONEx targetCreateTargetUrl)] ++ (catMaybes [fmap (("width",) . ToJSONEx) targetCreateTargetWidth, fmap (("height",) . ToJSONEx) targetCreateTargetHeight, fmap (("newWindow",) . ToJSONEx) targetCreateTargetNewWindow, fmap (("background",) . ToJSONEx) targetCreateTargetBackground]))
+instance Command  TargetCreateTarget where
+    commandName _ = "Target.createTarget"
+
+data PTargetCreateTarget = PTargetCreateTarget {
+    pTargetCreateTargetUrl :: String,
+    pTargetCreateTargetWidth :: Maybe Int,
+    pTargetCreateTargetHeight :: Maybe Int,
+    pTargetCreateTargetNewWindow :: Maybe Bool,
+    pTargetCreateTargetBackground :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PTargetCreateTarget where
+    parseJSON = A.withObject "PTargetCreateTarget" $ \v ->
+         PTargetCreateTarget <$> v .:  "url"
+            <*> v  .:?  "width"
+            <*> v  .:?  "height"
+            <*> v  .:?  "newWindow"
+            <*> v  .:?  "background"
 
 
-targetDetachFromTarget :: Session -> Maybe TargetSessionID -> IO (Maybe Error)
-targetDetachFromTarget session targetDetachFromTargetSessionId = sendReceiveCommand (conn session) ("Target","detachFromTarget") ([] ++ (catMaybes [fmap (("sessionId",) . ToJSONEx) targetDetachFromTargetSessionId]))
+instance ToJSON PTargetCreateTarget  where
+    toJSON v = A.object
+        [ "url" .= pTargetCreateTargetUrl v
+        , "width" .= pTargetCreateTargetWidth v
+        , "height" .= pTargetCreateTargetHeight v
+        , "newWindow" .= pTargetCreateTargetNewWindow v
+        , "background" .= pTargetCreateTargetBackground v
+        ]
+
+
+targetCreateTarget :: Session -> PTargetCreateTarget -> IO (Either Error TargetCreateTarget)
+targetCreateTarget session params = sendReceiveCommandResult session "Target.createTarget" (Just params)
+
+
+
+data PTargetDetachFromTarget = PTargetDetachFromTarget {
+    pTargetDetachFromTargetSessionId :: Maybe TargetSessionID
+} deriving (Eq, Show, Read)
+instance FromJSON  PTargetDetachFromTarget where
+    parseJSON = A.withObject "PTargetDetachFromTarget" $ \v ->
+         PTargetDetachFromTarget <$> v .:?  "sessionId"
+
+
+instance ToJSON PTargetDetachFromTarget  where
+    toJSON v = A.object
+        [ "sessionId" .= pTargetDetachFromTargetSessionId v
+        ]
+
+
+targetDetachFromTarget :: Session -> PTargetDetachFromTarget -> IO (Maybe Error)
+targetDetachFromTarget session params = sendReceiveCommand session "Target.detachFromTarget" (Just params)
 
 data TargetGetTargets = TargetGetTargets {
     targetGetTargetsTargetInfos :: [TargetTargetInfo]
@@ -3977,12 +5549,31 @@ instance FromJSON  TargetGetTargets where
 
 
 
+instance Command  TargetGetTargets where
+    commandName _ = "Target.getTargets"
+
+
 targetGetTargets :: Session -> IO (Either Error TargetGetTargets)
-targetGetTargets session  = sendReceiveCommandResult (conn session) ("Target","getTargets") ([] ++ (catMaybes []))
+targetGetTargets session = sendReceiveCommandResult session "Target.getTargets" (Nothing :: Maybe ())
 
 
-targetSetDiscoverTargets :: Session -> Bool -> IO (Maybe Error)
-targetSetDiscoverTargets session targetSetDiscoverTargetsDiscover = sendReceiveCommand (conn session) ("Target","setDiscoverTargets") ([("discover", ToJSONEx targetSetDiscoverTargetsDiscover)] ++ (catMaybes []))
+
+data PTargetSetDiscoverTargets = PTargetSetDiscoverTargets {
+    pTargetSetDiscoverTargetsDiscover :: Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PTargetSetDiscoverTargets where
+    parseJSON = A.withObject "PTargetSetDiscoverTargets" $ \v ->
+         PTargetSetDiscoverTargets <$> v .:  "discover"
+
+
+instance ToJSON PTargetSetDiscoverTargets  where
+    toJSON v = A.object
+        [ "discover" .= pTargetSetDiscoverTargetsDiscover v
+        ]
+
+
+targetSetDiscoverTargets :: Session -> PTargetSetDiscoverTargets -> IO (Maybe Error)
+targetSetDiscoverTargets session params = sendReceiveCommand session "Target.setDiscoverTargets" (Just params)
 
 
 
@@ -4067,10 +5658,10 @@ data FetchRequestStage = FetchRequestStageRequest | FetchRequestStageResponse
     deriving (Eq, Show, Read)
 instance FromJSON FetchRequestStage where
     parseJSON = A.withText  "FetchRequestStage"  $ \v -> do
-        pure $ case v of
-                "Request" -> FetchRequestStageRequest
-                "Response" -> FetchRequestStageResponse
-                _ -> error "failed to parse FetchRequestStage"
+        case v of
+                "Request" -> pure $ FetchRequestStageRequest
+                "Response" -> pure $ FetchRequestStageResponse
+                _ -> fail "failed to parse FetchRequestStage"
 
 instance ToJSON FetchRequestStage where
     toJSON v = A.String $
@@ -4164,28 +5755,141 @@ instance ToJSON FetchAuthChallengeResponse  where
 
 
 
+
+
 fetchDisable :: Session -> IO (Maybe Error)
-fetchDisable session  = sendReceiveCommand (conn session) ("Fetch","disable") ([] ++ (catMaybes []))
+fetchDisable session = sendReceiveCommand session "Fetch.disable" (Nothing :: Maybe ())
 
 
-fetchEnable :: Session -> Maybe [FetchRequestPattern] -> Maybe Bool -> IO (Maybe Error)
-fetchEnable session fetchEnablePatterns fetchEnableHandleAuthRequests = sendReceiveCommand (conn session) ("Fetch","enable") ([] ++ (catMaybes [fmap (("patterns",) . ToJSONEx) fetchEnablePatterns, fmap (("handleAuthRequests",) . ToJSONEx) fetchEnableHandleAuthRequests]))
+
+data PFetchEnable = PFetchEnable {
+    pFetchEnablePatterns :: Maybe [FetchRequestPattern],
+    pFetchEnableHandleAuthRequests :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PFetchEnable where
+    parseJSON = A.withObject "PFetchEnable" $ \v ->
+         PFetchEnable <$> v .:?  "patterns"
+            <*> v  .:?  "handleAuthRequests"
 
 
-fetchFailRequest :: Session -> FetchRequestId -> NetworkErrorReason -> IO (Maybe Error)
-fetchFailRequest session fetchFailRequestRequestId fetchFailRequestErrorReason = sendReceiveCommand (conn session) ("Fetch","failRequest") ([("requestId", ToJSONEx fetchFailRequestRequestId), ("errorReason", ToJSONEx fetchFailRequestErrorReason)] ++ (catMaybes []))
+instance ToJSON PFetchEnable  where
+    toJSON v = A.object
+        [ "patterns" .= pFetchEnablePatterns v
+        , "handleAuthRequests" .= pFetchEnableHandleAuthRequests v
+        ]
 
 
-fetchFulfillRequest :: Session -> FetchRequestId -> Int -> Maybe [FetchHeaderEntry] -> Maybe String -> Maybe String -> Maybe String -> IO (Maybe Error)
-fetchFulfillRequest session fetchFulfillRequestRequestId fetchFulfillRequestResponseCode fetchFulfillRequestResponseHeaders fetchFulfillRequestBinaryResponseHeaders fetchFulfillRequestBody fetchFulfillRequestResponsePhrase = sendReceiveCommand (conn session) ("Fetch","fulfillRequest") ([("requestId", ToJSONEx fetchFulfillRequestRequestId), ("responseCode", ToJSONEx fetchFulfillRequestResponseCode)] ++ (catMaybes [fmap (("responseHeaders",) . ToJSONEx) fetchFulfillRequestResponseHeaders, fmap (("binaryResponseHeaders",) . ToJSONEx) fetchFulfillRequestBinaryResponseHeaders, fmap (("body",) . ToJSONEx) fetchFulfillRequestBody, fmap (("responsePhrase",) . ToJSONEx) fetchFulfillRequestResponsePhrase]))
+fetchEnable :: Session -> PFetchEnable -> IO (Maybe Error)
+fetchEnable session params = sendReceiveCommand session "Fetch.enable" (Just params)
 
 
-fetchContinueRequest :: Session -> FetchRequestId -> Maybe String -> Maybe String -> Maybe String -> Maybe [FetchHeaderEntry] -> IO (Maybe Error)
-fetchContinueRequest session fetchContinueRequestRequestId fetchContinueRequestUrl fetchContinueRequestMethod fetchContinueRequestPostData fetchContinueRequestHeaders = sendReceiveCommand (conn session) ("Fetch","continueRequest") ([("requestId", ToJSONEx fetchContinueRequestRequestId)] ++ (catMaybes [fmap (("url",) . ToJSONEx) fetchContinueRequestUrl, fmap (("method",) . ToJSONEx) fetchContinueRequestMethod, fmap (("postData",) . ToJSONEx) fetchContinueRequestPostData, fmap (("headers",) . ToJSONEx) fetchContinueRequestHeaders]))
+
+data PFetchFailRequest = PFetchFailRequest {
+    pFetchFailRequestRequestId :: FetchRequestId,
+    pFetchFailRequestErrorReason :: NetworkErrorReason
+} deriving (Eq, Show, Read)
+instance FromJSON  PFetchFailRequest where
+    parseJSON = A.withObject "PFetchFailRequest" $ \v ->
+         PFetchFailRequest <$> v .:  "requestId"
+            <*> v  .:  "errorReason"
 
 
-fetchContinueWithAuth :: Session -> FetchRequestId -> FetchAuthChallengeResponse -> IO (Maybe Error)
-fetchContinueWithAuth session fetchContinueWithAuthRequestId fetchContinueWithAuthAuthChallengeResponse = sendReceiveCommand (conn session) ("Fetch","continueWithAuth") ([("requestId", ToJSONEx fetchContinueWithAuthRequestId), ("authChallengeResponse", ToJSONEx fetchContinueWithAuthAuthChallengeResponse)] ++ (catMaybes []))
+instance ToJSON PFetchFailRequest  where
+    toJSON v = A.object
+        [ "requestId" .= pFetchFailRequestRequestId v
+        , "errorReason" .= pFetchFailRequestErrorReason v
+        ]
+
+
+fetchFailRequest :: Session -> PFetchFailRequest -> IO (Maybe Error)
+fetchFailRequest session params = sendReceiveCommand session "Fetch.failRequest" (Just params)
+
+
+
+data PFetchFulfillRequest = PFetchFulfillRequest {
+    pFetchFulfillRequestRequestId :: FetchRequestId,
+    pFetchFulfillRequestResponseCode :: Int,
+    pFetchFulfillRequestResponseHeaders :: Maybe [FetchHeaderEntry],
+    pFetchFulfillRequestBinaryResponseHeaders :: Maybe String,
+    pFetchFulfillRequestBody :: Maybe String,
+    pFetchFulfillRequestResponsePhrase :: Maybe String
+} deriving (Eq, Show, Read)
+instance FromJSON  PFetchFulfillRequest where
+    parseJSON = A.withObject "PFetchFulfillRequest" $ \v ->
+         PFetchFulfillRequest <$> v .:  "requestId"
+            <*> v  .:  "responseCode"
+            <*> v  .:?  "responseHeaders"
+            <*> v  .:?  "binaryResponseHeaders"
+            <*> v  .:?  "body"
+            <*> v  .:?  "responsePhrase"
+
+
+instance ToJSON PFetchFulfillRequest  where
+    toJSON v = A.object
+        [ "requestId" .= pFetchFulfillRequestRequestId v
+        , "responseCode" .= pFetchFulfillRequestResponseCode v
+        , "responseHeaders" .= pFetchFulfillRequestResponseHeaders v
+        , "binaryResponseHeaders" .= pFetchFulfillRequestBinaryResponseHeaders v
+        , "body" .= pFetchFulfillRequestBody v
+        , "responsePhrase" .= pFetchFulfillRequestResponsePhrase v
+        ]
+
+
+fetchFulfillRequest :: Session -> PFetchFulfillRequest -> IO (Maybe Error)
+fetchFulfillRequest session params = sendReceiveCommand session "Fetch.fulfillRequest" (Just params)
+
+
+
+data PFetchContinueRequest = PFetchContinueRequest {
+    pFetchContinueRequestRequestId :: FetchRequestId,
+    pFetchContinueRequestUrl :: Maybe String,
+    pFetchContinueRequestMethod :: Maybe String,
+    pFetchContinueRequestPostData :: Maybe String,
+    pFetchContinueRequestHeaders :: Maybe [FetchHeaderEntry]
+} deriving (Eq, Show, Read)
+instance FromJSON  PFetchContinueRequest where
+    parseJSON = A.withObject "PFetchContinueRequest" $ \v ->
+         PFetchContinueRequest <$> v .:  "requestId"
+            <*> v  .:?  "url"
+            <*> v  .:?  "method"
+            <*> v  .:?  "postData"
+            <*> v  .:?  "headers"
+
+
+instance ToJSON PFetchContinueRequest  where
+    toJSON v = A.object
+        [ "requestId" .= pFetchContinueRequestRequestId v
+        , "url" .= pFetchContinueRequestUrl v
+        , "method" .= pFetchContinueRequestMethod v
+        , "postData" .= pFetchContinueRequestPostData v
+        , "headers" .= pFetchContinueRequestHeaders v
+        ]
+
+
+fetchContinueRequest :: Session -> PFetchContinueRequest -> IO (Maybe Error)
+fetchContinueRequest session params = sendReceiveCommand session "Fetch.continueRequest" (Just params)
+
+
+
+data PFetchContinueWithAuth = PFetchContinueWithAuth {
+    pFetchContinueWithAuthRequestId :: FetchRequestId,
+    pFetchContinueWithAuthAuthChallengeResponse :: FetchAuthChallengeResponse
+} deriving (Eq, Show, Read)
+instance FromJSON  PFetchContinueWithAuth where
+    parseJSON = A.withObject "PFetchContinueWithAuth" $ \v ->
+         PFetchContinueWithAuth <$> v .:  "requestId"
+            <*> v  .:  "authChallengeResponse"
+
+
+instance ToJSON PFetchContinueWithAuth  where
+    toJSON v = A.object
+        [ "requestId" .= pFetchContinueWithAuthRequestId v
+        , "authChallengeResponse" .= pFetchContinueWithAuthAuthChallengeResponse v
+        ]
+
+
+fetchContinueWithAuth :: Session -> PFetchContinueWithAuth -> IO (Maybe Error)
+fetchContinueWithAuth session params = sendReceiveCommand session "Fetch.continueWithAuth" (Just params)
 
 data FetchGetResponseBody = FetchGetResponseBody {
     fetchGetResponseBodyBody :: String,
@@ -4198,8 +5902,25 @@ instance FromJSON  FetchGetResponseBody where
 
 
 
-fetchGetResponseBody :: Session -> FetchRequestId -> IO (Either Error FetchGetResponseBody)
-fetchGetResponseBody session fetchGetResponseBodyRequestId = sendReceiveCommandResult (conn session) ("Fetch","getResponseBody") ([("requestId", ToJSONEx fetchGetResponseBodyRequestId)] ++ (catMaybes []))
+instance Command  FetchGetResponseBody where
+    commandName _ = "Fetch.getResponseBody"
+
+data PFetchGetResponseBody = PFetchGetResponseBody {
+    pFetchGetResponseBodyRequestId :: FetchRequestId
+} deriving (Eq, Show, Read)
+instance FromJSON  PFetchGetResponseBody where
+    parseJSON = A.withObject "PFetchGetResponseBody" $ \v ->
+         PFetchGetResponseBody <$> v .:  "requestId"
+
+
+instance ToJSON PFetchGetResponseBody  where
+    toJSON v = A.object
+        [ "requestId" .= pFetchGetResponseBodyRequestId v
+        ]
+
+
+fetchGetResponseBody :: Session -> PFetchGetResponseBody -> IO (Either Error FetchGetResponseBody)
+fetchGetResponseBody session params = sendReceiveCommandResult session "Fetch.getResponseBody" (Just params)
 
 data FetchTakeResponseBodyAsStream = FetchTakeResponseBodyAsStream {
     fetchTakeResponseBodyAsStreamStream :: IOStreamHandle
@@ -4210,8 +5931,25 @@ instance FromJSON  FetchTakeResponseBodyAsStream where
 
 
 
-fetchTakeResponseBodyAsStream :: Session -> FetchRequestId -> IO (Either Error FetchTakeResponseBodyAsStream)
-fetchTakeResponseBodyAsStream session fetchTakeResponseBodyAsStreamRequestId = sendReceiveCommandResult (conn session) ("Fetch","takeResponseBodyAsStream") ([("requestId", ToJSONEx fetchTakeResponseBodyAsStreamRequestId)] ++ (catMaybes []))
+instance Command  FetchTakeResponseBodyAsStream where
+    commandName _ = "Fetch.takeResponseBodyAsStream"
+
+data PFetchTakeResponseBodyAsStream = PFetchTakeResponseBodyAsStream {
+    pFetchTakeResponseBodyAsStreamRequestId :: FetchRequestId
+} deriving (Eq, Show, Read)
+instance FromJSON  PFetchTakeResponseBodyAsStream where
+    parseJSON = A.withObject "PFetchTakeResponseBodyAsStream" $ \v ->
+         PFetchTakeResponseBodyAsStream <$> v .:  "requestId"
+
+
+instance ToJSON PFetchTakeResponseBodyAsStream  where
+    toJSON v = A.object
+        [ "requestId" .= pFetchTakeResponseBodyAsStreamRequestId v
+        ]
+
+
+fetchTakeResponseBodyAsStream :: Session -> PFetchTakeResponseBodyAsStream -> IO (Either Error FetchTakeResponseBodyAsStream)
+fetchTakeResponseBodyAsStream session params = sendReceiveCommandResult session "Fetch.takeResponseBodyAsStream" (Just params)
 
 
 
@@ -4265,16 +6003,22 @@ instance ToJSON ConsoleConsoleMessage  where
 
 
 
+
+
 consoleClearMessages :: Session -> IO (Maybe Error)
-consoleClearMessages session  = sendReceiveCommand (conn session) ("Console","clearMessages") ([] ++ (catMaybes []))
+consoleClearMessages session = sendReceiveCommand session "Console.clearMessages" (Nothing :: Maybe ())
+
+
 
 
 consoleDisable :: Session -> IO (Maybe Error)
-consoleDisable session  = sendReceiveCommand (conn session) ("Console","disable") ([] ++ (catMaybes []))
+consoleDisable session = sendReceiveCommand session "Console.disable" (Nothing :: Maybe ())
+
+
 
 
 consoleEnable :: Session -> IO (Maybe Error)
-consoleEnable session  = sendReceiveCommand (conn session) ("Console","enable") ([] ++ (catMaybes []))
+consoleEnable session = sendReceiveCommand session "Console.enable" (Nothing :: Maybe ())
 
 
 
@@ -4335,9 +6079,9 @@ data DebuggerResumed = DebuggerResumed
     deriving (Eq, Show, Read)
 instance FromJSON DebuggerResumed where
     parseJSON = A.withText  "DebuggerResumed"  $ \v -> do
-        pure $ case v of
-                "DebuggerResumed" -> DebuggerResumed
-                _ -> error "failed to parse DebuggerResumed"
+        case v of
+                "DebuggerResumed" -> pure $ DebuggerResumed
+                _ -> fail "failed to parse DebuggerResumed"
 
 instance Event  DebuggerResumed where
     eventName  _   =  "Debugger.resumed"
@@ -4586,10 +6330,10 @@ data DebuggerScriptLanguage = DebuggerScriptLanguageJavaScript | DebuggerScriptL
     deriving (Eq, Show, Read)
 instance FromJSON DebuggerScriptLanguage where
     parseJSON = A.withText  "DebuggerScriptLanguage"  $ \v -> do
-        pure $ case v of
-                "JavaScript" -> DebuggerScriptLanguageJavaScript
-                "WebAssembly" -> DebuggerScriptLanguageWebAssembly
-                _ -> error "failed to parse DebuggerScriptLanguage"
+        case v of
+                "JavaScript" -> pure $ DebuggerScriptLanguageJavaScript
+                "WebAssembly" -> pure $ DebuggerScriptLanguageWebAssembly
+                _ -> fail "failed to parse DebuggerScriptLanguage"
 
 instance ToJSON DebuggerScriptLanguage where
     toJSON v = A.String $
@@ -4617,16 +6361,38 @@ instance ToJSON DebuggerDebugSymbols  where
 
 
 
-debuggerContinueToLocation :: Session -> DebuggerLocation -> Maybe String -> IO (Maybe Error)
-debuggerContinueToLocation session debuggerContinueToLocationLocation debuggerContinueToLocationTargetCallFrames = sendReceiveCommand (conn session) ("Debugger","continueToLocation") ([("location", ToJSONEx debuggerContinueToLocationLocation)] ++ (catMaybes [fmap (("targetCallFrames",) . ToJSONEx) debuggerContinueToLocationTargetCallFrames]))
+
+data PDebuggerContinueToLocation = PDebuggerContinueToLocation {
+    pDebuggerContinueToLocationLocation :: DebuggerLocation,
+    pDebuggerContinueToLocationTargetCallFrames :: Maybe String
+} deriving (Eq, Show, Read)
+instance FromJSON  PDebuggerContinueToLocation where
+    parseJSON = A.withObject "PDebuggerContinueToLocation" $ \v ->
+         PDebuggerContinueToLocation <$> v .:  "location"
+            <*> v  .:?  "targetCallFrames"
+
+
+instance ToJSON PDebuggerContinueToLocation  where
+    toJSON v = A.object
+        [ "location" .= pDebuggerContinueToLocationLocation v
+        , "targetCallFrames" .= pDebuggerContinueToLocationTargetCallFrames v
+        ]
+
+
+debuggerContinueToLocation :: Session -> PDebuggerContinueToLocation -> IO (Maybe Error)
+debuggerContinueToLocation session params = sendReceiveCommand session "Debugger.continueToLocation" (Just params)
+
+
 
 
 debuggerDisable :: Session -> IO (Maybe Error)
-debuggerDisable session  = sendReceiveCommand (conn session) ("Debugger","disable") ([] ++ (catMaybes []))
+debuggerDisable session = sendReceiveCommand session "Debugger.disable" (Nothing :: Maybe ())
+
+
 
 
 debuggerEnable :: Session -> IO (Maybe Error)
-debuggerEnable session  = sendReceiveCommand (conn session) ("Debugger","enable") ([] ++ (catMaybes []))
+debuggerEnable session = sendReceiveCommand session "Debugger.enable" (Nothing :: Maybe ())
 
 data DebuggerEvaluateOnCallFrame = DebuggerEvaluateOnCallFrame {
     debuggerEvaluateOnCallFrameResult :: RuntimeRemoteObject,
@@ -4639,8 +6405,43 @@ instance FromJSON  DebuggerEvaluateOnCallFrame where
 
 
 
-debuggerEvaluateOnCallFrame :: Session -> DebuggerCallFrameId -> String -> Maybe String -> Maybe Bool -> Maybe Bool -> Maybe Bool -> Maybe Bool -> IO (Either Error DebuggerEvaluateOnCallFrame)
-debuggerEvaluateOnCallFrame session debuggerEvaluateOnCallFrameCallFrameId debuggerEvaluateOnCallFrameExpression debuggerEvaluateOnCallFrameObjectGroup debuggerEvaluateOnCallFrameIncludeCommandLineApi debuggerEvaluateOnCallFrameSilent debuggerEvaluateOnCallFrameReturnByValue debuggerEvaluateOnCallFrameThrowOnSideEffect = sendReceiveCommandResult (conn session) ("Debugger","evaluateOnCallFrame") ([("callFrameId", ToJSONEx debuggerEvaluateOnCallFrameCallFrameId), ("expression", ToJSONEx debuggerEvaluateOnCallFrameExpression)] ++ (catMaybes [fmap (("objectGroup",) . ToJSONEx) debuggerEvaluateOnCallFrameObjectGroup, fmap (("includeCommandLineAPI",) . ToJSONEx) debuggerEvaluateOnCallFrameIncludeCommandLineApi, fmap (("silent",) . ToJSONEx) debuggerEvaluateOnCallFrameSilent, fmap (("returnByValue",) . ToJSONEx) debuggerEvaluateOnCallFrameReturnByValue, fmap (("throwOnSideEffect",) . ToJSONEx) debuggerEvaluateOnCallFrameThrowOnSideEffect]))
+instance Command  DebuggerEvaluateOnCallFrame where
+    commandName _ = "Debugger.evaluateOnCallFrame"
+
+data PDebuggerEvaluateOnCallFrame = PDebuggerEvaluateOnCallFrame {
+    pDebuggerEvaluateOnCallFrameCallFrameId :: DebuggerCallFrameId,
+    pDebuggerEvaluateOnCallFrameExpression :: String,
+    pDebuggerEvaluateOnCallFrameObjectGroup :: Maybe String,
+    pDebuggerEvaluateOnCallFrameIncludeCommandLineApi :: Maybe Bool,
+    pDebuggerEvaluateOnCallFrameSilent :: Maybe Bool,
+    pDebuggerEvaluateOnCallFrameReturnByValue :: Maybe Bool,
+    pDebuggerEvaluateOnCallFrameThrowOnSideEffect :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PDebuggerEvaluateOnCallFrame where
+    parseJSON = A.withObject "PDebuggerEvaluateOnCallFrame" $ \v ->
+         PDebuggerEvaluateOnCallFrame <$> v .:  "callFrameId"
+            <*> v  .:  "expression"
+            <*> v  .:?  "objectGroup"
+            <*> v  .:?  "includeCommandLineAPI"
+            <*> v  .:?  "silent"
+            <*> v  .:?  "returnByValue"
+            <*> v  .:?  "throwOnSideEffect"
+
+
+instance ToJSON PDebuggerEvaluateOnCallFrame  where
+    toJSON v = A.object
+        [ "callFrameId" .= pDebuggerEvaluateOnCallFrameCallFrameId v
+        , "expression" .= pDebuggerEvaluateOnCallFrameExpression v
+        , "objectGroup" .= pDebuggerEvaluateOnCallFrameObjectGroup v
+        , "includeCommandLineAPI" .= pDebuggerEvaluateOnCallFrameIncludeCommandLineApi v
+        , "silent" .= pDebuggerEvaluateOnCallFrameSilent v
+        , "returnByValue" .= pDebuggerEvaluateOnCallFrameReturnByValue v
+        , "throwOnSideEffect" .= pDebuggerEvaluateOnCallFrameThrowOnSideEffect v
+        ]
+
+
+debuggerEvaluateOnCallFrame :: Session -> PDebuggerEvaluateOnCallFrame -> IO (Either Error DebuggerEvaluateOnCallFrame)
+debuggerEvaluateOnCallFrame session params = sendReceiveCommandResult session "Debugger.evaluateOnCallFrame" (Just params)
 
 data DebuggerGetPossibleBreakpoints = DebuggerGetPossibleBreakpoints {
     debuggerGetPossibleBreakpointsLocations :: [DebuggerBreakLocation]
@@ -4651,8 +6452,31 @@ instance FromJSON  DebuggerGetPossibleBreakpoints where
 
 
 
-debuggerGetPossibleBreakpoints :: Session -> DebuggerLocation -> Maybe DebuggerLocation -> Maybe Bool -> IO (Either Error DebuggerGetPossibleBreakpoints)
-debuggerGetPossibleBreakpoints session debuggerGetPossibleBreakpointsStart debuggerGetPossibleBreakpointsEnd debuggerGetPossibleBreakpointsRestrictToFunction = sendReceiveCommandResult (conn session) ("Debugger","getPossibleBreakpoints") ([("start", ToJSONEx debuggerGetPossibleBreakpointsStart)] ++ (catMaybes [fmap (("end",) . ToJSONEx) debuggerGetPossibleBreakpointsEnd, fmap (("restrictToFunction",) . ToJSONEx) debuggerGetPossibleBreakpointsRestrictToFunction]))
+instance Command  DebuggerGetPossibleBreakpoints where
+    commandName _ = "Debugger.getPossibleBreakpoints"
+
+data PDebuggerGetPossibleBreakpoints = PDebuggerGetPossibleBreakpoints {
+    pDebuggerGetPossibleBreakpointsStart :: DebuggerLocation,
+    pDebuggerGetPossibleBreakpointsEnd :: Maybe DebuggerLocation,
+    pDebuggerGetPossibleBreakpointsRestrictToFunction :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PDebuggerGetPossibleBreakpoints where
+    parseJSON = A.withObject "PDebuggerGetPossibleBreakpoints" $ \v ->
+         PDebuggerGetPossibleBreakpoints <$> v .:  "start"
+            <*> v  .:?  "end"
+            <*> v  .:?  "restrictToFunction"
+
+
+instance ToJSON PDebuggerGetPossibleBreakpoints  where
+    toJSON v = A.object
+        [ "start" .= pDebuggerGetPossibleBreakpointsStart v
+        , "end" .= pDebuggerGetPossibleBreakpointsEnd v
+        , "restrictToFunction" .= pDebuggerGetPossibleBreakpointsRestrictToFunction v
+        ]
+
+
+debuggerGetPossibleBreakpoints :: Session -> PDebuggerGetPossibleBreakpoints -> IO (Either Error DebuggerGetPossibleBreakpoints)
+debuggerGetPossibleBreakpoints session params = sendReceiveCommandResult session "Debugger.getPossibleBreakpoints" (Just params)
 
 data DebuggerGetScriptSource = DebuggerGetScriptSource {
     debuggerGetScriptSourceScriptSource :: String,
@@ -4665,20 +6489,69 @@ instance FromJSON  DebuggerGetScriptSource where
 
 
 
-debuggerGetScriptSource :: Session -> RuntimeScriptId -> IO (Either Error DebuggerGetScriptSource)
-debuggerGetScriptSource session debuggerGetScriptSourceScriptId = sendReceiveCommandResult (conn session) ("Debugger","getScriptSource") ([("scriptId", ToJSONEx debuggerGetScriptSourceScriptId)] ++ (catMaybes []))
+instance Command  DebuggerGetScriptSource where
+    commandName _ = "Debugger.getScriptSource"
+
+data PDebuggerGetScriptSource = PDebuggerGetScriptSource {
+    pDebuggerGetScriptSourceScriptId :: RuntimeScriptId
+} deriving (Eq, Show, Read)
+instance FromJSON  PDebuggerGetScriptSource where
+    parseJSON = A.withObject "PDebuggerGetScriptSource" $ \v ->
+         PDebuggerGetScriptSource <$> v .:  "scriptId"
+
+
+instance ToJSON PDebuggerGetScriptSource  where
+    toJSON v = A.object
+        [ "scriptId" .= pDebuggerGetScriptSourceScriptId v
+        ]
+
+
+debuggerGetScriptSource :: Session -> PDebuggerGetScriptSource -> IO (Either Error DebuggerGetScriptSource)
+debuggerGetScriptSource session params = sendReceiveCommandResult session "Debugger.getScriptSource" (Just params)
+
+
 
 
 debuggerPause :: Session -> IO (Maybe Error)
-debuggerPause session  = sendReceiveCommand (conn session) ("Debugger","pause") ([] ++ (catMaybes []))
+debuggerPause session = sendReceiveCommand session "Debugger.pause" (Nothing :: Maybe ())
 
 
-debuggerRemoveBreakpoint :: Session -> DebuggerBreakpointId -> IO (Maybe Error)
-debuggerRemoveBreakpoint session debuggerRemoveBreakpointBreakpointId = sendReceiveCommand (conn session) ("Debugger","removeBreakpoint") ([("breakpointId", ToJSONEx debuggerRemoveBreakpointBreakpointId)] ++ (catMaybes []))
+
+data PDebuggerRemoveBreakpoint = PDebuggerRemoveBreakpoint {
+    pDebuggerRemoveBreakpointBreakpointId :: DebuggerBreakpointId
+} deriving (Eq, Show, Read)
+instance FromJSON  PDebuggerRemoveBreakpoint where
+    parseJSON = A.withObject "PDebuggerRemoveBreakpoint" $ \v ->
+         PDebuggerRemoveBreakpoint <$> v .:  "breakpointId"
 
 
-debuggerResume :: Session -> Maybe Bool -> IO (Maybe Error)
-debuggerResume session debuggerResumeTerminateOnResume = sendReceiveCommand (conn session) ("Debugger","resume") ([] ++ (catMaybes [fmap (("terminateOnResume",) . ToJSONEx) debuggerResumeTerminateOnResume]))
+instance ToJSON PDebuggerRemoveBreakpoint  where
+    toJSON v = A.object
+        [ "breakpointId" .= pDebuggerRemoveBreakpointBreakpointId v
+        ]
+
+
+debuggerRemoveBreakpoint :: Session -> PDebuggerRemoveBreakpoint -> IO (Maybe Error)
+debuggerRemoveBreakpoint session params = sendReceiveCommand session "Debugger.removeBreakpoint" (Just params)
+
+
+
+data PDebuggerResume = PDebuggerResume {
+    pDebuggerResumeTerminateOnResume :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PDebuggerResume where
+    parseJSON = A.withObject "PDebuggerResume" $ \v ->
+         PDebuggerResume <$> v .:?  "terminateOnResume"
+
+
+instance ToJSON PDebuggerResume  where
+    toJSON v = A.object
+        [ "terminateOnResume" .= pDebuggerResumeTerminateOnResume v
+        ]
+
+
+debuggerResume :: Session -> PDebuggerResume -> IO (Maybe Error)
+debuggerResume session params = sendReceiveCommand session "Debugger.resume" (Just params)
 
 data DebuggerSearchInContent = DebuggerSearchInContent {
     debuggerSearchInContentResult :: [DebuggerSearchMatch]
@@ -4689,12 +6562,53 @@ instance FromJSON  DebuggerSearchInContent where
 
 
 
-debuggerSearchInContent :: Session -> RuntimeScriptId -> String -> Maybe Bool -> Maybe Bool -> IO (Either Error DebuggerSearchInContent)
-debuggerSearchInContent session debuggerSearchInContentScriptId debuggerSearchInContentQuery debuggerSearchInContentCaseSensitive debuggerSearchInContentIsRegex = sendReceiveCommandResult (conn session) ("Debugger","searchInContent") ([("scriptId", ToJSONEx debuggerSearchInContentScriptId), ("query", ToJSONEx debuggerSearchInContentQuery)] ++ (catMaybes [fmap (("caseSensitive",) . ToJSONEx) debuggerSearchInContentCaseSensitive, fmap (("isRegex",) . ToJSONEx) debuggerSearchInContentIsRegex]))
+instance Command  DebuggerSearchInContent where
+    commandName _ = "Debugger.searchInContent"
+
+data PDebuggerSearchInContent = PDebuggerSearchInContent {
+    pDebuggerSearchInContentScriptId :: RuntimeScriptId,
+    pDebuggerSearchInContentQuery :: String,
+    pDebuggerSearchInContentCaseSensitive :: Maybe Bool,
+    pDebuggerSearchInContentIsRegex :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PDebuggerSearchInContent where
+    parseJSON = A.withObject "PDebuggerSearchInContent" $ \v ->
+         PDebuggerSearchInContent <$> v .:  "scriptId"
+            <*> v  .:  "query"
+            <*> v  .:?  "caseSensitive"
+            <*> v  .:?  "isRegex"
 
 
-debuggerSetAsyncCallStackDepth :: Session -> Int -> IO (Maybe Error)
-debuggerSetAsyncCallStackDepth session debuggerSetAsyncCallStackDepthMaxDepth = sendReceiveCommand (conn session) ("Debugger","setAsyncCallStackDepth") ([("maxDepth", ToJSONEx debuggerSetAsyncCallStackDepthMaxDepth)] ++ (catMaybes []))
+instance ToJSON PDebuggerSearchInContent  where
+    toJSON v = A.object
+        [ "scriptId" .= pDebuggerSearchInContentScriptId v
+        , "query" .= pDebuggerSearchInContentQuery v
+        , "caseSensitive" .= pDebuggerSearchInContentCaseSensitive v
+        , "isRegex" .= pDebuggerSearchInContentIsRegex v
+        ]
+
+
+debuggerSearchInContent :: Session -> PDebuggerSearchInContent -> IO (Either Error DebuggerSearchInContent)
+debuggerSearchInContent session params = sendReceiveCommandResult session "Debugger.searchInContent" (Just params)
+
+
+
+data PDebuggerSetAsyncCallStackDepth = PDebuggerSetAsyncCallStackDepth {
+    pDebuggerSetAsyncCallStackDepthMaxDepth :: Int
+} deriving (Eq, Show, Read)
+instance FromJSON  PDebuggerSetAsyncCallStackDepth where
+    parseJSON = A.withObject "PDebuggerSetAsyncCallStackDepth" $ \v ->
+         PDebuggerSetAsyncCallStackDepth <$> v .:  "maxDepth"
+
+
+instance ToJSON PDebuggerSetAsyncCallStackDepth  where
+    toJSON v = A.object
+        [ "maxDepth" .= pDebuggerSetAsyncCallStackDepthMaxDepth v
+        ]
+
+
+debuggerSetAsyncCallStackDepth :: Session -> PDebuggerSetAsyncCallStackDepth -> IO (Maybe Error)
+debuggerSetAsyncCallStackDepth session params = sendReceiveCommand session "Debugger.setAsyncCallStackDepth" (Just params)
 
 data DebuggerSetBreakpoint = DebuggerSetBreakpoint {
     debuggerSetBreakpointBreakpointId :: DebuggerBreakpointId,
@@ -4707,8 +6621,28 @@ instance FromJSON  DebuggerSetBreakpoint where
 
 
 
-debuggerSetBreakpoint :: Session -> DebuggerLocation -> Maybe String -> IO (Either Error DebuggerSetBreakpoint)
-debuggerSetBreakpoint session debuggerSetBreakpointLocation debuggerSetBreakpointCondition = sendReceiveCommandResult (conn session) ("Debugger","setBreakpoint") ([("location", ToJSONEx debuggerSetBreakpointLocation)] ++ (catMaybes [fmap (("condition",) . ToJSONEx) debuggerSetBreakpointCondition]))
+instance Command  DebuggerSetBreakpoint where
+    commandName _ = "Debugger.setBreakpoint"
+
+data PDebuggerSetBreakpoint = PDebuggerSetBreakpoint {
+    pDebuggerSetBreakpointLocation :: DebuggerLocation,
+    pDebuggerSetBreakpointCondition :: Maybe String
+} deriving (Eq, Show, Read)
+instance FromJSON  PDebuggerSetBreakpoint where
+    parseJSON = A.withObject "PDebuggerSetBreakpoint" $ \v ->
+         PDebuggerSetBreakpoint <$> v .:  "location"
+            <*> v  .:?  "condition"
+
+
+instance ToJSON PDebuggerSetBreakpoint  where
+    toJSON v = A.object
+        [ "location" .= pDebuggerSetBreakpointLocation v
+        , "condition" .= pDebuggerSetBreakpointCondition v
+        ]
+
+
+debuggerSetBreakpoint :: Session -> PDebuggerSetBreakpoint -> IO (Either Error DebuggerSetBreakpoint)
+debuggerSetBreakpoint session params = sendReceiveCommandResult session "Debugger.setBreakpoint" (Just params)
 
 data DebuggerSetInstrumentationBreakpoint = DebuggerSetInstrumentationBreakpoint {
     debuggerSetInstrumentationBreakpointBreakpointId :: DebuggerBreakpointId
@@ -4719,8 +6653,25 @@ instance FromJSON  DebuggerSetInstrumentationBreakpoint where
 
 
 
-debuggerSetInstrumentationBreakpoint :: Session -> String -> IO (Either Error DebuggerSetInstrumentationBreakpoint)
-debuggerSetInstrumentationBreakpoint session debuggerSetInstrumentationBreakpointInstrumentation = sendReceiveCommandResult (conn session) ("Debugger","setInstrumentationBreakpoint") ([("instrumentation", ToJSONEx debuggerSetInstrumentationBreakpointInstrumentation)] ++ (catMaybes []))
+instance Command  DebuggerSetInstrumentationBreakpoint where
+    commandName _ = "Debugger.setInstrumentationBreakpoint"
+
+data PDebuggerSetInstrumentationBreakpoint = PDebuggerSetInstrumentationBreakpoint {
+    pDebuggerSetInstrumentationBreakpointInstrumentation :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PDebuggerSetInstrumentationBreakpoint where
+    parseJSON = A.withObject "PDebuggerSetInstrumentationBreakpoint" $ \v ->
+         PDebuggerSetInstrumentationBreakpoint <$> v .:  "instrumentation"
+
+
+instance ToJSON PDebuggerSetInstrumentationBreakpoint  where
+    toJSON v = A.object
+        [ "instrumentation" .= pDebuggerSetInstrumentationBreakpointInstrumentation v
+        ]
+
+
+debuggerSetInstrumentationBreakpoint :: Session -> PDebuggerSetInstrumentationBreakpoint -> IO (Either Error DebuggerSetInstrumentationBreakpoint)
+debuggerSetInstrumentationBreakpoint session params = sendReceiveCommandResult session "Debugger.setInstrumentationBreakpoint" (Just params)
 
 data DebuggerSetBreakpointByUrl = DebuggerSetBreakpointByUrl {
     debuggerSetBreakpointByUrlBreakpointId :: DebuggerBreakpointId,
@@ -4733,16 +6684,78 @@ instance FromJSON  DebuggerSetBreakpointByUrl where
 
 
 
-debuggerSetBreakpointByUrl :: Session -> Int -> Maybe String -> Maybe String -> Maybe String -> Maybe Int -> Maybe String -> IO (Either Error DebuggerSetBreakpointByUrl)
-debuggerSetBreakpointByUrl session debuggerSetBreakpointByUrlLineNumber debuggerSetBreakpointByUrlUrl debuggerSetBreakpointByUrlUrlRegex debuggerSetBreakpointByUrlScriptHash debuggerSetBreakpointByUrlColumnNumber debuggerSetBreakpointByUrlCondition = sendReceiveCommandResult (conn session) ("Debugger","setBreakpointByUrl") ([("lineNumber", ToJSONEx debuggerSetBreakpointByUrlLineNumber)] ++ (catMaybes [fmap (("url",) . ToJSONEx) debuggerSetBreakpointByUrlUrl, fmap (("urlRegex",) . ToJSONEx) debuggerSetBreakpointByUrlUrlRegex, fmap (("scriptHash",) . ToJSONEx) debuggerSetBreakpointByUrlScriptHash, fmap (("columnNumber",) . ToJSONEx) debuggerSetBreakpointByUrlColumnNumber, fmap (("condition",) . ToJSONEx) debuggerSetBreakpointByUrlCondition]))
+instance Command  DebuggerSetBreakpointByUrl where
+    commandName _ = "Debugger.setBreakpointByUrl"
+
+data PDebuggerSetBreakpointByUrl = PDebuggerSetBreakpointByUrl {
+    pDebuggerSetBreakpointByUrlLineNumber :: Int,
+    pDebuggerSetBreakpointByUrlUrl :: Maybe String,
+    pDebuggerSetBreakpointByUrlUrlRegex :: Maybe String,
+    pDebuggerSetBreakpointByUrlScriptHash :: Maybe String,
+    pDebuggerSetBreakpointByUrlColumnNumber :: Maybe Int,
+    pDebuggerSetBreakpointByUrlCondition :: Maybe String
+} deriving (Eq, Show, Read)
+instance FromJSON  PDebuggerSetBreakpointByUrl where
+    parseJSON = A.withObject "PDebuggerSetBreakpointByUrl" $ \v ->
+         PDebuggerSetBreakpointByUrl <$> v .:  "lineNumber"
+            <*> v  .:?  "url"
+            <*> v  .:?  "urlRegex"
+            <*> v  .:?  "scriptHash"
+            <*> v  .:?  "columnNumber"
+            <*> v  .:?  "condition"
 
 
-debuggerSetBreakpointsActive :: Session -> Bool -> IO (Maybe Error)
-debuggerSetBreakpointsActive session debuggerSetBreakpointsActiveActive = sendReceiveCommand (conn session) ("Debugger","setBreakpointsActive") ([("active", ToJSONEx debuggerSetBreakpointsActiveActive)] ++ (catMaybes []))
+instance ToJSON PDebuggerSetBreakpointByUrl  where
+    toJSON v = A.object
+        [ "lineNumber" .= pDebuggerSetBreakpointByUrlLineNumber v
+        , "url" .= pDebuggerSetBreakpointByUrlUrl v
+        , "urlRegex" .= pDebuggerSetBreakpointByUrlUrlRegex v
+        , "scriptHash" .= pDebuggerSetBreakpointByUrlScriptHash v
+        , "columnNumber" .= pDebuggerSetBreakpointByUrlColumnNumber v
+        , "condition" .= pDebuggerSetBreakpointByUrlCondition v
+        ]
 
 
-debuggerSetPauseOnExceptions :: Session -> String -> IO (Maybe Error)
-debuggerSetPauseOnExceptions session debuggerSetPauseOnExceptionsState = sendReceiveCommand (conn session) ("Debugger","setPauseOnExceptions") ([("state", ToJSONEx debuggerSetPauseOnExceptionsState)] ++ (catMaybes []))
+debuggerSetBreakpointByUrl :: Session -> PDebuggerSetBreakpointByUrl -> IO (Either Error DebuggerSetBreakpointByUrl)
+debuggerSetBreakpointByUrl session params = sendReceiveCommandResult session "Debugger.setBreakpointByUrl" (Just params)
+
+
+
+data PDebuggerSetBreakpointsActive = PDebuggerSetBreakpointsActive {
+    pDebuggerSetBreakpointsActiveActive :: Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PDebuggerSetBreakpointsActive where
+    parseJSON = A.withObject "PDebuggerSetBreakpointsActive" $ \v ->
+         PDebuggerSetBreakpointsActive <$> v .:  "active"
+
+
+instance ToJSON PDebuggerSetBreakpointsActive  where
+    toJSON v = A.object
+        [ "active" .= pDebuggerSetBreakpointsActiveActive v
+        ]
+
+
+debuggerSetBreakpointsActive :: Session -> PDebuggerSetBreakpointsActive -> IO (Maybe Error)
+debuggerSetBreakpointsActive session params = sendReceiveCommand session "Debugger.setBreakpointsActive" (Just params)
+
+
+
+data PDebuggerSetPauseOnExceptions = PDebuggerSetPauseOnExceptions {
+    pDebuggerSetPauseOnExceptionsState :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PDebuggerSetPauseOnExceptions where
+    parseJSON = A.withObject "PDebuggerSetPauseOnExceptions" $ \v ->
+         PDebuggerSetPauseOnExceptions <$> v .:  "state"
+
+
+instance ToJSON PDebuggerSetPauseOnExceptions  where
+    toJSON v = A.object
+        [ "state" .= pDebuggerSetPauseOnExceptionsState v
+        ]
+
+
+debuggerSetPauseOnExceptions :: Session -> PDebuggerSetPauseOnExceptions -> IO (Maybe Error)
+debuggerSetPauseOnExceptions session params = sendReceiveCommand session "Debugger.setPauseOnExceptions" (Just params)
 
 data DebuggerSetScriptSource = DebuggerSetScriptSource {
     debuggerSetScriptSourceCallFrames :: Maybe [DebuggerCallFrame],
@@ -4759,28 +6772,96 @@ instance FromJSON  DebuggerSetScriptSource where
 
 
 
-debuggerSetScriptSource :: Session -> RuntimeScriptId -> String -> Maybe Bool -> IO (Either Error DebuggerSetScriptSource)
-debuggerSetScriptSource session debuggerSetScriptSourceScriptId debuggerSetScriptSourceScriptSource debuggerSetScriptSourceDryRun = sendReceiveCommandResult (conn session) ("Debugger","setScriptSource") ([("scriptId", ToJSONEx debuggerSetScriptSourceScriptId), ("scriptSource", ToJSONEx debuggerSetScriptSourceScriptSource)] ++ (catMaybes [fmap (("dryRun",) . ToJSONEx) debuggerSetScriptSourceDryRun]))
+instance Command  DebuggerSetScriptSource where
+    commandName _ = "Debugger.setScriptSource"
+
+data PDebuggerSetScriptSource = PDebuggerSetScriptSource {
+    pDebuggerSetScriptSourceScriptId :: RuntimeScriptId,
+    pDebuggerSetScriptSourceScriptSource :: String,
+    pDebuggerSetScriptSourceDryRun :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PDebuggerSetScriptSource where
+    parseJSON = A.withObject "PDebuggerSetScriptSource" $ \v ->
+         PDebuggerSetScriptSource <$> v .:  "scriptId"
+            <*> v  .:  "scriptSource"
+            <*> v  .:?  "dryRun"
 
 
-debuggerSetSkipAllPauses :: Session -> Bool -> IO (Maybe Error)
-debuggerSetSkipAllPauses session debuggerSetSkipAllPausesSkip = sendReceiveCommand (conn session) ("Debugger","setSkipAllPauses") ([("skip", ToJSONEx debuggerSetSkipAllPausesSkip)] ++ (catMaybes []))
+instance ToJSON PDebuggerSetScriptSource  where
+    toJSON v = A.object
+        [ "scriptId" .= pDebuggerSetScriptSourceScriptId v
+        , "scriptSource" .= pDebuggerSetScriptSourceScriptSource v
+        , "dryRun" .= pDebuggerSetScriptSourceDryRun v
+        ]
 
 
-debuggerSetVariableValue :: Session -> Int -> String -> RuntimeCallArgument -> DebuggerCallFrameId -> IO (Maybe Error)
-debuggerSetVariableValue session debuggerSetVariableValueScopeNumber debuggerSetVariableValueVariableName debuggerSetVariableValueNewValue debuggerSetVariableValueCallFrameId = sendReceiveCommand (conn session) ("Debugger","setVariableValue") ([("scopeNumber", ToJSONEx debuggerSetVariableValueScopeNumber), ("variableName", ToJSONEx debuggerSetVariableValueVariableName), ("newValue", ToJSONEx debuggerSetVariableValueNewValue), ("callFrameId", ToJSONEx debuggerSetVariableValueCallFrameId)] ++ (catMaybes []))
+debuggerSetScriptSource :: Session -> PDebuggerSetScriptSource -> IO (Either Error DebuggerSetScriptSource)
+debuggerSetScriptSource session params = sendReceiveCommandResult session "Debugger.setScriptSource" (Just params)
+
+
+
+data PDebuggerSetSkipAllPauses = PDebuggerSetSkipAllPauses {
+    pDebuggerSetSkipAllPausesSkip :: Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PDebuggerSetSkipAllPauses where
+    parseJSON = A.withObject "PDebuggerSetSkipAllPauses" $ \v ->
+         PDebuggerSetSkipAllPauses <$> v .:  "skip"
+
+
+instance ToJSON PDebuggerSetSkipAllPauses  where
+    toJSON v = A.object
+        [ "skip" .= pDebuggerSetSkipAllPausesSkip v
+        ]
+
+
+debuggerSetSkipAllPauses :: Session -> PDebuggerSetSkipAllPauses -> IO (Maybe Error)
+debuggerSetSkipAllPauses session params = sendReceiveCommand session "Debugger.setSkipAllPauses" (Just params)
+
+
+
+data PDebuggerSetVariableValue = PDebuggerSetVariableValue {
+    pDebuggerSetVariableValueScopeNumber :: Int,
+    pDebuggerSetVariableValueVariableName :: String,
+    pDebuggerSetVariableValueNewValue :: RuntimeCallArgument,
+    pDebuggerSetVariableValueCallFrameId :: DebuggerCallFrameId
+} deriving (Eq, Show, Read)
+instance FromJSON  PDebuggerSetVariableValue where
+    parseJSON = A.withObject "PDebuggerSetVariableValue" $ \v ->
+         PDebuggerSetVariableValue <$> v .:  "scopeNumber"
+            <*> v  .:  "variableName"
+            <*> v  .:  "newValue"
+            <*> v  .:  "callFrameId"
+
+
+instance ToJSON PDebuggerSetVariableValue  where
+    toJSON v = A.object
+        [ "scopeNumber" .= pDebuggerSetVariableValueScopeNumber v
+        , "variableName" .= pDebuggerSetVariableValueVariableName v
+        , "newValue" .= pDebuggerSetVariableValueNewValue v
+        , "callFrameId" .= pDebuggerSetVariableValueCallFrameId v
+        ]
+
+
+debuggerSetVariableValue :: Session -> PDebuggerSetVariableValue -> IO (Maybe Error)
+debuggerSetVariableValue session params = sendReceiveCommand session "Debugger.setVariableValue" (Just params)
+
+
 
 
 debuggerStepInto :: Session -> IO (Maybe Error)
-debuggerStepInto session  = sendReceiveCommand (conn session) ("Debugger","stepInto") ([] ++ (catMaybes []))
+debuggerStepInto session = sendReceiveCommand session "Debugger.stepInto" (Nothing :: Maybe ())
+
+
 
 
 debuggerStepOut :: Session -> IO (Maybe Error)
-debuggerStepOut session  = sendReceiveCommand (conn session) ("Debugger","stepOut") ([] ++ (catMaybes []))
+debuggerStepOut session = sendReceiveCommand session "Debugger.stepOut" (Nothing :: Maybe ())
+
+
 
 
 debuggerStepOver :: Session -> IO (Maybe Error)
-debuggerStepOver session  = sendReceiveCommand (conn session) ("Debugger","stepOver") ([] ++ (catMaybes []))
+debuggerStepOver session = sendReceiveCommand session "Debugger.stepOver" (Nothing :: Maybe ())
 
 
 
@@ -4976,12 +7057,16 @@ instance ToJSON ProfilerScriptCoverage  where
 
 
 
+
+
 profilerDisable :: Session -> IO (Maybe Error)
-profilerDisable session  = sendReceiveCommand (conn session) ("Profiler","disable") ([] ++ (catMaybes []))
+profilerDisable session = sendReceiveCommand session "Profiler.disable" (Nothing :: Maybe ())
+
+
 
 
 profilerEnable :: Session -> IO (Maybe Error)
-profilerEnable session  = sendReceiveCommand (conn session) ("Profiler","enable") ([] ++ (catMaybes []))
+profilerEnable session = sendReceiveCommand session "Profiler.enable" (Nothing :: Maybe ())
 
 data ProfilerGetBestEffortCoverage = ProfilerGetBestEffortCoverage {
     profilerGetBestEffortCoverageResult :: [ProfilerScriptCoverage]
@@ -4992,16 +7077,37 @@ instance FromJSON  ProfilerGetBestEffortCoverage where
 
 
 
+instance Command  ProfilerGetBestEffortCoverage where
+    commandName _ = "Profiler.getBestEffortCoverage"
+
+
 profilerGetBestEffortCoverage :: Session -> IO (Either Error ProfilerGetBestEffortCoverage)
-profilerGetBestEffortCoverage session  = sendReceiveCommandResult (conn session) ("Profiler","getBestEffortCoverage") ([] ++ (catMaybes []))
+profilerGetBestEffortCoverage session = sendReceiveCommandResult session "Profiler.getBestEffortCoverage" (Nothing :: Maybe ())
 
 
-profilerSetSamplingInterval :: Session -> Int -> IO (Maybe Error)
-profilerSetSamplingInterval session profilerSetSamplingIntervalInterval = sendReceiveCommand (conn session) ("Profiler","setSamplingInterval") ([("interval", ToJSONEx profilerSetSamplingIntervalInterval)] ++ (catMaybes []))
+
+data PProfilerSetSamplingInterval = PProfilerSetSamplingInterval {
+    pProfilerSetSamplingIntervalInterval :: Int
+} deriving (Eq, Show, Read)
+instance FromJSON  PProfilerSetSamplingInterval where
+    parseJSON = A.withObject "PProfilerSetSamplingInterval" $ \v ->
+         PProfilerSetSamplingInterval <$> v .:  "interval"
+
+
+instance ToJSON PProfilerSetSamplingInterval  where
+    toJSON v = A.object
+        [ "interval" .= pProfilerSetSamplingIntervalInterval v
+        ]
+
+
+profilerSetSamplingInterval :: Session -> PProfilerSetSamplingInterval -> IO (Maybe Error)
+profilerSetSamplingInterval session params = sendReceiveCommand session "Profiler.setSamplingInterval" (Just params)
+
+
 
 
 profilerStart :: Session -> IO (Maybe Error)
-profilerStart session  = sendReceiveCommand (conn session) ("Profiler","start") ([] ++ (catMaybes []))
+profilerStart session = sendReceiveCommand session "Profiler.start" (Nothing :: Maybe ())
 
 data ProfilerStartPreciseCoverage = ProfilerStartPreciseCoverage {
     profilerStartPreciseCoverageTimestamp :: Int
@@ -5012,8 +7118,31 @@ instance FromJSON  ProfilerStartPreciseCoverage where
 
 
 
-profilerStartPreciseCoverage :: Session -> Maybe Bool -> Maybe Bool -> Maybe Bool -> IO (Either Error ProfilerStartPreciseCoverage)
-profilerStartPreciseCoverage session profilerStartPreciseCoverageCallCount profilerStartPreciseCoverageDetailed profilerStartPreciseCoverageAllowTriggeredUpdates = sendReceiveCommandResult (conn session) ("Profiler","startPreciseCoverage") ([] ++ (catMaybes [fmap (("callCount",) . ToJSONEx) profilerStartPreciseCoverageCallCount, fmap (("detailed",) . ToJSONEx) profilerStartPreciseCoverageDetailed, fmap (("allowTriggeredUpdates",) . ToJSONEx) profilerStartPreciseCoverageAllowTriggeredUpdates]))
+instance Command  ProfilerStartPreciseCoverage where
+    commandName _ = "Profiler.startPreciseCoverage"
+
+data PProfilerStartPreciseCoverage = PProfilerStartPreciseCoverage {
+    pProfilerStartPreciseCoverageCallCount :: Maybe Bool,
+    pProfilerStartPreciseCoverageDetailed :: Maybe Bool,
+    pProfilerStartPreciseCoverageAllowTriggeredUpdates :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PProfilerStartPreciseCoverage where
+    parseJSON = A.withObject "PProfilerStartPreciseCoverage" $ \v ->
+         PProfilerStartPreciseCoverage <$> v .:?  "callCount"
+            <*> v  .:?  "detailed"
+            <*> v  .:?  "allowTriggeredUpdates"
+
+
+instance ToJSON PProfilerStartPreciseCoverage  where
+    toJSON v = A.object
+        [ "callCount" .= pProfilerStartPreciseCoverageCallCount v
+        , "detailed" .= pProfilerStartPreciseCoverageDetailed v
+        , "allowTriggeredUpdates" .= pProfilerStartPreciseCoverageAllowTriggeredUpdates v
+        ]
+
+
+profilerStartPreciseCoverage :: Session -> PProfilerStartPreciseCoverage -> IO (Either Error ProfilerStartPreciseCoverage)
+profilerStartPreciseCoverage session params = sendReceiveCommandResult session "Profiler.startPreciseCoverage" (Just params)
 
 data ProfilerStop = ProfilerStop {
     profilerStopProfile :: ProfilerProfile
@@ -5024,12 +7153,18 @@ instance FromJSON  ProfilerStop where
 
 
 
+instance Command  ProfilerStop where
+    commandName _ = "Profiler.stop"
+
+
 profilerStop :: Session -> IO (Either Error ProfilerStop)
-profilerStop session  = sendReceiveCommandResult (conn session) ("Profiler","stop") ([] ++ (catMaybes []))
+profilerStop session = sendReceiveCommandResult session "Profiler.stop" (Nothing :: Maybe ())
+
+
 
 
 profilerStopPreciseCoverage :: Session -> IO (Maybe Error)
-profilerStopPreciseCoverage session  = sendReceiveCommand (conn session) ("Profiler","stopPreciseCoverage") ([] ++ (catMaybes []))
+profilerStopPreciseCoverage session = sendReceiveCommand session "Profiler.stopPreciseCoverage" (Nothing :: Maybe ())
 
 data ProfilerTakePreciseCoverage = ProfilerTakePreciseCoverage {
     profilerTakePreciseCoverageResult :: [ProfilerScriptCoverage],
@@ -5042,8 +7177,12 @@ instance FromJSON  ProfilerTakePreciseCoverage where
 
 
 
+instance Command  ProfilerTakePreciseCoverage where
+    commandName _ = "Profiler.takePreciseCoverage"
+
+
 profilerTakePreciseCoverage :: Session -> IO (Either Error ProfilerTakePreciseCoverage)
-profilerTakePreciseCoverage session  = sendReceiveCommandResult (conn session) ("Profiler","takePreciseCoverage") ([] ++ (catMaybes []))
+profilerTakePreciseCoverage session = sendReceiveCommandResult session "Profiler.takePreciseCoverage" (Nothing :: Maybe ())
 
 
 
@@ -5164,9 +7303,9 @@ data RuntimeExecutionContextsCleared = RuntimeExecutionContextsCleared
     deriving (Eq, Show, Read)
 instance FromJSON RuntimeExecutionContextsCleared where
     parseJSON = A.withText  "RuntimeExecutionContextsCleared"  $ \v -> do
-        pure $ case v of
-                "RuntimeExecutionContextsCleared" -> RuntimeExecutionContextsCleared
-                _ -> error "failed to parse RuntimeExecutionContextsCleared"
+        case v of
+                "RuntimeExecutionContextsCleared" -> pure $ RuntimeExecutionContextsCleared
+                _ -> fail "failed to parse RuntimeExecutionContextsCleared"
 
 instance Event  RuntimeExecutionContextsCleared where
     eventName  _   =  "Runtime.executionContextsCleared"
@@ -5464,8 +7603,31 @@ instance FromJSON  RuntimeAwaitPromise where
 
 
 
-runtimeAwaitPromise :: Session -> RuntimeRemoteObjectId -> Maybe Bool -> Maybe Bool -> IO (Either Error RuntimeAwaitPromise)
-runtimeAwaitPromise session runtimeAwaitPromisePromiseObjectId runtimeAwaitPromiseReturnByValue runtimeAwaitPromiseGeneratePreview = sendReceiveCommandResult (conn session) ("Runtime","awaitPromise") ([("promiseObjectId", ToJSONEx runtimeAwaitPromisePromiseObjectId)] ++ (catMaybes [fmap (("returnByValue",) . ToJSONEx) runtimeAwaitPromiseReturnByValue, fmap (("generatePreview",) . ToJSONEx) runtimeAwaitPromiseGeneratePreview]))
+instance Command  RuntimeAwaitPromise where
+    commandName _ = "Runtime.awaitPromise"
+
+data PRuntimeAwaitPromise = PRuntimeAwaitPromise {
+    pRuntimeAwaitPromisePromiseObjectId :: RuntimeRemoteObjectId,
+    pRuntimeAwaitPromiseReturnByValue :: Maybe Bool,
+    pRuntimeAwaitPromiseGeneratePreview :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PRuntimeAwaitPromise where
+    parseJSON = A.withObject "PRuntimeAwaitPromise" $ \v ->
+         PRuntimeAwaitPromise <$> v .:  "promiseObjectId"
+            <*> v  .:?  "returnByValue"
+            <*> v  .:?  "generatePreview"
+
+
+instance ToJSON PRuntimeAwaitPromise  where
+    toJSON v = A.object
+        [ "promiseObjectId" .= pRuntimeAwaitPromisePromiseObjectId v
+        , "returnByValue" .= pRuntimeAwaitPromiseReturnByValue v
+        , "generatePreview" .= pRuntimeAwaitPromiseGeneratePreview v
+        ]
+
+
+runtimeAwaitPromise :: Session -> PRuntimeAwaitPromise -> IO (Either Error RuntimeAwaitPromise)
+runtimeAwaitPromise session params = sendReceiveCommandResult session "Runtime.awaitPromise" (Just params)
 
 data RuntimeCallFunctionOn = RuntimeCallFunctionOn {
     runtimeCallFunctionOnResult :: RuntimeRemoteObject,
@@ -5478,8 +7640,49 @@ instance FromJSON  RuntimeCallFunctionOn where
 
 
 
-runtimeCallFunctionOn :: Session -> String -> Maybe RuntimeRemoteObjectId -> Maybe [RuntimeCallArgument] -> Maybe Bool -> Maybe Bool -> Maybe Bool -> Maybe Bool -> Maybe RuntimeExecutionContextId -> Maybe String -> IO (Either Error RuntimeCallFunctionOn)
-runtimeCallFunctionOn session runtimeCallFunctionOnFunctionDeclaration runtimeCallFunctionOnObjectId runtimeCallFunctionOnArguments runtimeCallFunctionOnSilent runtimeCallFunctionOnReturnByValue runtimeCallFunctionOnUserGesture runtimeCallFunctionOnAwaitPromise runtimeCallFunctionOnExecutionContextId runtimeCallFunctionOnObjectGroup = sendReceiveCommandResult (conn session) ("Runtime","callFunctionOn") ([("functionDeclaration", ToJSONEx runtimeCallFunctionOnFunctionDeclaration)] ++ (catMaybes [fmap (("objectId",) . ToJSONEx) runtimeCallFunctionOnObjectId, fmap (("arguments",) . ToJSONEx) runtimeCallFunctionOnArguments, fmap (("silent",) . ToJSONEx) runtimeCallFunctionOnSilent, fmap (("returnByValue",) . ToJSONEx) runtimeCallFunctionOnReturnByValue, fmap (("userGesture",) . ToJSONEx) runtimeCallFunctionOnUserGesture, fmap (("awaitPromise",) . ToJSONEx) runtimeCallFunctionOnAwaitPromise, fmap (("executionContextId",) . ToJSONEx) runtimeCallFunctionOnExecutionContextId, fmap (("objectGroup",) . ToJSONEx) runtimeCallFunctionOnObjectGroup]))
+instance Command  RuntimeCallFunctionOn where
+    commandName _ = "Runtime.callFunctionOn"
+
+data PRuntimeCallFunctionOn = PRuntimeCallFunctionOn {
+    pRuntimeCallFunctionOnFunctionDeclaration :: String,
+    pRuntimeCallFunctionOnObjectId :: Maybe RuntimeRemoteObjectId,
+    pRuntimeCallFunctionOnArguments :: Maybe [RuntimeCallArgument],
+    pRuntimeCallFunctionOnSilent :: Maybe Bool,
+    pRuntimeCallFunctionOnReturnByValue :: Maybe Bool,
+    pRuntimeCallFunctionOnUserGesture :: Maybe Bool,
+    pRuntimeCallFunctionOnAwaitPromise :: Maybe Bool,
+    pRuntimeCallFunctionOnExecutionContextId :: Maybe RuntimeExecutionContextId,
+    pRuntimeCallFunctionOnObjectGroup :: Maybe String
+} deriving (Eq, Show, Read)
+instance FromJSON  PRuntimeCallFunctionOn where
+    parseJSON = A.withObject "PRuntimeCallFunctionOn" $ \v ->
+         PRuntimeCallFunctionOn <$> v .:  "functionDeclaration"
+            <*> v  .:?  "objectId"
+            <*> v  .:?  "arguments"
+            <*> v  .:?  "silent"
+            <*> v  .:?  "returnByValue"
+            <*> v  .:?  "userGesture"
+            <*> v  .:?  "awaitPromise"
+            <*> v  .:?  "executionContextId"
+            <*> v  .:?  "objectGroup"
+
+
+instance ToJSON PRuntimeCallFunctionOn  where
+    toJSON v = A.object
+        [ "functionDeclaration" .= pRuntimeCallFunctionOnFunctionDeclaration v
+        , "objectId" .= pRuntimeCallFunctionOnObjectId v
+        , "arguments" .= pRuntimeCallFunctionOnArguments v
+        , "silent" .= pRuntimeCallFunctionOnSilent v
+        , "returnByValue" .= pRuntimeCallFunctionOnReturnByValue v
+        , "userGesture" .= pRuntimeCallFunctionOnUserGesture v
+        , "awaitPromise" .= pRuntimeCallFunctionOnAwaitPromise v
+        , "executionContextId" .= pRuntimeCallFunctionOnExecutionContextId v
+        , "objectGroup" .= pRuntimeCallFunctionOnObjectGroup v
+        ]
+
+
+runtimeCallFunctionOn :: Session -> PRuntimeCallFunctionOn -> IO (Either Error RuntimeCallFunctionOn)
+runtimeCallFunctionOn session params = sendReceiveCommandResult session "Runtime.callFunctionOn" (Just params)
 
 data RuntimeCompileScript = RuntimeCompileScript {
     runtimeCompileScriptScriptId :: Maybe RuntimeScriptId,
@@ -5492,20 +7695,52 @@ instance FromJSON  RuntimeCompileScript where
 
 
 
-runtimeCompileScript :: Session -> String -> String -> Bool -> Maybe RuntimeExecutionContextId -> IO (Either Error RuntimeCompileScript)
-runtimeCompileScript session runtimeCompileScriptExpression runtimeCompileScriptSourceUrl runtimeCompileScriptPersistScript runtimeCompileScriptExecutionContextId = sendReceiveCommandResult (conn session) ("Runtime","compileScript") ([("expression", ToJSONEx runtimeCompileScriptExpression), ("sourceURL", ToJSONEx runtimeCompileScriptSourceUrl), ("persistScript", ToJSONEx runtimeCompileScriptPersistScript)] ++ (catMaybes [fmap (("executionContextId",) . ToJSONEx) runtimeCompileScriptExecutionContextId]))
+instance Command  RuntimeCompileScript where
+    commandName _ = "Runtime.compileScript"
+
+data PRuntimeCompileScript = PRuntimeCompileScript {
+    pRuntimeCompileScriptExpression :: String,
+    pRuntimeCompileScriptSourceUrl :: String,
+    pRuntimeCompileScriptPersistScript :: Bool,
+    pRuntimeCompileScriptExecutionContextId :: Maybe RuntimeExecutionContextId
+} deriving (Eq, Show, Read)
+instance FromJSON  PRuntimeCompileScript where
+    parseJSON = A.withObject "PRuntimeCompileScript" $ \v ->
+         PRuntimeCompileScript <$> v .:  "expression"
+            <*> v  .:  "sourceURL"
+            <*> v  .:  "persistScript"
+            <*> v  .:?  "executionContextId"
+
+
+instance ToJSON PRuntimeCompileScript  where
+    toJSON v = A.object
+        [ "expression" .= pRuntimeCompileScriptExpression v
+        , "sourceURL" .= pRuntimeCompileScriptSourceUrl v
+        , "persistScript" .= pRuntimeCompileScriptPersistScript v
+        , "executionContextId" .= pRuntimeCompileScriptExecutionContextId v
+        ]
+
+
+runtimeCompileScript :: Session -> PRuntimeCompileScript -> IO (Either Error RuntimeCompileScript)
+runtimeCompileScript session params = sendReceiveCommandResult session "Runtime.compileScript" (Just params)
+
+
 
 
 runtimeDisable :: Session -> IO (Maybe Error)
-runtimeDisable session  = sendReceiveCommand (conn session) ("Runtime","disable") ([] ++ (catMaybes []))
+runtimeDisable session = sendReceiveCommand session "Runtime.disable" (Nothing :: Maybe ())
+
+
 
 
 runtimeDiscardConsoleEntries :: Session -> IO (Maybe Error)
-runtimeDiscardConsoleEntries session  = sendReceiveCommand (conn session) ("Runtime","discardConsoleEntries") ([] ++ (catMaybes []))
+runtimeDiscardConsoleEntries session = sendReceiveCommand session "Runtime.discardConsoleEntries" (Nothing :: Maybe ())
+
+
 
 
 runtimeEnable :: Session -> IO (Maybe Error)
-runtimeEnable session  = sendReceiveCommand (conn session) ("Runtime","enable") ([] ++ (catMaybes []))
+runtimeEnable session = sendReceiveCommand session "Runtime.enable" (Nothing :: Maybe ())
 
 data RuntimeEvaluate = RuntimeEvaluate {
     runtimeEvaluateResult :: RuntimeRemoteObject,
@@ -5518,8 +7753,46 @@ instance FromJSON  RuntimeEvaluate where
 
 
 
-runtimeEvaluate :: Session -> String -> Maybe String -> Maybe Bool -> Maybe Bool -> Maybe RuntimeExecutionContextId -> Maybe Bool -> Maybe Bool -> Maybe Bool -> IO (Either Error RuntimeEvaluate)
-runtimeEvaluate session runtimeEvaluateExpression runtimeEvaluateObjectGroup runtimeEvaluateIncludeCommandLineApi runtimeEvaluateSilent runtimeEvaluateContextId runtimeEvaluateReturnByValue runtimeEvaluateUserGesture runtimeEvaluateAwaitPromise = sendReceiveCommandResult (conn session) ("Runtime","evaluate") ([("expression", ToJSONEx runtimeEvaluateExpression)] ++ (catMaybes [fmap (("objectGroup",) . ToJSONEx) runtimeEvaluateObjectGroup, fmap (("includeCommandLineAPI",) . ToJSONEx) runtimeEvaluateIncludeCommandLineApi, fmap (("silent",) . ToJSONEx) runtimeEvaluateSilent, fmap (("contextId",) . ToJSONEx) runtimeEvaluateContextId, fmap (("returnByValue",) . ToJSONEx) runtimeEvaluateReturnByValue, fmap (("userGesture",) . ToJSONEx) runtimeEvaluateUserGesture, fmap (("awaitPromise",) . ToJSONEx) runtimeEvaluateAwaitPromise]))
+instance Command  RuntimeEvaluate where
+    commandName _ = "Runtime.evaluate"
+
+data PRuntimeEvaluate = PRuntimeEvaluate {
+    pRuntimeEvaluateExpression :: String,
+    pRuntimeEvaluateObjectGroup :: Maybe String,
+    pRuntimeEvaluateIncludeCommandLineApi :: Maybe Bool,
+    pRuntimeEvaluateSilent :: Maybe Bool,
+    pRuntimeEvaluateContextId :: Maybe RuntimeExecutionContextId,
+    pRuntimeEvaluateReturnByValue :: Maybe Bool,
+    pRuntimeEvaluateUserGesture :: Maybe Bool,
+    pRuntimeEvaluateAwaitPromise :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PRuntimeEvaluate where
+    parseJSON = A.withObject "PRuntimeEvaluate" $ \v ->
+         PRuntimeEvaluate <$> v .:  "expression"
+            <*> v  .:?  "objectGroup"
+            <*> v  .:?  "includeCommandLineAPI"
+            <*> v  .:?  "silent"
+            <*> v  .:?  "contextId"
+            <*> v  .:?  "returnByValue"
+            <*> v  .:?  "userGesture"
+            <*> v  .:?  "awaitPromise"
+
+
+instance ToJSON PRuntimeEvaluate  where
+    toJSON v = A.object
+        [ "expression" .= pRuntimeEvaluateExpression v
+        , "objectGroup" .= pRuntimeEvaluateObjectGroup v
+        , "includeCommandLineAPI" .= pRuntimeEvaluateIncludeCommandLineApi v
+        , "silent" .= pRuntimeEvaluateSilent v
+        , "contextId" .= pRuntimeEvaluateContextId v
+        , "returnByValue" .= pRuntimeEvaluateReturnByValue v
+        , "userGesture" .= pRuntimeEvaluateUserGesture v
+        , "awaitPromise" .= pRuntimeEvaluateAwaitPromise v
+        ]
+
+
+runtimeEvaluate :: Session -> PRuntimeEvaluate -> IO (Either Error RuntimeEvaluate)
+runtimeEvaluate session params = sendReceiveCommandResult session "Runtime.evaluate" (Just params)
 
 data RuntimeGetProperties = RuntimeGetProperties {
     runtimeGetPropertiesResult :: [RuntimePropertyDescriptor],
@@ -5534,8 +7807,28 @@ instance FromJSON  RuntimeGetProperties where
 
 
 
-runtimeGetProperties :: Session -> RuntimeRemoteObjectId -> Maybe Bool -> IO (Either Error RuntimeGetProperties)
-runtimeGetProperties session runtimeGetPropertiesObjectId runtimeGetPropertiesOwnProperties = sendReceiveCommandResult (conn session) ("Runtime","getProperties") ([("objectId", ToJSONEx runtimeGetPropertiesObjectId)] ++ (catMaybes [fmap (("ownProperties",) . ToJSONEx) runtimeGetPropertiesOwnProperties]))
+instance Command  RuntimeGetProperties where
+    commandName _ = "Runtime.getProperties"
+
+data PRuntimeGetProperties = PRuntimeGetProperties {
+    pRuntimeGetPropertiesObjectId :: RuntimeRemoteObjectId,
+    pRuntimeGetPropertiesOwnProperties :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PRuntimeGetProperties where
+    parseJSON = A.withObject "PRuntimeGetProperties" $ \v ->
+         PRuntimeGetProperties <$> v .:  "objectId"
+            <*> v  .:?  "ownProperties"
+
+
+instance ToJSON PRuntimeGetProperties  where
+    toJSON v = A.object
+        [ "objectId" .= pRuntimeGetPropertiesObjectId v
+        , "ownProperties" .= pRuntimeGetPropertiesOwnProperties v
+        ]
+
+
+runtimeGetProperties :: Session -> PRuntimeGetProperties -> IO (Either Error RuntimeGetProperties)
+runtimeGetProperties session params = sendReceiveCommandResult session "Runtime.getProperties" (Just params)
 
 data RuntimeGlobalLexicalScopeNames = RuntimeGlobalLexicalScopeNames {
     runtimeGlobalLexicalScopeNamesNames :: [String]
@@ -5546,8 +7839,25 @@ instance FromJSON  RuntimeGlobalLexicalScopeNames where
 
 
 
-runtimeGlobalLexicalScopeNames :: Session -> Maybe RuntimeExecutionContextId -> IO (Either Error RuntimeGlobalLexicalScopeNames)
-runtimeGlobalLexicalScopeNames session runtimeGlobalLexicalScopeNamesExecutionContextId = sendReceiveCommandResult (conn session) ("Runtime","globalLexicalScopeNames") ([] ++ (catMaybes [fmap (("executionContextId",) . ToJSONEx) runtimeGlobalLexicalScopeNamesExecutionContextId]))
+instance Command  RuntimeGlobalLexicalScopeNames where
+    commandName _ = "Runtime.globalLexicalScopeNames"
+
+data PRuntimeGlobalLexicalScopeNames = PRuntimeGlobalLexicalScopeNames {
+    pRuntimeGlobalLexicalScopeNamesExecutionContextId :: Maybe RuntimeExecutionContextId
+} deriving (Eq, Show, Read)
+instance FromJSON  PRuntimeGlobalLexicalScopeNames where
+    parseJSON = A.withObject "PRuntimeGlobalLexicalScopeNames" $ \v ->
+         PRuntimeGlobalLexicalScopeNames <$> v .:?  "executionContextId"
+
+
+instance ToJSON PRuntimeGlobalLexicalScopeNames  where
+    toJSON v = A.object
+        [ "executionContextId" .= pRuntimeGlobalLexicalScopeNamesExecutionContextId v
+        ]
+
+
+runtimeGlobalLexicalScopeNames :: Session -> PRuntimeGlobalLexicalScopeNames -> IO (Either Error RuntimeGlobalLexicalScopeNames)
+runtimeGlobalLexicalScopeNames session params = sendReceiveCommandResult session "Runtime.globalLexicalScopeNames" (Just params)
 
 data RuntimeQueryObjects = RuntimeQueryObjects {
     runtimeQueryObjectsObjects :: RuntimeRemoteObject
@@ -5558,20 +7868,72 @@ instance FromJSON  RuntimeQueryObjects where
 
 
 
-runtimeQueryObjects :: Session -> RuntimeRemoteObjectId -> Maybe String -> IO (Either Error RuntimeQueryObjects)
-runtimeQueryObjects session runtimeQueryObjectsPrototypeObjectId runtimeQueryObjectsObjectGroup = sendReceiveCommandResult (conn session) ("Runtime","queryObjects") ([("prototypeObjectId", ToJSONEx runtimeQueryObjectsPrototypeObjectId)] ++ (catMaybes [fmap (("objectGroup",) . ToJSONEx) runtimeQueryObjectsObjectGroup]))
+instance Command  RuntimeQueryObjects where
+    commandName _ = "Runtime.queryObjects"
+
+data PRuntimeQueryObjects = PRuntimeQueryObjects {
+    pRuntimeQueryObjectsPrototypeObjectId :: RuntimeRemoteObjectId,
+    pRuntimeQueryObjectsObjectGroup :: Maybe String
+} deriving (Eq, Show, Read)
+instance FromJSON  PRuntimeQueryObjects where
+    parseJSON = A.withObject "PRuntimeQueryObjects" $ \v ->
+         PRuntimeQueryObjects <$> v .:  "prototypeObjectId"
+            <*> v  .:?  "objectGroup"
 
 
-runtimeReleaseObject :: Session -> RuntimeRemoteObjectId -> IO (Maybe Error)
-runtimeReleaseObject session runtimeReleaseObjectObjectId = sendReceiveCommand (conn session) ("Runtime","releaseObject") ([("objectId", ToJSONEx runtimeReleaseObjectObjectId)] ++ (catMaybes []))
+instance ToJSON PRuntimeQueryObjects  where
+    toJSON v = A.object
+        [ "prototypeObjectId" .= pRuntimeQueryObjectsPrototypeObjectId v
+        , "objectGroup" .= pRuntimeQueryObjectsObjectGroup v
+        ]
 
 
-runtimeReleaseObjectGroup :: Session -> String -> IO (Maybe Error)
-runtimeReleaseObjectGroup session runtimeReleaseObjectGroupObjectGroup = sendReceiveCommand (conn session) ("Runtime","releaseObjectGroup") ([("objectGroup", ToJSONEx runtimeReleaseObjectGroupObjectGroup)] ++ (catMaybes []))
+runtimeQueryObjects :: Session -> PRuntimeQueryObjects -> IO (Either Error RuntimeQueryObjects)
+runtimeQueryObjects session params = sendReceiveCommandResult session "Runtime.queryObjects" (Just params)
+
+
+
+data PRuntimeReleaseObject = PRuntimeReleaseObject {
+    pRuntimeReleaseObjectObjectId :: RuntimeRemoteObjectId
+} deriving (Eq, Show, Read)
+instance FromJSON  PRuntimeReleaseObject where
+    parseJSON = A.withObject "PRuntimeReleaseObject" $ \v ->
+         PRuntimeReleaseObject <$> v .:  "objectId"
+
+
+instance ToJSON PRuntimeReleaseObject  where
+    toJSON v = A.object
+        [ "objectId" .= pRuntimeReleaseObjectObjectId v
+        ]
+
+
+runtimeReleaseObject :: Session -> PRuntimeReleaseObject -> IO (Maybe Error)
+runtimeReleaseObject session params = sendReceiveCommand session "Runtime.releaseObject" (Just params)
+
+
+
+data PRuntimeReleaseObjectGroup = PRuntimeReleaseObjectGroup {
+    pRuntimeReleaseObjectGroupObjectGroup :: String
+} deriving (Eq, Show, Read)
+instance FromJSON  PRuntimeReleaseObjectGroup where
+    parseJSON = A.withObject "PRuntimeReleaseObjectGroup" $ \v ->
+         PRuntimeReleaseObjectGroup <$> v .:  "objectGroup"
+
+
+instance ToJSON PRuntimeReleaseObjectGroup  where
+    toJSON v = A.object
+        [ "objectGroup" .= pRuntimeReleaseObjectGroupObjectGroup v
+        ]
+
+
+runtimeReleaseObjectGroup :: Session -> PRuntimeReleaseObjectGroup -> IO (Maybe Error)
+runtimeReleaseObjectGroup session params = sendReceiveCommand session "Runtime.releaseObjectGroup" (Just params)
+
+
 
 
 runtimeRunIfWaitingForDebugger :: Session -> IO (Maybe Error)
-runtimeRunIfWaitingForDebugger session  = sendReceiveCommand (conn session) ("Runtime","runIfWaitingForDebugger") ([] ++ (catMaybes []))
+runtimeRunIfWaitingForDebugger session = sendReceiveCommand session "Runtime.runIfWaitingForDebugger" (Nothing :: Maybe ())
 
 data RuntimeRunScript = RuntimeRunScript {
     runtimeRunScriptResult :: RuntimeRemoteObject,
@@ -5584,12 +7946,65 @@ instance FromJSON  RuntimeRunScript where
 
 
 
-runtimeRunScript :: Session -> RuntimeScriptId -> Maybe RuntimeExecutionContextId -> Maybe String -> Maybe Bool -> Maybe Bool -> Maybe Bool -> Maybe Bool -> Maybe Bool -> IO (Either Error RuntimeRunScript)
-runtimeRunScript session runtimeRunScriptScriptId runtimeRunScriptExecutionContextId runtimeRunScriptObjectGroup runtimeRunScriptSilent runtimeRunScriptIncludeCommandLineApi runtimeRunScriptReturnByValue runtimeRunScriptGeneratePreview runtimeRunScriptAwaitPromise = sendReceiveCommandResult (conn session) ("Runtime","runScript") ([("scriptId", ToJSONEx runtimeRunScriptScriptId)] ++ (catMaybes [fmap (("executionContextId",) . ToJSONEx) runtimeRunScriptExecutionContextId, fmap (("objectGroup",) . ToJSONEx) runtimeRunScriptObjectGroup, fmap (("silent",) . ToJSONEx) runtimeRunScriptSilent, fmap (("includeCommandLineAPI",) . ToJSONEx) runtimeRunScriptIncludeCommandLineApi, fmap (("returnByValue",) . ToJSONEx) runtimeRunScriptReturnByValue, fmap (("generatePreview",) . ToJSONEx) runtimeRunScriptGeneratePreview, fmap (("awaitPromise",) . ToJSONEx) runtimeRunScriptAwaitPromise]))
+instance Command  RuntimeRunScript where
+    commandName _ = "Runtime.runScript"
+
+data PRuntimeRunScript = PRuntimeRunScript {
+    pRuntimeRunScriptScriptId :: RuntimeScriptId,
+    pRuntimeRunScriptExecutionContextId :: Maybe RuntimeExecutionContextId,
+    pRuntimeRunScriptObjectGroup :: Maybe String,
+    pRuntimeRunScriptSilent :: Maybe Bool,
+    pRuntimeRunScriptIncludeCommandLineApi :: Maybe Bool,
+    pRuntimeRunScriptReturnByValue :: Maybe Bool,
+    pRuntimeRunScriptGeneratePreview :: Maybe Bool,
+    pRuntimeRunScriptAwaitPromise :: Maybe Bool
+} deriving (Eq, Show, Read)
+instance FromJSON  PRuntimeRunScript where
+    parseJSON = A.withObject "PRuntimeRunScript" $ \v ->
+         PRuntimeRunScript <$> v .:  "scriptId"
+            <*> v  .:?  "executionContextId"
+            <*> v  .:?  "objectGroup"
+            <*> v  .:?  "silent"
+            <*> v  .:?  "includeCommandLineAPI"
+            <*> v  .:?  "returnByValue"
+            <*> v  .:?  "generatePreview"
+            <*> v  .:?  "awaitPromise"
 
 
-runtimeSetAsyncCallStackDepth :: Session -> Int -> IO (Maybe Error)
-runtimeSetAsyncCallStackDepth session runtimeSetAsyncCallStackDepthMaxDepth = sendReceiveCommand (conn session) ("Runtime","setAsyncCallStackDepth") ([("maxDepth", ToJSONEx runtimeSetAsyncCallStackDepthMaxDepth)] ++ (catMaybes []))
+instance ToJSON PRuntimeRunScript  where
+    toJSON v = A.object
+        [ "scriptId" .= pRuntimeRunScriptScriptId v
+        , "executionContextId" .= pRuntimeRunScriptExecutionContextId v
+        , "objectGroup" .= pRuntimeRunScriptObjectGroup v
+        , "silent" .= pRuntimeRunScriptSilent v
+        , "includeCommandLineAPI" .= pRuntimeRunScriptIncludeCommandLineApi v
+        , "returnByValue" .= pRuntimeRunScriptReturnByValue v
+        , "generatePreview" .= pRuntimeRunScriptGeneratePreview v
+        , "awaitPromise" .= pRuntimeRunScriptAwaitPromise v
+        ]
+
+
+runtimeRunScript :: Session -> PRuntimeRunScript -> IO (Either Error RuntimeRunScript)
+runtimeRunScript session params = sendReceiveCommandResult session "Runtime.runScript" (Just params)
+
+
+
+data PRuntimeSetAsyncCallStackDepth = PRuntimeSetAsyncCallStackDepth {
+    pRuntimeSetAsyncCallStackDepthMaxDepth :: Int
+} deriving (Eq, Show, Read)
+instance FromJSON  PRuntimeSetAsyncCallStackDepth where
+    parseJSON = A.withObject "PRuntimeSetAsyncCallStackDepth" $ \v ->
+         PRuntimeSetAsyncCallStackDepth <$> v .:  "maxDepth"
+
+
+instance ToJSON PRuntimeSetAsyncCallStackDepth  where
+    toJSON v = A.object
+        [ "maxDepth" .= pRuntimeSetAsyncCallStackDepthMaxDepth v
+        ]
+
+
+runtimeSetAsyncCallStackDepth :: Session -> PRuntimeSetAsyncCallStackDepth -> IO (Maybe Error)
+runtimeSetAsyncCallStackDepth session params = sendReceiveCommand session "Runtime.setAsyncCallStackDepth" (Just params)
 
 
 
@@ -5620,8 +8035,12 @@ instance FromJSON  SchemaGetDomains where
 
 
 
+instance Command  SchemaGetDomains where
+    commandName _ = "Schema.getDomains"
+
+
 schemaGetDomains :: Session -> IO (Either Error SchemaGetDomains)
-schemaGetDomains session  = sendReceiveCommandResult (conn session) ("Schema","getDomains") ([] ++ (catMaybes []))
+schemaGetDomains session = sendReceiveCommandResult session "Schema.getDomains" (Nothing :: Maybe ())
 
 
 

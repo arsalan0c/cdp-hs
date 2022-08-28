@@ -15,13 +15,13 @@ import qualified CDP as CDP
 
 main :: IO ()
 main = do
-    putStrLn "Starting CDP example"
+    putStrLn "Starting CDP examples"
     -- doChromeDevtoolsProtocol >>= appendFile "app/CDP.hs"
 
     CDP.runClient Nothing $ \session -> do
         -- print =<< CDP.browserGetVersion session
-        CDP.subscribe   session (print . CDP.pageWindowOpenUrl)
-        CDP.unsubscribe session (Proxy :: Proxy CDP.PageWindowOpen)
+        -- CDP.subscribe   session (print . CDP.pageWindowOpenUrl)
+        -- CDP.unsubscribe session (Proxy :: Proxy CDP.PageWindowOpen)
         forever $ do
             threadDelay 1000
   where

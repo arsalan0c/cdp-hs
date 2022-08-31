@@ -16,13 +16,13 @@ import qualified CDP as CDP
 main :: IO ()
 main = do
     putStrLn "Starting CDP"
-    doChromeDevtoolsProtocol >>= appendFile "app/CDP.hs"
+    -- doChromeDevtoolsProtocol >>= appendFile "app/CDP.hs"
     
     CDP.runClient Nothing $ \session -> do
-        print =<< CDP.browserGetVersion session
+        -- print =<< CDP.browserGetVersion session
 
-        CDP.subscribe session (print . CDP.pageWindowOpenUrl)
-        CDP.pageEnable session
+        --CDP.subscribe session (print . CDP.pageWindowOpenUrl)
+        -- CDP.pageEnable session
         -- CDP.unsubscribe session (Proxy :: Proxy CDP.PageWindowOpen)
 
         forever $ do

@@ -10,6 +10,7 @@ import Data.Text (Text(..), unpack)
 import qualified Text.Casing as C
 import Data.Aeson.AutoType.Alternative ((:|:)(AltLeft, AltRight))
 import qualified Data.Aeson as A
+import qualified Data.Map as Map
 
 import qualified Protocol as P
 
@@ -17,23 +18,21 @@ newtype StringAlt = StringAlt String
 instance Show StringAlt where
     show (StringAlt s) = s
 
-type Program = String
-
-supportedDomains :: [Text]
-supportedDomains = ["Browser", "Page"]
-
-generate :: [P.DomainsElt] -> Program
-generate des = ("\n\n" <>) $
+generate :: String -> String -> [P.DomainsElt] -> (String, String, Map.Map String String)
+generate extensions imports des = (allDomainImports,,generatedDomains) . ("\n\n" <>) $
     unlines 
         [ eventsSumType
         , eventResponseFromJSON
-        , unlines . map genDomain $ validDomains
         ]
   where
     validDomains = 
         filter (not . hasExperimentalDependencies) . 
         filter (not . isTrue . P.domainsEltExperimental) $ 
         des
+
+    importDomain dn = unwords ["import", "qualified", domainModuleName dn, "as", dn]
+    generatedDomains = Map.fromList . map (domainName &&& genDomain) $ validDomains
+    allDomainImports = unlines . map (importDomain . unpack . P.domainsEltDomain) $ validDomains
 
     hasExperimentalDependencies domain = any (`elem` experimentalDomains) . (fromMaybe [] . P.domainsEltDependencies) $ domain
     experimentalDomains = map P.domainsEltDomain . filter (isTrue . P.domainsEltExperimental) $ des
@@ -82,13 +81,19 @@ generate des = ("\n\n" <>) $
     commandName domainName c  = (domainName <>) . C.pascal . unpack . P.commandsEltName $ c
     domainName = unpack . P.domainsEltDomain
     
-    genDomain de = unlines
-        [ events
+    genDomain de = intercalate "\n\n"
+        [ extensions
+        , domainModuleHeader dn
+        , imports
+        , otherDomainImports
+        , events
         , genTypes dn . P.domainsEltTypes $ de
         , unlines . map (genCommand dn) $ validCommands
         ]
       where
-        validCommands = 
+        otherDomainImports = unlines . map (importDomain . domainName) . filter (/= de) $ validDomains
+
+        validCommands      = 
             filter (not . isTrue . P.commandsEltDeprecated) . 
             filter (not . isTrue . P.commandsEltExperimental) . 
             P.domainsEltCommands $ de
@@ -337,3 +342,8 @@ splitOn [] _ = error "splitOn, needle may not be empty"
 splitOn _ [] = [[]]
 splitOn needle haystack = a : if null b then [] else splitOn needle $ drop (length needle) b
     where (a,b) = breakOn needle haystack
+
+domainModuleName dn = intercalate "." ["Domains", dn]
+moduleHeader dn = unwords ["module", dn, "(module", dn <>")", "where"]
+domainModuleHeader dn = unwords ["module", domainModuleName dn, "(module", domainModuleName dn <>")", "where"]
+importDomain dn = unwords ["import", "qualified", domainModuleName dn, "as", dn]

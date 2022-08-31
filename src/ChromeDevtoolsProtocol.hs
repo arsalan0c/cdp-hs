@@ -11,4 +11,7 @@ doChromeDevtoolsProtocol :: IO String
 doChromeDevtoolsProtocol = do 
     browserProtocolDomains <- P.topLevelDomains <$> P.parse "protocol/browser_protocol.json"
     jsProtocolDomains      <- P.topLevelDomains <$> P.parse "protocol/js_protocol.json"
-    pure $ Gen.generate $ browserProtocolDomains ++ jsProtocolDomains
+    
+    prelude <- readFile "src/GeneratedPrelude.txt"
+    let protocol =Gen.generate $ browserProtocolDomains ++ jsProtocolDomains
+    pure $ unlines [prelude, protocol]

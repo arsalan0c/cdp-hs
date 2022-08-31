@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings, RecordWildCards, TupleSections, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE AllowAmbiguousTypes    #-}
 {-# LANGUAGE DataKinds              #-}
 {-# LANGUAGE FlexibleContexts       #-}
@@ -14,6 +15,7 @@
 {-# LANGUAGE UndecidableInstances   #-}
 
 module CDP (module CDP) where
+
 
 import           Control.Applicative  ((<$>))
 import           Control.Monad
@@ -40,289 +42,97 @@ import qualified Data.Map as Map
 import Data.Proxy
 import System.Random
 
+import CDPPrelude
 
-defaultHostPort :: (String, Int)
-defaultHostPort = ("http://127.0.0.1", 9222) 
 
--- :CONFIG
-hostPortToEndpoint :: (String, Int) -> Http.Request
-hostPortToEndpoint (host, port) = Http.parseRequest_ . 
-    ("GET " <>) . 
-    mconcat $ [host, ":", show port, "/json"]
+type ClientApp b = Session -> IO b
+data Session = Session { unSession :: Session' Event }  
 
-data PageInfo = PageInfo
-    { debuggerUrl :: String
-    } deriving Show
-instance FromJSON PageInfo where
-    parseJSON = A.withObject "PageInfo" $ \v ->
-        PageInfo <$> v .: "webSocketDebuggerUrl"
+runClient  :: Maybe (String, Int) -> ClientApp a -> IO a
+runClient hostPort app = runClient' hostPort (app . Session)
 
-parseUri :: String -> (String, Int, String)
-parseUri uri = fromMaybe (error "parseUri: Invalid URI") $ do
-    u    <- Uri.parseURI uri
-    auth <- Uri.uriAuthority u
-    let port = case Uri.uriPort auth of
-            (':':str)   -> read str
-            _           -> 80
-    pure (Uri.uriRegName auth, port, Uri.uriPath u)
+subscribe :: forall a. FromEvent Event a => Session -> (a -> IO ()) -> IO ()
+subscribe session h = subscribe' (unSession session) h
 
-getPageInfo :: Http.Request -> IO PageInfo
-getPageInfo request = do
-    response <- Http.httpLBS request
-    let body = Http.getResponseBody response
-    case A.decode body of
-        Just mpis -> pure $ head . catMaybes $ mpis
-        Nothing   -> error "getPageInfo: Parse error"
+unsubscribe :: forall a. FromEvent Event a => Session -> Proxy a -> IO ()
+unsubscribe session p = unsubscribe' (unSession session) p
 
-data ToJSONEx where
-   ToJSONEx :: (ToJSON a, Show a) => a -> ToJSONEx
-instance ToJSON ToJSONEx where
-    toJSON (ToJSONEx v) = toJSON v
-instance Show ToJSONEx where
-    show (ToJSONEx v) = show v
-
-newtype CommandId = CommandId { unCommandId :: Int }
-    deriving (Eq, Ord, Show, ToJSON)
-
-instance FromJSON CommandId where
-    parseJSON = A.withObject "CommandId" $ \obj -> do
-        CommandId <$> obj .: "id"
-
-data CommandObj a = CommandObj {
-      coId :: CommandId
-    , coMethod :: String
-    , coParams :: Maybe a
-    } deriving Show
-
-instance (ToJSON a) => ToJSON (CommandObj a) where
-   toJSON cmd = A.object . concat $
-        [ [ "id"     .= coId cmd ]
-        , [ "method" .= coMethod cmd ]
-        , maybe [] (\p -> [ "params" .= p ]) $ coParams cmd
-        ]
-
-randomCommandId :: MVar StdGen -> IO CommandId
-randomCommandId mg = modifyMVar mg $ \g -> do
-    let (id, g2) = uniformR (0 :: Int, 1000 :: Int) g
-    pure (g2, CommandId id)
-
-type ClientApp a = Session -> IO a
-data Session = MkSession 
-    { randomGen      :: MVar StdGen
-    , events         :: MVar (Map.Map String Handler)
-    , commandBuffer  :: MVar CommandBuffer
-    , conn           :: WS.Connection
-    , listenThread   :: ThreadId
-    }
-    
-runClient :: Maybe (String, Int) -> ClientApp a -> IO a
-runClient hostPort app = do
-    let endpoint = hostPortToEndpoint . fromMaybe defaultHostPort $ hostPort
-    pi             <- getPageInfo endpoint
-    randomGen      <- newMVar . mkStdGen $ 42
-    eventsM        <- newMVar Map.empty
-    commandBuffer  <- newMVar Map.empty
-    let (host, port, path) = parseUri . debuggerUrl $ pi
-    
-    WS.runClient host port path $ \conn -> do
-        let act = forever $ do
-                res <- WS.fromDataMessage <$> WS.receiveDataMessage conn
-                if isCommand res
-                    then dispatchCommandResponse commandBuffer res
-                    else dispatchEventResponse eventsM res 
-            
-        listenThread <- forkIO act
-        let session = MkSession randomGen eventsM commandBuffer conn listenThread
-        result <- app session
-        killThread listenThread
-        pure result
-
-type CommandBuffer = Map.Map CommandId BS.ByteString
-
-isCommand :: BS.ByteString -> Bool
-isCommand res = do
-    case A.decode res of
-        Nothing            -> False
-        Just (CommandId _) -> True
-        
-dispatchCommandResponse :: MVar CommandBuffer -> BS.ByteString -> IO ()
-dispatchCommandResponse commandBuffer res = do
-    case A.decode res of
-        Nothing  -> error "not a command"
-        Just cid@(CommandId id)  -> do
-            updateCommandBuffer commandBuffer (Map.insert cid res)
-            
-updateCommandBuffer :: MVar CommandBuffer -> (CommandBuffer -> CommandBuffer) -> IO ()
-updateCommandBuffer commandBuffer f = ($ pure . f) . modifyMVar_ $ commandBuffer
-
-dispatchEventResponse :: MVar (Map.Map String Handler) -> BS.ByteString -> IO ()
-dispatchEventResponse handlers res = do
-    void $ go handlers . A.decode $ res
-  where
-    go :: MVar (Map.Map String Handler) -> Maybe EventResponse -> IO ()
-    go handlers evr = maybe (pure ()) f evr
-      where
-        f (EventResponse p v) = do
-            evs <- readMVar handlers
-            let handler = maybe print id $ Map.lookup (eventName p) evs >>= handlerToF p
-            maybe (pure ()) handler v
-
-updateEvents :: Session -> (Map.Map String Handler -> Map.Map String Handler) -> IO ()
-updateEvents session f = ($ pure . f) . modifyMVar_ . events $ session
-
-subscribe :: forall a. Event a => Session -> (a -> IO ()) -> IO ()
-subscribe session h = updateEvents session $ Map.insert (eventName p) $ fToHandler p h
-  where
-    p = (Proxy :: Proxy a)
-
-unsubscribe :: Event a => Session -> Proxy a -> IO ()
-unsubscribe session p = updateEvents session (Map.delete (eventName p))
-
-class (FromJSON a, Show a, Eq a) => Event a where
-    eventName         :: Proxy a  -> String
-    fToHandler  :: Proxy a  -> ((a -> IO ()) -> Handler)
-    handlerToF        :: Proxy a  -> Handler -> Maybe (a -> IO ())
-
-data EventResponse where
-    EventResponse :: Event a => Proxy a -> Maybe a -> EventResponse
-
-class (FromJSON b) => Command b where
-    commandName               :: Proxy b -> String
-
-data CommandResponse b where
-    CommandResponse :: Command b => CommandId -> Maybe b -> CommandResponse b
-instance (Show b) => Show (CommandResponse b) where
-    show (CommandResponse id result) = "\nid: " <> show id <> "\nresult: " <> show result
-
-newtype Error = Error String
-    deriving Show
-
-newtype InternalError = InternalError String
-    deriving Show
-
-indent :: Int -> String -> String
-indent = (<>) . flip replicate ' '
-
-sendCommand :: forall a. (ToJSON a) => WS.Connection -> CommandId -> String -> Maybe a -> IO ()
-sendCommand conn id name params = do
-    let co = CommandObj id name params
-    WS.sendTextData conn . A.encode $ co
-  where
-    paramsProxy = Proxy :: Proxy a
-       
-receiveResponse :: forall b. Command b => MVar CommandBuffer -> CommandId -> IO (Either InternalError (CommandResponse b))
-receiveResponse buffer id = do
-    bs <- untilJust $ do
-            bsM <- Map.lookup id <$> readMVar buffer
-            if isNothing bsM
-                then threadDelay 1000 -- :CONFIG
-                else pure ()
-
-            pure bsM
-
-    pure $ maybe (Left . InternalError $ "error in parsing response") Right . A.decode $ bs
-  where
-    p = Proxy :: Proxy b
-
-sendReceiveCommandResult :: forall a b. (ToJSON a, Command b) => Session -> String -> Maybe a -> IO (Either Error b)
-sendReceiveCommandResult session name params = do
-    id <- randomCommandId $ randomGen session
-    sendCommand (conn session) id name params
-    response <- receiveResponse (commandBuffer session) id
-    pure $ case response of
-        Left _ -> Left . Error $ "internal error"
-        Right (CommandResponse _ resultM) -> maybe (Left . Error $ "error in parsing result") Right $ resultM    
-  where
-    resultProxy = Proxy :: Proxy b
-    
 sendReceiveCommand :: (ToJSON a) => Session -> String -> Maybe a -> IO (Maybe Error)
-sendReceiveCommand session name params = do
-    id <- randomCommandId $ randomGen session
-    sendCommand (conn session) id name params
-    response <- receiveResponse (commandBuffer session) id :: IO (Either InternalError (CommandResponse NoResponse))
-    pure $ case response of
-        Left _                            -> Just . Error $ "internal error"
-        Right (CommandResponse _ resultM) -> maybe Nothing (const . Just . Error $ "got an unexpected result") $ resultM  
+sendReceiveCommand session = sendReceiveCommand' (unSession session)
 
-instance (Command b) => FromJSON (CommandResponse b) where
-    parseJSON = A.withObject "CommandResponse" $ \obj -> do
-        crId <- CommandId <$> obj .: "id"
-        CommandResponse (crId :: CommandId) <$> obj .:? "result"
-
-data NoResponse = NoResponse
-instance Command NoResponse where
-    commandName _ = "noresponse"
-instance FromJSON NoResponse where
-    parseJSON _ = fail "noresponse"
+sendReceiveCommandResult :: forall a b s. (ToJSON a, Command b) => Session -> String -> Maybe a -> IO (Either Error b)
+sendReceiveCommandResult session = sendReceiveCommandResult' (unSession session)
 
 
-data Handler = HDOMAttributeModified (DOMAttributeModified -> IO ()) | HDOMAttributeRemoved (DOMAttributeRemoved -> IO ()) | HDOMCharacterDataModified (DOMCharacterDataModified -> IO ()) | HDOMChildNodeCountUpdated (DOMChildNodeCountUpdated -> IO ()) | HDOMChildNodeInserted (DOMChildNodeInserted -> IO ()) | HDOMChildNodeRemoved (DOMChildNodeRemoved -> IO ()) | HDOMDocumentUpdated (DOMDocumentUpdated -> IO ()) | HDOMSetChildNodes (DOMSetChildNodes -> IO ()) | HLogEntryAdded (LogEntryAdded -> IO ()) | HNetworkDataReceived (NetworkDataReceived -> IO ()) | HNetworkEventSourceMessageReceived (NetworkEventSourceMessageReceived -> IO ()) | HNetworkLoadingFailed (NetworkLoadingFailed -> IO ()) | HNetworkLoadingFinished (NetworkLoadingFinished -> IO ()) | HNetworkRequestServedFromCache (NetworkRequestServedFromCache -> IO ()) | HNetworkRequestWillBeSent (NetworkRequestWillBeSent -> IO ()) | HNetworkResponseReceived (NetworkResponseReceived -> IO ()) | HNetworkWebSocketClosed (NetworkWebSocketClosed -> IO ()) | HNetworkWebSocketCreated (NetworkWebSocketCreated -> IO ()) | HNetworkWebSocketFrameError (NetworkWebSocketFrameError -> IO ()) | HNetworkWebSocketFrameReceived (NetworkWebSocketFrameReceived -> IO ()) | HNetworkWebSocketFrameSent (NetworkWebSocketFrameSent -> IO ()) | HNetworkWebSocketHandshakeResponseReceived (NetworkWebSocketHandshakeResponseReceived -> IO ()) | HNetworkWebSocketWillSendHandshakeRequest (NetworkWebSocketWillSendHandshakeRequest -> IO ()) | HNetworkWebTransportCreated (NetworkWebTransportCreated -> IO ()) | HNetworkWebTransportConnectionEstablished (NetworkWebTransportConnectionEstablished -> IO ()) | HNetworkWebTransportClosed (NetworkWebTransportClosed -> IO ()) | HPageDomContentEventFired (PageDomContentEventFired -> IO ()) | HPageFileChooserOpened (PageFileChooserOpened -> IO ()) | HPageFrameAttached (PageFrameAttached -> IO ()) | HPageFrameDetached (PageFrameDetached -> IO ()) | HPageFrameNavigated (PageFrameNavigated -> IO ()) | HPageInterstitialHidden (PageInterstitialHidden -> IO ()) | HPageInterstitialShown (PageInterstitialShown -> IO ()) | HPageJavascriptDialogClosed (PageJavascriptDialogClosed -> IO ()) | HPageJavascriptDialogOpening (PageJavascriptDialogOpening -> IO ()) | HPageLifecycleEvent (PageLifecycleEvent -> IO ()) | HPagePrerenderAttemptCompleted (PagePrerenderAttemptCompleted -> IO ()) | HPageLoadEventFired (PageLoadEventFired -> IO ()) | HPageWindowOpen (PageWindowOpen -> IO ()) | HPerformanceMetrics (PerformanceMetrics -> IO ()) | HTargetReceivedMessageFromTarget (TargetReceivedMessageFromTarget -> IO ()) | HTargetTargetCreated (TargetTargetCreated -> IO ()) | HTargetTargetDestroyed (TargetTargetDestroyed -> IO ()) | HTargetTargetCrashed (TargetTargetCrashed -> IO ()) | HTargetTargetInfoChanged (TargetTargetInfoChanged -> IO ()) | HFetchRequestPaused (FetchRequestPaused -> IO ()) | HFetchAuthRequired (FetchAuthRequired -> IO ()) | HConsoleMessageAdded (ConsoleMessageAdded -> IO ()) | HDebuggerBreakpointResolved (DebuggerBreakpointResolved -> IO ()) | HDebuggerPaused (DebuggerPaused -> IO ()) | HDebuggerResumed (DebuggerResumed -> IO ()) | HDebuggerScriptFailedToParse (DebuggerScriptFailedToParse -> IO ()) | HDebuggerScriptParsed (DebuggerScriptParsed -> IO ()) | HProfilerConsoleProfileFinished (ProfilerConsoleProfileFinished -> IO ()) | HProfilerConsoleProfileStarted (ProfilerConsoleProfileStarted -> IO ()) | HRuntimeConsoleApiCalled (RuntimeConsoleApiCalled -> IO ()) | HRuntimeExceptionRevoked (RuntimeExceptionRevoked -> IO ()) | HRuntimeExceptionThrown (RuntimeExceptionThrown -> IO ()) | HRuntimeExecutionContextCreated (RuntimeExecutionContextCreated -> IO ()) | HRuntimeExecutionContextDestroyed (RuntimeExecutionContextDestroyed -> IO ()) | HRuntimeExecutionContextsCleared (RuntimeExecutionContextsCleared -> IO ()) | HRuntimeInspectRequested (RuntimeInspectRequested -> IO ())
-instance FromJSON EventResponse where
+
+data Event = EVDOMAttributeModified DOMAttributeModified | EVDOMAttributeRemoved DOMAttributeRemoved | EVDOMCharacterDataModified DOMCharacterDataModified | EVDOMChildNodeCountUpdated DOMChildNodeCountUpdated | EVDOMChildNodeInserted DOMChildNodeInserted | EVDOMChildNodeRemoved DOMChildNodeRemoved | EVDOMDocumentUpdated DOMDocumentUpdated | EVDOMSetChildNodes DOMSetChildNodes | EVLogEntryAdded LogEntryAdded | EVNetworkDataReceived NetworkDataReceived | EVNetworkEventSourceMessageReceived NetworkEventSourceMessageReceived | EVNetworkLoadingFailed NetworkLoadingFailed | EVNetworkLoadingFinished NetworkLoadingFinished | EVNetworkRequestServedFromCache NetworkRequestServedFromCache | EVNetworkRequestWillBeSent NetworkRequestWillBeSent | EVNetworkResponseReceived NetworkResponseReceived | EVNetworkWebSocketClosed NetworkWebSocketClosed | EVNetworkWebSocketCreated NetworkWebSocketCreated | EVNetworkWebSocketFrameError NetworkWebSocketFrameError | EVNetworkWebSocketFrameReceived NetworkWebSocketFrameReceived | EVNetworkWebSocketFrameSent NetworkWebSocketFrameSent | EVNetworkWebSocketHandshakeResponseReceived NetworkWebSocketHandshakeResponseReceived | EVNetworkWebSocketWillSendHandshakeRequest NetworkWebSocketWillSendHandshakeRequest | EVNetworkWebTransportCreated NetworkWebTransportCreated | EVNetworkWebTransportConnectionEstablished NetworkWebTransportConnectionEstablished | EVNetworkWebTransportClosed NetworkWebTransportClosed | EVPageDomContentEventFired PageDomContentEventFired | EVPageFileChooserOpened PageFileChooserOpened | EVPageFrameAttached PageFrameAttached | EVPageFrameDetached PageFrameDetached | EVPageFrameNavigated PageFrameNavigated | EVPageInterstitialHidden PageInterstitialHidden | EVPageInterstitialShown PageInterstitialShown | EVPageJavascriptDialogClosed PageJavascriptDialogClosed | EVPageJavascriptDialogOpening PageJavascriptDialogOpening | EVPageLifecycleEvent PageLifecycleEvent | EVPagePrerenderAttemptCompleted PagePrerenderAttemptCompleted | EVPageLoadEventFired PageLoadEventFired | EVPageWindowOpen PageWindowOpen | EVPerformanceMetrics PerformanceMetrics | EVTargetReceivedMessageFromTarget TargetReceivedMessageFromTarget | EVTargetTargetCreated TargetTargetCreated | EVTargetTargetDestroyed TargetTargetDestroyed | EVTargetTargetCrashed TargetTargetCrashed | EVTargetTargetInfoChanged TargetTargetInfoChanged | EVFetchRequestPaused FetchRequestPaused | EVFetchAuthRequired FetchAuthRequired | EVConsoleMessageAdded ConsoleMessageAdded | EVDebuggerBreakpointResolved DebuggerBreakpointResolved | EVDebuggerPaused DebuggerPaused | EVDebuggerResumed DebuggerResumed | EVDebuggerScriptFailedToParse DebuggerScriptFailedToParse | EVDebuggerScriptParsed DebuggerScriptParsed | EVProfilerConsoleProfileFinished ProfilerConsoleProfileFinished | EVProfilerConsoleProfileStarted ProfilerConsoleProfileStarted | EVRuntimeConsoleApiCalled RuntimeConsoleApiCalled | EVRuntimeExceptionRevoked RuntimeExceptionRevoked | EVRuntimeExceptionThrown RuntimeExceptionThrown | EVRuntimeExecutionContextCreated RuntimeExecutionContextCreated | EVRuntimeExecutionContextDestroyed RuntimeExecutionContextDestroyed | EVRuntimeExecutionContextsCleared RuntimeExecutionContextsCleared | EVRuntimeInspectRequested RuntimeInspectRequested
+    deriving (Eq, Show, Read)
+instance FromJSON (EventResponse Event ) where
     parseJSON = A.withObject  "EventResponse"  $ \obj -> do
         name <- obj .: "method"
         case (name :: String) of
-                "DOM.attributeModified" -> EventResponse (Proxy :: Proxy DOMAttributeModified) <$> obj .:? "params"
-                "DOM.attributeRemoved" -> EventResponse (Proxy :: Proxy DOMAttributeRemoved) <$> obj .:? "params"
-                "DOM.characterDataModified" -> EventResponse (Proxy :: Proxy DOMCharacterDataModified) <$> obj .:? "params"
-                "DOM.childNodeCountUpdated" -> EventResponse (Proxy :: Proxy DOMChildNodeCountUpdated) <$> obj .:? "params"
-                "DOM.childNodeInserted" -> EventResponse (Proxy :: Proxy DOMChildNodeInserted) <$> obj .:? "params"
-                "DOM.childNodeRemoved" -> EventResponse (Proxy :: Proxy DOMChildNodeRemoved) <$> obj .:? "params"
-                "DOM.documentUpdated" -> EventResponse (Proxy :: Proxy DOMDocumentUpdated) <$> obj .:? "params"
-                "DOM.setChildNodes" -> EventResponse (Proxy :: Proxy DOMSetChildNodes) <$> obj .:? "params"
-                "Log.entryAdded" -> EventResponse (Proxy :: Proxy LogEntryAdded) <$> obj .:? "params"
-                "Network.dataReceived" -> EventResponse (Proxy :: Proxy NetworkDataReceived) <$> obj .:? "params"
-                "Network.eventSourceMessageReceived" -> EventResponse (Proxy :: Proxy NetworkEventSourceMessageReceived) <$> obj .:? "params"
-                "Network.loadingFailed" -> EventResponse (Proxy :: Proxy NetworkLoadingFailed) <$> obj .:? "params"
-                "Network.loadingFinished" -> EventResponse (Proxy :: Proxy NetworkLoadingFinished) <$> obj .:? "params"
-                "Network.requestServedFromCache" -> EventResponse (Proxy :: Proxy NetworkRequestServedFromCache) <$> obj .:? "params"
-                "Network.requestWillBeSent" -> EventResponse (Proxy :: Proxy NetworkRequestWillBeSent) <$> obj .:? "params"
-                "Network.responseReceived" -> EventResponse (Proxy :: Proxy NetworkResponseReceived) <$> obj .:? "params"
-                "Network.webSocketClosed" -> EventResponse (Proxy :: Proxy NetworkWebSocketClosed) <$> obj .:? "params"
-                "Network.webSocketCreated" -> EventResponse (Proxy :: Proxy NetworkWebSocketCreated) <$> obj .:? "params"
-                "Network.webSocketFrameError" -> EventResponse (Proxy :: Proxy NetworkWebSocketFrameError) <$> obj .:? "params"
-                "Network.webSocketFrameReceived" -> EventResponse (Proxy :: Proxy NetworkWebSocketFrameReceived) <$> obj .:? "params"
-                "Network.webSocketFrameSent" -> EventResponse (Proxy :: Proxy NetworkWebSocketFrameSent) <$> obj .:? "params"
-                "Network.webSocketHandshakeResponseReceived" -> EventResponse (Proxy :: Proxy NetworkWebSocketHandshakeResponseReceived) <$> obj .:? "params"
-                "Network.webSocketWillSendHandshakeRequest" -> EventResponse (Proxy :: Proxy NetworkWebSocketWillSendHandshakeRequest) <$> obj .:? "params"
-                "Network.webTransportCreated" -> EventResponse (Proxy :: Proxy NetworkWebTransportCreated) <$> obj .:? "params"
-                "Network.webTransportConnectionEstablished" -> EventResponse (Proxy :: Proxy NetworkWebTransportConnectionEstablished) <$> obj .:? "params"
-                "Network.webTransportClosed" -> EventResponse (Proxy :: Proxy NetworkWebTransportClosed) <$> obj .:? "params"
-                "Page.domContentEventFired" -> EventResponse (Proxy :: Proxy PageDomContentEventFired) <$> obj .:? "params"
-                "Page.fileChooserOpened" -> EventResponse (Proxy :: Proxy PageFileChooserOpened) <$> obj .:? "params"
-                "Page.frameAttached" -> EventResponse (Proxy :: Proxy PageFrameAttached) <$> obj .:? "params"
-                "Page.frameDetached" -> EventResponse (Proxy :: Proxy PageFrameDetached) <$> obj .:? "params"
-                "Page.frameNavigated" -> EventResponse (Proxy :: Proxy PageFrameNavigated) <$> obj .:? "params"
-                "Page.interstitialHidden" -> EventResponse (Proxy :: Proxy PageInterstitialHidden) <$> obj .:? "params"
-                "Page.interstitialShown" -> EventResponse (Proxy :: Proxy PageInterstitialShown) <$> obj .:? "params"
-                "Page.javascriptDialogClosed" -> EventResponse (Proxy :: Proxy PageJavascriptDialogClosed) <$> obj .:? "params"
-                "Page.javascriptDialogOpening" -> EventResponse (Proxy :: Proxy PageJavascriptDialogOpening) <$> obj .:? "params"
-                "Page.lifecycleEvent" -> EventResponse (Proxy :: Proxy PageLifecycleEvent) <$> obj .:? "params"
-                "Page.prerenderAttemptCompleted" -> EventResponse (Proxy :: Proxy PagePrerenderAttemptCompleted) <$> obj .:? "params"
-                "Page.loadEventFired" -> EventResponse (Proxy :: Proxy PageLoadEventFired) <$> obj .:? "params"
-                "Page.windowOpen" -> EventResponse (Proxy :: Proxy PageWindowOpen) <$> obj .:? "params"
-                "Performance.metrics" -> EventResponse (Proxy :: Proxy PerformanceMetrics) <$> obj .:? "params"
-                "Target.receivedMessageFromTarget" -> EventResponse (Proxy :: Proxy TargetReceivedMessageFromTarget) <$> obj .:? "params"
-                "Target.targetCreated" -> EventResponse (Proxy :: Proxy TargetTargetCreated) <$> obj .:? "params"
-                "Target.targetDestroyed" -> EventResponse (Proxy :: Proxy TargetTargetDestroyed) <$> obj .:? "params"
-                "Target.targetCrashed" -> EventResponse (Proxy :: Proxy TargetTargetCrashed) <$> obj .:? "params"
-                "Target.targetInfoChanged" -> EventResponse (Proxy :: Proxy TargetTargetInfoChanged) <$> obj .:? "params"
-                "Fetch.requestPaused" -> EventResponse (Proxy :: Proxy FetchRequestPaused) <$> obj .:? "params"
-                "Fetch.authRequired" -> EventResponse (Proxy :: Proxy FetchAuthRequired) <$> obj .:? "params"
-                "Console.messageAdded" -> EventResponse (Proxy :: Proxy ConsoleMessageAdded) <$> obj .:? "params"
-                "Debugger.breakpointResolved" -> EventResponse (Proxy :: Proxy DebuggerBreakpointResolved) <$> obj .:? "params"
-                "Debugger.paused" -> EventResponse (Proxy :: Proxy DebuggerPaused) <$> obj .:? "params"
-                "Debugger.resumed" -> EventResponse (Proxy :: Proxy DebuggerResumed) <$> obj .:? "params"
-                "Debugger.scriptFailedToParse" -> EventResponse (Proxy :: Proxy DebuggerScriptFailedToParse) <$> obj .:? "params"
-                "Debugger.scriptParsed" -> EventResponse (Proxy :: Proxy DebuggerScriptParsed) <$> obj .:? "params"
-                "Profiler.consoleProfileFinished" -> EventResponse (Proxy :: Proxy ProfilerConsoleProfileFinished) <$> obj .:? "params"
-                "Profiler.consoleProfileStarted" -> EventResponse (Proxy :: Proxy ProfilerConsoleProfileStarted) <$> obj .:? "params"
-                "Runtime.consoleAPICalled" -> EventResponse (Proxy :: Proxy RuntimeConsoleApiCalled) <$> obj .:? "params"
-                "Runtime.exceptionRevoked" -> EventResponse (Proxy :: Proxy RuntimeExceptionRevoked) <$> obj .:? "params"
-                "Runtime.exceptionThrown" -> EventResponse (Proxy :: Proxy RuntimeExceptionThrown) <$> obj .:? "params"
-                "Runtime.executionContextCreated" -> EventResponse (Proxy :: Proxy RuntimeExecutionContextCreated) <$> obj .:? "params"
-                "Runtime.executionContextDestroyed" -> EventResponse (Proxy :: Proxy RuntimeExecutionContextDestroyed) <$> obj .:? "params"
-                "Runtime.executionContextsCleared" -> EventResponse (Proxy :: Proxy RuntimeExecutionContextsCleared) <$> obj .:? "params"
-                "Runtime.inspectRequested" -> EventResponse (Proxy :: Proxy RuntimeInspectRequested) <$> obj .:? "params"
+                "DOM.attributeModified" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy DOMAttributeModified) . fmap EVDOMAttributeModified <$> obj .:? "params"
+                "DOM.attributeRemoved" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy DOMAttributeRemoved) . fmap EVDOMAttributeRemoved <$> obj .:? "params"
+                "DOM.characterDataModified" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy DOMCharacterDataModified) . fmap EVDOMCharacterDataModified <$> obj .:? "params"
+                "DOM.childNodeCountUpdated" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy DOMChildNodeCountUpdated) . fmap EVDOMChildNodeCountUpdated <$> obj .:? "params"
+                "DOM.childNodeInserted" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy DOMChildNodeInserted) . fmap EVDOMChildNodeInserted <$> obj .:? "params"
+                "DOM.childNodeRemoved" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy DOMChildNodeRemoved) . fmap EVDOMChildNodeRemoved <$> obj .:? "params"
+                "DOM.documentUpdated" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy DOMDocumentUpdated) . fmap EVDOMDocumentUpdated <$> obj .:? "params"
+                "DOM.setChildNodes" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy DOMSetChildNodes) . fmap EVDOMSetChildNodes <$> obj .:? "params"
+                "Log.entryAdded" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy LogEntryAdded) . fmap EVLogEntryAdded <$> obj .:? "params"
+                "Network.dataReceived" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy NetworkDataReceived) . fmap EVNetworkDataReceived <$> obj .:? "params"
+                "Network.eventSourceMessageReceived" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy NetworkEventSourceMessageReceived) . fmap EVNetworkEventSourceMessageReceived <$> obj .:? "params"
+                "Network.loadingFailed" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy NetworkLoadingFailed) . fmap EVNetworkLoadingFailed <$> obj .:? "params"
+                "Network.loadingFinished" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy NetworkLoadingFinished) . fmap EVNetworkLoadingFinished <$> obj .:? "params"
+                "Network.requestServedFromCache" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy NetworkRequestServedFromCache) . fmap EVNetworkRequestServedFromCache <$> obj .:? "params"
+                "Network.requestWillBeSent" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy NetworkRequestWillBeSent) . fmap EVNetworkRequestWillBeSent <$> obj .:? "params"
+                "Network.responseReceived" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy NetworkResponseReceived) . fmap EVNetworkResponseReceived <$> obj .:? "params"
+                "Network.webSocketClosed" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy NetworkWebSocketClosed) . fmap EVNetworkWebSocketClosed <$> obj .:? "params"
+                "Network.webSocketCreated" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy NetworkWebSocketCreated) . fmap EVNetworkWebSocketCreated <$> obj .:? "params"
+                "Network.webSocketFrameError" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy NetworkWebSocketFrameError) . fmap EVNetworkWebSocketFrameError <$> obj .:? "params"
+                "Network.webSocketFrameReceived" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy NetworkWebSocketFrameReceived) . fmap EVNetworkWebSocketFrameReceived <$> obj .:? "params"
+                "Network.webSocketFrameSent" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy NetworkWebSocketFrameSent) . fmap EVNetworkWebSocketFrameSent <$> obj .:? "params"
+                "Network.webSocketHandshakeResponseReceived" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy NetworkWebSocketHandshakeResponseReceived) . fmap EVNetworkWebSocketHandshakeResponseReceived <$> obj .:? "params"
+                "Network.webSocketWillSendHandshakeRequest" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy NetworkWebSocketWillSendHandshakeRequest) . fmap EVNetworkWebSocketWillSendHandshakeRequest <$> obj .:? "params"
+                "Network.webTransportCreated" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy NetworkWebTransportCreated) . fmap EVNetworkWebTransportCreated <$> obj .:? "params"
+                "Network.webTransportConnectionEstablished" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy NetworkWebTransportConnectionEstablished) . fmap EVNetworkWebTransportConnectionEstablished <$> obj .:? "params"
+                "Network.webTransportClosed" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy NetworkWebTransportClosed) . fmap EVNetworkWebTransportClosed <$> obj .:? "params"
+                "Page.domContentEventFired" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy PageDomContentEventFired) . fmap EVPageDomContentEventFired <$> obj .:? "params"
+                "Page.fileChooserOpened" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy PageFileChooserOpened) . fmap EVPageFileChooserOpened <$> obj .:? "params"
+                "Page.frameAttached" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy PageFrameAttached) . fmap EVPageFrameAttached <$> obj .:? "params"
+                "Page.frameDetached" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy PageFrameDetached) . fmap EVPageFrameDetached <$> obj .:? "params"
+                "Page.frameNavigated" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy PageFrameNavigated) . fmap EVPageFrameNavigated <$> obj .:? "params"
+                "Page.interstitialHidden" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy PageInterstitialHidden) . fmap EVPageInterstitialHidden <$> obj .:? "params"
+                "Page.interstitialShown" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy PageInterstitialShown) . fmap EVPageInterstitialShown <$> obj .:? "params"
+                "Page.javascriptDialogClosed" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy PageJavascriptDialogClosed) . fmap EVPageJavascriptDialogClosed <$> obj .:? "params"
+                "Page.javascriptDialogOpening" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy PageJavascriptDialogOpening) . fmap EVPageJavascriptDialogOpening <$> obj .:? "params"
+                "Page.lifecycleEvent" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy PageLifecycleEvent) . fmap EVPageLifecycleEvent <$> obj .:? "params"
+                "Page.prerenderAttemptCompleted" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy PagePrerenderAttemptCompleted) . fmap EVPagePrerenderAttemptCompleted <$> obj .:? "params"
+                "Page.loadEventFired" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy PageLoadEventFired) . fmap EVPageLoadEventFired <$> obj .:? "params"
+                "Page.windowOpen" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy PageWindowOpen) . fmap EVPageWindowOpen <$> obj .:? "params"
+                "Performance.metrics" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy PerformanceMetrics) . fmap EVPerformanceMetrics <$> obj .:? "params"
+                "Target.receivedMessageFromTarget" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy TargetReceivedMessageFromTarget) . fmap EVTargetReceivedMessageFromTarget <$> obj .:? "params"
+                "Target.targetCreated" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy TargetTargetCreated) . fmap EVTargetTargetCreated <$> obj .:? "params"
+                "Target.targetDestroyed" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy TargetTargetDestroyed) . fmap EVTargetTargetDestroyed <$> obj .:? "params"
+                "Target.targetCrashed" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy TargetTargetCrashed) . fmap EVTargetTargetCrashed <$> obj .:? "params"
+                "Target.targetInfoChanged" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy TargetTargetInfoChanged) . fmap EVTargetTargetInfoChanged <$> obj .:? "params"
+                "Fetch.requestPaused" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy FetchRequestPaused) . fmap EVFetchRequestPaused <$> obj .:? "params"
+                "Fetch.authRequired" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy FetchAuthRequired) . fmap EVFetchAuthRequired <$> obj .:? "params"
+                "Console.messageAdded" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy ConsoleMessageAdded) . fmap EVConsoleMessageAdded <$> obj .:? "params"
+                "Debugger.breakpointResolved" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy DebuggerBreakpointResolved) . fmap EVDebuggerBreakpointResolved <$> obj .:? "params"
+                "Debugger.paused" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy DebuggerPaused) . fmap EVDebuggerPaused <$> obj .:? "params"
+                "Debugger.resumed" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy DebuggerResumed) . fmap EVDebuggerResumed <$> obj .:? "params"
+                "Debugger.scriptFailedToParse" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy DebuggerScriptFailedToParse) . fmap EVDebuggerScriptFailedToParse <$> obj .:? "params"
+                "Debugger.scriptParsed" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy DebuggerScriptParsed) . fmap EVDebuggerScriptParsed <$> obj .:? "params"
+                "Profiler.consoleProfileFinished" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy ProfilerConsoleProfileFinished) . fmap EVProfilerConsoleProfileFinished <$> obj .:? "params"
+                "Profiler.consoleProfileStarted" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy ProfilerConsoleProfileStarted) . fmap EVProfilerConsoleProfileStarted <$> obj .:? "params"
+                "Runtime.consoleAPICalled" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy RuntimeConsoleApiCalled) . fmap EVRuntimeConsoleApiCalled <$> obj .:? "params"
+                "Runtime.exceptionRevoked" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy RuntimeExceptionRevoked) . fmap EVRuntimeExceptionRevoked <$> obj .:? "params"
+                "Runtime.exceptionThrown" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy RuntimeExceptionThrown) . fmap EVRuntimeExceptionThrown <$> obj .:? "params"
+                "Runtime.executionContextCreated" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy RuntimeExecutionContextCreated) . fmap EVRuntimeExecutionContextCreated <$> obj .:? "params"
+                "Runtime.executionContextDestroyed" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy RuntimeExecutionContextDestroyed) . fmap EVRuntimeExecutionContextDestroyed <$> obj .:? "params"
+                "Runtime.executionContextsCleared" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy RuntimeExecutionContextsCleared) . fmap EVRuntimeExecutionContextsCleared <$> obj .:? "params"
+                "Runtime.inspectRequested" -> EventResponse (Proxy :: Proxy Event) (Proxy :: Proxy RuntimeInspectRequested) . fmap EVRuntimeInspectRequested <$> obj .:? "params"
                 _ -> fail "failed to parse EventResponse"
 
 
@@ -379,10 +189,9 @@ instance ToJSON DOMAttributeModified  where
         ]
 
 
-instance Event  DOMAttributeModified where
-    eventName  _   =  "DOM.attributeModified"
-    fToHandler _   =  HDOMAttributeModified
-    handlerToF _ h =  case h of HDOMAttributeModified f -> Just f; _ -> Nothing
+instance FromEvent Event DOMAttributeModified where
+    eventName  _ _    =  "DOM.attributeModified"
+    fromEvent ev =  case ev of EVDOMAttributeModified v -> Just v; _ -> Nothing
 
 data DOMAttributeRemoved = DOMAttributeRemoved {
     domAttributeRemovedNodeId :: DOMNodeId,
@@ -401,10 +210,9 @@ instance ToJSON DOMAttributeRemoved  where
         ]
 
 
-instance Event  DOMAttributeRemoved where
-    eventName  _   =  "DOM.attributeRemoved"
-    fToHandler _   =  HDOMAttributeRemoved
-    handlerToF _ h =  case h of HDOMAttributeRemoved f -> Just f; _ -> Nothing
+instance FromEvent Event DOMAttributeRemoved where
+    eventName  _ _    =  "DOM.attributeRemoved"
+    fromEvent ev =  case ev of EVDOMAttributeRemoved v -> Just v; _ -> Nothing
 
 data DOMCharacterDataModified = DOMCharacterDataModified {
     domCharacterDataModifiedNodeId :: DOMNodeId,
@@ -423,10 +231,9 @@ instance ToJSON DOMCharacterDataModified  where
         ]
 
 
-instance Event  DOMCharacterDataModified where
-    eventName  _   =  "DOM.characterDataModified"
-    fToHandler _   =  HDOMCharacterDataModified
-    handlerToF _ h =  case h of HDOMCharacterDataModified f -> Just f; _ -> Nothing
+instance FromEvent Event DOMCharacterDataModified where
+    eventName  _ _    =  "DOM.characterDataModified"
+    fromEvent ev =  case ev of EVDOMCharacterDataModified v -> Just v; _ -> Nothing
 
 data DOMChildNodeCountUpdated = DOMChildNodeCountUpdated {
     domChildNodeCountUpdatedNodeId :: DOMNodeId,
@@ -445,10 +252,9 @@ instance ToJSON DOMChildNodeCountUpdated  where
         ]
 
 
-instance Event  DOMChildNodeCountUpdated where
-    eventName  _   =  "DOM.childNodeCountUpdated"
-    fToHandler _   =  HDOMChildNodeCountUpdated
-    handlerToF _ h =  case h of HDOMChildNodeCountUpdated f -> Just f; _ -> Nothing
+instance FromEvent Event DOMChildNodeCountUpdated where
+    eventName  _ _    =  "DOM.childNodeCountUpdated"
+    fromEvent ev =  case ev of EVDOMChildNodeCountUpdated v -> Just v; _ -> Nothing
 
 data DOMChildNodeInserted = DOMChildNodeInserted {
     domChildNodeInsertedParentNodeId :: DOMNodeId,
@@ -470,10 +276,9 @@ instance ToJSON DOMChildNodeInserted  where
         ]
 
 
-instance Event  DOMChildNodeInserted where
-    eventName  _   =  "DOM.childNodeInserted"
-    fToHandler _   =  HDOMChildNodeInserted
-    handlerToF _ h =  case h of HDOMChildNodeInserted f -> Just f; _ -> Nothing
+instance FromEvent Event DOMChildNodeInserted where
+    eventName  _ _    =  "DOM.childNodeInserted"
+    fromEvent ev =  case ev of EVDOMChildNodeInserted v -> Just v; _ -> Nothing
 
 data DOMChildNodeRemoved = DOMChildNodeRemoved {
     domChildNodeRemovedParentNodeId :: DOMNodeId,
@@ -492,10 +297,9 @@ instance ToJSON DOMChildNodeRemoved  where
         ]
 
 
-instance Event  DOMChildNodeRemoved where
-    eventName  _   =  "DOM.childNodeRemoved"
-    fToHandler _   =  HDOMChildNodeRemoved
-    handlerToF _ h =  case h of HDOMChildNodeRemoved f -> Just f; _ -> Nothing
+instance FromEvent Event DOMChildNodeRemoved where
+    eventName  _ _    =  "DOM.childNodeRemoved"
+    fromEvent ev =  case ev of EVDOMChildNodeRemoved v -> Just v; _ -> Nothing
 
 data DOMDocumentUpdated = DOMDocumentUpdated
     deriving (Eq, Show, Read)
@@ -505,10 +309,9 @@ instance FromJSON DOMDocumentUpdated where
                 "DOMDocumentUpdated" -> pure $ DOMDocumentUpdated
                 _ -> fail "failed to parse DOMDocumentUpdated"
 
-instance Event  DOMDocumentUpdated where
-    eventName  _   =  "DOM.documentUpdated"
-    fToHandler _   =  HDOMDocumentUpdated
-    handlerToF _ h =  case h of HDOMDocumentUpdated f -> Just f; _ -> Nothing
+instance FromEvent Event DOMDocumentUpdated where
+    eventName  _ _    =  "DOM.documentUpdated"
+    fromEvent ev =  case ev of EVDOMDocumentUpdated v -> Just v; _ -> Nothing
 
 data DOMSetChildNodes = DOMSetChildNodes {
     domSetChildNodesParentId :: DOMNodeId,
@@ -527,10 +330,9 @@ instance ToJSON DOMSetChildNodes  where
         ]
 
 
-instance Event  DOMSetChildNodes where
-    eventName  _   =  "DOM.setChildNodes"
-    fToHandler _   =  HDOMSetChildNodes
-    handlerToF _ h =  case h of HDOMSetChildNodes f -> Just f; _ -> Nothing
+instance FromEvent Event DOMSetChildNodes where
+    eventName  _ _    =  "DOM.setChildNodes"
+    fromEvent ev =  case ev of EVDOMSetChildNodes v -> Just v; _ -> Nothing
 
 
 type DOMNodeId = Int
@@ -2325,10 +2127,9 @@ instance ToJSON LogEntryAdded  where
         ]
 
 
-instance Event  LogEntryAdded where
-    eventName  _   =  "Log.entryAdded"
-    fToHandler _   =  HLogEntryAdded
-    handlerToF _ h =  case h of HLogEntryAdded f -> Just f; _ -> Nothing
+instance FromEvent Event LogEntryAdded where
+    eventName  _ _    =  "Log.entryAdded"
+    fromEvent ev =  case ev of EVLogEntryAdded v -> Just v; _ -> Nothing
 
 
 data LogLogEntry = LogLogEntry {
@@ -2461,10 +2262,9 @@ instance ToJSON NetworkDataReceived  where
         ]
 
 
-instance Event  NetworkDataReceived where
-    eventName  _   =  "Network.dataReceived"
-    fToHandler _   =  HNetworkDataReceived
-    handlerToF _ h =  case h of HNetworkDataReceived f -> Just f; _ -> Nothing
+instance FromEvent Event NetworkDataReceived where
+    eventName  _ _    =  "Network.dataReceived"
+    fromEvent ev =  case ev of EVNetworkDataReceived v -> Just v; _ -> Nothing
 
 data NetworkEventSourceMessageReceived = NetworkEventSourceMessageReceived {
     networkEventSourceMessageReceivedRequestId :: NetworkRequestId,
@@ -2492,10 +2292,9 @@ instance ToJSON NetworkEventSourceMessageReceived  where
         ]
 
 
-instance Event  NetworkEventSourceMessageReceived where
-    eventName  _   =  "Network.eventSourceMessageReceived"
-    fToHandler _   =  HNetworkEventSourceMessageReceived
-    handlerToF _ h =  case h of HNetworkEventSourceMessageReceived f -> Just f; _ -> Nothing
+instance FromEvent Event NetworkEventSourceMessageReceived where
+    eventName  _ _    =  "Network.eventSourceMessageReceived"
+    fromEvent ev =  case ev of EVNetworkEventSourceMessageReceived v -> Just v; _ -> Nothing
 
 data NetworkLoadingFailed = NetworkLoadingFailed {
     networkLoadingFailedRequestId :: NetworkRequestId,
@@ -2529,10 +2328,9 @@ instance ToJSON NetworkLoadingFailed  where
         ]
 
 
-instance Event  NetworkLoadingFailed where
-    eventName  _   =  "Network.loadingFailed"
-    fToHandler _   =  HNetworkLoadingFailed
-    handlerToF _ h =  case h of HNetworkLoadingFailed f -> Just f; _ -> Nothing
+instance FromEvent Event NetworkLoadingFailed where
+    eventName  _ _    =  "Network.loadingFailed"
+    fromEvent ev =  case ev of EVNetworkLoadingFailed v -> Just v; _ -> Nothing
 
 data NetworkLoadingFinished = NetworkLoadingFinished {
     networkLoadingFinishedRequestId :: NetworkRequestId,
@@ -2557,10 +2355,9 @@ instance ToJSON NetworkLoadingFinished  where
         ]
 
 
-instance Event  NetworkLoadingFinished where
-    eventName  _   =  "Network.loadingFinished"
-    fToHandler _   =  HNetworkLoadingFinished
-    handlerToF _ h =  case h of HNetworkLoadingFinished f -> Just f; _ -> Nothing
+instance FromEvent Event NetworkLoadingFinished where
+    eventName  _ _    =  "Network.loadingFinished"
+    fromEvent ev =  case ev of EVNetworkLoadingFinished v -> Just v; _ -> Nothing
 
 data NetworkRequestServedFromCache = NetworkRequestServedFromCache {
     networkRequestServedFromCacheRequestId :: NetworkRequestId
@@ -2576,10 +2373,9 @@ instance ToJSON NetworkRequestServedFromCache  where
         ]
 
 
-instance Event  NetworkRequestServedFromCache where
-    eventName  _   =  "Network.requestServedFromCache"
-    fToHandler _   =  HNetworkRequestServedFromCache
-    handlerToF _ h =  case h of HNetworkRequestServedFromCache f -> Just f; _ -> Nothing
+instance FromEvent Event NetworkRequestServedFromCache where
+    eventName  _ _    =  "Network.requestServedFromCache"
+    fromEvent ev =  case ev of EVNetworkRequestServedFromCache v -> Just v; _ -> Nothing
 
 data NetworkRequestWillBeSent = NetworkRequestWillBeSent {
     networkRequestWillBeSentRequestId :: NetworkRequestId,
@@ -2625,10 +2421,9 @@ instance ToJSON NetworkRequestWillBeSent  where
         ]
 
 
-instance Event  NetworkRequestWillBeSent where
-    eventName  _   =  "Network.requestWillBeSent"
-    fToHandler _   =  HNetworkRequestWillBeSent
-    handlerToF _ h =  case h of HNetworkRequestWillBeSent f -> Just f; _ -> Nothing
+instance FromEvent Event NetworkRequestWillBeSent where
+    eventName  _ _    =  "Network.requestWillBeSent"
+    fromEvent ev =  case ev of EVNetworkRequestWillBeSent v -> Just v; _ -> Nothing
 
 data NetworkResponseReceived = NetworkResponseReceived {
     networkResponseReceivedRequestId :: NetworkRequestId,
@@ -2659,10 +2454,9 @@ instance ToJSON NetworkResponseReceived  where
         ]
 
 
-instance Event  NetworkResponseReceived where
-    eventName  _   =  "Network.responseReceived"
-    fToHandler _   =  HNetworkResponseReceived
-    handlerToF _ h =  case h of HNetworkResponseReceived f -> Just f; _ -> Nothing
+instance FromEvent Event NetworkResponseReceived where
+    eventName  _ _    =  "Network.responseReceived"
+    fromEvent ev =  case ev of EVNetworkResponseReceived v -> Just v; _ -> Nothing
 
 data NetworkWebSocketClosed = NetworkWebSocketClosed {
     networkWebSocketClosedRequestId :: NetworkRequestId,
@@ -2681,10 +2475,9 @@ instance ToJSON NetworkWebSocketClosed  where
         ]
 
 
-instance Event  NetworkWebSocketClosed where
-    eventName  _   =  "Network.webSocketClosed"
-    fToHandler _   =  HNetworkWebSocketClosed
-    handlerToF _ h =  case h of HNetworkWebSocketClosed f -> Just f; _ -> Nothing
+instance FromEvent Event NetworkWebSocketClosed where
+    eventName  _ _    =  "Network.webSocketClosed"
+    fromEvent ev =  case ev of EVNetworkWebSocketClosed v -> Just v; _ -> Nothing
 
 data NetworkWebSocketCreated = NetworkWebSocketCreated {
     networkWebSocketCreatedRequestId :: NetworkRequestId,
@@ -2706,10 +2499,9 @@ instance ToJSON NetworkWebSocketCreated  where
         ]
 
 
-instance Event  NetworkWebSocketCreated where
-    eventName  _   =  "Network.webSocketCreated"
-    fToHandler _   =  HNetworkWebSocketCreated
-    handlerToF _ h =  case h of HNetworkWebSocketCreated f -> Just f; _ -> Nothing
+instance FromEvent Event NetworkWebSocketCreated where
+    eventName  _ _    =  "Network.webSocketCreated"
+    fromEvent ev =  case ev of EVNetworkWebSocketCreated v -> Just v; _ -> Nothing
 
 data NetworkWebSocketFrameError = NetworkWebSocketFrameError {
     networkWebSocketFrameErrorRequestId :: NetworkRequestId,
@@ -2731,10 +2523,9 @@ instance ToJSON NetworkWebSocketFrameError  where
         ]
 
 
-instance Event  NetworkWebSocketFrameError where
-    eventName  _   =  "Network.webSocketFrameError"
-    fToHandler _   =  HNetworkWebSocketFrameError
-    handlerToF _ h =  case h of HNetworkWebSocketFrameError f -> Just f; _ -> Nothing
+instance FromEvent Event NetworkWebSocketFrameError where
+    eventName  _ _    =  "Network.webSocketFrameError"
+    fromEvent ev =  case ev of EVNetworkWebSocketFrameError v -> Just v; _ -> Nothing
 
 data NetworkWebSocketFrameReceived = NetworkWebSocketFrameReceived {
     networkWebSocketFrameReceivedRequestId :: NetworkRequestId,
@@ -2756,10 +2547,9 @@ instance ToJSON NetworkWebSocketFrameReceived  where
         ]
 
 
-instance Event  NetworkWebSocketFrameReceived where
-    eventName  _   =  "Network.webSocketFrameReceived"
-    fToHandler _   =  HNetworkWebSocketFrameReceived
-    handlerToF _ h =  case h of HNetworkWebSocketFrameReceived f -> Just f; _ -> Nothing
+instance FromEvent Event NetworkWebSocketFrameReceived where
+    eventName  _ _    =  "Network.webSocketFrameReceived"
+    fromEvent ev =  case ev of EVNetworkWebSocketFrameReceived v -> Just v; _ -> Nothing
 
 data NetworkWebSocketFrameSent = NetworkWebSocketFrameSent {
     networkWebSocketFrameSentRequestId :: NetworkRequestId,
@@ -2781,10 +2571,9 @@ instance ToJSON NetworkWebSocketFrameSent  where
         ]
 
 
-instance Event  NetworkWebSocketFrameSent where
-    eventName  _   =  "Network.webSocketFrameSent"
-    fToHandler _   =  HNetworkWebSocketFrameSent
-    handlerToF _ h =  case h of HNetworkWebSocketFrameSent f -> Just f; _ -> Nothing
+instance FromEvent Event NetworkWebSocketFrameSent where
+    eventName  _ _    =  "Network.webSocketFrameSent"
+    fromEvent ev =  case ev of EVNetworkWebSocketFrameSent v -> Just v; _ -> Nothing
 
 data NetworkWebSocketHandshakeResponseReceived = NetworkWebSocketHandshakeResponseReceived {
     networkWebSocketHandshakeResponseReceivedRequestId :: NetworkRequestId,
@@ -2806,10 +2595,9 @@ instance ToJSON NetworkWebSocketHandshakeResponseReceived  where
         ]
 
 
-instance Event  NetworkWebSocketHandshakeResponseReceived where
-    eventName  _   =  "Network.webSocketHandshakeResponseReceived"
-    fToHandler _   =  HNetworkWebSocketHandshakeResponseReceived
-    handlerToF _ h =  case h of HNetworkWebSocketHandshakeResponseReceived f -> Just f; _ -> Nothing
+instance FromEvent Event NetworkWebSocketHandshakeResponseReceived where
+    eventName  _ _    =  "Network.webSocketHandshakeResponseReceived"
+    fromEvent ev =  case ev of EVNetworkWebSocketHandshakeResponseReceived v -> Just v; _ -> Nothing
 
 data NetworkWebSocketWillSendHandshakeRequest = NetworkWebSocketWillSendHandshakeRequest {
     networkWebSocketWillSendHandshakeRequestRequestId :: NetworkRequestId,
@@ -2834,10 +2622,9 @@ instance ToJSON NetworkWebSocketWillSendHandshakeRequest  where
         ]
 
 
-instance Event  NetworkWebSocketWillSendHandshakeRequest where
-    eventName  _   =  "Network.webSocketWillSendHandshakeRequest"
-    fToHandler _   =  HNetworkWebSocketWillSendHandshakeRequest
-    handlerToF _ h =  case h of HNetworkWebSocketWillSendHandshakeRequest f -> Just f; _ -> Nothing
+instance FromEvent Event NetworkWebSocketWillSendHandshakeRequest where
+    eventName  _ _    =  "Network.webSocketWillSendHandshakeRequest"
+    fromEvent ev =  case ev of EVNetworkWebSocketWillSendHandshakeRequest v -> Just v; _ -> Nothing
 
 data NetworkWebTransportCreated = NetworkWebTransportCreated {
     networkWebTransportCreatedTransportId :: NetworkRequestId,
@@ -2862,10 +2649,9 @@ instance ToJSON NetworkWebTransportCreated  where
         ]
 
 
-instance Event  NetworkWebTransportCreated where
-    eventName  _   =  "Network.webTransportCreated"
-    fToHandler _   =  HNetworkWebTransportCreated
-    handlerToF _ h =  case h of HNetworkWebTransportCreated f -> Just f; _ -> Nothing
+instance FromEvent Event NetworkWebTransportCreated where
+    eventName  _ _    =  "Network.webTransportCreated"
+    fromEvent ev =  case ev of EVNetworkWebTransportCreated v -> Just v; _ -> Nothing
 
 data NetworkWebTransportConnectionEstablished = NetworkWebTransportConnectionEstablished {
     networkWebTransportConnectionEstablishedTransportId :: NetworkRequestId,
@@ -2884,10 +2670,9 @@ instance ToJSON NetworkWebTransportConnectionEstablished  where
         ]
 
 
-instance Event  NetworkWebTransportConnectionEstablished where
-    eventName  _   =  "Network.webTransportConnectionEstablished"
-    fToHandler _   =  HNetworkWebTransportConnectionEstablished
-    handlerToF _ h =  case h of HNetworkWebTransportConnectionEstablished f -> Just f; _ -> Nothing
+instance FromEvent Event NetworkWebTransportConnectionEstablished where
+    eventName  _ _    =  "Network.webTransportConnectionEstablished"
+    fromEvent ev =  case ev of EVNetworkWebTransportConnectionEstablished v -> Just v; _ -> Nothing
 
 data NetworkWebTransportClosed = NetworkWebTransportClosed {
     networkWebTransportClosedTransportId :: NetworkRequestId,
@@ -2906,10 +2691,9 @@ instance ToJSON NetworkWebTransportClosed  where
         ]
 
 
-instance Event  NetworkWebTransportClosed where
-    eventName  _   =  "Network.webTransportClosed"
-    fToHandler _   =  HNetworkWebTransportClosed
-    handlerToF _ h =  case h of HNetworkWebTransportClosed f -> Just f; _ -> Nothing
+instance FromEvent Event NetworkWebTransportClosed where
+    eventName  _ _    =  "Network.webTransportClosed"
+    fromEvent ev =  case ev of EVNetworkWebTransportClosed v -> Just v; _ -> Nothing
 
 
 data NetworkResourceType = NetworkResourceTypeDocument | NetworkResourceTypeStylesheet | NetworkResourceTypeImage | NetworkResourceTypeMedia | NetworkResourceTypeFont | NetworkResourceTypeScript | NetworkResourceTypeTextTrack | NetworkResourceTypeXhr | NetworkResourceTypeFetch | NetworkResourceTypeEventSource | NetworkResourceTypeWebSocket | NetworkResourceTypeManifest | NetworkResourceTypeSignedExchange | NetworkResourceTypePing | NetworkResourceTypeCspViolationReport | NetworkResourceTypePreflight | NetworkResourceTypeOther
@@ -4062,10 +3846,9 @@ instance ToJSON PageDomContentEventFired  where
         ]
 
 
-instance Event  PageDomContentEventFired where
-    eventName  _   =  "Page.domContentEventFired"
-    fToHandler _   =  HPageDomContentEventFired
-    handlerToF _ h =  case h of HPageDomContentEventFired f -> Just f; _ -> Nothing
+instance FromEvent Event PageDomContentEventFired where
+    eventName  _ _    =  "Page.domContentEventFired"
+    fromEvent ev =  case ev of EVPageDomContentEventFired v -> Just v; _ -> Nothing
 
 data PageFileChooserOpened = PageFileChooserOpened {
     pageFileChooserOpenedMode :: String
@@ -4081,10 +3864,9 @@ instance ToJSON PageFileChooserOpened  where
         ]
 
 
-instance Event  PageFileChooserOpened where
-    eventName  _   =  "Page.fileChooserOpened"
-    fToHandler _   =  HPageFileChooserOpened
-    handlerToF _ h =  case h of HPageFileChooserOpened f -> Just f; _ -> Nothing
+instance FromEvent Event PageFileChooserOpened where
+    eventName  _ _    =  "Page.fileChooserOpened"
+    fromEvent ev =  case ev of EVPageFileChooserOpened v -> Just v; _ -> Nothing
 
 data PageFrameAttached = PageFrameAttached {
     pageFrameAttachedFrameId :: PageFrameId,
@@ -4106,10 +3888,9 @@ instance ToJSON PageFrameAttached  where
         ]
 
 
-instance Event  PageFrameAttached where
-    eventName  _   =  "Page.frameAttached"
-    fToHandler _   =  HPageFrameAttached
-    handlerToF _ h =  case h of HPageFrameAttached f -> Just f; _ -> Nothing
+instance FromEvent Event PageFrameAttached where
+    eventName  _ _    =  "Page.frameAttached"
+    fromEvent ev =  case ev of EVPageFrameAttached v -> Just v; _ -> Nothing
 
 data PageFrameDetached = PageFrameDetached {
     pageFrameDetachedFrameId :: PageFrameId
@@ -4125,10 +3906,9 @@ instance ToJSON PageFrameDetached  where
         ]
 
 
-instance Event  PageFrameDetached where
-    eventName  _   =  "Page.frameDetached"
-    fToHandler _   =  HPageFrameDetached
-    handlerToF _ h =  case h of HPageFrameDetached f -> Just f; _ -> Nothing
+instance FromEvent Event PageFrameDetached where
+    eventName  _ _    =  "Page.frameDetached"
+    fromEvent ev =  case ev of EVPageFrameDetached v -> Just v; _ -> Nothing
 
 data PageFrameNavigated = PageFrameNavigated {
     pageFrameNavigatedFrame :: PageFrame
@@ -4144,10 +3924,9 @@ instance ToJSON PageFrameNavigated  where
         ]
 
 
-instance Event  PageFrameNavigated where
-    eventName  _   =  "Page.frameNavigated"
-    fToHandler _   =  HPageFrameNavigated
-    handlerToF _ h =  case h of HPageFrameNavigated f -> Just f; _ -> Nothing
+instance FromEvent Event PageFrameNavigated where
+    eventName  _ _    =  "Page.frameNavigated"
+    fromEvent ev =  case ev of EVPageFrameNavigated v -> Just v; _ -> Nothing
 
 data PageInterstitialHidden = PageInterstitialHidden
     deriving (Eq, Show, Read)
@@ -4157,10 +3936,9 @@ instance FromJSON PageInterstitialHidden where
                 "PageInterstitialHidden" -> pure $ PageInterstitialHidden
                 _ -> fail "failed to parse PageInterstitialHidden"
 
-instance Event  PageInterstitialHidden where
-    eventName  _   =  "Page.interstitialHidden"
-    fToHandler _   =  HPageInterstitialHidden
-    handlerToF _ h =  case h of HPageInterstitialHidden f -> Just f; _ -> Nothing
+instance FromEvent Event PageInterstitialHidden where
+    eventName  _ _    =  "Page.interstitialHidden"
+    fromEvent ev =  case ev of EVPageInterstitialHidden v -> Just v; _ -> Nothing
 
 data PageInterstitialShown = PageInterstitialShown
     deriving (Eq, Show, Read)
@@ -4170,10 +3948,9 @@ instance FromJSON PageInterstitialShown where
                 "PageInterstitialShown" -> pure $ PageInterstitialShown
                 _ -> fail "failed to parse PageInterstitialShown"
 
-instance Event  PageInterstitialShown where
-    eventName  _   =  "Page.interstitialShown"
-    fToHandler _   =  HPageInterstitialShown
-    handlerToF _ h =  case h of HPageInterstitialShown f -> Just f; _ -> Nothing
+instance FromEvent Event PageInterstitialShown where
+    eventName  _ _    =  "Page.interstitialShown"
+    fromEvent ev =  case ev of EVPageInterstitialShown v -> Just v; _ -> Nothing
 
 data PageJavascriptDialogClosed = PageJavascriptDialogClosed {
     pageJavascriptDialogClosedResult :: Bool,
@@ -4192,10 +3969,9 @@ instance ToJSON PageJavascriptDialogClosed  where
         ]
 
 
-instance Event  PageJavascriptDialogClosed where
-    eventName  _   =  "Page.javascriptDialogClosed"
-    fToHandler _   =  HPageJavascriptDialogClosed
-    handlerToF _ h =  case h of HPageJavascriptDialogClosed f -> Just f; _ -> Nothing
+instance FromEvent Event PageJavascriptDialogClosed where
+    eventName  _ _    =  "Page.javascriptDialogClosed"
+    fromEvent ev =  case ev of EVPageJavascriptDialogClosed v -> Just v; _ -> Nothing
 
 data PageJavascriptDialogOpening = PageJavascriptDialogOpening {
     pageJavascriptDialogOpeningUrl :: String,
@@ -4223,10 +3999,9 @@ instance ToJSON PageJavascriptDialogOpening  where
         ]
 
 
-instance Event  PageJavascriptDialogOpening where
-    eventName  _   =  "Page.javascriptDialogOpening"
-    fToHandler _   =  HPageJavascriptDialogOpening
-    handlerToF _ h =  case h of HPageJavascriptDialogOpening f -> Just f; _ -> Nothing
+instance FromEvent Event PageJavascriptDialogOpening where
+    eventName  _ _    =  "Page.javascriptDialogOpening"
+    fromEvent ev =  case ev of EVPageJavascriptDialogOpening v -> Just v; _ -> Nothing
 
 data PageLifecycleEvent = PageLifecycleEvent {
     pageLifecycleEventFrameId :: PageFrameId,
@@ -4251,10 +4026,9 @@ instance ToJSON PageLifecycleEvent  where
         ]
 
 
-instance Event  PageLifecycleEvent where
-    eventName  _   =  "Page.lifecycleEvent"
-    fToHandler _   =  HPageLifecycleEvent
-    handlerToF _ h =  case h of HPageLifecycleEvent f -> Just f; _ -> Nothing
+instance FromEvent Event PageLifecycleEvent where
+    eventName  _ _    =  "Page.lifecycleEvent"
+    fromEvent ev =  case ev of EVPageLifecycleEvent v -> Just v; _ -> Nothing
 
 data PagePrerenderAttemptCompleted = PagePrerenderAttemptCompleted {
     pagePrerenderAttemptCompletedInitiatingFrameId :: PageFrameId,
@@ -4276,10 +4050,9 @@ instance ToJSON PagePrerenderAttemptCompleted  where
         ]
 
 
-instance Event  PagePrerenderAttemptCompleted where
-    eventName  _   =  "Page.prerenderAttemptCompleted"
-    fToHandler _   =  HPagePrerenderAttemptCompleted
-    handlerToF _ h =  case h of HPagePrerenderAttemptCompleted f -> Just f; _ -> Nothing
+instance FromEvent Event PagePrerenderAttemptCompleted where
+    eventName  _ _    =  "Page.prerenderAttemptCompleted"
+    fromEvent ev =  case ev of EVPagePrerenderAttemptCompleted v -> Just v; _ -> Nothing
 
 data PageLoadEventFired = PageLoadEventFired {
     pageLoadEventFiredTimestamp :: NetworkMonotonicTime
@@ -4295,10 +4068,9 @@ instance ToJSON PageLoadEventFired  where
         ]
 
 
-instance Event  PageLoadEventFired where
-    eventName  _   =  "Page.loadEventFired"
-    fToHandler _   =  HPageLoadEventFired
-    handlerToF _ h =  case h of HPageLoadEventFired f -> Just f; _ -> Nothing
+instance FromEvent Event PageLoadEventFired where
+    eventName  _ _    =  "Page.loadEventFired"
+    fromEvent ev =  case ev of EVPageLoadEventFired v -> Just v; _ -> Nothing
 
 data PageWindowOpen = PageWindowOpen {
     pageWindowOpenUrl :: String,
@@ -4323,10 +4095,9 @@ instance ToJSON PageWindowOpen  where
         ]
 
 
-instance Event  PageWindowOpen where
-    eventName  _   =  "Page.windowOpen"
-    fToHandler _   =  HPageWindowOpen
-    handlerToF _ h =  case h of HPageWindowOpen f -> Just f; _ -> Nothing
+instance FromEvent Event PageWindowOpen where
+    eventName  _ _    =  "Page.windowOpen"
+    fromEvent ev =  case ev of EVPageWindowOpen v -> Just v; _ -> Nothing
 
 
 type PageFrameId = String
@@ -5096,10 +4867,9 @@ instance ToJSON PerformanceMetrics  where
         ]
 
 
-instance Event  PerformanceMetrics where
-    eventName  _   =  "Performance.metrics"
-    fToHandler _   =  HPerformanceMetrics
-    handlerToF _ h =  case h of HPerformanceMetrics f -> Just f; _ -> Nothing
+instance FromEvent Event PerformanceMetrics where
+    eventName  _ _    =  "Performance.metrics"
+    fromEvent ev =  case ev of EVPerformanceMetrics v -> Just v; _ -> Nothing
 
 
 data PerformanceMetric = PerformanceMetric {
@@ -5289,10 +5059,9 @@ instance ToJSON TargetReceivedMessageFromTarget  where
         ]
 
 
-instance Event  TargetReceivedMessageFromTarget where
-    eventName  _   =  "Target.receivedMessageFromTarget"
-    fToHandler _   =  HTargetReceivedMessageFromTarget
-    handlerToF _ h =  case h of HTargetReceivedMessageFromTarget f -> Just f; _ -> Nothing
+instance FromEvent Event TargetReceivedMessageFromTarget where
+    eventName  _ _    =  "Target.receivedMessageFromTarget"
+    fromEvent ev =  case ev of EVTargetReceivedMessageFromTarget v -> Just v; _ -> Nothing
 
 data TargetTargetCreated = TargetTargetCreated {
     targetTargetCreatedTargetInfo :: TargetTargetInfo
@@ -5308,10 +5077,9 @@ instance ToJSON TargetTargetCreated  where
         ]
 
 
-instance Event  TargetTargetCreated where
-    eventName  _   =  "Target.targetCreated"
-    fToHandler _   =  HTargetTargetCreated
-    handlerToF _ h =  case h of HTargetTargetCreated f -> Just f; _ -> Nothing
+instance FromEvent Event TargetTargetCreated where
+    eventName  _ _    =  "Target.targetCreated"
+    fromEvent ev =  case ev of EVTargetTargetCreated v -> Just v; _ -> Nothing
 
 data TargetTargetDestroyed = TargetTargetDestroyed {
     targetTargetDestroyedTargetId :: TargetTargetID
@@ -5327,10 +5095,9 @@ instance ToJSON TargetTargetDestroyed  where
         ]
 
 
-instance Event  TargetTargetDestroyed where
-    eventName  _   =  "Target.targetDestroyed"
-    fToHandler _   =  HTargetTargetDestroyed
-    handlerToF _ h =  case h of HTargetTargetDestroyed f -> Just f; _ -> Nothing
+instance FromEvent Event TargetTargetDestroyed where
+    eventName  _ _    =  "Target.targetDestroyed"
+    fromEvent ev =  case ev of EVTargetTargetDestroyed v -> Just v; _ -> Nothing
 
 data TargetTargetCrashed = TargetTargetCrashed {
     targetTargetCrashedTargetId :: TargetTargetID,
@@ -5352,10 +5119,9 @@ instance ToJSON TargetTargetCrashed  where
         ]
 
 
-instance Event  TargetTargetCrashed where
-    eventName  _   =  "Target.targetCrashed"
-    fToHandler _   =  HTargetTargetCrashed
-    handlerToF _ h =  case h of HTargetTargetCrashed f -> Just f; _ -> Nothing
+instance FromEvent Event TargetTargetCrashed where
+    eventName  _ _    =  "Target.targetCrashed"
+    fromEvent ev =  case ev of EVTargetTargetCrashed v -> Just v; _ -> Nothing
 
 data TargetTargetInfoChanged = TargetTargetInfoChanged {
     targetTargetInfoChangedTargetInfo :: TargetTargetInfo
@@ -5371,10 +5137,9 @@ instance ToJSON TargetTargetInfoChanged  where
         ]
 
 
-instance Event  TargetTargetInfoChanged where
-    eventName  _   =  "Target.targetInfoChanged"
-    fToHandler _   =  HTargetTargetInfoChanged
-    handlerToF _ h =  case h of HTargetTargetInfoChanged f -> Just f; _ -> Nothing
+instance FromEvent Event TargetTargetInfoChanged where
+    eventName  _ _    =  "Target.targetInfoChanged"
+    fromEvent ev =  case ev of EVTargetTargetInfoChanged v -> Just v; _ -> Nothing
 
 
 type TargetTargetID = String
@@ -5615,10 +5380,9 @@ instance ToJSON FetchRequestPaused  where
         ]
 
 
-instance Event  FetchRequestPaused where
-    eventName  _   =  "Fetch.requestPaused"
-    fToHandler _   =  HFetchRequestPaused
-    handlerToF _ h =  case h of HFetchRequestPaused f -> Just f; _ -> Nothing
+instance FromEvent Event FetchRequestPaused where
+    eventName  _ _    =  "Fetch.requestPaused"
+    fromEvent ev =  case ev of EVFetchRequestPaused v -> Just v; _ -> Nothing
 
 data FetchAuthRequired = FetchAuthRequired {
     fetchAuthRequiredRequestId :: FetchRequestId,
@@ -5646,10 +5410,9 @@ instance ToJSON FetchAuthRequired  where
         ]
 
 
-instance Event  FetchAuthRequired where
-    eventName  _   =  "Fetch.authRequired"
-    fToHandler _   =  HFetchAuthRequired
-    handlerToF _ h =  case h of HFetchAuthRequired f -> Just f; _ -> Nothing
+instance FromEvent Event FetchAuthRequired where
+    eventName  _ _    =  "Fetch.authRequired"
+    fromEvent ev =  case ev of EVFetchAuthRequired v -> Just v; _ -> Nothing
 
 
 type FetchRequestId = String
@@ -5967,10 +5730,9 @@ instance ToJSON ConsoleMessageAdded  where
         ]
 
 
-instance Event  ConsoleMessageAdded where
-    eventName  _   =  "Console.messageAdded"
-    fToHandler _   =  HConsoleMessageAdded
-    handlerToF _ h =  case h of HConsoleMessageAdded f -> Just f; _ -> Nothing
+instance FromEvent Event ConsoleMessageAdded where
+    eventName  _ _    =  "Console.messageAdded"
+    fromEvent ev =  case ev of EVConsoleMessageAdded v -> Just v; _ -> Nothing
 
 
 data ConsoleConsoleMessage = ConsoleConsoleMessage {
@@ -6039,10 +5801,9 @@ instance ToJSON DebuggerBreakpointResolved  where
         ]
 
 
-instance Event  DebuggerBreakpointResolved where
-    eventName  _   =  "Debugger.breakpointResolved"
-    fToHandler _   =  HDebuggerBreakpointResolved
-    handlerToF _ h =  case h of HDebuggerBreakpointResolved f -> Just f; _ -> Nothing
+instance FromEvent Event DebuggerBreakpointResolved where
+    eventName  _ _    =  "Debugger.breakpointResolved"
+    fromEvent ev =  case ev of EVDebuggerBreakpointResolved v -> Just v; _ -> Nothing
 
 data DebuggerPaused = DebuggerPaused {
     debuggerPausedCallFrames :: [DebuggerCallFrame],
@@ -6070,10 +5831,9 @@ instance ToJSON DebuggerPaused  where
         ]
 
 
-instance Event  DebuggerPaused where
-    eventName  _   =  "Debugger.paused"
-    fToHandler _   =  HDebuggerPaused
-    handlerToF _ h =  case h of HDebuggerPaused f -> Just f; _ -> Nothing
+instance FromEvent Event DebuggerPaused where
+    eventName  _ _    =  "Debugger.paused"
+    fromEvent ev =  case ev of EVDebuggerPaused v -> Just v; _ -> Nothing
 
 data DebuggerResumed = DebuggerResumed
     deriving (Eq, Show, Read)
@@ -6083,10 +5843,9 @@ instance FromJSON DebuggerResumed where
                 "DebuggerResumed" -> pure $ DebuggerResumed
                 _ -> fail "failed to parse DebuggerResumed"
 
-instance Event  DebuggerResumed where
-    eventName  _   =  "Debugger.resumed"
-    fToHandler _   =  HDebuggerResumed
-    handlerToF _ h =  case h of HDebuggerResumed f -> Just f; _ -> Nothing
+instance FromEvent Event DebuggerResumed where
+    eventName  _ _    =  "Debugger.resumed"
+    fromEvent ev =  case ev of EVDebuggerResumed v -> Just v; _ -> Nothing
 
 data DebuggerScriptFailedToParse = DebuggerScriptFailedToParse {
     debuggerScriptFailedToParseScriptId :: RuntimeScriptId,
@@ -6138,10 +5897,9 @@ instance ToJSON DebuggerScriptFailedToParse  where
         ]
 
 
-instance Event  DebuggerScriptFailedToParse where
-    eventName  _   =  "Debugger.scriptFailedToParse"
-    fToHandler _   =  HDebuggerScriptFailedToParse
-    handlerToF _ h =  case h of HDebuggerScriptFailedToParse f -> Just f; _ -> Nothing
+instance FromEvent Event DebuggerScriptFailedToParse where
+    eventName  _ _    =  "Debugger.scriptFailedToParse"
+    fromEvent ev =  case ev of EVDebuggerScriptFailedToParse v -> Just v; _ -> Nothing
 
 data DebuggerScriptParsed = DebuggerScriptParsed {
     debuggerScriptParsedScriptId :: RuntimeScriptId,
@@ -6193,10 +5951,9 @@ instance ToJSON DebuggerScriptParsed  where
         ]
 
 
-instance Event  DebuggerScriptParsed where
-    eventName  _   =  "Debugger.scriptParsed"
-    fToHandler _   =  HDebuggerScriptParsed
-    handlerToF _ h =  case h of HDebuggerScriptParsed f -> Just f; _ -> Nothing
+instance FromEvent Event DebuggerScriptParsed where
+    eventName  _ _    =  "Debugger.scriptParsed"
+    fromEvent ev =  case ev of EVDebuggerScriptParsed v -> Just v; _ -> Nothing
 
 
 type DebuggerBreakpointId = String
@@ -6888,10 +6645,9 @@ instance ToJSON ProfilerConsoleProfileFinished  where
         ]
 
 
-instance Event  ProfilerConsoleProfileFinished where
-    eventName  _   =  "Profiler.consoleProfileFinished"
-    fToHandler _   =  HProfilerConsoleProfileFinished
-    handlerToF _ h =  case h of HProfilerConsoleProfileFinished f -> Just f; _ -> Nothing
+instance FromEvent Event ProfilerConsoleProfileFinished where
+    eventName  _ _    =  "Profiler.consoleProfileFinished"
+    fromEvent ev =  case ev of EVProfilerConsoleProfileFinished v -> Just v; _ -> Nothing
 
 data ProfilerConsoleProfileStarted = ProfilerConsoleProfileStarted {
     profilerConsoleProfileStartedId :: String,
@@ -6913,10 +6669,9 @@ instance ToJSON ProfilerConsoleProfileStarted  where
         ]
 
 
-instance Event  ProfilerConsoleProfileStarted where
-    eventName  _   =  "Profiler.consoleProfileStarted"
-    fToHandler _   =  HProfilerConsoleProfileStarted
-    handlerToF _ h =  case h of HProfilerConsoleProfileStarted f -> Just f; _ -> Nothing
+instance FromEvent Event ProfilerConsoleProfileStarted where
+    eventName  _ _    =  "Profiler.consoleProfileStarted"
+    fromEvent ev =  case ev of EVProfilerConsoleProfileStarted v -> Just v; _ -> Nothing
 
 
 data ProfilerProfileNode = ProfilerProfileNode {
@@ -7212,10 +6967,9 @@ instance ToJSON RuntimeConsoleApiCalled  where
         ]
 
 
-instance Event  RuntimeConsoleApiCalled where
-    eventName  _   =  "Runtime.consoleAPICalled"
-    fToHandler _   =  HRuntimeConsoleApiCalled
-    handlerToF _ h =  case h of HRuntimeConsoleApiCalled f -> Just f; _ -> Nothing
+instance FromEvent Event RuntimeConsoleApiCalled where
+    eventName  _ _    =  "Runtime.consoleAPICalled"
+    fromEvent ev =  case ev of EVRuntimeConsoleApiCalled v -> Just v; _ -> Nothing
 
 data RuntimeExceptionRevoked = RuntimeExceptionRevoked {
     runtimeExceptionRevokedReason :: String,
@@ -7234,10 +6988,9 @@ instance ToJSON RuntimeExceptionRevoked  where
         ]
 
 
-instance Event  RuntimeExceptionRevoked where
-    eventName  _   =  "Runtime.exceptionRevoked"
-    fToHandler _   =  HRuntimeExceptionRevoked
-    handlerToF _ h =  case h of HRuntimeExceptionRevoked f -> Just f; _ -> Nothing
+instance FromEvent Event RuntimeExceptionRevoked where
+    eventName  _ _    =  "Runtime.exceptionRevoked"
+    fromEvent ev =  case ev of EVRuntimeExceptionRevoked v -> Just v; _ -> Nothing
 
 data RuntimeExceptionThrown = RuntimeExceptionThrown {
     runtimeExceptionThrownTimestamp :: RuntimeTimestamp,
@@ -7256,10 +7009,9 @@ instance ToJSON RuntimeExceptionThrown  where
         ]
 
 
-instance Event  RuntimeExceptionThrown where
-    eventName  _   =  "Runtime.exceptionThrown"
-    fToHandler _   =  HRuntimeExceptionThrown
-    handlerToF _ h =  case h of HRuntimeExceptionThrown f -> Just f; _ -> Nothing
+instance FromEvent Event RuntimeExceptionThrown where
+    eventName  _ _    =  "Runtime.exceptionThrown"
+    fromEvent ev =  case ev of EVRuntimeExceptionThrown v -> Just v; _ -> Nothing
 
 data RuntimeExecutionContextCreated = RuntimeExecutionContextCreated {
     runtimeExecutionContextCreatedContext :: RuntimeExecutionContextDescription
@@ -7275,10 +7027,9 @@ instance ToJSON RuntimeExecutionContextCreated  where
         ]
 
 
-instance Event  RuntimeExecutionContextCreated where
-    eventName  _   =  "Runtime.executionContextCreated"
-    fToHandler _   =  HRuntimeExecutionContextCreated
-    handlerToF _ h =  case h of HRuntimeExecutionContextCreated f -> Just f; _ -> Nothing
+instance FromEvent Event RuntimeExecutionContextCreated where
+    eventName  _ _    =  "Runtime.executionContextCreated"
+    fromEvent ev =  case ev of EVRuntimeExecutionContextCreated v -> Just v; _ -> Nothing
 
 data RuntimeExecutionContextDestroyed = RuntimeExecutionContextDestroyed {
     runtimeExecutionContextDestroyedExecutionContextId :: RuntimeExecutionContextId
@@ -7294,10 +7045,9 @@ instance ToJSON RuntimeExecutionContextDestroyed  where
         ]
 
 
-instance Event  RuntimeExecutionContextDestroyed where
-    eventName  _   =  "Runtime.executionContextDestroyed"
-    fToHandler _   =  HRuntimeExecutionContextDestroyed
-    handlerToF _ h =  case h of HRuntimeExecutionContextDestroyed f -> Just f; _ -> Nothing
+instance FromEvent Event RuntimeExecutionContextDestroyed where
+    eventName  _ _    =  "Runtime.executionContextDestroyed"
+    fromEvent ev =  case ev of EVRuntimeExecutionContextDestroyed v -> Just v; _ -> Nothing
 
 data RuntimeExecutionContextsCleared = RuntimeExecutionContextsCleared
     deriving (Eq, Show, Read)
@@ -7307,10 +7057,9 @@ instance FromJSON RuntimeExecutionContextsCleared where
                 "RuntimeExecutionContextsCleared" -> pure $ RuntimeExecutionContextsCleared
                 _ -> fail "failed to parse RuntimeExecutionContextsCleared"
 
-instance Event  RuntimeExecutionContextsCleared where
-    eventName  _   =  "Runtime.executionContextsCleared"
-    fToHandler _   =  HRuntimeExecutionContextsCleared
-    handlerToF _ h =  case h of HRuntimeExecutionContextsCleared f -> Just f; _ -> Nothing
+instance FromEvent Event RuntimeExecutionContextsCleared where
+    eventName  _ _    =  "Runtime.executionContextsCleared"
+    fromEvent ev =  case ev of EVRuntimeExecutionContextsCleared v -> Just v; _ -> Nothing
 
 data RuntimeInspectRequested = RuntimeInspectRequested {
     runtimeInspectRequestedObject :: RuntimeRemoteObject,
@@ -7329,10 +7078,9 @@ instance ToJSON RuntimeInspectRequested  where
         ]
 
 
-instance Event  RuntimeInspectRequested where
-    eventName  _   =  "Runtime.inspectRequested"
-    fToHandler _   =  HRuntimeInspectRequested
-    handlerToF _ h =  case h of HRuntimeInspectRequested f -> Just f; _ -> Nothing
+instance FromEvent Event RuntimeInspectRequested where
+    eventName  _ _    =  "Runtime.inspectRequested"
+    fromEvent ev =  case ev of EVRuntimeInspectRequested v -> Just v; _ -> Nothing
 
 
 type RuntimeScriptId = String
@@ -8041,6 +7789,7 @@ instance Command  SchemaGetDomains where
 
 schemaGetDomains :: Session -> IO (Either Error SchemaGetDomains)
 schemaGetDomains session = sendReceiveCommandResult session "Schema.getDomains" (Nothing :: Maybe ())
+
 
 
 

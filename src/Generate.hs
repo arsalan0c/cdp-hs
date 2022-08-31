@@ -25,7 +25,7 @@ supportedDomains = ["Browser", "Page"]
 generate :: [P.DomainsElt] -> Program
 generate des = ("\n\n" <>) $
     unlines 
-        [ eventHandlerSumType
+        [ eventsSumType
         , eventResponseFromJSON
         , unlines . map genDomain $ validDomains
         ]
@@ -38,16 +38,17 @@ generate des = ("\n\n" <>) $
     hasExperimentalDependencies domain = any (`elem` experimentalDomains) . (fromMaybe [] . P.domainsEltDependencies) $ domain
     experimentalDomains = map P.domainsEltDomain . filter (isTrue . P.domainsEltExperimental) $ des
     
-
     allEventConstructors = concatMap (\d -> map (eventName (domainName d)) . (validEvents . fromMaybe []) $ P.domainsEltEvents d) $ validDomains 
     allEventStrs = concatMap (\d -> map (eventStr (domainName d)) . (validEvents . fromMaybe []) $ P.domainsEltEvents d) $ validDomains 
 
-    eventHandlerSumType = ("data Handler = " <>) $   
+    eventsSumTypeName = "Event"
+    eventsSumType     = (<> "\n    deriving (Eq, Show, Read)") . 
+        (unwords ["data", eventsSumTypeName, "= "] <>) .   
         intercalate " | " . 
-        map (\c -> unwords [eventHandlerConstructor c, "(" <> c, "-> IO ())"]) $ 
+        map (\c -> unwords [eventsSumTypeConstructor c, c]) $ 
         allEventConstructors
 
-    eventHandlerConstructor = ("H" <>)
+    eventsSumTypeConstructor = ("EV" <>)
             
     allEventsType = (<> "\n    deriving (Ord, Eq, Show, Read)") . 
         ("data EventName = "<>) . 
@@ -61,13 +62,13 @@ generate des = ("\n\n" <>) $
         map (\c -> unwords ["EventReturn" <> c, c]) $ 
         allEventConstructors
     eventResponseFromJSON = unlines $
-        [ unwords ["instance FromJSON", "EventResponse", "where"]
+        [ unwords ["instance FromJSON", "(EventResponse", eventsSumTypeName, ") where"]
         , unwords ["    parseJSON = A.withObject ", show "EventResponse", " $ \\obj -> do"]
         , unwords ["        name", "<-", "obj", ".:", show "method"]
         , unwords ["        case (name :: String) of"]
         ] ++ 
             (map (\(l,r) -> unwords ["               ", l, "->", r]) $ zip (map show allEventStrs)
-                (map ((\c -> unwords ["EventResponse " <> proxy c, "<$> obj .:?", show "params"])) allEventConstructors) ++ 
+                (map ((\c -> unwords ["EventResponse", proxy eventsSumTypeName, proxy c, ". fmap", eventsSumTypeConstructor c, "<$> obj .:?", show "params"])) allEventConstructors) ++ 
                 [emptyCase "EventResponse"])
     proxy s = "(Proxy :: Proxy " <> s <> ")"
 
@@ -76,6 +77,7 @@ generate des = ("\n\n" <>) $
     eventStr domainName    ev = (domainName <>) . ("." <>) . unpack . P.eventsEltName $ ev
     commandStr domainName  c  = (domainName <>) . ("." <>) . unpack . P.commandsEltName $ c
 
+    eventClassName = "FromEvent"
     eventName domainName   ev = (domainName <>) . C.pascal . unpack . P.eventsEltName $ ev
     commandName domainName c  = (domainName <>) . C.pascal . unpack . P.commandsEltName $ c
     domainName = unpack . P.domainsEltDomain
@@ -96,12 +98,11 @@ generate des = ("\n\n" <>) $
         dn = domainName de 
         eventInstance ev = 
             let evn = eventName dn ev
-                evh = eventHandlerConstructor evn in
+                evc = eventsSumTypeConstructor evn in
             unlines $
-                [ unwords ["instance Event ", evn, "where"]
-                , unwords ["   ", "eventName  _   = ", show $ eventStr dn ev]
-                , unwords ["   ", "fToHandler _   = ", evh]
-                , unwords ["   ", "handlerToF _ h = ", "case h of", evh, "f -> Just f; _ -> Nothing"] 
+                [ unwords ["instance", eventClassName, eventsSumTypeName, evn, "where"]
+                , unwords ["   ", "eventName  _ _    = ", show $ eventStr dn ev] -- TODO: parameterize
+                , unwords ["   ", "fromEvent ev = ", "case ev of", evc, "v -> Just v; _ -> Nothing"] -- TODO: parameterize
                 ]
     
     genCommand dn ce = 
@@ -214,7 +215,6 @@ generate des = ("\n\n" <>) $
         , if isEmptyParams then "(Nothing :: Maybe ())" else "(Just params)" -- genBodyArgs paramNamesOptional
         ]
         
-
     genBodyArgs paramNamesOptional = 
         let optArgs = map fst . filter (not . snd) $ paramNamesOptional
             reqArgs = map fst . filter (snd) $ paramNamesOptional

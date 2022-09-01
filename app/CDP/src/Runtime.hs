@@ -77,7 +77,6 @@ getPageInfo request = do
         Just mpis -> pure $ head . catMaybes $ mpis
         Nothing   -> error "getPageInfo: Parse error"
 
-type FromJSONEvent ev = FromJSON (EventResponse ev)
 type ClientApp' ev b  = Session' ev -> IO b
 runClient' :: forall ev b. FromJSONEvent ev => Maybe (String, Int) -> ClientApp' ev b -> IO b
 runClient' hostPort app = do
@@ -128,25 +127,3 @@ dispatchEventResponse handlers res = do
             evs <- readMVar handlers
             let handler = maybe print id $ Map.lookup (eventName ps p) evs
             maybe (pure ()) handler v
-
-updateEvents :: forall ev. FromJSONEvent ev => Session' ev -> (Map.Map String (ev -> IO ()) -> Map.Map String (ev -> IO ())) -> IO ()
-updateEvents session f = ($ pure . f) . modifyMVar_ . events $ session
-
-subscribe' :: forall ev a . (FromJSONEvent ev, FromEvent ev a) => Session' ev -> (a -> IO ()) -> IO ()
-subscribe' session h = updateEvents session $ Map.insert (eventName ps p) handler
-  where
-    handler = maybe (pure ()) h . fromEvent
-    p  = (Proxy :: Proxy a)
-    ps = (Proxy :: Proxy s)
-
-unsubscribe' :: forall ev a. (FromJSONEvent ev, FromEvent ev a) => Session' ev -> Proxy a -> IO ()
-unsubscribe' session p = updateEvents session (Map.delete (eventName ps p))
-  where
-    ps = Proxy :: Proxy ev
-
-class (FromJSON a) => FromEvent ev a | a -> ev where
-    eventName     :: Proxy ev -> Proxy a -> String
-    fromEvent     :: ev       -> Maybe a
-
-data EventResponse ev where
-    EventResponse :: (Show ev, Show a, FromEvent ev a) => Proxy ev -> Proxy a -> Maybe ev -> EventResponse ev

@@ -43,24 +43,10 @@ import System.Random
 
 import Utils
 
-import qualified Domains.Browser as Browser
-import qualified Domains.DOM as DOM
-import qualified Domains.DOMDebugger as DOMDebugger
-import qualified Domains.Emulation as Emulation
-import qualified Domains.IO as IO
-import qualified Domains.Input as Input
-import qualified Domains.Log as Log
-import qualified Domains.Network as Network
-import qualified Domains.Page as Page
-import qualified Domains.Security as Security
-import qualified Domains.Target as Target
-import qualified Domains.Fetch as Fetch
-import qualified Domains.Console as Console
-import qualified Domains.Debugger as Debugger
-import qualified Domains.Profiler as Profiler
-import qualified Domains.Runtime as Runtime
-import qualified Domains.Schema as Schema
 
+
+data PerformanceEvent = EVPerformanceMetrics PerformanceMetrics
+    deriving (Eq, Show, Read)
 
 data PerformanceMetrics = PerformanceMetrics {
     performanceMetricsMetrics :: [PerformanceMetric],
@@ -79,10 +65,21 @@ instance ToJSON PerformanceMetrics  where
         ]
 
 
-instance FromEvent Event PerformanceMetrics where
+instance FromEvent PerformanceEvent PerformanceMetrics where
     eventName  _ _    =  "Performance.metrics"
     fromEvent ev =  case ev of EVPerformanceMetrics v -> Just v; _ -> Nothing
 
+
+
+
+subscribe :: forall a. FromEvent PerformanceEvent a => Session -> ( a -> IO () ) -> IO ()
+subscribe (Session session') handler1 = subscribe' paev session' name handler2
+  where
+    handler2 = maybe (pure ()) handler1 . fromEvent
+    name     = eventName pev pa
+    paev     = Proxy :: Proxy Event
+    pev      = Proxy :: Proxy PerformanceEvent
+    pa       = Proxy :: Proxy a
 
 
 data PerformanceMetric = PerformanceMetric {

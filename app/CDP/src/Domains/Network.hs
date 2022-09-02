@@ -43,24 +43,13 @@ import System.Random
 
 import Utils
 
-import qualified Domains.Browser as Browser
-import qualified Domains.DOM as DOM
-import qualified Domains.DOMDebugger as DOMDebugger
-import qualified Domains.Emulation as Emulation
-import qualified Domains.IO as IO
-import qualified Domains.Input as Input
-import qualified Domains.Log as Log
-import qualified Domains.Page as Page
-import qualified Domains.Performance as Performance
-import qualified Domains.Security as Security
-import qualified Domains.Target as Target
-import qualified Domains.Fetch as Fetch
-import qualified Domains.Console as Console
 import qualified Domains.Debugger as Debugger
-import qualified Domains.Profiler as Profiler
 import qualified Domains.Runtime as Runtime
-import qualified Domains.Schema as Schema
+import qualified Domains.Security as Security
 
+
+data NetworkEvent = EVNetworkDataReceived NetworkDataReceived | EVNetworkEventSourceMessageReceived NetworkEventSourceMessageReceived | EVNetworkLoadingFailed NetworkLoadingFailed | EVNetworkLoadingFinished NetworkLoadingFinished | EVNetworkRequestServedFromCache NetworkRequestServedFromCache | EVNetworkRequestWillBeSent NetworkRequestWillBeSent | EVNetworkResponseReceived NetworkResponseReceived | EVNetworkWebSocketClosed NetworkWebSocketClosed | EVNetworkWebSocketCreated NetworkWebSocketCreated | EVNetworkWebSocketFrameError NetworkWebSocketFrameError | EVNetworkWebSocketFrameReceived NetworkWebSocketFrameReceived | EVNetworkWebSocketFrameSent NetworkWebSocketFrameSent | EVNetworkWebSocketHandshakeResponseReceived NetworkWebSocketHandshakeResponseReceived | EVNetworkWebSocketWillSendHandshakeRequest NetworkWebSocketWillSendHandshakeRequest | EVNetworkWebTransportCreated NetworkWebTransportCreated | EVNetworkWebTransportConnectionEstablished NetworkWebTransportConnectionEstablished | EVNetworkWebTransportClosed NetworkWebTransportClosed
+    deriving (Eq, Show, Read)
 
 data NetworkDataReceived = NetworkDataReceived {
     networkDataReceivedRequestId :: NetworkRequestId,
@@ -85,9 +74,10 @@ instance ToJSON NetworkDataReceived  where
         ]
 
 
-instance FromEvent Event NetworkDataReceived where
+instance FromEvent NetworkEvent NetworkDataReceived where
     eventName  _ _    =  "Network.dataReceived"
     fromEvent ev =  case ev of EVNetworkDataReceived v -> Just v; _ -> Nothing
+
 
 data NetworkEventSourceMessageReceived = NetworkEventSourceMessageReceived {
     networkEventSourceMessageReceivedRequestId :: NetworkRequestId,
@@ -115,9 +105,10 @@ instance ToJSON NetworkEventSourceMessageReceived  where
         ]
 
 
-instance FromEvent Event NetworkEventSourceMessageReceived where
+instance FromEvent NetworkEvent NetworkEventSourceMessageReceived where
     eventName  _ _    =  "Network.eventSourceMessageReceived"
     fromEvent ev =  case ev of EVNetworkEventSourceMessageReceived v -> Just v; _ -> Nothing
+
 
 data NetworkLoadingFailed = NetworkLoadingFailed {
     networkLoadingFailedRequestId :: NetworkRequestId,
@@ -151,9 +142,10 @@ instance ToJSON NetworkLoadingFailed  where
         ]
 
 
-instance FromEvent Event NetworkLoadingFailed where
+instance FromEvent NetworkEvent NetworkLoadingFailed where
     eventName  _ _    =  "Network.loadingFailed"
     fromEvent ev =  case ev of EVNetworkLoadingFailed v -> Just v; _ -> Nothing
+
 
 data NetworkLoadingFinished = NetworkLoadingFinished {
     networkLoadingFinishedRequestId :: NetworkRequestId,
@@ -178,9 +170,10 @@ instance ToJSON NetworkLoadingFinished  where
         ]
 
 
-instance FromEvent Event NetworkLoadingFinished where
+instance FromEvent NetworkEvent NetworkLoadingFinished where
     eventName  _ _    =  "Network.loadingFinished"
     fromEvent ev =  case ev of EVNetworkLoadingFinished v -> Just v; _ -> Nothing
+
 
 data NetworkRequestServedFromCache = NetworkRequestServedFromCache {
     networkRequestServedFromCacheRequestId :: NetworkRequestId
@@ -196,9 +189,10 @@ instance ToJSON NetworkRequestServedFromCache  where
         ]
 
 
-instance FromEvent Event NetworkRequestServedFromCache where
+instance FromEvent NetworkEvent NetworkRequestServedFromCache where
     eventName  _ _    =  "Network.requestServedFromCache"
     fromEvent ev =  case ev of EVNetworkRequestServedFromCache v -> Just v; _ -> Nothing
+
 
 data NetworkRequestWillBeSent = NetworkRequestWillBeSent {
     networkRequestWillBeSentRequestId :: NetworkRequestId,
@@ -244,9 +238,10 @@ instance ToJSON NetworkRequestWillBeSent  where
         ]
 
 
-instance FromEvent Event NetworkRequestWillBeSent where
+instance FromEvent NetworkEvent NetworkRequestWillBeSent where
     eventName  _ _    =  "Network.requestWillBeSent"
     fromEvent ev =  case ev of EVNetworkRequestWillBeSent v -> Just v; _ -> Nothing
+
 
 data NetworkResponseReceived = NetworkResponseReceived {
     networkResponseReceivedRequestId :: NetworkRequestId,
@@ -277,9 +272,10 @@ instance ToJSON NetworkResponseReceived  where
         ]
 
 
-instance FromEvent Event NetworkResponseReceived where
+instance FromEvent NetworkEvent NetworkResponseReceived where
     eventName  _ _    =  "Network.responseReceived"
     fromEvent ev =  case ev of EVNetworkResponseReceived v -> Just v; _ -> Nothing
+
 
 data NetworkWebSocketClosed = NetworkWebSocketClosed {
     networkWebSocketClosedRequestId :: NetworkRequestId,
@@ -298,9 +294,10 @@ instance ToJSON NetworkWebSocketClosed  where
         ]
 
 
-instance FromEvent Event NetworkWebSocketClosed where
+instance FromEvent NetworkEvent NetworkWebSocketClosed where
     eventName  _ _    =  "Network.webSocketClosed"
     fromEvent ev =  case ev of EVNetworkWebSocketClosed v -> Just v; _ -> Nothing
+
 
 data NetworkWebSocketCreated = NetworkWebSocketCreated {
     networkWebSocketCreatedRequestId :: NetworkRequestId,
@@ -322,9 +319,10 @@ instance ToJSON NetworkWebSocketCreated  where
         ]
 
 
-instance FromEvent Event NetworkWebSocketCreated where
+instance FromEvent NetworkEvent NetworkWebSocketCreated where
     eventName  _ _    =  "Network.webSocketCreated"
     fromEvent ev =  case ev of EVNetworkWebSocketCreated v -> Just v; _ -> Nothing
+
 
 data NetworkWebSocketFrameError = NetworkWebSocketFrameError {
     networkWebSocketFrameErrorRequestId :: NetworkRequestId,
@@ -346,9 +344,10 @@ instance ToJSON NetworkWebSocketFrameError  where
         ]
 
 
-instance FromEvent Event NetworkWebSocketFrameError where
+instance FromEvent NetworkEvent NetworkWebSocketFrameError where
     eventName  _ _    =  "Network.webSocketFrameError"
     fromEvent ev =  case ev of EVNetworkWebSocketFrameError v -> Just v; _ -> Nothing
+
 
 data NetworkWebSocketFrameReceived = NetworkWebSocketFrameReceived {
     networkWebSocketFrameReceivedRequestId :: NetworkRequestId,
@@ -370,9 +369,10 @@ instance ToJSON NetworkWebSocketFrameReceived  where
         ]
 
 
-instance FromEvent Event NetworkWebSocketFrameReceived where
+instance FromEvent NetworkEvent NetworkWebSocketFrameReceived where
     eventName  _ _    =  "Network.webSocketFrameReceived"
     fromEvent ev =  case ev of EVNetworkWebSocketFrameReceived v -> Just v; _ -> Nothing
+
 
 data NetworkWebSocketFrameSent = NetworkWebSocketFrameSent {
     networkWebSocketFrameSentRequestId :: NetworkRequestId,
@@ -394,9 +394,10 @@ instance ToJSON NetworkWebSocketFrameSent  where
         ]
 
 
-instance FromEvent Event NetworkWebSocketFrameSent where
+instance FromEvent NetworkEvent NetworkWebSocketFrameSent where
     eventName  _ _    =  "Network.webSocketFrameSent"
     fromEvent ev =  case ev of EVNetworkWebSocketFrameSent v -> Just v; _ -> Nothing
+
 
 data NetworkWebSocketHandshakeResponseReceived = NetworkWebSocketHandshakeResponseReceived {
     networkWebSocketHandshakeResponseReceivedRequestId :: NetworkRequestId,
@@ -418,9 +419,10 @@ instance ToJSON NetworkWebSocketHandshakeResponseReceived  where
         ]
 
 
-instance FromEvent Event NetworkWebSocketHandshakeResponseReceived where
+instance FromEvent NetworkEvent NetworkWebSocketHandshakeResponseReceived where
     eventName  _ _    =  "Network.webSocketHandshakeResponseReceived"
     fromEvent ev =  case ev of EVNetworkWebSocketHandshakeResponseReceived v -> Just v; _ -> Nothing
+
 
 data NetworkWebSocketWillSendHandshakeRequest = NetworkWebSocketWillSendHandshakeRequest {
     networkWebSocketWillSendHandshakeRequestRequestId :: NetworkRequestId,
@@ -445,9 +447,10 @@ instance ToJSON NetworkWebSocketWillSendHandshakeRequest  where
         ]
 
 
-instance FromEvent Event NetworkWebSocketWillSendHandshakeRequest where
+instance FromEvent NetworkEvent NetworkWebSocketWillSendHandshakeRequest where
     eventName  _ _    =  "Network.webSocketWillSendHandshakeRequest"
     fromEvent ev =  case ev of EVNetworkWebSocketWillSendHandshakeRequest v -> Just v; _ -> Nothing
+
 
 data NetworkWebTransportCreated = NetworkWebTransportCreated {
     networkWebTransportCreatedTransportId :: NetworkRequestId,
@@ -472,9 +475,10 @@ instance ToJSON NetworkWebTransportCreated  where
         ]
 
 
-instance FromEvent Event NetworkWebTransportCreated where
+instance FromEvent NetworkEvent NetworkWebTransportCreated where
     eventName  _ _    =  "Network.webTransportCreated"
     fromEvent ev =  case ev of EVNetworkWebTransportCreated v -> Just v; _ -> Nothing
+
 
 data NetworkWebTransportConnectionEstablished = NetworkWebTransportConnectionEstablished {
     networkWebTransportConnectionEstablishedTransportId :: NetworkRequestId,
@@ -493,9 +497,10 @@ instance ToJSON NetworkWebTransportConnectionEstablished  where
         ]
 
 
-instance FromEvent Event NetworkWebTransportConnectionEstablished where
+instance FromEvent NetworkEvent NetworkWebTransportConnectionEstablished where
     eventName  _ _    =  "Network.webTransportConnectionEstablished"
     fromEvent ev =  case ev of EVNetworkWebTransportConnectionEstablished v -> Just v; _ -> Nothing
+
 
 data NetworkWebTransportClosed = NetworkWebTransportClosed {
     networkWebTransportClosedTransportId :: NetworkRequestId,
@@ -514,10 +519,21 @@ instance ToJSON NetworkWebTransportClosed  where
         ]
 
 
-instance FromEvent Event NetworkWebTransportClosed where
+instance FromEvent NetworkEvent NetworkWebTransportClosed where
     eventName  _ _    =  "Network.webTransportClosed"
     fromEvent ev =  case ev of EVNetworkWebTransportClosed v -> Just v; _ -> Nothing
 
+
+
+
+subscribe :: forall a. FromEvent NetworkEvent a => Session -> ( a -> IO () ) -> IO ()
+subscribe (Session session') handler1 = subscribe' paev session' name handler2
+  where
+    handler2 = maybe (pure ()) handler1 . fromEvent
+    name     = eventName pev pa
+    paev     = Proxy :: Proxy Event
+    pev      = Proxy :: Proxy NetworkEvent
+    pa       = Proxy :: Proxy a
 
 
 data NetworkResourceType = NetworkResourceTypeDocument | NetworkResourceTypeStylesheet | NetworkResourceTypeImage | NetworkResourceTypeMedia | NetworkResourceTypeFont | NetworkResourceTypeScript | NetworkResourceTypeTextTrack | NetworkResourceTypeXhr | NetworkResourceTypeFetch | NetworkResourceTypeEventSource | NetworkResourceTypeWebSocket | NetworkResourceTypeManifest | NetworkResourceTypeSignedExchange | NetworkResourceTypePing | NetworkResourceTypeCspViolationReport | NetworkResourceTypePreflight | NetworkResourceTypeOther

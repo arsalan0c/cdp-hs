@@ -1,17 +1,4 @@
 type ClientApp b = Session -> IO b
-data Session = Session { unSession :: Session' Event }  
 
 runClient  :: Maybe (String, Int) -> ClientApp a -> IO a
 runClient hostPort app = runClient' hostPort (app . Session)
-
-subscribe :: forall a. FromEvent Event a => Session -> (a -> IO ()) -> IO ()
-subscribe session h = subscribe' (unSession session) h
-
-unsubscribe :: forall a. FromEvent Event a => Session -> Proxy a -> IO ()
-unsubscribe session p = unsubscribe' (unSession session) p
-
-sendReceiveCommand :: (ToJSON a) => Session -> String -> Maybe a -> IO (Maybe Error)
-sendReceiveCommand session = sendReceiveCommand' (unSession session)
-
-sendReceiveCommandResult :: forall a b s. (ToJSON a, Command b) => Session -> String -> Maybe a -> IO (Either Error b)
-sendReceiveCommandResult session = sendReceiveCommandResult' (unSession session)

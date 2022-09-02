@@ -22,7 +22,7 @@ generate :: String -> String -> [P.DomainsElt] -> (String, String, Map.Map Strin
 generate extensions imports des = (allDomainImports,,generatedDomains) . ("\n\n" <>) $
     unlines 
         [ eventsSumType
-        , eventResponseFromJSON
+        , allEventsResponseFromJSON
         ]
   where
     validDomains = 
@@ -37,46 +37,55 @@ generate extensions imports des = (allDomainImports,,generatedDomains) . ("\n\n"
     hasExperimentalDependencies domain = any (`elem` experimentalDomains) . (fromMaybe [] . P.domainsEltDependencies) $ domain
     experimentalDomains = map P.domainsEltDomain . filter (isTrue . P.domainsEltExperimental) $ des
     
-    allEventConstructors = concatMap (\d -> map (eventName (domainName d)) . (validEvents . fromMaybe []) $ P.domainsEltEvents d) $ validDomains 
-    allEventStrs = concatMap (\d -> map (eventStr (domainName d)) . (validEvents . fromMaybe []) $ P.domainsEltEvents d) $ validDomains 
 
     eventsSumTypeName = "Event"
     eventsSumType     = (<> "\n    deriving (Eq, Show, Read)") . 
         (unwords ["data", eventsSumTypeName, "= "] <>) .   
         intercalate " | " . 
-        map (\c -> unwords [eventsSumTypeConstructor c, c]) $ 
-        allEventConstructors
+        map (\de -> unwords [eventsSumTypeConstructor (domainName de), domainEventsSumTypeName (domainName de)]) $ 
+        validDomains
 
     eventsSumTypeConstructor = ("EV" <>)
-            
-    allEventsType = (<> "\n    deriving (Ord, Eq, Show, Read)") . 
-        ("data EventName = "<>) . 
-        intercalate " | " . 
-        map ("EventName" <>) $ 
-        allEventConstructors
-
-    allEventsFromJSON = genFromJSONInstanceEnum "EventName" allEventConstructors (map ("EventName"<>) allEventConstructors)
-  
-    allEventReturns = (<> "\n    deriving (Eq, Show, Read)") . ("data EventReturn = "<>) . intercalate " | " .
-        map (\c -> unwords ["EventReturn" <> c, c]) $ 
-        allEventConstructors
-    eventResponseFromJSON = unlines $
-        [ unwords ["instance FromJSON", "(EventResponse", eventsSumTypeName, ") where"]
+    validDomainEvents          = maybe [] filterValidEvents . P.domainsEltEvents
+    allEventNames              = concatMap (\de -> map (eventStr (domainName de)) (validDomainEvents de)) validDomains
+    allEventConstructors       = concatMap (\de -> map (\_ -> eventsSumTypeConstructor (domainName de)) (validDomainEvents de)) validDomains
+    domainEventConstructors    = concatMap (\de -> map (eventsSumTypeConstructor . eventName (domainName de)) (validDomainEvents de)) validDomains
+    allEventsResponseFromJSON  = eventResponseFromJSON eventsSumTypeName allEventNames domainEventConstructors allEventConstructors
+       
+    domainEventsSumTypeName   = (<> "Event")             
+    eventResponseFromJSON tn names domainEventConstructors allEventConstructors = unlines $
+        [ unwords ["instance FromJSON", "(EventResponse", tn, ") where"]
         , unwords ["    parseJSON = A.withObject ", show "EventResponse", " $ \\obj -> do"]
         , unwords ["        name", "<-", "obj", ".:", show "method"]
         , unwords ["        case (name :: String) of"]
         ] ++ 
-            (map (\(l,r) -> unwords ["               ", l, "->", r]) $ zip (map show allEventStrs)
-                (map ((\c -> unwords ["EventResponse", proxy eventsSumTypeName, proxy c, ". fmap", eventsSumTypeConstructor c, "<$> obj .:?", show "params"])) allEventConstructors) ++ 
-                [emptyCase "EventResponse"])
+            (map (\(l,r) -> unwords ["               ", l, "->", r]) $ zip (map show names)
+                (map ((\(dc, ac) -> unwords ["EventResponse", proxy tn, proxy dc, ". fmap", ac, ". fmap", dc, "<$> obj .:?", show "params"])) $ zip domainEventConstructors allEventConstructors) ++ 
+                [emptyCase $ "EventResponse" <> tn])
     proxy s = "(Proxy :: Proxy " <> s <> ")"
 
-    validEvents  = filter (not . isTrue . P.eventsEltExperimental) . filter (not . isTrue . P.eventsEltDeprecated)
+
+    handlerType var = unwords [var, "->", "IO", "()"]
+
+    subscribeEvents eventsTypeName = unlines 
+        [ unwords ["subscribe :: forall a.", "FromEvent", eventsTypeName, "a => Session -> (", handlerType "a", ") -> IO ()"]
+        , unwords ["subscribe (Session session') handler1 = subscribe' paev session' name handler2"]
+        , unwords ["  where"]
+        , unwords ["    handler2 = maybe (pure ()) handler1 . fromEvent"]
+        , unwords ["    name     = eventName pev pa"]
+        , unwords ["    paev     = Proxy :: Proxy", eventsSumTypeName]
+        , unwords ["    pev      = Proxy :: Proxy", eventsTypeName]
+        , unwords ["    pa       = Proxy :: Proxy a"]
+        ]
+
+    filterValidEvents = filter (not . isTrue . P.eventsEltExperimental) . filter (not . isTrue . P.eventsEltDeprecated)
 
     eventStr domainName    ev = (domainName <>) . ("." <>) . unpack . P.eventsEltName $ ev
     commandStr domainName  c  = (domainName <>) . ("." <>) . unpack . P.commandsEltName $ c
 
     eventClassName = "FromEvent"
+
+    eventNameQualified domainName ev = (domainName <>) . ("." <>) . C.pascal . unpack . P.eventsEltName $ ev
     eventName domainName   ev = (domainName <>) . C.pascal . unpack . P.eventsEltName $ ev
     commandName domainName c  = (domainName <>) . C.pascal . unpack . P.commandsEltName $ c
     domainName = unpack . P.domainsEltDomain
@@ -86,18 +95,28 @@ generate extensions imports des = (allDomainImports,,generatedDomains) . ("\n\n"
         , domainModuleHeader dn
         , imports
         , otherDomainImports
-        , events
+        , domainEventsSumType
+        , unlines . map (\ev -> unlines [eventReturnType ev, eventInstance ev]) $ validEvents
+        , subscribeEvents (domainEventsSumTypeName dn)
         , genTypes dn . P.domainsEltTypes $ de
         , unlines . map (genCommand dn) $ validCommands
         ]
       where
-        otherDomainImports = unlines . map (importDomain . domainName) . filter (/= de) $ validDomains
+        otherDomainImports = unlines . map importDomain . maybe [] (map unpack) . P.domainsEltDependencies $ de
+        -- unlines . map (importDomain . domainName) . filter (/= de) $ validDomains
 
         validCommands      = 
             filter (not . isTrue . P.commandsEltDeprecated) . 
             filter (not . isTrue . P.commandsEltExperimental) . 
             P.domainsEltCommands $ de
-        events = maybe "" (unlines . concatMap (\ev -> [eventReturnType ev, eventInstance ev]) . validEvents) . P.domainsEltEvents $ de
+
+        domainEventsSumType = (<> "\n    deriving (Eq, Show, Read)") . 
+            (unwords ["data", domainEventsSumTypeName dn, "= "] <>) .   
+            intercalate " | " . 
+            map (\ev -> let evn = eventName dn ev in unwords [eventsSumTypeConstructor evn, evn]) $ 
+            validEvents
+
+        validEvents = maybe [] filterValidEvents . P.domainsEltEvents $ de
         eventReturnType ev = let evn = eventName (domainName de) ev in
             maybe ((<> "\n" <> genFromJSONInstanceEnum evn [evn] [evn]) . (<> "\n    deriving (Eq, Show, Read)") $ unwords ["data", evn, "=", evn]) (genTypeObj dn evn "") . P.eventsEltParameters $ ev
         dn = domainName de 
@@ -105,7 +124,7 @@ generate extensions imports des = (allDomainImports,,generatedDomains) . ("\n\n"
             let evn = eventName dn ev
                 evc = eventsSumTypeConstructor evn in
             unlines $
-                [ unwords ["instance", eventClassName, eventsSumTypeName, evn, "where"]
+                [ unwords ["instance", eventClassName, domainEventsSumTypeName dn, evn, "where"]
                 , unwords ["   ", "eventName  _ _    = ", show $ eventStr dn ev] -- TODO: parameterize
                 , unwords ["   ", "fromEvent ev = ", "case ev of", evc, "v -> Just v; _ -> Nothing"] -- TODO: parameterize
                 ]

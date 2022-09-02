@@ -19,7 +19,7 @@ doChromeDevtoolsProtocol = do
     
     prelude <- intercalate "\n\n" <$> sequence
         [ readFile "src/PreludeExtensions.txt"
-        , readFile "src/PreludeDeclaration.txt"
+        , readFile "src/PreludeModuleDeclaration.txt"
         , readFile "src/PreludeImports.txt"
         , pure importOfDomains
         , readFile "src/PreludeCode.txt"

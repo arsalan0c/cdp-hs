@@ -43,24 +43,15 @@ import System.Random
 
 import Utils
 
-import qualified Domains.Browser as Browser
-import qualified Domains.DOM as DOM
-import qualified Domains.DOMDebugger as DOMDebugger
-import qualified Domains.Emulation as Emulation
-import qualified Domains.IO as IO
-import qualified Domains.Input as Input
-import qualified Domains.Log as Log
-import qualified Domains.Network as Network
-import qualified Domains.Performance as Performance
-import qualified Domains.Security as Security
-import qualified Domains.Target as Target
-import qualified Domains.Fetch as Fetch
-import qualified Domains.Console as Console
 import qualified Domains.Debugger as Debugger
-import qualified Domains.Profiler as Profiler
+import qualified Domains.DOM as DOM
+import qualified Domains.IO as IO
+import qualified Domains.Network as Network
 import qualified Domains.Runtime as Runtime
-import qualified Domains.Schema as Schema
 
+
+data PageEvent = EVPageDomContentEventFired PageDomContentEventFired | EVPageFileChooserOpened PageFileChooserOpened | EVPageFrameAttached PageFrameAttached | EVPageFrameDetached PageFrameDetached | EVPageFrameNavigated PageFrameNavigated | EVPageInterstitialHidden PageInterstitialHidden | EVPageInterstitialShown PageInterstitialShown | EVPageJavascriptDialogClosed PageJavascriptDialogClosed | EVPageJavascriptDialogOpening PageJavascriptDialogOpening | EVPageLifecycleEvent PageLifecycleEvent | EVPagePrerenderAttemptCompleted PagePrerenderAttemptCompleted | EVPageLoadEventFired PageLoadEventFired | EVPageWindowOpen PageWindowOpen
+    deriving (Eq, Show, Read)
 
 data PageDomContentEventFired = PageDomContentEventFired {
     pageDomContentEventFiredTimestamp :: NetworkMonotonicTime
@@ -76,9 +67,10 @@ instance ToJSON PageDomContentEventFired  where
         ]
 
 
-instance FromEvent Event PageDomContentEventFired where
+instance FromEvent PageEvent PageDomContentEventFired where
     eventName  _ _    =  "Page.domContentEventFired"
     fromEvent ev =  case ev of EVPageDomContentEventFired v -> Just v; _ -> Nothing
+
 
 data PageFileChooserOpened = PageFileChooserOpened {
     pageFileChooserOpenedMode :: String
@@ -94,9 +86,10 @@ instance ToJSON PageFileChooserOpened  where
         ]
 
 
-instance FromEvent Event PageFileChooserOpened where
+instance FromEvent PageEvent PageFileChooserOpened where
     eventName  _ _    =  "Page.fileChooserOpened"
     fromEvent ev =  case ev of EVPageFileChooserOpened v -> Just v; _ -> Nothing
+
 
 data PageFrameAttached = PageFrameAttached {
     pageFrameAttachedFrameId :: PageFrameId,
@@ -118,9 +111,10 @@ instance ToJSON PageFrameAttached  where
         ]
 
 
-instance FromEvent Event PageFrameAttached where
+instance FromEvent PageEvent PageFrameAttached where
     eventName  _ _    =  "Page.frameAttached"
     fromEvent ev =  case ev of EVPageFrameAttached v -> Just v; _ -> Nothing
+
 
 data PageFrameDetached = PageFrameDetached {
     pageFrameDetachedFrameId :: PageFrameId
@@ -136,9 +130,10 @@ instance ToJSON PageFrameDetached  where
         ]
 
 
-instance FromEvent Event PageFrameDetached where
+instance FromEvent PageEvent PageFrameDetached where
     eventName  _ _    =  "Page.frameDetached"
     fromEvent ev =  case ev of EVPageFrameDetached v -> Just v; _ -> Nothing
+
 
 data PageFrameNavigated = PageFrameNavigated {
     pageFrameNavigatedFrame :: PageFrame
@@ -154,9 +149,10 @@ instance ToJSON PageFrameNavigated  where
         ]
 
 
-instance FromEvent Event PageFrameNavigated where
+instance FromEvent PageEvent PageFrameNavigated where
     eventName  _ _    =  "Page.frameNavigated"
     fromEvent ev =  case ev of EVPageFrameNavigated v -> Just v; _ -> Nothing
+
 
 data PageInterstitialHidden = PageInterstitialHidden
     deriving (Eq, Show, Read)
@@ -166,9 +162,10 @@ instance FromJSON PageInterstitialHidden where
                 "PageInterstitialHidden" -> pure $ PageInterstitialHidden
                 _ -> fail "failed to parse PageInterstitialHidden"
 
-instance FromEvent Event PageInterstitialHidden where
+instance FromEvent PageEvent PageInterstitialHidden where
     eventName  _ _    =  "Page.interstitialHidden"
     fromEvent ev =  case ev of EVPageInterstitialHidden v -> Just v; _ -> Nothing
+
 
 data PageInterstitialShown = PageInterstitialShown
     deriving (Eq, Show, Read)
@@ -178,9 +175,10 @@ instance FromJSON PageInterstitialShown where
                 "PageInterstitialShown" -> pure $ PageInterstitialShown
                 _ -> fail "failed to parse PageInterstitialShown"
 
-instance FromEvent Event PageInterstitialShown where
+instance FromEvent PageEvent PageInterstitialShown where
     eventName  _ _    =  "Page.interstitialShown"
     fromEvent ev =  case ev of EVPageInterstitialShown v -> Just v; _ -> Nothing
+
 
 data PageJavascriptDialogClosed = PageJavascriptDialogClosed {
     pageJavascriptDialogClosedResult :: Bool,
@@ -199,9 +197,10 @@ instance ToJSON PageJavascriptDialogClosed  where
         ]
 
 
-instance FromEvent Event PageJavascriptDialogClosed where
+instance FromEvent PageEvent PageJavascriptDialogClosed where
     eventName  _ _    =  "Page.javascriptDialogClosed"
     fromEvent ev =  case ev of EVPageJavascriptDialogClosed v -> Just v; _ -> Nothing
+
 
 data PageJavascriptDialogOpening = PageJavascriptDialogOpening {
     pageJavascriptDialogOpeningUrl :: String,
@@ -229,9 +228,10 @@ instance ToJSON PageJavascriptDialogOpening  where
         ]
 
 
-instance FromEvent Event PageJavascriptDialogOpening where
+instance FromEvent PageEvent PageJavascriptDialogOpening where
     eventName  _ _    =  "Page.javascriptDialogOpening"
     fromEvent ev =  case ev of EVPageJavascriptDialogOpening v -> Just v; _ -> Nothing
+
 
 data PageLifecycleEvent = PageLifecycleEvent {
     pageLifecycleEventFrameId :: PageFrameId,
@@ -256,9 +256,10 @@ instance ToJSON PageLifecycleEvent  where
         ]
 
 
-instance FromEvent Event PageLifecycleEvent where
+instance FromEvent PageEvent PageLifecycleEvent where
     eventName  _ _    =  "Page.lifecycleEvent"
     fromEvent ev =  case ev of EVPageLifecycleEvent v -> Just v; _ -> Nothing
+
 
 data PagePrerenderAttemptCompleted = PagePrerenderAttemptCompleted {
     pagePrerenderAttemptCompletedInitiatingFrameId :: PageFrameId,
@@ -280,9 +281,10 @@ instance ToJSON PagePrerenderAttemptCompleted  where
         ]
 
 
-instance FromEvent Event PagePrerenderAttemptCompleted where
+instance FromEvent PageEvent PagePrerenderAttemptCompleted where
     eventName  _ _    =  "Page.prerenderAttemptCompleted"
     fromEvent ev =  case ev of EVPagePrerenderAttemptCompleted v -> Just v; _ -> Nothing
+
 
 data PageLoadEventFired = PageLoadEventFired {
     pageLoadEventFiredTimestamp :: NetworkMonotonicTime
@@ -298,9 +300,10 @@ instance ToJSON PageLoadEventFired  where
         ]
 
 
-instance FromEvent Event PageLoadEventFired where
+instance FromEvent PageEvent PageLoadEventFired where
     eventName  _ _    =  "Page.loadEventFired"
     fromEvent ev =  case ev of EVPageLoadEventFired v -> Just v; _ -> Nothing
+
 
 data PageWindowOpen = PageWindowOpen {
     pageWindowOpenUrl :: String,
@@ -325,10 +328,21 @@ instance ToJSON PageWindowOpen  where
         ]
 
 
-instance FromEvent Event PageWindowOpen where
+instance FromEvent PageEvent PageWindowOpen where
     eventName  _ _    =  "Page.windowOpen"
     fromEvent ev =  case ev of EVPageWindowOpen v -> Just v; _ -> Nothing
 
+
+
+
+subscribe :: forall a. FromEvent PageEvent a => Session -> ( a -> IO () ) -> IO ()
+subscribe (Session session') handler1 = subscribe' paev session' name handler2
+  where
+    handler2 = maybe (pure ()) handler1 . fromEvent
+    name     = eventName pev pa
+    paev     = Proxy :: Proxy Event
+    pev      = Proxy :: Proxy PageEvent
+    pa       = Proxy :: Proxy a
 
 
 type PageFrameId = String

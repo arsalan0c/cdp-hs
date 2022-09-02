@@ -43,24 +43,13 @@ import System.Random
 
 import Utils
 
-import qualified Domains.Browser as Browser
-import qualified Domains.DOM as DOM
-import qualified Domains.DOMDebugger as DOMDebugger
-import qualified Domains.Emulation as Emulation
-import qualified Domains.IO as IO
-import qualified Domains.Input as Input
-import qualified Domains.Log as Log
 import qualified Domains.Network as Network
+import qualified Domains.IO as IO
 import qualified Domains.Page as Page
-import qualified Domains.Performance as Performance
-import qualified Domains.Security as Security
-import qualified Domains.Target as Target
-import qualified Domains.Console as Console
-import qualified Domains.Debugger as Debugger
-import qualified Domains.Profiler as Profiler
-import qualified Domains.Runtime as Runtime
-import qualified Domains.Schema as Schema
 
+
+data FetchEvent = EVFetchRequestPaused FetchRequestPaused | EVFetchAuthRequired FetchAuthRequired
+    deriving (Eq, Show, Read)
 
 data FetchRequestPaused = FetchRequestPaused {
     fetchRequestPausedRequestId :: FetchRequestId,
@@ -100,9 +89,10 @@ instance ToJSON FetchRequestPaused  where
         ]
 
 
-instance FromEvent Event FetchRequestPaused where
+instance FromEvent FetchEvent FetchRequestPaused where
     eventName  _ _    =  "Fetch.requestPaused"
     fromEvent ev =  case ev of EVFetchRequestPaused v -> Just v; _ -> Nothing
+
 
 data FetchAuthRequired = FetchAuthRequired {
     fetchAuthRequiredRequestId :: FetchRequestId,
@@ -130,10 +120,21 @@ instance ToJSON FetchAuthRequired  where
         ]
 
 
-instance FromEvent Event FetchAuthRequired where
+instance FromEvent FetchEvent FetchAuthRequired where
     eventName  _ _    =  "Fetch.authRequired"
     fromEvent ev =  case ev of EVFetchAuthRequired v -> Just v; _ -> Nothing
 
+
+
+
+subscribe :: forall a. FromEvent FetchEvent a => Session -> ( a -> IO () ) -> IO ()
+subscribe (Session session') handler1 = subscribe' paev session' name handler2
+  where
+    handler2 = maybe (pure ()) handler1 . fromEvent
+    name     = eventName pev pa
+    paev     = Proxy :: Proxy Event
+    pev      = Proxy :: Proxy FetchEvent
+    pa       = Proxy :: Proxy a
 
 
 type FetchRequestId = String

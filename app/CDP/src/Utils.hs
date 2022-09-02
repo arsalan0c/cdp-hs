@@ -57,7 +57,7 @@ instance FromJSON CommandId where
         CommandId <$> obj .: "id"
 
 data CommandObj a = CommandObj {
-    coId :: CommandId
+      coId :: CommandId
     , coMethod :: String
     , coParams :: Maybe a
     } deriving Show
@@ -146,9 +146,9 @@ instance FromJSON NoResponse where
 
 type CommandBuffer = Map.Map CommandId BS.ByteString
 
-data Session' ev = MkSession 
+data Session' aev = MkSession 
     { randomGen      :: MVar StdGen
-    , events         :: MVar (Map.Map String (ev -> IO ()))
+    , events         :: MVar (Map.Map String (aev -> IO ()))
     , commandBuffer  :: MVar CommandBuffer
     , conn           :: WS.Connection
     , listenThread   :: ThreadId
@@ -159,24 +159,48 @@ type FromJSONEvent ev = FromJSON (EventResponse ev)
 updateEvents :: forall ev. FromJSONEvent ev => Session' ev -> (Map.Map String (ev -> IO ()) -> Map.Map String (ev -> IO ())) -> IO ()
 updateEvents session f = ($ pure . f) . modifyMVar_ . events $ session
 
-subscribe' :: forall ev a . (FromJSONEvent ev, FromEvent ev a) => Session' ev -> (a -> IO ()) -> IO ()
-subscribe' session h = updateEvents session $ Map.insert (eventName ps p) handler
+subscribe' :: forall aev dev. (FromAllEvent aev dev, FromJSONEvent aev)  => Proxy aev -> Session' aev -> String -> (dev -> IO ()) -> IO ()
+subscribe' _ session' name handler1 = updateEvents session' $ Map.insert name handler2
   where
-    handler = maybe (pure ()) h . fromEvent
-    p  = (Proxy :: Proxy a)
-    ps = (Proxy :: Proxy s)
+    handler2 = maybe (pure ()) handler1 . fromAllEvent
 
-unsubscribe' :: forall ev a. (FromJSONEvent ev, FromEvent ev a) => Session' ev -> Proxy a -> IO ()
-unsubscribe' session p = updateEvents session (Map.delete (eventName ps p))
-  where
-    ps = Proxy :: Proxy ev
 
+-- unsubscribe' :: forall aev. (FromJSONEvent ev, FromEvent ev a) => Session' aev -> Proxy a -> IO ()
+-- unsubscribe' session p = updateEvents session (Map.delete (eventName ps p))
+--   where
+--     ps = Proxy :: Proxy ev
+
+
+class FromAllEvent aev dev where
+    fromAllEvent :: aev -> Maybe dev
 
 class (FromJSON a) => FromEvent ev a | a -> ev where
     eventName     :: Proxy ev -> Proxy a -> String
     fromEvent     :: ev       -> Maybe a
 
 data EventResponse ev where
-    EventResponse :: (Show ev, Show a, FromEvent ev a) => Proxy ev -> Proxy a -> Maybe ev -> EventResponse ev
+    EventResponse :: (Show ev, Show a, FromEvent ev a) => Proxy ev -> Proxy a -> String -> Maybe ev -> EventResponse ev
 
+
+sendReceiveCommand :: (ToJSON a) => Session -> String -> Maybe a -> IO (Maybe Error)
+sendReceiveCommand (Session session) = sendReceiveCommand' session
+
+sendReceiveCommandResult :: forall a b. (ToJSON a, Command b) => Session -> String -> Maybe a -> IO (Either Error b)
+sendReceiveCommandResult (Session session) = sendReceiveCommandResult' session
+
+data Session = forall ev. Session { unSession :: Session' ev }  
+
+
+
+
+
+-- subscribe :: forall ev a. FromEvent ev a => Session -> Proxy ev -> (a -> IO ()) -> IO ()
+-- subscribe session pev handler1 = subscribe' (unSession session) name handler2
+--   where
+--     handler2 = handler1 . (read name)
+--     name     = eventName pev pa
+--     pa  = (Proxy :: Proxy a)
     
+
+-- unsubscribe :: forall a. FromEvent Event a => Session -> Proxy a -> IO ()
+-- unsubscribe session p = unsubscribe' (unSession session) p

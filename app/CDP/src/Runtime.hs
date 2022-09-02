@@ -78,7 +78,7 @@ getPageInfo request = do
         Nothing   -> error "getPageInfo: Parse error"
 
 type ClientApp' ev b  = Session' ev -> IO b
-runClient' :: forall ev b. FromJSONEvent ev => Maybe (String, Int) -> ClientApp' ev b -> IO b
+runClient' :: forall aev b. FromJSONEvent aev => Maybe (String, Int) -> ClientApp' aev b -> IO b
 runClient' hostPort app = do
     let endpoint = hostPortToEndpoint . fromMaybe defaultHostPort $ hostPort
     pi             <- getPageInfo endpoint
@@ -92,7 +92,7 @@ runClient' hostPort app = do
                 res <- WS.fromDataMessage <$> WS.receiveDataMessage conn
                 if isCommand res
                     then dispatchCommandResponse commandBuffer res
-                    else dispatchEventResponse eventsM res 
+                    else error "" -- dispatchEventResponse eventsM res 
             
         listenThread <- forkIO act
         let session' = MkSession randomGen eventsM commandBuffer conn listenThread
@@ -116,14 +116,13 @@ dispatchCommandResponse commandBuffer res = do
 updateCommandBuffer :: MVar CommandBuffer -> (CommandBuffer -> CommandBuffer) -> IO ()
 updateCommandBuffer commandBuffer f = ($ pure . f) . modifyMVar_ $ commandBuffer
 
-dispatchEventResponse :: forall ev. FromJSONEvent ev => MVar (Map.Map String (ev -> IO ())) -> BS.ByteString -> IO ()
-dispatchEventResponse handlers res = do
-    void $ go handlers . A.decode $ res
+dispatchEventResponse :: forall aev. (FromJSONEvent aev) => MVar (Map.Map String (aev -> IO ())) -> BS.ByteString -> IO ()
+dispatchEventResponse handlers res = void $ go handlers . A.decode $ res
   where
-    go :: forall ev. FromJSONEvent ev => MVar (Map.Map String (ev -> IO ())) -> Maybe (EventResponse ev) -> IO ()
+    go :: FromJSONEvent aev => MVar (Map.Map String (aev -> IO ())) -> Maybe (EventResponse aev) -> IO ()
     go handlers evr = maybe (pure ()) f evr
       where
-        f (EventResponse ps p v) = do
+        f (EventResponse pdev pa name aevM) = do
             evs <- readMVar handlers
-            let handler = maybe print id $ Map.lookup (eventName ps p) evs
-            maybe (pure ()) handler v
+            let handler = maybe print id $ Map.lookup name evs
+            maybe (pure ()) handler aevM

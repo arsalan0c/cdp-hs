@@ -43,24 +43,11 @@ import System.Random
 
 import Utils
 
-import qualified Domains.Browser as Browser
-import qualified Domains.DOMDebugger as DOMDebugger
-import qualified Domains.Emulation as Emulation
-import qualified Domains.IO as IO
-import qualified Domains.Input as Input
-import qualified Domains.Log as Log
-import qualified Domains.Network as Network
-import qualified Domains.Page as Page
-import qualified Domains.Performance as Performance
-import qualified Domains.Security as Security
-import qualified Domains.Target as Target
-import qualified Domains.Fetch as Fetch
-import qualified Domains.Console as Console
-import qualified Domains.Debugger as Debugger
-import qualified Domains.Profiler as Profiler
 import qualified Domains.Runtime as Runtime
-import qualified Domains.Schema as Schema
 
+
+data DOMEvent = EVDOMAttributeModified DOMAttributeModified | EVDOMAttributeRemoved DOMAttributeRemoved | EVDOMCharacterDataModified DOMCharacterDataModified | EVDOMChildNodeCountUpdated DOMChildNodeCountUpdated | EVDOMChildNodeInserted DOMChildNodeInserted | EVDOMChildNodeRemoved DOMChildNodeRemoved | EVDOMDocumentUpdated DOMDocumentUpdated | EVDOMSetChildNodes DOMSetChildNodes
+    deriving (Eq, Show, Read)
 
 data DOMAttributeModified = DOMAttributeModified {
     domAttributeModifiedNodeId :: DOMNodeId,
@@ -82,9 +69,10 @@ instance ToJSON DOMAttributeModified  where
         ]
 
 
-instance FromEvent Event DOMAttributeModified where
+instance FromEvent DOMEvent DOMAttributeModified where
     eventName  _ _    =  "DOM.attributeModified"
     fromEvent ev =  case ev of EVDOMAttributeModified v -> Just v; _ -> Nothing
+
 
 data DOMAttributeRemoved = DOMAttributeRemoved {
     domAttributeRemovedNodeId :: DOMNodeId,
@@ -103,9 +91,10 @@ instance ToJSON DOMAttributeRemoved  where
         ]
 
 
-instance FromEvent Event DOMAttributeRemoved where
+instance FromEvent DOMEvent DOMAttributeRemoved where
     eventName  _ _    =  "DOM.attributeRemoved"
     fromEvent ev =  case ev of EVDOMAttributeRemoved v -> Just v; _ -> Nothing
+
 
 data DOMCharacterDataModified = DOMCharacterDataModified {
     domCharacterDataModifiedNodeId :: DOMNodeId,
@@ -124,9 +113,10 @@ instance ToJSON DOMCharacterDataModified  where
         ]
 
 
-instance FromEvent Event DOMCharacterDataModified where
+instance FromEvent DOMEvent DOMCharacterDataModified where
     eventName  _ _    =  "DOM.characterDataModified"
     fromEvent ev =  case ev of EVDOMCharacterDataModified v -> Just v; _ -> Nothing
+
 
 data DOMChildNodeCountUpdated = DOMChildNodeCountUpdated {
     domChildNodeCountUpdatedNodeId :: DOMNodeId,
@@ -145,9 +135,10 @@ instance ToJSON DOMChildNodeCountUpdated  where
         ]
 
 
-instance FromEvent Event DOMChildNodeCountUpdated where
+instance FromEvent DOMEvent DOMChildNodeCountUpdated where
     eventName  _ _    =  "DOM.childNodeCountUpdated"
     fromEvent ev =  case ev of EVDOMChildNodeCountUpdated v -> Just v; _ -> Nothing
+
 
 data DOMChildNodeInserted = DOMChildNodeInserted {
     domChildNodeInsertedParentNodeId :: DOMNodeId,
@@ -169,9 +160,10 @@ instance ToJSON DOMChildNodeInserted  where
         ]
 
 
-instance FromEvent Event DOMChildNodeInserted where
+instance FromEvent DOMEvent DOMChildNodeInserted where
     eventName  _ _    =  "DOM.childNodeInserted"
     fromEvent ev =  case ev of EVDOMChildNodeInserted v -> Just v; _ -> Nothing
+
 
 data DOMChildNodeRemoved = DOMChildNodeRemoved {
     domChildNodeRemovedParentNodeId :: DOMNodeId,
@@ -190,9 +182,10 @@ instance ToJSON DOMChildNodeRemoved  where
         ]
 
 
-instance FromEvent Event DOMChildNodeRemoved where
+instance FromEvent DOMEvent DOMChildNodeRemoved where
     eventName  _ _    =  "DOM.childNodeRemoved"
     fromEvent ev =  case ev of EVDOMChildNodeRemoved v -> Just v; _ -> Nothing
+
 
 data DOMDocumentUpdated = DOMDocumentUpdated
     deriving (Eq, Show, Read)
@@ -202,9 +195,10 @@ instance FromJSON DOMDocumentUpdated where
                 "DOMDocumentUpdated" -> pure $ DOMDocumentUpdated
                 _ -> fail "failed to parse DOMDocumentUpdated"
 
-instance FromEvent Event DOMDocumentUpdated where
+instance FromEvent DOMEvent DOMDocumentUpdated where
     eventName  _ _    =  "DOM.documentUpdated"
     fromEvent ev =  case ev of EVDOMDocumentUpdated v -> Just v; _ -> Nothing
+
 
 data DOMSetChildNodes = DOMSetChildNodes {
     domSetChildNodesParentId :: DOMNodeId,
@@ -223,10 +217,21 @@ instance ToJSON DOMSetChildNodes  where
         ]
 
 
-instance FromEvent Event DOMSetChildNodes where
+instance FromEvent DOMEvent DOMSetChildNodes where
     eventName  _ _    =  "DOM.setChildNodes"
     fromEvent ev =  case ev of EVDOMSetChildNodes v -> Just v; _ -> Nothing
 
+
+
+
+subscribe :: forall a. FromEvent DOMEvent a => Session -> ( a -> IO () ) -> IO ()
+subscribe (Session session') handler1 = subscribe' paev session' name handler2
+  where
+    handler2 = maybe (pure ()) handler1 . fromEvent
+    name     = eventName pev pa
+    paev     = Proxy :: Proxy Event
+    pev      = Proxy :: Proxy DOMEvent
+    pa       = Proxy :: Proxy a
 
 
 type DOMNodeId = Int

@@ -43,24 +43,11 @@ import System.Random
 
 import Utils
 
-import qualified Domains.Browser as Browser
-import qualified Domains.DOM as DOM
-import qualified Domains.DOMDebugger as DOMDebugger
-import qualified Domains.Emulation as Emulation
-import qualified Domains.IO as IO
-import qualified Domains.Input as Input
-import qualified Domains.Log as Log
-import qualified Domains.Network as Network
-import qualified Domains.Page as Page
-import qualified Domains.Performance as Performance
-import qualified Domains.Security as Security
-import qualified Domains.Target as Target
-import qualified Domains.Fetch as Fetch
-import qualified Domains.Console as Console
-import qualified Domains.Profiler as Profiler
 import qualified Domains.Runtime as Runtime
-import qualified Domains.Schema as Schema
 
+
+data DebuggerEvent = EVDebuggerBreakpointResolved DebuggerBreakpointResolved | EVDebuggerPaused DebuggerPaused | EVDebuggerResumed DebuggerResumed | EVDebuggerScriptFailedToParse DebuggerScriptFailedToParse | EVDebuggerScriptParsed DebuggerScriptParsed
+    deriving (Eq, Show, Read)
 
 data DebuggerBreakpointResolved = DebuggerBreakpointResolved {
     debuggerBreakpointResolvedBreakpointId :: DebuggerBreakpointId,
@@ -79,9 +66,10 @@ instance ToJSON DebuggerBreakpointResolved  where
         ]
 
 
-instance FromEvent Event DebuggerBreakpointResolved where
+instance FromEvent DebuggerEvent DebuggerBreakpointResolved where
     eventName  _ _    =  "Debugger.breakpointResolved"
     fromEvent ev =  case ev of EVDebuggerBreakpointResolved v -> Just v; _ -> Nothing
+
 
 data DebuggerPaused = DebuggerPaused {
     debuggerPausedCallFrames :: [DebuggerCallFrame],
@@ -109,9 +97,10 @@ instance ToJSON DebuggerPaused  where
         ]
 
 
-instance FromEvent Event DebuggerPaused where
+instance FromEvent DebuggerEvent DebuggerPaused where
     eventName  _ _    =  "Debugger.paused"
     fromEvent ev =  case ev of EVDebuggerPaused v -> Just v; _ -> Nothing
+
 
 data DebuggerResumed = DebuggerResumed
     deriving (Eq, Show, Read)
@@ -121,9 +110,10 @@ instance FromJSON DebuggerResumed where
                 "DebuggerResumed" -> pure $ DebuggerResumed
                 _ -> fail "failed to parse DebuggerResumed"
 
-instance FromEvent Event DebuggerResumed where
+instance FromEvent DebuggerEvent DebuggerResumed where
     eventName  _ _    =  "Debugger.resumed"
     fromEvent ev =  case ev of EVDebuggerResumed v -> Just v; _ -> Nothing
+
 
 data DebuggerScriptFailedToParse = DebuggerScriptFailedToParse {
     debuggerScriptFailedToParseScriptId :: RuntimeScriptId,
@@ -175,9 +165,10 @@ instance ToJSON DebuggerScriptFailedToParse  where
         ]
 
 
-instance FromEvent Event DebuggerScriptFailedToParse where
+instance FromEvent DebuggerEvent DebuggerScriptFailedToParse where
     eventName  _ _    =  "Debugger.scriptFailedToParse"
     fromEvent ev =  case ev of EVDebuggerScriptFailedToParse v -> Just v; _ -> Nothing
+
 
 data DebuggerScriptParsed = DebuggerScriptParsed {
     debuggerScriptParsedScriptId :: RuntimeScriptId,
@@ -229,10 +220,21 @@ instance ToJSON DebuggerScriptParsed  where
         ]
 
 
-instance FromEvent Event DebuggerScriptParsed where
+instance FromEvent DebuggerEvent DebuggerScriptParsed where
     eventName  _ _    =  "Debugger.scriptParsed"
     fromEvent ev =  case ev of EVDebuggerScriptParsed v -> Just v; _ -> Nothing
 
+
+
+
+subscribe :: forall a. FromEvent DebuggerEvent a => Session -> ( a -> IO () ) -> IO ()
+subscribe (Session session') handler1 = subscribe' paev session' name handler2
+  where
+    handler2 = maybe (pure ()) handler1 . fromEvent
+    name     = eventName pev pa
+    paev     = Proxy :: Proxy Event
+    pev      = Proxy :: Proxy DebuggerEvent
+    pa       = Proxy :: Proxy a
 
 
 type DebuggerBreakpointId = String

@@ -43,24 +43,10 @@ import System.Random
 
 import Utils
 
-import qualified Domains.Browser as Browser
-import qualified Domains.DOM as DOM
-import qualified Domains.DOMDebugger as DOMDebugger
-import qualified Domains.Emulation as Emulation
-import qualified Domains.IO as IO
-import qualified Domains.Input as Input
-import qualified Domains.Log as Log
-import qualified Domains.Network as Network
-import qualified Domains.Page as Page
-import qualified Domains.Performance as Performance
-import qualified Domains.Security as Security
-import qualified Domains.Target as Target
-import qualified Domains.Fetch as Fetch
-import qualified Domains.Console as Console
-import qualified Domains.Debugger as Debugger
-import qualified Domains.Profiler as Profiler
-import qualified Domains.Schema as Schema
 
+
+data RuntimeEvent = EVRuntimeConsoleApiCalled RuntimeConsoleApiCalled | EVRuntimeExceptionRevoked RuntimeExceptionRevoked | EVRuntimeExceptionThrown RuntimeExceptionThrown | EVRuntimeExecutionContextCreated RuntimeExecutionContextCreated | EVRuntimeExecutionContextDestroyed RuntimeExecutionContextDestroyed | EVRuntimeExecutionContextsCleared RuntimeExecutionContextsCleared | EVRuntimeInspectRequested RuntimeInspectRequested
+    deriving (Eq, Show, Read)
 
 data RuntimeConsoleApiCalled = RuntimeConsoleApiCalled {
     runtimeConsoleApiCalledType :: String,
@@ -88,9 +74,10 @@ instance ToJSON RuntimeConsoleApiCalled  where
         ]
 
 
-instance FromEvent Event RuntimeConsoleApiCalled where
+instance FromEvent RuntimeEvent RuntimeConsoleApiCalled where
     eventName  _ _    =  "Runtime.consoleAPICalled"
     fromEvent ev =  case ev of EVRuntimeConsoleApiCalled v -> Just v; _ -> Nothing
+
 
 data RuntimeExceptionRevoked = RuntimeExceptionRevoked {
     runtimeExceptionRevokedReason :: String,
@@ -109,9 +96,10 @@ instance ToJSON RuntimeExceptionRevoked  where
         ]
 
 
-instance FromEvent Event RuntimeExceptionRevoked where
+instance FromEvent RuntimeEvent RuntimeExceptionRevoked where
     eventName  _ _    =  "Runtime.exceptionRevoked"
     fromEvent ev =  case ev of EVRuntimeExceptionRevoked v -> Just v; _ -> Nothing
+
 
 data RuntimeExceptionThrown = RuntimeExceptionThrown {
     runtimeExceptionThrownTimestamp :: RuntimeTimestamp,
@@ -130,9 +118,10 @@ instance ToJSON RuntimeExceptionThrown  where
         ]
 
 
-instance FromEvent Event RuntimeExceptionThrown where
+instance FromEvent RuntimeEvent RuntimeExceptionThrown where
     eventName  _ _    =  "Runtime.exceptionThrown"
     fromEvent ev =  case ev of EVRuntimeExceptionThrown v -> Just v; _ -> Nothing
+
 
 data RuntimeExecutionContextCreated = RuntimeExecutionContextCreated {
     runtimeExecutionContextCreatedContext :: RuntimeExecutionContextDescription
@@ -148,9 +137,10 @@ instance ToJSON RuntimeExecutionContextCreated  where
         ]
 
 
-instance FromEvent Event RuntimeExecutionContextCreated where
+instance FromEvent RuntimeEvent RuntimeExecutionContextCreated where
     eventName  _ _    =  "Runtime.executionContextCreated"
     fromEvent ev =  case ev of EVRuntimeExecutionContextCreated v -> Just v; _ -> Nothing
+
 
 data RuntimeExecutionContextDestroyed = RuntimeExecutionContextDestroyed {
     runtimeExecutionContextDestroyedExecutionContextId :: RuntimeExecutionContextId
@@ -166,9 +156,10 @@ instance ToJSON RuntimeExecutionContextDestroyed  where
         ]
 
 
-instance FromEvent Event RuntimeExecutionContextDestroyed where
+instance FromEvent RuntimeEvent RuntimeExecutionContextDestroyed where
     eventName  _ _    =  "Runtime.executionContextDestroyed"
     fromEvent ev =  case ev of EVRuntimeExecutionContextDestroyed v -> Just v; _ -> Nothing
+
 
 data RuntimeExecutionContextsCleared = RuntimeExecutionContextsCleared
     deriving (Eq, Show, Read)
@@ -178,9 +169,10 @@ instance FromJSON RuntimeExecutionContextsCleared where
                 "RuntimeExecutionContextsCleared" -> pure $ RuntimeExecutionContextsCleared
                 _ -> fail "failed to parse RuntimeExecutionContextsCleared"
 
-instance FromEvent Event RuntimeExecutionContextsCleared where
+instance FromEvent RuntimeEvent RuntimeExecutionContextsCleared where
     eventName  _ _    =  "Runtime.executionContextsCleared"
     fromEvent ev =  case ev of EVRuntimeExecutionContextsCleared v -> Just v; _ -> Nothing
+
 
 data RuntimeInspectRequested = RuntimeInspectRequested {
     runtimeInspectRequestedObject :: RuntimeRemoteObject,
@@ -199,10 +191,21 @@ instance ToJSON RuntimeInspectRequested  where
         ]
 
 
-instance FromEvent Event RuntimeInspectRequested where
+instance FromEvent RuntimeEvent RuntimeInspectRequested where
     eventName  _ _    =  "Runtime.inspectRequested"
     fromEvent ev =  case ev of EVRuntimeInspectRequested v -> Just v; _ -> Nothing
 
+
+
+
+subscribe :: forall a. FromEvent RuntimeEvent a => Session -> ( a -> IO () ) -> IO ()
+subscribe (Session session') handler1 = subscribe' paev session' name handler2
+  where
+    handler2 = maybe (pure ()) handler1 . fromEvent
+    name     = eventName pev pa
+    paev     = Proxy :: Proxy Event
+    pev      = Proxy :: Proxy RuntimeEvent
+    pa       = Proxy :: Proxy a
 
 
 type RuntimeScriptId = String

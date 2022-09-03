@@ -40,7 +40,7 @@ import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
 import System.Random
-
+import Control.Applicative
 
 defaultHostPort :: (String, Int)
 defaultHostPort = ("http://127.0.0.1", 9222) 
@@ -110,16 +110,68 @@ randomCommandId mg = modifyMVar mg $ \g -> do
 class (FromJSON b) => Command b where
     commandName               :: Proxy b -> String
 
-data CommandResponse b where
-    CommandResponse :: Command b => CommandId -> Maybe b -> CommandResponse b
-instance (Show b) => Show (CommandResponse b) where
-    show (CommandResponse id result) = "\nid: " <> show id <> "\nresult: " <> show result
+data CommandResponse b = CommandResponse 
+    { crId      :: CommandId
+    , crResult  :: Either ProtocolError b
+    }
+    deriving (Eq, Show)
 
-newtype Error = Error String
-    deriving Show
+instance (Command b) => FromJSON (CommandResponse b) where
+    parseJSON = A.withObject "CommandResponse" $ \obj -> do
+        crId     <- CommandId <$> obj .: "id"
+        crResult <- (Left <$> (obj .: "error")) <|> (Right <$> (obj .: "result"))
+        pure CommandResponse{..}
+        
+data NoResponse = NoResponse
+    deriving (Eq, Show)
+instance Command NoResponse where
+    commandName _ = "noresponse"
 
-newtype InternalError = InternalError String
-    deriving Show
+instance FromJSON NoResponse where
+    parseJSON _ = pure NoResponse
+
+data ProtocolError = 
+    PEParse                -- ^ Invalid JSON was received by the server. An error occurred on the server while parsing the JSON text
+  | PEInvalidRequest       -- ^ The JSON sent is not a valid Request object
+  | PEMethodNotFound       -- ^ The method does not exist / is not available
+  | PEInvalidParams        -- ^ Invalid method parameter (s)
+  | PEInternalError        -- ^ Internal JSON-RPC error
+  | PEServerError String   -- ^ Server error
+  | PEOther String         -- ^ An uncategorized error
+  deriving Eq
+instance Show ProtocolError where
+    show PEParse = unlines
+        [ "Invalid JSON was received by the server."
+        , "An error occurred on the server while parsing the JSON text."
+        ]
+    show PEInvalidRequest     = "The JSON sent is not a valid Request object"
+    show PEMethodNotFound     = "The method does not exist / is not available"
+    show PEInvalidParams      = "Invalid method parameter (s)"
+    show PEInternalError      = "Internal JSON-RPC error"
+    show (PEServerError msg)  = unwords ["Server error:", msg]
+    show (PEOther msg)        = msg
+
+instance FromJSON ProtocolError where
+    parseJSON = A.withObject "ProtocolError" $ \obj -> do
+        code <- read <$> obj .: "code"
+        msg  <- obj .: "message"
+        pure $ case (code :: Int) of
+            -32700 -> PEParse
+            -32600 -> PEInvalidRequest
+            -32600 -> PEMethodNotFound
+            -32602 -> PEInvalidParams
+            -32603 -> PEInternalError
+            _      -> if code > -32099 && code < -32000 then PEServerError msg else PEOther msg
+
+data Error = 
+      ParseError 
+    | ProtocolError ProtocolError
+    deriving Eq
+
+instance Show Error where
+    show ParseError         = "error in parsing a message received from the protocol"
+    show (ProtocolError pe) = show pe 
+
 
 indent :: Int -> String -> String
 indent = (<>) . flip replicate ' '
@@ -131,7 +183,7 @@ sendCommand conn id name params = do
   where
     paramsProxy = Proxy :: Proxy a
         
-receiveResponse :: forall b. Command b => MVar CommandBuffer -> CommandId -> IO (Either InternalError (CommandResponse b))
+receiveResponse :: forall b. Command b => MVar CommandBuffer -> CommandId -> IO (Either String (CommandResponse b))
 receiveResponse buffer id = do
     bs <- untilJust $ do
             bsM <- Map.lookup id <$> readMVar buffer
@@ -141,9 +193,7 @@ receiveResponse buffer id = do
 
             pure bsM
 
-    pure $ maybe (Left . InternalError $ "error in parsing response") Right . A.decode $ bs
-  where
-    p = Proxy :: Proxy b
+    pure $ A.eitherDecode $ bs
 
 sendReceiveCommandResult' :: forall a b ev. (ToJSON a, Command b) => Session' ev -> String -> Maybe a -> IO (Either Error b)
 sendReceiveCommandResult' session name params = do
@@ -151,8 +201,8 @@ sendReceiveCommandResult' session name params = do
     sendCommand (conn session) id name params
     response <- receiveResponse (commandBuffer session) id
     pure $ case response of
-        Left _ -> Left . Error $ "internal error"
-        Right (CommandResponse _ resultM) -> maybe (Left . Error $ "error in parsing result") Right $ resultM    
+        Left err -> Left ParseError
+        Right CommandResponse{..} -> either (Left . ProtocolError) Right $ crResult
     where
       resultProxy = Proxy :: Proxy b
     
@@ -160,21 +210,10 @@ sendReceiveCommand' :: (ToJSON a) => Session' ev -> String -> Maybe a -> IO (May
 sendReceiveCommand' session name params = do
     id <- randomCommandId $ randomGen session
     sendCommand (conn session) id name params
-    response <- receiveResponse (commandBuffer session) id :: IO (Either InternalError (CommandResponse NoResponse))
+    response <- receiveResponse (commandBuffer session) id :: IO (Either String (CommandResponse NoResponse))
     pure $ case response of
-        Left _                            -> Just . Error $ "internal error"
-        Right (CommandResponse _ resultM) -> maybe Nothing (const . Just . Error $ "got an unexpected result") $ resultM  
-
-instance (Command b) => FromJSON (CommandResponse b) where
-    parseJSON = A.withObject "CommandResponse" $ \obj -> do
-        crId <- CommandId <$> obj .: "id"
-        CommandResponse (crId :: CommandId) <$> obj .:? "result"
-
-data NoResponse = NoResponse
-instance Command NoResponse where
-    commandName _ = "noresponse"
-instance FromJSON NoResponse where
-    parseJSON _ = fail "noresponse"    
+        Left err                  -> Just ParseError
+        Right CommandResponse{..} -> either (Just . ProtocolError) (const Nothing) $ crResult -- protocol error
 
 data Session' ev = MkSession 
     { randomGen      :: MVar StdGen
@@ -188,11 +227,11 @@ type FromJSONEvent ev = FromJSON (EventResponse ev)
 type ClientApp' ev b  = Session' ev -> IO b
 runClient' :: forall ev b. FromJSONEvent ev => Maybe (String, Int) -> ClientApp' ev b -> IO b
 runClient' hostPort app = do
-    let endpoint = hostPortToEndpoint . fromMaybe defaultHostPort $ hostPort
-    pi             <- getPageInfo endpoint
     randomGen      <- newMVar . mkStdGen $ 42
     eventsM        <- newMVar Map.empty
     commandBuffer  <- newMVar Map.empty
+    let endpoint = hostPortToEndpoint . fromMaybe defaultHostPort $ hostPort
+    pi             <- getPageInfo endpoint
     let (host, port, path) = parseUri . debuggerUrl $ pi
     
     WS.runClient host port path $ \conn -> do
@@ -202,7 +241,7 @@ runClient' hostPort app = do
                     then dispatchCommandResponse commandBuffer res
                     else dispatchEventResponse eventsM res 
             
-        listenThread <- forkIO act
+        listenThread <- forkIO $ pure () -- act
         let session' = MkSession randomGen eventsM commandBuffer conn listenThread
         result <- app session'
         killThread listenThread

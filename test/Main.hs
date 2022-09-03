@@ -8,7 +8,9 @@ import ChromeDevtoolsProtocol
 
 prop_test :: Property
 prop_test = property $ do
-  doChromeDevtoolsProtocol === "ChromeDevtoolsProtocol"
+    pure ()
+
+
 
 main :: IO ()
 main = defaultMain [checkParallel $$(discover)]

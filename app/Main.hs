@@ -5,27 +5,15 @@ module Main where
 import qualified Network.WebSockets as WS
 import qualified Data.Aeson           as A
 import Data.Maybe (fromMaybe)
-import Data.Map
 import Control.Concurrent
 import Control.Monad
-import Data.Proxy
+import qualified Data.Map as Map
+import qualified System.FilePath as FP
 
 import ChromeDevtoolsProtocol
-import qualified CDP as CDP
 
 main :: IO ()
 main = do
-    putStrLn "Starting CDP"
-    -- doChromeDevtoolsProtocol >>= writeFile "app/CDP.hs"
-    
-    CDP.runClient Nothing $ \session -> do
-        print =<< CDP.browserGetVersion session
-
-        CDP.subscribe session (print . CDP.pageWindowOpenUrl)
-        CDP.pageEnable session
-        CDP.unsubscribe session (Proxy :: Proxy CDP.PageWindowOpen)
-
-        forever $ do
-            threadDelay 1000
-
-     
+    main <- doChromeDevtoolsProtocol
+    let basePath = ["app", "CDP", "src"]
+    writeFile (FP.joinPath $ basePath ++ [FP.addExtension "CDP" "hs"]) main

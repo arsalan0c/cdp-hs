@@ -131,7 +131,7 @@ generate des = ("\n\n" <>) $
 
             isEmptyParams = length params == 0
             paramsTypeName = "P" <> (commandName dn ce)
-            paramsTypeDecl = maybe "" -- (unwords  ["type", paramsTypeName, "= ()"]) 
+            paramsTypeDecl = maybe ""
                 (genTypeObj dn paramsTypeName "") (P.commandsEltParameters ce)
 
             commandInstance ce =
@@ -174,7 +174,7 @@ generate des = ("\n\n" <>) $
                                 (P.returnsEltType ret)
                                 (P.returnsEltRef ret) 
                                 (P.returnsEltItems ret))) $ reqRets ++ optRets
-                , "} deriving (Eq, Show, Read)"
+                , "} deriving (Eq, Show, Read, Generic)"
                 , genFromJSONInstance name 
                     (map (unpack . P.returnsEltName) reqRets) 
                     (map (unpack . P.returnsEltName) optRets)
@@ -187,26 +187,25 @@ generate des = ("\n\n" <>) $
                 sep isOpt = if isOpt then ".:? " else ".: " in
             unlines
             [ unwords ["instance FromJSON ", name, "where"]
-            , unwords ["    parseJSON = A.withObject", show name, "$ \\v ->"]
-            , unwords ["        ", name, "<$> v", sep (snd headField), show (fst headField)]
-            , unlines . map (\(field, isOpt) -> unwords ["            <*> v ", sep isOpt, show field]) $ tail fields
+            , unwords ["    parseJSON = A.genericParseJSON", fromJSONOpts (length name)]
             ]
+            -- , unwords ["    parseJSON = A.withObject", show name, "$ \\v ->"]
+            -- , unwords ["        ", name, "<$> v", sep (snd headField), show (fst headField)]
+            -- , unlines . map (\(field, isOpt) -> unwords ["            <*> v ", sep isOpt, show field]) $ tail fields
+            -- ]
       where
         f b = map (id &&& (const b))
+
+    toJSONOpts   n    = unwords ["A.defaultOptions{A.fieldLabelModifier = C.camel . drop", show n, ", A.omitNothingFields = True}"]
+    fromJSONOpts n    = unwords ["A.defaultOptions{A.fieldLabelModifier =  C.camel . drop", show n, "}"]
+
 
     genToJSONInstance name reqFieldsHS optFieldsHS =
         unlines
         [ unwords ["instance ToJSON", name, " where"]
-        , unwords ["    toJSON v = A.object"]
-        , unwords ["        ["
-            , intercalate "\n        , " $ (map fieldToJSON reqFieldsHS) ++ (map optFieldToJSON optFieldsHS)
-            ]
-        , unwords ["        ]"]
+        , unwords ["    toJSON = A.genericToJSON", toJSONOpts (length name)]
         ]
-      where
-        fieldToJSON (f, hsf) = unwords [show f, ".=", hsf, "v"]
-        optFieldToJSON = fieldToJSON 
-
+    
     genBody isEmptyParams isEmptyReturn dn commandName paramNamesOptional = 
         unwords 
         [ if isEmptyReturn then "sendReceiveCommand" else "sendReceiveCommandResult" 
@@ -259,7 +258,7 @@ generate des = ("\n\n" <>) $
         unlines
             [ unwords 
                 ["data", name, "=", intercalate " | " hsValues]
-            , "    deriving (Eq, Show, Read)"
+            , "    deriving (Eq, Show, Read, Generic)"
             , genFromJSONInstanceEnum name values hsValues
             , genToJSONInstanceEnum name values hsValues
             ]
@@ -287,7 +286,7 @@ generate des = ("\n\n" <>) $
                                 (P.parametersEltType param)
                                 (P.parametersEltRef param) 
                                 (P.parametersEltItems param))) $ reqParams ++ optParams
-                , "} deriving (Eq, Show, Read)"
+                , "} deriving (Eq, Show, Read, Generic)"
                 , genFromJSONInstance name reqParamNames optParamNames
                 , genToJSONInstance name 
                     (zip reqParamNames (map paramNameToHSName reqParamNames)) 

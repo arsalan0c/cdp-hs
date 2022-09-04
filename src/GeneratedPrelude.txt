@@ -13,6 +13,7 @@
 {-# LANGUAGE TypeFamilies           #-}
 {-# LANGUAGE TypeOperators          #-}
 {-# LANGUAGE UndecidableInstances   #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module CDP (module CDP) where
 
@@ -41,6 +42,7 @@ import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
 import System.Random
+import GHC.Generics
 
 import CDPPrelude
 
@@ -57,8 +59,8 @@ subscribe session h = subscribe' (unSession session) h
 unsubscribe :: forall a. FromEvent Event a => Session -> Proxy a -> IO ()
 unsubscribe session p = unsubscribe' (unSession session) p
 
-sendReceiveCommand :: (ToJSON a) => Session -> String -> Maybe a -> IO (Maybe Error)
+sendReceiveCommand :: (Show a, ToJSON a) => Session -> String -> Maybe a -> IO (Maybe Error)
 sendReceiveCommand session = sendReceiveCommand' (unSession session)
 
-sendReceiveCommandResult :: forall a b s. (ToJSON a, Command b) => Session -> String -> Maybe a -> IO (Either Error b)
+sendReceiveCommandResult :: forall a b s. (Show a, ToJSON a, Command b) => Session -> String -> Maybe a -> IO (Either Error b)
 sendReceiveCommandResult session = sendReceiveCommandResult' (unSession session)

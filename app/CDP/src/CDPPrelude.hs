@@ -102,8 +102,8 @@ instance (ToJSON a) => ToJSON (CommandObj a) where
         , maybe [] (\p -> [ "params" .= p ]) $ coParams cmd
         ]
 
-randomCommandId :: MVar StdGen -> IO CommandId
-randomCommandId mg = modifyMVar mg $ \g -> do
+randomCommandId :: Session' ev -> IO CommandId
+randomCommandId mg = modifyMVar (randomGen mg) $ \g -> do
     let (id, g2) = uniformR (0 :: Int, 1000 :: Int) g
     pure (g2, CommandId id)
 
@@ -131,89 +131,97 @@ instance FromJSON NoResponse where
     parseJSON _ = pure NoResponse
 
 data ProtocolError = 
-    PEParse                -- ^ Invalid JSON was received by the server. An error occurred on the server while parsing the JSON text
-  | PEInvalidRequest       -- ^ The JSON sent is not a valid Request object
-  | PEMethodNotFound       -- ^ The method does not exist / is not available
-  | PEInvalidParams        -- ^ Invalid method parameter (s)
-  | PEInternalError        -- ^ Internal JSON-RPC error
-  | PEServerError String   -- ^ Server error
-  | PEOther String         -- ^ An uncategorized error
+    PEParse          String      -- ^ Invalid JSON was received by the server. An error occurred on the server while parsing the JSON text
+  | PEInvalidRequest String      -- ^ The JSON sent is not a valid Request object
+  | PEMethodNotFound String      -- ^ The method does not exist / is not available
+  | PEInvalidParams  String      -- ^ Invalid method parameter (s)
+  | PEInternalError  String      -- ^ Internal JSON-RPC error
+  | PEServerError    String      -- ^ Server error
+  | PEOther          String      -- ^ An uncategorized error
   deriving Eq
 instance Show ProtocolError where
-    show PEParse = unlines
-        [ "Invalid JSON was received by the server."
-        , "An error occurred on the server while parsing the JSON text."
-        ]
-    show PEInvalidRequest     = "The JSON sent is not a valid Request object"
-    show PEMethodNotFound     = "The method does not exist / is not available"
-    show PEInvalidParams      = "Invalid method parameter (s)"
-    show PEInternalError      = "Internal JSON-RPC error"
-    show (PEServerError msg)  = unwords ["Server error:", msg]
-    show (PEOther msg)        = msg
+    show (PEParse msg)            = msg 
+    show (PEInvalidRequest msg)   = msg
+    show (PEMethodNotFound msg)   = msg
+    show (PEInvalidParams msg)    = msg
+    show (PEInternalError msg)    = msg
+    show (PEServerError msg)      = msg
+    show (PEOther msg)            = msg
 
 instance FromJSON ProtocolError where
     parseJSON = A.withObject "ProtocolError" $ \obj -> do
-        code <- read <$> obj .: "code"
+        code <- obj .: "code"
         msg  <- obj .: "message"
-        pure $ case (code :: Int) of
-            -32700 -> PEParse
-            -32600 -> PEInvalidRequest
-            -32600 -> PEMethodNotFound
-            -32602 -> PEInvalidParams
-            -32603 -> PEInternalError
+        pure $ case (code :: Double) of
+            -32700 -> PEParse          msg
+            -32600 -> PEInvalidRequest msg
+            -32600 -> PEMethodNotFound msg
+            -32602 -> PEInvalidParams  msg
+            -32603 -> PEInternalError  msg
             _      -> if code > -32099 && code < -32000 then PEServerError msg else PEOther msg
 
 data Error = 
-      ParseError 
-    | ProtocolError ProtocolError
+      ERRNoResponse
+    | ERRParse String
+    | ERRProtocol ProtocolError
     deriving Eq
 
 instance Show Error where
-    show ParseError         = "error in parsing a message received from the protocol"
-    show (ProtocolError pe) = show pe 
+    show ERRNoResponse      = "no response received from the protocol"
+    show (ERRParse msg)     = unlines ["error in parsing a message received from the protocol:", msg]
+    show (ERRProtocol pe)   = show pe 
 
 
 indent :: Int -> String -> String
 indent = (<>) . flip replicate ' '
 
-sendCommand :: forall a. (ToJSON a) => WS.Connection -> CommandId -> String -> Maybe a -> IO ()
+sendCommand :: forall a. (Show a, ToJSON a) => WS.Connection -> CommandId -> String -> Maybe a -> IO ()
 sendCommand conn id name params = do
     let co = CommandObj id name params
+    print (A.encode co)
     WS.sendTextData conn . A.encode $ co
   where
     paramsProxy = Proxy :: Proxy a
-        
-receiveResponse :: forall b. Command b => MVar CommandBuffer -> CommandId -> IO (Either String (CommandResponse b))
+ 
+untilJustLimit :: (Monad m) => Int -> m (Maybe a) -> m (Maybe a)  
+untilJustLimit n act = do
+    if n <= 0
+        then pure Nothing
+        else do
+            vM <- act
+            maybe (untilJustLimit (n - 1) act) (pure . Just) vM
+
+receiveResponse :: forall b. Command b => MVar CommandBuffer -> CommandId -> IO (Either Error (CommandResponse b))
 receiveResponse buffer id = do
-    bs <- untilJust $ do
+    bs <- untilJust $ do -- :CONFIG
             bsM <- Map.lookup id <$> readMVar buffer
             if isNothing bsM
                 then threadDelay 1000 -- :CONFIG
                 else pure ()
 
             pure bsM
+    print bs
+    pure $ maybe (Left ERRNoResponse) (either (Left . ERRParse) Right . A.eitherDecode) $ (Just bs)
 
-    pure $ A.eitherDecode $ bs
-
-sendReceiveCommandResult' :: forall a b ev. (ToJSON a, Command b) => Session' ev -> String -> Maybe a -> IO (Either Error b)
+sendReceiveCommandResult' :: forall a b ev. (Show a, ToJSON a, Command b) => Session' ev -> String -> Maybe a -> IO (Either Error b)
 sendReceiveCommandResult' session name params = do
-    id <- randomCommandId $ randomGen session
+    id <- randomCommandId session
     sendCommand (conn session) id name params
     response <- receiveResponse (commandBuffer session) id
     pure $ case response of
-        Left err -> Left ParseError
-        Right CommandResponse{..} -> either (Left . ProtocolError) Right $ crResult
+        Left err -> Left err
+        Right CommandResponse{..} -> either (Left . ERRProtocol) Right crResult
     where
       resultProxy = Proxy :: Proxy b
     
-sendReceiveCommand' :: (ToJSON a) => Session' ev -> String -> Maybe a -> IO (Maybe Error)
+sendReceiveCommand' :: (Show a, ToJSON a) => Session' ev -> String -> Maybe a -> IO (Maybe Error)
 sendReceiveCommand' session name params = do
-    id <- randomCommandId $ randomGen session
+    id <- randomCommandId session
     sendCommand (conn session) id name params
-    response <- receiveResponse (commandBuffer session) id :: IO (Either String (CommandResponse NoResponse))
+    response <- receiveResponse (commandBuffer session) id :: IO (Either Error (CommandResponse NoResponse))
     pure $ case response of
-        Left err                  -> Just ParseError
-        Right CommandResponse{..} -> either (Just . ProtocolError) (const Nothing) $ crResult -- protocol error
+        Left err                  -> Just err
+        Right CommandResponse{..} -> either (Just . ERRProtocol) (const Nothing) crResult
 
 data Session' ev = MkSession 
     { randomGen      :: MVar StdGen
@@ -241,7 +249,7 @@ runClient' hostPort app = do
                     then dispatchCommandResponse commandBuffer res
                     else dispatchEventResponse eventsM res 
             
-        listenThread <- forkIO $ pure () -- act
+        listenThread <- forkIO act
         let session' = MkSession randomGen eventsM commandBuffer conn listenThread
         result <- app session'
         killThread listenThread
@@ -270,7 +278,7 @@ dispatchEventResponse handlers res = do
     void $ go handlers . A.decode $ res
   where
     go :: forall ev. FromJSONEvent ev => MVar (Map.Map String (ev -> IO ())) -> Maybe (EventResponse ev) -> IO ()
-    go handlers evr = maybe (pure ()) f evr
+    go handlers evr = maybe (pure ()) f evr -- TODO: throw error
       where
         f (EventResponse ps p v) = do
             evs <- readMVar handlers

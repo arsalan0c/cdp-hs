@@ -13,6 +13,7 @@
 {-# LANGUAGE TypeFamilies           #-}
 {-# LANGUAGE TypeOperators          #-}
 {-# LANGUAGE UndecidableInstances   #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module CDP (module CDP) where
 
@@ -41,6 +42,7 @@ import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
 import System.Random
+import GHC.Generics
 
 import CDPPrelude
 
@@ -57,12 +59,11 @@ subscribe session h = subscribe' (unSession session) h
 unsubscribe :: forall a. FromEvent Event a => Session -> Proxy a -> IO ()
 unsubscribe session p = unsubscribe' (unSession session) p
 
-sendReceiveCommand :: (ToJSON a) => Session -> String -> Maybe a -> IO (Maybe Error)
+sendReceiveCommand :: (Show a, ToJSON a) => Session -> String -> Maybe a -> IO (Maybe Error)
 sendReceiveCommand session = sendReceiveCommand' (unSession session)
 
-sendReceiveCommandResult :: forall a b s. (ToJSON a, Command b) => Session -> String -> Maybe a -> IO (Either Error b)
+sendReceiveCommandResult :: forall a b s. (Show a, ToJSON a, Command b) => Session -> String -> Maybe a -> IO (Either Error b)
 sendReceiveCommandResult session = sendReceiveCommandResult' (unSession session)
-
 
 
 data Event = EVDOMAttributeModified DOMAttributeModified | EVDOMAttributeRemoved DOMAttributeRemoved | EVDOMCharacterDataModified DOMCharacterDataModified | EVDOMChildNodeCountUpdated DOMChildNodeCountUpdated | EVDOMChildNodeInserted DOMChildNodeInserted | EVDOMChildNodeRemoved DOMChildNodeRemoved | EVDOMDocumentUpdated DOMDocumentUpdated | EVDOMSetChildNodes DOMSetChildNodes | EVLogEntryAdded LogEntryAdded | EVNetworkDataReceived NetworkDataReceived | EVNetworkEventSourceMessageReceived NetworkEventSourceMessageReceived | EVNetworkLoadingFailed NetworkLoadingFailed | EVNetworkLoadingFinished NetworkLoadingFinished | EVNetworkRequestServedFromCache NetworkRequestServedFromCache | EVNetworkRequestWillBeSent NetworkRequestWillBeSent | EVNetworkResponseReceived NetworkResponseReceived | EVNetworkWebSocketClosed NetworkWebSocketClosed | EVNetworkWebSocketCreated NetworkWebSocketCreated | EVNetworkWebSocketFrameError NetworkWebSocketFrameError | EVNetworkWebSocketFrameReceived NetworkWebSocketFrameReceived | EVNetworkWebSocketFrameSent NetworkWebSocketFrameSent | EVNetworkWebSocketHandshakeResponseReceived NetworkWebSocketHandshakeResponseReceived | EVNetworkWebSocketWillSendHandshakeRequest NetworkWebSocketWillSendHandshakeRequest | EVNetworkWebTransportCreated NetworkWebTransportCreated | EVNetworkWebTransportConnectionEstablished NetworkWebTransportConnectionEstablished | EVNetworkWebTransportClosed NetworkWebTransportClosed | EVPageDomContentEventFired PageDomContentEventFired | EVPageFileChooserOpened PageFileChooserOpened | EVPageFrameAttached PageFrameAttached | EVPageFrameDetached PageFrameDetached | EVPageFrameNavigated PageFrameNavigated | EVPageInterstitialHidden PageInterstitialHidden | EVPageInterstitialShown PageInterstitialShown | EVPageJavascriptDialogClosed PageJavascriptDialogClosed | EVPageJavascriptDialogOpening PageJavascriptDialogOpening | EVPageLifecycleEvent PageLifecycleEvent | EVPagePrerenderAttemptCompleted PagePrerenderAttemptCompleted | EVPageLoadEventFired PageLoadEventFired | EVPageWindowOpen PageWindowOpen | EVPerformanceMetrics PerformanceMetrics | EVTargetReceivedMessageFromTarget TargetReceivedMessageFromTarget | EVTargetTargetCreated TargetTargetCreated | EVTargetTargetDestroyed TargetTargetDestroyed | EVTargetTargetCrashed TargetTargetCrashed | EVTargetTargetInfoChanged TargetTargetInfoChanged | EVFetchRequestPaused FetchRequestPaused | EVFetchAuthRequired FetchAuthRequired | EVConsoleMessageAdded ConsoleMessageAdded | EVDebuggerBreakpointResolved DebuggerBreakpointResolved | EVDebuggerPaused DebuggerPaused | EVDebuggerResumed DebuggerResumed | EVDebuggerScriptFailedToParse DebuggerScriptFailedToParse | EVDebuggerScriptParsed DebuggerScriptParsed | EVProfilerConsoleProfileFinished ProfilerConsoleProfileFinished | EVProfilerConsoleProfileStarted ProfilerConsoleProfileStarted | EVRuntimeConsoleApiCalled RuntimeConsoleApiCalled | EVRuntimeExceptionRevoked RuntimeExceptionRevoked | EVRuntimeExceptionThrown RuntimeExceptionThrown | EVRuntimeExecutionContextCreated RuntimeExecutionContextCreated | EVRuntimeExecutionContextDestroyed RuntimeExecutionContextDestroyed | EVRuntimeExecutionContextsCleared RuntimeExecutionContextsCleared | EVRuntimeInspectRequested RuntimeInspectRequested
@@ -149,15 +150,9 @@ data BrowserGetVersion = BrowserGetVersion {
     browserGetVersionRevision :: String,
     browserGetVersionUserAgent :: String,
     browserGetVersionJsVersion :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  BrowserGetVersion where
-    parseJSON = A.withObject "BrowserGetVersion" $ \v ->
-         BrowserGetVersion <$> v .:  "protocolVersion"
-            <*> v  .:  "product"
-            <*> v  .:  "revision"
-            <*> v  .:  "userAgent"
-            <*> v  .:  "jsVersion"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
 
 
 instance Command  BrowserGetVersion where
@@ -173,20 +168,12 @@ data DOMAttributeModified = DOMAttributeModified {
     domAttributeModifiedNodeId :: DOMNodeId,
     domAttributeModifiedName :: String,
     domAttributeModifiedValue :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMAttributeModified where
-    parseJSON = A.withObject "DOMAttributeModified" $ \v ->
-         DOMAttributeModified <$> v .:  "nodeId"
-            <*> v  .:  "name"
-            <*> v  .:  "value"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
 
 instance ToJSON DOMAttributeModified  where
-    toJSON v = A.object
-        [ "nodeId" .= domAttributeModifiedNodeId v
-        , "name" .= domAttributeModifiedName v
-        , "value" .= domAttributeModifiedValue v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DOMAttributeModified where
@@ -196,18 +183,12 @@ instance FromEvent Event DOMAttributeModified where
 data DOMAttributeRemoved = DOMAttributeRemoved {
     domAttributeRemovedNodeId :: DOMNodeId,
     domAttributeRemovedName :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMAttributeRemoved where
-    parseJSON = A.withObject "DOMAttributeRemoved" $ \v ->
-         DOMAttributeRemoved <$> v .:  "nodeId"
-            <*> v  .:  "name"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 instance ToJSON DOMAttributeRemoved  where
-    toJSON v = A.object
-        [ "nodeId" .= domAttributeRemovedNodeId v
-        , "name" .= domAttributeRemovedName v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DOMAttributeRemoved where
@@ -217,18 +198,12 @@ instance FromEvent Event DOMAttributeRemoved where
 data DOMCharacterDataModified = DOMCharacterDataModified {
     domCharacterDataModifiedNodeId :: DOMNodeId,
     domCharacterDataModifiedCharacterData :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMCharacterDataModified where
-    parseJSON = A.withObject "DOMCharacterDataModified" $ \v ->
-         DOMCharacterDataModified <$> v .:  "nodeId"
-            <*> v  .:  "characterData"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
 
 instance ToJSON DOMCharacterDataModified  where
-    toJSON v = A.object
-        [ "nodeId" .= domCharacterDataModifiedNodeId v
-        , "characterData" .= domCharacterDataModifiedCharacterData v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DOMCharacterDataModified where
@@ -238,18 +213,12 @@ instance FromEvent Event DOMCharacterDataModified where
 data DOMChildNodeCountUpdated = DOMChildNodeCountUpdated {
     domChildNodeCountUpdatedNodeId :: DOMNodeId,
     domChildNodeCountUpdatedChildNodeCount :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMChildNodeCountUpdated where
-    parseJSON = A.withObject "DOMChildNodeCountUpdated" $ \v ->
-         DOMChildNodeCountUpdated <$> v .:  "nodeId"
-            <*> v  .:  "childNodeCount"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
 
 instance ToJSON DOMChildNodeCountUpdated  where
-    toJSON v = A.object
-        [ "nodeId" .= domChildNodeCountUpdatedNodeId v
-        , "childNodeCount" .= domChildNodeCountUpdatedChildNodeCount v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DOMChildNodeCountUpdated where
@@ -260,20 +229,12 @@ data DOMChildNodeInserted = DOMChildNodeInserted {
     domChildNodeInsertedParentNodeId :: DOMNodeId,
     domChildNodeInsertedPreviousNodeId :: DOMNodeId,
     domChildNodeInsertedNode :: DOMNode
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMChildNodeInserted where
-    parseJSON = A.withObject "DOMChildNodeInserted" $ \v ->
-         DOMChildNodeInserted <$> v .:  "parentNodeId"
-            <*> v  .:  "previousNodeId"
-            <*> v  .:  "node"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
 
 instance ToJSON DOMChildNodeInserted  where
-    toJSON v = A.object
-        [ "parentNodeId" .= domChildNodeInsertedParentNodeId v
-        , "previousNodeId" .= domChildNodeInsertedPreviousNodeId v
-        , "node" .= domChildNodeInsertedNode v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DOMChildNodeInserted where
@@ -283,18 +244,12 @@ instance FromEvent Event DOMChildNodeInserted where
 data DOMChildNodeRemoved = DOMChildNodeRemoved {
     domChildNodeRemovedParentNodeId :: DOMNodeId,
     domChildNodeRemovedNodeId :: DOMNodeId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMChildNodeRemoved where
-    parseJSON = A.withObject "DOMChildNodeRemoved" $ \v ->
-         DOMChildNodeRemoved <$> v .:  "parentNodeId"
-            <*> v  .:  "nodeId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 instance ToJSON DOMChildNodeRemoved  where
-    toJSON v = A.object
-        [ "parentNodeId" .= domChildNodeRemovedParentNodeId v
-        , "nodeId" .= domChildNodeRemovedNodeId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DOMChildNodeRemoved where
@@ -316,18 +271,12 @@ instance FromEvent Event DOMDocumentUpdated where
 data DOMSetChildNodes = DOMSetChildNodes {
     domSetChildNodesParentId :: DOMNodeId,
     domSetChildNodesNodes :: [DOMNode]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMSetChildNodes where
-    parseJSON = A.withObject "DOMSetChildNodes" $ \v ->
-         DOMSetChildNodes <$> v .:  "parentId"
-            <*> v  .:  "nodes"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
 
 instance ToJSON DOMSetChildNodes  where
-    toJSON v = A.object
-        [ "parentId" .= domSetChildNodesParentId v
-        , "nodes" .= domSetChildNodesNodes v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DOMSetChildNodes where
@@ -343,25 +292,17 @@ data DOMBackendNode = DOMBackendNode {
     domBackendNodeNodeType :: Int,
     domBackendNodeNodeName :: String,
     domBackendNodeBackendNodeId :: DOMBackendNodeId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMBackendNode where
-    parseJSON = A.withObject "DOMBackendNode" $ \v ->
-         DOMBackendNode <$> v .:  "nodeType"
-            <*> v  .:  "nodeName"
-            <*> v  .:  "backendNodeId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
 
 instance ToJSON DOMBackendNode  where
-    toJSON v = A.object
-        [ "nodeType" .= domBackendNodeNodeType v
-        , "nodeName" .= domBackendNodeNodeName v
-        , "backendNodeId" .= domBackendNodeBackendNodeId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 14 , A.omitNothingFields = True}
 
 
 
 data DOMPseudoType = DOMPseudoTypeFirstLine | DOMPseudoTypeFirstLetter | DOMPseudoTypeBefore | DOMPseudoTypeAfter | DOMPseudoTypeMarker | DOMPseudoTypeBackdrop | DOMPseudoTypeSelection | DOMPseudoTypeTargetText | DOMPseudoTypeSpellingError | DOMPseudoTypeGrammarError | DOMPseudoTypeHighlight | DOMPseudoTypeFirstLineInherited | DOMPseudoTypeScrollbar | DOMPseudoTypeScrollbarThumb | DOMPseudoTypeScrollbarButton | DOMPseudoTypeScrollbarTrack | DOMPseudoTypeScrollbarTrackPiece | DOMPseudoTypeScrollbarCorner | DOMPseudoTypeResizer | DOMPseudoTypeInputListButton | DOMPseudoTypePageTransition | DOMPseudoTypePageTransitionContainer | DOMPseudoTypePageTransitionImageWrapper | DOMPseudoTypePageTransitionOutgoingImage | DOMPseudoTypePageTransitionIncomingImage
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON DOMPseudoType where
     parseJSON = A.withText  "DOMPseudoType"  $ \v -> do
         case v of
@@ -424,7 +365,7 @@ instance ToJSON DOMPseudoType where
 
 
 data DOMShadowRootType = DOMShadowRootTypeUserAgent | DOMShadowRootTypeOpen | DOMShadowRootTypeClosed
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON DOMShadowRootType where
     parseJSON = A.withText  "DOMShadowRootType"  $ \v -> do
         case v of
@@ -443,7 +384,7 @@ instance ToJSON DOMShadowRootType where
 
 
 data DOMCompatibilityMode = DOMCompatibilityModeQuirksMode | DOMCompatibilityModeLimitedQuirksMode | DOMCompatibilityModeNoQuirksMode
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON DOMCompatibilityMode where
     parseJSON = A.withText  "DOMCompatibilityMode"  $ \v -> do
         case v of
@@ -491,72 +432,12 @@ data DOMNode = DOMNode {
     domNodeIsSvg :: Maybe Bool,
     domNodeCompatibilityMode :: Maybe DOMCompatibilityMode,
     domNodeAssignedSlot :: Maybe DOMBackendNode
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMNode where
-    parseJSON = A.withObject "DOMNode" $ \v ->
-         DOMNode <$> v .:  "nodeId"
-            <*> v  .:  "backendNodeId"
-            <*> v  .:  "nodeType"
-            <*> v  .:  "nodeName"
-            <*> v  .:  "localName"
-            <*> v  .:  "nodeValue"
-            <*> v  .:?  "parentId"
-            <*> v  .:?  "childNodeCount"
-            <*> v  .:?  "children"
-            <*> v  .:?  "attributes"
-            <*> v  .:?  "documentURL"
-            <*> v  .:?  "baseURL"
-            <*> v  .:?  "publicId"
-            <*> v  .:?  "systemId"
-            <*> v  .:?  "internalSubset"
-            <*> v  .:?  "xmlVersion"
-            <*> v  .:?  "name"
-            <*> v  .:?  "value"
-            <*> v  .:?  "pseudoType"
-            <*> v  .:?  "shadowRootType"
-            <*> v  .:?  "frameId"
-            <*> v  .:?  "contentDocument"
-            <*> v  .:?  "shadowRoots"
-            <*> v  .:?  "templateContent"
-            <*> v  .:?  "pseudoElements"
-            <*> v  .:?  "distributedNodes"
-            <*> v  .:?  "isSVG"
-            <*> v  .:?  "compatibilityMode"
-            <*> v  .:?  "assignedSlot"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 7 }
 
 instance ToJSON DOMNode  where
-    toJSON v = A.object
-        [ "nodeId" .= domNodeNodeId v
-        , "backendNodeId" .= domNodeBackendNodeId v
-        , "nodeType" .= domNodeNodeType v
-        , "nodeName" .= domNodeNodeName v
-        , "localName" .= domNodeLocalName v
-        , "nodeValue" .= domNodeNodeValue v
-        , "parentId" .= domNodeParentId v
-        , "childNodeCount" .= domNodeChildNodeCount v
-        , "children" .= domNodeChildren v
-        , "attributes" .= domNodeAttributes v
-        , "documentURL" .= domNodeDocumentUrl v
-        , "baseURL" .= domNodeBaseUrl v
-        , "publicId" .= domNodePublicId v
-        , "systemId" .= domNodeSystemId v
-        , "internalSubset" .= domNodeInternalSubset v
-        , "xmlVersion" .= domNodeXmlVersion v
-        , "name" .= domNodeName v
-        , "value" .= domNodeValue v
-        , "pseudoType" .= domNodePseudoType v
-        , "shadowRootType" .= domNodeShadowRootType v
-        , "frameId" .= domNodeFrameId v
-        , "contentDocument" .= domNodeContentDocument v
-        , "shadowRoots" .= domNodeShadowRoots v
-        , "templateContent" .= domNodeTemplateContent v
-        , "pseudoElements" .= domNodePseudoElements v
-        , "distributedNodes" .= domNodeDistributedNodes v
-        , "isSVG" .= domNodeIsSvg v
-        , "compatibilityMode" .= domNodeCompatibilityMode v
-        , "assignedSlot" .= domNodeAssignedSlot v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 7 , A.omitNothingFields = True}
 
 
 
@@ -565,22 +446,12 @@ data DOMRGBA = DOMRGBA {
     domrgbag :: Int,
     domrgbab :: Int,
     domrgbaa :: Maybe Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMRGBA where
-    parseJSON = A.withObject "DOMRGBA" $ \v ->
-         DOMRGBA <$> v .:  "r"
-            <*> v  .:  "g"
-            <*> v  .:  "b"
-            <*> v  .:?  "a"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 7 }
 
 instance ToJSON DOMRGBA  where
-    toJSON v = A.object
-        [ "r" .= domrgbar v
-        , "g" .= domrgbag v
-        , "b" .= domrgbab v
-        , "a" .= domrgbaa v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 7 , A.omitNothingFields = True}
 
 
 
@@ -594,28 +465,12 @@ data DOMBoxModel = DOMBoxModel {
     domBoxModelWidth :: Int,
     domBoxModelHeight :: Int,
     domBoxModelShapeOutside :: Maybe DOMShapeOutsideInfo
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMBoxModel where
-    parseJSON = A.withObject "DOMBoxModel" $ \v ->
-         DOMBoxModel <$> v .:  "content"
-            <*> v  .:  "padding"
-            <*> v  .:  "border"
-            <*> v  .:  "margin"
-            <*> v  .:  "width"
-            <*> v  .:  "height"
-            <*> v  .:?  "shapeOutside"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 11 }
 
 instance ToJSON DOMBoxModel  where
-    toJSON v = A.object
-        [ "content" .= domBoxModelContent v
-        , "padding" .= domBoxModelPadding v
-        , "border" .= domBoxModelBorder v
-        , "margin" .= domBoxModelMargin v
-        , "width" .= domBoxModelWidth v
-        , "height" .= domBoxModelHeight v
-        , "shapeOutside" .= domBoxModelShapeOutside v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 11 , A.omitNothingFields = True}
 
 
 
@@ -623,20 +478,12 @@ data DOMShapeOutsideInfo = DOMShapeOutsideInfo {
     domShapeOutsideInfoBounds :: DOMQuad,
     domShapeOutsideInfoShape :: [Int],
     domShapeOutsideInfoMarginShape :: [Int]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMShapeOutsideInfo where
-    parseJSON = A.withObject "DOMShapeOutsideInfo" $ \v ->
-         DOMShapeOutsideInfo <$> v .:  "bounds"
-            <*> v  .:  "shape"
-            <*> v  .:  "marginShape"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 instance ToJSON DOMShapeOutsideInfo  where
-    toJSON v = A.object
-        [ "bounds" .= domShapeOutsideInfoBounds v
-        , "shape" .= domShapeOutsideInfoShape v
-        , "marginShape" .= domShapeOutsideInfoMarginShape v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
 
 
 
@@ -645,49 +492,31 @@ data DOMRect = DOMRect {
     domRectY :: Int,
     domRectWidth :: Int,
     domRectHeight :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMRect where
-    parseJSON = A.withObject "DOMRect" $ \v ->
-         DOMRect <$> v .:  "x"
-            <*> v  .:  "y"
-            <*> v  .:  "width"
-            <*> v  .:  "height"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 7 }
 
 instance ToJSON DOMRect  where
-    toJSON v = A.object
-        [ "x" .= domRectX v
-        , "y" .= domRectY v
-        , "width" .= domRectWidth v
-        , "height" .= domRectHeight v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 7 , A.omitNothingFields = True}
 
 
 
 data DOMCSSComputedStyleProperty = DOMCSSComputedStyleProperty {
     domcssComputedStylePropertyName :: String,
     domcssComputedStylePropertyValue :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMCSSComputedStyleProperty where
-    parseJSON = A.withObject "DOMCSSComputedStyleProperty" $ \v ->
-         DOMCSSComputedStyleProperty <$> v .:  "name"
-            <*> v  .:  "value"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
 
 instance ToJSON DOMCSSComputedStyleProperty  where
-    toJSON v = A.object
-        [ "name" .= domcssComputedStylePropertyName v
-        , "value" .= domcssComputedStylePropertyValue v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 27 , A.omitNothingFields = True}
 
 
 data DOMDescribeNode = DOMDescribeNode {
     dOMDescribeNodeNode :: DOMNode
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMDescribeNode where
-    parseJSON = A.withObject "DOMDescribeNode" $ \v ->
-         DOMDescribeNode <$> v .:  "node"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
 
 
 instance Command  DOMDescribeNode where
@@ -699,24 +528,12 @@ data PDOMDescribeNode = PDOMDescribeNode {
     pdomDescribeNodeObjectId :: Maybe RuntimeRemoteObjectId,
     pdomDescribeNodeDepth :: Maybe Int,
     pdomDescribeNodePierce :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMDescribeNode where
-    parseJSON = A.withObject "PDOMDescribeNode" $ \v ->
-         PDOMDescribeNode <$> v .:?  "nodeId"
-            <*> v  .:?  "backendNodeId"
-            <*> v  .:?  "objectId"
-            <*> v  .:?  "depth"
-            <*> v  .:?  "pierce"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
 
 instance ToJSON PDOMDescribeNode  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomDescribeNodeNodeId v
-        , "backendNodeId" .= pdomDescribeNodeBackendNodeId v
-        , "objectId" .= pdomDescribeNodeObjectId v
-        , "depth" .= pdomDescribeNodeDepth v
-        , "pierce" .= pdomDescribeNodePierce v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
 
 
 dOMDescribeNode :: Session -> PDOMDescribeNode -> IO (Either Error DOMDescribeNode)
@@ -740,20 +557,12 @@ data PDOMFocus = PDOMFocus {
     pdomFocusNodeId :: Maybe DOMNodeId,
     pdomFocusBackendNodeId :: Maybe DOMBackendNodeId,
     pdomFocusObjectId :: Maybe RuntimeRemoteObjectId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMFocus where
-    parseJSON = A.withObject "PDOMFocus" $ \v ->
-         PDOMFocus <$> v .:?  "nodeId"
-            <*> v  .:?  "backendNodeId"
-            <*> v  .:?  "objectId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 9 }
 
 instance ToJSON PDOMFocus  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomFocusNodeId v
-        , "backendNodeId" .= pdomFocusBackendNodeId v
-        , "objectId" .= pdomFocusObjectId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 9 , A.omitNothingFields = True}
 
 
 dOMFocus :: Session -> PDOMFocus -> IO (Maybe Error)
@@ -761,11 +570,9 @@ dOMFocus session params = sendReceiveCommand session "DOM.focus" (Just params)
 
 data DOMGetAttributes = DOMGetAttributes {
     dOMGetAttributesAttributes :: [String]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMGetAttributes where
-    parseJSON = A.withObject "DOMGetAttributes" $ \v ->
-         DOMGetAttributes <$> v .:  "attributes"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
 
 
 instance Command  DOMGetAttributes where
@@ -773,16 +580,12 @@ instance Command  DOMGetAttributes where
 
 data PDOMGetAttributes = PDOMGetAttributes {
     pdomGetAttributesNodeId :: DOMNodeId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMGetAttributes where
-    parseJSON = A.withObject "PDOMGetAttributes" $ \v ->
-         PDOMGetAttributes <$> v .:  "nodeId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
 
 instance ToJSON PDOMGetAttributes  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomGetAttributesNodeId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
 
 
 dOMGetAttributes :: Session -> PDOMGetAttributes -> IO (Either Error DOMGetAttributes)
@@ -790,11 +593,9 @@ dOMGetAttributes session params = sendReceiveCommandResult session "DOM.getAttri
 
 data DOMGetBoxModel = DOMGetBoxModel {
     dOMGetBoxModelModel :: DOMBoxModel
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMGetBoxModel where
-    parseJSON = A.withObject "DOMGetBoxModel" $ \v ->
-         DOMGetBoxModel <$> v .:  "model"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
 
 
 instance Command  DOMGetBoxModel where
@@ -804,20 +605,12 @@ data PDOMGetBoxModel = PDOMGetBoxModel {
     pdomGetBoxModelNodeId :: Maybe DOMNodeId,
     pdomGetBoxModelBackendNodeId :: Maybe DOMBackendNodeId,
     pdomGetBoxModelObjectId :: Maybe RuntimeRemoteObjectId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMGetBoxModel where
-    parseJSON = A.withObject "PDOMGetBoxModel" $ \v ->
-         PDOMGetBoxModel <$> v .:?  "nodeId"
-            <*> v  .:?  "backendNodeId"
-            <*> v  .:?  "objectId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
 
 instance ToJSON PDOMGetBoxModel  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomGetBoxModelNodeId v
-        , "backendNodeId" .= pdomGetBoxModelBackendNodeId v
-        , "objectId" .= pdomGetBoxModelObjectId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
 
 
 dOMGetBoxModel :: Session -> PDOMGetBoxModel -> IO (Either Error DOMGetBoxModel)
@@ -825,11 +618,9 @@ dOMGetBoxModel session params = sendReceiveCommandResult session "DOM.getBoxMode
 
 data DOMGetDocument = DOMGetDocument {
     dOMGetDocumentRoot :: DOMNode
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMGetDocument where
-    parseJSON = A.withObject "DOMGetDocument" $ \v ->
-         DOMGetDocument <$> v .:  "root"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
 
 
 instance Command  DOMGetDocument where
@@ -838,18 +629,12 @@ instance Command  DOMGetDocument where
 data PDOMGetDocument = PDOMGetDocument {
     pdomGetDocumentDepth :: Maybe Int,
     pdomGetDocumentPierce :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMGetDocument where
-    parseJSON = A.withObject "PDOMGetDocument" $ \v ->
-         PDOMGetDocument <$> v .:?  "depth"
-            <*> v  .:?  "pierce"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
 
 instance ToJSON PDOMGetDocument  where
-    toJSON v = A.object
-        [ "depth" .= pdomGetDocumentDepth v
-        , "pierce" .= pdomGetDocumentPierce v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
 
 
 dOMGetDocument :: Session -> PDOMGetDocument -> IO (Either Error DOMGetDocument)
@@ -859,13 +644,9 @@ data DOMGetNodeForLocation = DOMGetNodeForLocation {
     dOMGetNodeForLocationBackendNodeId :: DOMBackendNodeId,
     dOMGetNodeForLocationFrameId :: PageFrameId,
     dOMGetNodeForLocationNodeId :: Maybe DOMNodeId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMGetNodeForLocation where
-    parseJSON = A.withObject "DOMGetNodeForLocation" $ \v ->
-         DOMGetNodeForLocation <$> v .:  "backendNodeId"
-            <*> v  .:  "frameId"
-            <*> v  .:?  "nodeId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 
 instance Command  DOMGetNodeForLocation where
@@ -876,22 +657,12 @@ data PDOMGetNodeForLocation = PDOMGetNodeForLocation {
     pdomGetNodeForLocationY :: Int,
     pdomGetNodeForLocationIncludeUserAgentShadowDom :: Maybe Bool,
     pdomGetNodeForLocationIgnorePointerEventsNone :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMGetNodeForLocation where
-    parseJSON = A.withObject "PDOMGetNodeForLocation" $ \v ->
-         PDOMGetNodeForLocation <$> v .:  "x"
-            <*> v  .:  "y"
-            <*> v  .:?  "includeUserAgentShadowDOM"
-            <*> v  .:?  "ignorePointerEventsNone"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
 
 instance ToJSON PDOMGetNodeForLocation  where
-    toJSON v = A.object
-        [ "x" .= pdomGetNodeForLocationX v
-        , "y" .= pdomGetNodeForLocationY v
-        , "includeUserAgentShadowDOM" .= pdomGetNodeForLocationIncludeUserAgentShadowDom v
-        , "ignorePointerEventsNone" .= pdomGetNodeForLocationIgnorePointerEventsNone v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
 
 
 dOMGetNodeForLocation :: Session -> PDOMGetNodeForLocation -> IO (Either Error DOMGetNodeForLocation)
@@ -899,11 +670,9 @@ dOMGetNodeForLocation session params = sendReceiveCommandResult session "DOM.get
 
 data DOMGetOuterHtml = DOMGetOuterHtml {
     dOMGetOuterHtmlOuterHtml :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMGetOuterHtml where
-    parseJSON = A.withObject "DOMGetOuterHtml" $ \v ->
-         DOMGetOuterHtml <$> v .:  "outerHTML"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
 
 
 instance Command  DOMGetOuterHtml where
@@ -913,20 +682,12 @@ data PDOMGetOuterHtml = PDOMGetOuterHtml {
     pdomGetOuterHtmlNodeId :: Maybe DOMNodeId,
     pdomGetOuterHtmlBackendNodeId :: Maybe DOMBackendNodeId,
     pdomGetOuterHtmlObjectId :: Maybe RuntimeRemoteObjectId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMGetOuterHtml where
-    parseJSON = A.withObject "PDOMGetOuterHtml" $ \v ->
-         PDOMGetOuterHtml <$> v .:?  "nodeId"
-            <*> v  .:?  "backendNodeId"
-            <*> v  .:?  "objectId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
 
 instance ToJSON PDOMGetOuterHtml  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomGetOuterHtmlNodeId v
-        , "backendNodeId" .= pdomGetOuterHtmlBackendNodeId v
-        , "objectId" .= pdomGetOuterHtmlObjectId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
 
 
 dOMGetOuterHtml :: Session -> PDOMGetOuterHtml -> IO (Either Error DOMGetOuterHtml)
@@ -952,11 +713,9 @@ dOMHighlightRect session = sendReceiveCommand session "DOM.highlightRect" (Nothi
 
 data DOMMoveTo = DOMMoveTo {
     dOMMoveToNodeId :: DOMNodeId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMMoveTo where
-    parseJSON = A.withObject "DOMMoveTo" $ \v ->
-         DOMMoveTo <$> v .:  "nodeId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 9 }
 
 
 instance Command  DOMMoveTo where
@@ -966,20 +725,12 @@ data PDOMMoveTo = PDOMMoveTo {
     pdomMoveToNodeId :: DOMNodeId,
     pdomMoveToTargetNodeId :: DOMNodeId,
     pdomMoveToInsertBeforeNodeId :: Maybe DOMNodeId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMMoveTo where
-    parseJSON = A.withObject "PDOMMoveTo" $ \v ->
-         PDOMMoveTo <$> v .:  "nodeId"
-            <*> v  .:  "targetNodeId"
-            <*> v  .:?  "insertBeforeNodeId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 10 }
 
 instance ToJSON PDOMMoveTo  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomMoveToNodeId v
-        , "targetNodeId" .= pdomMoveToTargetNodeId v
-        , "insertBeforeNodeId" .= pdomMoveToInsertBeforeNodeId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 10 , A.omitNothingFields = True}
 
 
 dOMMoveTo :: Session -> PDOMMoveTo -> IO (Either Error DOMMoveTo)
@@ -987,11 +738,9 @@ dOMMoveTo session params = sendReceiveCommandResult session "DOM.moveTo" (Just p
 
 data DOMQuerySelector = DOMQuerySelector {
     dOMQuerySelectorNodeId :: DOMNodeId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMQuerySelector where
-    parseJSON = A.withObject "DOMQuerySelector" $ \v ->
-         DOMQuerySelector <$> v .:  "nodeId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
 
 
 instance Command  DOMQuerySelector where
@@ -1000,18 +749,12 @@ instance Command  DOMQuerySelector where
 data PDOMQuerySelector = PDOMQuerySelector {
     pdomQuerySelectorNodeId :: DOMNodeId,
     pdomQuerySelectorSelector :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMQuerySelector where
-    parseJSON = A.withObject "PDOMQuerySelector" $ \v ->
-         PDOMQuerySelector <$> v .:  "nodeId"
-            <*> v  .:  "selector"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
 
 instance ToJSON PDOMQuerySelector  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomQuerySelectorNodeId v
-        , "selector" .= pdomQuerySelectorSelector v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
 
 
 dOMQuerySelector :: Session -> PDOMQuerySelector -> IO (Either Error DOMQuerySelector)
@@ -1019,11 +762,9 @@ dOMQuerySelector session params = sendReceiveCommandResult session "DOM.querySel
 
 data DOMQuerySelectorAll = DOMQuerySelectorAll {
     dOMQuerySelectorAllNodeIds :: [DOMNodeId]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMQuerySelectorAll where
-    parseJSON = A.withObject "DOMQuerySelectorAll" $ \v ->
-         DOMQuerySelectorAll <$> v .:  "nodeIds"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 
 instance Command  DOMQuerySelectorAll where
@@ -1032,18 +773,12 @@ instance Command  DOMQuerySelectorAll where
 data PDOMQuerySelectorAll = PDOMQuerySelectorAll {
     pdomQuerySelectorAllNodeId :: DOMNodeId,
     pdomQuerySelectorAllSelector :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMQuerySelectorAll where
-    parseJSON = A.withObject "PDOMQuerySelectorAll" $ \v ->
-         PDOMQuerySelectorAll <$> v .:  "nodeId"
-            <*> v  .:  "selector"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
 
 instance ToJSON PDOMQuerySelectorAll  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomQuerySelectorAllNodeId v
-        , "selector" .= pdomQuerySelectorAllSelector v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
 
 
 dOMQuerySelectorAll :: Session -> PDOMQuerySelectorAll -> IO (Either Error DOMQuerySelectorAll)
@@ -1054,18 +789,12 @@ dOMQuerySelectorAll session params = sendReceiveCommandResult session "DOM.query
 data PDOMRemoveAttribute = PDOMRemoveAttribute {
     pdomRemoveAttributeNodeId :: DOMNodeId,
     pdomRemoveAttributeName :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMRemoveAttribute where
-    parseJSON = A.withObject "PDOMRemoveAttribute" $ \v ->
-         PDOMRemoveAttribute <$> v .:  "nodeId"
-            <*> v  .:  "name"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 instance ToJSON PDOMRemoveAttribute  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomRemoveAttributeNodeId v
-        , "name" .= pdomRemoveAttributeName v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
 
 
 dOMRemoveAttribute :: Session -> PDOMRemoveAttribute -> IO (Maybe Error)
@@ -1075,16 +804,12 @@ dOMRemoveAttribute session params = sendReceiveCommand session "DOM.removeAttrib
 
 data PDOMRemoveNode = PDOMRemoveNode {
     pdomRemoveNodeNodeId :: DOMNodeId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMRemoveNode where
-    parseJSON = A.withObject "PDOMRemoveNode" $ \v ->
-         PDOMRemoveNode <$> v .:  "nodeId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
 
 instance ToJSON PDOMRemoveNode  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomRemoveNodeNodeId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 14 , A.omitNothingFields = True}
 
 
 dOMRemoveNode :: Session -> PDOMRemoveNode -> IO (Maybe Error)
@@ -1096,20 +821,12 @@ data PDOMRequestChildNodes = PDOMRequestChildNodes {
     pdomRequestChildNodesNodeId :: DOMNodeId,
     pdomRequestChildNodesDepth :: Maybe Int,
     pdomRequestChildNodesPierce :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMRequestChildNodes where
-    parseJSON = A.withObject "PDOMRequestChildNodes" $ \v ->
-         PDOMRequestChildNodes <$> v .:  "nodeId"
-            <*> v  .:?  "depth"
-            <*> v  .:?  "pierce"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON PDOMRequestChildNodes  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomRequestChildNodesNodeId v
-        , "depth" .= pdomRequestChildNodesDepth v
-        , "pierce" .= pdomRequestChildNodesPierce v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 dOMRequestChildNodes :: Session -> PDOMRequestChildNodes -> IO (Maybe Error)
@@ -1117,11 +834,9 @@ dOMRequestChildNodes session params = sendReceiveCommand session "DOM.requestChi
 
 data DOMRequestNode = DOMRequestNode {
     dOMRequestNodeNodeId :: DOMNodeId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMRequestNode where
-    parseJSON = A.withObject "DOMRequestNode" $ \v ->
-         DOMRequestNode <$> v .:  "nodeId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
 
 
 instance Command  DOMRequestNode where
@@ -1129,16 +844,12 @@ instance Command  DOMRequestNode where
 
 data PDOMRequestNode = PDOMRequestNode {
     pdomRequestNodeObjectId :: RuntimeRemoteObjectId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMRequestNode where
-    parseJSON = A.withObject "PDOMRequestNode" $ \v ->
-         PDOMRequestNode <$> v .:  "objectId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
 
 instance ToJSON PDOMRequestNode  where
-    toJSON v = A.object
-        [ "objectId" .= pdomRequestNodeObjectId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
 
 
 dOMRequestNode :: Session -> PDOMRequestNode -> IO (Either Error DOMRequestNode)
@@ -1146,11 +857,9 @@ dOMRequestNode session params = sendReceiveCommandResult session "DOM.requestNod
 
 data DOMResolveNode = DOMResolveNode {
     dOMResolveNodeObject :: RuntimeRemoteObject
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMResolveNode where
-    parseJSON = A.withObject "DOMResolveNode" $ \v ->
-         DOMResolveNode <$> v .:  "object"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
 
 
 instance Command  DOMResolveNode where
@@ -1161,22 +870,12 @@ data PDOMResolveNode = PDOMResolveNode {
     pdomResolveNodeBackendNodeId :: Maybe DOMBackendNodeId,
     pdomResolveNodeObjectGroup :: Maybe String,
     pdomResolveNodeExecutionContextId :: Maybe RuntimeExecutionContextId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMResolveNode where
-    parseJSON = A.withObject "PDOMResolveNode" $ \v ->
-         PDOMResolveNode <$> v .:?  "nodeId"
-            <*> v  .:?  "backendNodeId"
-            <*> v  .:?  "objectGroup"
-            <*> v  .:?  "executionContextId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
 
 instance ToJSON PDOMResolveNode  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomResolveNodeNodeId v
-        , "backendNodeId" .= pdomResolveNodeBackendNodeId v
-        , "objectGroup" .= pdomResolveNodeObjectGroup v
-        , "executionContextId" .= pdomResolveNodeExecutionContextId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
 
 
 dOMResolveNode :: Session -> PDOMResolveNode -> IO (Either Error DOMResolveNode)
@@ -1188,20 +887,12 @@ data PDOMSetAttributeValue = PDOMSetAttributeValue {
     pdomSetAttributeValueNodeId :: DOMNodeId,
     pdomSetAttributeValueName :: String,
     pdomSetAttributeValueValue :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMSetAttributeValue where
-    parseJSON = A.withObject "PDOMSetAttributeValue" $ \v ->
-         PDOMSetAttributeValue <$> v .:  "nodeId"
-            <*> v  .:  "name"
-            <*> v  .:  "value"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON PDOMSetAttributeValue  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomSetAttributeValueNodeId v
-        , "name" .= pdomSetAttributeValueName v
-        , "value" .= pdomSetAttributeValueValue v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 dOMSetAttributeValue :: Session -> PDOMSetAttributeValue -> IO (Maybe Error)
@@ -1213,20 +904,12 @@ data PDOMSetAttributesAsText = PDOMSetAttributesAsText {
     pdomSetAttributesAsTextNodeId :: DOMNodeId,
     pdomSetAttributesAsTextText :: String,
     pdomSetAttributesAsTextName :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMSetAttributesAsText where
-    parseJSON = A.withObject "PDOMSetAttributesAsText" $ \v ->
-         PDOMSetAttributesAsText <$> v .:  "nodeId"
-            <*> v  .:  "text"
-            <*> v  .:?  "name"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
 
 instance ToJSON PDOMSetAttributesAsText  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomSetAttributesAsTextNodeId v
-        , "text" .= pdomSetAttributesAsTextText v
-        , "name" .= pdomSetAttributesAsTextName v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
 
 
 dOMSetAttributesAsText :: Session -> PDOMSetAttributesAsText -> IO (Maybe Error)
@@ -1239,22 +922,12 @@ data PDOMSetFileInputFiles = PDOMSetFileInputFiles {
     pdomSetFileInputFilesNodeId :: Maybe DOMNodeId,
     pdomSetFileInputFilesBackendNodeId :: Maybe DOMBackendNodeId,
     pdomSetFileInputFilesObjectId :: Maybe RuntimeRemoteObjectId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMSetFileInputFiles where
-    parseJSON = A.withObject "PDOMSetFileInputFiles" $ \v ->
-         PDOMSetFileInputFiles <$> v .:  "files"
-            <*> v  .:?  "nodeId"
-            <*> v  .:?  "backendNodeId"
-            <*> v  .:?  "objectId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON PDOMSetFileInputFiles  where
-    toJSON v = A.object
-        [ "files" .= pdomSetFileInputFilesFiles v
-        , "nodeId" .= pdomSetFileInputFilesNodeId v
-        , "backendNodeId" .= pdomSetFileInputFilesBackendNodeId v
-        , "objectId" .= pdomSetFileInputFilesObjectId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 dOMSetFileInputFiles :: Session -> PDOMSetFileInputFiles -> IO (Maybe Error)
@@ -1262,11 +935,9 @@ dOMSetFileInputFiles session params = sendReceiveCommand session "DOM.setFileInp
 
 data DOMSetNodeName = DOMSetNodeName {
     dOMSetNodeNameNodeId :: DOMNodeId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMSetNodeName where
-    parseJSON = A.withObject "DOMSetNodeName" $ \v ->
-         DOMSetNodeName <$> v .:  "nodeId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
 
 
 instance Command  DOMSetNodeName where
@@ -1275,18 +946,12 @@ instance Command  DOMSetNodeName where
 data PDOMSetNodeName = PDOMSetNodeName {
     pdomSetNodeNameNodeId :: DOMNodeId,
     pdomSetNodeNameName :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMSetNodeName where
-    parseJSON = A.withObject "PDOMSetNodeName" $ \v ->
-         PDOMSetNodeName <$> v .:  "nodeId"
-            <*> v  .:  "name"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
 
 instance ToJSON PDOMSetNodeName  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomSetNodeNameNodeId v
-        , "name" .= pdomSetNodeNameName v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
 
 
 dOMSetNodeName :: Session -> PDOMSetNodeName -> IO (Either Error DOMSetNodeName)
@@ -1297,18 +962,12 @@ dOMSetNodeName session params = sendReceiveCommandResult session "DOM.setNodeNam
 data PDOMSetNodeValue = PDOMSetNodeValue {
     pdomSetNodeValueNodeId :: DOMNodeId,
     pdomSetNodeValueValue :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMSetNodeValue where
-    parseJSON = A.withObject "PDOMSetNodeValue" $ \v ->
-         PDOMSetNodeValue <$> v .:  "nodeId"
-            <*> v  .:  "value"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
 
 instance ToJSON PDOMSetNodeValue  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomSetNodeValueNodeId v
-        , "value" .= pdomSetNodeValueValue v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
 
 
 dOMSetNodeValue :: Session -> PDOMSetNodeValue -> IO (Maybe Error)
@@ -1319,18 +978,12 @@ dOMSetNodeValue session params = sendReceiveCommand session "DOM.setNodeValue" (
 data PDOMSetOuterHtml = PDOMSetOuterHtml {
     pdomSetOuterHtmlNodeId :: DOMNodeId,
     pdomSetOuterHtmlOuterHtml :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMSetOuterHtml where
-    parseJSON = A.withObject "PDOMSetOuterHtml" $ \v ->
-         PDOMSetOuterHtml <$> v .:  "nodeId"
-            <*> v  .:  "outerHTML"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
 
 instance ToJSON PDOMSetOuterHtml  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomSetOuterHtmlNodeId v
-        , "outerHTML" .= pdomSetOuterHtmlOuterHtml v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
 
 
 dOMSetOuterHtml :: Session -> PDOMSetOuterHtml -> IO (Maybe Error)
@@ -1340,7 +993,7 @@ dOMSetOuterHtml session params = sendReceiveCommand session "DOM.setOuterHTML" (
 
 
 data DOMDebuggerDOMBreakpointType = DOMDebuggerDOMBreakpointTypeSubtreeModified | DOMDebuggerDOMBreakpointTypeAttributeModified | DOMDebuggerDOMBreakpointTypeNodeRemoved
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON DOMDebuggerDOMBreakpointType where
     parseJSON = A.withText  "DOMDebuggerDOMBreakpointType"  $ \v -> do
         case v of
@@ -1369,43 +1022,19 @@ data DOMDebuggerEventListener = DOMDebuggerEventListener {
     domDebuggerEventListenerHandler :: Maybe RuntimeRemoteObject,
     domDebuggerEventListenerOriginalHandler :: Maybe RuntimeRemoteObject,
     domDebuggerEventListenerBackendNodeId :: Maybe DOMBackendNodeId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMDebuggerEventListener where
-    parseJSON = A.withObject "DOMDebuggerEventListener" $ \v ->
-         DOMDebuggerEventListener <$> v .:  "type"
-            <*> v  .:  "useCapture"
-            <*> v  .:  "passive"
-            <*> v  .:  "once"
-            <*> v  .:  "scriptId"
-            <*> v  .:  "lineNumber"
-            <*> v  .:  "columnNumber"
-            <*> v  .:?  "handler"
-            <*> v  .:?  "originalHandler"
-            <*> v  .:?  "backendNodeId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
 
 instance ToJSON DOMDebuggerEventListener  where
-    toJSON v = A.object
-        [ "type" .= domDebuggerEventListenerType v
-        , "useCapture" .= domDebuggerEventListenerUseCapture v
-        , "passive" .= domDebuggerEventListenerPassive v
-        , "once" .= domDebuggerEventListenerOnce v
-        , "scriptId" .= domDebuggerEventListenerScriptId v
-        , "lineNumber" .= domDebuggerEventListenerLineNumber v
-        , "columnNumber" .= domDebuggerEventListenerColumnNumber v
-        , "handler" .= domDebuggerEventListenerHandler v
-        , "originalHandler" .= domDebuggerEventListenerOriginalHandler v
-        , "backendNodeId" .= domDebuggerEventListenerBackendNodeId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
 
 
 data DOMDebuggerGetEventListeners = DOMDebuggerGetEventListeners {
     dOMDebuggerGetEventListenersListeners :: [DOMDebuggerEventListener]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMDebuggerGetEventListeners where
-    parseJSON = A.withObject "DOMDebuggerGetEventListeners" $ \v ->
-         DOMDebuggerGetEventListeners <$> v .:  "listeners"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 28 }
 
 
 instance Command  DOMDebuggerGetEventListeners where
@@ -1415,20 +1044,12 @@ data PDOMDebuggerGetEventListeners = PDOMDebuggerGetEventListeners {
     pdomDebuggerGetEventListenersObjectId :: RuntimeRemoteObjectId,
     pdomDebuggerGetEventListenersDepth :: Maybe Int,
     pdomDebuggerGetEventListenersPierce :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMDebuggerGetEventListeners where
-    parseJSON = A.withObject "PDOMDebuggerGetEventListeners" $ \v ->
-         PDOMDebuggerGetEventListeners <$> v .:  "objectId"
-            <*> v  .:?  "depth"
-            <*> v  .:?  "pierce"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
 
 instance ToJSON PDOMDebuggerGetEventListeners  where
-    toJSON v = A.object
-        [ "objectId" .= pdomDebuggerGetEventListenersObjectId v
-        , "depth" .= pdomDebuggerGetEventListenersDepth v
-        , "pierce" .= pdomDebuggerGetEventListenersPierce v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 29 , A.omitNothingFields = True}
 
 
 dOMDebuggerGetEventListeners :: Session -> PDOMDebuggerGetEventListeners -> IO (Either Error DOMDebuggerGetEventListeners)
@@ -1439,18 +1060,12 @@ dOMDebuggerGetEventListeners session params = sendReceiveCommandResult session "
 data PDOMDebuggerRemoveDomBreakpoint = PDOMDebuggerRemoveDomBreakpoint {
     pdomDebuggerRemoveDomBreakpointNodeId :: DOMNodeId,
     pdomDebuggerRemoveDomBreakpointType :: DOMDebuggerDOMBreakpointType
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMDebuggerRemoveDomBreakpoint where
-    parseJSON = A.withObject "PDOMDebuggerRemoveDomBreakpoint" $ \v ->
-         PDOMDebuggerRemoveDomBreakpoint <$> v .:  "nodeId"
-            <*> v  .:  "type"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 31 }
 
 instance ToJSON PDOMDebuggerRemoveDomBreakpoint  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomDebuggerRemoveDomBreakpointNodeId v
-        , "type" .= pdomDebuggerRemoveDomBreakpointType v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 31 , A.omitNothingFields = True}
 
 
 dOMDebuggerRemoveDomBreakpoint :: Session -> PDOMDebuggerRemoveDomBreakpoint -> IO (Maybe Error)
@@ -1460,16 +1075,12 @@ dOMDebuggerRemoveDomBreakpoint session params = sendReceiveCommand session "DOMD
 
 data PDOMDebuggerRemoveEventListenerBreakpoint = PDOMDebuggerRemoveEventListenerBreakpoint {
     pdomDebuggerRemoveEventListenerBreakpointEventName :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMDebuggerRemoveEventListenerBreakpoint where
-    parseJSON = A.withObject "PDOMDebuggerRemoveEventListenerBreakpoint" $ \v ->
-         PDOMDebuggerRemoveEventListenerBreakpoint <$> v .:  "eventName"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 41 }
 
 instance ToJSON PDOMDebuggerRemoveEventListenerBreakpoint  where
-    toJSON v = A.object
-        [ "eventName" .= pdomDebuggerRemoveEventListenerBreakpointEventName v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 41 , A.omitNothingFields = True}
 
 
 dOMDebuggerRemoveEventListenerBreakpoint :: Session -> PDOMDebuggerRemoveEventListenerBreakpoint -> IO (Maybe Error)
@@ -1479,16 +1090,12 @@ dOMDebuggerRemoveEventListenerBreakpoint session params = sendReceiveCommand ses
 
 data PDOMDebuggerRemoveXhrBreakpoint = PDOMDebuggerRemoveXhrBreakpoint {
     pdomDebuggerRemoveXhrBreakpointUrl :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMDebuggerRemoveXhrBreakpoint where
-    parseJSON = A.withObject "PDOMDebuggerRemoveXhrBreakpoint" $ \v ->
-         PDOMDebuggerRemoveXhrBreakpoint <$> v .:  "url"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 31 }
 
 instance ToJSON PDOMDebuggerRemoveXhrBreakpoint  where
-    toJSON v = A.object
-        [ "url" .= pdomDebuggerRemoveXhrBreakpointUrl v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 31 , A.omitNothingFields = True}
 
 
 dOMDebuggerRemoveXhrBreakpoint :: Session -> PDOMDebuggerRemoveXhrBreakpoint -> IO (Maybe Error)
@@ -1499,18 +1106,12 @@ dOMDebuggerRemoveXhrBreakpoint session params = sendReceiveCommand session "DOMD
 data PDOMDebuggerSetDomBreakpoint = PDOMDebuggerSetDomBreakpoint {
     pdomDebuggerSetDomBreakpointNodeId :: DOMNodeId,
     pdomDebuggerSetDomBreakpointType :: DOMDebuggerDOMBreakpointType
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMDebuggerSetDomBreakpoint where
-    parseJSON = A.withObject "PDOMDebuggerSetDomBreakpoint" $ \v ->
-         PDOMDebuggerSetDomBreakpoint <$> v .:  "nodeId"
-            <*> v  .:  "type"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 28 }
 
 instance ToJSON PDOMDebuggerSetDomBreakpoint  where
-    toJSON v = A.object
-        [ "nodeId" .= pdomDebuggerSetDomBreakpointNodeId v
-        , "type" .= pdomDebuggerSetDomBreakpointType v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 28 , A.omitNothingFields = True}
 
 
 dOMDebuggerSetDomBreakpoint :: Session -> PDOMDebuggerSetDomBreakpoint -> IO (Maybe Error)
@@ -1520,16 +1121,12 @@ dOMDebuggerSetDomBreakpoint session params = sendReceiveCommand session "DOMDebu
 
 data PDOMDebuggerSetEventListenerBreakpoint = PDOMDebuggerSetEventListenerBreakpoint {
     pdomDebuggerSetEventListenerBreakpointEventName :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMDebuggerSetEventListenerBreakpoint where
-    parseJSON = A.withObject "PDOMDebuggerSetEventListenerBreakpoint" $ \v ->
-         PDOMDebuggerSetEventListenerBreakpoint <$> v .:  "eventName"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 38 }
 
 instance ToJSON PDOMDebuggerSetEventListenerBreakpoint  where
-    toJSON v = A.object
-        [ "eventName" .= pdomDebuggerSetEventListenerBreakpointEventName v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 38 , A.omitNothingFields = True}
 
 
 dOMDebuggerSetEventListenerBreakpoint :: Session -> PDOMDebuggerSetEventListenerBreakpoint -> IO (Maybe Error)
@@ -1539,16 +1136,12 @@ dOMDebuggerSetEventListenerBreakpoint session params = sendReceiveCommand sessio
 
 data PDOMDebuggerSetXhrBreakpoint = PDOMDebuggerSetXhrBreakpoint {
     pdomDebuggerSetXhrBreakpointUrl :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMDebuggerSetXhrBreakpoint where
-    parseJSON = A.withObject "PDOMDebuggerSetXhrBreakpoint" $ \v ->
-         PDOMDebuggerSetXhrBreakpoint <$> v .:  "url"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 28 }
 
 instance ToJSON PDOMDebuggerSetXhrBreakpoint  where
-    toJSON v = A.object
-        [ "url" .= pdomDebuggerSetXhrBreakpointUrl v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 28 , A.omitNothingFields = True}
 
 
 dOMDebuggerSetXhrBreakpoint :: Session -> PDOMDebuggerSetXhrBreakpoint -> IO (Maybe Error)
@@ -1560,18 +1153,12 @@ dOMDebuggerSetXhrBreakpoint session params = sendReceiveCommand session "DOMDebu
 data EmulationScreenOrientation = EmulationScreenOrientation {
     emulationScreenOrientationType :: String,
     emulationScreenOrientationAngle :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  EmulationScreenOrientation where
-    parseJSON = A.withObject "EmulationScreenOrientation" $ \v ->
-         EmulationScreenOrientation <$> v .:  "type"
-            <*> v  .:  "angle"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
 
 instance ToJSON EmulationScreenOrientation  where
-    toJSON v = A.object
-        [ "type" .= emulationScreenOrientationType v
-        , "angle" .= emulationScreenOrientationAngle v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
 
 
 
@@ -1579,47 +1166,31 @@ data EmulationDisplayFeature = EmulationDisplayFeature {
     emulationDisplayFeatureOrientation :: String,
     emulationDisplayFeatureOffset :: Int,
     emulationDisplayFeatureMaskLength :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  EmulationDisplayFeature where
-    parseJSON = A.withObject "EmulationDisplayFeature" $ \v ->
-         EmulationDisplayFeature <$> v .:  "orientation"
-            <*> v  .:  "offset"
-            <*> v  .:  "maskLength"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
 
 instance ToJSON EmulationDisplayFeature  where
-    toJSON v = A.object
-        [ "orientation" .= emulationDisplayFeatureOrientation v
-        , "offset" .= emulationDisplayFeatureOffset v
-        , "maskLength" .= emulationDisplayFeatureMaskLength v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
 
 
 
 data EmulationMediaFeature = EmulationMediaFeature {
     emulationMediaFeatureName :: String,
     emulationMediaFeatureValue :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  EmulationMediaFeature where
-    parseJSON = A.withObject "EmulationMediaFeature" $ \v ->
-         EmulationMediaFeature <$> v .:  "name"
-            <*> v  .:  "value"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON EmulationMediaFeature  where
-    toJSON v = A.object
-        [ "name" .= emulationMediaFeatureName v
-        , "value" .= emulationMediaFeatureValue v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 data EmulationCanEmulate = EmulationCanEmulate {
     emulationCanEmulateResult :: Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  EmulationCanEmulate where
-    parseJSON = A.withObject "EmulationCanEmulate" $ \v ->
-         EmulationCanEmulate <$> v .:  "result"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 
 instance Command  EmulationCanEmulate where
@@ -1645,16 +1216,12 @@ emulationClearGeolocationOverride session = sendReceiveCommand session "Emulatio
 
 data PEmulationSetDefaultBackgroundColorOverride = PEmulationSetDefaultBackgroundColorOverride {
     pEmulationSetDefaultBackgroundColorOverrideColor :: Maybe DOMRGBA
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PEmulationSetDefaultBackgroundColorOverride where
-    parseJSON = A.withObject "PEmulationSetDefaultBackgroundColorOverride" $ \v ->
-         PEmulationSetDefaultBackgroundColorOverride <$> v .:?  "color"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 43 }
 
 instance ToJSON PEmulationSetDefaultBackgroundColorOverride  where
-    toJSON v = A.object
-        [ "color" .= pEmulationSetDefaultBackgroundColorOverrideColor v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 43 , A.omitNothingFields = True}
 
 
 emulationSetDefaultBackgroundColorOverride :: Session -> PEmulationSetDefaultBackgroundColorOverride -> IO (Maybe Error)
@@ -1668,24 +1235,12 @@ data PEmulationSetDeviceMetricsOverride = PEmulationSetDeviceMetricsOverride {
     pEmulationSetDeviceMetricsOverrideDeviceScaleFactor :: Int,
     pEmulationSetDeviceMetricsOverrideMobile :: Bool,
     pEmulationSetDeviceMetricsOverrideScreenOrientation :: Maybe EmulationScreenOrientation
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PEmulationSetDeviceMetricsOverride where
-    parseJSON = A.withObject "PEmulationSetDeviceMetricsOverride" $ \v ->
-         PEmulationSetDeviceMetricsOverride <$> v .:  "width"
-            <*> v  .:  "height"
-            <*> v  .:  "deviceScaleFactor"
-            <*> v  .:  "mobile"
-            <*> v  .:?  "screenOrientation"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 34 }
 
 instance ToJSON PEmulationSetDeviceMetricsOverride  where
-    toJSON v = A.object
-        [ "width" .= pEmulationSetDeviceMetricsOverrideWidth v
-        , "height" .= pEmulationSetDeviceMetricsOverrideHeight v
-        , "deviceScaleFactor" .= pEmulationSetDeviceMetricsOverrideDeviceScaleFactor v
-        , "mobile" .= pEmulationSetDeviceMetricsOverrideMobile v
-        , "screenOrientation" .= pEmulationSetDeviceMetricsOverrideScreenOrientation v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 34 , A.omitNothingFields = True}
 
 
 emulationSetDeviceMetricsOverride :: Session -> PEmulationSetDeviceMetricsOverride -> IO (Maybe Error)
@@ -1696,18 +1251,12 @@ emulationSetDeviceMetricsOverride session params = sendReceiveCommand session "E
 data PEmulationSetEmulatedMedia = PEmulationSetEmulatedMedia {
     pEmulationSetEmulatedMediaMedia :: Maybe String,
     pEmulationSetEmulatedMediaFeatures :: Maybe [EmulationMediaFeature]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PEmulationSetEmulatedMedia where
-    parseJSON = A.withObject "PEmulationSetEmulatedMedia" $ \v ->
-         PEmulationSetEmulatedMedia <$> v .:?  "media"
-            <*> v  .:?  "features"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
 
 instance ToJSON PEmulationSetEmulatedMedia  where
-    toJSON v = A.object
-        [ "media" .= pEmulationSetEmulatedMediaMedia v
-        , "features" .= pEmulationSetEmulatedMediaFeatures v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
 
 
 emulationSetEmulatedMedia :: Session -> PEmulationSetEmulatedMedia -> IO (Maybe Error)
@@ -1719,20 +1268,12 @@ data PEmulationSetGeolocationOverride = PEmulationSetGeolocationOverride {
     pEmulationSetGeolocationOverrideLatitude :: Maybe Int,
     pEmulationSetGeolocationOverrideLongitude :: Maybe Int,
     pEmulationSetGeolocationOverrideAccuracy :: Maybe Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PEmulationSetGeolocationOverride where
-    parseJSON = A.withObject "PEmulationSetGeolocationOverride" $ \v ->
-         PEmulationSetGeolocationOverride <$> v .:?  "latitude"
-            <*> v  .:?  "longitude"
-            <*> v  .:?  "accuracy"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 32 }
 
 instance ToJSON PEmulationSetGeolocationOverride  where
-    toJSON v = A.object
-        [ "latitude" .= pEmulationSetGeolocationOverrideLatitude v
-        , "longitude" .= pEmulationSetGeolocationOverrideLongitude v
-        , "accuracy" .= pEmulationSetGeolocationOverrideAccuracy v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 32 , A.omitNothingFields = True}
 
 
 emulationSetGeolocationOverride :: Session -> PEmulationSetGeolocationOverride -> IO (Maybe Error)
@@ -1742,16 +1283,12 @@ emulationSetGeolocationOverride session params = sendReceiveCommand session "Emu
 
 data PEmulationSetScriptExecutionDisabled = PEmulationSetScriptExecutionDisabled {
     pEmulationSetScriptExecutionDisabledValue :: Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PEmulationSetScriptExecutionDisabled where
-    parseJSON = A.withObject "PEmulationSetScriptExecutionDisabled" $ \v ->
-         PEmulationSetScriptExecutionDisabled <$> v .:  "value"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 36 }
 
 instance ToJSON PEmulationSetScriptExecutionDisabled  where
-    toJSON v = A.object
-        [ "value" .= pEmulationSetScriptExecutionDisabledValue v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 36 , A.omitNothingFields = True}
 
 
 emulationSetScriptExecutionDisabled :: Session -> PEmulationSetScriptExecutionDisabled -> IO (Maybe Error)
@@ -1762,18 +1299,12 @@ emulationSetScriptExecutionDisabled session params = sendReceiveCommand session 
 data PEmulationSetTouchEmulationEnabled = PEmulationSetTouchEmulationEnabled {
     pEmulationSetTouchEmulationEnabledEnabled :: Bool,
     pEmulationSetTouchEmulationEnabledMaxTouchPoints :: Maybe Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PEmulationSetTouchEmulationEnabled where
-    parseJSON = A.withObject "PEmulationSetTouchEmulationEnabled" $ \v ->
-         PEmulationSetTouchEmulationEnabled <$> v .:  "enabled"
-            <*> v  .:?  "maxTouchPoints"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 34 }
 
 instance ToJSON PEmulationSetTouchEmulationEnabled  where
-    toJSON v = A.object
-        [ "enabled" .= pEmulationSetTouchEmulationEnabledEnabled v
-        , "maxTouchPoints" .= pEmulationSetTouchEmulationEnabledMaxTouchPoints v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 34 , A.omitNothingFields = True}
 
 
 emulationSetTouchEmulationEnabled :: Session -> PEmulationSetTouchEmulationEnabled -> IO (Maybe Error)
@@ -1785,20 +1316,12 @@ data PEmulationSetUserAgentOverride = PEmulationSetUserAgentOverride {
     pEmulationSetUserAgentOverrideUserAgent :: String,
     pEmulationSetUserAgentOverrideAcceptLanguage :: Maybe String,
     pEmulationSetUserAgentOverridePlatform :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PEmulationSetUserAgentOverride where
-    parseJSON = A.withObject "PEmulationSetUserAgentOverride" $ \v ->
-         PEmulationSetUserAgentOverride <$> v .:  "userAgent"
-            <*> v  .:?  "acceptLanguage"
-            <*> v  .:?  "platform"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 30 }
 
 instance ToJSON PEmulationSetUserAgentOverride  where
-    toJSON v = A.object
-        [ "userAgent" .= pEmulationSetUserAgentOverrideUserAgent v
-        , "acceptLanguage" .= pEmulationSetUserAgentOverrideAcceptLanguage v
-        , "platform" .= pEmulationSetUserAgentOverridePlatform v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 30 , A.omitNothingFields = True}
 
 
 emulationSetUserAgentOverride :: Session -> PEmulationSetUserAgentOverride -> IO (Maybe Error)
@@ -1812,16 +1335,12 @@ type IOStreamHandle = String
 
 data PIOClose = PIOClose {
     pioCloseHandle :: IOStreamHandle
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PIOClose where
-    parseJSON = A.withObject "PIOClose" $ \v ->
-         PIOClose <$> v .:  "handle"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 8 }
 
 instance ToJSON PIOClose  where
-    toJSON v = A.object
-        [ "handle" .= pioCloseHandle v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 8 , A.omitNothingFields = True}
 
 
 iOClose :: Session -> PIOClose -> IO (Maybe Error)
@@ -1831,13 +1350,9 @@ data IORead = IORead {
     iOReadData :: String,
     iOReadEof :: Bool,
     iOReadBase64Encoded :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  IORead where
-    parseJSON = A.withObject "IORead" $ \v ->
-         IORead <$> v .:  "data"
-            <*> v  .:  "eof"
-            <*> v  .:?  "base64Encoded"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 6 }
 
 
 instance Command  IORead where
@@ -1847,20 +1362,12 @@ data PIORead = PIORead {
     pioReadHandle :: IOStreamHandle,
     pioReadOffset :: Maybe Int,
     pioReadSize :: Maybe Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PIORead where
-    parseJSON = A.withObject "PIORead" $ \v ->
-         PIORead <$> v .:  "handle"
-            <*> v  .:?  "offset"
-            <*> v  .:?  "size"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 7 }
 
 instance ToJSON PIORead  where
-    toJSON v = A.object
-        [ "handle" .= pioReadHandle v
-        , "offset" .= pioReadOffset v
-        , "size" .= pioReadSize v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 7 , A.omitNothingFields = True}
 
 
 iORead :: Session -> PIORead -> IO (Either Error IORead)
@@ -1868,11 +1375,9 @@ iORead session params = sendReceiveCommandResult session "IO.read" (Just params)
 
 data IOResolveBlob = IOResolveBlob {
     iOResolveBlobUuid :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  IOResolveBlob where
-    parseJSON = A.withObject "IOResolveBlob" $ \v ->
-         IOResolveBlob <$> v .:  "uuid"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 13 }
 
 
 instance Command  IOResolveBlob where
@@ -1880,16 +1385,12 @@ instance Command  IOResolveBlob where
 
 data PIOResolveBlob = PIOResolveBlob {
     pioResolveBlobObjectId :: RuntimeRemoteObjectId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PIOResolveBlob where
-    parseJSON = A.withObject "PIOResolveBlob" $ \v ->
-         PIOResolveBlob <$> v .:  "objectId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
 
 instance ToJSON PIOResolveBlob  where
-    toJSON v = A.object
-        [ "objectId" .= pioResolveBlobObjectId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 14 , A.omitNothingFields = True}
 
 
 iOResolveBlob :: Session -> PIOResolveBlob -> IO (Either Error IOResolveBlob)
@@ -1906,33 +1407,17 @@ data InputTouchPoint = InputTouchPoint {
     inputTouchPointRotationAngle :: Maybe Int,
     inputTouchPointForce :: Maybe Int,
     inputTouchPointId :: Maybe Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  InputTouchPoint where
-    parseJSON = A.withObject "InputTouchPoint" $ \v ->
-         InputTouchPoint <$> v .:  "x"
-            <*> v  .:  "y"
-            <*> v  .:?  "radiusX"
-            <*> v  .:?  "radiusY"
-            <*> v  .:?  "rotationAngle"
-            <*> v  .:?  "force"
-            <*> v  .:?  "id"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
 
 instance ToJSON InputTouchPoint  where
-    toJSON v = A.object
-        [ "x" .= inputTouchPointX v
-        , "y" .= inputTouchPointY v
-        , "radiusX" .= inputTouchPointRadiusX v
-        , "radiusY" .= inputTouchPointRadiusY v
-        , "rotationAngle" .= inputTouchPointRotationAngle v
-        , "force" .= inputTouchPointForce v
-        , "id" .= inputTouchPointId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
 
 
 
 data InputMouseButton = InputMouseButtonNone | InputMouseButtonLeft | InputMouseButtonMiddle | InputMouseButtonRight | InputMouseButtonBack | InputMouseButtonForward
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON InputMouseButton where
     parseJSON = A.withText  "InputMouseButton"  $ \v -> do
         case v of
@@ -1974,42 +1459,12 @@ data PInputDispatchKeyEvent = PInputDispatchKeyEvent {
     pInputDispatchKeyEventIsKeypad :: Maybe Bool,
     pInputDispatchKeyEventIsSystemKey :: Maybe Bool,
     pInputDispatchKeyEventLocation :: Maybe Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PInputDispatchKeyEvent where
-    parseJSON = A.withObject "PInputDispatchKeyEvent" $ \v ->
-         PInputDispatchKeyEvent <$> v .:  "type"
-            <*> v  .:?  "modifiers"
-            <*> v  .:?  "timestamp"
-            <*> v  .:?  "text"
-            <*> v  .:?  "unmodifiedText"
-            <*> v  .:?  "keyIdentifier"
-            <*> v  .:?  "code"
-            <*> v  .:?  "key"
-            <*> v  .:?  "windowsVirtualKeyCode"
-            <*> v  .:?  "nativeVirtualKeyCode"
-            <*> v  .:?  "autoRepeat"
-            <*> v  .:?  "isKeypad"
-            <*> v  .:?  "isSystemKey"
-            <*> v  .:?  "location"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
 
 instance ToJSON PInputDispatchKeyEvent  where
-    toJSON v = A.object
-        [ "type" .= pInputDispatchKeyEventType v
-        , "modifiers" .= pInputDispatchKeyEventModifiers v
-        , "timestamp" .= pInputDispatchKeyEventTimestamp v
-        , "text" .= pInputDispatchKeyEventText v
-        , "unmodifiedText" .= pInputDispatchKeyEventUnmodifiedText v
-        , "keyIdentifier" .= pInputDispatchKeyEventKeyIdentifier v
-        , "code" .= pInputDispatchKeyEventCode v
-        , "key" .= pInputDispatchKeyEventKey v
-        , "windowsVirtualKeyCode" .= pInputDispatchKeyEventWindowsVirtualKeyCode v
-        , "nativeVirtualKeyCode" .= pInputDispatchKeyEventNativeVirtualKeyCode v
-        , "autoRepeat" .= pInputDispatchKeyEventAutoRepeat v
-        , "isKeypad" .= pInputDispatchKeyEventIsKeypad v
-        , "isSystemKey" .= pInputDispatchKeyEventIsSystemKey v
-        , "location" .= pInputDispatchKeyEventLocation v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
 
 
 inputDispatchKeyEvent :: Session -> PInputDispatchKeyEvent -> IO (Maybe Error)
@@ -2029,36 +1484,12 @@ data PInputDispatchMouseEvent = PInputDispatchMouseEvent {
     pInputDispatchMouseEventDeltaX :: Maybe Int,
     pInputDispatchMouseEventDeltaY :: Maybe Int,
     pInputDispatchMouseEventPointerType :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PInputDispatchMouseEvent where
-    parseJSON = A.withObject "PInputDispatchMouseEvent" $ \v ->
-         PInputDispatchMouseEvent <$> v .:  "type"
-            <*> v  .:  "x"
-            <*> v  .:  "y"
-            <*> v  .:?  "modifiers"
-            <*> v  .:?  "timestamp"
-            <*> v  .:?  "button"
-            <*> v  .:?  "buttons"
-            <*> v  .:?  "clickCount"
-            <*> v  .:?  "deltaX"
-            <*> v  .:?  "deltaY"
-            <*> v  .:?  "pointerType"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
 
 instance ToJSON PInputDispatchMouseEvent  where
-    toJSON v = A.object
-        [ "type" .= pInputDispatchMouseEventType v
-        , "x" .= pInputDispatchMouseEventX v
-        , "y" .= pInputDispatchMouseEventY v
-        , "modifiers" .= pInputDispatchMouseEventModifiers v
-        , "timestamp" .= pInputDispatchMouseEventTimestamp v
-        , "button" .= pInputDispatchMouseEventButton v
-        , "buttons" .= pInputDispatchMouseEventButtons v
-        , "clickCount" .= pInputDispatchMouseEventClickCount v
-        , "deltaX" .= pInputDispatchMouseEventDeltaX v
-        , "deltaY" .= pInputDispatchMouseEventDeltaY v
-        , "pointerType" .= pInputDispatchMouseEventPointerType v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
 
 
 inputDispatchMouseEvent :: Session -> PInputDispatchMouseEvent -> IO (Maybe Error)
@@ -2071,22 +1502,12 @@ data PInputDispatchTouchEvent = PInputDispatchTouchEvent {
     pInputDispatchTouchEventTouchPoints :: [InputTouchPoint],
     pInputDispatchTouchEventModifiers :: Maybe Int,
     pInputDispatchTouchEventTimestamp :: Maybe InputTimeSinceEpoch
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PInputDispatchTouchEvent where
-    parseJSON = A.withObject "PInputDispatchTouchEvent" $ \v ->
-         PInputDispatchTouchEvent <$> v .:  "type"
-            <*> v  .:  "touchPoints"
-            <*> v  .:?  "modifiers"
-            <*> v  .:?  "timestamp"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
 
 instance ToJSON PInputDispatchTouchEvent  where
-    toJSON v = A.object
-        [ "type" .= pInputDispatchTouchEventType v
-        , "touchPoints" .= pInputDispatchTouchEventTouchPoints v
-        , "modifiers" .= pInputDispatchTouchEventModifiers v
-        , "timestamp" .= pInputDispatchTouchEventTimestamp v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
 
 
 inputDispatchTouchEvent :: Session -> PInputDispatchTouchEvent -> IO (Maybe Error)
@@ -2096,16 +1517,12 @@ inputDispatchTouchEvent session params = sendReceiveCommand session "Input.dispa
 
 data PInputSetIgnoreInputEvents = PInputSetIgnoreInputEvents {
     pInputSetIgnoreInputEventsIgnore :: Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PInputSetIgnoreInputEvents where
-    parseJSON = A.withObject "PInputSetIgnoreInputEvents" $ \v ->
-         PInputSetIgnoreInputEvents <$> v .:  "ignore"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
 
 instance ToJSON PInputSetIgnoreInputEvents  where
-    toJSON v = A.object
-        [ "ignore" .= pInputSetIgnoreInputEventsIgnore v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
 
 
 inputSetIgnoreInputEvents :: Session -> PInputSetIgnoreInputEvents -> IO (Maybe Error)
@@ -2115,16 +1532,12 @@ inputSetIgnoreInputEvents session params = sendReceiveCommand session "Input.set
 
 data LogEntryAdded = LogEntryAdded {
     logEntryAddedEntry :: LogLogEntry
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  LogEntryAdded where
-    parseJSON = A.withObject "LogEntryAdded" $ \v ->
-         LogEntryAdded <$> v .:  "entry"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 13 }
 
 instance ToJSON LogEntryAdded  where
-    toJSON v = A.object
-        [ "entry" .= logEntryAddedEntry v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 13 , A.omitNothingFields = True}
 
 
 instance FromEvent Event LogEntryAdded where
@@ -2144,54 +1557,24 @@ data LogLogEntry = LogLogEntry {
     logLogEntryNetworkRequestId :: Maybe NetworkRequestId,
     logLogEntryWorkerId :: Maybe String,
     logLogEntryArgs :: Maybe [RuntimeRemoteObject]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  LogLogEntry where
-    parseJSON = A.withObject "LogLogEntry" $ \v ->
-         LogLogEntry <$> v .:  "source"
-            <*> v  .:  "level"
-            <*> v  .:  "text"
-            <*> v  .:  "timestamp"
-            <*> v  .:?  "category"
-            <*> v  .:?  "url"
-            <*> v  .:?  "lineNumber"
-            <*> v  .:?  "stackTrace"
-            <*> v  .:?  "networkRequestId"
-            <*> v  .:?  "workerId"
-            <*> v  .:?  "args"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 11 }
 
 instance ToJSON LogLogEntry  where
-    toJSON v = A.object
-        [ "source" .= logLogEntrySource v
-        , "level" .= logLogEntryLevel v
-        , "text" .= logLogEntryText v
-        , "timestamp" .= logLogEntryTimestamp v
-        , "category" .= logLogEntryCategory v
-        , "url" .= logLogEntryUrl v
-        , "lineNumber" .= logLogEntryLineNumber v
-        , "stackTrace" .= logLogEntryStackTrace v
-        , "networkRequestId" .= logLogEntryNetworkRequestId v
-        , "workerId" .= logLogEntryWorkerId v
-        , "args" .= logLogEntryArgs v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 11 , A.omitNothingFields = True}
 
 
 
 data LogViolationSetting = LogViolationSetting {
     logViolationSettingName :: String,
     logViolationSettingThreshold :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  LogViolationSetting where
-    parseJSON = A.withObject "LogViolationSetting" $ \v ->
-         LogViolationSetting <$> v .:  "name"
-            <*> v  .:  "threshold"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 instance ToJSON LogViolationSetting  where
-    toJSON v = A.object
-        [ "name" .= logViolationSettingName v
-        , "threshold" .= logViolationSettingThreshold v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
 
 
 
@@ -2216,16 +1599,12 @@ logEnable session = sendReceiveCommand session "Log.enable" (Nothing :: Maybe ()
 
 data PLogStartViolationsReport = PLogStartViolationsReport {
     pLogStartViolationsReportConfig :: [LogViolationSetting]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PLogStartViolationsReport where
-    parseJSON = A.withObject "PLogStartViolationsReport" $ \v ->
-         PLogStartViolationsReport <$> v .:  "config"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 25 }
 
 instance ToJSON PLogStartViolationsReport  where
-    toJSON v = A.object
-        [ "config" .= pLogStartViolationsReportConfig v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 25 , A.omitNothingFields = True}
 
 
 logStartViolationsReport :: Session -> PLogStartViolationsReport -> IO (Maybe Error)
@@ -2244,22 +1623,12 @@ data NetworkDataReceived = NetworkDataReceived {
     networkDataReceivedTimestamp :: NetworkMonotonicTime,
     networkDataReceivedDataLength :: Int,
     networkDataReceivedEncodedDataLength :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkDataReceived where
-    parseJSON = A.withObject "NetworkDataReceived" $ \v ->
-         NetworkDataReceived <$> v .:  "requestId"
-            <*> v  .:  "timestamp"
-            <*> v  .:  "dataLength"
-            <*> v  .:  "encodedDataLength"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 instance ToJSON NetworkDataReceived  where
-    toJSON v = A.object
-        [ "requestId" .= networkDataReceivedRequestId v
-        , "timestamp" .= networkDataReceivedTimestamp v
-        , "dataLength" .= networkDataReceivedDataLength v
-        , "encodedDataLength" .= networkDataReceivedEncodedDataLength v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkDataReceived where
@@ -2272,24 +1641,12 @@ data NetworkEventSourceMessageReceived = NetworkEventSourceMessageReceived {
     networkEventSourceMessageReceivedEventName :: String,
     networkEventSourceMessageReceivedEventId :: String,
     networkEventSourceMessageReceivedData :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkEventSourceMessageReceived where
-    parseJSON = A.withObject "NetworkEventSourceMessageReceived" $ \v ->
-         NetworkEventSourceMessageReceived <$> v .:  "requestId"
-            <*> v  .:  "timestamp"
-            <*> v  .:  "eventName"
-            <*> v  .:  "eventId"
-            <*> v  .:  "data"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 33 }
 
 instance ToJSON NetworkEventSourceMessageReceived  where
-    toJSON v = A.object
-        [ "requestId" .= networkEventSourceMessageReceivedRequestId v
-        , "timestamp" .= networkEventSourceMessageReceivedTimestamp v
-        , "eventName" .= networkEventSourceMessageReceivedEventName v
-        , "eventId" .= networkEventSourceMessageReceivedEventId v
-        , "data" .= networkEventSourceMessageReceivedData v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 33 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkEventSourceMessageReceived where
@@ -2304,28 +1661,12 @@ data NetworkLoadingFailed = NetworkLoadingFailed {
     networkLoadingFailedCanceled :: Maybe Bool,
     networkLoadingFailedBlockedReason :: Maybe NetworkBlockedReason,
     networkLoadingFailedCorsErrorStatus :: Maybe NetworkCorsErrorStatus
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkLoadingFailed where
-    parseJSON = A.withObject "NetworkLoadingFailed" $ \v ->
-         NetworkLoadingFailed <$> v .:  "requestId"
-            <*> v  .:  "timestamp"
-            <*> v  .:  "type"
-            <*> v  .:  "errorText"
-            <*> v  .:?  "canceled"
-            <*> v  .:?  "blockedReason"
-            <*> v  .:?  "corsErrorStatus"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
 
 instance ToJSON NetworkLoadingFailed  where
-    toJSON v = A.object
-        [ "requestId" .= networkLoadingFailedRequestId v
-        , "timestamp" .= networkLoadingFailedTimestamp v
-        , "type" .= networkLoadingFailedType v
-        , "errorText" .= networkLoadingFailedErrorText v
-        , "canceled" .= networkLoadingFailedCanceled v
-        , "blockedReason" .= networkLoadingFailedBlockedReason v
-        , "corsErrorStatus" .= networkLoadingFailedCorsErrorStatus v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkLoadingFailed where
@@ -2337,22 +1678,12 @@ data NetworkLoadingFinished = NetworkLoadingFinished {
     networkLoadingFinishedTimestamp :: NetworkMonotonicTime,
     networkLoadingFinishedEncodedDataLength :: Int,
     networkLoadingFinishedShouldReportCorbBlocking :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkLoadingFinished where
-    parseJSON = A.withObject "NetworkLoadingFinished" $ \v ->
-         NetworkLoadingFinished <$> v .:  "requestId"
-            <*> v  .:  "timestamp"
-            <*> v  .:  "encodedDataLength"
-            <*> v  .:?  "shouldReportCorbBlocking"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
 
 instance ToJSON NetworkLoadingFinished  where
-    toJSON v = A.object
-        [ "requestId" .= networkLoadingFinishedRequestId v
-        , "timestamp" .= networkLoadingFinishedTimestamp v
-        , "encodedDataLength" .= networkLoadingFinishedEncodedDataLength v
-        , "shouldReportCorbBlocking" .= networkLoadingFinishedShouldReportCorbBlocking v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkLoadingFinished where
@@ -2361,16 +1692,12 @@ instance FromEvent Event NetworkLoadingFinished where
 
 data NetworkRequestServedFromCache = NetworkRequestServedFromCache {
     networkRequestServedFromCacheRequestId :: NetworkRequestId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkRequestServedFromCache where
-    parseJSON = A.withObject "NetworkRequestServedFromCache" $ \v ->
-         NetworkRequestServedFromCache <$> v .:  "requestId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
 
 instance ToJSON NetworkRequestServedFromCache  where
-    toJSON v = A.object
-        [ "requestId" .= networkRequestServedFromCacheRequestId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 29 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkRequestServedFromCache where
@@ -2389,36 +1716,12 @@ data NetworkRequestWillBeSent = NetworkRequestWillBeSent {
     networkRequestWillBeSentType :: Maybe NetworkResourceType,
     networkRequestWillBeSentFrameId :: Maybe PageFrameId,
     networkRequestWillBeSentHasUserGesture :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkRequestWillBeSent where
-    parseJSON = A.withObject "NetworkRequestWillBeSent" $ \v ->
-         NetworkRequestWillBeSent <$> v .:  "requestId"
-            <*> v  .:  "loaderId"
-            <*> v  .:  "documentURL"
-            <*> v  .:  "request"
-            <*> v  .:  "timestamp"
-            <*> v  .:  "wallTime"
-            <*> v  .:  "initiator"
-            <*> v  .:?  "redirectResponse"
-            <*> v  .:?  "type"
-            <*> v  .:?  "frameId"
-            <*> v  .:?  "hasUserGesture"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
 
 instance ToJSON NetworkRequestWillBeSent  where
-    toJSON v = A.object
-        [ "requestId" .= networkRequestWillBeSentRequestId v
-        , "loaderId" .= networkRequestWillBeSentLoaderId v
-        , "documentURL" .= networkRequestWillBeSentDocumentUrl v
-        , "request" .= networkRequestWillBeSentRequest v
-        , "timestamp" .= networkRequestWillBeSentTimestamp v
-        , "wallTime" .= networkRequestWillBeSentWallTime v
-        , "initiator" .= networkRequestWillBeSentInitiator v
-        , "redirectResponse" .= networkRequestWillBeSentRedirectResponse v
-        , "type" .= networkRequestWillBeSentType v
-        , "frameId" .= networkRequestWillBeSentFrameId v
-        , "hasUserGesture" .= networkRequestWillBeSentHasUserGesture v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkRequestWillBeSent where
@@ -2432,26 +1735,12 @@ data NetworkResponseReceived = NetworkResponseReceived {
     networkResponseReceivedType :: NetworkResourceType,
     networkResponseReceivedResponse :: NetworkResponse,
     networkResponseReceivedFrameId :: Maybe PageFrameId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkResponseReceived where
-    parseJSON = A.withObject "NetworkResponseReceived" $ \v ->
-         NetworkResponseReceived <$> v .:  "requestId"
-            <*> v  .:  "loaderId"
-            <*> v  .:  "timestamp"
-            <*> v  .:  "type"
-            <*> v  .:  "response"
-            <*> v  .:?  "frameId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
 
 instance ToJSON NetworkResponseReceived  where
-    toJSON v = A.object
-        [ "requestId" .= networkResponseReceivedRequestId v
-        , "loaderId" .= networkResponseReceivedLoaderId v
-        , "timestamp" .= networkResponseReceivedTimestamp v
-        , "type" .= networkResponseReceivedType v
-        , "response" .= networkResponseReceivedResponse v
-        , "frameId" .= networkResponseReceivedFrameId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkResponseReceived where
@@ -2461,18 +1750,12 @@ instance FromEvent Event NetworkResponseReceived where
 data NetworkWebSocketClosed = NetworkWebSocketClosed {
     networkWebSocketClosedRequestId :: NetworkRequestId,
     networkWebSocketClosedTimestamp :: NetworkMonotonicTime
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketClosed where
-    parseJSON = A.withObject "NetworkWebSocketClosed" $ \v ->
-         NetworkWebSocketClosed <$> v .:  "requestId"
-            <*> v  .:  "timestamp"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
 
 instance ToJSON NetworkWebSocketClosed  where
-    toJSON v = A.object
-        [ "requestId" .= networkWebSocketClosedRequestId v
-        , "timestamp" .= networkWebSocketClosedTimestamp v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebSocketClosed where
@@ -2483,20 +1766,12 @@ data NetworkWebSocketCreated = NetworkWebSocketCreated {
     networkWebSocketCreatedRequestId :: NetworkRequestId,
     networkWebSocketCreatedUrl :: String,
     networkWebSocketCreatedInitiator :: Maybe NetworkInitiator
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketCreated where
-    parseJSON = A.withObject "NetworkWebSocketCreated" $ \v ->
-         NetworkWebSocketCreated <$> v .:  "requestId"
-            <*> v  .:  "url"
-            <*> v  .:?  "initiator"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
 
 instance ToJSON NetworkWebSocketCreated  where
-    toJSON v = A.object
-        [ "requestId" .= networkWebSocketCreatedRequestId v
-        , "url" .= networkWebSocketCreatedUrl v
-        , "initiator" .= networkWebSocketCreatedInitiator v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebSocketCreated where
@@ -2507,20 +1782,12 @@ data NetworkWebSocketFrameError = NetworkWebSocketFrameError {
     networkWebSocketFrameErrorRequestId :: NetworkRequestId,
     networkWebSocketFrameErrorTimestamp :: NetworkMonotonicTime,
     networkWebSocketFrameErrorErrorMessage :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketFrameError where
-    parseJSON = A.withObject "NetworkWebSocketFrameError" $ \v ->
-         NetworkWebSocketFrameError <$> v .:  "requestId"
-            <*> v  .:  "timestamp"
-            <*> v  .:  "errorMessage"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
 
 instance ToJSON NetworkWebSocketFrameError  where
-    toJSON v = A.object
-        [ "requestId" .= networkWebSocketFrameErrorRequestId v
-        , "timestamp" .= networkWebSocketFrameErrorTimestamp v
-        , "errorMessage" .= networkWebSocketFrameErrorErrorMessage v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebSocketFrameError where
@@ -2531,20 +1798,12 @@ data NetworkWebSocketFrameReceived = NetworkWebSocketFrameReceived {
     networkWebSocketFrameReceivedRequestId :: NetworkRequestId,
     networkWebSocketFrameReceivedTimestamp :: NetworkMonotonicTime,
     networkWebSocketFrameReceivedResponse :: NetworkWebSocketFrame
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketFrameReceived where
-    parseJSON = A.withObject "NetworkWebSocketFrameReceived" $ \v ->
-         NetworkWebSocketFrameReceived <$> v .:  "requestId"
-            <*> v  .:  "timestamp"
-            <*> v  .:  "response"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
 
 instance ToJSON NetworkWebSocketFrameReceived  where
-    toJSON v = A.object
-        [ "requestId" .= networkWebSocketFrameReceivedRequestId v
-        , "timestamp" .= networkWebSocketFrameReceivedTimestamp v
-        , "response" .= networkWebSocketFrameReceivedResponse v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 29 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebSocketFrameReceived where
@@ -2555,20 +1814,12 @@ data NetworkWebSocketFrameSent = NetworkWebSocketFrameSent {
     networkWebSocketFrameSentRequestId :: NetworkRequestId,
     networkWebSocketFrameSentTimestamp :: NetworkMonotonicTime,
     networkWebSocketFrameSentResponse :: NetworkWebSocketFrame
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketFrameSent where
-    parseJSON = A.withObject "NetworkWebSocketFrameSent" $ \v ->
-         NetworkWebSocketFrameSent <$> v .:  "requestId"
-            <*> v  .:  "timestamp"
-            <*> v  .:  "response"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 25 }
 
 instance ToJSON NetworkWebSocketFrameSent  where
-    toJSON v = A.object
-        [ "requestId" .= networkWebSocketFrameSentRequestId v
-        , "timestamp" .= networkWebSocketFrameSentTimestamp v
-        , "response" .= networkWebSocketFrameSentResponse v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 25 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebSocketFrameSent where
@@ -2579,20 +1830,12 @@ data NetworkWebSocketHandshakeResponseReceived = NetworkWebSocketHandshakeRespon
     networkWebSocketHandshakeResponseReceivedRequestId :: NetworkRequestId,
     networkWebSocketHandshakeResponseReceivedTimestamp :: NetworkMonotonicTime,
     networkWebSocketHandshakeResponseReceivedResponse :: NetworkWebSocketResponse
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketHandshakeResponseReceived where
-    parseJSON = A.withObject "NetworkWebSocketHandshakeResponseReceived" $ \v ->
-         NetworkWebSocketHandshakeResponseReceived <$> v .:  "requestId"
-            <*> v  .:  "timestamp"
-            <*> v  .:  "response"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 41 }
 
 instance ToJSON NetworkWebSocketHandshakeResponseReceived  where
-    toJSON v = A.object
-        [ "requestId" .= networkWebSocketHandshakeResponseReceivedRequestId v
-        , "timestamp" .= networkWebSocketHandshakeResponseReceivedTimestamp v
-        , "response" .= networkWebSocketHandshakeResponseReceivedResponse v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 41 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebSocketHandshakeResponseReceived where
@@ -2604,22 +1847,12 @@ data NetworkWebSocketWillSendHandshakeRequest = NetworkWebSocketWillSendHandshak
     networkWebSocketWillSendHandshakeRequestTimestamp :: NetworkMonotonicTime,
     networkWebSocketWillSendHandshakeRequestWallTime :: NetworkTimeSinceEpoch,
     networkWebSocketWillSendHandshakeRequestRequest :: NetworkWebSocketRequest
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketWillSendHandshakeRequest where
-    parseJSON = A.withObject "NetworkWebSocketWillSendHandshakeRequest" $ \v ->
-         NetworkWebSocketWillSendHandshakeRequest <$> v .:  "requestId"
-            <*> v  .:  "timestamp"
-            <*> v  .:  "wallTime"
-            <*> v  .:  "request"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 40 }
 
 instance ToJSON NetworkWebSocketWillSendHandshakeRequest  where
-    toJSON v = A.object
-        [ "requestId" .= networkWebSocketWillSendHandshakeRequestRequestId v
-        , "timestamp" .= networkWebSocketWillSendHandshakeRequestTimestamp v
-        , "wallTime" .= networkWebSocketWillSendHandshakeRequestWallTime v
-        , "request" .= networkWebSocketWillSendHandshakeRequestRequest v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 40 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebSocketWillSendHandshakeRequest where
@@ -2631,22 +1864,12 @@ data NetworkWebTransportCreated = NetworkWebTransportCreated {
     networkWebTransportCreatedUrl :: String,
     networkWebTransportCreatedTimestamp :: NetworkMonotonicTime,
     networkWebTransportCreatedInitiator :: Maybe NetworkInitiator
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebTransportCreated where
-    parseJSON = A.withObject "NetworkWebTransportCreated" $ \v ->
-         NetworkWebTransportCreated <$> v .:  "transportId"
-            <*> v  .:  "url"
-            <*> v  .:  "timestamp"
-            <*> v  .:?  "initiator"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
 
 instance ToJSON NetworkWebTransportCreated  where
-    toJSON v = A.object
-        [ "transportId" .= networkWebTransportCreatedTransportId v
-        , "url" .= networkWebTransportCreatedUrl v
-        , "timestamp" .= networkWebTransportCreatedTimestamp v
-        , "initiator" .= networkWebTransportCreatedInitiator v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebTransportCreated where
@@ -2656,18 +1879,12 @@ instance FromEvent Event NetworkWebTransportCreated where
 data NetworkWebTransportConnectionEstablished = NetworkWebTransportConnectionEstablished {
     networkWebTransportConnectionEstablishedTransportId :: NetworkRequestId,
     networkWebTransportConnectionEstablishedTimestamp :: NetworkMonotonicTime
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebTransportConnectionEstablished where
-    parseJSON = A.withObject "NetworkWebTransportConnectionEstablished" $ \v ->
-         NetworkWebTransportConnectionEstablished <$> v .:  "transportId"
-            <*> v  .:  "timestamp"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 40 }
 
 instance ToJSON NetworkWebTransportConnectionEstablished  where
-    toJSON v = A.object
-        [ "transportId" .= networkWebTransportConnectionEstablishedTransportId v
-        , "timestamp" .= networkWebTransportConnectionEstablishedTimestamp v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 40 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebTransportConnectionEstablished where
@@ -2677,18 +1894,12 @@ instance FromEvent Event NetworkWebTransportConnectionEstablished where
 data NetworkWebTransportClosed = NetworkWebTransportClosed {
     networkWebTransportClosedTransportId :: NetworkRequestId,
     networkWebTransportClosedTimestamp :: NetworkMonotonicTime
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebTransportClosed where
-    parseJSON = A.withObject "NetworkWebTransportClosed" $ \v ->
-         NetworkWebTransportClosed <$> v .:  "transportId"
-            <*> v  .:  "timestamp"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 25 }
 
 instance ToJSON NetworkWebTransportClosed  where
-    toJSON v = A.object
-        [ "transportId" .= networkWebTransportClosedTransportId v
-        , "timestamp" .= networkWebTransportClosedTimestamp v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 25 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebTransportClosed where
@@ -2697,7 +1908,7 @@ instance FromEvent Event NetworkWebTransportClosed where
 
 
 data NetworkResourceType = NetworkResourceTypeDocument | NetworkResourceTypeStylesheet | NetworkResourceTypeImage | NetworkResourceTypeMedia | NetworkResourceTypeFont | NetworkResourceTypeScript | NetworkResourceTypeTextTrack | NetworkResourceTypeXhr | NetworkResourceTypeFetch | NetworkResourceTypeEventSource | NetworkResourceTypeWebSocket | NetworkResourceTypeManifest | NetworkResourceTypeSignedExchange | NetworkResourceTypePing | NetworkResourceTypeCspViolationReport | NetworkResourceTypePreflight | NetworkResourceTypeOther
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON NetworkResourceType where
     parseJSON = A.withText  "NetworkResourceType"  $ \v -> do
         case v of
@@ -2750,7 +1961,7 @@ type NetworkRequestId = String
 type NetworkInterceptionId = String
 
 data NetworkErrorReason = NetworkErrorReasonFailed | NetworkErrorReasonAborted | NetworkErrorReasonTimedOut | NetworkErrorReasonAccessDenied | NetworkErrorReasonConnectionClosed | NetworkErrorReasonConnectionReset | NetworkErrorReasonConnectionRefused | NetworkErrorReasonConnectionAborted | NetworkErrorReasonConnectionFailed | NetworkErrorReasonNameNotResolved | NetworkErrorReasonInternetDisconnected | NetworkErrorReasonAddressUnreachable | NetworkErrorReasonBlockedByClient | NetworkErrorReasonBlockedByResponse
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON NetworkErrorReason where
     parseJSON = A.withText  "NetworkErrorReason"  $ \v -> do
         case v of
@@ -2797,7 +2008,7 @@ type NetworkMonotonicTime = Int
 type NetworkHeaders = [(String, String)]
 
 data NetworkConnectionType = NetworkConnectionTypeNone | NetworkConnectionTypeCellular2g | NetworkConnectionTypeCellular3g | NetworkConnectionTypeCellular4g | NetworkConnectionTypeBluetooth | NetworkConnectionTypeEthernet | NetworkConnectionTypeWifi | NetworkConnectionTypeWimax | NetworkConnectionTypeOther
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON NetworkConnectionType where
     parseJSON = A.withText  "NetworkConnectionType"  $ \v -> do
         case v of
@@ -2828,7 +2039,7 @@ instance ToJSON NetworkConnectionType where
 
 
 data NetworkCookieSameSite = NetworkCookieSameSiteStrict | NetworkCookieSameSiteLax | NetworkCookieSameSiteNone
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON NetworkCookieSameSite where
     parseJSON = A.withText  "NetworkCookieSameSite"  $ \v -> do
         case v of
@@ -2859,43 +2070,17 @@ data NetworkResourceTiming = NetworkResourceTiming {
     networkResourceTimingSendStart :: Int,
     networkResourceTimingSendEnd :: Int,
     networkResourceTimingReceiveHeadersEnd :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkResourceTiming where
-    parseJSON = A.withObject "NetworkResourceTiming" $ \v ->
-         NetworkResourceTiming <$> v .:  "requestTime"
-            <*> v  .:  "proxyStart"
-            <*> v  .:  "proxyEnd"
-            <*> v  .:  "dnsStart"
-            <*> v  .:  "dnsEnd"
-            <*> v  .:  "connectStart"
-            <*> v  .:  "connectEnd"
-            <*> v  .:  "sslStart"
-            <*> v  .:  "sslEnd"
-            <*> v  .:  "sendStart"
-            <*> v  .:  "sendEnd"
-            <*> v  .:  "receiveHeadersEnd"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON NetworkResourceTiming  where
-    toJSON v = A.object
-        [ "requestTime" .= networkResourceTimingRequestTime v
-        , "proxyStart" .= networkResourceTimingProxyStart v
-        , "proxyEnd" .= networkResourceTimingProxyEnd v
-        , "dnsStart" .= networkResourceTimingDnsStart v
-        , "dnsEnd" .= networkResourceTimingDnsEnd v
-        , "connectStart" .= networkResourceTimingConnectStart v
-        , "connectEnd" .= networkResourceTimingConnectEnd v
-        , "sslStart" .= networkResourceTimingSslStart v
-        , "sslEnd" .= networkResourceTimingSslEnd v
-        , "sendStart" .= networkResourceTimingSendStart v
-        , "sendEnd" .= networkResourceTimingSendEnd v
-        , "receiveHeadersEnd" .= networkResourceTimingReceiveHeadersEnd v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 
 data NetworkResourcePriority = NetworkResourcePriorityVeryLow | NetworkResourcePriorityLow | NetworkResourcePriorityMedium | NetworkResourcePriorityHigh | NetworkResourcePriorityVeryHigh
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON NetworkResourcePriority where
     parseJSON = A.withText  "NetworkResourcePriority"  $ \v -> do
         case v of
@@ -2919,16 +2104,12 @@ instance ToJSON NetworkResourcePriority where
 
 data NetworkPostDataEntry = NetworkPostDataEntry {
     networkPostDataEntryBytes :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkPostDataEntry where
-    parseJSON = A.withObject "NetworkPostDataEntry" $ \v ->
-         NetworkPostDataEntry <$> v .:?  "bytes"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
 
 instance ToJSON NetworkPostDataEntry  where
-    toJSON v = A.object
-        [ "bytes" .= networkPostDataEntryBytes v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
 
 
 
@@ -2943,34 +2124,12 @@ data NetworkRequest = NetworkRequest {
     networkRequestHasPostData :: Maybe Bool,
     networkRequestMixedContentType :: Maybe SecurityMixedContentType,
     networkRequestIsLinkPreload :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkRequest where
-    parseJSON = A.withObject "NetworkRequest" $ \v ->
-         NetworkRequest <$> v .:  "url"
-            <*> v  .:  "method"
-            <*> v  .:  "headers"
-            <*> v  .:  "initialPriority"
-            <*> v  .:  "referrerPolicy"
-            <*> v  .:?  "urlFragment"
-            <*> v  .:?  "postData"
-            <*> v  .:?  "hasPostData"
-            <*> v  .:?  "mixedContentType"
-            <*> v  .:?  "isLinkPreload"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
 
 instance ToJSON NetworkRequest  where
-    toJSON v = A.object
-        [ "url" .= networkRequestUrl v
-        , "method" .= networkRequestMethod v
-        , "headers" .= networkRequestHeaders v
-        , "initialPriority" .= networkRequestInitialPriority v
-        , "referrerPolicy" .= networkRequestReferrerPolicy v
-        , "urlFragment" .= networkRequestUrlFragment v
-        , "postData" .= networkRequestPostData v
-        , "hasPostData" .= networkRequestHasPostData v
-        , "mixedContentType" .= networkRequestMixedContentType v
-        , "isLinkPreload" .= networkRequestIsLinkPreload v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 14 , A.omitNothingFields = True}
 
 
 
@@ -2983,30 +2142,12 @@ data NetworkSignedCertificateTimestamp = NetworkSignedCertificateTimestamp {
     networkSignedCertificateTimestampHashAlgorithm :: String,
     networkSignedCertificateTimestampSignatureAlgorithm :: String,
     networkSignedCertificateTimestampSignatureData :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkSignedCertificateTimestamp where
-    parseJSON = A.withObject "NetworkSignedCertificateTimestamp" $ \v ->
-         NetworkSignedCertificateTimestamp <$> v .:  "status"
-            <*> v  .:  "origin"
-            <*> v  .:  "logDescription"
-            <*> v  .:  "logId"
-            <*> v  .:  "timestamp"
-            <*> v  .:  "hashAlgorithm"
-            <*> v  .:  "signatureAlgorithm"
-            <*> v  .:  "signatureData"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 33 }
 
 instance ToJSON NetworkSignedCertificateTimestamp  where
-    toJSON v = A.object
-        [ "status" .= networkSignedCertificateTimestampStatus v
-        , "origin" .= networkSignedCertificateTimestampOrigin v
-        , "logDescription" .= networkSignedCertificateTimestampLogDescription v
-        , "logId" .= networkSignedCertificateTimestampLogId v
-        , "timestamp" .= networkSignedCertificateTimestampTimestamp v
-        , "hashAlgorithm" .= networkSignedCertificateTimestampHashAlgorithm v
-        , "signatureAlgorithm" .= networkSignedCertificateTimestampSignatureAlgorithm v
-        , "signatureData" .= networkSignedCertificateTimestampSignatureData v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 33 , A.omitNothingFields = True}
 
 
 
@@ -3024,45 +2165,17 @@ data NetworkSecurityDetails = NetworkSecurityDetails {
     networkSecurityDetailsCertificateTransparencyCompliance :: NetworkCertificateTransparencyCompliance,
     networkSecurityDetailsKeyExchangeGroup :: Maybe String,
     networkSecurityDetailsMac :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkSecurityDetails where
-    parseJSON = A.withObject "NetworkSecurityDetails" $ \v ->
-         NetworkSecurityDetails <$> v .:  "protocol"
-            <*> v  .:  "keyExchange"
-            <*> v  .:  "cipher"
-            <*> v  .:  "certificateId"
-            <*> v  .:  "subjectName"
-            <*> v  .:  "sanList"
-            <*> v  .:  "issuer"
-            <*> v  .:  "validFrom"
-            <*> v  .:  "validTo"
-            <*> v  .:  "signedCertificateTimestampList"
-            <*> v  .:  "certificateTransparencyCompliance"
-            <*> v  .:?  "keyExchangeGroup"
-            <*> v  .:?  "mac"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
 
 instance ToJSON NetworkSecurityDetails  where
-    toJSON v = A.object
-        [ "protocol" .= networkSecurityDetailsProtocol v
-        , "keyExchange" .= networkSecurityDetailsKeyExchange v
-        , "cipher" .= networkSecurityDetailsCipher v
-        , "certificateId" .= networkSecurityDetailsCertificateId v
-        , "subjectName" .= networkSecurityDetailsSubjectName v
-        , "sanList" .= networkSecurityDetailsSanList v
-        , "issuer" .= networkSecurityDetailsIssuer v
-        , "validFrom" .= networkSecurityDetailsValidFrom v
-        , "validTo" .= networkSecurityDetailsValidTo v
-        , "signedCertificateTimestampList" .= networkSecurityDetailsSignedCertificateTimestampList v
-        , "certificateTransparencyCompliance" .= networkSecurityDetailsCertificateTransparencyCompliance v
-        , "keyExchangeGroup" .= networkSecurityDetailsKeyExchangeGroup v
-        , "mac" .= networkSecurityDetailsMac v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
 
 
 
 data NetworkCertificateTransparencyCompliance = NetworkCertificateTransparencyComplianceUnknown | NetworkCertificateTransparencyComplianceNotCompliant | NetworkCertificateTransparencyComplianceCompliant
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON NetworkCertificateTransparencyCompliance where
     parseJSON = A.withText  "NetworkCertificateTransparencyCompliance"  $ \v -> do
         case v of
@@ -3081,7 +2194,7 @@ instance ToJSON NetworkCertificateTransparencyCompliance where
 
 
 data NetworkBlockedReason = NetworkBlockedReasonOther | NetworkBlockedReasonCsp | NetworkBlockedReasonMixedContent | NetworkBlockedReasonOrigin | NetworkBlockedReasonInspector | NetworkBlockedReasonSubresourceFilter | NetworkBlockedReasonContentType | NetworkBlockedReasonCoepFrameResourceNeedsCoepHeader | NetworkBlockedReasonCoopSandboxedIframeCannotNavigateToCoopPage | NetworkBlockedReasonCorpNotSameOrigin | NetworkBlockedReasonCorpNotSameOriginAfterDefaultedToSameOriginByCoep | NetworkBlockedReasonCorpNotSameSite
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON NetworkBlockedReason where
     parseJSON = A.withText  "NetworkBlockedReason"  $ \v -> do
         case v of
@@ -3118,7 +2231,7 @@ instance ToJSON NetworkBlockedReason where
 
 
 data NetworkCorsError = NetworkCorsErrorDisallowedByMode | NetworkCorsErrorInvalidResponse | NetworkCorsErrorWildcardOriginNotAllowed | NetworkCorsErrorMissingAllowOriginHeader | NetworkCorsErrorMultipleAllowOriginValues | NetworkCorsErrorInvalidAllowOriginValue | NetworkCorsErrorAllowOriginMismatch | NetworkCorsErrorInvalidAllowCredentials | NetworkCorsErrorCorsDisabledScheme | NetworkCorsErrorPreflightInvalidStatus | NetworkCorsErrorPreflightDisallowedRedirect | NetworkCorsErrorPreflightWildcardOriginNotAllowed | NetworkCorsErrorPreflightMissingAllowOriginHeader | NetworkCorsErrorPreflightMultipleAllowOriginValues | NetworkCorsErrorPreflightInvalidAllowOriginValue | NetworkCorsErrorPreflightAllowOriginMismatch | NetworkCorsErrorPreflightInvalidAllowCredentials | NetworkCorsErrorPreflightMissingAllowExternal | NetworkCorsErrorPreflightInvalidAllowExternal | NetworkCorsErrorPreflightMissingAllowPrivateNetwork | NetworkCorsErrorPreflightInvalidAllowPrivateNetwork | NetworkCorsErrorInvalidAllowMethodsPreflightResponse | NetworkCorsErrorInvalidAllowHeadersPreflightResponse | NetworkCorsErrorMethodDisallowedByPreflightResponse | NetworkCorsErrorHeaderDisallowedByPreflightResponse | NetworkCorsErrorRedirectContainsCredentials | NetworkCorsErrorInsecurePrivateNetwork | NetworkCorsErrorInvalidPrivateNetworkAccess | NetworkCorsErrorUnexpectedPrivateNetworkAccess | NetworkCorsErrorNoCorsRedirectModeNotFollow
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON NetworkCorsError where
     parseJSON = A.withText  "NetworkCorsError"  $ \v -> do
         case v of
@@ -3193,23 +2306,17 @@ instance ToJSON NetworkCorsError where
 data NetworkCorsErrorStatus = NetworkCorsErrorStatus {
     networkCorsErrorStatusCorsError :: NetworkCorsError,
     networkCorsErrorStatusFailedParameter :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkCorsErrorStatus where
-    parseJSON = A.withObject "NetworkCorsErrorStatus" $ \v ->
-         NetworkCorsErrorStatus <$> v .:  "corsError"
-            <*> v  .:  "failedParameter"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
 
 instance ToJSON NetworkCorsErrorStatus  where
-    toJSON v = A.object
-        [ "corsError" .= networkCorsErrorStatusCorsError v
-        , "failedParameter" .= networkCorsErrorStatusFailedParameter v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
 
 
 
 data NetworkServiceWorkerResponseSource = NetworkServiceWorkerResponseSourceCacheStorage | NetworkServiceWorkerResponseSourceHttpCache | NetworkServiceWorkerResponseSourceFallbackCode | NetworkServiceWorkerResponseSourceNetwork
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON NetworkServiceWorkerResponseSource where
     parseJSON = A.withText  "NetworkServiceWorkerResponseSource"  $ \v -> do
         case v of
@@ -3251,71 +2358,23 @@ data NetworkResponse = NetworkResponse {
     networkResponseCacheStorageCacheName :: Maybe String,
     networkResponseProtocol :: Maybe String,
     networkResponseSecurityDetails :: Maybe NetworkSecurityDetails
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkResponse where
-    parseJSON = A.withObject "NetworkResponse" $ \v ->
-         NetworkResponse <$> v .:  "url"
-            <*> v  .:  "status"
-            <*> v  .:  "statusText"
-            <*> v  .:  "headers"
-            <*> v  .:  "mimeType"
-            <*> v  .:  "connectionReused"
-            <*> v  .:  "connectionId"
-            <*> v  .:  "encodedDataLength"
-            <*> v  .:  "securityState"
-            <*> v  .:?  "requestHeaders"
-            <*> v  .:?  "remoteIPAddress"
-            <*> v  .:?  "remotePort"
-            <*> v  .:?  "fromDiskCache"
-            <*> v  .:?  "fromServiceWorker"
-            <*> v  .:?  "fromPrefetchCache"
-            <*> v  .:?  "timing"
-            <*> v  .:?  "serviceWorkerResponseSource"
-            <*> v  .:?  "responseTime"
-            <*> v  .:?  "cacheStorageCacheName"
-            <*> v  .:?  "protocol"
-            <*> v  .:?  "securityDetails"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
 
 instance ToJSON NetworkResponse  where
-    toJSON v = A.object
-        [ "url" .= networkResponseUrl v
-        , "status" .= networkResponseStatus v
-        , "statusText" .= networkResponseStatusText v
-        , "headers" .= networkResponseHeaders v
-        , "mimeType" .= networkResponseMimeType v
-        , "connectionReused" .= networkResponseConnectionReused v
-        , "connectionId" .= networkResponseConnectionId v
-        , "encodedDataLength" .= networkResponseEncodedDataLength v
-        , "securityState" .= networkResponseSecurityState v
-        , "requestHeaders" .= networkResponseRequestHeaders v
-        , "remoteIPAddress" .= networkResponseRemoteIpAddress v
-        , "remotePort" .= networkResponseRemotePort v
-        , "fromDiskCache" .= networkResponseFromDiskCache v
-        , "fromServiceWorker" .= networkResponseFromServiceWorker v
-        , "fromPrefetchCache" .= networkResponseFromPrefetchCache v
-        , "timing" .= networkResponseTiming v
-        , "serviceWorkerResponseSource" .= networkResponseServiceWorkerResponseSource v
-        , "responseTime" .= networkResponseResponseTime v
-        , "cacheStorageCacheName" .= networkResponseCacheStorageCacheName v
-        , "protocol" .= networkResponseProtocol v
-        , "securityDetails" .= networkResponseSecurityDetails v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
 
 
 
 data NetworkWebSocketRequest = NetworkWebSocketRequest {
     networkWebSocketRequestHeaders :: NetworkHeaders
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketRequest where
-    parseJSON = A.withObject "NetworkWebSocketRequest" $ \v ->
-         NetworkWebSocketRequest <$> v .:  "headers"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
 
 instance ToJSON NetworkWebSocketRequest  where
-    toJSON v = A.object
-        [ "headers" .= networkWebSocketRequestHeaders v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
 
 
 
@@ -3326,26 +2385,12 @@ data NetworkWebSocketResponse = NetworkWebSocketResponse {
     networkWebSocketResponseHeadersText :: Maybe String,
     networkWebSocketResponseRequestHeaders :: Maybe NetworkHeaders,
     networkWebSocketResponseRequestHeadersText :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketResponse where
-    parseJSON = A.withObject "NetworkWebSocketResponse" $ \v ->
-         NetworkWebSocketResponse <$> v .:  "status"
-            <*> v  .:  "statusText"
-            <*> v  .:  "headers"
-            <*> v  .:?  "headersText"
-            <*> v  .:?  "requestHeaders"
-            <*> v  .:?  "requestHeadersText"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
 
 instance ToJSON NetworkWebSocketResponse  where
-    toJSON v = A.object
-        [ "status" .= networkWebSocketResponseStatus v
-        , "statusText" .= networkWebSocketResponseStatusText v
-        , "headers" .= networkWebSocketResponseHeaders v
-        , "headersText" .= networkWebSocketResponseHeadersText v
-        , "requestHeaders" .= networkWebSocketResponseRequestHeaders v
-        , "requestHeadersText" .= networkWebSocketResponseRequestHeadersText v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
 
 
 
@@ -3353,20 +2398,12 @@ data NetworkWebSocketFrame = NetworkWebSocketFrame {
     networkWebSocketFrameOpcode :: Int,
     networkWebSocketFrameMask :: Bool,
     networkWebSocketFramePayloadData :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketFrame where
-    parseJSON = A.withObject "NetworkWebSocketFrame" $ \v ->
-         NetworkWebSocketFrame <$> v .:  "opcode"
-            <*> v  .:  "mask"
-            <*> v  .:  "payloadData"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON NetworkWebSocketFrame  where
-    toJSON v = A.object
-        [ "opcode" .= networkWebSocketFrameOpcode v
-        , "mask" .= networkWebSocketFrameMask v
-        , "payloadData" .= networkWebSocketFramePayloadData v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 
@@ -3375,22 +2412,12 @@ data NetworkCachedResource = NetworkCachedResource {
     networkCachedResourceType :: NetworkResourceType,
     networkCachedResourceBodySize :: Int,
     networkCachedResourceResponse :: Maybe NetworkResponse
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkCachedResource where
-    parseJSON = A.withObject "NetworkCachedResource" $ \v ->
-         NetworkCachedResource <$> v .:  "url"
-            <*> v  .:  "type"
-            <*> v  .:  "bodySize"
-            <*> v  .:?  "response"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON NetworkCachedResource  where
-    toJSON v = A.object
-        [ "url" .= networkCachedResourceUrl v
-        , "type" .= networkCachedResourceType v
-        , "bodySize" .= networkCachedResourceBodySize v
-        , "response" .= networkCachedResourceResponse v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 
@@ -3401,26 +2428,12 @@ data NetworkInitiator = NetworkInitiator {
     networkInitiatorLineNumber :: Maybe Int,
     networkInitiatorColumnNumber :: Maybe Int,
     networkInitiatorRequestId :: Maybe NetworkRequestId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkInitiator where
-    parseJSON = A.withObject "NetworkInitiator" $ \v ->
-         NetworkInitiator <$> v .:  "type"
-            <*> v  .:?  "stack"
-            <*> v  .:?  "url"
-            <*> v  .:?  "lineNumber"
-            <*> v  .:?  "columnNumber"
-            <*> v  .:?  "requestId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
 
 instance ToJSON NetworkInitiator  where
-    toJSON v = A.object
-        [ "type" .= networkInitiatorType v
-        , "stack" .= networkInitiatorStack v
-        , "url" .= networkInitiatorUrl v
-        , "lineNumber" .= networkInitiatorLineNumber v
-        , "columnNumber" .= networkInitiatorColumnNumber v
-        , "requestId" .= networkInitiatorRequestId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
 
 
 
@@ -3435,34 +2448,12 @@ data NetworkCookie = NetworkCookie {
     networkCookieSecure :: Bool,
     networkCookieSession :: Bool,
     networkCookieSameSite :: Maybe NetworkCookieSameSite
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkCookie where
-    parseJSON = A.withObject "NetworkCookie" $ \v ->
-         NetworkCookie <$> v .:  "name"
-            <*> v  .:  "value"
-            <*> v  .:  "domain"
-            <*> v  .:  "path"
-            <*> v  .:  "expires"
-            <*> v  .:  "size"
-            <*> v  .:  "httpOnly"
-            <*> v  .:  "secure"
-            <*> v  .:  "session"
-            <*> v  .:?  "sameSite"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 13 }
 
 instance ToJSON NetworkCookie  where
-    toJSON v = A.object
-        [ "name" .= networkCookieName v
-        , "value" .= networkCookieValue v
-        , "domain" .= networkCookieDomain v
-        , "path" .= networkCookiePath v
-        , "expires" .= networkCookieExpires v
-        , "size" .= networkCookieSize v
-        , "httpOnly" .= networkCookieHttpOnly v
-        , "secure" .= networkCookieSecure v
-        , "session" .= networkCookieSession v
-        , "sameSite" .= networkCookieSameSite v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 13 , A.omitNothingFields = True}
 
 
 
@@ -3476,32 +2467,12 @@ data NetworkCookieParam = NetworkCookieParam {
     networkCookieParamHttpOnly :: Maybe Bool,
     networkCookieParamSameSite :: Maybe NetworkCookieSameSite,
     networkCookieParamExpires :: Maybe NetworkTimeSinceEpoch
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkCookieParam where
-    parseJSON = A.withObject "NetworkCookieParam" $ \v ->
-         NetworkCookieParam <$> v .:  "name"
-            <*> v  .:  "value"
-            <*> v  .:?  "url"
-            <*> v  .:?  "domain"
-            <*> v  .:?  "path"
-            <*> v  .:?  "secure"
-            <*> v  .:?  "httpOnly"
-            <*> v  .:?  "sameSite"
-            <*> v  .:?  "expires"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
 
 instance ToJSON NetworkCookieParam  where
-    toJSON v = A.object
-        [ "name" .= networkCookieParamName v
-        , "value" .= networkCookieParamValue v
-        , "url" .= networkCookieParamUrl v
-        , "domain" .= networkCookieParamDomain v
-        , "path" .= networkCookieParamPath v
-        , "secure" .= networkCookieParamSecure v
-        , "httpOnly" .= networkCookieParamHttpOnly v
-        , "sameSite" .= networkCookieParamSameSite v
-        , "expires" .= networkCookieParamExpires v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
 
 
 
@@ -3523,22 +2494,12 @@ data PNetworkDeleteCookies = PNetworkDeleteCookies {
     pNetworkDeleteCookiesUrl :: Maybe String,
     pNetworkDeleteCookiesDomain :: Maybe String,
     pNetworkDeleteCookiesPath :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkDeleteCookies where
-    parseJSON = A.withObject "PNetworkDeleteCookies" $ \v ->
-         PNetworkDeleteCookies <$> v .:  "name"
-            <*> v  .:?  "url"
-            <*> v  .:?  "domain"
-            <*> v  .:?  "path"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON PNetworkDeleteCookies  where
-    toJSON v = A.object
-        [ "name" .= pNetworkDeleteCookiesName v
-        , "url" .= pNetworkDeleteCookiesUrl v
-        , "domain" .= pNetworkDeleteCookiesDomain v
-        , "path" .= pNetworkDeleteCookiesPath v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 networkDeleteCookies :: Session -> PNetworkDeleteCookies -> IO (Maybe Error)
@@ -3558,24 +2519,12 @@ data PNetworkEmulateNetworkConditions = PNetworkEmulateNetworkConditions {
     pNetworkEmulateNetworkConditionsDownloadThroughput :: Int,
     pNetworkEmulateNetworkConditionsUploadThroughput :: Int,
     pNetworkEmulateNetworkConditionsConnectionType :: Maybe NetworkConnectionType
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkEmulateNetworkConditions where
-    parseJSON = A.withObject "PNetworkEmulateNetworkConditions" $ \v ->
-         PNetworkEmulateNetworkConditions <$> v .:  "offline"
-            <*> v  .:  "latency"
-            <*> v  .:  "downloadThroughput"
-            <*> v  .:  "uploadThroughput"
-            <*> v  .:?  "connectionType"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 32 }
 
 instance ToJSON PNetworkEmulateNetworkConditions  where
-    toJSON v = A.object
-        [ "offline" .= pNetworkEmulateNetworkConditionsOffline v
-        , "latency" .= pNetworkEmulateNetworkConditionsLatency v
-        , "downloadThroughput" .= pNetworkEmulateNetworkConditionsDownloadThroughput v
-        , "uploadThroughput" .= pNetworkEmulateNetworkConditionsUploadThroughput v
-        , "connectionType" .= pNetworkEmulateNetworkConditionsConnectionType v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 32 , A.omitNothingFields = True}
 
 
 networkEmulateNetworkConditions :: Session -> PNetworkEmulateNetworkConditions -> IO (Maybe Error)
@@ -3585,16 +2534,12 @@ networkEmulateNetworkConditions session params = sendReceiveCommand session "Net
 
 data PNetworkEnable = PNetworkEnable {
     pNetworkEnableMaxPostDataSize :: Maybe Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkEnable where
-    parseJSON = A.withObject "PNetworkEnable" $ \v ->
-         PNetworkEnable <$> v .:?  "maxPostDataSize"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
 
 instance ToJSON PNetworkEnable  where
-    toJSON v = A.object
-        [ "maxPostDataSize" .= pNetworkEnableMaxPostDataSize v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 14 , A.omitNothingFields = True}
 
 
 networkEnable :: Session -> PNetworkEnable -> IO (Maybe Error)
@@ -3602,11 +2547,9 @@ networkEnable session params = sendReceiveCommand session "Network.enable" (Just
 
 data NetworkGetAllCookies = NetworkGetAllCookies {
     networkGetAllCookiesCookies :: [NetworkCookie]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkGetAllCookies where
-    parseJSON = A.withObject "NetworkGetAllCookies" $ \v ->
-         NetworkGetAllCookies <$> v .:  "cookies"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
 
 
 instance Command  NetworkGetAllCookies where
@@ -3618,11 +2561,9 @@ networkGetAllCookies session = sendReceiveCommandResult session "Network.getAllC
 
 data NetworkGetCookies = NetworkGetCookies {
     networkGetCookiesCookies :: [NetworkCookie]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkGetCookies where
-    parseJSON = A.withObject "NetworkGetCookies" $ \v ->
-         NetworkGetCookies <$> v .:  "cookies"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
 
 
 instance Command  NetworkGetCookies where
@@ -3630,16 +2571,12 @@ instance Command  NetworkGetCookies where
 
 data PNetworkGetCookies = PNetworkGetCookies {
     pNetworkGetCookiesUrls :: Maybe [String]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkGetCookies where
-    parseJSON = A.withObject "PNetworkGetCookies" $ \v ->
-         PNetworkGetCookies <$> v .:?  "urls"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
 
 instance ToJSON PNetworkGetCookies  where
-    toJSON v = A.object
-        [ "urls" .= pNetworkGetCookiesUrls v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
 
 
 networkGetCookies :: Session -> PNetworkGetCookies -> IO (Either Error NetworkGetCookies)
@@ -3648,12 +2585,9 @@ networkGetCookies session params = sendReceiveCommandResult session "Network.get
 data NetworkGetResponseBody = NetworkGetResponseBody {
     networkGetResponseBodyBody :: String,
     networkGetResponseBodyBase64Encoded :: Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkGetResponseBody where
-    parseJSON = A.withObject "NetworkGetResponseBody" $ \v ->
-         NetworkGetResponseBody <$> v .:  "body"
-            <*> v  .:  "base64Encoded"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
 
 
 instance Command  NetworkGetResponseBody where
@@ -3661,16 +2595,12 @@ instance Command  NetworkGetResponseBody where
 
 data PNetworkGetResponseBody = PNetworkGetResponseBody {
     pNetworkGetResponseBodyRequestId :: NetworkRequestId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkGetResponseBody where
-    parseJSON = A.withObject "PNetworkGetResponseBody" $ \v ->
-         PNetworkGetResponseBody <$> v .:  "requestId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
 
 instance ToJSON PNetworkGetResponseBody  where
-    toJSON v = A.object
-        [ "requestId" .= pNetworkGetResponseBodyRequestId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
 
 
 networkGetResponseBody :: Session -> PNetworkGetResponseBody -> IO (Either Error NetworkGetResponseBody)
@@ -3678,11 +2608,9 @@ networkGetResponseBody session params = sendReceiveCommandResult session "Networ
 
 data NetworkGetRequestPostData = NetworkGetRequestPostData {
     networkGetRequestPostDataPostData :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkGetRequestPostData where
-    parseJSON = A.withObject "NetworkGetRequestPostData" $ \v ->
-         NetworkGetRequestPostData <$> v .:  "postData"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 25 }
 
 
 instance Command  NetworkGetRequestPostData where
@@ -3690,16 +2618,12 @@ instance Command  NetworkGetRequestPostData where
 
 data PNetworkGetRequestPostData = PNetworkGetRequestPostData {
     pNetworkGetRequestPostDataRequestId :: NetworkRequestId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkGetRequestPostData where
-    parseJSON = A.withObject "PNetworkGetRequestPostData" $ \v ->
-         PNetworkGetRequestPostData <$> v .:  "requestId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
 
 instance ToJSON PNetworkGetRequestPostData  where
-    toJSON v = A.object
-        [ "requestId" .= pNetworkGetRequestPostDataRequestId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
 
 
 networkGetRequestPostData :: Session -> PNetworkGetRequestPostData -> IO (Either Error NetworkGetRequestPostData)
@@ -3709,16 +2633,12 @@ networkGetRequestPostData session params = sendReceiveCommandResult session "Net
 
 data PNetworkSetCacheDisabled = PNetworkSetCacheDisabled {
     pNetworkSetCacheDisabledCacheDisabled :: Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkSetCacheDisabled where
-    parseJSON = A.withObject "PNetworkSetCacheDisabled" $ \v ->
-         PNetworkSetCacheDisabled <$> v .:  "cacheDisabled"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
 
 instance ToJSON PNetworkSetCacheDisabled  where
-    toJSON v = A.object
-        [ "cacheDisabled" .= pNetworkSetCacheDisabledCacheDisabled v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
 
 
 networkSetCacheDisabled :: Session -> PNetworkSetCacheDisabled -> IO (Maybe Error)
@@ -3736,32 +2656,12 @@ data PNetworkSetCookie = PNetworkSetCookie {
     pNetworkSetCookieHttpOnly :: Maybe Bool,
     pNetworkSetCookieSameSite :: Maybe NetworkCookieSameSite,
     pNetworkSetCookieExpires :: Maybe NetworkTimeSinceEpoch
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkSetCookie where
-    parseJSON = A.withObject "PNetworkSetCookie" $ \v ->
-         PNetworkSetCookie <$> v .:  "name"
-            <*> v  .:  "value"
-            <*> v  .:?  "url"
-            <*> v  .:?  "domain"
-            <*> v  .:?  "path"
-            <*> v  .:?  "secure"
-            <*> v  .:?  "httpOnly"
-            <*> v  .:?  "sameSite"
-            <*> v  .:?  "expires"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
 
 instance ToJSON PNetworkSetCookie  where
-    toJSON v = A.object
-        [ "name" .= pNetworkSetCookieName v
-        , "value" .= pNetworkSetCookieValue v
-        , "url" .= pNetworkSetCookieUrl v
-        , "domain" .= pNetworkSetCookieDomain v
-        , "path" .= pNetworkSetCookiePath v
-        , "secure" .= pNetworkSetCookieSecure v
-        , "httpOnly" .= pNetworkSetCookieHttpOnly v
-        , "sameSite" .= pNetworkSetCookieSameSite v
-        , "expires" .= pNetworkSetCookieExpires v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
 
 
 networkSetCookie :: Session -> PNetworkSetCookie -> IO (Maybe Error)
@@ -3771,16 +2671,12 @@ networkSetCookie session params = sendReceiveCommand session "Network.setCookie"
 
 data PNetworkSetCookies = PNetworkSetCookies {
     pNetworkSetCookiesCookies :: [NetworkCookieParam]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkSetCookies where
-    parseJSON = A.withObject "PNetworkSetCookies" $ \v ->
-         PNetworkSetCookies <$> v .:  "cookies"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
 
 instance ToJSON PNetworkSetCookies  where
-    toJSON v = A.object
-        [ "cookies" .= pNetworkSetCookiesCookies v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
 
 
 networkSetCookies :: Session -> PNetworkSetCookies -> IO (Maybe Error)
@@ -3790,16 +2686,12 @@ networkSetCookies session params = sendReceiveCommand session "Network.setCookie
 
 data PNetworkSetExtraHttpHeaders = PNetworkSetExtraHttpHeaders {
     pNetworkSetExtraHttpHeadersHeaders :: NetworkHeaders
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkSetExtraHttpHeaders where
-    parseJSON = A.withObject "PNetworkSetExtraHttpHeaders" $ \v ->
-         PNetworkSetExtraHttpHeaders <$> v .:  "headers"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
 
 instance ToJSON PNetworkSetExtraHttpHeaders  where
-    toJSON v = A.object
-        [ "headers" .= pNetworkSetExtraHttpHeadersHeaders v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 27 , A.omitNothingFields = True}
 
 
 networkSetExtraHttpHeaders :: Session -> PNetworkSetExtraHttpHeaders -> IO (Maybe Error)
@@ -3811,20 +2703,12 @@ data PNetworkSetUserAgentOverride = PNetworkSetUserAgentOverride {
     pNetworkSetUserAgentOverrideUserAgent :: String,
     pNetworkSetUserAgentOverrideAcceptLanguage :: Maybe String,
     pNetworkSetUserAgentOverridePlatform :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkSetUserAgentOverride where
-    parseJSON = A.withObject "PNetworkSetUserAgentOverride" $ \v ->
-         PNetworkSetUserAgentOverride <$> v .:  "userAgent"
-            <*> v  .:?  "acceptLanguage"
-            <*> v  .:?  "platform"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 28 }
 
 instance ToJSON PNetworkSetUserAgentOverride  where
-    toJSON v = A.object
-        [ "userAgent" .= pNetworkSetUserAgentOverrideUserAgent v
-        , "acceptLanguage" .= pNetworkSetUserAgentOverrideAcceptLanguage v
-        , "platform" .= pNetworkSetUserAgentOverridePlatform v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 28 , A.omitNothingFields = True}
 
 
 networkSetUserAgentOverride :: Session -> PNetworkSetUserAgentOverride -> IO (Maybe Error)
@@ -3834,16 +2718,12 @@ networkSetUserAgentOverride session params = sendReceiveCommand session "Network
 
 data PageDomContentEventFired = PageDomContentEventFired {
     pageDomContentEventFiredTimestamp :: NetworkMonotonicTime
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageDomContentEventFired where
-    parseJSON = A.withObject "PageDomContentEventFired" $ \v ->
-         PageDomContentEventFired <$> v .:  "timestamp"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
 
 instance ToJSON PageDomContentEventFired  where
-    toJSON v = A.object
-        [ "timestamp" .= pageDomContentEventFiredTimestamp v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageDomContentEventFired where
@@ -3852,16 +2732,12 @@ instance FromEvent Event PageDomContentEventFired where
 
 data PageFileChooserOpened = PageFileChooserOpened {
     pageFileChooserOpenedMode :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageFileChooserOpened where
-    parseJSON = A.withObject "PageFileChooserOpened" $ \v ->
-         PageFileChooserOpened <$> v .:  "mode"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON PageFileChooserOpened  where
-    toJSON v = A.object
-        [ "mode" .= pageFileChooserOpenedMode v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageFileChooserOpened where
@@ -3872,20 +2748,12 @@ data PageFrameAttached = PageFrameAttached {
     pageFrameAttachedFrameId :: PageFrameId,
     pageFrameAttachedParentFrameId :: PageFrameId,
     pageFrameAttachedStack :: Maybe RuntimeStackTrace
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageFrameAttached where
-    parseJSON = A.withObject "PageFrameAttached" $ \v ->
-         PageFrameAttached <$> v .:  "frameId"
-            <*> v  .:  "parentFrameId"
-            <*> v  .:?  "stack"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
 
 instance ToJSON PageFrameAttached  where
-    toJSON v = A.object
-        [ "frameId" .= pageFrameAttachedFrameId v
-        , "parentFrameId" .= pageFrameAttachedParentFrameId v
-        , "stack" .= pageFrameAttachedStack v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageFrameAttached where
@@ -3894,16 +2762,12 @@ instance FromEvent Event PageFrameAttached where
 
 data PageFrameDetached = PageFrameDetached {
     pageFrameDetachedFrameId :: PageFrameId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageFrameDetached where
-    parseJSON = A.withObject "PageFrameDetached" $ \v ->
-         PageFrameDetached <$> v .:  "frameId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
 
 instance ToJSON PageFrameDetached  where
-    toJSON v = A.object
-        [ "frameId" .= pageFrameDetachedFrameId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageFrameDetached where
@@ -3912,16 +2776,12 @@ instance FromEvent Event PageFrameDetached where
 
 data PageFrameNavigated = PageFrameNavigated {
     pageFrameNavigatedFrame :: PageFrame
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageFrameNavigated where
-    parseJSON = A.withObject "PageFrameNavigated" $ \v ->
-         PageFrameNavigated <$> v .:  "frame"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
 
 instance ToJSON PageFrameNavigated  where
-    toJSON v = A.object
-        [ "frame" .= pageFrameNavigatedFrame v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageFrameNavigated where
@@ -3955,18 +2815,12 @@ instance FromEvent Event PageInterstitialShown where
 data PageJavascriptDialogClosed = PageJavascriptDialogClosed {
     pageJavascriptDialogClosedResult :: Bool,
     pageJavascriptDialogClosedUserInput :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageJavascriptDialogClosed where
-    parseJSON = A.withObject "PageJavascriptDialogClosed" $ \v ->
-         PageJavascriptDialogClosed <$> v .:  "result"
-            <*> v  .:  "userInput"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
 
 instance ToJSON PageJavascriptDialogClosed  where
-    toJSON v = A.object
-        [ "result" .= pageJavascriptDialogClosedResult v
-        , "userInput" .= pageJavascriptDialogClosedUserInput v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageJavascriptDialogClosed where
@@ -3979,24 +2833,12 @@ data PageJavascriptDialogOpening = PageJavascriptDialogOpening {
     pageJavascriptDialogOpeningType :: PageDialogType,
     pageJavascriptDialogOpeningHasBrowserHandler :: Bool,
     pageJavascriptDialogOpeningDefaultPrompt :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageJavascriptDialogOpening where
-    parseJSON = A.withObject "PageJavascriptDialogOpening" $ \v ->
-         PageJavascriptDialogOpening <$> v .:  "url"
-            <*> v  .:  "message"
-            <*> v  .:  "type"
-            <*> v  .:  "hasBrowserHandler"
-            <*> v  .:?  "defaultPrompt"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
 
 instance ToJSON PageJavascriptDialogOpening  where
-    toJSON v = A.object
-        [ "url" .= pageJavascriptDialogOpeningUrl v
-        , "message" .= pageJavascriptDialogOpeningMessage v
-        , "type" .= pageJavascriptDialogOpeningType v
-        , "hasBrowserHandler" .= pageJavascriptDialogOpeningHasBrowserHandler v
-        , "defaultPrompt" .= pageJavascriptDialogOpeningDefaultPrompt v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 27 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageJavascriptDialogOpening where
@@ -4008,22 +2850,12 @@ data PageLifecycleEvent = PageLifecycleEvent {
     pageLifecycleEventLoaderId :: NetworkLoaderId,
     pageLifecycleEventName :: String,
     pageLifecycleEventTimestamp :: NetworkMonotonicTime
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageLifecycleEvent where
-    parseJSON = A.withObject "PageLifecycleEvent" $ \v ->
-         PageLifecycleEvent <$> v .:  "frameId"
-            <*> v  .:  "loaderId"
-            <*> v  .:  "name"
-            <*> v  .:  "timestamp"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
 
 instance ToJSON PageLifecycleEvent  where
-    toJSON v = A.object
-        [ "frameId" .= pageLifecycleEventFrameId v
-        , "loaderId" .= pageLifecycleEventLoaderId v
-        , "name" .= pageLifecycleEventName v
-        , "timestamp" .= pageLifecycleEventTimestamp v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageLifecycleEvent where
@@ -4034,20 +2866,12 @@ data PagePrerenderAttemptCompleted = PagePrerenderAttemptCompleted {
     pagePrerenderAttemptCompletedInitiatingFrameId :: PageFrameId,
     pagePrerenderAttemptCompletedPrerenderingUrl :: String,
     pagePrerenderAttemptCompletedFinalStatus :: PagePrerenderFinalStatus
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PagePrerenderAttemptCompleted where
-    parseJSON = A.withObject "PagePrerenderAttemptCompleted" $ \v ->
-         PagePrerenderAttemptCompleted <$> v .:  "initiatingFrameId"
-            <*> v  .:  "prerenderingUrl"
-            <*> v  .:  "finalStatus"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
 
 instance ToJSON PagePrerenderAttemptCompleted  where
-    toJSON v = A.object
-        [ "initiatingFrameId" .= pagePrerenderAttemptCompletedInitiatingFrameId v
-        , "prerenderingUrl" .= pagePrerenderAttemptCompletedPrerenderingUrl v
-        , "finalStatus" .= pagePrerenderAttemptCompletedFinalStatus v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 29 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PagePrerenderAttemptCompleted where
@@ -4056,16 +2880,12 @@ instance FromEvent Event PagePrerenderAttemptCompleted where
 
 data PageLoadEventFired = PageLoadEventFired {
     pageLoadEventFiredTimestamp :: NetworkMonotonicTime
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageLoadEventFired where
-    parseJSON = A.withObject "PageLoadEventFired" $ \v ->
-         PageLoadEventFired <$> v .:  "timestamp"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
 
 instance ToJSON PageLoadEventFired  where
-    toJSON v = A.object
-        [ "timestamp" .= pageLoadEventFiredTimestamp v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageLoadEventFired where
@@ -4077,22 +2897,12 @@ data PageWindowOpen = PageWindowOpen {
     pageWindowOpenWindowName :: String,
     pageWindowOpenWindowFeatures :: [String],
     pageWindowOpenUserGesture :: Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageWindowOpen where
-    parseJSON = A.withObject "PageWindowOpen" $ \v ->
-         PageWindowOpen <$> v .:  "url"
-            <*> v  .:  "windowName"
-            <*> v  .:  "windowFeatures"
-            <*> v  .:  "userGesture"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
 
 instance ToJSON PageWindowOpen  where
-    toJSON v = A.object
-        [ "url" .= pageWindowOpenUrl v
-        , "windowName" .= pageWindowOpenWindowName v
-        , "windowFeatures" .= pageWindowOpenWindowFeatures v
-        , "userGesture" .= pageWindowOpenUserGesture v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 14 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageWindowOpen where
@@ -4110,53 +2920,31 @@ data PageFrame = PageFrame {
     pageFrameMimeType :: String,
     pageFrameParentId :: Maybe PageFrameId,
     pageFrameName :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageFrame where
-    parseJSON = A.withObject "PageFrame" $ \v ->
-         PageFrame <$> v .:  "id"
-            <*> v  .:  "loaderId"
-            <*> v  .:  "url"
-            <*> v  .:  "securityOrigin"
-            <*> v  .:  "mimeType"
-            <*> v  .:?  "parentId"
-            <*> v  .:?  "name"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 9 }
 
 instance ToJSON PageFrame  where
-    toJSON v = A.object
-        [ "id" .= pageFrameId v
-        , "loaderId" .= pageFrameLoaderId v
-        , "url" .= pageFrameUrl v
-        , "securityOrigin" .= pageFrameSecurityOrigin v
-        , "mimeType" .= pageFrameMimeType v
-        , "parentId" .= pageFrameParentId v
-        , "name" .= pageFrameName v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 9 , A.omitNothingFields = True}
 
 
 
 data PageFrameTree = PageFrameTree {
     pageFrameTreeFrame :: PageFrame,
     pageFrameTreeChildFrames :: Maybe [PageFrameTree]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageFrameTree where
-    parseJSON = A.withObject "PageFrameTree" $ \v ->
-         PageFrameTree <$> v .:  "frame"
-            <*> v  .:?  "childFrames"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 13 }
 
 instance ToJSON PageFrameTree  where
-    toJSON v = A.object
-        [ "frame" .= pageFrameTreeFrame v
-        , "childFrames" .= pageFrameTreeChildFrames v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 13 , A.omitNothingFields = True}
 
 
 
 type PageScriptIdentifier = String
 
 data PageTransitionType = PageTransitionTypeLink | PageTransitionTypeTyped | PageTransitionTypeAddressBar | PageTransitionTypeAutoBookmark | PageTransitionTypeAutoSubframe | PageTransitionTypeManualSubframe | PageTransitionTypeGenerated | PageTransitionTypeAutoToplevel | PageTransitionTypeFormSubmit | PageTransitionTypeReload | PageTransitionTypeKeyword | PageTransitionTypeKeywordGenerated | PageTransitionTypeOther
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON PageTransitionType where
     parseJSON = A.withText  "PageTransitionType"  $ \v -> do
         case v of
@@ -4200,29 +2988,17 @@ data PageNavigationEntry = PageNavigationEntry {
     pageNavigationEntryUserTypedUrl :: String,
     pageNavigationEntryTitle :: String,
     pageNavigationEntryTransitionType :: PageTransitionType
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageNavigationEntry where
-    parseJSON = A.withObject "PageNavigationEntry" $ \v ->
-         PageNavigationEntry <$> v .:  "id"
-            <*> v  .:  "url"
-            <*> v  .:  "userTypedURL"
-            <*> v  .:  "title"
-            <*> v  .:  "transitionType"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 instance ToJSON PageNavigationEntry  where
-    toJSON v = A.object
-        [ "id" .= pageNavigationEntryId v
-        , "url" .= pageNavigationEntryUrl v
-        , "userTypedURL" .= pageNavigationEntryUserTypedUrl v
-        , "title" .= pageNavigationEntryTitle v
-        , "transitionType" .= pageNavigationEntryTransitionType v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
 
 
 
 data PageDialogType = PageDialogTypeAlert | PageDialogTypeConfirm | PageDialogTypePrompt | PageDialogTypeBeforeunload
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON PageDialogType where
     parseJSON = A.withText  "PageDialogType"  $ \v -> do
         case v of
@@ -4247,22 +3023,12 @@ data PageAppManifestError = PageAppManifestError {
     pageAppManifestErrorCritical :: Int,
     pageAppManifestErrorLine :: Int,
     pageAppManifestErrorColumn :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageAppManifestError where
-    parseJSON = A.withObject "PageAppManifestError" $ \v ->
-         PageAppManifestError <$> v .:  "message"
-            <*> v  .:  "critical"
-            <*> v  .:  "line"
-            <*> v  .:  "column"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
 
 instance ToJSON PageAppManifestError  where
-    toJSON v = A.object
-        [ "message" .= pageAppManifestErrorMessage v
-        , "critical" .= pageAppManifestErrorCritical v
-        , "line" .= pageAppManifestErrorLine v
-        , "column" .= pageAppManifestErrorColumn v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
 
 
 
@@ -4271,22 +3037,12 @@ data PageLayoutViewport = PageLayoutViewport {
     pageLayoutViewportPageY :: Int,
     pageLayoutViewportClientWidth :: Int,
     pageLayoutViewportClientHeight :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageLayoutViewport where
-    parseJSON = A.withObject "PageLayoutViewport" $ \v ->
-         PageLayoutViewport <$> v .:  "pageX"
-            <*> v  .:  "pageY"
-            <*> v  .:  "clientWidth"
-            <*> v  .:  "clientHeight"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
 
 instance ToJSON PageLayoutViewport  where
-    toJSON v = A.object
-        [ "pageX" .= pageLayoutViewportPageX v
-        , "pageY" .= pageLayoutViewportPageY v
-        , "clientWidth" .= pageLayoutViewportClientWidth v
-        , "clientHeight" .= pageLayoutViewportClientHeight v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
 
 
 
@@ -4299,30 +3055,12 @@ data PageVisualViewport = PageVisualViewport {
     pageVisualViewportClientHeight :: Int,
     pageVisualViewportScale :: Int,
     pageVisualViewportZoom :: Maybe Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageVisualViewport where
-    parseJSON = A.withObject "PageVisualViewport" $ \v ->
-         PageVisualViewport <$> v .:  "offsetX"
-            <*> v  .:  "offsetY"
-            <*> v  .:  "pageX"
-            <*> v  .:  "pageY"
-            <*> v  .:  "clientWidth"
-            <*> v  .:  "clientHeight"
-            <*> v  .:  "scale"
-            <*> v  .:?  "zoom"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
 
 instance ToJSON PageVisualViewport  where
-    toJSON v = A.object
-        [ "offsetX" .= pageVisualViewportOffsetX v
-        , "offsetY" .= pageVisualViewportOffsetY v
-        , "pageX" .= pageVisualViewportPageX v
-        , "pageY" .= pageVisualViewportPageY v
-        , "clientWidth" .= pageVisualViewportClientWidth v
-        , "clientHeight" .= pageVisualViewportClientHeight v
-        , "scale" .= pageVisualViewportScale v
-        , "zoom" .= pageVisualViewportZoom v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
 
 
 
@@ -4332,29 +3070,17 @@ data PageViewport = PageViewport {
     pageViewportWidth :: Int,
     pageViewportHeight :: Int,
     pageViewportScale :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageViewport where
-    parseJSON = A.withObject "PageViewport" $ \v ->
-         PageViewport <$> v .:  "x"
-            <*> v  .:  "y"
-            <*> v  .:  "width"
-            <*> v  .:  "height"
-            <*> v  .:  "scale"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 12 }
 
 instance ToJSON PageViewport  where
-    toJSON v = A.object
-        [ "x" .= pageViewportX v
-        , "y" .= pageViewportY v
-        , "width" .= pageViewportWidth v
-        , "height" .= pageViewportHeight v
-        , "scale" .= pageViewportScale v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 12 , A.omitNothingFields = True}
 
 
 
 data PagePrerenderFinalStatus = PagePrerenderFinalStatusActivated | PagePrerenderFinalStatusDestroyed | PagePrerenderFinalStatusLowEndDevice | PagePrerenderFinalStatusCrossOriginRedirect | PagePrerenderFinalStatusCrossOriginNavigation | PagePrerenderFinalStatusInvalidSchemeRedirect | PagePrerenderFinalStatusInvalidSchemeNavigation | PagePrerenderFinalStatusInProgressNavigation | PagePrerenderFinalStatusNavigationRequestBlockedByCsp | PagePrerenderFinalStatusMainFrameNavigation | PagePrerenderFinalStatusMojoBinderPolicy | PagePrerenderFinalStatusRendererProcessCrashed | PagePrerenderFinalStatusRendererProcessKilled | PagePrerenderFinalStatusDownload | PagePrerenderFinalStatusTriggerDestroyed | PagePrerenderFinalStatusNavigationNotCommitted | PagePrerenderFinalStatusNavigationBadHttpStatus | PagePrerenderFinalStatusClientCertRequested | PagePrerenderFinalStatusNavigationRequestNetworkError | PagePrerenderFinalStatusMaxNumOfRunningPrerendersExceeded | PagePrerenderFinalStatusCancelAllHostsForTesting | PagePrerenderFinalStatusDidFailLoad | PagePrerenderFinalStatusStop | PagePrerenderFinalStatusSslCertificateError | PagePrerenderFinalStatusLoginAuthRequested | PagePrerenderFinalStatusUaChangeRequiresReload | PagePrerenderFinalStatusBlockedByClient | PagePrerenderFinalStatusAudioOutputDeviceRequested | PagePrerenderFinalStatusMixedContent | PagePrerenderFinalStatusTriggerBackgrounded | PagePrerenderFinalStatusEmbedderTriggeredAndSameOriginRedirected | PagePrerenderFinalStatusEmbedderTriggeredAndCrossOriginRedirected | PagePrerenderFinalStatusEmbedderTriggeredAndDestroyed
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON PagePrerenderFinalStatus where
     parseJSON = A.withText  "PagePrerenderFinalStatus"  $ \v -> do
         case v of
@@ -4433,11 +3159,9 @@ instance ToJSON PagePrerenderFinalStatus where
 
 data PageAddScriptToEvaluateOnNewDocument = PageAddScriptToEvaluateOnNewDocument {
     pageAddScriptToEvaluateOnNewDocumentIdentifier :: PageScriptIdentifier
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageAddScriptToEvaluateOnNewDocument where
-    parseJSON = A.withObject "PageAddScriptToEvaluateOnNewDocument" $ \v ->
-         PageAddScriptToEvaluateOnNewDocument <$> v .:  "identifier"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 36 }
 
 
 instance Command  PageAddScriptToEvaluateOnNewDocument where
@@ -4445,16 +3169,12 @@ instance Command  PageAddScriptToEvaluateOnNewDocument where
 
 data PPageAddScriptToEvaluateOnNewDocument = PPageAddScriptToEvaluateOnNewDocument {
     pPageAddScriptToEvaluateOnNewDocumentSource :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPageAddScriptToEvaluateOnNewDocument where
-    parseJSON = A.withObject "PPageAddScriptToEvaluateOnNewDocument" $ \v ->
-         PPageAddScriptToEvaluateOnNewDocument <$> v .:  "source"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 37 }
 
 instance ToJSON PPageAddScriptToEvaluateOnNewDocument  where
-    toJSON v = A.object
-        [ "source" .= pPageAddScriptToEvaluateOnNewDocumentSource v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 37 , A.omitNothingFields = True}
 
 
 pageAddScriptToEvaluateOnNewDocument :: Session -> PPageAddScriptToEvaluateOnNewDocument -> IO (Either Error PageAddScriptToEvaluateOnNewDocument)
@@ -4468,11 +3188,9 @@ pageBringToFront session = sendReceiveCommand session "Page.bringToFront" (Nothi
 
 data PageCaptureScreenshot = PageCaptureScreenshot {
     pageCaptureScreenshotData :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageCaptureScreenshot where
-    parseJSON = A.withObject "PageCaptureScreenshot" $ \v ->
-         PageCaptureScreenshot <$> v .:  "data"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 
 instance Command  PageCaptureScreenshot where
@@ -4482,20 +3200,12 @@ data PPageCaptureScreenshot = PPageCaptureScreenshot {
     pPageCaptureScreenshotFormat :: Maybe String,
     pPageCaptureScreenshotQuality :: Maybe Int,
     pPageCaptureScreenshotClip :: Maybe PageViewport
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPageCaptureScreenshot where
-    parseJSON = A.withObject "PPageCaptureScreenshot" $ \v ->
-         PPageCaptureScreenshot <$> v .:?  "format"
-            <*> v  .:?  "quality"
-            <*> v  .:?  "clip"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
 
 instance ToJSON PPageCaptureScreenshot  where
-    toJSON v = A.object
-        [ "format" .= pPageCaptureScreenshotFormat v
-        , "quality" .= pPageCaptureScreenshotQuality v
-        , "clip" .= pPageCaptureScreenshotClip v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
 
 
 pageCaptureScreenshot :: Session -> PPageCaptureScreenshot -> IO (Either Error PageCaptureScreenshot)
@@ -4503,11 +3213,9 @@ pageCaptureScreenshot session params = sendReceiveCommandResult session "Page.ca
 
 data PageCreateIsolatedWorld = PageCreateIsolatedWorld {
     pageCreateIsolatedWorldExecutionContextId :: RuntimeExecutionContextId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageCreateIsolatedWorld where
-    parseJSON = A.withObject "PageCreateIsolatedWorld" $ \v ->
-         PageCreateIsolatedWorld <$> v .:  "executionContextId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
 
 
 instance Command  PageCreateIsolatedWorld where
@@ -4517,20 +3225,12 @@ data PPageCreateIsolatedWorld = PPageCreateIsolatedWorld {
     pPageCreateIsolatedWorldFrameId :: PageFrameId,
     pPageCreateIsolatedWorldWorldName :: Maybe String,
     pPageCreateIsolatedWorldGrantUniveralAccess :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPageCreateIsolatedWorld where
-    parseJSON = A.withObject "PPageCreateIsolatedWorld" $ \v ->
-         PPageCreateIsolatedWorld <$> v .:  "frameId"
-            <*> v  .:?  "worldName"
-            <*> v  .:?  "grantUniveralAccess"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
 
 instance ToJSON PPageCreateIsolatedWorld  where
-    toJSON v = A.object
-        [ "frameId" .= pPageCreateIsolatedWorldFrameId v
-        , "worldName" .= pPageCreateIsolatedWorldWorldName v
-        , "grantUniveralAccess" .= pPageCreateIsolatedWorldGrantUniveralAccess v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
 
 
 pageCreateIsolatedWorld :: Session -> PPageCreateIsolatedWorld -> IO (Either Error PageCreateIsolatedWorld)
@@ -4552,13 +3252,9 @@ data PageGetAppManifest = PageGetAppManifest {
     pageGetAppManifestUrl :: String,
     pageGetAppManifestErrors :: [PageAppManifestError],
     pageGetAppManifestData :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageGetAppManifest where
-    parseJSON = A.withObject "PageGetAppManifest" $ \v ->
-         PageGetAppManifest <$> v .:  "url"
-            <*> v  .:  "errors"
-            <*> v  .:?  "data"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
 
 
 instance Command  PageGetAppManifest where
@@ -4570,11 +3266,9 @@ pageGetAppManifest session = sendReceiveCommandResult session "Page.getAppManife
 
 data PageGetFrameTree = PageGetFrameTree {
     pageGetFrameTreeFrameTree :: PageFrameTree
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageGetFrameTree where
-    parseJSON = A.withObject "PageGetFrameTree" $ \v ->
-         PageGetFrameTree <$> v .:  "frameTree"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
 
 
 instance Command  PageGetFrameTree where
@@ -4588,13 +3282,9 @@ data PageGetLayoutMetrics = PageGetLayoutMetrics {
     pageGetLayoutMetricsCssLayoutViewport :: PageLayoutViewport,
     pageGetLayoutMetricsCssVisualViewport :: PageVisualViewport,
     pageGetLayoutMetricsCssContentSize :: DOMRect
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageGetLayoutMetrics where
-    parseJSON = A.withObject "PageGetLayoutMetrics" $ \v ->
-         PageGetLayoutMetrics <$> v .:  "cssLayoutViewport"
-            <*> v  .:  "cssVisualViewport"
-            <*> v  .:  "cssContentSize"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
 
 
 instance Command  PageGetLayoutMetrics where
@@ -4607,12 +3297,9 @@ pageGetLayoutMetrics session = sendReceiveCommandResult session "Page.getLayoutM
 data PageGetNavigationHistory = PageGetNavigationHistory {
     pageGetNavigationHistoryCurrentIndex :: Int,
     pageGetNavigationHistoryEntries :: [PageNavigationEntry]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageGetNavigationHistory where
-    parseJSON = A.withObject "PageGetNavigationHistory" $ \v ->
-         PageGetNavigationHistory <$> v .:  "currentIndex"
-            <*> v  .:  "entries"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
 
 
 instance Command  PageGetNavigationHistory where
@@ -4633,18 +3320,12 @@ pageResetNavigationHistory session = sendReceiveCommand session "Page.resetNavig
 data PPageHandleJavaScriptDialog = PPageHandleJavaScriptDialog {
     pPageHandleJavaScriptDialogAccept :: Bool,
     pPageHandleJavaScriptDialogPromptText :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPageHandleJavaScriptDialog where
-    parseJSON = A.withObject "PPageHandleJavaScriptDialog" $ \v ->
-         PPageHandleJavaScriptDialog <$> v .:  "accept"
-            <*> v  .:?  "promptText"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
 
 instance ToJSON PPageHandleJavaScriptDialog  where
-    toJSON v = A.object
-        [ "accept" .= pPageHandleJavaScriptDialogAccept v
-        , "promptText" .= pPageHandleJavaScriptDialogPromptText v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 27 , A.omitNothingFields = True}
 
 
 pageHandleJavaScriptDialog :: Session -> PPageHandleJavaScriptDialog -> IO (Maybe Error)
@@ -4654,13 +3335,9 @@ data PageNavigate = PageNavigate {
     pageNavigateFrameId :: PageFrameId,
     pageNavigateLoaderId :: Maybe NetworkLoaderId,
     pageNavigateErrorText :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageNavigate where
-    parseJSON = A.withObject "PageNavigate" $ \v ->
-         PageNavigate <$> v .:  "frameId"
-            <*> v  .:?  "loaderId"
-            <*> v  .:?  "errorText"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 12 }
 
 
 instance Command  PageNavigate where
@@ -4671,22 +3348,12 @@ data PPageNavigate = PPageNavigate {
     pPageNavigateReferrer :: Maybe String,
     pPageNavigateTransitionType :: Maybe PageTransitionType,
     pPageNavigateFrameId :: Maybe PageFrameId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPageNavigate where
-    parseJSON = A.withObject "PPageNavigate" $ \v ->
-         PPageNavigate <$> v .:  "url"
-            <*> v  .:?  "referrer"
-            <*> v  .:?  "transitionType"
-            <*> v  .:?  "frameId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 13 }
 
 instance ToJSON PPageNavigate  where
-    toJSON v = A.object
-        [ "url" .= pPageNavigateUrl v
-        , "referrer" .= pPageNavigateReferrer v
-        , "transitionType" .= pPageNavigateTransitionType v
-        , "frameId" .= pPageNavigateFrameId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 13 , A.omitNothingFields = True}
 
 
 pageNavigate :: Session -> PPageNavigate -> IO (Either Error PageNavigate)
@@ -4696,16 +3363,12 @@ pageNavigate session params = sendReceiveCommandResult session "Page.navigate" (
 
 data PPageNavigateToHistoryEntry = PPageNavigateToHistoryEntry {
     pPageNavigateToHistoryEntryEntryId :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPageNavigateToHistoryEntry where
-    parseJSON = A.withObject "PPageNavigateToHistoryEntry" $ \v ->
-         PPageNavigateToHistoryEntry <$> v .:  "entryId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
 
 instance ToJSON PPageNavigateToHistoryEntry  where
-    toJSON v = A.object
-        [ "entryId" .= pPageNavigateToHistoryEntryEntryId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 27 , A.omitNothingFields = True}
 
 
 pageNavigateToHistoryEntry :: Session -> PPageNavigateToHistoryEntry -> IO (Maybe Error)
@@ -4713,11 +3376,9 @@ pageNavigateToHistoryEntry session params = sendReceiveCommand session "Page.nav
 
 data PagePrintToPdf = PagePrintToPdf {
     pagePrintToPdfData :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PagePrintToPdf where
-    parseJSON = A.withObject "PagePrintToPdf" $ \v ->
-         PagePrintToPdf <$> v .:  "data"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
 
 
 instance Command  PagePrintToPdf where
@@ -4738,42 +3399,12 @@ data PPagePrintToPdf = PPagePrintToPdf {
     pPagePrintToPdfHeaderTemplate :: Maybe String,
     pPagePrintToPdfFooterTemplate :: Maybe String,
     pPagePrintToPdfPreferCssPageSize :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPagePrintToPdf where
-    parseJSON = A.withObject "PPagePrintToPdf" $ \v ->
-         PPagePrintToPdf <$> v .:?  "landscape"
-            <*> v  .:?  "displayHeaderFooter"
-            <*> v  .:?  "printBackground"
-            <*> v  .:?  "scale"
-            <*> v  .:?  "paperWidth"
-            <*> v  .:?  "paperHeight"
-            <*> v  .:?  "marginTop"
-            <*> v  .:?  "marginBottom"
-            <*> v  .:?  "marginLeft"
-            <*> v  .:?  "marginRight"
-            <*> v  .:?  "pageRanges"
-            <*> v  .:?  "headerTemplate"
-            <*> v  .:?  "footerTemplate"
-            <*> v  .:?  "preferCSSPageSize"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
 
 instance ToJSON PPagePrintToPdf  where
-    toJSON v = A.object
-        [ "landscape" .= pPagePrintToPdfLandscape v
-        , "displayHeaderFooter" .= pPagePrintToPdfDisplayHeaderFooter v
-        , "printBackground" .= pPagePrintToPdfPrintBackground v
-        , "scale" .= pPagePrintToPdfScale v
-        , "paperWidth" .= pPagePrintToPdfPaperWidth v
-        , "paperHeight" .= pPagePrintToPdfPaperHeight v
-        , "marginTop" .= pPagePrintToPdfMarginTop v
-        , "marginBottom" .= pPagePrintToPdfMarginBottom v
-        , "marginLeft" .= pPagePrintToPdfMarginLeft v
-        , "marginRight" .= pPagePrintToPdfMarginRight v
-        , "pageRanges" .= pPagePrintToPdfPageRanges v
-        , "headerTemplate" .= pPagePrintToPdfHeaderTemplate v
-        , "footerTemplate" .= pPagePrintToPdfFooterTemplate v
-        , "preferCSSPageSize" .= pPagePrintToPdfPreferCssPageSize v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
 
 
 pagePrintToPdf :: Session -> PPagePrintToPdf -> IO (Either Error PagePrintToPdf)
@@ -4784,18 +3415,12 @@ pagePrintToPdf session params = sendReceiveCommandResult session "Page.printToPD
 data PPageReload = PPageReload {
     pPageReloadIgnoreCache :: Maybe Bool,
     pPageReloadScriptToEvaluateOnLoad :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPageReload where
-    parseJSON = A.withObject "PPageReload" $ \v ->
-         PPageReload <$> v .:?  "ignoreCache"
-            <*> v  .:?  "scriptToEvaluateOnLoad"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 11 }
 
 instance ToJSON PPageReload  where
-    toJSON v = A.object
-        [ "ignoreCache" .= pPageReloadIgnoreCache v
-        , "scriptToEvaluateOnLoad" .= pPageReloadScriptToEvaluateOnLoad v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 11 , A.omitNothingFields = True}
 
 
 pageReload :: Session -> PPageReload -> IO (Maybe Error)
@@ -4805,16 +3430,12 @@ pageReload session params = sendReceiveCommand session "Page.reload" (Just param
 
 data PPageRemoveScriptToEvaluateOnNewDocument = PPageRemoveScriptToEvaluateOnNewDocument {
     pPageRemoveScriptToEvaluateOnNewDocumentIdentifier :: PageScriptIdentifier
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPageRemoveScriptToEvaluateOnNewDocument where
-    parseJSON = A.withObject "PPageRemoveScriptToEvaluateOnNewDocument" $ \v ->
-         PPageRemoveScriptToEvaluateOnNewDocument <$> v .:  "identifier"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 40 }
 
 instance ToJSON PPageRemoveScriptToEvaluateOnNewDocument  where
-    toJSON v = A.object
-        [ "identifier" .= pPageRemoveScriptToEvaluateOnNewDocumentIdentifier v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 40 , A.omitNothingFields = True}
 
 
 pageRemoveScriptToEvaluateOnNewDocument :: Session -> PPageRemoveScriptToEvaluateOnNewDocument -> IO (Maybe Error)
@@ -4825,18 +3446,12 @@ pageRemoveScriptToEvaluateOnNewDocument session params = sendReceiveCommand sess
 data PPageSetDocumentContent = PPageSetDocumentContent {
     pPageSetDocumentContentFrameId :: PageFrameId,
     pPageSetDocumentContentHtml :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPageSetDocumentContent where
-    parseJSON = A.withObject "PPageSetDocumentContent" $ \v ->
-         PPageSetDocumentContent <$> v .:  "frameId"
-            <*> v  .:  "html"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
 
 instance ToJSON PPageSetDocumentContent  where
-    toJSON v = A.object
-        [ "frameId" .= pPageSetDocumentContentFrameId v
-        , "html" .= pPageSetDocumentContentHtml v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
 
 
 pageSetDocumentContent :: Session -> PPageSetDocumentContent -> IO (Maybe Error)
@@ -4853,18 +3468,12 @@ pageStopLoading session = sendReceiveCommand session "Page.stopLoading" (Nothing
 data PerformanceMetrics = PerformanceMetrics {
     performanceMetricsMetrics :: [PerformanceMetric],
     performanceMetricsTitle :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PerformanceMetrics where
-    parseJSON = A.withObject "PerformanceMetrics" $ \v ->
-         PerformanceMetrics <$> v .:  "metrics"
-            <*> v  .:  "title"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
 
 instance ToJSON PerformanceMetrics  where
-    toJSON v = A.object
-        [ "metrics" .= performanceMetricsMetrics v
-        , "title" .= performanceMetricsTitle v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PerformanceMetrics where
@@ -4875,18 +3484,12 @@ instance FromEvent Event PerformanceMetrics where
 data PerformanceMetric = PerformanceMetric {
     performanceMetricName :: String,
     performanceMetricValue :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PerformanceMetric where
-    parseJSON = A.withObject "PerformanceMetric" $ \v ->
-         PerformanceMetric <$> v .:  "name"
-            <*> v  .:  "value"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
 
 instance ToJSON PerformanceMetric  where
-    toJSON v = A.object
-        [ "name" .= performanceMetricName v
-        , "value" .= performanceMetricValue v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
 
 
 
@@ -4899,16 +3502,12 @@ performanceDisable session = sendReceiveCommand session "Performance.disable" (N
 
 data PPerformanceEnable = PPerformanceEnable {
     pPerformanceEnableTimeDomain :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPerformanceEnable where
-    parseJSON = A.withObject "PPerformanceEnable" $ \v ->
-         PPerformanceEnable <$> v .:?  "timeDomain"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
 
 instance ToJSON PPerformanceEnable  where
-    toJSON v = A.object
-        [ "timeDomain" .= pPerformanceEnableTimeDomain v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
 
 
 performanceEnable :: Session -> PPerformanceEnable -> IO (Maybe Error)
@@ -4916,11 +3515,9 @@ performanceEnable session params = sendReceiveCommand session "Performance.enabl
 
 data PerformanceGetMetrics = PerformanceGetMetrics {
     performanceGetMetricsMetrics :: [PerformanceMetric]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PerformanceGetMetrics where
-    parseJSON = A.withObject "PerformanceGetMetrics" $ \v ->
-         PerformanceGetMetrics <$> v .:  "metrics"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 
 instance Command  PerformanceGetMetrics where
@@ -4936,7 +3533,7 @@ performanceGetMetrics session = sendReceiveCommandResult session "Performance.ge
 type SecurityCertificateId = Int
 
 data SecurityMixedContentType = SecurityMixedContentTypeBlockable | SecurityMixedContentTypeOptionallyBlockable | SecurityMixedContentTypeNone
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON SecurityMixedContentType where
     parseJSON = A.withText  "SecurityMixedContentType"  $ \v -> do
         case v of
@@ -4955,7 +3552,7 @@ instance ToJSON SecurityMixedContentType where
 
 
 data SecuritySecurityState = SecuritySecurityStateUnknown | SecuritySecurityStateNeutral | SecuritySecurityStateInsecure | SecuritySecurityStateSecure | SecuritySecurityStateInfo | SecuritySecurityStateInsecureBroken
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON SecuritySecurityState where
     parseJSON = A.withText  "SecuritySecurityState"  $ \v -> do
         case v of
@@ -4987,33 +3584,17 @@ data SecuritySecurityStateExplanation = SecuritySecurityStateExplanation {
     securitySecurityStateExplanationMixedContentType :: SecurityMixedContentType,
     securitySecurityStateExplanationCertificate :: [String],
     securitySecurityStateExplanationRecommendations :: Maybe [String]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  SecuritySecurityStateExplanation where
-    parseJSON = A.withObject "SecuritySecurityStateExplanation" $ \v ->
-         SecuritySecurityStateExplanation <$> v .:  "securityState"
-            <*> v  .:  "title"
-            <*> v  .:  "summary"
-            <*> v  .:  "description"
-            <*> v  .:  "mixedContentType"
-            <*> v  .:  "certificate"
-            <*> v  .:?  "recommendations"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 32 }
 
 instance ToJSON SecuritySecurityStateExplanation  where
-    toJSON v = A.object
-        [ "securityState" .= securitySecurityStateExplanationSecurityState v
-        , "title" .= securitySecurityStateExplanationTitle v
-        , "summary" .= securitySecurityStateExplanationSummary v
-        , "description" .= securitySecurityStateExplanationDescription v
-        , "mixedContentType" .= securitySecurityStateExplanationMixedContentType v
-        , "certificate" .= securitySecurityStateExplanationCertificate v
-        , "recommendations" .= securitySecurityStateExplanationRecommendations v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 32 , A.omitNothingFields = True}
 
 
 
 data SecurityCertificateErrorAction = SecurityCertificateErrorActionContinue | SecurityCertificateErrorActionCancel
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON SecurityCertificateErrorAction where
     parseJSON = A.withText  "SecurityCertificateErrorAction"  $ \v -> do
         case v of
@@ -5045,18 +3626,12 @@ securityEnable session = sendReceiveCommand session "Security.enable" (Nothing :
 data TargetReceivedMessageFromTarget = TargetReceivedMessageFromTarget {
     targetReceivedMessageFromTargetSessionId :: TargetSessionID,
     targetReceivedMessageFromTargetMessage :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  TargetReceivedMessageFromTarget where
-    parseJSON = A.withObject "TargetReceivedMessageFromTarget" $ \v ->
-         TargetReceivedMessageFromTarget <$> v .:  "sessionId"
-            <*> v  .:  "message"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 31 }
 
 instance ToJSON TargetReceivedMessageFromTarget  where
-    toJSON v = A.object
-        [ "sessionId" .= targetReceivedMessageFromTargetSessionId v
-        , "message" .= targetReceivedMessageFromTargetMessage v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 31 , A.omitNothingFields = True}
 
 
 instance FromEvent Event TargetReceivedMessageFromTarget where
@@ -5065,16 +3640,12 @@ instance FromEvent Event TargetReceivedMessageFromTarget where
 
 data TargetTargetCreated = TargetTargetCreated {
     targetTargetCreatedTargetInfo :: TargetTargetInfo
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  TargetTargetCreated where
-    parseJSON = A.withObject "TargetTargetCreated" $ \v ->
-         TargetTargetCreated <$> v .:  "targetInfo"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 instance ToJSON TargetTargetCreated  where
-    toJSON v = A.object
-        [ "targetInfo" .= targetTargetCreatedTargetInfo v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
 
 
 instance FromEvent Event TargetTargetCreated where
@@ -5083,16 +3654,12 @@ instance FromEvent Event TargetTargetCreated where
 
 data TargetTargetDestroyed = TargetTargetDestroyed {
     targetTargetDestroyedTargetId :: TargetTargetID
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  TargetTargetDestroyed where
-    parseJSON = A.withObject "TargetTargetDestroyed" $ \v ->
-         TargetTargetDestroyed <$> v .:  "targetId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON TargetTargetDestroyed  where
-    toJSON v = A.object
-        [ "targetId" .= targetTargetDestroyedTargetId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 instance FromEvent Event TargetTargetDestroyed where
@@ -5103,20 +3670,12 @@ data TargetTargetCrashed = TargetTargetCrashed {
     targetTargetCrashedTargetId :: TargetTargetID,
     targetTargetCrashedStatus :: String,
     targetTargetCrashedErrorCode :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  TargetTargetCrashed where
-    parseJSON = A.withObject "TargetTargetCrashed" $ \v ->
-         TargetTargetCrashed <$> v .:  "targetId"
-            <*> v  .:  "status"
-            <*> v  .:  "errorCode"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 instance ToJSON TargetTargetCrashed  where
-    toJSON v = A.object
-        [ "targetId" .= targetTargetCrashedTargetId v
-        , "status" .= targetTargetCrashedStatus v
-        , "errorCode" .= targetTargetCrashedErrorCode v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
 
 
 instance FromEvent Event TargetTargetCrashed where
@@ -5125,16 +3684,12 @@ instance FromEvent Event TargetTargetCrashed where
 
 data TargetTargetInfoChanged = TargetTargetInfoChanged {
     targetTargetInfoChangedTargetInfo :: TargetTargetInfo
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  TargetTargetInfoChanged where
-    parseJSON = A.withObject "TargetTargetInfoChanged" $ \v ->
-         TargetTargetInfoChanged <$> v .:  "targetInfo"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
 
 instance ToJSON TargetTargetInfoChanged  where
-    toJSON v = A.object
-        [ "targetInfo" .= targetTargetInfoChangedTargetInfo v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
 
 
 instance FromEvent Event TargetTargetInfoChanged where
@@ -5153,42 +3708,24 @@ data TargetTargetInfo = TargetTargetInfo {
     targetTargetInfoUrl :: String,
     targetTargetInfoAttached :: Bool,
     targetTargetInfoOpenerId :: Maybe TargetTargetID
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  TargetTargetInfo where
-    parseJSON = A.withObject "TargetTargetInfo" $ \v ->
-         TargetTargetInfo <$> v .:  "targetId"
-            <*> v  .:  "type"
-            <*> v  .:  "title"
-            <*> v  .:  "url"
-            <*> v  .:  "attached"
-            <*> v  .:?  "openerId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
 
 instance ToJSON TargetTargetInfo  where
-    toJSON v = A.object
-        [ "targetId" .= targetTargetInfoTargetId v
-        , "type" .= targetTargetInfoType v
-        , "title" .= targetTargetInfoTitle v
-        , "url" .= targetTargetInfoUrl v
-        , "attached" .= targetTargetInfoAttached v
-        , "openerId" .= targetTargetInfoOpenerId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
 
 
 
 
 data PTargetActivateTarget = PTargetActivateTarget {
     pTargetActivateTargetTargetId :: TargetTargetID
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PTargetActivateTarget where
-    parseJSON = A.withObject "PTargetActivateTarget" $ \v ->
-         PTargetActivateTarget <$> v .:  "targetId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON PTargetActivateTarget  where
-    toJSON v = A.object
-        [ "targetId" .= pTargetActivateTargetTargetId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 targetActivateTarget :: Session -> PTargetActivateTarget -> IO (Maybe Error)
@@ -5196,11 +3733,9 @@ targetActivateTarget session params = sendReceiveCommand session "Target.activat
 
 data TargetAttachToTarget = TargetAttachToTarget {
     targetAttachToTargetSessionId :: TargetSessionID
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  TargetAttachToTarget where
-    parseJSON = A.withObject "TargetAttachToTarget" $ \v ->
-         TargetAttachToTarget <$> v .:  "sessionId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
 
 
 instance Command  TargetAttachToTarget where
@@ -5209,18 +3744,12 @@ instance Command  TargetAttachToTarget where
 data PTargetAttachToTarget = PTargetAttachToTarget {
     pTargetAttachToTargetTargetId :: TargetTargetID,
     pTargetAttachToTargetFlatten :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PTargetAttachToTarget where
-    parseJSON = A.withObject "PTargetAttachToTarget" $ \v ->
-         PTargetAttachToTarget <$> v .:  "targetId"
-            <*> v  .:?  "flatten"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON PTargetAttachToTarget  where
-    toJSON v = A.object
-        [ "targetId" .= pTargetAttachToTargetTargetId v
-        , "flatten" .= pTargetAttachToTargetFlatten v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 targetAttachToTarget :: Session -> PTargetAttachToTarget -> IO (Either Error TargetAttachToTarget)
@@ -5230,16 +3759,12 @@ targetAttachToTarget session params = sendReceiveCommandResult session "Target.a
 
 data PTargetCloseTarget = PTargetCloseTarget {
     pTargetCloseTargetTargetId :: TargetTargetID
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PTargetCloseTarget where
-    parseJSON = A.withObject "PTargetCloseTarget" $ \v ->
-         PTargetCloseTarget <$> v .:  "targetId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
 
 instance ToJSON PTargetCloseTarget  where
-    toJSON v = A.object
-        [ "targetId" .= pTargetCloseTargetTargetId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
 
 
 targetCloseTarget :: Session -> PTargetCloseTarget -> IO (Maybe Error)
@@ -5247,11 +3772,9 @@ targetCloseTarget session params = sendReceiveCommand session "Target.closeTarge
 
 data TargetCreateTarget = TargetCreateTarget {
     targetCreateTargetTargetId :: TargetTargetID
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  TargetCreateTarget where
-    parseJSON = A.withObject "TargetCreateTarget" $ \v ->
-         TargetCreateTarget <$> v .:  "targetId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
 
 
 instance Command  TargetCreateTarget where
@@ -5263,24 +3786,12 @@ data PTargetCreateTarget = PTargetCreateTarget {
     pTargetCreateTargetHeight :: Maybe Int,
     pTargetCreateTargetNewWindow :: Maybe Bool,
     pTargetCreateTargetBackground :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PTargetCreateTarget where
-    parseJSON = A.withObject "PTargetCreateTarget" $ \v ->
-         PTargetCreateTarget <$> v .:  "url"
-            <*> v  .:?  "width"
-            <*> v  .:?  "height"
-            <*> v  .:?  "newWindow"
-            <*> v  .:?  "background"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 instance ToJSON PTargetCreateTarget  where
-    toJSON v = A.object
-        [ "url" .= pTargetCreateTargetUrl v
-        , "width" .= pTargetCreateTargetWidth v
-        , "height" .= pTargetCreateTargetHeight v
-        , "newWindow" .= pTargetCreateTargetNewWindow v
-        , "background" .= pTargetCreateTargetBackground v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
 
 
 targetCreateTarget :: Session -> PTargetCreateTarget -> IO (Either Error TargetCreateTarget)
@@ -5290,16 +3801,12 @@ targetCreateTarget session params = sendReceiveCommandResult session "Target.cre
 
 data PTargetDetachFromTarget = PTargetDetachFromTarget {
     pTargetDetachFromTargetSessionId :: Maybe TargetSessionID
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PTargetDetachFromTarget where
-    parseJSON = A.withObject "PTargetDetachFromTarget" $ \v ->
-         PTargetDetachFromTarget <$> v .:?  "sessionId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
 
 instance ToJSON PTargetDetachFromTarget  where
-    toJSON v = A.object
-        [ "sessionId" .= pTargetDetachFromTargetSessionId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
 
 
 targetDetachFromTarget :: Session -> PTargetDetachFromTarget -> IO (Maybe Error)
@@ -5307,11 +3814,9 @@ targetDetachFromTarget session params = sendReceiveCommand session "Target.detac
 
 data TargetGetTargets = TargetGetTargets {
     targetGetTargetsTargetInfos :: [TargetTargetInfo]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  TargetGetTargets where
-    parseJSON = A.withObject "TargetGetTargets" $ \v ->
-         TargetGetTargets <$> v .:  "targetInfos"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
 
 
 instance Command  TargetGetTargets where
@@ -5325,16 +3830,12 @@ targetGetTargets session = sendReceiveCommandResult session "Target.getTargets" 
 
 data PTargetSetDiscoverTargets = PTargetSetDiscoverTargets {
     pTargetSetDiscoverTargetsDiscover :: Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PTargetSetDiscoverTargets where
-    parseJSON = A.withObject "PTargetSetDiscoverTargets" $ \v ->
-         PTargetSetDiscoverTargets <$> v .:  "discover"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 25 }
 
 instance ToJSON PTargetSetDiscoverTargets  where
-    toJSON v = A.object
-        [ "discover" .= pTargetSetDiscoverTargetsDiscover v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 25 , A.omitNothingFields = True}
 
 
 targetSetDiscoverTargets :: Session -> PTargetSetDiscoverTargets -> IO (Maybe Error)
@@ -5352,32 +3853,12 @@ data FetchRequestPaused = FetchRequestPaused {
     fetchRequestPausedResponseStatusText :: Maybe String,
     fetchRequestPausedResponseHeaders :: Maybe [FetchHeaderEntry],
     fetchRequestPausedNetworkId :: Maybe FetchRequestId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  FetchRequestPaused where
-    parseJSON = A.withObject "FetchRequestPaused" $ \v ->
-         FetchRequestPaused <$> v .:  "requestId"
-            <*> v  .:  "request"
-            <*> v  .:  "frameId"
-            <*> v  .:  "resourceType"
-            <*> v  .:?  "responseErrorReason"
-            <*> v  .:?  "responseStatusCode"
-            <*> v  .:?  "responseStatusText"
-            <*> v  .:?  "responseHeaders"
-            <*> v  .:?  "networkId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
 
 instance ToJSON FetchRequestPaused  where
-    toJSON v = A.object
-        [ "requestId" .= fetchRequestPausedRequestId v
-        , "request" .= fetchRequestPausedRequest v
-        , "frameId" .= fetchRequestPausedFrameId v
-        , "resourceType" .= fetchRequestPausedResourceType v
-        , "responseErrorReason" .= fetchRequestPausedResponseErrorReason v
-        , "responseStatusCode" .= fetchRequestPausedResponseStatusCode v
-        , "responseStatusText" .= fetchRequestPausedResponseStatusText v
-        , "responseHeaders" .= fetchRequestPausedResponseHeaders v
-        , "networkId" .= fetchRequestPausedNetworkId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
 
 
 instance FromEvent Event FetchRequestPaused where
@@ -5390,24 +3871,12 @@ data FetchAuthRequired = FetchAuthRequired {
     fetchAuthRequiredFrameId :: PageFrameId,
     fetchAuthRequiredResourceType :: NetworkResourceType,
     fetchAuthRequiredAuthChallenge :: FetchAuthChallenge
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  FetchAuthRequired where
-    parseJSON = A.withObject "FetchAuthRequired" $ \v ->
-         FetchAuthRequired <$> v .:  "requestId"
-            <*> v  .:  "request"
-            <*> v  .:  "frameId"
-            <*> v  .:  "resourceType"
-            <*> v  .:  "authChallenge"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
 
 instance ToJSON FetchAuthRequired  where
-    toJSON v = A.object
-        [ "requestId" .= fetchAuthRequiredRequestId v
-        , "request" .= fetchAuthRequiredRequest v
-        , "frameId" .= fetchAuthRequiredFrameId v
-        , "resourceType" .= fetchAuthRequiredResourceType v
-        , "authChallenge" .= fetchAuthRequiredAuthChallenge v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
 
 
 instance FromEvent Event FetchAuthRequired where
@@ -5418,7 +3887,7 @@ instance FromEvent Event FetchAuthRequired where
 type FetchRequestId = String
 
 data FetchRequestStage = FetchRequestStageRequest | FetchRequestStageResponse
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON FetchRequestStage where
     parseJSON = A.withText  "FetchRequestStage"  $ \v -> do
         case v of
@@ -5438,38 +3907,24 @@ data FetchRequestPattern = FetchRequestPattern {
     fetchRequestPatternUrlPattern :: Maybe String,
     fetchRequestPatternResourceType :: Maybe NetworkResourceType,
     fetchRequestPatternRequestStage :: Maybe FetchRequestStage
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  FetchRequestPattern where
-    parseJSON = A.withObject "FetchRequestPattern" $ \v ->
-         FetchRequestPattern <$> v .:?  "urlPattern"
-            <*> v  .:?  "resourceType"
-            <*> v  .:?  "requestStage"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 instance ToJSON FetchRequestPattern  where
-    toJSON v = A.object
-        [ "urlPattern" .= fetchRequestPatternUrlPattern v
-        , "resourceType" .= fetchRequestPatternResourceType v
-        , "requestStage" .= fetchRequestPatternRequestStage v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
 
 
 
 data FetchHeaderEntry = FetchHeaderEntry {
     fetchHeaderEntryName :: String,
     fetchHeaderEntryValue :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  FetchHeaderEntry where
-    parseJSON = A.withObject "FetchHeaderEntry" $ \v ->
-         FetchHeaderEntry <$> v .:  "name"
-            <*> v  .:  "value"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
 
 instance ToJSON FetchHeaderEntry  where
-    toJSON v = A.object
-        [ "name" .= fetchHeaderEntryName v
-        , "value" .= fetchHeaderEntryValue v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
 
 
 
@@ -5478,22 +3933,12 @@ data FetchAuthChallenge = FetchAuthChallenge {
     fetchAuthChallengeScheme :: String,
     fetchAuthChallengeRealm :: String,
     fetchAuthChallengeSource :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  FetchAuthChallenge where
-    parseJSON = A.withObject "FetchAuthChallenge" $ \v ->
-         FetchAuthChallenge <$> v .:  "origin"
-            <*> v  .:  "scheme"
-            <*> v  .:  "realm"
-            <*> v  .:?  "source"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
 
 instance ToJSON FetchAuthChallenge  where
-    toJSON v = A.object
-        [ "origin" .= fetchAuthChallengeOrigin v
-        , "scheme" .= fetchAuthChallengeScheme v
-        , "realm" .= fetchAuthChallengeRealm v
-        , "source" .= fetchAuthChallengeSource v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
 
 
 
@@ -5501,20 +3946,12 @@ data FetchAuthChallengeResponse = FetchAuthChallengeResponse {
     fetchAuthChallengeResponseResponse :: String,
     fetchAuthChallengeResponseUsername :: Maybe String,
     fetchAuthChallengeResponsePassword :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  FetchAuthChallengeResponse where
-    parseJSON = A.withObject "FetchAuthChallengeResponse" $ \v ->
-         FetchAuthChallengeResponse <$> v .:  "response"
-            <*> v  .:?  "username"
-            <*> v  .:?  "password"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
 
 instance ToJSON FetchAuthChallengeResponse  where
-    toJSON v = A.object
-        [ "response" .= fetchAuthChallengeResponseResponse v
-        , "username" .= fetchAuthChallengeResponseUsername v
-        , "password" .= fetchAuthChallengeResponsePassword v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
 
 
 
@@ -5528,18 +3965,12 @@ fetchDisable session = sendReceiveCommand session "Fetch.disable" (Nothing :: Ma
 data PFetchEnable = PFetchEnable {
     pFetchEnablePatterns :: Maybe [FetchRequestPattern],
     pFetchEnableHandleAuthRequests :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PFetchEnable where
-    parseJSON = A.withObject "PFetchEnable" $ \v ->
-         PFetchEnable <$> v .:?  "patterns"
-            <*> v  .:?  "handleAuthRequests"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 12 }
 
 instance ToJSON PFetchEnable  where
-    toJSON v = A.object
-        [ "patterns" .= pFetchEnablePatterns v
-        , "handleAuthRequests" .= pFetchEnableHandleAuthRequests v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 12 , A.omitNothingFields = True}
 
 
 fetchEnable :: Session -> PFetchEnable -> IO (Maybe Error)
@@ -5550,18 +3981,12 @@ fetchEnable session params = sendReceiveCommand session "Fetch.enable" (Just par
 data PFetchFailRequest = PFetchFailRequest {
     pFetchFailRequestRequestId :: FetchRequestId,
     pFetchFailRequestErrorReason :: NetworkErrorReason
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PFetchFailRequest where
-    parseJSON = A.withObject "PFetchFailRequest" $ \v ->
-         PFetchFailRequest <$> v .:  "requestId"
-            <*> v  .:  "errorReason"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
 
 instance ToJSON PFetchFailRequest  where
-    toJSON v = A.object
-        [ "requestId" .= pFetchFailRequestRequestId v
-        , "errorReason" .= pFetchFailRequestErrorReason v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
 
 
 fetchFailRequest :: Session -> PFetchFailRequest -> IO (Maybe Error)
@@ -5576,26 +4001,12 @@ data PFetchFulfillRequest = PFetchFulfillRequest {
     pFetchFulfillRequestBinaryResponseHeaders :: Maybe String,
     pFetchFulfillRequestBody :: Maybe String,
     pFetchFulfillRequestResponsePhrase :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PFetchFulfillRequest where
-    parseJSON = A.withObject "PFetchFulfillRequest" $ \v ->
-         PFetchFulfillRequest <$> v .:  "requestId"
-            <*> v  .:  "responseCode"
-            <*> v  .:?  "responseHeaders"
-            <*> v  .:?  "binaryResponseHeaders"
-            <*> v  .:?  "body"
-            <*> v  .:?  "responsePhrase"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
 
 instance ToJSON PFetchFulfillRequest  where
-    toJSON v = A.object
-        [ "requestId" .= pFetchFulfillRequestRequestId v
-        , "responseCode" .= pFetchFulfillRequestResponseCode v
-        , "responseHeaders" .= pFetchFulfillRequestResponseHeaders v
-        , "binaryResponseHeaders" .= pFetchFulfillRequestBinaryResponseHeaders v
-        , "body" .= pFetchFulfillRequestBody v
-        , "responsePhrase" .= pFetchFulfillRequestResponsePhrase v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
 
 
 fetchFulfillRequest :: Session -> PFetchFulfillRequest -> IO (Maybe Error)
@@ -5609,24 +4020,12 @@ data PFetchContinueRequest = PFetchContinueRequest {
     pFetchContinueRequestMethod :: Maybe String,
     pFetchContinueRequestPostData :: Maybe String,
     pFetchContinueRequestHeaders :: Maybe [FetchHeaderEntry]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PFetchContinueRequest where
-    parseJSON = A.withObject "PFetchContinueRequest" $ \v ->
-         PFetchContinueRequest <$> v .:  "requestId"
-            <*> v  .:?  "url"
-            <*> v  .:?  "method"
-            <*> v  .:?  "postData"
-            <*> v  .:?  "headers"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON PFetchContinueRequest  where
-    toJSON v = A.object
-        [ "requestId" .= pFetchContinueRequestRequestId v
-        , "url" .= pFetchContinueRequestUrl v
-        , "method" .= pFetchContinueRequestMethod v
-        , "postData" .= pFetchContinueRequestPostData v
-        , "headers" .= pFetchContinueRequestHeaders v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 fetchContinueRequest :: Session -> PFetchContinueRequest -> IO (Maybe Error)
@@ -5637,18 +4036,12 @@ fetchContinueRequest session params = sendReceiveCommand session "Fetch.continue
 data PFetchContinueWithAuth = PFetchContinueWithAuth {
     pFetchContinueWithAuthRequestId :: FetchRequestId,
     pFetchContinueWithAuthAuthChallengeResponse :: FetchAuthChallengeResponse
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PFetchContinueWithAuth where
-    parseJSON = A.withObject "PFetchContinueWithAuth" $ \v ->
-         PFetchContinueWithAuth <$> v .:  "requestId"
-            <*> v  .:  "authChallengeResponse"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
 
 instance ToJSON PFetchContinueWithAuth  where
-    toJSON v = A.object
-        [ "requestId" .= pFetchContinueWithAuthRequestId v
-        , "authChallengeResponse" .= pFetchContinueWithAuthAuthChallengeResponse v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
 
 
 fetchContinueWithAuth :: Session -> PFetchContinueWithAuth -> IO (Maybe Error)
@@ -5657,12 +4050,9 @@ fetchContinueWithAuth session params = sendReceiveCommand session "Fetch.continu
 data FetchGetResponseBody = FetchGetResponseBody {
     fetchGetResponseBodyBody :: String,
     fetchGetResponseBodyBase64Encoded :: Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  FetchGetResponseBody where
-    parseJSON = A.withObject "FetchGetResponseBody" $ \v ->
-         FetchGetResponseBody <$> v .:  "body"
-            <*> v  .:  "base64Encoded"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
 
 
 instance Command  FetchGetResponseBody where
@@ -5670,16 +4060,12 @@ instance Command  FetchGetResponseBody where
 
 data PFetchGetResponseBody = PFetchGetResponseBody {
     pFetchGetResponseBodyRequestId :: FetchRequestId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PFetchGetResponseBody where
-    parseJSON = A.withObject "PFetchGetResponseBody" $ \v ->
-         PFetchGetResponseBody <$> v .:  "requestId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON PFetchGetResponseBody  where
-    toJSON v = A.object
-        [ "requestId" .= pFetchGetResponseBodyRequestId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 fetchGetResponseBody :: Session -> PFetchGetResponseBody -> IO (Either Error FetchGetResponseBody)
@@ -5687,11 +4073,9 @@ fetchGetResponseBody session params = sendReceiveCommandResult session "Fetch.ge
 
 data FetchTakeResponseBodyAsStream = FetchTakeResponseBodyAsStream {
     fetchTakeResponseBodyAsStreamStream :: IOStreamHandle
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  FetchTakeResponseBodyAsStream where
-    parseJSON = A.withObject "FetchTakeResponseBodyAsStream" $ \v ->
-         FetchTakeResponseBodyAsStream <$> v .:  "stream"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
 
 
 instance Command  FetchTakeResponseBodyAsStream where
@@ -5699,16 +4083,12 @@ instance Command  FetchTakeResponseBodyAsStream where
 
 data PFetchTakeResponseBodyAsStream = PFetchTakeResponseBodyAsStream {
     pFetchTakeResponseBodyAsStreamRequestId :: FetchRequestId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PFetchTakeResponseBodyAsStream where
-    parseJSON = A.withObject "PFetchTakeResponseBodyAsStream" $ \v ->
-         PFetchTakeResponseBodyAsStream <$> v .:  "requestId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 30 }
 
 instance ToJSON PFetchTakeResponseBodyAsStream  where
-    toJSON v = A.object
-        [ "requestId" .= pFetchTakeResponseBodyAsStreamRequestId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 30 , A.omitNothingFields = True}
 
 
 fetchTakeResponseBodyAsStream :: Session -> PFetchTakeResponseBodyAsStream -> IO (Either Error FetchTakeResponseBodyAsStream)
@@ -5718,16 +4098,12 @@ fetchTakeResponseBodyAsStream session params = sendReceiveCommandResult session 
 
 data ConsoleMessageAdded = ConsoleMessageAdded {
     consoleMessageAddedMessage :: ConsoleConsoleMessage
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  ConsoleMessageAdded where
-    parseJSON = A.withObject "ConsoleMessageAdded" $ \v ->
-         ConsoleMessageAdded <$> v .:  "message"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 instance ToJSON ConsoleMessageAdded  where
-    toJSON v = A.object
-        [ "message" .= consoleMessageAddedMessage v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
 
 
 instance FromEvent Event ConsoleMessageAdded where
@@ -5742,26 +4118,12 @@ data ConsoleConsoleMessage = ConsoleConsoleMessage {
     consoleConsoleMessageUrl :: Maybe String,
     consoleConsoleMessageLine :: Maybe Int,
     consoleConsoleMessageColumn :: Maybe Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  ConsoleConsoleMessage where
-    parseJSON = A.withObject "ConsoleConsoleMessage" $ \v ->
-         ConsoleConsoleMessage <$> v .:  "source"
-            <*> v  .:  "level"
-            <*> v  .:  "text"
-            <*> v  .:?  "url"
-            <*> v  .:?  "line"
-            <*> v  .:?  "column"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON ConsoleConsoleMessage  where
-    toJSON v = A.object
-        [ "source" .= consoleConsoleMessageSource v
-        , "level" .= consoleConsoleMessageLevel v
-        , "text" .= consoleConsoleMessageText v
-        , "url" .= consoleConsoleMessageUrl v
-        , "line" .= consoleConsoleMessageLine v
-        , "column" .= consoleConsoleMessageColumn v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 
@@ -5787,18 +4149,12 @@ consoleEnable session = sendReceiveCommand session "Console.enable" (Nothing :: 
 data DebuggerBreakpointResolved = DebuggerBreakpointResolved {
     debuggerBreakpointResolvedBreakpointId :: DebuggerBreakpointId,
     debuggerBreakpointResolvedLocation :: DebuggerLocation
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerBreakpointResolved where
-    parseJSON = A.withObject "DebuggerBreakpointResolved" $ \v ->
-         DebuggerBreakpointResolved <$> v .:  "breakpointId"
-            <*> v  .:  "location"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
 
 instance ToJSON DebuggerBreakpointResolved  where
-    toJSON v = A.object
-        [ "breakpointId" .= debuggerBreakpointResolvedBreakpointId v
-        , "location" .= debuggerBreakpointResolvedLocation v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DebuggerBreakpointResolved where
@@ -5811,24 +4167,12 @@ data DebuggerPaused = DebuggerPaused {
     debuggerPausedData :: Maybe [(String, String)],
     debuggerPausedHitBreakpoints :: Maybe [String],
     debuggerPausedAsyncStackTrace :: Maybe RuntimeStackTrace
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerPaused where
-    parseJSON = A.withObject "DebuggerPaused" $ \v ->
-         DebuggerPaused <$> v .:  "callFrames"
-            <*> v  .:  "reason"
-            <*> v  .:?  "data"
-            <*> v  .:?  "hitBreakpoints"
-            <*> v  .:?  "asyncStackTrace"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
 
 instance ToJSON DebuggerPaused  where
-    toJSON v = A.object
-        [ "callFrames" .= debuggerPausedCallFrames v
-        , "reason" .= debuggerPausedReason v
-        , "data" .= debuggerPausedData v
-        , "hitBreakpoints" .= debuggerPausedHitBreakpoints v
-        , "asyncStackTrace" .= debuggerPausedAsyncStackTrace v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 14 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DebuggerPaused where
@@ -5861,40 +4205,12 @@ data DebuggerScriptFailedToParse = DebuggerScriptFailedToParse {
     debuggerScriptFailedToParseHasSourceUrl :: Maybe Bool,
     debuggerScriptFailedToParseIsModule :: Maybe Bool,
     debuggerScriptFailedToParseLength :: Maybe Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerScriptFailedToParse where
-    parseJSON = A.withObject "DebuggerScriptFailedToParse" $ \v ->
-         DebuggerScriptFailedToParse <$> v .:  "scriptId"
-            <*> v  .:  "url"
-            <*> v  .:  "startLine"
-            <*> v  .:  "startColumn"
-            <*> v  .:  "endLine"
-            <*> v  .:  "endColumn"
-            <*> v  .:  "executionContextId"
-            <*> v  .:  "hash"
-            <*> v  .:?  "executionContextAuxData"
-            <*> v  .:?  "sourceMapURL"
-            <*> v  .:?  "hasSourceURL"
-            <*> v  .:?  "isModule"
-            <*> v  .:?  "length"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
 
 instance ToJSON DebuggerScriptFailedToParse  where
-    toJSON v = A.object
-        [ "scriptId" .= debuggerScriptFailedToParseScriptId v
-        , "url" .= debuggerScriptFailedToParseUrl v
-        , "startLine" .= debuggerScriptFailedToParseStartLine v
-        , "startColumn" .= debuggerScriptFailedToParseStartColumn v
-        , "endLine" .= debuggerScriptFailedToParseEndLine v
-        , "endColumn" .= debuggerScriptFailedToParseEndColumn v
-        , "executionContextId" .= debuggerScriptFailedToParseExecutionContextId v
-        , "hash" .= debuggerScriptFailedToParseHash v
-        , "executionContextAuxData" .= debuggerScriptFailedToParseExecutionContextAuxData v
-        , "sourceMapURL" .= debuggerScriptFailedToParseSourceMapUrl v
-        , "hasSourceURL" .= debuggerScriptFailedToParseHasSourceUrl v
-        , "isModule" .= debuggerScriptFailedToParseIsModule v
-        , "length" .= debuggerScriptFailedToParseLength v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 27 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DebuggerScriptFailedToParse where
@@ -5915,40 +4231,12 @@ data DebuggerScriptParsed = DebuggerScriptParsed {
     debuggerScriptParsedHasSourceUrl :: Maybe Bool,
     debuggerScriptParsedIsModule :: Maybe Bool,
     debuggerScriptParsedLength :: Maybe Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerScriptParsed where
-    parseJSON = A.withObject "DebuggerScriptParsed" $ \v ->
-         DebuggerScriptParsed <$> v .:  "scriptId"
-            <*> v  .:  "url"
-            <*> v  .:  "startLine"
-            <*> v  .:  "startColumn"
-            <*> v  .:  "endLine"
-            <*> v  .:  "endColumn"
-            <*> v  .:  "executionContextId"
-            <*> v  .:  "hash"
-            <*> v  .:?  "executionContextAuxData"
-            <*> v  .:?  "sourceMapURL"
-            <*> v  .:?  "hasSourceURL"
-            <*> v  .:?  "isModule"
-            <*> v  .:?  "length"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
 
 instance ToJSON DebuggerScriptParsed  where
-    toJSON v = A.object
-        [ "scriptId" .= debuggerScriptParsedScriptId v
-        , "url" .= debuggerScriptParsedUrl v
-        , "startLine" .= debuggerScriptParsedStartLine v
-        , "startColumn" .= debuggerScriptParsedStartColumn v
-        , "endLine" .= debuggerScriptParsedEndLine v
-        , "endColumn" .= debuggerScriptParsedEndColumn v
-        , "executionContextId" .= debuggerScriptParsedExecutionContextId v
-        , "hash" .= debuggerScriptParsedHash v
-        , "executionContextAuxData" .= debuggerScriptParsedExecutionContextAuxData v
-        , "sourceMapURL" .= debuggerScriptParsedSourceMapUrl v
-        , "hasSourceURL" .= debuggerScriptParsedHasSourceUrl v
-        , "isModule" .= debuggerScriptParsedIsModule v
-        , "length" .= debuggerScriptParsedLength v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DebuggerScriptParsed where
@@ -5964,20 +4252,12 @@ data DebuggerLocation = DebuggerLocation {
     debuggerLocationScriptId :: RuntimeScriptId,
     debuggerLocationLineNumber :: Int,
     debuggerLocationColumnNumber :: Maybe Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerLocation where
-    parseJSON = A.withObject "DebuggerLocation" $ \v ->
-         DebuggerLocation <$> v .:  "scriptId"
-            <*> v  .:  "lineNumber"
-            <*> v  .:?  "columnNumber"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
 
 instance ToJSON DebuggerLocation  where
-    toJSON v = A.object
-        [ "scriptId" .= debuggerLocationScriptId v
-        , "lineNumber" .= debuggerLocationLineNumber v
-        , "columnNumber" .= debuggerLocationColumnNumber v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
 
 
 
@@ -5989,28 +4269,12 @@ data DebuggerCallFrame = DebuggerCallFrame {
     debuggerCallFrameThis :: RuntimeRemoteObject,
     debuggerCallFrameFunctionLocation :: Maybe DebuggerLocation,
     debuggerCallFrameReturnValue :: Maybe RuntimeRemoteObject
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerCallFrame where
-    parseJSON = A.withObject "DebuggerCallFrame" $ \v ->
-         DebuggerCallFrame <$> v .:  "callFrameId"
-            <*> v  .:  "functionName"
-            <*> v  .:  "location"
-            <*> v  .:  "scopeChain"
-            <*> v  .:  "this"
-            <*> v  .:?  "functionLocation"
-            <*> v  .:?  "returnValue"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
 
 instance ToJSON DebuggerCallFrame  where
-    toJSON v = A.object
-        [ "callFrameId" .= debuggerCallFrameCallFrameId v
-        , "functionName" .= debuggerCallFrameFunctionName v
-        , "location" .= debuggerCallFrameLocation v
-        , "scopeChain" .= debuggerCallFrameScopeChain v
-        , "this" .= debuggerCallFrameThis v
-        , "functionLocation" .= debuggerCallFrameFunctionLocation v
-        , "returnValue" .= debuggerCallFrameReturnValue v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
 
 
 
@@ -6020,42 +4284,24 @@ data DebuggerScope = DebuggerScope {
     debuggerScopeName :: Maybe String,
     debuggerScopeStartLocation :: Maybe DebuggerLocation,
     debuggerScopeEndLocation :: Maybe DebuggerLocation
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerScope where
-    parseJSON = A.withObject "DebuggerScope" $ \v ->
-         DebuggerScope <$> v .:  "type"
-            <*> v  .:  "object"
-            <*> v  .:?  "name"
-            <*> v  .:?  "startLocation"
-            <*> v  .:?  "endLocation"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 13 }
 
 instance ToJSON DebuggerScope  where
-    toJSON v = A.object
-        [ "type" .= debuggerScopeType v
-        , "object" .= debuggerScopeObject v
-        , "name" .= debuggerScopeName v
-        , "startLocation" .= debuggerScopeStartLocation v
-        , "endLocation" .= debuggerScopeEndLocation v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 13 , A.omitNothingFields = True}
 
 
 
 data DebuggerSearchMatch = DebuggerSearchMatch {
     debuggerSearchMatchLineNumber :: Int,
     debuggerSearchMatchLineContent :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerSearchMatch where
-    parseJSON = A.withObject "DebuggerSearchMatch" $ \v ->
-         DebuggerSearchMatch <$> v .:  "lineNumber"
-            <*> v  .:  "lineContent"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 instance ToJSON DebuggerSearchMatch  where
-    toJSON v = A.object
-        [ "lineNumber" .= debuggerSearchMatchLineNumber v
-        , "lineContent" .= debuggerSearchMatchLineContent v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
 
 
 
@@ -6064,27 +4310,17 @@ data DebuggerBreakLocation = DebuggerBreakLocation {
     debuggerBreakLocationLineNumber :: Int,
     debuggerBreakLocationColumnNumber :: Maybe Int,
     debuggerBreakLocationType :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerBreakLocation where
-    parseJSON = A.withObject "DebuggerBreakLocation" $ \v ->
-         DebuggerBreakLocation <$> v .:  "scriptId"
-            <*> v  .:  "lineNumber"
-            <*> v  .:?  "columnNumber"
-            <*> v  .:?  "type"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON DebuggerBreakLocation  where
-    toJSON v = A.object
-        [ "scriptId" .= debuggerBreakLocationScriptId v
-        , "lineNumber" .= debuggerBreakLocationLineNumber v
-        , "columnNumber" .= debuggerBreakLocationColumnNumber v
-        , "type" .= debuggerBreakLocationType v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 
 data DebuggerScriptLanguage = DebuggerScriptLanguageJavaScript | DebuggerScriptLanguageWebAssembly
-    deriving (Eq, Show, Read)
+    deriving (Eq, Show, Read, Generic)
 instance FromJSON DebuggerScriptLanguage where
     parseJSON = A.withText  "DebuggerScriptLanguage"  $ \v -> do
         case v of
@@ -6103,18 +4339,12 @@ instance ToJSON DebuggerScriptLanguage where
 data DebuggerDebugSymbols = DebuggerDebugSymbols {
     debuggerDebugSymbolsType :: String,
     debuggerDebugSymbolsExternalUrl :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerDebugSymbols where
-    parseJSON = A.withObject "DebuggerDebugSymbols" $ \v ->
-         DebuggerDebugSymbols <$> v .:  "type"
-            <*> v  .:?  "externalURL"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
 
 instance ToJSON DebuggerDebugSymbols  where
-    toJSON v = A.object
-        [ "type" .= debuggerDebugSymbolsType v
-        , "externalURL" .= debuggerDebugSymbolsExternalUrl v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
 
 
 
@@ -6122,18 +4352,12 @@ instance ToJSON DebuggerDebugSymbols  where
 data PDebuggerContinueToLocation = PDebuggerContinueToLocation {
     pDebuggerContinueToLocationLocation :: DebuggerLocation,
     pDebuggerContinueToLocationTargetCallFrames :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerContinueToLocation where
-    parseJSON = A.withObject "PDebuggerContinueToLocation" $ \v ->
-         PDebuggerContinueToLocation <$> v .:  "location"
-            <*> v  .:?  "targetCallFrames"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
 
 instance ToJSON PDebuggerContinueToLocation  where
-    toJSON v = A.object
-        [ "location" .= pDebuggerContinueToLocationLocation v
-        , "targetCallFrames" .= pDebuggerContinueToLocationTargetCallFrames v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 27 , A.omitNothingFields = True}
 
 
 debuggerContinueToLocation :: Session -> PDebuggerContinueToLocation -> IO (Maybe Error)
@@ -6154,12 +4378,9 @@ debuggerEnable session = sendReceiveCommand session "Debugger.enable" (Nothing :
 data DebuggerEvaluateOnCallFrame = DebuggerEvaluateOnCallFrame {
     debuggerEvaluateOnCallFrameResult :: RuntimeRemoteObject,
     debuggerEvaluateOnCallFrameExceptionDetails :: Maybe RuntimeExceptionDetails
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerEvaluateOnCallFrame where
-    parseJSON = A.withObject "DebuggerEvaluateOnCallFrame" $ \v ->
-         DebuggerEvaluateOnCallFrame <$> v .:  "result"
-            <*> v  .:?  "exceptionDetails"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
 
 
 instance Command  DebuggerEvaluateOnCallFrame where
@@ -6173,28 +4394,12 @@ data PDebuggerEvaluateOnCallFrame = PDebuggerEvaluateOnCallFrame {
     pDebuggerEvaluateOnCallFrameSilent :: Maybe Bool,
     pDebuggerEvaluateOnCallFrameReturnByValue :: Maybe Bool,
     pDebuggerEvaluateOnCallFrameThrowOnSideEffect :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerEvaluateOnCallFrame where
-    parseJSON = A.withObject "PDebuggerEvaluateOnCallFrame" $ \v ->
-         PDebuggerEvaluateOnCallFrame <$> v .:  "callFrameId"
-            <*> v  .:  "expression"
-            <*> v  .:?  "objectGroup"
-            <*> v  .:?  "includeCommandLineAPI"
-            <*> v  .:?  "silent"
-            <*> v  .:?  "returnByValue"
-            <*> v  .:?  "throwOnSideEffect"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 28 }
 
 instance ToJSON PDebuggerEvaluateOnCallFrame  where
-    toJSON v = A.object
-        [ "callFrameId" .= pDebuggerEvaluateOnCallFrameCallFrameId v
-        , "expression" .= pDebuggerEvaluateOnCallFrameExpression v
-        , "objectGroup" .= pDebuggerEvaluateOnCallFrameObjectGroup v
-        , "includeCommandLineAPI" .= pDebuggerEvaluateOnCallFrameIncludeCommandLineApi v
-        , "silent" .= pDebuggerEvaluateOnCallFrameSilent v
-        , "returnByValue" .= pDebuggerEvaluateOnCallFrameReturnByValue v
-        , "throwOnSideEffect" .= pDebuggerEvaluateOnCallFrameThrowOnSideEffect v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 28 , A.omitNothingFields = True}
 
 
 debuggerEvaluateOnCallFrame :: Session -> PDebuggerEvaluateOnCallFrame -> IO (Either Error DebuggerEvaluateOnCallFrame)
@@ -6202,11 +4407,9 @@ debuggerEvaluateOnCallFrame session params = sendReceiveCommandResult session "D
 
 data DebuggerGetPossibleBreakpoints = DebuggerGetPossibleBreakpoints {
     debuggerGetPossibleBreakpointsLocations :: [DebuggerBreakLocation]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerGetPossibleBreakpoints where
-    parseJSON = A.withObject "DebuggerGetPossibleBreakpoints" $ \v ->
-         DebuggerGetPossibleBreakpoints <$> v .:  "locations"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 30 }
 
 
 instance Command  DebuggerGetPossibleBreakpoints where
@@ -6216,20 +4419,12 @@ data PDebuggerGetPossibleBreakpoints = PDebuggerGetPossibleBreakpoints {
     pDebuggerGetPossibleBreakpointsStart :: DebuggerLocation,
     pDebuggerGetPossibleBreakpointsEnd :: Maybe DebuggerLocation,
     pDebuggerGetPossibleBreakpointsRestrictToFunction :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerGetPossibleBreakpoints where
-    parseJSON = A.withObject "PDebuggerGetPossibleBreakpoints" $ \v ->
-         PDebuggerGetPossibleBreakpoints <$> v .:  "start"
-            <*> v  .:?  "end"
-            <*> v  .:?  "restrictToFunction"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 31 }
 
 instance ToJSON PDebuggerGetPossibleBreakpoints  where
-    toJSON v = A.object
-        [ "start" .= pDebuggerGetPossibleBreakpointsStart v
-        , "end" .= pDebuggerGetPossibleBreakpointsEnd v
-        , "restrictToFunction" .= pDebuggerGetPossibleBreakpointsRestrictToFunction v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 31 , A.omitNothingFields = True}
 
 
 debuggerGetPossibleBreakpoints :: Session -> PDebuggerGetPossibleBreakpoints -> IO (Either Error DebuggerGetPossibleBreakpoints)
@@ -6238,12 +4433,9 @@ debuggerGetPossibleBreakpoints session params = sendReceiveCommandResult session
 data DebuggerGetScriptSource = DebuggerGetScriptSource {
     debuggerGetScriptSourceScriptSource :: String,
     debuggerGetScriptSourceBytecode :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerGetScriptSource where
-    parseJSON = A.withObject "DebuggerGetScriptSource" $ \v ->
-         DebuggerGetScriptSource <$> v .:  "scriptSource"
-            <*> v  .:?  "bytecode"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
 
 
 instance Command  DebuggerGetScriptSource where
@@ -6251,16 +4443,12 @@ instance Command  DebuggerGetScriptSource where
 
 data PDebuggerGetScriptSource = PDebuggerGetScriptSource {
     pDebuggerGetScriptSourceScriptId :: RuntimeScriptId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerGetScriptSource where
-    parseJSON = A.withObject "PDebuggerGetScriptSource" $ \v ->
-         PDebuggerGetScriptSource <$> v .:  "scriptId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
 
 instance ToJSON PDebuggerGetScriptSource  where
-    toJSON v = A.object
-        [ "scriptId" .= pDebuggerGetScriptSourceScriptId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
 
 
 debuggerGetScriptSource :: Session -> PDebuggerGetScriptSource -> IO (Either Error DebuggerGetScriptSource)
@@ -6276,16 +4464,12 @@ debuggerPause session = sendReceiveCommand session "Debugger.pause" (Nothing :: 
 
 data PDebuggerRemoveBreakpoint = PDebuggerRemoveBreakpoint {
     pDebuggerRemoveBreakpointBreakpointId :: DebuggerBreakpointId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerRemoveBreakpoint where
-    parseJSON = A.withObject "PDebuggerRemoveBreakpoint" $ \v ->
-         PDebuggerRemoveBreakpoint <$> v .:  "breakpointId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 25 }
 
 instance ToJSON PDebuggerRemoveBreakpoint  where
-    toJSON v = A.object
-        [ "breakpointId" .= pDebuggerRemoveBreakpointBreakpointId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 25 , A.omitNothingFields = True}
 
 
 debuggerRemoveBreakpoint :: Session -> PDebuggerRemoveBreakpoint -> IO (Maybe Error)
@@ -6295,16 +4479,12 @@ debuggerRemoveBreakpoint session params = sendReceiveCommand session "Debugger.r
 
 data PDebuggerResume = PDebuggerResume {
     pDebuggerResumeTerminateOnResume :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerResume where
-    parseJSON = A.withObject "PDebuggerResume" $ \v ->
-         PDebuggerResume <$> v .:?  "terminateOnResume"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
 
 instance ToJSON PDebuggerResume  where
-    toJSON v = A.object
-        [ "terminateOnResume" .= pDebuggerResumeTerminateOnResume v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
 
 
 debuggerResume :: Session -> PDebuggerResume -> IO (Maybe Error)
@@ -6312,11 +4492,9 @@ debuggerResume session params = sendReceiveCommand session "Debugger.resume" (Ju
 
 data DebuggerSearchInContent = DebuggerSearchInContent {
     debuggerSearchInContentResult :: [DebuggerSearchMatch]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerSearchInContent where
-    parseJSON = A.withObject "DebuggerSearchInContent" $ \v ->
-         DebuggerSearchInContent <$> v .:  "result"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
 
 
 instance Command  DebuggerSearchInContent where
@@ -6327,22 +4505,12 @@ data PDebuggerSearchInContent = PDebuggerSearchInContent {
     pDebuggerSearchInContentQuery :: String,
     pDebuggerSearchInContentCaseSensitive :: Maybe Bool,
     pDebuggerSearchInContentIsRegex :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSearchInContent where
-    parseJSON = A.withObject "PDebuggerSearchInContent" $ \v ->
-         PDebuggerSearchInContent <$> v .:  "scriptId"
-            <*> v  .:  "query"
-            <*> v  .:?  "caseSensitive"
-            <*> v  .:?  "isRegex"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
 
 instance ToJSON PDebuggerSearchInContent  where
-    toJSON v = A.object
-        [ "scriptId" .= pDebuggerSearchInContentScriptId v
-        , "query" .= pDebuggerSearchInContentQuery v
-        , "caseSensitive" .= pDebuggerSearchInContentCaseSensitive v
-        , "isRegex" .= pDebuggerSearchInContentIsRegex v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
 
 
 debuggerSearchInContent :: Session -> PDebuggerSearchInContent -> IO (Either Error DebuggerSearchInContent)
@@ -6352,16 +4520,12 @@ debuggerSearchInContent session params = sendReceiveCommandResult session "Debug
 
 data PDebuggerSetAsyncCallStackDepth = PDebuggerSetAsyncCallStackDepth {
     pDebuggerSetAsyncCallStackDepthMaxDepth :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSetAsyncCallStackDepth where
-    parseJSON = A.withObject "PDebuggerSetAsyncCallStackDepth" $ \v ->
-         PDebuggerSetAsyncCallStackDepth <$> v .:  "maxDepth"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 31 }
 
 instance ToJSON PDebuggerSetAsyncCallStackDepth  where
-    toJSON v = A.object
-        [ "maxDepth" .= pDebuggerSetAsyncCallStackDepthMaxDepth v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 31 , A.omitNothingFields = True}
 
 
 debuggerSetAsyncCallStackDepth :: Session -> PDebuggerSetAsyncCallStackDepth -> IO (Maybe Error)
@@ -6370,12 +4534,9 @@ debuggerSetAsyncCallStackDepth session params = sendReceiveCommand session "Debu
 data DebuggerSetBreakpoint = DebuggerSetBreakpoint {
     debuggerSetBreakpointBreakpointId :: DebuggerBreakpointId,
     debuggerSetBreakpointActualLocation :: DebuggerLocation
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerSetBreakpoint where
-    parseJSON = A.withObject "DebuggerSetBreakpoint" $ \v ->
-         DebuggerSetBreakpoint <$> v .:  "breakpointId"
-            <*> v  .:  "actualLocation"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 
 instance Command  DebuggerSetBreakpoint where
@@ -6384,18 +4545,12 @@ instance Command  DebuggerSetBreakpoint where
 data PDebuggerSetBreakpoint = PDebuggerSetBreakpoint {
     pDebuggerSetBreakpointLocation :: DebuggerLocation,
     pDebuggerSetBreakpointCondition :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSetBreakpoint where
-    parseJSON = A.withObject "PDebuggerSetBreakpoint" $ \v ->
-         PDebuggerSetBreakpoint <$> v .:  "location"
-            <*> v  .:?  "condition"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
 
 instance ToJSON PDebuggerSetBreakpoint  where
-    toJSON v = A.object
-        [ "location" .= pDebuggerSetBreakpointLocation v
-        , "condition" .= pDebuggerSetBreakpointCondition v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
 
 
 debuggerSetBreakpoint :: Session -> PDebuggerSetBreakpoint -> IO (Either Error DebuggerSetBreakpoint)
@@ -6403,11 +4558,9 @@ debuggerSetBreakpoint session params = sendReceiveCommandResult session "Debugge
 
 data DebuggerSetInstrumentationBreakpoint = DebuggerSetInstrumentationBreakpoint {
     debuggerSetInstrumentationBreakpointBreakpointId :: DebuggerBreakpointId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerSetInstrumentationBreakpoint where
-    parseJSON = A.withObject "DebuggerSetInstrumentationBreakpoint" $ \v ->
-         DebuggerSetInstrumentationBreakpoint <$> v .:  "breakpointId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 36 }
 
 
 instance Command  DebuggerSetInstrumentationBreakpoint where
@@ -6415,16 +4568,12 @@ instance Command  DebuggerSetInstrumentationBreakpoint where
 
 data PDebuggerSetInstrumentationBreakpoint = PDebuggerSetInstrumentationBreakpoint {
     pDebuggerSetInstrumentationBreakpointInstrumentation :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSetInstrumentationBreakpoint where
-    parseJSON = A.withObject "PDebuggerSetInstrumentationBreakpoint" $ \v ->
-         PDebuggerSetInstrumentationBreakpoint <$> v .:  "instrumentation"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 37 }
 
 instance ToJSON PDebuggerSetInstrumentationBreakpoint  where
-    toJSON v = A.object
-        [ "instrumentation" .= pDebuggerSetInstrumentationBreakpointInstrumentation v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 37 , A.omitNothingFields = True}
 
 
 debuggerSetInstrumentationBreakpoint :: Session -> PDebuggerSetInstrumentationBreakpoint -> IO (Either Error DebuggerSetInstrumentationBreakpoint)
@@ -6433,12 +4582,9 @@ debuggerSetInstrumentationBreakpoint session params = sendReceiveCommandResult s
 data DebuggerSetBreakpointByUrl = DebuggerSetBreakpointByUrl {
     debuggerSetBreakpointByUrlBreakpointId :: DebuggerBreakpointId,
     debuggerSetBreakpointByUrlLocations :: [DebuggerLocation]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerSetBreakpointByUrl where
-    parseJSON = A.withObject "DebuggerSetBreakpointByUrl" $ \v ->
-         DebuggerSetBreakpointByUrl <$> v .:  "breakpointId"
-            <*> v  .:  "locations"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
 
 
 instance Command  DebuggerSetBreakpointByUrl where
@@ -6451,26 +4597,12 @@ data PDebuggerSetBreakpointByUrl = PDebuggerSetBreakpointByUrl {
     pDebuggerSetBreakpointByUrlScriptHash :: Maybe String,
     pDebuggerSetBreakpointByUrlColumnNumber :: Maybe Int,
     pDebuggerSetBreakpointByUrlCondition :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSetBreakpointByUrl where
-    parseJSON = A.withObject "PDebuggerSetBreakpointByUrl" $ \v ->
-         PDebuggerSetBreakpointByUrl <$> v .:  "lineNumber"
-            <*> v  .:?  "url"
-            <*> v  .:?  "urlRegex"
-            <*> v  .:?  "scriptHash"
-            <*> v  .:?  "columnNumber"
-            <*> v  .:?  "condition"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
 
 instance ToJSON PDebuggerSetBreakpointByUrl  where
-    toJSON v = A.object
-        [ "lineNumber" .= pDebuggerSetBreakpointByUrlLineNumber v
-        , "url" .= pDebuggerSetBreakpointByUrlUrl v
-        , "urlRegex" .= pDebuggerSetBreakpointByUrlUrlRegex v
-        , "scriptHash" .= pDebuggerSetBreakpointByUrlScriptHash v
-        , "columnNumber" .= pDebuggerSetBreakpointByUrlColumnNumber v
-        , "condition" .= pDebuggerSetBreakpointByUrlCondition v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 27 , A.omitNothingFields = True}
 
 
 debuggerSetBreakpointByUrl :: Session -> PDebuggerSetBreakpointByUrl -> IO (Either Error DebuggerSetBreakpointByUrl)
@@ -6480,16 +4612,12 @@ debuggerSetBreakpointByUrl session params = sendReceiveCommandResult session "De
 
 data PDebuggerSetBreakpointsActive = PDebuggerSetBreakpointsActive {
     pDebuggerSetBreakpointsActiveActive :: Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSetBreakpointsActive where
-    parseJSON = A.withObject "PDebuggerSetBreakpointsActive" $ \v ->
-         PDebuggerSetBreakpointsActive <$> v .:  "active"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
 
 instance ToJSON PDebuggerSetBreakpointsActive  where
-    toJSON v = A.object
-        [ "active" .= pDebuggerSetBreakpointsActiveActive v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 29 , A.omitNothingFields = True}
 
 
 debuggerSetBreakpointsActive :: Session -> PDebuggerSetBreakpointsActive -> IO (Maybe Error)
@@ -6499,16 +4627,12 @@ debuggerSetBreakpointsActive session params = sendReceiveCommand session "Debugg
 
 data PDebuggerSetPauseOnExceptions = PDebuggerSetPauseOnExceptions {
     pDebuggerSetPauseOnExceptionsState :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSetPauseOnExceptions where
-    parseJSON = A.withObject "PDebuggerSetPauseOnExceptions" $ \v ->
-         PDebuggerSetPauseOnExceptions <$> v .:  "state"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
 
 instance ToJSON PDebuggerSetPauseOnExceptions  where
-    toJSON v = A.object
-        [ "state" .= pDebuggerSetPauseOnExceptionsState v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 29 , A.omitNothingFields = True}
 
 
 debuggerSetPauseOnExceptions :: Session -> PDebuggerSetPauseOnExceptions -> IO (Maybe Error)
@@ -6519,14 +4643,9 @@ data DebuggerSetScriptSource = DebuggerSetScriptSource {
     debuggerSetScriptSourceStackChanged :: Maybe Bool,
     debuggerSetScriptSourceAsyncStackTrace :: Maybe RuntimeStackTrace,
     debuggerSetScriptSourceExceptionDetails :: Maybe RuntimeExceptionDetails
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerSetScriptSource where
-    parseJSON = A.withObject "DebuggerSetScriptSource" $ \v ->
-         DebuggerSetScriptSource <$> v .:?  "callFrames"
-            <*> v  .:?  "stackChanged"
-            <*> v  .:?  "asyncStackTrace"
-            <*> v  .:?  "exceptionDetails"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
 
 
 instance Command  DebuggerSetScriptSource where
@@ -6536,20 +4655,12 @@ data PDebuggerSetScriptSource = PDebuggerSetScriptSource {
     pDebuggerSetScriptSourceScriptId :: RuntimeScriptId,
     pDebuggerSetScriptSourceScriptSource :: String,
     pDebuggerSetScriptSourceDryRun :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSetScriptSource where
-    parseJSON = A.withObject "PDebuggerSetScriptSource" $ \v ->
-         PDebuggerSetScriptSource <$> v .:  "scriptId"
-            <*> v  .:  "scriptSource"
-            <*> v  .:?  "dryRun"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
 
 instance ToJSON PDebuggerSetScriptSource  where
-    toJSON v = A.object
-        [ "scriptId" .= pDebuggerSetScriptSourceScriptId v
-        , "scriptSource" .= pDebuggerSetScriptSourceScriptSource v
-        , "dryRun" .= pDebuggerSetScriptSourceDryRun v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
 
 
 debuggerSetScriptSource :: Session -> PDebuggerSetScriptSource -> IO (Either Error DebuggerSetScriptSource)
@@ -6559,16 +4670,12 @@ debuggerSetScriptSource session params = sendReceiveCommandResult session "Debug
 
 data PDebuggerSetSkipAllPauses = PDebuggerSetSkipAllPauses {
     pDebuggerSetSkipAllPausesSkip :: Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSetSkipAllPauses where
-    parseJSON = A.withObject "PDebuggerSetSkipAllPauses" $ \v ->
-         PDebuggerSetSkipAllPauses <$> v .:  "skip"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 25 }
 
 instance ToJSON PDebuggerSetSkipAllPauses  where
-    toJSON v = A.object
-        [ "skip" .= pDebuggerSetSkipAllPausesSkip v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 25 , A.omitNothingFields = True}
 
 
 debuggerSetSkipAllPauses :: Session -> PDebuggerSetSkipAllPauses -> IO (Maybe Error)
@@ -6581,22 +4688,12 @@ data PDebuggerSetVariableValue = PDebuggerSetVariableValue {
     pDebuggerSetVariableValueVariableName :: String,
     pDebuggerSetVariableValueNewValue :: RuntimeCallArgument,
     pDebuggerSetVariableValueCallFrameId :: DebuggerCallFrameId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSetVariableValue where
-    parseJSON = A.withObject "PDebuggerSetVariableValue" $ \v ->
-         PDebuggerSetVariableValue <$> v .:  "scopeNumber"
-            <*> v  .:  "variableName"
-            <*> v  .:  "newValue"
-            <*> v  .:  "callFrameId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 25 }
 
 instance ToJSON PDebuggerSetVariableValue  where
-    toJSON v = A.object
-        [ "scopeNumber" .= pDebuggerSetVariableValueScopeNumber v
-        , "variableName" .= pDebuggerSetVariableValueVariableName v
-        , "newValue" .= pDebuggerSetVariableValueNewValue v
-        , "callFrameId" .= pDebuggerSetVariableValueCallFrameId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 25 , A.omitNothingFields = True}
 
 
 debuggerSetVariableValue :: Session -> PDebuggerSetVariableValue -> IO (Maybe Error)
@@ -6627,22 +4724,12 @@ data ProfilerConsoleProfileFinished = ProfilerConsoleProfileFinished {
     profilerConsoleProfileFinishedLocation :: DebuggerLocation,
     profilerConsoleProfileFinishedProfile :: ProfilerProfile,
     profilerConsoleProfileFinishedTitle :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerConsoleProfileFinished where
-    parseJSON = A.withObject "ProfilerConsoleProfileFinished" $ \v ->
-         ProfilerConsoleProfileFinished <$> v .:  "id"
-            <*> v  .:  "location"
-            <*> v  .:  "profile"
-            <*> v  .:?  "title"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 30 }
 
 instance ToJSON ProfilerConsoleProfileFinished  where
-    toJSON v = A.object
-        [ "id" .= profilerConsoleProfileFinishedId v
-        , "location" .= profilerConsoleProfileFinishedLocation v
-        , "profile" .= profilerConsoleProfileFinishedProfile v
-        , "title" .= profilerConsoleProfileFinishedTitle v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 30 , A.omitNothingFields = True}
 
 
 instance FromEvent Event ProfilerConsoleProfileFinished where
@@ -6653,20 +4740,12 @@ data ProfilerConsoleProfileStarted = ProfilerConsoleProfileStarted {
     profilerConsoleProfileStartedId :: String,
     profilerConsoleProfileStartedLocation :: DebuggerLocation,
     profilerConsoleProfileStartedTitle :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerConsoleProfileStarted where
-    parseJSON = A.withObject "ProfilerConsoleProfileStarted" $ \v ->
-         ProfilerConsoleProfileStarted <$> v .:  "id"
-            <*> v  .:  "location"
-            <*> v  .:?  "title"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
 
 instance ToJSON ProfilerConsoleProfileStarted  where
-    toJSON v = A.object
-        [ "id" .= profilerConsoleProfileStartedId v
-        , "location" .= profilerConsoleProfileStartedLocation v
-        , "title" .= profilerConsoleProfileStartedTitle v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 29 , A.omitNothingFields = True}
 
 
 instance FromEvent Event ProfilerConsoleProfileStarted where
@@ -6681,26 +4760,12 @@ data ProfilerProfileNode = ProfilerProfileNode {
     profilerProfileNodeChildren :: Maybe [Int],
     profilerProfileNodeDeoptReason :: Maybe String,
     profilerProfileNodePositionTicks :: Maybe [ProfilerPositionTickInfo]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerProfileNode where
-    parseJSON = A.withObject "ProfilerProfileNode" $ \v ->
-         ProfilerProfileNode <$> v .:  "id"
-            <*> v  .:  "callFrame"
-            <*> v  .:?  "hitCount"
-            <*> v  .:?  "children"
-            <*> v  .:?  "deoptReason"
-            <*> v  .:?  "positionTicks"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 instance ToJSON ProfilerProfileNode  where
-    toJSON v = A.object
-        [ "id" .= profilerProfileNodeId v
-        , "callFrame" .= profilerProfileNodeCallFrame v
-        , "hitCount" .= profilerProfileNodeHitCount v
-        , "children" .= profilerProfileNodeChildren v
-        , "deoptReason" .= profilerProfileNodeDeoptReason v
-        , "positionTicks" .= profilerProfileNodePositionTicks v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
 
 
 
@@ -6710,42 +4775,24 @@ data ProfilerProfile = ProfilerProfile {
     profilerProfileEndTime :: Int,
     profilerProfileSamples :: Maybe [Int],
     profilerProfileTimeDeltas :: Maybe [Int]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerProfile where
-    parseJSON = A.withObject "ProfilerProfile" $ \v ->
-         ProfilerProfile <$> v .:  "nodes"
-            <*> v  .:  "startTime"
-            <*> v  .:  "endTime"
-            <*> v  .:?  "samples"
-            <*> v  .:?  "timeDeltas"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
 
 instance ToJSON ProfilerProfile  where
-    toJSON v = A.object
-        [ "nodes" .= profilerProfileNodes v
-        , "startTime" .= profilerProfileStartTime v
-        , "endTime" .= profilerProfileEndTime v
-        , "samples" .= profilerProfileSamples v
-        , "timeDeltas" .= profilerProfileTimeDeltas v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
 
 
 
 data ProfilerPositionTickInfo = ProfilerPositionTickInfo {
     profilerPositionTickInfoLine :: Int,
     profilerPositionTickInfoTicks :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerPositionTickInfo where
-    parseJSON = A.withObject "ProfilerPositionTickInfo" $ \v ->
-         ProfilerPositionTickInfo <$> v .:  "line"
-            <*> v  .:  "ticks"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
 
 instance ToJSON ProfilerPositionTickInfo  where
-    toJSON v = A.object
-        [ "line" .= profilerPositionTickInfoLine v
-        , "ticks" .= profilerPositionTickInfoTicks v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
 
 
 
@@ -6753,20 +4800,12 @@ data ProfilerCoverageRange = ProfilerCoverageRange {
     profilerCoverageRangeStartOffset :: Int,
     profilerCoverageRangeEndOffset :: Int,
     profilerCoverageRangeCount :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerCoverageRange where
-    parseJSON = A.withObject "ProfilerCoverageRange" $ \v ->
-         ProfilerCoverageRange <$> v .:  "startOffset"
-            <*> v  .:  "endOffset"
-            <*> v  .:  "count"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON ProfilerCoverageRange  where
-    toJSON v = A.object
-        [ "startOffset" .= profilerCoverageRangeStartOffset v
-        , "endOffset" .= profilerCoverageRangeEndOffset v
-        , "count" .= profilerCoverageRangeCount v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 
@@ -6774,20 +4813,12 @@ data ProfilerFunctionCoverage = ProfilerFunctionCoverage {
     profilerFunctionCoverageFunctionName :: String,
     profilerFunctionCoverageRanges :: [ProfilerCoverageRange],
     profilerFunctionCoverageIsBlockCoverage :: Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerFunctionCoverage where
-    parseJSON = A.withObject "ProfilerFunctionCoverage" $ \v ->
-         ProfilerFunctionCoverage <$> v .:  "functionName"
-            <*> v  .:  "ranges"
-            <*> v  .:  "isBlockCoverage"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
 
 instance ToJSON ProfilerFunctionCoverage  where
-    toJSON v = A.object
-        [ "functionName" .= profilerFunctionCoverageFunctionName v
-        , "ranges" .= profilerFunctionCoverageRanges v
-        , "isBlockCoverage" .= profilerFunctionCoverageIsBlockCoverage v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
 
 
 
@@ -6795,20 +4826,12 @@ data ProfilerScriptCoverage = ProfilerScriptCoverage {
     profilerScriptCoverageScriptId :: RuntimeScriptId,
     profilerScriptCoverageUrl :: String,
     profilerScriptCoverageFunctions :: [ProfilerFunctionCoverage]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerScriptCoverage where
-    parseJSON = A.withObject "ProfilerScriptCoverage" $ \v ->
-         ProfilerScriptCoverage <$> v .:  "scriptId"
-            <*> v  .:  "url"
-            <*> v  .:  "functions"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
 
 instance ToJSON ProfilerScriptCoverage  where
-    toJSON v = A.object
-        [ "scriptId" .= profilerScriptCoverageScriptId v
-        , "url" .= profilerScriptCoverageUrl v
-        , "functions" .= profilerScriptCoverageFunctions v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
 
 
 
@@ -6825,11 +4848,9 @@ profilerEnable session = sendReceiveCommand session "Profiler.enable" (Nothing :
 
 data ProfilerGetBestEffortCoverage = ProfilerGetBestEffortCoverage {
     profilerGetBestEffortCoverageResult :: [ProfilerScriptCoverage]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerGetBestEffortCoverage where
-    parseJSON = A.withObject "ProfilerGetBestEffortCoverage" $ \v ->
-         ProfilerGetBestEffortCoverage <$> v .:  "result"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
 
 
 instance Command  ProfilerGetBestEffortCoverage where
@@ -6843,16 +4864,12 @@ profilerGetBestEffortCoverage session = sendReceiveCommandResult session "Profil
 
 data PProfilerSetSamplingInterval = PProfilerSetSamplingInterval {
     pProfilerSetSamplingIntervalInterval :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PProfilerSetSamplingInterval where
-    parseJSON = A.withObject "PProfilerSetSamplingInterval" $ \v ->
-         PProfilerSetSamplingInterval <$> v .:  "interval"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 28 }
 
 instance ToJSON PProfilerSetSamplingInterval  where
-    toJSON v = A.object
-        [ "interval" .= pProfilerSetSamplingIntervalInterval v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 28 , A.omitNothingFields = True}
 
 
 profilerSetSamplingInterval :: Session -> PProfilerSetSamplingInterval -> IO (Maybe Error)
@@ -6866,11 +4883,9 @@ profilerStart session = sendReceiveCommand session "Profiler.start" (Nothing :: 
 
 data ProfilerStartPreciseCoverage = ProfilerStartPreciseCoverage {
     profilerStartPreciseCoverageTimestamp :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerStartPreciseCoverage where
-    parseJSON = A.withObject "ProfilerStartPreciseCoverage" $ \v ->
-         ProfilerStartPreciseCoverage <$> v .:  "timestamp"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 28 }
 
 
 instance Command  ProfilerStartPreciseCoverage where
@@ -6880,20 +4895,12 @@ data PProfilerStartPreciseCoverage = PProfilerStartPreciseCoverage {
     pProfilerStartPreciseCoverageCallCount :: Maybe Bool,
     pProfilerStartPreciseCoverageDetailed :: Maybe Bool,
     pProfilerStartPreciseCoverageAllowTriggeredUpdates :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PProfilerStartPreciseCoverage where
-    parseJSON = A.withObject "PProfilerStartPreciseCoverage" $ \v ->
-         PProfilerStartPreciseCoverage <$> v .:?  "callCount"
-            <*> v  .:?  "detailed"
-            <*> v  .:?  "allowTriggeredUpdates"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
 
 instance ToJSON PProfilerStartPreciseCoverage  where
-    toJSON v = A.object
-        [ "callCount" .= pProfilerStartPreciseCoverageCallCount v
-        , "detailed" .= pProfilerStartPreciseCoverageDetailed v
-        , "allowTriggeredUpdates" .= pProfilerStartPreciseCoverageAllowTriggeredUpdates v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 29 , A.omitNothingFields = True}
 
 
 profilerStartPreciseCoverage :: Session -> PProfilerStartPreciseCoverage -> IO (Either Error ProfilerStartPreciseCoverage)
@@ -6901,11 +4908,9 @@ profilerStartPreciseCoverage session params = sendReceiveCommandResult session "
 
 data ProfilerStop = ProfilerStop {
     profilerStopProfile :: ProfilerProfile
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerStop where
-    parseJSON = A.withObject "ProfilerStop" $ \v ->
-         ProfilerStop <$> v .:  "profile"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 12 }
 
 
 instance Command  ProfilerStop where
@@ -6924,12 +4929,9 @@ profilerStopPreciseCoverage session = sendReceiveCommand session "Profiler.stopP
 data ProfilerTakePreciseCoverage = ProfilerTakePreciseCoverage {
     profilerTakePreciseCoverageResult :: [ProfilerScriptCoverage],
     profilerTakePreciseCoverageTimestamp :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerTakePreciseCoverage where
-    parseJSON = A.withObject "ProfilerTakePreciseCoverage" $ \v ->
-         ProfilerTakePreciseCoverage <$> v .:  "result"
-            <*> v  .:  "timestamp"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
 
 
 instance Command  ProfilerTakePreciseCoverage where
@@ -6947,24 +4949,12 @@ data RuntimeConsoleApiCalled = RuntimeConsoleApiCalled {
     runtimeConsoleApiCalledExecutionContextId :: RuntimeExecutionContextId,
     runtimeConsoleApiCalledTimestamp :: RuntimeTimestamp,
     runtimeConsoleApiCalledStackTrace :: Maybe RuntimeStackTrace
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeConsoleApiCalled where
-    parseJSON = A.withObject "RuntimeConsoleApiCalled" $ \v ->
-         RuntimeConsoleApiCalled <$> v .:  "type"
-            <*> v  .:  "args"
-            <*> v  .:  "executionContextId"
-            <*> v  .:  "timestamp"
-            <*> v  .:?  "stackTrace"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
 
 instance ToJSON RuntimeConsoleApiCalled  where
-    toJSON v = A.object
-        [ "type" .= runtimeConsoleApiCalledType v
-        , "args" .= runtimeConsoleApiCalledArgs v
-        , "executionContextId" .= runtimeConsoleApiCalledExecutionContextId v
-        , "timestamp" .= runtimeConsoleApiCalledTimestamp v
-        , "stackTrace" .= runtimeConsoleApiCalledStackTrace v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
 
 
 instance FromEvent Event RuntimeConsoleApiCalled where
@@ -6974,18 +4964,12 @@ instance FromEvent Event RuntimeConsoleApiCalled where
 data RuntimeExceptionRevoked = RuntimeExceptionRevoked {
     runtimeExceptionRevokedReason :: String,
     runtimeExceptionRevokedExceptionId :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeExceptionRevoked where
-    parseJSON = A.withObject "RuntimeExceptionRevoked" $ \v ->
-         RuntimeExceptionRevoked <$> v .:  "reason"
-            <*> v  .:  "exceptionId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
 
 instance ToJSON RuntimeExceptionRevoked  where
-    toJSON v = A.object
-        [ "reason" .= runtimeExceptionRevokedReason v
-        , "exceptionId" .= runtimeExceptionRevokedExceptionId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
 
 
 instance FromEvent Event RuntimeExceptionRevoked where
@@ -6995,18 +4979,12 @@ instance FromEvent Event RuntimeExceptionRevoked where
 data RuntimeExceptionThrown = RuntimeExceptionThrown {
     runtimeExceptionThrownTimestamp :: RuntimeTimestamp,
     runtimeExceptionThrownExceptionDetails :: RuntimeExceptionDetails
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeExceptionThrown where
-    parseJSON = A.withObject "RuntimeExceptionThrown" $ \v ->
-         RuntimeExceptionThrown <$> v .:  "timestamp"
-            <*> v  .:  "exceptionDetails"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
 
 instance ToJSON RuntimeExceptionThrown  where
-    toJSON v = A.object
-        [ "timestamp" .= runtimeExceptionThrownTimestamp v
-        , "exceptionDetails" .= runtimeExceptionThrownExceptionDetails v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
 
 
 instance FromEvent Event RuntimeExceptionThrown where
@@ -7015,16 +4993,12 @@ instance FromEvent Event RuntimeExceptionThrown where
 
 data RuntimeExecutionContextCreated = RuntimeExecutionContextCreated {
     runtimeExecutionContextCreatedContext :: RuntimeExecutionContextDescription
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeExecutionContextCreated where
-    parseJSON = A.withObject "RuntimeExecutionContextCreated" $ \v ->
-         RuntimeExecutionContextCreated <$> v .:  "context"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 30 }
 
 instance ToJSON RuntimeExecutionContextCreated  where
-    toJSON v = A.object
-        [ "context" .= runtimeExecutionContextCreatedContext v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 30 , A.omitNothingFields = True}
 
 
 instance FromEvent Event RuntimeExecutionContextCreated where
@@ -7033,16 +5007,12 @@ instance FromEvent Event RuntimeExecutionContextCreated where
 
 data RuntimeExecutionContextDestroyed = RuntimeExecutionContextDestroyed {
     runtimeExecutionContextDestroyedExecutionContextId :: RuntimeExecutionContextId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeExecutionContextDestroyed where
-    parseJSON = A.withObject "RuntimeExecutionContextDestroyed" $ \v ->
-         RuntimeExecutionContextDestroyed <$> v .:  "executionContextId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 32 }
 
 instance ToJSON RuntimeExecutionContextDestroyed  where
-    toJSON v = A.object
-        [ "executionContextId" .= runtimeExecutionContextDestroyedExecutionContextId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 32 , A.omitNothingFields = True}
 
 
 instance FromEvent Event RuntimeExecutionContextDestroyed where
@@ -7064,18 +5034,12 @@ instance FromEvent Event RuntimeExecutionContextsCleared where
 data RuntimeInspectRequested = RuntimeInspectRequested {
     runtimeInspectRequestedObject :: RuntimeRemoteObject,
     runtimeInspectRequestedHints :: [(String, String)]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeInspectRequested where
-    parseJSON = A.withObject "RuntimeInspectRequested" $ \v ->
-         RuntimeInspectRequested <$> v .:  "object"
-            <*> v  .:  "hints"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
 
 instance ToJSON RuntimeInspectRequested  where
-    toJSON v = A.object
-        [ "object" .= runtimeInspectRequestedObject v
-        , "hints" .= runtimeInspectRequestedHints v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
 
 
 instance FromEvent Event RuntimeInspectRequested where
@@ -7089,20 +5053,12 @@ data RuntimeWebDriverValue = RuntimeWebDriverValue {
     runtimeWebDriverValueType :: String,
     runtimeWebDriverValueValue :: Maybe Int,
     runtimeWebDriverValueObjectId :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeWebDriverValue where
-    parseJSON = A.withObject "RuntimeWebDriverValue" $ \v ->
-         RuntimeWebDriverValue <$> v .:  "type"
-            <*> v  .:?  "value"
-            <*> v  .:?  "objectId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON RuntimeWebDriverValue  where
-    toJSON v = A.object
-        [ "type" .= runtimeWebDriverValueType v
-        , "value" .= runtimeWebDriverValueValue v
-        , "objectId" .= runtimeWebDriverValueObjectId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 
@@ -7118,28 +5074,12 @@ data RuntimeRemoteObject = RuntimeRemoteObject {
     runtimeRemoteObjectUnserializableValue :: Maybe RuntimeUnserializableValue,
     runtimeRemoteObjectDescription :: Maybe String,
     runtimeRemoteObjectObjectId :: Maybe RuntimeRemoteObjectId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeRemoteObject where
-    parseJSON = A.withObject "RuntimeRemoteObject" $ \v ->
-         RuntimeRemoteObject <$> v .:  "type"
-            <*> v  .:?  "subtype"
-            <*> v  .:?  "className"
-            <*> v  .:?  "value"
-            <*> v  .:?  "unserializableValue"
-            <*> v  .:?  "description"
-            <*> v  .:?  "objectId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 instance ToJSON RuntimeRemoteObject  where
-    toJSON v = A.object
-        [ "type" .= runtimeRemoteObjectType v
-        , "subtype" .= runtimeRemoteObjectSubtype v
-        , "className" .= runtimeRemoteObjectClassName v
-        , "value" .= runtimeRemoteObjectValue v
-        , "unserializableValue" .= runtimeRemoteObjectUnserializableValue v
-        , "description" .= runtimeRemoteObjectDescription v
-        , "objectId" .= runtimeRemoteObjectObjectId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
 
 
 
@@ -7154,52 +5094,24 @@ data RuntimePropertyDescriptor = RuntimePropertyDescriptor {
     runtimePropertyDescriptorWasThrown :: Maybe Bool,
     runtimePropertyDescriptorIsOwn :: Maybe Bool,
     runtimePropertyDescriptorSymbol :: Maybe RuntimeRemoteObject
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimePropertyDescriptor where
-    parseJSON = A.withObject "RuntimePropertyDescriptor" $ \v ->
-         RuntimePropertyDescriptor <$> v .:  "name"
-            <*> v  .:  "configurable"
-            <*> v  .:  "enumerable"
-            <*> v  .:?  "value"
-            <*> v  .:?  "writable"
-            <*> v  .:?  "get"
-            <*> v  .:?  "set"
-            <*> v  .:?  "wasThrown"
-            <*> v  .:?  "isOwn"
-            <*> v  .:?  "symbol"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 25 }
 
 instance ToJSON RuntimePropertyDescriptor  where
-    toJSON v = A.object
-        [ "name" .= runtimePropertyDescriptorName v
-        , "configurable" .= runtimePropertyDescriptorConfigurable v
-        , "enumerable" .= runtimePropertyDescriptorEnumerable v
-        , "value" .= runtimePropertyDescriptorValue v
-        , "writable" .= runtimePropertyDescriptorWritable v
-        , "get" .= runtimePropertyDescriptorGet v
-        , "set" .= runtimePropertyDescriptorSet v
-        , "wasThrown" .= runtimePropertyDescriptorWasThrown v
-        , "isOwn" .= runtimePropertyDescriptorIsOwn v
-        , "symbol" .= runtimePropertyDescriptorSymbol v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 25 , A.omitNothingFields = True}
 
 
 
 data RuntimeInternalPropertyDescriptor = RuntimeInternalPropertyDescriptor {
     runtimeInternalPropertyDescriptorName :: String,
     runtimeInternalPropertyDescriptorValue :: Maybe RuntimeRemoteObject
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeInternalPropertyDescriptor where
-    parseJSON = A.withObject "RuntimeInternalPropertyDescriptor" $ \v ->
-         RuntimeInternalPropertyDescriptor <$> v .:  "name"
-            <*> v  .:?  "value"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 33 }
 
 instance ToJSON RuntimeInternalPropertyDescriptor  where
-    toJSON v = A.object
-        [ "name" .= runtimeInternalPropertyDescriptorName v
-        , "value" .= runtimeInternalPropertyDescriptorValue v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 33 , A.omitNothingFields = True}
 
 
 
@@ -7207,20 +5119,12 @@ data RuntimeCallArgument = RuntimeCallArgument {
     runtimeCallArgumentValue :: Maybe Int,
     runtimeCallArgumentUnserializableValue :: Maybe RuntimeUnserializableValue,
     runtimeCallArgumentObjectId :: Maybe RuntimeRemoteObjectId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeCallArgument where
-    parseJSON = A.withObject "RuntimeCallArgument" $ \v ->
-         RuntimeCallArgument <$> v .:?  "value"
-            <*> v  .:?  "unserializableValue"
-            <*> v  .:?  "objectId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 instance ToJSON RuntimeCallArgument  where
-    toJSON v = A.object
-        [ "value" .= runtimeCallArgumentValue v
-        , "unserializableValue" .= runtimeCallArgumentUnserializableValue v
-        , "objectId" .= runtimeCallArgumentObjectId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
 
 
 
@@ -7231,22 +5135,12 @@ data RuntimeExecutionContextDescription = RuntimeExecutionContextDescription {
     runtimeExecutionContextDescriptionOrigin :: String,
     runtimeExecutionContextDescriptionName :: String,
     runtimeExecutionContextDescriptionAuxData :: Maybe [(String, String)]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeExecutionContextDescription where
-    parseJSON = A.withObject "RuntimeExecutionContextDescription" $ \v ->
-         RuntimeExecutionContextDescription <$> v .:  "id"
-            <*> v  .:  "origin"
-            <*> v  .:  "name"
-            <*> v  .:?  "auxData"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 34 }
 
 instance ToJSON RuntimeExecutionContextDescription  where
-    toJSON v = A.object
-        [ "id" .= runtimeExecutionContextDescriptionId v
-        , "origin" .= runtimeExecutionContextDescriptionOrigin v
-        , "name" .= runtimeExecutionContextDescriptionName v
-        , "auxData" .= runtimeExecutionContextDescriptionAuxData v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 34 , A.omitNothingFields = True}
 
 
 
@@ -7260,32 +5154,12 @@ data RuntimeExceptionDetails = RuntimeExceptionDetails {
     runtimeExceptionDetailsStackTrace :: Maybe RuntimeStackTrace,
     runtimeExceptionDetailsException :: Maybe RuntimeRemoteObject,
     runtimeExceptionDetailsExecutionContextId :: Maybe RuntimeExecutionContextId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeExceptionDetails where
-    parseJSON = A.withObject "RuntimeExceptionDetails" $ \v ->
-         RuntimeExceptionDetails <$> v .:  "exceptionId"
-            <*> v  .:  "text"
-            <*> v  .:  "lineNumber"
-            <*> v  .:  "columnNumber"
-            <*> v  .:?  "scriptId"
-            <*> v  .:?  "url"
-            <*> v  .:?  "stackTrace"
-            <*> v  .:?  "exception"
-            <*> v  .:?  "executionContextId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
 
 instance ToJSON RuntimeExceptionDetails  where
-    toJSON v = A.object
-        [ "exceptionId" .= runtimeExceptionDetailsExceptionId v
-        , "text" .= runtimeExceptionDetailsText v
-        , "lineNumber" .= runtimeExceptionDetailsLineNumber v
-        , "columnNumber" .= runtimeExceptionDetailsColumnNumber v
-        , "scriptId" .= runtimeExceptionDetailsScriptId v
-        , "url" .= runtimeExceptionDetailsUrl v
-        , "stackTrace" .= runtimeExceptionDetailsStackTrace v
-        , "exception" .= runtimeExceptionDetailsException v
-        , "executionContextId" .= runtimeExceptionDetailsExecutionContextId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
 
 
 
@@ -7299,24 +5173,12 @@ data RuntimeCallFrame = RuntimeCallFrame {
     runtimeCallFrameUrl :: String,
     runtimeCallFrameLineNumber :: Int,
     runtimeCallFrameColumnNumber :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeCallFrame where
-    parseJSON = A.withObject "RuntimeCallFrame" $ \v ->
-         RuntimeCallFrame <$> v .:  "functionName"
-            <*> v  .:  "scriptId"
-            <*> v  .:  "url"
-            <*> v  .:  "lineNumber"
-            <*> v  .:  "columnNumber"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
 
 instance ToJSON RuntimeCallFrame  where
-    toJSON v = A.object
-        [ "functionName" .= runtimeCallFrameFunctionName v
-        , "scriptId" .= runtimeCallFrameScriptId v
-        , "url" .= runtimeCallFrameUrl v
-        , "lineNumber" .= runtimeCallFrameLineNumber v
-        , "columnNumber" .= runtimeCallFrameColumnNumber v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
 
 
 
@@ -7324,31 +5186,20 @@ data RuntimeStackTrace = RuntimeStackTrace {
     runtimeStackTraceCallFrames :: [RuntimeCallFrame],
     runtimeStackTraceDescription :: Maybe String,
     runtimeStackTraceParent :: Maybe RuntimeStackTrace
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeStackTrace where
-    parseJSON = A.withObject "RuntimeStackTrace" $ \v ->
-         RuntimeStackTrace <$> v .:  "callFrames"
-            <*> v  .:?  "description"
-            <*> v  .:?  "parent"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
 
 instance ToJSON RuntimeStackTrace  where
-    toJSON v = A.object
-        [ "callFrames" .= runtimeStackTraceCallFrames v
-        , "description" .= runtimeStackTraceDescription v
-        , "parent" .= runtimeStackTraceParent v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
 
 
 data RuntimeAwaitPromise = RuntimeAwaitPromise {
     runtimeAwaitPromiseResult :: RuntimeRemoteObject,
     runtimeAwaitPromiseExceptionDetails :: Maybe RuntimeExceptionDetails
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeAwaitPromise where
-    parseJSON = A.withObject "RuntimeAwaitPromise" $ \v ->
-         RuntimeAwaitPromise <$> v .:  "result"
-            <*> v  .:?  "exceptionDetails"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 
 instance Command  RuntimeAwaitPromise where
@@ -7358,20 +5209,12 @@ data PRuntimeAwaitPromise = PRuntimeAwaitPromise {
     pRuntimeAwaitPromisePromiseObjectId :: RuntimeRemoteObjectId,
     pRuntimeAwaitPromiseReturnByValue :: Maybe Bool,
     pRuntimeAwaitPromiseGeneratePreview :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeAwaitPromise where
-    parseJSON = A.withObject "PRuntimeAwaitPromise" $ \v ->
-         PRuntimeAwaitPromise <$> v .:  "promiseObjectId"
-            <*> v  .:?  "returnByValue"
-            <*> v  .:?  "generatePreview"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
 
 instance ToJSON PRuntimeAwaitPromise  where
-    toJSON v = A.object
-        [ "promiseObjectId" .= pRuntimeAwaitPromisePromiseObjectId v
-        , "returnByValue" .= pRuntimeAwaitPromiseReturnByValue v
-        , "generatePreview" .= pRuntimeAwaitPromiseGeneratePreview v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
 
 
 runtimeAwaitPromise :: Session -> PRuntimeAwaitPromise -> IO (Either Error RuntimeAwaitPromise)
@@ -7380,12 +5223,9 @@ runtimeAwaitPromise session params = sendReceiveCommandResult session "Runtime.a
 data RuntimeCallFunctionOn = RuntimeCallFunctionOn {
     runtimeCallFunctionOnResult :: RuntimeRemoteObject,
     runtimeCallFunctionOnExceptionDetails :: Maybe RuntimeExceptionDetails
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeCallFunctionOn where
-    parseJSON = A.withObject "RuntimeCallFunctionOn" $ \v ->
-         RuntimeCallFunctionOn <$> v .:  "result"
-            <*> v  .:?  "exceptionDetails"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 
 instance Command  RuntimeCallFunctionOn where
@@ -7401,32 +5241,12 @@ data PRuntimeCallFunctionOn = PRuntimeCallFunctionOn {
     pRuntimeCallFunctionOnAwaitPromise :: Maybe Bool,
     pRuntimeCallFunctionOnExecutionContextId :: Maybe RuntimeExecutionContextId,
     pRuntimeCallFunctionOnObjectGroup :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeCallFunctionOn where
-    parseJSON = A.withObject "PRuntimeCallFunctionOn" $ \v ->
-         PRuntimeCallFunctionOn <$> v .:  "functionDeclaration"
-            <*> v  .:?  "objectId"
-            <*> v  .:?  "arguments"
-            <*> v  .:?  "silent"
-            <*> v  .:?  "returnByValue"
-            <*> v  .:?  "userGesture"
-            <*> v  .:?  "awaitPromise"
-            <*> v  .:?  "executionContextId"
-            <*> v  .:?  "objectGroup"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
 
 instance ToJSON PRuntimeCallFunctionOn  where
-    toJSON v = A.object
-        [ "functionDeclaration" .= pRuntimeCallFunctionOnFunctionDeclaration v
-        , "objectId" .= pRuntimeCallFunctionOnObjectId v
-        , "arguments" .= pRuntimeCallFunctionOnArguments v
-        , "silent" .= pRuntimeCallFunctionOnSilent v
-        , "returnByValue" .= pRuntimeCallFunctionOnReturnByValue v
-        , "userGesture" .= pRuntimeCallFunctionOnUserGesture v
-        , "awaitPromise" .= pRuntimeCallFunctionOnAwaitPromise v
-        , "executionContextId" .= pRuntimeCallFunctionOnExecutionContextId v
-        , "objectGroup" .= pRuntimeCallFunctionOnObjectGroup v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
 
 
 runtimeCallFunctionOn :: Session -> PRuntimeCallFunctionOn -> IO (Either Error RuntimeCallFunctionOn)
@@ -7435,12 +5255,9 @@ runtimeCallFunctionOn session params = sendReceiveCommandResult session "Runtime
 data RuntimeCompileScript = RuntimeCompileScript {
     runtimeCompileScriptScriptId :: Maybe RuntimeScriptId,
     runtimeCompileScriptExceptionDetails :: Maybe RuntimeExceptionDetails
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeCompileScript where
-    parseJSON = A.withObject "RuntimeCompileScript" $ \v ->
-         RuntimeCompileScript <$> v .:?  "scriptId"
-            <*> v  .:?  "exceptionDetails"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
 
 
 instance Command  RuntimeCompileScript where
@@ -7451,22 +5268,12 @@ data PRuntimeCompileScript = PRuntimeCompileScript {
     pRuntimeCompileScriptSourceUrl :: String,
     pRuntimeCompileScriptPersistScript :: Bool,
     pRuntimeCompileScriptExecutionContextId :: Maybe RuntimeExecutionContextId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeCompileScript where
-    parseJSON = A.withObject "PRuntimeCompileScript" $ \v ->
-         PRuntimeCompileScript <$> v .:  "expression"
-            <*> v  .:  "sourceURL"
-            <*> v  .:  "persistScript"
-            <*> v  .:?  "executionContextId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON PRuntimeCompileScript  where
-    toJSON v = A.object
-        [ "expression" .= pRuntimeCompileScriptExpression v
-        , "sourceURL" .= pRuntimeCompileScriptSourceUrl v
-        , "persistScript" .= pRuntimeCompileScriptPersistScript v
-        , "executionContextId" .= pRuntimeCompileScriptExecutionContextId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 runtimeCompileScript :: Session -> PRuntimeCompileScript -> IO (Either Error RuntimeCompileScript)
@@ -7493,12 +5300,9 @@ runtimeEnable session = sendReceiveCommand session "Runtime.enable" (Nothing :: 
 data RuntimeEvaluate = RuntimeEvaluate {
     runtimeEvaluateResult :: RuntimeRemoteObject,
     runtimeEvaluateExceptionDetails :: Maybe RuntimeExceptionDetails
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeEvaluate where
-    parseJSON = A.withObject "RuntimeEvaluate" $ \v ->
-         RuntimeEvaluate <$> v .:  "result"
-            <*> v  .:?  "exceptionDetails"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
 
 
 instance Command  RuntimeEvaluate where
@@ -7513,30 +5317,12 @@ data PRuntimeEvaluate = PRuntimeEvaluate {
     pRuntimeEvaluateReturnByValue :: Maybe Bool,
     pRuntimeEvaluateUserGesture :: Maybe Bool,
     pRuntimeEvaluateAwaitPromise :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeEvaluate where
-    parseJSON = A.withObject "PRuntimeEvaluate" $ \v ->
-         PRuntimeEvaluate <$> v .:  "expression"
-            <*> v  .:?  "objectGroup"
-            <*> v  .:?  "includeCommandLineAPI"
-            <*> v  .:?  "silent"
-            <*> v  .:?  "contextId"
-            <*> v  .:?  "returnByValue"
-            <*> v  .:?  "userGesture"
-            <*> v  .:?  "awaitPromise"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
 
 instance ToJSON PRuntimeEvaluate  where
-    toJSON v = A.object
-        [ "expression" .= pRuntimeEvaluateExpression v
-        , "objectGroup" .= pRuntimeEvaluateObjectGroup v
-        , "includeCommandLineAPI" .= pRuntimeEvaluateIncludeCommandLineApi v
-        , "silent" .= pRuntimeEvaluateSilent v
-        , "contextId" .= pRuntimeEvaluateContextId v
-        , "returnByValue" .= pRuntimeEvaluateReturnByValue v
-        , "userGesture" .= pRuntimeEvaluateUserGesture v
-        , "awaitPromise" .= pRuntimeEvaluateAwaitPromise v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
 
 
 runtimeEvaluate :: Session -> PRuntimeEvaluate -> IO (Either Error RuntimeEvaluate)
@@ -7546,13 +5332,9 @@ data RuntimeGetProperties = RuntimeGetProperties {
     runtimeGetPropertiesResult :: [RuntimePropertyDescriptor],
     runtimeGetPropertiesInternalProperties :: Maybe [RuntimeInternalPropertyDescriptor],
     runtimeGetPropertiesExceptionDetails :: Maybe RuntimeExceptionDetails
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeGetProperties where
-    parseJSON = A.withObject "RuntimeGetProperties" $ \v ->
-         RuntimeGetProperties <$> v .:  "result"
-            <*> v  .:?  "internalProperties"
-            <*> v  .:?  "exceptionDetails"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
 
 
 instance Command  RuntimeGetProperties where
@@ -7561,18 +5343,12 @@ instance Command  RuntimeGetProperties where
 data PRuntimeGetProperties = PRuntimeGetProperties {
     pRuntimeGetPropertiesObjectId :: RuntimeRemoteObjectId,
     pRuntimeGetPropertiesOwnProperties :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeGetProperties where
-    parseJSON = A.withObject "PRuntimeGetProperties" $ \v ->
-         PRuntimeGetProperties <$> v .:  "objectId"
-            <*> v  .:?  "ownProperties"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON PRuntimeGetProperties  where
-    toJSON v = A.object
-        [ "objectId" .= pRuntimeGetPropertiesObjectId v
-        , "ownProperties" .= pRuntimeGetPropertiesOwnProperties v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 runtimeGetProperties :: Session -> PRuntimeGetProperties -> IO (Either Error RuntimeGetProperties)
@@ -7580,11 +5356,9 @@ runtimeGetProperties session params = sendReceiveCommandResult session "Runtime.
 
 data RuntimeGlobalLexicalScopeNames = RuntimeGlobalLexicalScopeNames {
     runtimeGlobalLexicalScopeNamesNames :: [String]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeGlobalLexicalScopeNames where
-    parseJSON = A.withObject "RuntimeGlobalLexicalScopeNames" $ \v ->
-         RuntimeGlobalLexicalScopeNames <$> v .:  "names"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 30 }
 
 
 instance Command  RuntimeGlobalLexicalScopeNames where
@@ -7592,16 +5366,12 @@ instance Command  RuntimeGlobalLexicalScopeNames where
 
 data PRuntimeGlobalLexicalScopeNames = PRuntimeGlobalLexicalScopeNames {
     pRuntimeGlobalLexicalScopeNamesExecutionContextId :: Maybe RuntimeExecutionContextId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeGlobalLexicalScopeNames where
-    parseJSON = A.withObject "PRuntimeGlobalLexicalScopeNames" $ \v ->
-         PRuntimeGlobalLexicalScopeNames <$> v .:?  "executionContextId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 31 }
 
 instance ToJSON PRuntimeGlobalLexicalScopeNames  where
-    toJSON v = A.object
-        [ "executionContextId" .= pRuntimeGlobalLexicalScopeNamesExecutionContextId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 31 , A.omitNothingFields = True}
 
 
 runtimeGlobalLexicalScopeNames :: Session -> PRuntimeGlobalLexicalScopeNames -> IO (Either Error RuntimeGlobalLexicalScopeNames)
@@ -7609,11 +5379,9 @@ runtimeGlobalLexicalScopeNames session params = sendReceiveCommandResult session
 
 data RuntimeQueryObjects = RuntimeQueryObjects {
     runtimeQueryObjectsObjects :: RuntimeRemoteObject
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeQueryObjects where
-    parseJSON = A.withObject "RuntimeQueryObjects" $ \v ->
-         RuntimeQueryObjects <$> v .:  "objects"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
 
 
 instance Command  RuntimeQueryObjects where
@@ -7622,18 +5390,12 @@ instance Command  RuntimeQueryObjects where
 data PRuntimeQueryObjects = PRuntimeQueryObjects {
     pRuntimeQueryObjectsPrototypeObjectId :: RuntimeRemoteObjectId,
     pRuntimeQueryObjectsObjectGroup :: Maybe String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeQueryObjects where
-    parseJSON = A.withObject "PRuntimeQueryObjects" $ \v ->
-         PRuntimeQueryObjects <$> v .:  "prototypeObjectId"
-            <*> v  .:?  "objectGroup"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
 
 instance ToJSON PRuntimeQueryObjects  where
-    toJSON v = A.object
-        [ "prototypeObjectId" .= pRuntimeQueryObjectsPrototypeObjectId v
-        , "objectGroup" .= pRuntimeQueryObjectsObjectGroup v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
 
 
 runtimeQueryObjects :: Session -> PRuntimeQueryObjects -> IO (Either Error RuntimeQueryObjects)
@@ -7643,16 +5405,12 @@ runtimeQueryObjects session params = sendReceiveCommandResult session "Runtime.q
 
 data PRuntimeReleaseObject = PRuntimeReleaseObject {
     pRuntimeReleaseObjectObjectId :: RuntimeRemoteObjectId
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeReleaseObject where
-    parseJSON = A.withObject "PRuntimeReleaseObject" $ \v ->
-         PRuntimeReleaseObject <$> v .:  "objectId"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
 
 instance ToJSON PRuntimeReleaseObject  where
-    toJSON v = A.object
-        [ "objectId" .= pRuntimeReleaseObjectObjectId v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
 
 
 runtimeReleaseObject :: Session -> PRuntimeReleaseObject -> IO (Maybe Error)
@@ -7662,16 +5420,12 @@ runtimeReleaseObject session params = sendReceiveCommand session "Runtime.releas
 
 data PRuntimeReleaseObjectGroup = PRuntimeReleaseObjectGroup {
     pRuntimeReleaseObjectGroupObjectGroup :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeReleaseObjectGroup where
-    parseJSON = A.withObject "PRuntimeReleaseObjectGroup" $ \v ->
-         PRuntimeReleaseObjectGroup <$> v .:  "objectGroup"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
 
 instance ToJSON PRuntimeReleaseObjectGroup  where
-    toJSON v = A.object
-        [ "objectGroup" .= pRuntimeReleaseObjectGroupObjectGroup v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
 
 
 runtimeReleaseObjectGroup :: Session -> PRuntimeReleaseObjectGroup -> IO (Maybe Error)
@@ -7686,12 +5440,9 @@ runtimeRunIfWaitingForDebugger session = sendReceiveCommand session "Runtime.run
 data RuntimeRunScript = RuntimeRunScript {
     runtimeRunScriptResult :: RuntimeRemoteObject,
     runtimeRunScriptExceptionDetails :: Maybe RuntimeExceptionDetails
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeRunScript where
-    parseJSON = A.withObject "RuntimeRunScript" $ \v ->
-         RuntimeRunScript <$> v .:  "result"
-            <*> v  .:?  "exceptionDetails"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
 
 
 instance Command  RuntimeRunScript where
@@ -7706,30 +5457,12 @@ data PRuntimeRunScript = PRuntimeRunScript {
     pRuntimeRunScriptReturnByValue :: Maybe Bool,
     pRuntimeRunScriptGeneratePreview :: Maybe Bool,
     pRuntimeRunScriptAwaitPromise :: Maybe Bool
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeRunScript where
-    parseJSON = A.withObject "PRuntimeRunScript" $ \v ->
-         PRuntimeRunScript <$> v .:  "scriptId"
-            <*> v  .:?  "executionContextId"
-            <*> v  .:?  "objectGroup"
-            <*> v  .:?  "silent"
-            <*> v  .:?  "includeCommandLineAPI"
-            <*> v  .:?  "returnByValue"
-            <*> v  .:?  "generatePreview"
-            <*> v  .:?  "awaitPromise"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
 
 instance ToJSON PRuntimeRunScript  where
-    toJSON v = A.object
-        [ "scriptId" .= pRuntimeRunScriptScriptId v
-        , "executionContextId" .= pRuntimeRunScriptExecutionContextId v
-        , "objectGroup" .= pRuntimeRunScriptObjectGroup v
-        , "silent" .= pRuntimeRunScriptSilent v
-        , "includeCommandLineAPI" .= pRuntimeRunScriptIncludeCommandLineApi v
-        , "returnByValue" .= pRuntimeRunScriptReturnByValue v
-        , "generatePreview" .= pRuntimeRunScriptGeneratePreview v
-        , "awaitPromise" .= pRuntimeRunScriptAwaitPromise v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
 
 
 runtimeRunScript :: Session -> PRuntimeRunScript -> IO (Either Error RuntimeRunScript)
@@ -7739,16 +5472,12 @@ runtimeRunScript session params = sendReceiveCommandResult session "Runtime.runS
 
 data PRuntimeSetAsyncCallStackDepth = PRuntimeSetAsyncCallStackDepth {
     pRuntimeSetAsyncCallStackDepthMaxDepth :: Int
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeSetAsyncCallStackDepth where
-    parseJSON = A.withObject "PRuntimeSetAsyncCallStackDepth" $ \v ->
-         PRuntimeSetAsyncCallStackDepth <$> v .:  "maxDepth"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 30 }
 
 instance ToJSON PRuntimeSetAsyncCallStackDepth  where
-    toJSON v = A.object
-        [ "maxDepth" .= pRuntimeSetAsyncCallStackDepthMaxDepth v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 30 , A.omitNothingFields = True}
 
 
 runtimeSetAsyncCallStackDepth :: Session -> PRuntimeSetAsyncCallStackDepth -> IO (Maybe Error)
@@ -7760,27 +5489,19 @@ runtimeSetAsyncCallStackDepth session params = sendReceiveCommand session "Runti
 data SchemaDomain = SchemaDomain {
     schemaDomainName :: String,
     schemaDomainVersion :: String
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  SchemaDomain where
-    parseJSON = A.withObject "SchemaDomain" $ \v ->
-         SchemaDomain <$> v .:  "name"
-            <*> v  .:  "version"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 12 }
 
 instance ToJSON SchemaDomain  where
-    toJSON v = A.object
-        [ "name" .= schemaDomainName v
-        , "version" .= schemaDomainVersion v
-        ]
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 12 , A.omitNothingFields = True}
 
 
 data SchemaGetDomains = SchemaGetDomains {
     schemaGetDomainsDomains :: [SchemaDomain]
-} deriving (Eq, Show, Read)
+} deriving (Eq, Show, Read, Generic)
 instance FromJSON  SchemaGetDomains where
-    parseJSON = A.withObject "SchemaGetDomains" $ \v ->
-         SchemaGetDomains <$> v .:  "domains"
-
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
 
 
 instance Command  SchemaGetDomains where

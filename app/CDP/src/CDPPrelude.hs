@@ -194,13 +194,12 @@ untilJustLimit n act = do
 receiveResponse :: forall b. Command b => MVar CommandBuffer -> CommandId -> IO (Either Error (CommandResponse b))
 receiveResponse buffer id = do
     bs <- untilJust $ do -- :CONFIG
-            bsM <- Map.lookup id <$> readMVar buffer
-            if isNothing bsM
-                then threadDelay 1000 -- :CONFIG
-                else pure ()
+            updateCommandBufferM buffer $ \b -> do
+                let bsM = Map.lookup id b
+                if isNothing bsM
+                    then do threadDelay 1000; pure (b, bsM) -- :CONFIG
+                    else pure $ (Map.delete id b, bsM)
 
-            pure bsM
-    print bs
     pure $ maybe (Left ERRNoResponse) (either (Left . ERRParse) Right . A.eitherDecode) $ (Just bs)
 
 sendReceiveCommandResult' :: forall a b ev. (Show a, ToJSON a, Command b) => Session' ev -> String -> Maybe a -> IO (Either Error b)
@@ -272,6 +271,9 @@ dispatchCommandResponse commandBuffer res = do
             
 updateCommandBuffer :: MVar CommandBuffer -> (CommandBuffer -> CommandBuffer) -> IO ()
 updateCommandBuffer commandBuffer f = ($ pure . f) . modifyMVar_ $ commandBuffer
+
+updateCommandBufferM :: MVar CommandBuffer -> (CommandBuffer -> IO (CommandBuffer, a)) -> IO a
+updateCommandBufferM = modifyMVar
 
 dispatchEventResponse :: forall ev. FromJSONEvent ev => MVar (Map.Map String (ev -> IO ())) -> BS.ByteString -> IO ()
 dispatchEventResponse handlers res = do

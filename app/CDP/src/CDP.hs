@@ -43,6 +43,7 @@ import qualified Data.Map as Map
 import Data.Proxy
 import System.Random
 import GHC.Generics
+import Data.Char
 
 import CDPPrelude
 
@@ -64,6 +65,9 @@ sendReceiveCommand session = sendReceiveCommand' (unSession session)
 
 sendReceiveCommandResult :: forall a b s. (Show a, ToJSON a, Command b) => Session -> String -> Maybe a -> IO (Either Error b)
 sendReceiveCommandResult session = sendReceiveCommandResult' (unSession session)
+
+uncapitalizeFirst [] = []
+uncapitalizeFirst (hd:tl) = toLower hd : tl
 
 
 data Event = EVDOMAttributeModified DOMAttributeModified | EVDOMAttributeRemoved DOMAttributeRemoved | EVDOMCharacterDataModified DOMCharacterDataModified | EVDOMChildNodeCountUpdated DOMChildNodeCountUpdated | EVDOMChildNodeInserted DOMChildNodeInserted | EVDOMChildNodeRemoved DOMChildNodeRemoved | EVDOMDocumentUpdated DOMDocumentUpdated | EVDOMSetChildNodes DOMSetChildNodes | EVLogEntryAdded LogEntryAdded | EVNetworkDataReceived NetworkDataReceived | EVNetworkEventSourceMessageReceived NetworkEventSourceMessageReceived | EVNetworkLoadingFailed NetworkLoadingFailed | EVNetworkLoadingFinished NetworkLoadingFinished | EVNetworkRequestServedFromCache NetworkRequestServedFromCache | EVNetworkRequestWillBeSent NetworkRequestWillBeSent | EVNetworkResponseReceived NetworkResponseReceived | EVNetworkWebSocketClosed NetworkWebSocketClosed | EVNetworkWebSocketCreated NetworkWebSocketCreated | EVNetworkWebSocketFrameError NetworkWebSocketFrameError | EVNetworkWebSocketFrameReceived NetworkWebSocketFrameReceived | EVNetworkWebSocketFrameSent NetworkWebSocketFrameSent | EVNetworkWebSocketHandshakeResponseReceived NetworkWebSocketHandshakeResponseReceived | EVNetworkWebSocketWillSendHandshakeRequest NetworkWebSocketWillSendHandshakeRequest | EVNetworkWebTransportCreated NetworkWebTransportCreated | EVNetworkWebTransportConnectionEstablished NetworkWebTransportConnectionEstablished | EVNetworkWebTransportClosed NetworkWebTransportClosed | EVPageDomContentEventFired PageDomContentEventFired | EVPageFileChooserOpened PageFileChooserOpened | EVPageFrameAttached PageFrameAttached | EVPageFrameDetached PageFrameDetached | EVPageFrameNavigated PageFrameNavigated | EVPageInterstitialHidden PageInterstitialHidden | EVPageInterstitialShown PageInterstitialShown | EVPageJavascriptDialogClosed PageJavascriptDialogClosed | EVPageJavascriptDialogOpening PageJavascriptDialogOpening | EVPageLifecycleEvent PageLifecycleEvent | EVPagePrerenderAttemptCompleted PagePrerenderAttemptCompleted | EVPageLoadEventFired PageLoadEventFired | EVPageWindowOpen PageWindowOpen | EVPerformanceMetrics PerformanceMetrics | EVTargetReceivedMessageFromTarget TargetReceivedMessageFromTarget | EVTargetTargetCreated TargetTargetCreated | EVTargetTargetDestroyed TargetTargetDestroyed | EVTargetTargetCrashed TargetTargetCrashed | EVTargetTargetInfoChanged TargetTargetInfoChanged | EVFetchRequestPaused FetchRequestPaused | EVFetchAuthRequired FetchAuthRequired | EVConsoleMessageAdded ConsoleMessageAdded | EVDebuggerBreakpointResolved DebuggerBreakpointResolved | EVDebuggerPaused DebuggerPaused | EVDebuggerResumed DebuggerResumed | EVDebuggerScriptFailedToParse DebuggerScriptFailedToParse | EVDebuggerScriptParsed DebuggerScriptParsed | EVProfilerConsoleProfileFinished ProfilerConsoleProfileFinished | EVProfilerConsoleProfileStarted ProfilerConsoleProfileStarted | EVRuntimeConsoleApiCalled RuntimeConsoleApiCalled | EVRuntimeExceptionRevoked RuntimeExceptionRevoked | EVRuntimeExceptionThrown RuntimeExceptionThrown | EVRuntimeExecutionContextCreated RuntimeExecutionContextCreated | EVRuntimeExecutionContextDestroyed RuntimeExecutionContextDestroyed | EVRuntimeExecutionContextsCleared RuntimeExecutionContextsCleared | EVRuntimeInspectRequested RuntimeInspectRequested
@@ -152,7 +156,7 @@ data BrowserGetVersion = BrowserGetVersion {
     browserGetVersionJsVersion :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  BrowserGetVersion where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
 instance Command  BrowserGetVersion where
@@ -165,15 +169,15 @@ browserGetVersion session = sendReceiveCommandResult session "Browser.getVersion
 
 
 data DOMAttributeModified = DOMAttributeModified {
-    domAttributeModifiedNodeId :: DOMNodeId,
-    domAttributeModifiedName :: String,
-    domAttributeModifiedValue :: String
+    dOMAttributeModifiedNodeId :: DOMNodeId,
+    dOMAttributeModifiedName :: String,
+    dOMAttributeModifiedValue :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMAttributeModified where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 instance ToJSON DOMAttributeModified  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DOMAttributeModified where
@@ -181,14 +185,14 @@ instance FromEvent Event DOMAttributeModified where
     fromEvent ev =  case ev of EVDOMAttributeModified v -> Just v; _ -> Nothing
 
 data DOMAttributeRemoved = DOMAttributeRemoved {
-    domAttributeRemovedNodeId :: DOMNodeId,
-    domAttributeRemovedName :: String
+    dOMAttributeRemovedNodeId :: DOMNodeId,
+    dOMAttributeRemovedName :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMAttributeRemoved where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 instance ToJSON DOMAttributeRemoved  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DOMAttributeRemoved where
@@ -196,14 +200,14 @@ instance FromEvent Event DOMAttributeRemoved where
     fromEvent ev =  case ev of EVDOMAttributeRemoved v -> Just v; _ -> Nothing
 
 data DOMCharacterDataModified = DOMCharacterDataModified {
-    domCharacterDataModifiedNodeId :: DOMNodeId,
-    domCharacterDataModifiedCharacterData :: String
+    dOMCharacterDataModifiedNodeId :: DOMNodeId,
+    dOMCharacterDataModifiedCharacterData :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMCharacterDataModified where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance ToJSON DOMCharacterDataModified  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DOMCharacterDataModified where
@@ -211,14 +215,14 @@ instance FromEvent Event DOMCharacterDataModified where
     fromEvent ev =  case ev of EVDOMCharacterDataModified v -> Just v; _ -> Nothing
 
 data DOMChildNodeCountUpdated = DOMChildNodeCountUpdated {
-    domChildNodeCountUpdatedNodeId :: DOMNodeId,
-    domChildNodeCountUpdatedChildNodeCount :: Int
+    dOMChildNodeCountUpdatedNodeId :: DOMNodeId,
+    dOMChildNodeCountUpdatedChildNodeCount :: Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMChildNodeCountUpdated where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance ToJSON DOMChildNodeCountUpdated  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DOMChildNodeCountUpdated where
@@ -226,15 +230,15 @@ instance FromEvent Event DOMChildNodeCountUpdated where
     fromEvent ev =  case ev of EVDOMChildNodeCountUpdated v -> Just v; _ -> Nothing
 
 data DOMChildNodeInserted = DOMChildNodeInserted {
-    domChildNodeInsertedParentNodeId :: DOMNodeId,
-    domChildNodeInsertedPreviousNodeId :: DOMNodeId,
-    domChildNodeInsertedNode :: DOMNode
+    dOMChildNodeInsertedParentNodeId :: DOMNodeId,
+    dOMChildNodeInsertedPreviousNodeId :: DOMNodeId,
+    dOMChildNodeInsertedNode :: DOMNode
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMChildNodeInserted where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 instance ToJSON DOMChildNodeInserted  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DOMChildNodeInserted where
@@ -242,14 +246,14 @@ instance FromEvent Event DOMChildNodeInserted where
     fromEvent ev =  case ev of EVDOMChildNodeInserted v -> Just v; _ -> Nothing
 
 data DOMChildNodeRemoved = DOMChildNodeRemoved {
-    domChildNodeRemovedParentNodeId :: DOMNodeId,
-    domChildNodeRemovedNodeId :: DOMNodeId
+    dOMChildNodeRemovedParentNodeId :: DOMNodeId,
+    dOMChildNodeRemovedNodeId :: DOMNodeId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMChildNodeRemoved where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 instance ToJSON DOMChildNodeRemoved  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DOMChildNodeRemoved where
@@ -269,14 +273,14 @@ instance FromEvent Event DOMDocumentUpdated where
     fromEvent ev =  case ev of EVDOMDocumentUpdated v -> Just v; _ -> Nothing
 
 data DOMSetChildNodes = DOMSetChildNodes {
-    domSetChildNodesParentId :: DOMNodeId,
-    domSetChildNodesNodes :: [DOMNode]
+    dOMSetChildNodesParentId :: DOMNodeId,
+    dOMSetChildNodesNodes :: [DOMNode]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMSetChildNodes where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 instance ToJSON DOMSetChildNodes  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DOMSetChildNodes where
@@ -289,15 +293,15 @@ type DOMNodeId = Int
 type DOMBackendNodeId = Int
 
 data DOMBackendNode = DOMBackendNode {
-    domBackendNodeNodeType :: Int,
-    domBackendNodeNodeName :: String,
-    domBackendNodeBackendNodeId :: DOMBackendNodeId
+    dOMBackendNodeNodeType :: Int,
+    dOMBackendNodeNodeName :: String,
+    dOMBackendNodeBackendNodeId :: DOMBackendNodeId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMBackendNode where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 instance ToJSON DOMBackendNode  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 14 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
 
 
 
@@ -403,137 +407,137 @@ instance ToJSON DOMCompatibilityMode where
 
 
 data DOMNode = DOMNode {
-    domNodeNodeId :: DOMNodeId,
-    domNodeBackendNodeId :: DOMBackendNodeId,
-    domNodeNodeType :: Int,
-    domNodeNodeName :: String,
-    domNodeLocalName :: String,
-    domNodeNodeValue :: String,
-    domNodeParentId :: Maybe DOMNodeId,
-    domNodeChildNodeCount :: Maybe Int,
-    domNodeChildren :: Maybe [DOMNode],
-    domNodeAttributes :: Maybe [String],
-    domNodeDocumentUrl :: Maybe String,
-    domNodeBaseUrl :: Maybe String,
-    domNodePublicId :: Maybe String,
-    domNodeSystemId :: Maybe String,
-    domNodeInternalSubset :: Maybe String,
-    domNodeXmlVersion :: Maybe String,
-    domNodeName :: Maybe String,
-    domNodeValue :: Maybe String,
-    domNodePseudoType :: Maybe DOMPseudoType,
-    domNodeShadowRootType :: Maybe DOMShadowRootType,
-    domNodeFrameId :: Maybe PageFrameId,
-    domNodeContentDocument :: Maybe DOMNode,
-    domNodeShadowRoots :: Maybe [DOMNode],
-    domNodeTemplateContent :: Maybe DOMNode,
-    domNodePseudoElements :: Maybe [DOMNode],
-    domNodeDistributedNodes :: Maybe [DOMBackendNode],
-    domNodeIsSvg :: Maybe Bool,
-    domNodeCompatibilityMode :: Maybe DOMCompatibilityMode,
-    domNodeAssignedSlot :: Maybe DOMBackendNode
+    dOMNodeNodeId :: DOMNodeId,
+    dOMNodeBackendNodeId :: DOMBackendNodeId,
+    dOMNodeNodeType :: Int,
+    dOMNodeNodeName :: String,
+    dOMNodeLocalName :: String,
+    dOMNodeNodeValue :: String,
+    dOMNodeParentId :: Maybe DOMNodeId,
+    dOMNodeChildNodeCount :: Maybe Int,
+    dOMNodeChildren :: Maybe [DOMNode],
+    dOMNodeAttributes :: Maybe [String],
+    dOMNodeDocumentURL :: Maybe String,
+    dOMNodeBaseURL :: Maybe String,
+    dOMNodePublicId :: Maybe String,
+    dOMNodeSystemId :: Maybe String,
+    dOMNodeInternalSubset :: Maybe String,
+    dOMNodeXmlVersion :: Maybe String,
+    dOMNodeName :: Maybe String,
+    dOMNodeValue :: Maybe String,
+    dOMNodePseudoType :: Maybe DOMPseudoType,
+    dOMNodeShadowRootType :: Maybe DOMShadowRootType,
+    dOMNodeFrameId :: Maybe PageFrameId,
+    dOMNodeContentDocument :: Maybe DOMNode,
+    dOMNodeShadowRoots :: Maybe [DOMNode],
+    dOMNodeTemplateContent :: Maybe DOMNode,
+    dOMNodePseudoElements :: Maybe [DOMNode],
+    dOMNodeDistributedNodes :: Maybe [DOMBackendNode],
+    dOMNodeIsSVG :: Maybe Bool,
+    dOMNodeCompatibilityMode :: Maybe DOMCompatibilityMode,
+    dOMNodeAssignedSlot :: Maybe DOMBackendNode
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMNode where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 7 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 }
 
 instance ToJSON DOMNode  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 7 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 , A.omitNothingFields = True}
 
 
 
 data DOMRGBA = DOMRGBA {
-    domrgbar :: Int,
-    domrgbag :: Int,
-    domrgbab :: Int,
-    domrgbaa :: Maybe Int
+    dOMRGBAR :: Int,
+    dOMRGBAG :: Int,
+    dOMRGBAB :: Int,
+    dOMRGBAA :: Maybe Double
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMRGBA where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 7 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 }
 
 instance ToJSON DOMRGBA  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 7 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 , A.omitNothingFields = True}
 
 
 
-type DOMQuad = [Int]
+type DOMQuad = [Double]
 
 data DOMBoxModel = DOMBoxModel {
-    domBoxModelContent :: DOMQuad,
-    domBoxModelPadding :: DOMQuad,
-    domBoxModelBorder :: DOMQuad,
-    domBoxModelMargin :: DOMQuad,
-    domBoxModelWidth :: Int,
-    domBoxModelHeight :: Int,
-    domBoxModelShapeOutside :: Maybe DOMShapeOutsideInfo
+    dOMBoxModelContent :: DOMQuad,
+    dOMBoxModelPadding :: DOMQuad,
+    dOMBoxModelBorder :: DOMQuad,
+    dOMBoxModelMargin :: DOMQuad,
+    dOMBoxModelWidth :: Int,
+    dOMBoxModelHeight :: Int,
+    dOMBoxModelShapeOutside :: Maybe DOMShapeOutsideInfo
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMBoxModel where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 11 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 }
 
 instance ToJSON DOMBoxModel  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 11 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 , A.omitNothingFields = True}
 
 
 
 data DOMShapeOutsideInfo = DOMShapeOutsideInfo {
-    domShapeOutsideInfoBounds :: DOMQuad,
-    domShapeOutsideInfoShape :: [Int],
-    domShapeOutsideInfoMarginShape :: [Int]
+    dOMShapeOutsideInfoBounds :: DOMQuad,
+    dOMShapeOutsideInfoShape :: [Int],
+    dOMShapeOutsideInfoMarginShape :: [Int]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMShapeOutsideInfo where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 instance ToJSON DOMShapeOutsideInfo  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 
 
 data DOMRect = DOMRect {
-    domRectX :: Int,
-    domRectY :: Int,
-    domRectWidth :: Int,
-    domRectHeight :: Int
+    dOMRectX :: Double,
+    dOMRectY :: Double,
+    dOMRectWidth :: Double,
+    dOMRectHeight :: Double
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMRect where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 7 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 }
 
 instance ToJSON DOMRect  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 7 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 , A.omitNothingFields = True}
 
 
 
 data DOMCSSComputedStyleProperty = DOMCSSComputedStyleProperty {
-    domcssComputedStylePropertyName :: String,
-    domcssComputedStylePropertyValue :: String
+    dOMCSSComputedStylePropertyName :: String,
+    dOMCSSComputedStylePropertyValue :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMCSSComputedStyleProperty where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 instance ToJSON DOMCSSComputedStyleProperty  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 27 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
 
 data DOMDescribeNode = DOMDescribeNode {
     dOMDescribeNodeNode :: DOMNode
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMDescribeNode where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
 instance Command  DOMDescribeNode where
     commandName _ = "DOM.describeNode"
 
 data PDOMDescribeNode = PDOMDescribeNode {
-    pdomDescribeNodeNodeId :: Maybe DOMNodeId,
-    pdomDescribeNodeBackendNodeId :: Maybe DOMBackendNodeId,
-    pdomDescribeNodeObjectId :: Maybe RuntimeRemoteObjectId,
-    pdomDescribeNodeDepth :: Maybe Int,
-    pdomDescribeNodePierce :: Maybe Bool
+    pDOMDescribeNodeNodeId :: Maybe DOMNodeId,
+    pDOMDescribeNodeBackendNodeId :: Maybe DOMBackendNodeId,
+    pDOMDescribeNodeObjectId :: Maybe RuntimeRemoteObjectId,
+    pDOMDescribeNodeDepth :: Maybe Int,
+    pDOMDescribeNodePierce :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMDescribeNode where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 instance ToJSON PDOMDescribeNode  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
 
 dOMDescribeNode :: Session -> PDOMDescribeNode -> IO (Either Error DOMDescribeNode)
@@ -554,15 +558,15 @@ dOMEnable session = sendReceiveCommand session "DOM.enable" (Nothing :: Maybe ()
 
 
 data PDOMFocus = PDOMFocus {
-    pdomFocusNodeId :: Maybe DOMNodeId,
-    pdomFocusBackendNodeId :: Maybe DOMBackendNodeId,
-    pdomFocusObjectId :: Maybe RuntimeRemoteObjectId
+    pDOMFocusNodeId :: Maybe DOMNodeId,
+    pDOMFocusBackendNodeId :: Maybe DOMBackendNodeId,
+    pDOMFocusObjectId :: Maybe RuntimeRemoteObjectId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMFocus where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 9 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 9 }
 
 instance ToJSON PDOMFocus  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 9 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 9 , A.omitNothingFields = True}
 
 
 dOMFocus :: Session -> PDOMFocus -> IO (Maybe Error)
@@ -572,20 +576,20 @@ data DOMGetAttributes = DOMGetAttributes {
     dOMGetAttributesAttributes :: [String]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMGetAttributes where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
 instance Command  DOMGetAttributes where
     commandName _ = "DOM.getAttributes"
 
 data PDOMGetAttributes = PDOMGetAttributes {
-    pdomGetAttributesNodeId :: DOMNodeId
+    pDOMGetAttributesNodeId :: DOMNodeId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMGetAttributes where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 instance ToJSON PDOMGetAttributes  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
 
 dOMGetAttributes :: Session -> PDOMGetAttributes -> IO (Either Error DOMGetAttributes)
@@ -595,22 +599,22 @@ data DOMGetBoxModel = DOMGetBoxModel {
     dOMGetBoxModelModel :: DOMBoxModel
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMGetBoxModel where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
 instance Command  DOMGetBoxModel where
     commandName _ = "DOM.getBoxModel"
 
 data PDOMGetBoxModel = PDOMGetBoxModel {
-    pdomGetBoxModelNodeId :: Maybe DOMNodeId,
-    pdomGetBoxModelBackendNodeId :: Maybe DOMBackendNodeId,
-    pdomGetBoxModelObjectId :: Maybe RuntimeRemoteObjectId
+    pDOMGetBoxModelNodeId :: Maybe DOMNodeId,
+    pDOMGetBoxModelBackendNodeId :: Maybe DOMBackendNodeId,
+    pDOMGetBoxModelObjectId :: Maybe RuntimeRemoteObjectId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMGetBoxModel where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 instance ToJSON PDOMGetBoxModel  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
 
 dOMGetBoxModel :: Session -> PDOMGetBoxModel -> IO (Either Error DOMGetBoxModel)
@@ -620,21 +624,21 @@ data DOMGetDocument = DOMGetDocument {
     dOMGetDocumentRoot :: DOMNode
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMGetDocument where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
 instance Command  DOMGetDocument where
     commandName _ = "DOM.getDocument"
 
 data PDOMGetDocument = PDOMGetDocument {
-    pdomGetDocumentDepth :: Maybe Int,
-    pdomGetDocumentPierce :: Maybe Bool
+    pDOMGetDocumentDepth :: Maybe Int,
+    pDOMGetDocumentPierce :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMGetDocument where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 instance ToJSON PDOMGetDocument  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
 
 dOMGetDocument :: Session -> PDOMGetDocument -> IO (Either Error DOMGetDocument)
@@ -646,23 +650,23 @@ data DOMGetNodeForLocation = DOMGetNodeForLocation {
     dOMGetNodeForLocationNodeId :: Maybe DOMNodeId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMGetNodeForLocation where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
 instance Command  DOMGetNodeForLocation where
     commandName _ = "DOM.getNodeForLocation"
 
 data PDOMGetNodeForLocation = PDOMGetNodeForLocation {
-    pdomGetNodeForLocationX :: Int,
-    pdomGetNodeForLocationY :: Int,
-    pdomGetNodeForLocationIncludeUserAgentShadowDom :: Maybe Bool,
-    pdomGetNodeForLocationIgnorePointerEventsNone :: Maybe Bool
+    pDOMGetNodeForLocationX :: Int,
+    pDOMGetNodeForLocationY :: Int,
+    pDOMGetNodeForLocationIncludeUserAgentShadowDOM :: Maybe Bool,
+    pDOMGetNodeForLocationIgnorePointerEventsNone :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMGetNodeForLocation where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 instance ToJSON PDOMGetNodeForLocation  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
 
 dOMGetNodeForLocation :: Session -> PDOMGetNodeForLocation -> IO (Either Error DOMGetNodeForLocation)
@@ -672,22 +676,22 @@ data DOMGetOuterHtml = DOMGetOuterHtml {
     dOMGetOuterHtmlOuterHtml :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMGetOuterHtml where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
 instance Command  DOMGetOuterHtml where
     commandName _ = "DOM.getOuterHTML"
 
 data PDOMGetOuterHtml = PDOMGetOuterHtml {
-    pdomGetOuterHtmlNodeId :: Maybe DOMNodeId,
-    pdomGetOuterHtmlBackendNodeId :: Maybe DOMBackendNodeId,
-    pdomGetOuterHtmlObjectId :: Maybe RuntimeRemoteObjectId
+    pDOMGetOuterHtmlNodeId :: Maybe DOMNodeId,
+    pDOMGetOuterHtmlBackendNodeId :: Maybe DOMBackendNodeId,
+    pDOMGetOuterHtmlObjectId :: Maybe RuntimeRemoteObjectId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMGetOuterHtml where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 instance ToJSON PDOMGetOuterHtml  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
 
 dOMGetOuterHtml :: Session -> PDOMGetOuterHtml -> IO (Either Error DOMGetOuterHtml)
@@ -715,22 +719,22 @@ data DOMMoveTo = DOMMoveTo {
     dOMMoveToNodeId :: DOMNodeId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMMoveTo where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 9 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 9 }
 
 
 instance Command  DOMMoveTo where
     commandName _ = "DOM.moveTo"
 
 data PDOMMoveTo = PDOMMoveTo {
-    pdomMoveToNodeId :: DOMNodeId,
-    pdomMoveToTargetNodeId :: DOMNodeId,
-    pdomMoveToInsertBeforeNodeId :: Maybe DOMNodeId
+    pDOMMoveToNodeId :: DOMNodeId,
+    pDOMMoveToTargetNodeId :: DOMNodeId,
+    pDOMMoveToInsertBeforeNodeId :: Maybe DOMNodeId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMMoveTo where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 10 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 }
 
 instance ToJSON PDOMMoveTo  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 10 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 , A.omitNothingFields = True}
 
 
 dOMMoveTo :: Session -> PDOMMoveTo -> IO (Either Error DOMMoveTo)
@@ -740,21 +744,21 @@ data DOMQuerySelector = DOMQuerySelector {
     dOMQuerySelectorNodeId :: DOMNodeId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMQuerySelector where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
 instance Command  DOMQuerySelector where
     commandName _ = "DOM.querySelector"
 
 data PDOMQuerySelector = PDOMQuerySelector {
-    pdomQuerySelectorNodeId :: DOMNodeId,
-    pdomQuerySelectorSelector :: String
+    pDOMQuerySelectorNodeId :: DOMNodeId,
+    pDOMQuerySelectorSelector :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMQuerySelector where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 instance ToJSON PDOMQuerySelector  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
 
 dOMQuerySelector :: Session -> PDOMQuerySelector -> IO (Either Error DOMQuerySelector)
@@ -764,21 +768,21 @@ data DOMQuerySelectorAll = DOMQuerySelectorAll {
     dOMQuerySelectorAllNodeIds :: [DOMNodeId]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMQuerySelectorAll where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
 instance Command  DOMQuerySelectorAll where
     commandName _ = "DOM.querySelectorAll"
 
 data PDOMQuerySelectorAll = PDOMQuerySelectorAll {
-    pdomQuerySelectorAllNodeId :: DOMNodeId,
-    pdomQuerySelectorAllSelector :: String
+    pDOMQuerySelectorAllNodeId :: DOMNodeId,
+    pDOMQuerySelectorAllSelector :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMQuerySelectorAll where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 instance ToJSON PDOMQuerySelectorAll  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
 
 dOMQuerySelectorAll :: Session -> PDOMQuerySelectorAll -> IO (Either Error DOMQuerySelectorAll)
@@ -787,14 +791,14 @@ dOMQuerySelectorAll session params = sendReceiveCommandResult session "DOM.query
 
 
 data PDOMRemoveAttribute = PDOMRemoveAttribute {
-    pdomRemoveAttributeNodeId :: DOMNodeId,
-    pdomRemoveAttributeName :: String
+    pDOMRemoveAttributeNodeId :: DOMNodeId,
+    pDOMRemoveAttributeName :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMRemoveAttribute where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 instance ToJSON PDOMRemoveAttribute  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 
 dOMRemoveAttribute :: Session -> PDOMRemoveAttribute -> IO (Maybe Error)
@@ -803,13 +807,13 @@ dOMRemoveAttribute session params = sendReceiveCommand session "DOM.removeAttrib
 
 
 data PDOMRemoveNode = PDOMRemoveNode {
-    pdomRemoveNodeNodeId :: DOMNodeId
+    pDOMRemoveNodeNodeId :: DOMNodeId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMRemoveNode where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 instance ToJSON PDOMRemoveNode  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 14 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
 
 
 dOMRemoveNode :: Session -> PDOMRemoveNode -> IO (Maybe Error)
@@ -818,15 +822,15 @@ dOMRemoveNode session params = sendReceiveCommand session "DOM.removeNode" (Just
 
 
 data PDOMRequestChildNodes = PDOMRequestChildNodes {
-    pdomRequestChildNodesNodeId :: DOMNodeId,
-    pdomRequestChildNodesDepth :: Maybe Int,
-    pdomRequestChildNodesPierce :: Maybe Bool
+    pDOMRequestChildNodesNodeId :: DOMNodeId,
+    pDOMRequestChildNodesDepth :: Maybe Int,
+    pDOMRequestChildNodesPierce :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMRequestChildNodes where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON PDOMRequestChildNodes  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 dOMRequestChildNodes :: Session -> PDOMRequestChildNodes -> IO (Maybe Error)
@@ -836,20 +840,20 @@ data DOMRequestNode = DOMRequestNode {
     dOMRequestNodeNodeId :: DOMNodeId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMRequestNode where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
 instance Command  DOMRequestNode where
     commandName _ = "DOM.requestNode"
 
 data PDOMRequestNode = PDOMRequestNode {
-    pdomRequestNodeObjectId :: RuntimeRemoteObjectId
+    pDOMRequestNodeObjectId :: RuntimeRemoteObjectId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMRequestNode where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 instance ToJSON PDOMRequestNode  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
 
 dOMRequestNode :: Session -> PDOMRequestNode -> IO (Either Error DOMRequestNode)
@@ -859,23 +863,23 @@ data DOMResolveNode = DOMResolveNode {
     dOMResolveNodeObject :: RuntimeRemoteObject
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMResolveNode where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
 instance Command  DOMResolveNode where
     commandName _ = "DOM.resolveNode"
 
 data PDOMResolveNode = PDOMResolveNode {
-    pdomResolveNodeNodeId :: Maybe DOMNodeId,
-    pdomResolveNodeBackendNodeId :: Maybe DOMBackendNodeId,
-    pdomResolveNodeObjectGroup :: Maybe String,
-    pdomResolveNodeExecutionContextId :: Maybe RuntimeExecutionContextId
+    pDOMResolveNodeNodeId :: Maybe DOMNodeId,
+    pDOMResolveNodeBackendNodeId :: Maybe DOMBackendNodeId,
+    pDOMResolveNodeObjectGroup :: Maybe String,
+    pDOMResolveNodeExecutionContextId :: Maybe RuntimeExecutionContextId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMResolveNode where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 instance ToJSON PDOMResolveNode  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
 
 dOMResolveNode :: Session -> PDOMResolveNode -> IO (Either Error DOMResolveNode)
@@ -884,15 +888,15 @@ dOMResolveNode session params = sendReceiveCommandResult session "DOM.resolveNod
 
 
 data PDOMSetAttributeValue = PDOMSetAttributeValue {
-    pdomSetAttributeValueNodeId :: DOMNodeId,
-    pdomSetAttributeValueName :: String,
-    pdomSetAttributeValueValue :: String
+    pDOMSetAttributeValueNodeId :: DOMNodeId,
+    pDOMSetAttributeValueName :: String,
+    pDOMSetAttributeValueValue :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMSetAttributeValue where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON PDOMSetAttributeValue  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 dOMSetAttributeValue :: Session -> PDOMSetAttributeValue -> IO (Maybe Error)
@@ -901,15 +905,15 @@ dOMSetAttributeValue session params = sendReceiveCommand session "DOM.setAttribu
 
 
 data PDOMSetAttributesAsText = PDOMSetAttributesAsText {
-    pdomSetAttributesAsTextNodeId :: DOMNodeId,
-    pdomSetAttributesAsTextText :: String,
-    pdomSetAttributesAsTextName :: Maybe String
+    pDOMSetAttributesAsTextNodeId :: DOMNodeId,
+    pDOMSetAttributesAsTextText :: String,
+    pDOMSetAttributesAsTextName :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMSetAttributesAsText where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 instance ToJSON PDOMSetAttributesAsText  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
 
 dOMSetAttributesAsText :: Session -> PDOMSetAttributesAsText -> IO (Maybe Error)
@@ -918,16 +922,16 @@ dOMSetAttributesAsText session params = sendReceiveCommand session "DOM.setAttri
 
 
 data PDOMSetFileInputFiles = PDOMSetFileInputFiles {
-    pdomSetFileInputFilesFiles :: [String],
-    pdomSetFileInputFilesNodeId :: Maybe DOMNodeId,
-    pdomSetFileInputFilesBackendNodeId :: Maybe DOMBackendNodeId,
-    pdomSetFileInputFilesObjectId :: Maybe RuntimeRemoteObjectId
+    pDOMSetFileInputFilesFiles :: [String],
+    pDOMSetFileInputFilesNodeId :: Maybe DOMNodeId,
+    pDOMSetFileInputFilesBackendNodeId :: Maybe DOMBackendNodeId,
+    pDOMSetFileInputFilesObjectId :: Maybe RuntimeRemoteObjectId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMSetFileInputFiles where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON PDOMSetFileInputFiles  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 dOMSetFileInputFiles :: Session -> PDOMSetFileInputFiles -> IO (Maybe Error)
@@ -937,21 +941,21 @@ data DOMSetNodeName = DOMSetNodeName {
     dOMSetNodeNameNodeId :: DOMNodeId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMSetNodeName where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
 instance Command  DOMSetNodeName where
     commandName _ = "DOM.setNodeName"
 
 data PDOMSetNodeName = PDOMSetNodeName {
-    pdomSetNodeNameNodeId :: DOMNodeId,
-    pdomSetNodeNameName :: String
+    pDOMSetNodeNameNodeId :: DOMNodeId,
+    pDOMSetNodeNameName :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMSetNodeName where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 instance ToJSON PDOMSetNodeName  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
 
 dOMSetNodeName :: Session -> PDOMSetNodeName -> IO (Either Error DOMSetNodeName)
@@ -960,14 +964,14 @@ dOMSetNodeName session params = sendReceiveCommandResult session "DOM.setNodeNam
 
 
 data PDOMSetNodeValue = PDOMSetNodeValue {
-    pdomSetNodeValueNodeId :: DOMNodeId,
-    pdomSetNodeValueValue :: String
+    pDOMSetNodeValueNodeId :: DOMNodeId,
+    pDOMSetNodeValueValue :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMSetNodeValue where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 instance ToJSON PDOMSetNodeValue  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
 
 dOMSetNodeValue :: Session -> PDOMSetNodeValue -> IO (Maybe Error)
@@ -976,14 +980,14 @@ dOMSetNodeValue session params = sendReceiveCommand session "DOM.setNodeValue" (
 
 
 data PDOMSetOuterHtml = PDOMSetOuterHtml {
-    pdomSetOuterHtmlNodeId :: DOMNodeId,
-    pdomSetOuterHtmlOuterHtml :: String
+    pDOMSetOuterHtmlNodeId :: DOMNodeId,
+    pDOMSetOuterHtmlOuterHTML :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMSetOuterHtml where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 instance ToJSON PDOMSetOuterHtml  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
 
 dOMSetOuterHtml :: Session -> PDOMSetOuterHtml -> IO (Maybe Error)
@@ -1012,44 +1016,44 @@ instance ToJSON DOMDebuggerDOMBreakpointType where
 
 
 data DOMDebuggerEventListener = DOMDebuggerEventListener {
-    domDebuggerEventListenerType :: String,
-    domDebuggerEventListenerUseCapture :: Bool,
-    domDebuggerEventListenerPassive :: Bool,
-    domDebuggerEventListenerOnce :: Bool,
-    domDebuggerEventListenerScriptId :: RuntimeScriptId,
-    domDebuggerEventListenerLineNumber :: Int,
-    domDebuggerEventListenerColumnNumber :: Int,
-    domDebuggerEventListenerHandler :: Maybe RuntimeRemoteObject,
-    domDebuggerEventListenerOriginalHandler :: Maybe RuntimeRemoteObject,
-    domDebuggerEventListenerBackendNodeId :: Maybe DOMBackendNodeId
+    dOMDebuggerEventListenerType :: String,
+    dOMDebuggerEventListenerUseCapture :: Bool,
+    dOMDebuggerEventListenerPassive :: Bool,
+    dOMDebuggerEventListenerOnce :: Bool,
+    dOMDebuggerEventListenerScriptId :: RuntimeScriptId,
+    dOMDebuggerEventListenerLineNumber :: Int,
+    dOMDebuggerEventListenerColumnNumber :: Int,
+    dOMDebuggerEventListenerHandler :: Maybe RuntimeRemoteObject,
+    dOMDebuggerEventListenerOriginalHandler :: Maybe RuntimeRemoteObject,
+    dOMDebuggerEventListenerBackendNodeId :: Maybe DOMBackendNodeId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMDebuggerEventListener where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance ToJSON DOMDebuggerEventListener  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
 data DOMDebuggerGetEventListeners = DOMDebuggerGetEventListeners {
     dOMDebuggerGetEventListenersListeners :: [DOMDebuggerEventListener]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DOMDebuggerGetEventListeners where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 28 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
 instance Command  DOMDebuggerGetEventListeners where
     commandName _ = "DOMDebugger.getEventListeners"
 
 data PDOMDebuggerGetEventListeners = PDOMDebuggerGetEventListeners {
-    pdomDebuggerGetEventListenersObjectId :: RuntimeRemoteObjectId,
-    pdomDebuggerGetEventListenersDepth :: Maybe Int,
-    pdomDebuggerGetEventListenersPierce :: Maybe Bool
+    pDOMDebuggerGetEventListenersObjectId :: RuntimeRemoteObjectId,
+    pDOMDebuggerGetEventListenersDepth :: Maybe Int,
+    pDOMDebuggerGetEventListenersPierce :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMDebuggerGetEventListeners where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 instance ToJSON PDOMDebuggerGetEventListeners  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 29 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
 
 
 dOMDebuggerGetEventListeners :: Session -> PDOMDebuggerGetEventListeners -> IO (Either Error DOMDebuggerGetEventListeners)
@@ -1058,14 +1062,14 @@ dOMDebuggerGetEventListeners session params = sendReceiveCommandResult session "
 
 
 data PDOMDebuggerRemoveDomBreakpoint = PDOMDebuggerRemoveDomBreakpoint {
-    pdomDebuggerRemoveDomBreakpointNodeId :: DOMNodeId,
-    pdomDebuggerRemoveDomBreakpointType :: DOMDebuggerDOMBreakpointType
+    pDOMDebuggerRemoveDomBreakpointNodeId :: DOMNodeId,
+    pDOMDebuggerRemoveDomBreakpointType :: DOMDebuggerDOMBreakpointType
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMDebuggerRemoveDomBreakpoint where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 31 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 instance ToJSON PDOMDebuggerRemoveDomBreakpoint  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 31 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
 
 
 dOMDebuggerRemoveDomBreakpoint :: Session -> PDOMDebuggerRemoveDomBreakpoint -> IO (Maybe Error)
@@ -1074,13 +1078,13 @@ dOMDebuggerRemoveDomBreakpoint session params = sendReceiveCommand session "DOMD
 
 
 data PDOMDebuggerRemoveEventListenerBreakpoint = PDOMDebuggerRemoveEventListenerBreakpoint {
-    pdomDebuggerRemoveEventListenerBreakpointEventName :: String
+    pDOMDebuggerRemoveEventListenerBreakpointEventName :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMDebuggerRemoveEventListenerBreakpoint where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 41 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 41 }
 
 instance ToJSON PDOMDebuggerRemoveEventListenerBreakpoint  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 41 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 41 , A.omitNothingFields = True}
 
 
 dOMDebuggerRemoveEventListenerBreakpoint :: Session -> PDOMDebuggerRemoveEventListenerBreakpoint -> IO (Maybe Error)
@@ -1089,13 +1093,13 @@ dOMDebuggerRemoveEventListenerBreakpoint session params = sendReceiveCommand ses
 
 
 data PDOMDebuggerRemoveXhrBreakpoint = PDOMDebuggerRemoveXhrBreakpoint {
-    pdomDebuggerRemoveXhrBreakpointUrl :: String
+    pDOMDebuggerRemoveXhrBreakpointUrl :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMDebuggerRemoveXhrBreakpoint where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 31 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 instance ToJSON PDOMDebuggerRemoveXhrBreakpoint  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 31 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
 
 
 dOMDebuggerRemoveXhrBreakpoint :: Session -> PDOMDebuggerRemoveXhrBreakpoint -> IO (Maybe Error)
@@ -1104,14 +1108,14 @@ dOMDebuggerRemoveXhrBreakpoint session params = sendReceiveCommand session "DOMD
 
 
 data PDOMDebuggerSetDomBreakpoint = PDOMDebuggerSetDomBreakpoint {
-    pdomDebuggerSetDomBreakpointNodeId :: DOMNodeId,
-    pdomDebuggerSetDomBreakpointType :: DOMDebuggerDOMBreakpointType
+    pDOMDebuggerSetDomBreakpointNodeId :: DOMNodeId,
+    pDOMDebuggerSetDomBreakpointType :: DOMDebuggerDOMBreakpointType
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMDebuggerSetDomBreakpoint where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 28 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 instance ToJSON PDOMDebuggerSetDomBreakpoint  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 28 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
 
 
 dOMDebuggerSetDomBreakpoint :: Session -> PDOMDebuggerSetDomBreakpoint -> IO (Maybe Error)
@@ -1120,13 +1124,13 @@ dOMDebuggerSetDomBreakpoint session params = sendReceiveCommand session "DOMDebu
 
 
 data PDOMDebuggerSetEventListenerBreakpoint = PDOMDebuggerSetEventListenerBreakpoint {
-    pdomDebuggerSetEventListenerBreakpointEventName :: String
+    pDOMDebuggerSetEventListenerBreakpointEventName :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMDebuggerSetEventListenerBreakpoint where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 38 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 }
 
 instance ToJSON PDOMDebuggerSetEventListenerBreakpoint  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 38 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 , A.omitNothingFields = True}
 
 
 dOMDebuggerSetEventListenerBreakpoint :: Session -> PDOMDebuggerSetEventListenerBreakpoint -> IO (Maybe Error)
@@ -1135,13 +1139,13 @@ dOMDebuggerSetEventListenerBreakpoint session params = sendReceiveCommand sessio
 
 
 data PDOMDebuggerSetXhrBreakpoint = PDOMDebuggerSetXhrBreakpoint {
-    pdomDebuggerSetXhrBreakpointUrl :: String
+    pDOMDebuggerSetXhrBreakpointUrl :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDOMDebuggerSetXhrBreakpoint where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 28 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 instance ToJSON PDOMDebuggerSetXhrBreakpoint  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 28 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
 
 
 dOMDebuggerSetXhrBreakpoint :: Session -> PDOMDebuggerSetXhrBreakpoint -> IO (Maybe Error)
@@ -1155,10 +1159,10 @@ data EmulationScreenOrientation = EmulationScreenOrientation {
     emulationScreenOrientationAngle :: Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  EmulationScreenOrientation where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 instance ToJSON EmulationScreenOrientation  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
 
 
@@ -1168,10 +1172,10 @@ data EmulationDisplayFeature = EmulationDisplayFeature {
     emulationDisplayFeatureMaskLength :: Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  EmulationDisplayFeature where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 instance ToJSON EmulationDisplayFeature  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
 
 
@@ -1180,17 +1184,17 @@ data EmulationMediaFeature = EmulationMediaFeature {
     emulationMediaFeatureValue :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  EmulationMediaFeature where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON EmulationMediaFeature  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 data EmulationCanEmulate = EmulationCanEmulate {
     emulationCanEmulateResult :: Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  EmulationCanEmulate where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
 instance Command  EmulationCanEmulate where
@@ -1218,10 +1222,10 @@ data PEmulationSetDefaultBackgroundColorOverride = PEmulationSetDefaultBackgroun
     pEmulationSetDefaultBackgroundColorOverrideColor :: Maybe DOMRGBA
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PEmulationSetDefaultBackgroundColorOverride where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 43 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 43 }
 
 instance ToJSON PEmulationSetDefaultBackgroundColorOverride  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 43 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 43 , A.omitNothingFields = True}
 
 
 emulationSetDefaultBackgroundColorOverride :: Session -> PEmulationSetDefaultBackgroundColorOverride -> IO (Maybe Error)
@@ -1232,15 +1236,15 @@ emulationSetDefaultBackgroundColorOverride session params = sendReceiveCommand s
 data PEmulationSetDeviceMetricsOverride = PEmulationSetDeviceMetricsOverride {
     pEmulationSetDeviceMetricsOverrideWidth :: Int,
     pEmulationSetDeviceMetricsOverrideHeight :: Int,
-    pEmulationSetDeviceMetricsOverrideDeviceScaleFactor :: Int,
+    pEmulationSetDeviceMetricsOverrideDeviceScaleFactor :: Double,
     pEmulationSetDeviceMetricsOverrideMobile :: Bool,
     pEmulationSetDeviceMetricsOverrideScreenOrientation :: Maybe EmulationScreenOrientation
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PEmulationSetDeviceMetricsOverride where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 34 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
 
 instance ToJSON PEmulationSetDeviceMetricsOverride  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 34 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 , A.omitNothingFields = True}
 
 
 emulationSetDeviceMetricsOverride :: Session -> PEmulationSetDeviceMetricsOverride -> IO (Maybe Error)
@@ -1253,10 +1257,10 @@ data PEmulationSetEmulatedMedia = PEmulationSetEmulatedMedia {
     pEmulationSetEmulatedMediaFeatures :: Maybe [EmulationMediaFeature]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PEmulationSetEmulatedMedia where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 instance ToJSON PEmulationSetEmulatedMedia  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
 
 emulationSetEmulatedMedia :: Session -> PEmulationSetEmulatedMedia -> IO (Maybe Error)
@@ -1265,15 +1269,15 @@ emulationSetEmulatedMedia session params = sendReceiveCommand session "Emulation
 
 
 data PEmulationSetGeolocationOverride = PEmulationSetGeolocationOverride {
-    pEmulationSetGeolocationOverrideLatitude :: Maybe Int,
-    pEmulationSetGeolocationOverrideLongitude :: Maybe Int,
-    pEmulationSetGeolocationOverrideAccuracy :: Maybe Int
+    pEmulationSetGeolocationOverrideLatitude :: Maybe Double,
+    pEmulationSetGeolocationOverrideLongitude :: Maybe Double,
+    pEmulationSetGeolocationOverrideAccuracy :: Maybe Double
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PEmulationSetGeolocationOverride where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 32 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 instance ToJSON PEmulationSetGeolocationOverride  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 32 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
 
 
 emulationSetGeolocationOverride :: Session -> PEmulationSetGeolocationOverride -> IO (Maybe Error)
@@ -1285,10 +1289,10 @@ data PEmulationSetScriptExecutionDisabled = PEmulationSetScriptExecutionDisabled
     pEmulationSetScriptExecutionDisabledValue :: Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PEmulationSetScriptExecutionDisabled where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 36 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 }
 
 instance ToJSON PEmulationSetScriptExecutionDisabled  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 36 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
 
 
 emulationSetScriptExecutionDisabled :: Session -> PEmulationSetScriptExecutionDisabled -> IO (Maybe Error)
@@ -1301,10 +1305,10 @@ data PEmulationSetTouchEmulationEnabled = PEmulationSetTouchEmulationEnabled {
     pEmulationSetTouchEmulationEnabledMaxTouchPoints :: Maybe Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PEmulationSetTouchEmulationEnabled where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 34 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
 
 instance ToJSON PEmulationSetTouchEmulationEnabled  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 34 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 , A.omitNothingFields = True}
 
 
 emulationSetTouchEmulationEnabled :: Session -> PEmulationSetTouchEmulationEnabled -> IO (Maybe Error)
@@ -1318,10 +1322,10 @@ data PEmulationSetUserAgentOverride = PEmulationSetUserAgentOverride {
     pEmulationSetUserAgentOverridePlatform :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PEmulationSetUserAgentOverride where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 30 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 instance ToJSON PEmulationSetUserAgentOverride  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 30 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
 
 
 emulationSetUserAgentOverride :: Session -> PEmulationSetUserAgentOverride -> IO (Maybe Error)
@@ -1334,13 +1338,13 @@ type IOStreamHandle = String
 
 
 data PIOClose = PIOClose {
-    pioCloseHandle :: IOStreamHandle
+    pIOCloseHandle :: IOStreamHandle
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PIOClose where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 8 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 8 }
 
 instance ToJSON PIOClose  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 8 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 8 , A.omitNothingFields = True}
 
 
 iOClose :: Session -> PIOClose -> IO (Maybe Error)
@@ -1352,22 +1356,22 @@ data IORead = IORead {
     iOReadBase64Encoded :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  IORead where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 6 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 6 }
 
 
 instance Command  IORead where
     commandName _ = "IO.read"
 
 data PIORead = PIORead {
-    pioReadHandle :: IOStreamHandle,
-    pioReadOffset :: Maybe Int,
-    pioReadSize :: Maybe Int
+    pIOReadHandle :: IOStreamHandle,
+    pIOReadOffset :: Maybe Int,
+    pIOReadSize :: Maybe Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PIORead where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 7 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 }
 
 instance ToJSON PIORead  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 7 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 , A.omitNothingFields = True}
 
 
 iORead :: Session -> PIORead -> IO (Either Error IORead)
@@ -1377,20 +1381,20 @@ data IOResolveBlob = IOResolveBlob {
     iOResolveBlobUuid :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  IOResolveBlob where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 13 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 }
 
 
 instance Command  IOResolveBlob where
     commandName _ = "IO.resolveBlob"
 
 data PIOResolveBlob = PIOResolveBlob {
-    pioResolveBlobObjectId :: RuntimeRemoteObjectId
+    pIOResolveBlobObjectId :: RuntimeRemoteObjectId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PIOResolveBlob where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 instance ToJSON PIOResolveBlob  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 14 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
 
 
 iOResolveBlob :: Session -> PIOResolveBlob -> IO (Either Error IOResolveBlob)
@@ -1400,19 +1404,19 @@ iOResolveBlob session params = sendReceiveCommandResult session "IO.resolveBlob"
 
 
 data InputTouchPoint = InputTouchPoint {
-    inputTouchPointX :: Int,
-    inputTouchPointY :: Int,
-    inputTouchPointRadiusX :: Maybe Int,
-    inputTouchPointRadiusY :: Maybe Int,
-    inputTouchPointRotationAngle :: Maybe Int,
-    inputTouchPointForce :: Maybe Int,
-    inputTouchPointId :: Maybe Int
+    inputTouchPointX :: Double,
+    inputTouchPointY :: Double,
+    inputTouchPointRadiusX :: Maybe Double,
+    inputTouchPointRadiusY :: Maybe Double,
+    inputTouchPointRotationAngle :: Maybe Double,
+    inputTouchPointForce :: Maybe Double,
+    inputTouchPointId :: Maybe Double
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  InputTouchPoint where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 instance ToJSON InputTouchPoint  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
 
 
@@ -1441,7 +1445,7 @@ instance ToJSON InputMouseButton where
 
 
 
-type InputTimeSinceEpoch = Int
+type InputTimeSinceEpoch = Double
 
 
 data PInputDispatchKeyEvent = PInputDispatchKeyEvent {
@@ -1461,10 +1465,10 @@ data PInputDispatchKeyEvent = PInputDispatchKeyEvent {
     pInputDispatchKeyEventLocation :: Maybe Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PInputDispatchKeyEvent where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 instance ToJSON PInputDispatchKeyEvent  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
 
 inputDispatchKeyEvent :: Session -> PInputDispatchKeyEvent -> IO (Maybe Error)
@@ -1474,22 +1478,22 @@ inputDispatchKeyEvent session params = sendReceiveCommand session "Input.dispatc
 
 data PInputDispatchMouseEvent = PInputDispatchMouseEvent {
     pInputDispatchMouseEventType :: String,
-    pInputDispatchMouseEventX :: Int,
-    pInputDispatchMouseEventY :: Int,
+    pInputDispatchMouseEventX :: Double,
+    pInputDispatchMouseEventY :: Double,
     pInputDispatchMouseEventModifiers :: Maybe Int,
     pInputDispatchMouseEventTimestamp :: Maybe InputTimeSinceEpoch,
     pInputDispatchMouseEventButton :: Maybe InputMouseButton,
     pInputDispatchMouseEventButtons :: Maybe Int,
     pInputDispatchMouseEventClickCount :: Maybe Int,
-    pInputDispatchMouseEventDeltaX :: Maybe Int,
-    pInputDispatchMouseEventDeltaY :: Maybe Int,
+    pInputDispatchMouseEventDeltaX :: Maybe Double,
+    pInputDispatchMouseEventDeltaY :: Maybe Double,
     pInputDispatchMouseEventPointerType :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PInputDispatchMouseEvent where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance ToJSON PInputDispatchMouseEvent  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
 inputDispatchMouseEvent :: Session -> PInputDispatchMouseEvent -> IO (Maybe Error)
@@ -1504,10 +1508,10 @@ data PInputDispatchTouchEvent = PInputDispatchTouchEvent {
     pInputDispatchTouchEventTimestamp :: Maybe InputTimeSinceEpoch
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PInputDispatchTouchEvent where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance ToJSON PInputDispatchTouchEvent  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
 inputDispatchTouchEvent :: Session -> PInputDispatchTouchEvent -> IO (Maybe Error)
@@ -1519,10 +1523,10 @@ data PInputSetIgnoreInputEvents = PInputSetIgnoreInputEvents {
     pInputSetIgnoreInputEventsIgnore :: Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PInputSetIgnoreInputEvents where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 instance ToJSON PInputSetIgnoreInputEvents  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
 
 inputSetIgnoreInputEvents :: Session -> PInputSetIgnoreInputEvents -> IO (Maybe Error)
@@ -1534,10 +1538,10 @@ data LogEntryAdded = LogEntryAdded {
     logEntryAddedEntry :: LogLogEntry
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  LogEntryAdded where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 13 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 }
 
 instance ToJSON LogEntryAdded  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 13 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 , A.omitNothingFields = True}
 
 
 instance FromEvent Event LogEntryAdded where
@@ -1559,22 +1563,22 @@ data LogLogEntry = LogLogEntry {
     logLogEntryArgs :: Maybe [RuntimeRemoteObject]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  LogLogEntry where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 11 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 }
 
 instance ToJSON LogLogEntry  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 11 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 , A.omitNothingFields = True}
 
 
 
 data LogViolationSetting = LogViolationSetting {
     logViolationSettingName :: String,
-    logViolationSettingThreshold :: Int
+    logViolationSettingThreshold :: Double
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  LogViolationSetting where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 instance ToJSON LogViolationSetting  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 
 
@@ -1601,10 +1605,10 @@ data PLogStartViolationsReport = PLogStartViolationsReport {
     pLogStartViolationsReportConfig :: [LogViolationSetting]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PLogStartViolationsReport where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 25 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 instance ToJSON PLogStartViolationsReport  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 25 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
 
 
 logStartViolationsReport :: Session -> PLogStartViolationsReport -> IO (Maybe Error)
@@ -1625,10 +1629,10 @@ data NetworkDataReceived = NetworkDataReceived {
     networkDataReceivedEncodedDataLength :: Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkDataReceived where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 instance ToJSON NetworkDataReceived  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkDataReceived where
@@ -1643,10 +1647,10 @@ data NetworkEventSourceMessageReceived = NetworkEventSourceMessageReceived {
     networkEventSourceMessageReceivedData :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkEventSourceMessageReceived where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 33 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 }
 
 instance ToJSON NetworkEventSourceMessageReceived  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 33 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkEventSourceMessageReceived where
@@ -1663,10 +1667,10 @@ data NetworkLoadingFailed = NetworkLoadingFailed {
     networkLoadingFailedCorsErrorStatus :: Maybe NetworkCorsErrorStatus
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkLoadingFailed where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 instance ToJSON NetworkLoadingFailed  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkLoadingFailed where
@@ -1676,14 +1680,14 @@ instance FromEvent Event NetworkLoadingFailed where
 data NetworkLoadingFinished = NetworkLoadingFinished {
     networkLoadingFinishedRequestId :: NetworkRequestId,
     networkLoadingFinishedTimestamp :: NetworkMonotonicTime,
-    networkLoadingFinishedEncodedDataLength :: Int,
+    networkLoadingFinishedEncodedDataLength :: Double,
     networkLoadingFinishedShouldReportCorbBlocking :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkLoadingFinished where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 instance ToJSON NetworkLoadingFinished  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkLoadingFinished where
@@ -1694,10 +1698,10 @@ data NetworkRequestServedFromCache = NetworkRequestServedFromCache {
     networkRequestServedFromCacheRequestId :: NetworkRequestId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkRequestServedFromCache where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 instance ToJSON NetworkRequestServedFromCache  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 29 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkRequestServedFromCache where
@@ -1707,7 +1711,7 @@ instance FromEvent Event NetworkRequestServedFromCache where
 data NetworkRequestWillBeSent = NetworkRequestWillBeSent {
     networkRequestWillBeSentRequestId :: NetworkRequestId,
     networkRequestWillBeSentLoaderId :: NetworkLoaderId,
-    networkRequestWillBeSentDocumentUrl :: String,
+    networkRequestWillBeSentDocumentURL :: String,
     networkRequestWillBeSentRequest :: NetworkRequest,
     networkRequestWillBeSentTimestamp :: NetworkMonotonicTime,
     networkRequestWillBeSentWallTime :: NetworkTimeSinceEpoch,
@@ -1718,10 +1722,10 @@ data NetworkRequestWillBeSent = NetworkRequestWillBeSent {
     networkRequestWillBeSentHasUserGesture :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkRequestWillBeSent where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance ToJSON NetworkRequestWillBeSent  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkRequestWillBeSent where
@@ -1737,10 +1741,10 @@ data NetworkResponseReceived = NetworkResponseReceived {
     networkResponseReceivedFrameId :: Maybe PageFrameId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkResponseReceived where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 instance ToJSON NetworkResponseReceived  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkResponseReceived where
@@ -1752,10 +1756,10 @@ data NetworkWebSocketClosed = NetworkWebSocketClosed {
     networkWebSocketClosedTimestamp :: NetworkMonotonicTime
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketClosed where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 instance ToJSON NetworkWebSocketClosed  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebSocketClosed where
@@ -1768,10 +1772,10 @@ data NetworkWebSocketCreated = NetworkWebSocketCreated {
     networkWebSocketCreatedInitiator :: Maybe NetworkInitiator
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketCreated where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 instance ToJSON NetworkWebSocketCreated  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebSocketCreated where
@@ -1784,10 +1788,10 @@ data NetworkWebSocketFrameError = NetworkWebSocketFrameError {
     networkWebSocketFrameErrorErrorMessage :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketFrameError where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 instance ToJSON NetworkWebSocketFrameError  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebSocketFrameError where
@@ -1800,10 +1804,10 @@ data NetworkWebSocketFrameReceived = NetworkWebSocketFrameReceived {
     networkWebSocketFrameReceivedResponse :: NetworkWebSocketFrame
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketFrameReceived where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 instance ToJSON NetworkWebSocketFrameReceived  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 29 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebSocketFrameReceived where
@@ -1816,10 +1820,10 @@ data NetworkWebSocketFrameSent = NetworkWebSocketFrameSent {
     networkWebSocketFrameSentResponse :: NetworkWebSocketFrame
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketFrameSent where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 25 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 instance ToJSON NetworkWebSocketFrameSent  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 25 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebSocketFrameSent where
@@ -1832,10 +1836,10 @@ data NetworkWebSocketHandshakeResponseReceived = NetworkWebSocketHandshakeRespon
     networkWebSocketHandshakeResponseReceivedResponse :: NetworkWebSocketResponse
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketHandshakeResponseReceived where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 41 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 41 }
 
 instance ToJSON NetworkWebSocketHandshakeResponseReceived  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 41 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 41 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebSocketHandshakeResponseReceived where
@@ -1849,10 +1853,10 @@ data NetworkWebSocketWillSendHandshakeRequest = NetworkWebSocketWillSendHandshak
     networkWebSocketWillSendHandshakeRequestRequest :: NetworkWebSocketRequest
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketWillSendHandshakeRequest where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 40 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 }
 
 instance ToJSON NetworkWebSocketWillSendHandshakeRequest  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 40 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebSocketWillSendHandshakeRequest where
@@ -1866,10 +1870,10 @@ data NetworkWebTransportCreated = NetworkWebTransportCreated {
     networkWebTransportCreatedInitiator :: Maybe NetworkInitiator
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebTransportCreated where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 instance ToJSON NetworkWebTransportCreated  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebTransportCreated where
@@ -1881,10 +1885,10 @@ data NetworkWebTransportConnectionEstablished = NetworkWebTransportConnectionEst
     networkWebTransportConnectionEstablishedTimestamp :: NetworkMonotonicTime
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebTransportConnectionEstablished where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 40 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 }
 
 instance ToJSON NetworkWebTransportConnectionEstablished  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 40 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebTransportConnectionEstablished where
@@ -1896,10 +1900,10 @@ data NetworkWebTransportClosed = NetworkWebTransportClosed {
     networkWebTransportClosedTimestamp :: NetworkMonotonicTime
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebTransportClosed where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 25 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 instance ToJSON NetworkWebTransportClosed  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 25 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
 
 
 instance FromEvent Event NetworkWebTransportClosed where
@@ -2001,9 +2005,9 @@ instance ToJSON NetworkErrorReason where
 
 
 
-type NetworkTimeSinceEpoch = Int
+type NetworkTimeSinceEpoch = Double
 
-type NetworkMonotonicTime = Int
+type NetworkMonotonicTime = Double
 
 type NetworkHeaders = [(String, String)]
 
@@ -2058,24 +2062,24 @@ instance ToJSON NetworkCookieSameSite where
 
 
 data NetworkResourceTiming = NetworkResourceTiming {
-    networkResourceTimingRequestTime :: Int,
-    networkResourceTimingProxyStart :: Int,
-    networkResourceTimingProxyEnd :: Int,
-    networkResourceTimingDnsStart :: Int,
-    networkResourceTimingDnsEnd :: Int,
-    networkResourceTimingConnectStart :: Int,
-    networkResourceTimingConnectEnd :: Int,
-    networkResourceTimingSslStart :: Int,
-    networkResourceTimingSslEnd :: Int,
-    networkResourceTimingSendStart :: Int,
-    networkResourceTimingSendEnd :: Int,
-    networkResourceTimingReceiveHeadersEnd :: Int
+    networkResourceTimingRequestTime :: Double,
+    networkResourceTimingProxyStart :: Double,
+    networkResourceTimingProxyEnd :: Double,
+    networkResourceTimingDnsStart :: Double,
+    networkResourceTimingDnsEnd :: Double,
+    networkResourceTimingConnectStart :: Double,
+    networkResourceTimingConnectEnd :: Double,
+    networkResourceTimingSslStart :: Double,
+    networkResourceTimingSslEnd :: Double,
+    networkResourceTimingSendStart :: Double,
+    networkResourceTimingSendEnd :: Double,
+    networkResourceTimingReceiveHeadersEnd :: Double
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkResourceTiming where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON NetworkResourceTiming  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 
@@ -2106,10 +2110,10 @@ data NetworkPostDataEntry = NetworkPostDataEntry {
     networkPostDataEntryBytes :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkPostDataEntry where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 instance ToJSON NetworkPostDataEntry  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
 
 
@@ -2126,10 +2130,10 @@ data NetworkRequest = NetworkRequest {
     networkRequestIsLinkPreload :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkRequest where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 instance ToJSON NetworkRequest  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 14 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
 
 
 
@@ -2138,16 +2142,16 @@ data NetworkSignedCertificateTimestamp = NetworkSignedCertificateTimestamp {
     networkSignedCertificateTimestampOrigin :: String,
     networkSignedCertificateTimestampLogDescription :: String,
     networkSignedCertificateTimestampLogId :: String,
-    networkSignedCertificateTimestampTimestamp :: Int,
+    networkSignedCertificateTimestampTimestamp :: Double,
     networkSignedCertificateTimestampHashAlgorithm :: String,
     networkSignedCertificateTimestampSignatureAlgorithm :: String,
     networkSignedCertificateTimestampSignatureData :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkSignedCertificateTimestamp where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 33 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 }
 
 instance ToJSON NetworkSignedCertificateTimestamp  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 33 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
 
 
 
@@ -2167,10 +2171,10 @@ data NetworkSecurityDetails = NetworkSecurityDetails {
     networkSecurityDetailsMac :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkSecurityDetails where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 instance ToJSON NetworkSecurityDetails  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
 
 
@@ -2308,10 +2312,10 @@ data NetworkCorsErrorStatus = NetworkCorsErrorStatus {
     networkCorsErrorStatusFailedParameter :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkCorsErrorStatus where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 instance ToJSON NetworkCorsErrorStatus  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
 
 
@@ -2343,11 +2347,11 @@ data NetworkResponse = NetworkResponse {
     networkResponseHeaders :: NetworkHeaders,
     networkResponseMimeType :: String,
     networkResponseConnectionReused :: Bool,
-    networkResponseConnectionId :: Int,
-    networkResponseEncodedDataLength :: Int,
+    networkResponseConnectionId :: Double,
+    networkResponseEncodedDataLength :: Double,
     networkResponseSecurityState :: SecuritySecurityState,
     networkResponseRequestHeaders :: Maybe NetworkHeaders,
-    networkResponseRemoteIpAddress :: Maybe String,
+    networkResponseRemoteIPAddress :: Maybe String,
     networkResponseRemotePort :: Maybe Int,
     networkResponseFromDiskCache :: Maybe Bool,
     networkResponseFromServiceWorker :: Maybe Bool,
@@ -2360,10 +2364,10 @@ data NetworkResponse = NetworkResponse {
     networkResponseSecurityDetails :: Maybe NetworkSecurityDetails
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkResponse where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 instance ToJSON NetworkResponse  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
 
 
@@ -2371,10 +2375,10 @@ data NetworkWebSocketRequest = NetworkWebSocketRequest {
     networkWebSocketRequestHeaders :: NetworkHeaders
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketRequest where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 instance ToJSON NetworkWebSocketRequest  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
 
 
@@ -2387,37 +2391,37 @@ data NetworkWebSocketResponse = NetworkWebSocketResponse {
     networkWebSocketResponseRequestHeadersText :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketResponse where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance ToJSON NetworkWebSocketResponse  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
 
 data NetworkWebSocketFrame = NetworkWebSocketFrame {
-    networkWebSocketFrameOpcode :: Int,
+    networkWebSocketFrameOpcode :: Double,
     networkWebSocketFrameMask :: Bool,
     networkWebSocketFramePayloadData :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkWebSocketFrame where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON NetworkWebSocketFrame  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 
 data NetworkCachedResource = NetworkCachedResource {
     networkCachedResourceUrl :: String,
     networkCachedResourceType :: NetworkResourceType,
-    networkCachedResourceBodySize :: Int,
+    networkCachedResourceBodySize :: Double,
     networkCachedResourceResponse :: Maybe NetworkResponse
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkCachedResource where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON NetworkCachedResource  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 
@@ -2425,15 +2429,15 @@ data NetworkInitiator = NetworkInitiator {
     networkInitiatorType :: String,
     networkInitiatorStack :: Maybe RuntimeStackTrace,
     networkInitiatorUrl :: Maybe String,
-    networkInitiatorLineNumber :: Maybe Int,
-    networkInitiatorColumnNumber :: Maybe Int,
+    networkInitiatorLineNumber :: Maybe Double,
+    networkInitiatorColumnNumber :: Maybe Double,
     networkInitiatorRequestId :: Maybe NetworkRequestId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkInitiator where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 instance ToJSON NetworkInitiator  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
 
 
@@ -2442,7 +2446,7 @@ data NetworkCookie = NetworkCookie {
     networkCookieValue :: String,
     networkCookieDomain :: String,
     networkCookiePath :: String,
-    networkCookieExpires :: Int,
+    networkCookieExpires :: Double,
     networkCookieSize :: Int,
     networkCookieHttpOnly :: Bool,
     networkCookieSecure :: Bool,
@@ -2450,10 +2454,10 @@ data NetworkCookie = NetworkCookie {
     networkCookieSameSite :: Maybe NetworkCookieSameSite
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkCookie where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 13 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 }
 
 instance ToJSON NetworkCookie  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 13 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 , A.omitNothingFields = True}
 
 
 
@@ -2469,10 +2473,10 @@ data NetworkCookieParam = NetworkCookieParam {
     networkCookieParamExpires :: Maybe NetworkTimeSinceEpoch
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkCookieParam where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 instance ToJSON NetworkCookieParam  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
 
 
@@ -2496,10 +2500,10 @@ data PNetworkDeleteCookies = PNetworkDeleteCookies {
     pNetworkDeleteCookiesPath :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkDeleteCookies where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON PNetworkDeleteCookies  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 networkDeleteCookies :: Session -> PNetworkDeleteCookies -> IO (Maybe Error)
@@ -2515,16 +2519,16 @@ networkDisable session = sendReceiveCommand session "Network.disable" (Nothing :
 
 data PNetworkEmulateNetworkConditions = PNetworkEmulateNetworkConditions {
     pNetworkEmulateNetworkConditionsOffline :: Bool,
-    pNetworkEmulateNetworkConditionsLatency :: Int,
-    pNetworkEmulateNetworkConditionsDownloadThroughput :: Int,
-    pNetworkEmulateNetworkConditionsUploadThroughput :: Int,
+    pNetworkEmulateNetworkConditionsLatency :: Double,
+    pNetworkEmulateNetworkConditionsDownloadThroughput :: Double,
+    pNetworkEmulateNetworkConditionsUploadThroughput :: Double,
     pNetworkEmulateNetworkConditionsConnectionType :: Maybe NetworkConnectionType
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkEmulateNetworkConditions where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 32 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 instance ToJSON PNetworkEmulateNetworkConditions  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 32 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
 
 
 networkEmulateNetworkConditions :: Session -> PNetworkEmulateNetworkConditions -> IO (Maybe Error)
@@ -2536,10 +2540,10 @@ data PNetworkEnable = PNetworkEnable {
     pNetworkEnableMaxPostDataSize :: Maybe Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkEnable where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 instance ToJSON PNetworkEnable  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 14 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
 
 
 networkEnable :: Session -> PNetworkEnable -> IO (Maybe Error)
@@ -2549,7 +2553,7 @@ data NetworkGetAllCookies = NetworkGetAllCookies {
     networkGetAllCookiesCookies :: [NetworkCookie]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkGetAllCookies where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
 instance Command  NetworkGetAllCookies where
@@ -2563,7 +2567,7 @@ data NetworkGetCookies = NetworkGetCookies {
     networkGetCookiesCookies :: [NetworkCookie]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkGetCookies where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
 instance Command  NetworkGetCookies where
@@ -2573,10 +2577,10 @@ data PNetworkGetCookies = PNetworkGetCookies {
     pNetworkGetCookiesUrls :: Maybe [String]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkGetCookies where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 instance ToJSON PNetworkGetCookies  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
 
 networkGetCookies :: Session -> PNetworkGetCookies -> IO (Either Error NetworkGetCookies)
@@ -2587,7 +2591,7 @@ data NetworkGetResponseBody = NetworkGetResponseBody {
     networkGetResponseBodyBase64Encoded :: Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkGetResponseBody where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
 instance Command  NetworkGetResponseBody where
@@ -2597,10 +2601,10 @@ data PNetworkGetResponseBody = PNetworkGetResponseBody {
     pNetworkGetResponseBodyRequestId :: NetworkRequestId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkGetResponseBody where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 instance ToJSON PNetworkGetResponseBody  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
 
 networkGetResponseBody :: Session -> PNetworkGetResponseBody -> IO (Either Error NetworkGetResponseBody)
@@ -2610,7 +2614,7 @@ data NetworkGetRequestPostData = NetworkGetRequestPostData {
     networkGetRequestPostDataPostData :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  NetworkGetRequestPostData where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 25 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
 instance Command  NetworkGetRequestPostData where
@@ -2620,10 +2624,10 @@ data PNetworkGetRequestPostData = PNetworkGetRequestPostData {
     pNetworkGetRequestPostDataRequestId :: NetworkRequestId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkGetRequestPostData where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 instance ToJSON PNetworkGetRequestPostData  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
 
 networkGetRequestPostData :: Session -> PNetworkGetRequestPostData -> IO (Either Error NetworkGetRequestPostData)
@@ -2635,10 +2639,10 @@ data PNetworkSetCacheDisabled = PNetworkSetCacheDisabled {
     pNetworkSetCacheDisabledCacheDisabled :: Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkSetCacheDisabled where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance ToJSON PNetworkSetCacheDisabled  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
 networkSetCacheDisabled :: Session -> PNetworkSetCacheDisabled -> IO (Maybe Error)
@@ -2658,10 +2662,10 @@ data PNetworkSetCookie = PNetworkSetCookie {
     pNetworkSetCookieExpires :: Maybe NetworkTimeSinceEpoch
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkSetCookie where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 instance ToJSON PNetworkSetCookie  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
 
 networkSetCookie :: Session -> PNetworkSetCookie -> IO (Maybe Error)
@@ -2673,10 +2677,10 @@ data PNetworkSetCookies = PNetworkSetCookies {
     pNetworkSetCookiesCookies :: [NetworkCookieParam]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkSetCookies where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 instance ToJSON PNetworkSetCookies  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
 
 networkSetCookies :: Session -> PNetworkSetCookies -> IO (Maybe Error)
@@ -2688,10 +2692,10 @@ data PNetworkSetExtraHttpHeaders = PNetworkSetExtraHttpHeaders {
     pNetworkSetExtraHttpHeadersHeaders :: NetworkHeaders
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkSetExtraHttpHeaders where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 instance ToJSON PNetworkSetExtraHttpHeaders  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 27 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
 
 networkSetExtraHttpHeaders :: Session -> PNetworkSetExtraHttpHeaders -> IO (Maybe Error)
@@ -2705,10 +2709,10 @@ data PNetworkSetUserAgentOverride = PNetworkSetUserAgentOverride {
     pNetworkSetUserAgentOverridePlatform :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PNetworkSetUserAgentOverride where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 28 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 instance ToJSON PNetworkSetUserAgentOverride  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 28 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
 
 
 networkSetUserAgentOverride :: Session -> PNetworkSetUserAgentOverride -> IO (Maybe Error)
@@ -2720,10 +2724,10 @@ data PageDomContentEventFired = PageDomContentEventFired {
     pageDomContentEventFiredTimestamp :: NetworkMonotonicTime
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageDomContentEventFired where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance ToJSON PageDomContentEventFired  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageDomContentEventFired where
@@ -2734,10 +2738,10 @@ data PageFileChooserOpened = PageFileChooserOpened {
     pageFileChooserOpenedMode :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageFileChooserOpened where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON PageFileChooserOpened  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageFileChooserOpened where
@@ -2750,10 +2754,10 @@ data PageFrameAttached = PageFrameAttached {
     pageFrameAttachedStack :: Maybe RuntimeStackTrace
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageFrameAttached where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 instance ToJSON PageFrameAttached  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageFrameAttached where
@@ -2764,10 +2768,10 @@ data PageFrameDetached = PageFrameDetached {
     pageFrameDetachedFrameId :: PageFrameId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageFrameDetached where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 instance ToJSON PageFrameDetached  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageFrameDetached where
@@ -2778,10 +2782,10 @@ data PageFrameNavigated = PageFrameNavigated {
     pageFrameNavigatedFrame :: PageFrame
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageFrameNavigated where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 instance ToJSON PageFrameNavigated  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageFrameNavigated where
@@ -2817,10 +2821,10 @@ data PageJavascriptDialogClosed = PageJavascriptDialogClosed {
     pageJavascriptDialogClosedUserInput :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageJavascriptDialogClosed where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 instance ToJSON PageJavascriptDialogClosed  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageJavascriptDialogClosed where
@@ -2835,10 +2839,10 @@ data PageJavascriptDialogOpening = PageJavascriptDialogOpening {
     pageJavascriptDialogOpeningDefaultPrompt :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageJavascriptDialogOpening where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 instance ToJSON PageJavascriptDialogOpening  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 27 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageJavascriptDialogOpening where
@@ -2852,10 +2856,10 @@ data PageLifecycleEvent = PageLifecycleEvent {
     pageLifecycleEventTimestamp :: NetworkMonotonicTime
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageLifecycleEvent where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 instance ToJSON PageLifecycleEvent  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageLifecycleEvent where
@@ -2868,10 +2872,10 @@ data PagePrerenderAttemptCompleted = PagePrerenderAttemptCompleted {
     pagePrerenderAttemptCompletedFinalStatus :: PagePrerenderFinalStatus
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PagePrerenderAttemptCompleted where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 instance ToJSON PagePrerenderAttemptCompleted  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 29 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PagePrerenderAttemptCompleted where
@@ -2882,10 +2886,10 @@ data PageLoadEventFired = PageLoadEventFired {
     pageLoadEventFiredTimestamp :: NetworkMonotonicTime
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageLoadEventFired where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 instance ToJSON PageLoadEventFired  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageLoadEventFired where
@@ -2899,10 +2903,10 @@ data PageWindowOpen = PageWindowOpen {
     pageWindowOpenUserGesture :: Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageWindowOpen where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 instance ToJSON PageWindowOpen  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 14 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PageWindowOpen where
@@ -2922,10 +2926,10 @@ data PageFrame = PageFrame {
     pageFrameName :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageFrame where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 9 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 9 }
 
 instance ToJSON PageFrame  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 9 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 9 , A.omitNothingFields = True}
 
 
 
@@ -2934,10 +2938,10 @@ data PageFrameTree = PageFrameTree {
     pageFrameTreeChildFrames :: Maybe [PageFrameTree]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageFrameTree where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 13 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 }
 
 instance ToJSON PageFrameTree  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 13 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 , A.omitNothingFields = True}
 
 
 
@@ -2985,15 +2989,15 @@ instance ToJSON PageTransitionType where
 data PageNavigationEntry = PageNavigationEntry {
     pageNavigationEntryId :: Int,
     pageNavigationEntryUrl :: String,
-    pageNavigationEntryUserTypedUrl :: String,
+    pageNavigationEntryUserTypedURL :: String,
     pageNavigationEntryTitle :: String,
     pageNavigationEntryTransitionType :: PageTransitionType
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageNavigationEntry where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 instance ToJSON PageNavigationEntry  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 
 
@@ -3025,10 +3029,10 @@ data PageAppManifestError = PageAppManifestError {
     pageAppManifestErrorColumn :: Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageAppManifestError where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 instance ToJSON PageAppManifestError  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
 
 
@@ -3039,43 +3043,43 @@ data PageLayoutViewport = PageLayoutViewport {
     pageLayoutViewportClientHeight :: Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageLayoutViewport where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 instance ToJSON PageLayoutViewport  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
 
 
 data PageVisualViewport = PageVisualViewport {
-    pageVisualViewportOffsetX :: Int,
-    pageVisualViewportOffsetY :: Int,
-    pageVisualViewportPageX :: Int,
-    pageVisualViewportPageY :: Int,
-    pageVisualViewportClientWidth :: Int,
-    pageVisualViewportClientHeight :: Int,
-    pageVisualViewportScale :: Int,
-    pageVisualViewportZoom :: Maybe Int
+    pageVisualViewportOffsetX :: Double,
+    pageVisualViewportOffsetY :: Double,
+    pageVisualViewportPageX :: Double,
+    pageVisualViewportPageY :: Double,
+    pageVisualViewportClientWidth :: Double,
+    pageVisualViewportClientHeight :: Double,
+    pageVisualViewportScale :: Double,
+    pageVisualViewportZoom :: Maybe Double
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageVisualViewport where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 instance ToJSON PageVisualViewport  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
 
 
 data PageViewport = PageViewport {
-    pageViewportX :: Int,
-    pageViewportY :: Int,
-    pageViewportWidth :: Int,
-    pageViewportHeight :: Int,
-    pageViewportScale :: Int
+    pageViewportX :: Double,
+    pageViewportY :: Double,
+    pageViewportWidth :: Double,
+    pageViewportHeight :: Double,
+    pageViewportScale :: Double
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageViewport where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 12 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 }
 
 instance ToJSON PageViewport  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 12 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 , A.omitNothingFields = True}
 
 
 
@@ -3161,7 +3165,7 @@ data PageAddScriptToEvaluateOnNewDocument = PageAddScriptToEvaluateOnNewDocument
     pageAddScriptToEvaluateOnNewDocumentIdentifier :: PageScriptIdentifier
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageAddScriptToEvaluateOnNewDocument where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 36 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 }
 
 
 instance Command  PageAddScriptToEvaluateOnNewDocument where
@@ -3171,10 +3175,10 @@ data PPageAddScriptToEvaluateOnNewDocument = PPageAddScriptToEvaluateOnNewDocume
     pPageAddScriptToEvaluateOnNewDocumentSource :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPageAddScriptToEvaluateOnNewDocument where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 37 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 }
 
 instance ToJSON PPageAddScriptToEvaluateOnNewDocument  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 37 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 , A.omitNothingFields = True}
 
 
 pageAddScriptToEvaluateOnNewDocument :: Session -> PPageAddScriptToEvaluateOnNewDocument -> IO (Either Error PageAddScriptToEvaluateOnNewDocument)
@@ -3190,7 +3194,7 @@ data PageCaptureScreenshot = PageCaptureScreenshot {
     pageCaptureScreenshotData :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageCaptureScreenshot where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
 instance Command  PageCaptureScreenshot where
@@ -3202,10 +3206,10 @@ data PPageCaptureScreenshot = PPageCaptureScreenshot {
     pPageCaptureScreenshotClip :: Maybe PageViewport
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPageCaptureScreenshot where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 instance ToJSON PPageCaptureScreenshot  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
 
 pageCaptureScreenshot :: Session -> PPageCaptureScreenshot -> IO (Either Error PageCaptureScreenshot)
@@ -3215,7 +3219,7 @@ data PageCreateIsolatedWorld = PageCreateIsolatedWorld {
     pageCreateIsolatedWorldExecutionContextId :: RuntimeExecutionContextId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageCreateIsolatedWorld where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
 instance Command  PageCreateIsolatedWorld where
@@ -3227,10 +3231,10 @@ data PPageCreateIsolatedWorld = PPageCreateIsolatedWorld {
     pPageCreateIsolatedWorldGrantUniveralAccess :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPageCreateIsolatedWorld where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance ToJSON PPageCreateIsolatedWorld  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
 pageCreateIsolatedWorld :: Session -> PPageCreateIsolatedWorld -> IO (Either Error PageCreateIsolatedWorld)
@@ -3254,7 +3258,7 @@ data PageGetAppManifest = PageGetAppManifest {
     pageGetAppManifestData :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageGetAppManifest where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
 instance Command  PageGetAppManifest where
@@ -3268,7 +3272,7 @@ data PageGetFrameTree = PageGetFrameTree {
     pageGetFrameTreeFrameTree :: PageFrameTree
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageGetFrameTree where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
 instance Command  PageGetFrameTree where
@@ -3284,7 +3288,7 @@ data PageGetLayoutMetrics = PageGetLayoutMetrics {
     pageGetLayoutMetricsCssContentSize :: DOMRect
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageGetLayoutMetrics where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
 instance Command  PageGetLayoutMetrics where
@@ -3299,7 +3303,7 @@ data PageGetNavigationHistory = PageGetNavigationHistory {
     pageGetNavigationHistoryEntries :: [PageNavigationEntry]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageGetNavigationHistory where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
 instance Command  PageGetNavigationHistory where
@@ -3322,10 +3326,10 @@ data PPageHandleJavaScriptDialog = PPageHandleJavaScriptDialog {
     pPageHandleJavaScriptDialogPromptText :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPageHandleJavaScriptDialog where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 instance ToJSON PPageHandleJavaScriptDialog  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 27 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
 
 pageHandleJavaScriptDialog :: Session -> PPageHandleJavaScriptDialog -> IO (Maybe Error)
@@ -3337,7 +3341,7 @@ data PageNavigate = PageNavigate {
     pageNavigateErrorText :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PageNavigate where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 12 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 }
 
 
 instance Command  PageNavigate where
@@ -3350,10 +3354,10 @@ data PPageNavigate = PPageNavigate {
     pPageNavigateFrameId :: Maybe PageFrameId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPageNavigate where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 13 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 }
 
 instance ToJSON PPageNavigate  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 13 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 , A.omitNothingFields = True}
 
 
 pageNavigate :: Session -> PPageNavigate -> IO (Either Error PageNavigate)
@@ -3365,10 +3369,10 @@ data PPageNavigateToHistoryEntry = PPageNavigateToHistoryEntry {
     pPageNavigateToHistoryEntryEntryId :: Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPageNavigateToHistoryEntry where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 instance ToJSON PPageNavigateToHistoryEntry  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 27 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
 
 pageNavigateToHistoryEntry :: Session -> PPageNavigateToHistoryEntry -> IO (Maybe Error)
@@ -3378,7 +3382,7 @@ data PagePrintToPdf = PagePrintToPdf {
     pagePrintToPdfData :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PagePrintToPdf where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
 instance Command  PagePrintToPdf where
@@ -3388,23 +3392,23 @@ data PPagePrintToPdf = PPagePrintToPdf {
     pPagePrintToPdfLandscape :: Maybe Bool,
     pPagePrintToPdfDisplayHeaderFooter :: Maybe Bool,
     pPagePrintToPdfPrintBackground :: Maybe Bool,
-    pPagePrintToPdfScale :: Maybe Int,
-    pPagePrintToPdfPaperWidth :: Maybe Int,
-    pPagePrintToPdfPaperHeight :: Maybe Int,
-    pPagePrintToPdfMarginTop :: Maybe Int,
-    pPagePrintToPdfMarginBottom :: Maybe Int,
-    pPagePrintToPdfMarginLeft :: Maybe Int,
-    pPagePrintToPdfMarginRight :: Maybe Int,
+    pPagePrintToPdfScale :: Maybe Double,
+    pPagePrintToPdfPaperWidth :: Maybe Double,
+    pPagePrintToPdfPaperHeight :: Maybe Double,
+    pPagePrintToPdfMarginTop :: Maybe Double,
+    pPagePrintToPdfMarginBottom :: Maybe Double,
+    pPagePrintToPdfMarginLeft :: Maybe Double,
+    pPagePrintToPdfMarginRight :: Maybe Double,
     pPagePrintToPdfPageRanges :: Maybe String,
     pPagePrintToPdfHeaderTemplate :: Maybe String,
     pPagePrintToPdfFooterTemplate :: Maybe String,
-    pPagePrintToPdfPreferCssPageSize :: Maybe Bool
+    pPagePrintToPdfPreferCSSPageSize :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPagePrintToPdf where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 instance ToJSON PPagePrintToPdf  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
 
 pagePrintToPdf :: Session -> PPagePrintToPdf -> IO (Either Error PagePrintToPdf)
@@ -3417,10 +3421,10 @@ data PPageReload = PPageReload {
     pPageReloadScriptToEvaluateOnLoad :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPageReload where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 11 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 }
 
 instance ToJSON PPageReload  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 11 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 , A.omitNothingFields = True}
 
 
 pageReload :: Session -> PPageReload -> IO (Maybe Error)
@@ -3432,10 +3436,10 @@ data PPageRemoveScriptToEvaluateOnNewDocument = PPageRemoveScriptToEvaluateOnNew
     pPageRemoveScriptToEvaluateOnNewDocumentIdentifier :: PageScriptIdentifier
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPageRemoveScriptToEvaluateOnNewDocument where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 40 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 }
 
 instance ToJSON PPageRemoveScriptToEvaluateOnNewDocument  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 40 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 , A.omitNothingFields = True}
 
 
 pageRemoveScriptToEvaluateOnNewDocument :: Session -> PPageRemoveScriptToEvaluateOnNewDocument -> IO (Maybe Error)
@@ -3448,10 +3452,10 @@ data PPageSetDocumentContent = PPageSetDocumentContent {
     pPageSetDocumentContentHtml :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPageSetDocumentContent where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 instance ToJSON PPageSetDocumentContent  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
 
 pageSetDocumentContent :: Session -> PPageSetDocumentContent -> IO (Maybe Error)
@@ -3470,10 +3474,10 @@ data PerformanceMetrics = PerformanceMetrics {
     performanceMetricsTitle :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PerformanceMetrics where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 instance ToJSON PerformanceMetrics  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
 
 instance FromEvent Event PerformanceMetrics where
@@ -3483,13 +3487,13 @@ instance FromEvent Event PerformanceMetrics where
 
 data PerformanceMetric = PerformanceMetric {
     performanceMetricName :: String,
-    performanceMetricValue :: Int
+    performanceMetricValue :: Double
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PerformanceMetric where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 instance ToJSON PerformanceMetric  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
 
 
@@ -3504,10 +3508,10 @@ data PPerformanceEnable = PPerformanceEnable {
     pPerformanceEnableTimeDomain :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PPerformanceEnable where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 instance ToJSON PPerformanceEnable  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
 
 performanceEnable :: Session -> PPerformanceEnable -> IO (Maybe Error)
@@ -3517,7 +3521,7 @@ data PerformanceGetMetrics = PerformanceGetMetrics {
     performanceGetMetricsMetrics :: [PerformanceMetric]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PerformanceGetMetrics where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
 instance Command  PerformanceGetMetrics where
@@ -3586,10 +3590,10 @@ data SecuritySecurityStateExplanation = SecuritySecurityStateExplanation {
     securitySecurityStateExplanationRecommendations :: Maybe [String]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  SecuritySecurityStateExplanation where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 32 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 instance ToJSON SecuritySecurityStateExplanation  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 32 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
 
 
 
@@ -3628,10 +3632,10 @@ data TargetReceivedMessageFromTarget = TargetReceivedMessageFromTarget {
     targetReceivedMessageFromTargetMessage :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  TargetReceivedMessageFromTarget where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 31 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 instance ToJSON TargetReceivedMessageFromTarget  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 31 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
 
 
 instance FromEvent Event TargetReceivedMessageFromTarget where
@@ -3642,10 +3646,10 @@ data TargetTargetCreated = TargetTargetCreated {
     targetTargetCreatedTargetInfo :: TargetTargetInfo
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  TargetTargetCreated where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 instance ToJSON TargetTargetCreated  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 
 instance FromEvent Event TargetTargetCreated where
@@ -3656,10 +3660,10 @@ data TargetTargetDestroyed = TargetTargetDestroyed {
     targetTargetDestroyedTargetId :: TargetTargetID
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  TargetTargetDestroyed where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON TargetTargetDestroyed  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 instance FromEvent Event TargetTargetDestroyed where
@@ -3672,10 +3676,10 @@ data TargetTargetCrashed = TargetTargetCrashed {
     targetTargetCrashedErrorCode :: Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  TargetTargetCrashed where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 instance ToJSON TargetTargetCrashed  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 
 instance FromEvent Event TargetTargetCrashed where
@@ -3686,10 +3690,10 @@ data TargetTargetInfoChanged = TargetTargetInfoChanged {
     targetTargetInfoChangedTargetInfo :: TargetTargetInfo
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  TargetTargetInfoChanged where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 instance ToJSON TargetTargetInfoChanged  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
 
 instance FromEvent Event TargetTargetInfoChanged where
@@ -3710,10 +3714,10 @@ data TargetTargetInfo = TargetTargetInfo {
     targetTargetInfoOpenerId :: Maybe TargetTargetID
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  TargetTargetInfo where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 instance ToJSON TargetTargetInfo  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
 
 
@@ -3722,10 +3726,10 @@ data PTargetActivateTarget = PTargetActivateTarget {
     pTargetActivateTargetTargetId :: TargetTargetID
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PTargetActivateTarget where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON PTargetActivateTarget  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 targetActivateTarget :: Session -> PTargetActivateTarget -> IO (Maybe Error)
@@ -3735,7 +3739,7 @@ data TargetAttachToTarget = TargetAttachToTarget {
     targetAttachToTargetSessionId :: TargetSessionID
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  TargetAttachToTarget where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
 instance Command  TargetAttachToTarget where
@@ -3746,10 +3750,10 @@ data PTargetAttachToTarget = PTargetAttachToTarget {
     pTargetAttachToTargetFlatten :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PTargetAttachToTarget where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON PTargetAttachToTarget  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 targetAttachToTarget :: Session -> PTargetAttachToTarget -> IO (Either Error TargetAttachToTarget)
@@ -3761,10 +3765,10 @@ data PTargetCloseTarget = PTargetCloseTarget {
     pTargetCloseTargetTargetId :: TargetTargetID
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PTargetCloseTarget where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 instance ToJSON PTargetCloseTarget  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
 
 targetCloseTarget :: Session -> PTargetCloseTarget -> IO (Maybe Error)
@@ -3774,7 +3778,7 @@ data TargetCreateTarget = TargetCreateTarget {
     targetCreateTargetTargetId :: TargetTargetID
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  TargetCreateTarget where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
 instance Command  TargetCreateTarget where
@@ -3788,10 +3792,10 @@ data PTargetCreateTarget = PTargetCreateTarget {
     pTargetCreateTargetBackground :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PTargetCreateTarget where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 instance ToJSON PTargetCreateTarget  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 
 targetCreateTarget :: Session -> PTargetCreateTarget -> IO (Either Error TargetCreateTarget)
@@ -3803,10 +3807,10 @@ data PTargetDetachFromTarget = PTargetDetachFromTarget {
     pTargetDetachFromTargetSessionId :: Maybe TargetSessionID
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PTargetDetachFromTarget where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 instance ToJSON PTargetDetachFromTarget  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
 
 targetDetachFromTarget :: Session -> PTargetDetachFromTarget -> IO (Maybe Error)
@@ -3816,7 +3820,7 @@ data TargetGetTargets = TargetGetTargets {
     targetGetTargetsTargetInfos :: [TargetTargetInfo]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  TargetGetTargets where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
 instance Command  TargetGetTargets where
@@ -3832,10 +3836,10 @@ data PTargetSetDiscoverTargets = PTargetSetDiscoverTargets {
     pTargetSetDiscoverTargetsDiscover :: Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PTargetSetDiscoverTargets where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 25 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 instance ToJSON PTargetSetDiscoverTargets  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 25 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
 
 
 targetSetDiscoverTargets :: Session -> PTargetSetDiscoverTargets -> IO (Maybe Error)
@@ -3855,10 +3859,10 @@ data FetchRequestPaused = FetchRequestPaused {
     fetchRequestPausedNetworkId :: Maybe FetchRequestId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  FetchRequestPaused where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 instance ToJSON FetchRequestPaused  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
 
 instance FromEvent Event FetchRequestPaused where
@@ -3873,10 +3877,10 @@ data FetchAuthRequired = FetchAuthRequired {
     fetchAuthRequiredAuthChallenge :: FetchAuthChallenge
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  FetchAuthRequired where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 instance ToJSON FetchAuthRequired  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
 
 instance FromEvent Event FetchAuthRequired where
@@ -3909,10 +3913,10 @@ data FetchRequestPattern = FetchRequestPattern {
     fetchRequestPatternRequestStage :: Maybe FetchRequestStage
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  FetchRequestPattern where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 instance ToJSON FetchRequestPattern  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 
 
@@ -3921,10 +3925,10 @@ data FetchHeaderEntry = FetchHeaderEntry {
     fetchHeaderEntryValue :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  FetchHeaderEntry where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 instance ToJSON FetchHeaderEntry  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
 
 
@@ -3935,10 +3939,10 @@ data FetchAuthChallenge = FetchAuthChallenge {
     fetchAuthChallengeSource :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  FetchAuthChallenge where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 18 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 instance ToJSON FetchAuthChallenge  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 18 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
 
 
@@ -3948,10 +3952,10 @@ data FetchAuthChallengeResponse = FetchAuthChallengeResponse {
     fetchAuthChallengeResponsePassword :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  FetchAuthChallengeResponse where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 instance ToJSON FetchAuthChallengeResponse  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
 
 
@@ -3967,10 +3971,10 @@ data PFetchEnable = PFetchEnable {
     pFetchEnableHandleAuthRequests :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PFetchEnable where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 12 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 }
 
 instance ToJSON PFetchEnable  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 12 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 , A.omitNothingFields = True}
 
 
 fetchEnable :: Session -> PFetchEnable -> IO (Maybe Error)
@@ -3983,10 +3987,10 @@ data PFetchFailRequest = PFetchFailRequest {
     pFetchFailRequestErrorReason :: NetworkErrorReason
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PFetchFailRequest where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 instance ToJSON PFetchFailRequest  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
 
 fetchFailRequest :: Session -> PFetchFailRequest -> IO (Maybe Error)
@@ -4003,10 +4007,10 @@ data PFetchFulfillRequest = PFetchFulfillRequest {
     pFetchFulfillRequestResponsePhrase :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PFetchFulfillRequest where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 instance ToJSON PFetchFulfillRequest  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
 
 fetchFulfillRequest :: Session -> PFetchFulfillRequest -> IO (Maybe Error)
@@ -4022,10 +4026,10 @@ data PFetchContinueRequest = PFetchContinueRequest {
     pFetchContinueRequestHeaders :: Maybe [FetchHeaderEntry]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PFetchContinueRequest where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON PFetchContinueRequest  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 fetchContinueRequest :: Session -> PFetchContinueRequest -> IO (Maybe Error)
@@ -4038,10 +4042,10 @@ data PFetchContinueWithAuth = PFetchContinueWithAuth {
     pFetchContinueWithAuthAuthChallengeResponse :: FetchAuthChallengeResponse
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PFetchContinueWithAuth where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 instance ToJSON PFetchContinueWithAuth  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
 
 fetchContinueWithAuth :: Session -> PFetchContinueWithAuth -> IO (Maybe Error)
@@ -4052,7 +4056,7 @@ data FetchGetResponseBody = FetchGetResponseBody {
     fetchGetResponseBodyBase64Encoded :: Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  FetchGetResponseBody where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
 instance Command  FetchGetResponseBody where
@@ -4062,10 +4066,10 @@ data PFetchGetResponseBody = PFetchGetResponseBody {
     pFetchGetResponseBodyRequestId :: FetchRequestId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PFetchGetResponseBody where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON PFetchGetResponseBody  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 fetchGetResponseBody :: Session -> PFetchGetResponseBody -> IO (Either Error FetchGetResponseBody)
@@ -4075,7 +4079,7 @@ data FetchTakeResponseBodyAsStream = FetchTakeResponseBodyAsStream {
     fetchTakeResponseBodyAsStreamStream :: IOStreamHandle
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  FetchTakeResponseBodyAsStream where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
 instance Command  FetchTakeResponseBodyAsStream where
@@ -4085,10 +4089,10 @@ data PFetchTakeResponseBodyAsStream = PFetchTakeResponseBodyAsStream {
     pFetchTakeResponseBodyAsStreamRequestId :: FetchRequestId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PFetchTakeResponseBodyAsStream where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 30 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 instance ToJSON PFetchTakeResponseBodyAsStream  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 30 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
 
 
 fetchTakeResponseBodyAsStream :: Session -> PFetchTakeResponseBodyAsStream -> IO (Either Error FetchTakeResponseBodyAsStream)
@@ -4100,10 +4104,10 @@ data ConsoleMessageAdded = ConsoleMessageAdded {
     consoleMessageAddedMessage :: ConsoleConsoleMessage
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  ConsoleMessageAdded where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 instance ToJSON ConsoleMessageAdded  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 
 instance FromEvent Event ConsoleMessageAdded where
@@ -4120,10 +4124,10 @@ data ConsoleConsoleMessage = ConsoleConsoleMessage {
     consoleConsoleMessageColumn :: Maybe Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  ConsoleConsoleMessage where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON ConsoleConsoleMessage  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 
@@ -4151,10 +4155,10 @@ data DebuggerBreakpointResolved = DebuggerBreakpointResolved {
     debuggerBreakpointResolvedLocation :: DebuggerLocation
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerBreakpointResolved where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 instance ToJSON DebuggerBreakpointResolved  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DebuggerBreakpointResolved where
@@ -4169,10 +4173,10 @@ data DebuggerPaused = DebuggerPaused {
     debuggerPausedAsyncStackTrace :: Maybe RuntimeStackTrace
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerPaused where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 14 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 instance ToJSON DebuggerPaused  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 14 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DebuggerPaused where
@@ -4201,16 +4205,16 @@ data DebuggerScriptFailedToParse = DebuggerScriptFailedToParse {
     debuggerScriptFailedToParseExecutionContextId :: RuntimeExecutionContextId,
     debuggerScriptFailedToParseHash :: String,
     debuggerScriptFailedToParseExecutionContextAuxData :: Maybe [(String, String)],
-    debuggerScriptFailedToParseSourceMapUrl :: Maybe String,
-    debuggerScriptFailedToParseHasSourceUrl :: Maybe Bool,
+    debuggerScriptFailedToParseSourceMapURL :: Maybe String,
+    debuggerScriptFailedToParseHasSourceURL :: Maybe Bool,
     debuggerScriptFailedToParseIsModule :: Maybe Bool,
     debuggerScriptFailedToParseLength :: Maybe Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerScriptFailedToParse where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 instance ToJSON DebuggerScriptFailedToParse  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 27 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DebuggerScriptFailedToParse where
@@ -4227,16 +4231,16 @@ data DebuggerScriptParsed = DebuggerScriptParsed {
     debuggerScriptParsedExecutionContextId :: RuntimeExecutionContextId,
     debuggerScriptParsedHash :: String,
     debuggerScriptParsedExecutionContextAuxData :: Maybe [(String, String)],
-    debuggerScriptParsedSourceMapUrl :: Maybe String,
-    debuggerScriptParsedHasSourceUrl :: Maybe Bool,
+    debuggerScriptParsedSourceMapURL :: Maybe String,
+    debuggerScriptParsedHasSourceURL :: Maybe Bool,
     debuggerScriptParsedIsModule :: Maybe Bool,
     debuggerScriptParsedLength :: Maybe Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerScriptParsed where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 instance ToJSON DebuggerScriptParsed  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
 
 instance FromEvent Event DebuggerScriptParsed where
@@ -4254,10 +4258,10 @@ data DebuggerLocation = DebuggerLocation {
     debuggerLocationColumnNumber :: Maybe Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerLocation where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 instance ToJSON DebuggerLocation  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
 
 
@@ -4271,10 +4275,10 @@ data DebuggerCallFrame = DebuggerCallFrame {
     debuggerCallFrameReturnValue :: Maybe RuntimeRemoteObject
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerCallFrame where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 instance ToJSON DebuggerCallFrame  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
 
 
@@ -4286,22 +4290,22 @@ data DebuggerScope = DebuggerScope {
     debuggerScopeEndLocation :: Maybe DebuggerLocation
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerScope where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 13 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 }
 
 instance ToJSON DebuggerScope  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 13 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 , A.omitNothingFields = True}
 
 
 
 data DebuggerSearchMatch = DebuggerSearchMatch {
-    debuggerSearchMatchLineNumber :: Int,
+    debuggerSearchMatchLineNumber :: Double,
     debuggerSearchMatchLineContent :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerSearchMatch where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 instance ToJSON DebuggerSearchMatch  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 
 
@@ -4312,10 +4316,10 @@ data DebuggerBreakLocation = DebuggerBreakLocation {
     debuggerBreakLocationType :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerBreakLocation where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON DebuggerBreakLocation  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 
@@ -4338,13 +4342,13 @@ instance ToJSON DebuggerScriptLanguage where
 
 data DebuggerDebugSymbols = DebuggerDebugSymbols {
     debuggerDebugSymbolsType :: String,
-    debuggerDebugSymbolsExternalUrl :: Maybe String
+    debuggerDebugSymbolsExternalURL :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerDebugSymbols where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 instance ToJSON DebuggerDebugSymbols  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
 
 
@@ -4354,10 +4358,10 @@ data PDebuggerContinueToLocation = PDebuggerContinueToLocation {
     pDebuggerContinueToLocationTargetCallFrames :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerContinueToLocation where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 instance ToJSON PDebuggerContinueToLocation  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 27 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
 
 debuggerContinueToLocation :: Session -> PDebuggerContinueToLocation -> IO (Maybe Error)
@@ -4380,7 +4384,7 @@ data DebuggerEvaluateOnCallFrame = DebuggerEvaluateOnCallFrame {
     debuggerEvaluateOnCallFrameExceptionDetails :: Maybe RuntimeExceptionDetails
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerEvaluateOnCallFrame where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
 instance Command  DebuggerEvaluateOnCallFrame where
@@ -4390,16 +4394,16 @@ data PDebuggerEvaluateOnCallFrame = PDebuggerEvaluateOnCallFrame {
     pDebuggerEvaluateOnCallFrameCallFrameId :: DebuggerCallFrameId,
     pDebuggerEvaluateOnCallFrameExpression :: String,
     pDebuggerEvaluateOnCallFrameObjectGroup :: Maybe String,
-    pDebuggerEvaluateOnCallFrameIncludeCommandLineApi :: Maybe Bool,
+    pDebuggerEvaluateOnCallFrameIncludeCommandLineAPI :: Maybe Bool,
     pDebuggerEvaluateOnCallFrameSilent :: Maybe Bool,
     pDebuggerEvaluateOnCallFrameReturnByValue :: Maybe Bool,
     pDebuggerEvaluateOnCallFrameThrowOnSideEffect :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerEvaluateOnCallFrame where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 28 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 instance ToJSON PDebuggerEvaluateOnCallFrame  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 28 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
 
 
 debuggerEvaluateOnCallFrame :: Session -> PDebuggerEvaluateOnCallFrame -> IO (Either Error DebuggerEvaluateOnCallFrame)
@@ -4409,7 +4413,7 @@ data DebuggerGetPossibleBreakpoints = DebuggerGetPossibleBreakpoints {
     debuggerGetPossibleBreakpointsLocations :: [DebuggerBreakLocation]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerGetPossibleBreakpoints where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 30 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
 instance Command  DebuggerGetPossibleBreakpoints where
@@ -4421,10 +4425,10 @@ data PDebuggerGetPossibleBreakpoints = PDebuggerGetPossibleBreakpoints {
     pDebuggerGetPossibleBreakpointsRestrictToFunction :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerGetPossibleBreakpoints where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 31 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 instance ToJSON PDebuggerGetPossibleBreakpoints  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 31 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
 
 
 debuggerGetPossibleBreakpoints :: Session -> PDebuggerGetPossibleBreakpoints -> IO (Either Error DebuggerGetPossibleBreakpoints)
@@ -4435,7 +4439,7 @@ data DebuggerGetScriptSource = DebuggerGetScriptSource {
     debuggerGetScriptSourceBytecode :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerGetScriptSource where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
 instance Command  DebuggerGetScriptSource where
@@ -4445,10 +4449,10 @@ data PDebuggerGetScriptSource = PDebuggerGetScriptSource {
     pDebuggerGetScriptSourceScriptId :: RuntimeScriptId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerGetScriptSource where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance ToJSON PDebuggerGetScriptSource  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
 debuggerGetScriptSource :: Session -> PDebuggerGetScriptSource -> IO (Either Error DebuggerGetScriptSource)
@@ -4466,10 +4470,10 @@ data PDebuggerRemoveBreakpoint = PDebuggerRemoveBreakpoint {
     pDebuggerRemoveBreakpointBreakpointId :: DebuggerBreakpointId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerRemoveBreakpoint where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 25 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 instance ToJSON PDebuggerRemoveBreakpoint  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 25 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
 
 
 debuggerRemoveBreakpoint :: Session -> PDebuggerRemoveBreakpoint -> IO (Maybe Error)
@@ -4481,10 +4485,10 @@ data PDebuggerResume = PDebuggerResume {
     pDebuggerResumeTerminateOnResume :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerResume where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 instance ToJSON PDebuggerResume  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
 
 debuggerResume :: Session -> PDebuggerResume -> IO (Maybe Error)
@@ -4494,7 +4498,7 @@ data DebuggerSearchInContent = DebuggerSearchInContent {
     debuggerSearchInContentResult :: [DebuggerSearchMatch]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerSearchInContent where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
 instance Command  DebuggerSearchInContent where
@@ -4507,10 +4511,10 @@ data PDebuggerSearchInContent = PDebuggerSearchInContent {
     pDebuggerSearchInContentIsRegex :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSearchInContent where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance ToJSON PDebuggerSearchInContent  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
 debuggerSearchInContent :: Session -> PDebuggerSearchInContent -> IO (Either Error DebuggerSearchInContent)
@@ -4522,10 +4526,10 @@ data PDebuggerSetAsyncCallStackDepth = PDebuggerSetAsyncCallStackDepth {
     pDebuggerSetAsyncCallStackDepthMaxDepth :: Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSetAsyncCallStackDepth where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 31 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 instance ToJSON PDebuggerSetAsyncCallStackDepth  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 31 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
 
 
 debuggerSetAsyncCallStackDepth :: Session -> PDebuggerSetAsyncCallStackDepth -> IO (Maybe Error)
@@ -4536,7 +4540,7 @@ data DebuggerSetBreakpoint = DebuggerSetBreakpoint {
     debuggerSetBreakpointActualLocation :: DebuggerLocation
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerSetBreakpoint where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
 instance Command  DebuggerSetBreakpoint where
@@ -4547,10 +4551,10 @@ data PDebuggerSetBreakpoint = PDebuggerSetBreakpoint {
     pDebuggerSetBreakpointCondition :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSetBreakpoint where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 instance ToJSON PDebuggerSetBreakpoint  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
 
 debuggerSetBreakpoint :: Session -> PDebuggerSetBreakpoint -> IO (Either Error DebuggerSetBreakpoint)
@@ -4560,7 +4564,7 @@ data DebuggerSetInstrumentationBreakpoint = DebuggerSetInstrumentationBreakpoint
     debuggerSetInstrumentationBreakpointBreakpointId :: DebuggerBreakpointId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerSetInstrumentationBreakpoint where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 36 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 }
 
 
 instance Command  DebuggerSetInstrumentationBreakpoint where
@@ -4570,10 +4574,10 @@ data PDebuggerSetInstrumentationBreakpoint = PDebuggerSetInstrumentationBreakpoi
     pDebuggerSetInstrumentationBreakpointInstrumentation :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSetInstrumentationBreakpoint where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 37 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 }
 
 instance ToJSON PDebuggerSetInstrumentationBreakpoint  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 37 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 , A.omitNothingFields = True}
 
 
 debuggerSetInstrumentationBreakpoint :: Session -> PDebuggerSetInstrumentationBreakpoint -> IO (Either Error DebuggerSetInstrumentationBreakpoint)
@@ -4584,7 +4588,7 @@ data DebuggerSetBreakpointByUrl = DebuggerSetBreakpointByUrl {
     debuggerSetBreakpointByUrlLocations :: [DebuggerLocation]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerSetBreakpointByUrl where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
 instance Command  DebuggerSetBreakpointByUrl where
@@ -4599,10 +4603,10 @@ data PDebuggerSetBreakpointByUrl = PDebuggerSetBreakpointByUrl {
     pDebuggerSetBreakpointByUrlCondition :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSetBreakpointByUrl where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 instance ToJSON PDebuggerSetBreakpointByUrl  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 27 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
 
 debuggerSetBreakpointByUrl :: Session -> PDebuggerSetBreakpointByUrl -> IO (Either Error DebuggerSetBreakpointByUrl)
@@ -4614,10 +4618,10 @@ data PDebuggerSetBreakpointsActive = PDebuggerSetBreakpointsActive {
     pDebuggerSetBreakpointsActiveActive :: Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSetBreakpointsActive where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 instance ToJSON PDebuggerSetBreakpointsActive  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 29 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
 
 
 debuggerSetBreakpointsActive :: Session -> PDebuggerSetBreakpointsActive -> IO (Maybe Error)
@@ -4629,10 +4633,10 @@ data PDebuggerSetPauseOnExceptions = PDebuggerSetPauseOnExceptions {
     pDebuggerSetPauseOnExceptionsState :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSetPauseOnExceptions where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 instance ToJSON PDebuggerSetPauseOnExceptions  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 29 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
 
 
 debuggerSetPauseOnExceptions :: Session -> PDebuggerSetPauseOnExceptions -> IO (Maybe Error)
@@ -4645,7 +4649,7 @@ data DebuggerSetScriptSource = DebuggerSetScriptSource {
     debuggerSetScriptSourceExceptionDetails :: Maybe RuntimeExceptionDetails
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  DebuggerSetScriptSource where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
 instance Command  DebuggerSetScriptSource where
@@ -4657,10 +4661,10 @@ data PDebuggerSetScriptSource = PDebuggerSetScriptSource {
     pDebuggerSetScriptSourceDryRun :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSetScriptSource where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance ToJSON PDebuggerSetScriptSource  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
 debuggerSetScriptSource :: Session -> PDebuggerSetScriptSource -> IO (Either Error DebuggerSetScriptSource)
@@ -4672,10 +4676,10 @@ data PDebuggerSetSkipAllPauses = PDebuggerSetSkipAllPauses {
     pDebuggerSetSkipAllPausesSkip :: Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSetSkipAllPauses where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 25 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 instance ToJSON PDebuggerSetSkipAllPauses  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 25 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
 
 
 debuggerSetSkipAllPauses :: Session -> PDebuggerSetSkipAllPauses -> IO (Maybe Error)
@@ -4690,10 +4694,10 @@ data PDebuggerSetVariableValue = PDebuggerSetVariableValue {
     pDebuggerSetVariableValueCallFrameId :: DebuggerCallFrameId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PDebuggerSetVariableValue where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 25 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 instance ToJSON PDebuggerSetVariableValue  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 25 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
 
 
 debuggerSetVariableValue :: Session -> PDebuggerSetVariableValue -> IO (Maybe Error)
@@ -4726,10 +4730,10 @@ data ProfilerConsoleProfileFinished = ProfilerConsoleProfileFinished {
     profilerConsoleProfileFinishedTitle :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerConsoleProfileFinished where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 30 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 instance ToJSON ProfilerConsoleProfileFinished  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 30 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
 
 
 instance FromEvent Event ProfilerConsoleProfileFinished where
@@ -4742,10 +4746,10 @@ data ProfilerConsoleProfileStarted = ProfilerConsoleProfileStarted {
     profilerConsoleProfileStartedTitle :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerConsoleProfileStarted where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 instance ToJSON ProfilerConsoleProfileStarted  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 29 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
 
 
 instance FromEvent Event ProfilerConsoleProfileStarted where
@@ -4762,25 +4766,25 @@ data ProfilerProfileNode = ProfilerProfileNode {
     profilerProfileNodePositionTicks :: Maybe [ProfilerPositionTickInfo]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerProfileNode where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 instance ToJSON ProfilerProfileNode  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 
 
 data ProfilerProfile = ProfilerProfile {
     profilerProfileNodes :: [ProfilerProfileNode],
-    profilerProfileStartTime :: Int,
-    profilerProfileEndTime :: Int,
+    profilerProfileStartTime :: Double,
+    profilerProfileEndTime :: Double,
     profilerProfileSamples :: Maybe [Int],
     profilerProfileTimeDeltas :: Maybe [Int]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerProfile where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 instance ToJSON ProfilerProfile  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 15 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
 
 
@@ -4789,10 +4793,10 @@ data ProfilerPositionTickInfo = ProfilerPositionTickInfo {
     profilerPositionTickInfoTicks :: Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerPositionTickInfo where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance ToJSON ProfilerPositionTickInfo  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
 
@@ -4802,10 +4806,10 @@ data ProfilerCoverageRange = ProfilerCoverageRange {
     profilerCoverageRangeCount :: Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerCoverageRange where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON ProfilerCoverageRange  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 
@@ -4815,10 +4819,10 @@ data ProfilerFunctionCoverage = ProfilerFunctionCoverage {
     profilerFunctionCoverageIsBlockCoverage :: Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerFunctionCoverage where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 24 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance ToJSON ProfilerFunctionCoverage  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 24 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
 
@@ -4828,10 +4832,10 @@ data ProfilerScriptCoverage = ProfilerScriptCoverage {
     profilerScriptCoverageFunctions :: [ProfilerFunctionCoverage]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerScriptCoverage where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 instance ToJSON ProfilerScriptCoverage  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
 
 
@@ -4850,7 +4854,7 @@ data ProfilerGetBestEffortCoverage = ProfilerGetBestEffortCoverage {
     profilerGetBestEffortCoverageResult :: [ProfilerScriptCoverage]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerGetBestEffortCoverage where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
 instance Command  ProfilerGetBestEffortCoverage where
@@ -4866,10 +4870,10 @@ data PProfilerSetSamplingInterval = PProfilerSetSamplingInterval {
     pProfilerSetSamplingIntervalInterval :: Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PProfilerSetSamplingInterval where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 28 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 instance ToJSON PProfilerSetSamplingInterval  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 28 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
 
 
 profilerSetSamplingInterval :: Session -> PProfilerSetSamplingInterval -> IO (Maybe Error)
@@ -4882,10 +4886,10 @@ profilerStart :: Session -> IO (Maybe Error)
 profilerStart session = sendReceiveCommand session "Profiler.start" (Nothing :: Maybe ())
 
 data ProfilerStartPreciseCoverage = ProfilerStartPreciseCoverage {
-    profilerStartPreciseCoverageTimestamp :: Int
+    profilerStartPreciseCoverageTimestamp :: Double
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerStartPreciseCoverage where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 28 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
 instance Command  ProfilerStartPreciseCoverage where
@@ -4897,10 +4901,10 @@ data PProfilerStartPreciseCoverage = PProfilerStartPreciseCoverage {
     pProfilerStartPreciseCoverageAllowTriggeredUpdates :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PProfilerStartPreciseCoverage where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 29 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 instance ToJSON PProfilerStartPreciseCoverage  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 29 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
 
 
 profilerStartPreciseCoverage :: Session -> PProfilerStartPreciseCoverage -> IO (Either Error ProfilerStartPreciseCoverage)
@@ -4910,7 +4914,7 @@ data ProfilerStop = ProfilerStop {
     profilerStopProfile :: ProfilerProfile
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerStop where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 12 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 }
 
 
 instance Command  ProfilerStop where
@@ -4928,10 +4932,10 @@ profilerStopPreciseCoverage session = sendReceiveCommand session "Profiler.stopP
 
 data ProfilerTakePreciseCoverage = ProfilerTakePreciseCoverage {
     profilerTakePreciseCoverageResult :: [ProfilerScriptCoverage],
-    profilerTakePreciseCoverageTimestamp :: Int
+    profilerTakePreciseCoverageTimestamp :: Double
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  ProfilerTakePreciseCoverage where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 27 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
 instance Command  ProfilerTakePreciseCoverage where
@@ -4951,10 +4955,10 @@ data RuntimeConsoleApiCalled = RuntimeConsoleApiCalled {
     runtimeConsoleApiCalledStackTrace :: Maybe RuntimeStackTrace
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeConsoleApiCalled where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 instance ToJSON RuntimeConsoleApiCalled  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
 
 instance FromEvent Event RuntimeConsoleApiCalled where
@@ -4966,10 +4970,10 @@ data RuntimeExceptionRevoked = RuntimeExceptionRevoked {
     runtimeExceptionRevokedExceptionId :: Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeExceptionRevoked where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 instance ToJSON RuntimeExceptionRevoked  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
 
 instance FromEvent Event RuntimeExceptionRevoked where
@@ -4981,10 +4985,10 @@ data RuntimeExceptionThrown = RuntimeExceptionThrown {
     runtimeExceptionThrownExceptionDetails :: RuntimeExceptionDetails
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeExceptionThrown where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 instance ToJSON RuntimeExceptionThrown  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
 
 instance FromEvent Event RuntimeExceptionThrown where
@@ -4995,10 +4999,10 @@ data RuntimeExecutionContextCreated = RuntimeExecutionContextCreated {
     runtimeExecutionContextCreatedContext :: RuntimeExecutionContextDescription
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeExecutionContextCreated where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 30 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 instance ToJSON RuntimeExecutionContextCreated  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 30 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
 
 
 instance FromEvent Event RuntimeExecutionContextCreated where
@@ -5009,10 +5013,10 @@ data RuntimeExecutionContextDestroyed = RuntimeExecutionContextDestroyed {
     runtimeExecutionContextDestroyedExecutionContextId :: RuntimeExecutionContextId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeExecutionContextDestroyed where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 32 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 instance ToJSON RuntimeExecutionContextDestroyed  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 32 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
 
 
 instance FromEvent Event RuntimeExecutionContextDestroyed where
@@ -5036,10 +5040,10 @@ data RuntimeInspectRequested = RuntimeInspectRequested {
     runtimeInspectRequestedHints :: [(String, String)]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeInspectRequested where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 instance ToJSON RuntimeInspectRequested  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
 
 instance FromEvent Event RuntimeInspectRequested where
@@ -5055,10 +5059,10 @@ data RuntimeWebDriverValue = RuntimeWebDriverValue {
     runtimeWebDriverValueObjectId :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeWebDriverValue where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON RuntimeWebDriverValue  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 
@@ -5076,10 +5080,10 @@ data RuntimeRemoteObject = RuntimeRemoteObject {
     runtimeRemoteObjectObjectId :: Maybe RuntimeRemoteObjectId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeRemoteObject where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 instance ToJSON RuntimeRemoteObject  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 
 
@@ -5096,10 +5100,10 @@ data RuntimePropertyDescriptor = RuntimePropertyDescriptor {
     runtimePropertyDescriptorSymbol :: Maybe RuntimeRemoteObject
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimePropertyDescriptor where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 25 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 instance ToJSON RuntimePropertyDescriptor  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 25 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
 
 
 
@@ -5108,10 +5112,10 @@ data RuntimeInternalPropertyDescriptor = RuntimeInternalPropertyDescriptor {
     runtimeInternalPropertyDescriptorValue :: Maybe RuntimeRemoteObject
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeInternalPropertyDescriptor where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 33 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 }
 
 instance ToJSON RuntimeInternalPropertyDescriptor  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 33 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
 
 
 
@@ -5121,10 +5125,10 @@ data RuntimeCallArgument = RuntimeCallArgument {
     runtimeCallArgumentObjectId :: Maybe RuntimeRemoteObjectId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeCallArgument where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 instance ToJSON RuntimeCallArgument  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 19 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 
 
@@ -5137,10 +5141,10 @@ data RuntimeExecutionContextDescription = RuntimeExecutionContextDescription {
     runtimeExecutionContextDescriptionAuxData :: Maybe [(String, String)]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeExecutionContextDescription where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 34 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
 
 instance ToJSON RuntimeExecutionContextDescription  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 34 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 , A.omitNothingFields = True}
 
 
 
@@ -5156,16 +5160,16 @@ data RuntimeExceptionDetails = RuntimeExceptionDetails {
     runtimeExceptionDetailsExecutionContextId :: Maybe RuntimeExecutionContextId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeExceptionDetails where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 23 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 instance ToJSON RuntimeExceptionDetails  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 23 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
 
 
-type RuntimeTimestamp = Int
+type RuntimeTimestamp = Double
 
-type RuntimeTimeDelta = Int
+type RuntimeTimeDelta = Double
 
 data RuntimeCallFrame = RuntimeCallFrame {
     runtimeCallFrameFunctionName :: String,
@@ -5175,10 +5179,10 @@ data RuntimeCallFrame = RuntimeCallFrame {
     runtimeCallFrameColumnNumber :: Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeCallFrame where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 instance ToJSON RuntimeCallFrame  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
 
 
@@ -5188,10 +5192,10 @@ data RuntimeStackTrace = RuntimeStackTrace {
     runtimeStackTraceParent :: Maybe RuntimeStackTrace
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeStackTrace where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 instance ToJSON RuntimeStackTrace  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
 
 data RuntimeAwaitPromise = RuntimeAwaitPromise {
@@ -5199,7 +5203,7 @@ data RuntimeAwaitPromise = RuntimeAwaitPromise {
     runtimeAwaitPromiseExceptionDetails :: Maybe RuntimeExceptionDetails
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeAwaitPromise where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
 instance Command  RuntimeAwaitPromise where
@@ -5211,10 +5215,10 @@ data PRuntimeAwaitPromise = PRuntimeAwaitPromise {
     pRuntimeAwaitPromiseGeneratePreview :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeAwaitPromise where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 instance ToJSON PRuntimeAwaitPromise  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
 
 runtimeAwaitPromise :: Session -> PRuntimeAwaitPromise -> IO (Either Error RuntimeAwaitPromise)
@@ -5225,7 +5229,7 @@ data RuntimeCallFunctionOn = RuntimeCallFunctionOn {
     runtimeCallFunctionOnExceptionDetails :: Maybe RuntimeExceptionDetails
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeCallFunctionOn where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
 instance Command  RuntimeCallFunctionOn where
@@ -5243,10 +5247,10 @@ data PRuntimeCallFunctionOn = PRuntimeCallFunctionOn {
     pRuntimeCallFunctionOnObjectGroup :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeCallFunctionOn where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 22 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 instance ToJSON PRuntimeCallFunctionOn  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 22 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
 
 runtimeCallFunctionOn :: Session -> PRuntimeCallFunctionOn -> IO (Either Error RuntimeCallFunctionOn)
@@ -5257,7 +5261,7 @@ data RuntimeCompileScript = RuntimeCompileScript {
     runtimeCompileScriptExceptionDetails :: Maybe RuntimeExceptionDetails
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeCompileScript where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
 instance Command  RuntimeCompileScript where
@@ -5265,15 +5269,15 @@ instance Command  RuntimeCompileScript where
 
 data PRuntimeCompileScript = PRuntimeCompileScript {
     pRuntimeCompileScriptExpression :: String,
-    pRuntimeCompileScriptSourceUrl :: String,
+    pRuntimeCompileScriptSourceURL :: String,
     pRuntimeCompileScriptPersistScript :: Bool,
     pRuntimeCompileScriptExecutionContextId :: Maybe RuntimeExecutionContextId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeCompileScript where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON PRuntimeCompileScript  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 runtimeCompileScript :: Session -> PRuntimeCompileScript -> IO (Either Error RuntimeCompileScript)
@@ -5302,7 +5306,7 @@ data RuntimeEvaluate = RuntimeEvaluate {
     runtimeEvaluateExceptionDetails :: Maybe RuntimeExceptionDetails
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeEvaluate where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 15 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
 instance Command  RuntimeEvaluate where
@@ -5311,7 +5315,7 @@ instance Command  RuntimeEvaluate where
 data PRuntimeEvaluate = PRuntimeEvaluate {
     pRuntimeEvaluateExpression :: String,
     pRuntimeEvaluateObjectGroup :: Maybe String,
-    pRuntimeEvaluateIncludeCommandLineApi :: Maybe Bool,
+    pRuntimeEvaluateIncludeCommandLineAPI :: Maybe Bool,
     pRuntimeEvaluateSilent :: Maybe Bool,
     pRuntimeEvaluateContextId :: Maybe RuntimeExecutionContextId,
     pRuntimeEvaluateReturnByValue :: Maybe Bool,
@@ -5319,10 +5323,10 @@ data PRuntimeEvaluate = PRuntimeEvaluate {
     pRuntimeEvaluateAwaitPromise :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeEvaluate where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 instance ToJSON PRuntimeEvaluate  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 16 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
 
 runtimeEvaluate :: Session -> PRuntimeEvaluate -> IO (Either Error RuntimeEvaluate)
@@ -5334,7 +5338,7 @@ data RuntimeGetProperties = RuntimeGetProperties {
     runtimeGetPropertiesExceptionDetails :: Maybe RuntimeExceptionDetails
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeGetProperties where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
 instance Command  RuntimeGetProperties where
@@ -5345,10 +5349,10 @@ data PRuntimeGetProperties = PRuntimeGetProperties {
     pRuntimeGetPropertiesOwnProperties :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeGetProperties where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON PRuntimeGetProperties  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 runtimeGetProperties :: Session -> PRuntimeGetProperties -> IO (Either Error RuntimeGetProperties)
@@ -5358,7 +5362,7 @@ data RuntimeGlobalLexicalScopeNames = RuntimeGlobalLexicalScopeNames {
     runtimeGlobalLexicalScopeNamesNames :: [String]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeGlobalLexicalScopeNames where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 30 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
 instance Command  RuntimeGlobalLexicalScopeNames where
@@ -5368,10 +5372,10 @@ data PRuntimeGlobalLexicalScopeNames = PRuntimeGlobalLexicalScopeNames {
     pRuntimeGlobalLexicalScopeNamesExecutionContextId :: Maybe RuntimeExecutionContextId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeGlobalLexicalScopeNames where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 31 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 instance ToJSON PRuntimeGlobalLexicalScopeNames  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 31 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
 
 
 runtimeGlobalLexicalScopeNames :: Session -> PRuntimeGlobalLexicalScopeNames -> IO (Either Error RuntimeGlobalLexicalScopeNames)
@@ -5381,7 +5385,7 @@ data RuntimeQueryObjects = RuntimeQueryObjects {
     runtimeQueryObjectsObjects :: RuntimeRemoteObject
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeQueryObjects where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 19 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
 instance Command  RuntimeQueryObjects where
@@ -5392,10 +5396,10 @@ data PRuntimeQueryObjects = PRuntimeQueryObjects {
     pRuntimeQueryObjectsObjectGroup :: Maybe String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeQueryObjects where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 20 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 instance ToJSON PRuntimeQueryObjects  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 20 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
 
 runtimeQueryObjects :: Session -> PRuntimeQueryObjects -> IO (Either Error RuntimeQueryObjects)
@@ -5407,10 +5411,10 @@ data PRuntimeReleaseObject = PRuntimeReleaseObject {
     pRuntimeReleaseObjectObjectId :: RuntimeRemoteObjectId
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeReleaseObject where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 21 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance ToJSON PRuntimeReleaseObject  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 21 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
 runtimeReleaseObject :: Session -> PRuntimeReleaseObject -> IO (Maybe Error)
@@ -5422,10 +5426,10 @@ data PRuntimeReleaseObjectGroup = PRuntimeReleaseObjectGroup {
     pRuntimeReleaseObjectGroupObjectGroup :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeReleaseObjectGroup where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 26 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 instance ToJSON PRuntimeReleaseObjectGroup  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 26 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
 
 runtimeReleaseObjectGroup :: Session -> PRuntimeReleaseObjectGroup -> IO (Maybe Error)
@@ -5442,7 +5446,7 @@ data RuntimeRunScript = RuntimeRunScript {
     runtimeRunScriptExceptionDetails :: Maybe RuntimeExceptionDetails
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  RuntimeRunScript where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
 instance Command  RuntimeRunScript where
@@ -5453,16 +5457,16 @@ data PRuntimeRunScript = PRuntimeRunScript {
     pRuntimeRunScriptExecutionContextId :: Maybe RuntimeExecutionContextId,
     pRuntimeRunScriptObjectGroup :: Maybe String,
     pRuntimeRunScriptSilent :: Maybe Bool,
-    pRuntimeRunScriptIncludeCommandLineApi :: Maybe Bool,
+    pRuntimeRunScriptIncludeCommandLineAPI :: Maybe Bool,
     pRuntimeRunScriptReturnByValue :: Maybe Bool,
     pRuntimeRunScriptGeneratePreview :: Maybe Bool,
     pRuntimeRunScriptAwaitPromise :: Maybe Bool
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeRunScript where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 17 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 instance ToJSON PRuntimeRunScript  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 17 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
 
 runtimeRunScript :: Session -> PRuntimeRunScript -> IO (Either Error RuntimeRunScript)
@@ -5474,10 +5478,10 @@ data PRuntimeSetAsyncCallStackDepth = PRuntimeSetAsyncCallStackDepth {
     pRuntimeSetAsyncCallStackDepthMaxDepth :: Int
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  PRuntimeSetAsyncCallStackDepth where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 30 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 instance ToJSON PRuntimeSetAsyncCallStackDepth  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 30 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
 
 
 runtimeSetAsyncCallStackDepth :: Session -> PRuntimeSetAsyncCallStackDepth -> IO (Maybe Error)
@@ -5491,17 +5495,17 @@ data SchemaDomain = SchemaDomain {
     schemaDomainVersion :: String
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  SchemaDomain where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 12 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 }
 
 instance ToJSON SchemaDomain  where
-    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = C.camel . drop 12 , A.omitNothingFields = True}
+    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 , A.omitNothingFields = True}
 
 
 data SchemaGetDomains = SchemaGetDomains {
     schemaGetDomainsDomains :: [SchemaDomain]
 } deriving (Eq, Show, Read, Generic)
 instance FromJSON  SchemaGetDomains where
-    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier =  C.camel . drop 16 }
+    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
 instance Command  SchemaGetDomains where

@@ -43,6 +43,7 @@ import qualified Data.Map as Map
 import Data.Proxy
 import System.Random
 import GHC.Generics
+import Data.Char
 
 import CDPPrelude
 
@@ -64,3 +65,6 @@ sendReceiveCommand session = sendReceiveCommand' (unSession session)
 
 sendReceiveCommandResult :: forall a b s. (Show a, ToJSON a, Command b) => Session -> String -> Maybe a -> IO (Either Error b)
 sendReceiveCommandResult session = sendReceiveCommandResult' (unSession session)
+
+uncapitalizeFirst [] = []
+uncapitalizeFirst (hd:tl) = toLower hd : tl

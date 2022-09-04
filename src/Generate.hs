@@ -189,15 +189,11 @@ generate des = ("\n\n" <>) $
             [ unwords ["instance FromJSON ", name, "where"]
             , unwords ["    parseJSON = A.genericParseJSON", fromJSONOpts (length name)]
             ]
-            -- , unwords ["    parseJSON = A.withObject", show name, "$ \\v ->"]
-            -- , unwords ["        ", name, "<$> v", sep (snd headField), show (fst headField)]
-            -- , unlines . map (\(field, isOpt) -> unwords ["            <*> v ", sep isOpt, show field]) $ tail fields
-            -- ]
       where
         f b = map (id &&& (const b))
 
-    toJSONOpts   n    = unwords ["A.defaultOptions{A.fieldLabelModifier = C.camel . drop", show n, ", A.omitNothingFields = True}"]
-    fromJSONOpts n    = unwords ["A.defaultOptions{A.fieldLabelModifier =  C.camel . drop", show n, "}"]
+    toJSONOpts   n    = unwords ["A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop", show n, ", A.omitNothingFields = True}"]
+    fromJSONOpts n    = unwords ["A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop", show n, "}"]
 
 
     genToJSONInstance name reqFieldsHS optFieldsHS =
@@ -274,7 +270,7 @@ generate des = ("\n\n" <>) $
             optParams =  filter (isTrue . P.parametersEltOptional) $ validParams
             reqParamNames = map (unpack . P.parametersEltName) reqParams
             optParamNames = map (unpack . P.parametersEltName) $ optParams
-            paramNameToHSName = (C.toCamel . C.fromAny) . (fieldPrefix <>) . (name <>) . C.toPascal . C.fromAny
+            paramNameToHSName = (uncapitalizeFirst) . (fieldPrefix <>) . (name <>) . capitalizeFirst
 
         in
         if length validParams == 0 then "" else
@@ -315,7 +311,7 @@ wrapRoundBrackets s = "(" <> s <> ")"
 convertType _ "string" = "String"
 convertType _ "integer" = "Int"
 convertType _ "boolean" = "Bool"
-convertType _ "number" = "Int" -- TODO
+convertType _ "number" = "Double"
 convertType _ "()" = "()"
 convertType _ "any" = "Int" -- TODO
 convertType _ "array" = error "got array conversion" -- TODO

@@ -27,6 +27,7 @@ dependencies:
   - random
   - monad-loops
   - filepath
+  - data-default
 
 library:
   source-dirs: src

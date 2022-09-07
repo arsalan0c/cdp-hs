@@ -26,6 +26,7 @@ dependencies:
   - casing
   - random
   - monad-loops
+  - data-default
 
 library:
   source-dirs: src
@@ -41,6 +42,26 @@ tests:
   cdp-test:
     source-dirs: test
     main: Main.hs
+    ghc-options:
+      - -Wall
+      - -threaded
+    dependencies:
+      - cdp
+      - hedgehog
+
+  cdp-test-commands:
+    source-dirs: test
+    main: Commands.hs
+    ghc-options:
+      - -Wall
+      - -threaded
+    dependencies:
+      - cdp
+      - hedgehog
+  
+  cdp-test-events:
+    source-dirs: test
+    main: Events.hs
     ghc-options:
       - -Wall
       - -threaded

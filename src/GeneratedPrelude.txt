@@ -1,21 +1,11 @@
-{-# LANGUAGE OverloadedStrings, RecordWildCards, TupleSections, GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE AllowAmbiguousTypes    #-}
-{-# LANGUAGE DataKinds              #-}
-{-# LANGUAGE FlexibleContexts       #-}
-{-# LANGUAGE FlexibleInstances      #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE GADTs                  #-}
-{-# LANGUAGE PolyKinds              #-}
-{-# LANGUAGE RankNTypes             #-}
-{-# LANGUAGE ScopedTypeVariables    #-}
-{-# LANGUAGE TypeApplications       #-}
-{-# LANGUAGE TypeFamilies           #-}
-{-# LANGUAGE TypeOperators          #-}
-{-# LANGUAGE UndecidableInstances   #-}
+{-# LANGUAGE OverloadedStrings, RecordWildCards, TupleSections #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module CDP (module CDP) where
+module CDP (Config(..), module CDP) where
 
 
 import           Control.Applicative  ((<$>))
@@ -44,15 +34,16 @@ import Data.Proxy
 import System.Random
 import GHC.Generics
 import Data.Char
+import Data.Default
 
 import CDPPrelude
 
 
 type ClientApp b = Session -> IO b
-data Session = Session { unSession :: Session' Event }  
+data Session = Session { unSession :: Session' Event }
 
-runClient  :: Maybe (String, Int) -> ClientApp a -> IO a
-runClient hostPort app = runClient' hostPort (app . Session)
+runClient  :: Config -> ClientApp a -> IO a
+runClient config app = runClient' config (app . Session)
 
 subscribe :: forall a. FromEvent Event a => Session -> (a -> IO ()) -> IO ()
 subscribe session h = subscribe' (unSession session) h

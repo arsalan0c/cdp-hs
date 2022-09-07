@@ -145,10 +145,10 @@ generate des = ("\n\n" <>) $
         unlines [ returnTypeDecl, if isEmptyReturn then "" else commandInstance ce, paramsTypeDecl
             , unwords 
                 [ name, "::"
-                , intercalate " -> " $ ["Session"] ++ (if isEmptyParams then [] else [paramsTypeName]) ++ [returnTypeSig]
+                , intercalate " -> " $ ["Handle Event"] ++ (if isEmptyParams then [] else [paramsTypeName]) ++ [returnTypeSig]
                 ]
             , unwords
-                [ name, "session", if isEmptyParams then "=" else "params ="
+                [ name, "handle", if isEmptyParams then "=" else "params ="
                 , genBody isEmptyParams isEmptyReturn dn ce (zip (zip paramNames paramHSNames) paramOptionals)
                 ]
         ]
@@ -205,7 +205,7 @@ generate des = ("\n\n" <>) $
     genBody isEmptyParams isEmptyReturn dn commandName paramNamesOptional = 
         unwords 
         [ if isEmptyReturn then "sendReceiveCommand" else "sendReceiveCommandResult" 
-        , "session"
+        , "handle"
         , show $ commandStr dn commandName
         , if isEmptyParams then "(Nothing :: Maybe ())" else "(Just params)" -- genBodyArgs paramNamesOptional
         ]

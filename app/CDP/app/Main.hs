@@ -17,12 +17,12 @@ main :: IO ()
 main = do
     putStrLn "Starting CDP example"
 
-    CDP.runClient def $ \session -> do
-        print =<< CDP.browserGetVersion session
+    CDP.runClient def $ \handle -> do
+        print =<< CDP.browserGetVersion handle
 
-        CDP.subscribe session (print . CDP.pageWindowOpenUrl)
-        CDP.pageEnable session
-        CDP.unsubscribe session (Proxy :: Proxy CDP.PageWindowOpen)
+        CDP.subscribe handle (print . CDP.pageWindowOpenUrl)
+        CDP.pageEnable handle
+        CDP.unsubscribe handle (Proxy :: Proxy CDP.PageWindowOpen)
 
         forever $ do
             threadDelay 1000

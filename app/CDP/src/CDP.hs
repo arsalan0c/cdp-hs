@@ -5,7 +5,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module CDP (Config(..), module CDP) where
+module CDP (Handle, Config(..), module CDP) where
 
 
 import           Control.Applicative  ((<$>))
@@ -36,29 +36,19 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDPPrelude
+import Internal
+import Runtime
 
+type ClientApp b = Handle Event -> IO b
 
-type ClientApp b = Session -> IO b
-data Session = Session { unSession :: Session' Event }
+runClient   :: Config -> ClientApp a -> IO a
+runClient config app = runClient' config app
 
-runClient  :: Config -> ClientApp a -> IO a
-runClient config app = runClient' config (app . Session)
+subscribe   :: forall a. FromEvent Event a => Handle Event -> (a -> IO ()) -> IO ()
+subscribe handle h = subscribe' handle h
 
-subscribe :: forall a. FromEvent Event a => Session -> (a -> IO ()) -> IO ()
-subscribe session h = subscribe' (unSession session) h
-
-unsubscribe :: forall a. FromEvent Event a => Session -> Proxy a -> IO ()
-unsubscribe session p = unsubscribe' (unSession session) p
-
-sendReceiveCommand :: (Show a, ToJSON a) => Session -> String -> Maybe a -> IO (Maybe Error)
-sendReceiveCommand session = sendReceiveCommand' (unSession session)
-
-sendReceiveCommandResult :: forall a b s. (Show a, ToJSON a, Command b) => Session -> String -> Maybe a -> IO (Either Error b)
-sendReceiveCommandResult session = sendReceiveCommandResult' (unSession session)
-
-uncapitalizeFirst [] = []
-uncapitalizeFirst (hd:tl) = toLower hd : tl
+unsubscribe :: forall a. FromEvent Event a => Handle Event -> Proxy a -> IO ()
+unsubscribe handle p = unsubscribe' handle p
 
 
 data Event = EVDOMAttributeModified DOMAttributeModified | EVDOMAttributeRemoved DOMAttributeRemoved | EVDOMCharacterDataModified DOMCharacterDataModified | EVDOMChildNodeCountUpdated DOMChildNodeCountUpdated | EVDOMChildNodeInserted DOMChildNodeInserted | EVDOMChildNodeRemoved DOMChildNodeRemoved | EVDOMDocumentUpdated DOMDocumentUpdated | EVDOMSetChildNodes DOMSetChildNodes | EVLogEntryAdded LogEntryAdded | EVNetworkDataReceived NetworkDataReceived | EVNetworkEventSourceMessageReceived NetworkEventSourceMessageReceived | EVNetworkLoadingFailed NetworkLoadingFailed | EVNetworkLoadingFinished NetworkLoadingFinished | EVNetworkRequestServedFromCache NetworkRequestServedFromCache | EVNetworkRequestWillBeSent NetworkRequestWillBeSent | EVNetworkResponseReceived NetworkResponseReceived | EVNetworkWebSocketClosed NetworkWebSocketClosed | EVNetworkWebSocketCreated NetworkWebSocketCreated | EVNetworkWebSocketFrameError NetworkWebSocketFrameError | EVNetworkWebSocketFrameReceived NetworkWebSocketFrameReceived | EVNetworkWebSocketFrameSent NetworkWebSocketFrameSent | EVNetworkWebSocketHandshakeResponseReceived NetworkWebSocketHandshakeResponseReceived | EVNetworkWebSocketWillSendHandshakeRequest NetworkWebSocketWillSendHandshakeRequest | EVNetworkWebTransportCreated NetworkWebTransportCreated | EVNetworkWebTransportConnectionEstablished NetworkWebTransportConnectionEstablished | EVNetworkWebTransportClosed NetworkWebTransportClosed | EVPageDomContentEventFired PageDomContentEventFired | EVPageFileChooserOpened PageFileChooserOpened | EVPageFrameAttached PageFrameAttached | EVPageFrameDetached PageFrameDetached | EVPageFrameNavigated PageFrameNavigated | EVPageInterstitialHidden PageInterstitialHidden | EVPageInterstitialShown PageInterstitialShown | EVPageJavascriptDialogClosed PageJavascriptDialogClosed | EVPageJavascriptDialogOpening PageJavascriptDialogOpening | EVPageLifecycleEvent PageLifecycleEvent | EVPagePrerenderAttemptCompleted PagePrerenderAttemptCompleted | EVPageLoadEventFired PageLoadEventFired | EVPageWindowOpen PageWindowOpen | EVPerformanceMetrics PerformanceMetrics | EVTargetReceivedMessageFromTarget TargetReceivedMessageFromTarget | EVTargetTargetCreated TargetTargetCreated | EVTargetTargetDestroyed TargetTargetDestroyed | EVTargetTargetCrashed TargetTargetCrashed | EVTargetTargetInfoChanged TargetTargetInfoChanged | EVFetchRequestPaused FetchRequestPaused | EVFetchAuthRequired FetchAuthRequired | EVConsoleMessageAdded ConsoleMessageAdded | EVDebuggerBreakpointResolved DebuggerBreakpointResolved | EVDebuggerPaused DebuggerPaused | EVDebuggerResumed DebuggerResumed | EVDebuggerScriptFailedToParse DebuggerScriptFailedToParse | EVDebuggerScriptParsed DebuggerScriptParsed | EVProfilerConsoleProfileFinished ProfilerConsoleProfileFinished | EVProfilerConsoleProfileStarted ProfilerConsoleProfileStarted | EVRuntimeConsoleApiCalled RuntimeConsoleApiCalled | EVRuntimeExceptionRevoked RuntimeExceptionRevoked | EVRuntimeExceptionThrown RuntimeExceptionThrown | EVRuntimeExecutionContextCreated RuntimeExecutionContextCreated | EVRuntimeExecutionContextDestroyed RuntimeExecutionContextDestroyed | EVRuntimeExecutionContextsCleared RuntimeExecutionContextsCleared | EVRuntimeInspectRequested RuntimeInspectRequested
@@ -136,8 +126,8 @@ instance FromJSON (EventResponse Event ) where
 
 
 
-browserClose :: Session -> IO (Maybe Error)
-browserClose session = sendReceiveCommand session "Browser.close" (Nothing :: Maybe ())
+browserClose :: Handle Event -> IO (Maybe Error)
+browserClose handle = sendReceiveCommand handle "Browser.close" (Nothing :: Maybe ())
 
 data BrowserGetVersion = BrowserGetVersion {
     browserGetVersionProtocolVersion :: String,
@@ -154,8 +144,8 @@ instance Command  BrowserGetVersion where
     commandName _ = "Browser.getVersion"
 
 
-browserGetVersion :: Session -> IO (Either Error BrowserGetVersion)
-browserGetVersion session = sendReceiveCommandResult session "Browser.getVersion" (Nothing :: Maybe ())
+browserGetVersion :: Handle Event -> IO (Either Error BrowserGetVersion)
+browserGetVersion handle = sendReceiveCommandResult handle "Browser.getVersion" (Nothing :: Maybe ())
 
 
 
@@ -531,20 +521,20 @@ instance ToJSON PDOMDescribeNode  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
 
-dOMDescribeNode :: Session -> PDOMDescribeNode -> IO (Either Error DOMDescribeNode)
-dOMDescribeNode session params = sendReceiveCommandResult session "DOM.describeNode" (Just params)
+dOMDescribeNode :: Handle Event -> PDOMDescribeNode -> IO (Either Error DOMDescribeNode)
+dOMDescribeNode handle params = sendReceiveCommandResult handle "DOM.describeNode" (Just params)
 
 
 
 
-dOMDisable :: Session -> IO (Maybe Error)
-dOMDisable session = sendReceiveCommand session "DOM.disable" (Nothing :: Maybe ())
+dOMDisable :: Handle Event -> IO (Maybe Error)
+dOMDisable handle = sendReceiveCommand handle "DOM.disable" (Nothing :: Maybe ())
 
 
 
 
-dOMEnable :: Session -> IO (Maybe Error)
-dOMEnable session = sendReceiveCommand session "DOM.enable" (Nothing :: Maybe ())
+dOMEnable :: Handle Event -> IO (Maybe Error)
+dOMEnable handle = sendReceiveCommand handle "DOM.enable" (Nothing :: Maybe ())
 
 
 
@@ -560,8 +550,8 @@ instance ToJSON PDOMFocus  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 9 , A.omitNothingFields = True}
 
 
-dOMFocus :: Session -> PDOMFocus -> IO (Maybe Error)
-dOMFocus session params = sendReceiveCommand session "DOM.focus" (Just params)
+dOMFocus :: Handle Event -> PDOMFocus -> IO (Maybe Error)
+dOMFocus handle params = sendReceiveCommand handle "DOM.focus" (Just params)
 
 data DOMGetAttributes = DOMGetAttributes {
     dOMGetAttributesAttributes :: [String]
@@ -583,8 +573,8 @@ instance ToJSON PDOMGetAttributes  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
 
-dOMGetAttributes :: Session -> PDOMGetAttributes -> IO (Either Error DOMGetAttributes)
-dOMGetAttributes session params = sendReceiveCommandResult session "DOM.getAttributes" (Just params)
+dOMGetAttributes :: Handle Event -> PDOMGetAttributes -> IO (Either Error DOMGetAttributes)
+dOMGetAttributes handle params = sendReceiveCommandResult handle "DOM.getAttributes" (Just params)
 
 data DOMGetBoxModel = DOMGetBoxModel {
     dOMGetBoxModelModel :: DOMBoxModel
@@ -608,8 +598,8 @@ instance ToJSON PDOMGetBoxModel  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
 
-dOMGetBoxModel :: Session -> PDOMGetBoxModel -> IO (Either Error DOMGetBoxModel)
-dOMGetBoxModel session params = sendReceiveCommandResult session "DOM.getBoxModel" (Just params)
+dOMGetBoxModel :: Handle Event -> PDOMGetBoxModel -> IO (Either Error DOMGetBoxModel)
+dOMGetBoxModel handle params = sendReceiveCommandResult handle "DOM.getBoxModel" (Just params)
 
 data DOMGetDocument = DOMGetDocument {
     dOMGetDocumentRoot :: DOMNode
@@ -632,8 +622,8 @@ instance ToJSON PDOMGetDocument  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
 
-dOMGetDocument :: Session -> PDOMGetDocument -> IO (Either Error DOMGetDocument)
-dOMGetDocument session params = sendReceiveCommandResult session "DOM.getDocument" (Just params)
+dOMGetDocument :: Handle Event -> PDOMGetDocument -> IO (Either Error DOMGetDocument)
+dOMGetDocument handle params = sendReceiveCommandResult handle "DOM.getDocument" (Just params)
 
 data DOMGetNodeForLocation = DOMGetNodeForLocation {
     dOMGetNodeForLocationBackendNodeId :: DOMBackendNodeId,
@@ -660,8 +650,8 @@ instance ToJSON PDOMGetNodeForLocation  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
 
-dOMGetNodeForLocation :: Session -> PDOMGetNodeForLocation -> IO (Either Error DOMGetNodeForLocation)
-dOMGetNodeForLocation session params = sendReceiveCommandResult session "DOM.getNodeForLocation" (Just params)
+dOMGetNodeForLocation :: Handle Event -> PDOMGetNodeForLocation -> IO (Either Error DOMGetNodeForLocation)
+dOMGetNodeForLocation handle params = sendReceiveCommandResult handle "DOM.getNodeForLocation" (Just params)
 
 data DOMGetOuterHtml = DOMGetOuterHtml {
     dOMGetOuterHtmlOuterHtml :: String
@@ -685,26 +675,26 @@ instance ToJSON PDOMGetOuterHtml  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
 
-dOMGetOuterHtml :: Session -> PDOMGetOuterHtml -> IO (Either Error DOMGetOuterHtml)
-dOMGetOuterHtml session params = sendReceiveCommandResult session "DOM.getOuterHTML" (Just params)
+dOMGetOuterHtml :: Handle Event -> PDOMGetOuterHtml -> IO (Either Error DOMGetOuterHtml)
+dOMGetOuterHtml handle params = sendReceiveCommandResult handle "DOM.getOuterHTML" (Just params)
 
 
 
 
-dOMHideHighlight :: Session -> IO (Maybe Error)
-dOMHideHighlight session = sendReceiveCommand session "DOM.hideHighlight" (Nothing :: Maybe ())
+dOMHideHighlight :: Handle Event -> IO (Maybe Error)
+dOMHideHighlight handle = sendReceiveCommand handle "DOM.hideHighlight" (Nothing :: Maybe ())
 
 
 
 
-dOMHighlightNode :: Session -> IO (Maybe Error)
-dOMHighlightNode session = sendReceiveCommand session "DOM.highlightNode" (Nothing :: Maybe ())
+dOMHighlightNode :: Handle Event -> IO (Maybe Error)
+dOMHighlightNode handle = sendReceiveCommand handle "DOM.highlightNode" (Nothing :: Maybe ())
 
 
 
 
-dOMHighlightRect :: Session -> IO (Maybe Error)
-dOMHighlightRect session = sendReceiveCommand session "DOM.highlightRect" (Nothing :: Maybe ())
+dOMHighlightRect :: Handle Event -> IO (Maybe Error)
+dOMHighlightRect handle = sendReceiveCommand handle "DOM.highlightRect" (Nothing :: Maybe ())
 
 data DOMMoveTo = DOMMoveTo {
     dOMMoveToNodeId :: DOMNodeId
@@ -728,8 +718,8 @@ instance ToJSON PDOMMoveTo  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 , A.omitNothingFields = True}
 
 
-dOMMoveTo :: Session -> PDOMMoveTo -> IO (Either Error DOMMoveTo)
-dOMMoveTo session params = sendReceiveCommandResult session "DOM.moveTo" (Just params)
+dOMMoveTo :: Handle Event -> PDOMMoveTo -> IO (Either Error DOMMoveTo)
+dOMMoveTo handle params = sendReceiveCommandResult handle "DOM.moveTo" (Just params)
 
 data DOMQuerySelector = DOMQuerySelector {
     dOMQuerySelectorNodeId :: DOMNodeId
@@ -752,8 +742,8 @@ instance ToJSON PDOMQuerySelector  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
 
-dOMQuerySelector :: Session -> PDOMQuerySelector -> IO (Either Error DOMQuerySelector)
-dOMQuerySelector session params = sendReceiveCommandResult session "DOM.querySelector" (Just params)
+dOMQuerySelector :: Handle Event -> PDOMQuerySelector -> IO (Either Error DOMQuerySelector)
+dOMQuerySelector handle params = sendReceiveCommandResult handle "DOM.querySelector" (Just params)
 
 data DOMQuerySelectorAll = DOMQuerySelectorAll {
     dOMQuerySelectorAllNodeIds :: [DOMNodeId]
@@ -776,8 +766,8 @@ instance ToJSON PDOMQuerySelectorAll  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
 
-dOMQuerySelectorAll :: Session -> PDOMQuerySelectorAll -> IO (Either Error DOMQuerySelectorAll)
-dOMQuerySelectorAll session params = sendReceiveCommandResult session "DOM.querySelectorAll" (Just params)
+dOMQuerySelectorAll :: Handle Event -> PDOMQuerySelectorAll -> IO (Either Error DOMQuerySelectorAll)
+dOMQuerySelectorAll handle params = sendReceiveCommandResult handle "DOM.querySelectorAll" (Just params)
 
 
 
@@ -792,8 +782,8 @@ instance ToJSON PDOMRemoveAttribute  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 
-dOMRemoveAttribute :: Session -> PDOMRemoveAttribute -> IO (Maybe Error)
-dOMRemoveAttribute session params = sendReceiveCommand session "DOM.removeAttribute" (Just params)
+dOMRemoveAttribute :: Handle Event -> PDOMRemoveAttribute -> IO (Maybe Error)
+dOMRemoveAttribute handle params = sendReceiveCommand handle "DOM.removeAttribute" (Just params)
 
 
 
@@ -807,8 +797,8 @@ instance ToJSON PDOMRemoveNode  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
 
 
-dOMRemoveNode :: Session -> PDOMRemoveNode -> IO (Maybe Error)
-dOMRemoveNode session params = sendReceiveCommand session "DOM.removeNode" (Just params)
+dOMRemoveNode :: Handle Event -> PDOMRemoveNode -> IO (Maybe Error)
+dOMRemoveNode handle params = sendReceiveCommand handle "DOM.removeNode" (Just params)
 
 
 
@@ -824,8 +814,8 @@ instance ToJSON PDOMRequestChildNodes  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
-dOMRequestChildNodes :: Session -> PDOMRequestChildNodes -> IO (Maybe Error)
-dOMRequestChildNodes session params = sendReceiveCommand session "DOM.requestChildNodes" (Just params)
+dOMRequestChildNodes :: Handle Event -> PDOMRequestChildNodes -> IO (Maybe Error)
+dOMRequestChildNodes handle params = sendReceiveCommand handle "DOM.requestChildNodes" (Just params)
 
 data DOMRequestNode = DOMRequestNode {
     dOMRequestNodeNodeId :: DOMNodeId
@@ -847,8 +837,8 @@ instance ToJSON PDOMRequestNode  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
 
-dOMRequestNode :: Session -> PDOMRequestNode -> IO (Either Error DOMRequestNode)
-dOMRequestNode session params = sendReceiveCommandResult session "DOM.requestNode" (Just params)
+dOMRequestNode :: Handle Event -> PDOMRequestNode -> IO (Either Error DOMRequestNode)
+dOMRequestNode handle params = sendReceiveCommandResult handle "DOM.requestNode" (Just params)
 
 data DOMResolveNode = DOMResolveNode {
     dOMResolveNodeObject :: RuntimeRemoteObject
@@ -873,8 +863,8 @@ instance ToJSON PDOMResolveNode  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
 
-dOMResolveNode :: Session -> PDOMResolveNode -> IO (Either Error DOMResolveNode)
-dOMResolveNode session params = sendReceiveCommandResult session "DOM.resolveNode" (Just params)
+dOMResolveNode :: Handle Event -> PDOMResolveNode -> IO (Either Error DOMResolveNode)
+dOMResolveNode handle params = sendReceiveCommandResult handle "DOM.resolveNode" (Just params)
 
 
 
@@ -890,8 +880,8 @@ instance ToJSON PDOMSetAttributeValue  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
-dOMSetAttributeValue :: Session -> PDOMSetAttributeValue -> IO (Maybe Error)
-dOMSetAttributeValue session params = sendReceiveCommand session "DOM.setAttributeValue" (Just params)
+dOMSetAttributeValue :: Handle Event -> PDOMSetAttributeValue -> IO (Maybe Error)
+dOMSetAttributeValue handle params = sendReceiveCommand handle "DOM.setAttributeValue" (Just params)
 
 
 
@@ -907,8 +897,8 @@ instance ToJSON PDOMSetAttributesAsText  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
 
-dOMSetAttributesAsText :: Session -> PDOMSetAttributesAsText -> IO (Maybe Error)
-dOMSetAttributesAsText session params = sendReceiveCommand session "DOM.setAttributesAsText" (Just params)
+dOMSetAttributesAsText :: Handle Event -> PDOMSetAttributesAsText -> IO (Maybe Error)
+dOMSetAttributesAsText handle params = sendReceiveCommand handle "DOM.setAttributesAsText" (Just params)
 
 
 
@@ -925,8 +915,8 @@ instance ToJSON PDOMSetFileInputFiles  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
-dOMSetFileInputFiles :: Session -> PDOMSetFileInputFiles -> IO (Maybe Error)
-dOMSetFileInputFiles session params = sendReceiveCommand session "DOM.setFileInputFiles" (Just params)
+dOMSetFileInputFiles :: Handle Event -> PDOMSetFileInputFiles -> IO (Maybe Error)
+dOMSetFileInputFiles handle params = sendReceiveCommand handle "DOM.setFileInputFiles" (Just params)
 
 data DOMSetNodeName = DOMSetNodeName {
     dOMSetNodeNameNodeId :: DOMNodeId
@@ -949,8 +939,8 @@ instance ToJSON PDOMSetNodeName  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
 
-dOMSetNodeName :: Session -> PDOMSetNodeName -> IO (Either Error DOMSetNodeName)
-dOMSetNodeName session params = sendReceiveCommandResult session "DOM.setNodeName" (Just params)
+dOMSetNodeName :: Handle Event -> PDOMSetNodeName -> IO (Either Error DOMSetNodeName)
+dOMSetNodeName handle params = sendReceiveCommandResult handle "DOM.setNodeName" (Just params)
 
 
 
@@ -965,8 +955,8 @@ instance ToJSON PDOMSetNodeValue  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
 
-dOMSetNodeValue :: Session -> PDOMSetNodeValue -> IO (Maybe Error)
-dOMSetNodeValue session params = sendReceiveCommand session "DOM.setNodeValue" (Just params)
+dOMSetNodeValue :: Handle Event -> PDOMSetNodeValue -> IO (Maybe Error)
+dOMSetNodeValue handle params = sendReceiveCommand handle "DOM.setNodeValue" (Just params)
 
 
 
@@ -981,8 +971,8 @@ instance ToJSON PDOMSetOuterHtml  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
 
-dOMSetOuterHtml :: Session -> PDOMSetOuterHtml -> IO (Maybe Error)
-dOMSetOuterHtml session params = sendReceiveCommand session "DOM.setOuterHTML" (Just params)
+dOMSetOuterHtml :: Handle Event -> PDOMSetOuterHtml -> IO (Maybe Error)
+dOMSetOuterHtml handle params = sendReceiveCommand handle "DOM.setOuterHTML" (Just params)
 
 
 
@@ -1047,8 +1037,8 @@ instance ToJSON PDOMDebuggerGetEventListeners  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
 
 
-dOMDebuggerGetEventListeners :: Session -> PDOMDebuggerGetEventListeners -> IO (Either Error DOMDebuggerGetEventListeners)
-dOMDebuggerGetEventListeners session params = sendReceiveCommandResult session "DOMDebugger.getEventListeners" (Just params)
+dOMDebuggerGetEventListeners :: Handle Event -> PDOMDebuggerGetEventListeners -> IO (Either Error DOMDebuggerGetEventListeners)
+dOMDebuggerGetEventListeners handle params = sendReceiveCommandResult handle "DOMDebugger.getEventListeners" (Just params)
 
 
 
@@ -1063,8 +1053,8 @@ instance ToJSON PDOMDebuggerRemoveDomBreakpoint  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
 
 
-dOMDebuggerRemoveDomBreakpoint :: Session -> PDOMDebuggerRemoveDomBreakpoint -> IO (Maybe Error)
-dOMDebuggerRemoveDomBreakpoint session params = sendReceiveCommand session "DOMDebugger.removeDOMBreakpoint" (Just params)
+dOMDebuggerRemoveDomBreakpoint :: Handle Event -> PDOMDebuggerRemoveDomBreakpoint -> IO (Maybe Error)
+dOMDebuggerRemoveDomBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.removeDOMBreakpoint" (Just params)
 
 
 
@@ -1078,8 +1068,8 @@ instance ToJSON PDOMDebuggerRemoveEventListenerBreakpoint  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 41 , A.omitNothingFields = True}
 
 
-dOMDebuggerRemoveEventListenerBreakpoint :: Session -> PDOMDebuggerRemoveEventListenerBreakpoint -> IO (Maybe Error)
-dOMDebuggerRemoveEventListenerBreakpoint session params = sendReceiveCommand session "DOMDebugger.removeEventListenerBreakpoint" (Just params)
+dOMDebuggerRemoveEventListenerBreakpoint :: Handle Event -> PDOMDebuggerRemoveEventListenerBreakpoint -> IO (Maybe Error)
+dOMDebuggerRemoveEventListenerBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.removeEventListenerBreakpoint" (Just params)
 
 
 
@@ -1093,8 +1083,8 @@ instance ToJSON PDOMDebuggerRemoveXhrBreakpoint  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
 
 
-dOMDebuggerRemoveXhrBreakpoint :: Session -> PDOMDebuggerRemoveXhrBreakpoint -> IO (Maybe Error)
-dOMDebuggerRemoveXhrBreakpoint session params = sendReceiveCommand session "DOMDebugger.removeXHRBreakpoint" (Just params)
+dOMDebuggerRemoveXhrBreakpoint :: Handle Event -> PDOMDebuggerRemoveXhrBreakpoint -> IO (Maybe Error)
+dOMDebuggerRemoveXhrBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.removeXHRBreakpoint" (Just params)
 
 
 
@@ -1109,8 +1099,8 @@ instance ToJSON PDOMDebuggerSetDomBreakpoint  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
 
 
-dOMDebuggerSetDomBreakpoint :: Session -> PDOMDebuggerSetDomBreakpoint -> IO (Maybe Error)
-dOMDebuggerSetDomBreakpoint session params = sendReceiveCommand session "DOMDebugger.setDOMBreakpoint" (Just params)
+dOMDebuggerSetDomBreakpoint :: Handle Event -> PDOMDebuggerSetDomBreakpoint -> IO (Maybe Error)
+dOMDebuggerSetDomBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.setDOMBreakpoint" (Just params)
 
 
 
@@ -1124,8 +1114,8 @@ instance ToJSON PDOMDebuggerSetEventListenerBreakpoint  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 , A.omitNothingFields = True}
 
 
-dOMDebuggerSetEventListenerBreakpoint :: Session -> PDOMDebuggerSetEventListenerBreakpoint -> IO (Maybe Error)
-dOMDebuggerSetEventListenerBreakpoint session params = sendReceiveCommand session "DOMDebugger.setEventListenerBreakpoint" (Just params)
+dOMDebuggerSetEventListenerBreakpoint :: Handle Event -> PDOMDebuggerSetEventListenerBreakpoint -> IO (Maybe Error)
+dOMDebuggerSetEventListenerBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.setEventListenerBreakpoint" (Just params)
 
 
 
@@ -1139,8 +1129,8 @@ instance ToJSON PDOMDebuggerSetXhrBreakpoint  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
 
 
-dOMDebuggerSetXhrBreakpoint :: Session -> PDOMDebuggerSetXhrBreakpoint -> IO (Maybe Error)
-dOMDebuggerSetXhrBreakpoint session params = sendReceiveCommand session "DOMDebugger.setXHRBreakpoint" (Just params)
+dOMDebuggerSetXhrBreakpoint :: Handle Event -> PDOMDebuggerSetXhrBreakpoint -> IO (Maybe Error)
+dOMDebuggerSetXhrBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.setXHRBreakpoint" (Just params)
 
 
 
@@ -1192,20 +1182,20 @@ instance Command  EmulationCanEmulate where
     commandName _ = "Emulation.canEmulate"
 
 
-emulationCanEmulate :: Session -> IO (Either Error EmulationCanEmulate)
-emulationCanEmulate session = sendReceiveCommandResult session "Emulation.canEmulate" (Nothing :: Maybe ())
+emulationCanEmulate :: Handle Event -> IO (Either Error EmulationCanEmulate)
+emulationCanEmulate handle = sendReceiveCommandResult handle "Emulation.canEmulate" (Nothing :: Maybe ())
 
 
 
 
-emulationClearDeviceMetricsOverride :: Session -> IO (Maybe Error)
-emulationClearDeviceMetricsOverride session = sendReceiveCommand session "Emulation.clearDeviceMetricsOverride" (Nothing :: Maybe ())
+emulationClearDeviceMetricsOverride :: Handle Event -> IO (Maybe Error)
+emulationClearDeviceMetricsOverride handle = sendReceiveCommand handle "Emulation.clearDeviceMetricsOverride" (Nothing :: Maybe ())
 
 
 
 
-emulationClearGeolocationOverride :: Session -> IO (Maybe Error)
-emulationClearGeolocationOverride session = sendReceiveCommand session "Emulation.clearGeolocationOverride" (Nothing :: Maybe ())
+emulationClearGeolocationOverride :: Handle Event -> IO (Maybe Error)
+emulationClearGeolocationOverride handle = sendReceiveCommand handle "Emulation.clearGeolocationOverride" (Nothing :: Maybe ())
 
 
 
@@ -1219,8 +1209,8 @@ instance ToJSON PEmulationSetDefaultBackgroundColorOverride  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 43 , A.omitNothingFields = True}
 
 
-emulationSetDefaultBackgroundColorOverride :: Session -> PEmulationSetDefaultBackgroundColorOverride -> IO (Maybe Error)
-emulationSetDefaultBackgroundColorOverride session params = sendReceiveCommand session "Emulation.setDefaultBackgroundColorOverride" (Just params)
+emulationSetDefaultBackgroundColorOverride :: Handle Event -> PEmulationSetDefaultBackgroundColorOverride -> IO (Maybe Error)
+emulationSetDefaultBackgroundColorOverride handle params = sendReceiveCommand handle "Emulation.setDefaultBackgroundColorOverride" (Just params)
 
 
 
@@ -1238,8 +1228,8 @@ instance ToJSON PEmulationSetDeviceMetricsOverride  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 , A.omitNothingFields = True}
 
 
-emulationSetDeviceMetricsOverride :: Session -> PEmulationSetDeviceMetricsOverride -> IO (Maybe Error)
-emulationSetDeviceMetricsOverride session params = sendReceiveCommand session "Emulation.setDeviceMetricsOverride" (Just params)
+emulationSetDeviceMetricsOverride :: Handle Event -> PEmulationSetDeviceMetricsOverride -> IO (Maybe Error)
+emulationSetDeviceMetricsOverride handle params = sendReceiveCommand handle "Emulation.setDeviceMetricsOverride" (Just params)
 
 
 
@@ -1254,8 +1244,8 @@ instance ToJSON PEmulationSetEmulatedMedia  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
 
-emulationSetEmulatedMedia :: Session -> PEmulationSetEmulatedMedia -> IO (Maybe Error)
-emulationSetEmulatedMedia session params = sendReceiveCommand session "Emulation.setEmulatedMedia" (Just params)
+emulationSetEmulatedMedia :: Handle Event -> PEmulationSetEmulatedMedia -> IO (Maybe Error)
+emulationSetEmulatedMedia handle params = sendReceiveCommand handle "Emulation.setEmulatedMedia" (Just params)
 
 
 
@@ -1271,8 +1261,8 @@ instance ToJSON PEmulationSetGeolocationOverride  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
 
 
-emulationSetGeolocationOverride :: Session -> PEmulationSetGeolocationOverride -> IO (Maybe Error)
-emulationSetGeolocationOverride session params = sendReceiveCommand session "Emulation.setGeolocationOverride" (Just params)
+emulationSetGeolocationOverride :: Handle Event -> PEmulationSetGeolocationOverride -> IO (Maybe Error)
+emulationSetGeolocationOverride handle params = sendReceiveCommand handle "Emulation.setGeolocationOverride" (Just params)
 
 
 
@@ -1286,8 +1276,8 @@ instance ToJSON PEmulationSetScriptExecutionDisabled  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
 
 
-emulationSetScriptExecutionDisabled :: Session -> PEmulationSetScriptExecutionDisabled -> IO (Maybe Error)
-emulationSetScriptExecutionDisabled session params = sendReceiveCommand session "Emulation.setScriptExecutionDisabled" (Just params)
+emulationSetScriptExecutionDisabled :: Handle Event -> PEmulationSetScriptExecutionDisabled -> IO (Maybe Error)
+emulationSetScriptExecutionDisabled handle params = sendReceiveCommand handle "Emulation.setScriptExecutionDisabled" (Just params)
 
 
 
@@ -1302,8 +1292,8 @@ instance ToJSON PEmulationSetTouchEmulationEnabled  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 , A.omitNothingFields = True}
 
 
-emulationSetTouchEmulationEnabled :: Session -> PEmulationSetTouchEmulationEnabled -> IO (Maybe Error)
-emulationSetTouchEmulationEnabled session params = sendReceiveCommand session "Emulation.setTouchEmulationEnabled" (Just params)
+emulationSetTouchEmulationEnabled :: Handle Event -> PEmulationSetTouchEmulationEnabled -> IO (Maybe Error)
+emulationSetTouchEmulationEnabled handle params = sendReceiveCommand handle "Emulation.setTouchEmulationEnabled" (Just params)
 
 
 
@@ -1319,8 +1309,8 @@ instance ToJSON PEmulationSetUserAgentOverride  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
 
 
-emulationSetUserAgentOverride :: Session -> PEmulationSetUserAgentOverride -> IO (Maybe Error)
-emulationSetUserAgentOverride session params = sendReceiveCommand session "Emulation.setUserAgentOverride" (Just params)
+emulationSetUserAgentOverride :: Handle Event -> PEmulationSetUserAgentOverride -> IO (Maybe Error)
+emulationSetUserAgentOverride handle params = sendReceiveCommand handle "Emulation.setUserAgentOverride" (Just params)
 
 
 
@@ -1338,8 +1328,8 @@ instance ToJSON PIOClose  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 8 , A.omitNothingFields = True}
 
 
-iOClose :: Session -> PIOClose -> IO (Maybe Error)
-iOClose session params = sendReceiveCommand session "IO.close" (Just params)
+iOClose :: Handle Event -> PIOClose -> IO (Maybe Error)
+iOClose handle params = sendReceiveCommand handle "IO.close" (Just params)
 
 data IORead = IORead {
     iOReadData :: String,
@@ -1365,8 +1355,8 @@ instance ToJSON PIORead  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 , A.omitNothingFields = True}
 
 
-iORead :: Session -> PIORead -> IO (Either Error IORead)
-iORead session params = sendReceiveCommandResult session "IO.read" (Just params)
+iORead :: Handle Event -> PIORead -> IO (Either Error IORead)
+iORead handle params = sendReceiveCommandResult handle "IO.read" (Just params)
 
 data IOResolveBlob = IOResolveBlob {
     iOResolveBlobUuid :: String
@@ -1388,8 +1378,8 @@ instance ToJSON PIOResolveBlob  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
 
 
-iOResolveBlob :: Session -> PIOResolveBlob -> IO (Either Error IOResolveBlob)
-iOResolveBlob session params = sendReceiveCommandResult session "IO.resolveBlob" (Just params)
+iOResolveBlob :: Handle Event -> PIOResolveBlob -> IO (Either Error IOResolveBlob)
+iOResolveBlob handle params = sendReceiveCommandResult handle "IO.resolveBlob" (Just params)
 
 
 
@@ -1462,8 +1452,8 @@ instance ToJSON PInputDispatchKeyEvent  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
 
-inputDispatchKeyEvent :: Session -> PInputDispatchKeyEvent -> IO (Maybe Error)
-inputDispatchKeyEvent session params = sendReceiveCommand session "Input.dispatchKeyEvent" (Just params)
+inputDispatchKeyEvent :: Handle Event -> PInputDispatchKeyEvent -> IO (Maybe Error)
+inputDispatchKeyEvent handle params = sendReceiveCommand handle "Input.dispatchKeyEvent" (Just params)
 
 
 
@@ -1487,8 +1477,8 @@ instance ToJSON PInputDispatchMouseEvent  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
-inputDispatchMouseEvent :: Session -> PInputDispatchMouseEvent -> IO (Maybe Error)
-inputDispatchMouseEvent session params = sendReceiveCommand session "Input.dispatchMouseEvent" (Just params)
+inputDispatchMouseEvent :: Handle Event -> PInputDispatchMouseEvent -> IO (Maybe Error)
+inputDispatchMouseEvent handle params = sendReceiveCommand handle "Input.dispatchMouseEvent" (Just params)
 
 
 
@@ -1505,8 +1495,8 @@ instance ToJSON PInputDispatchTouchEvent  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
-inputDispatchTouchEvent :: Session -> PInputDispatchTouchEvent -> IO (Maybe Error)
-inputDispatchTouchEvent session params = sendReceiveCommand session "Input.dispatchTouchEvent" (Just params)
+inputDispatchTouchEvent :: Handle Event -> PInputDispatchTouchEvent -> IO (Maybe Error)
+inputDispatchTouchEvent handle params = sendReceiveCommand handle "Input.dispatchTouchEvent" (Just params)
 
 
 
@@ -1520,8 +1510,8 @@ instance ToJSON PInputSetIgnoreInputEvents  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
 
-inputSetIgnoreInputEvents :: Session -> PInputSetIgnoreInputEvents -> IO (Maybe Error)
-inputSetIgnoreInputEvents session params = sendReceiveCommand session "Input.setIgnoreInputEvents" (Just params)
+inputSetIgnoreInputEvents :: Handle Event -> PInputSetIgnoreInputEvents -> IO (Maybe Error)
+inputSetIgnoreInputEvents handle params = sendReceiveCommand handle "Input.setIgnoreInputEvents" (Just params)
 
 
 
@@ -1575,20 +1565,20 @@ instance ToJSON LogViolationSetting  where
 
 
 
-logClear :: Session -> IO (Maybe Error)
-logClear session = sendReceiveCommand session "Log.clear" (Nothing :: Maybe ())
+logClear :: Handle Event -> IO (Maybe Error)
+logClear handle = sendReceiveCommand handle "Log.clear" (Nothing :: Maybe ())
 
 
 
 
-logDisable :: Session -> IO (Maybe Error)
-logDisable session = sendReceiveCommand session "Log.disable" (Nothing :: Maybe ())
+logDisable :: Handle Event -> IO (Maybe Error)
+logDisable handle = sendReceiveCommand handle "Log.disable" (Nothing :: Maybe ())
 
 
 
 
-logEnable :: Session -> IO (Maybe Error)
-logEnable session = sendReceiveCommand session "Log.enable" (Nothing :: Maybe ())
+logEnable :: Handle Event -> IO (Maybe Error)
+logEnable handle = sendReceiveCommand handle "Log.enable" (Nothing :: Maybe ())
 
 
 
@@ -1602,14 +1592,14 @@ instance ToJSON PLogStartViolationsReport  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
 
 
-logStartViolationsReport :: Session -> PLogStartViolationsReport -> IO (Maybe Error)
-logStartViolationsReport session params = sendReceiveCommand session "Log.startViolationsReport" (Just params)
+logStartViolationsReport :: Handle Event -> PLogStartViolationsReport -> IO (Maybe Error)
+logStartViolationsReport handle params = sendReceiveCommand handle "Log.startViolationsReport" (Just params)
 
 
 
 
-logStopViolationsReport :: Session -> IO (Maybe Error)
-logStopViolationsReport session = sendReceiveCommand session "Log.stopViolationsReport" (Nothing :: Maybe ())
+logStopViolationsReport :: Handle Event -> IO (Maybe Error)
+logStopViolationsReport handle = sendReceiveCommand handle "Log.stopViolationsReport" (Nothing :: Maybe ())
 
 
 
@@ -2473,14 +2463,14 @@ instance ToJSON NetworkCookieParam  where
 
 
 
-networkClearBrowserCache :: Session -> IO (Maybe Error)
-networkClearBrowserCache session = sendReceiveCommand session "Network.clearBrowserCache" (Nothing :: Maybe ())
+networkClearBrowserCache :: Handle Event -> IO (Maybe Error)
+networkClearBrowserCache handle = sendReceiveCommand handle "Network.clearBrowserCache" (Nothing :: Maybe ())
 
 
 
 
-networkClearBrowserCookies :: Session -> IO (Maybe Error)
-networkClearBrowserCookies session = sendReceiveCommand session "Network.clearBrowserCookies" (Nothing :: Maybe ())
+networkClearBrowserCookies :: Handle Event -> IO (Maybe Error)
+networkClearBrowserCookies handle = sendReceiveCommand handle "Network.clearBrowserCookies" (Nothing :: Maybe ())
 
 
 
@@ -2497,14 +2487,14 @@ instance ToJSON PNetworkDeleteCookies  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
-networkDeleteCookies :: Session -> PNetworkDeleteCookies -> IO (Maybe Error)
-networkDeleteCookies session params = sendReceiveCommand session "Network.deleteCookies" (Just params)
+networkDeleteCookies :: Handle Event -> PNetworkDeleteCookies -> IO (Maybe Error)
+networkDeleteCookies handle params = sendReceiveCommand handle "Network.deleteCookies" (Just params)
 
 
 
 
-networkDisable :: Session -> IO (Maybe Error)
-networkDisable session = sendReceiveCommand session "Network.disable" (Nothing :: Maybe ())
+networkDisable :: Handle Event -> IO (Maybe Error)
+networkDisable handle = sendReceiveCommand handle "Network.disable" (Nothing :: Maybe ())
 
 
 
@@ -2522,8 +2512,8 @@ instance ToJSON PNetworkEmulateNetworkConditions  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
 
 
-networkEmulateNetworkConditions :: Session -> PNetworkEmulateNetworkConditions -> IO (Maybe Error)
-networkEmulateNetworkConditions session params = sendReceiveCommand session "Network.emulateNetworkConditions" (Just params)
+networkEmulateNetworkConditions :: Handle Event -> PNetworkEmulateNetworkConditions -> IO (Maybe Error)
+networkEmulateNetworkConditions handle params = sendReceiveCommand handle "Network.emulateNetworkConditions" (Just params)
 
 
 
@@ -2537,8 +2527,8 @@ instance ToJSON PNetworkEnable  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
 
 
-networkEnable :: Session -> PNetworkEnable -> IO (Maybe Error)
-networkEnable session params = sendReceiveCommand session "Network.enable" (Just params)
+networkEnable :: Handle Event -> PNetworkEnable -> IO (Maybe Error)
+networkEnable handle params = sendReceiveCommand handle "Network.enable" (Just params)
 
 data NetworkGetAllCookies = NetworkGetAllCookies {
     networkGetAllCookiesCookies :: [NetworkCookie]
@@ -2551,8 +2541,8 @@ instance Command  NetworkGetAllCookies where
     commandName _ = "Network.getAllCookies"
 
 
-networkGetAllCookies :: Session -> IO (Either Error NetworkGetAllCookies)
-networkGetAllCookies session = sendReceiveCommandResult session "Network.getAllCookies" (Nothing :: Maybe ())
+networkGetAllCookies :: Handle Event -> IO (Either Error NetworkGetAllCookies)
+networkGetAllCookies handle = sendReceiveCommandResult handle "Network.getAllCookies" (Nothing :: Maybe ())
 
 data NetworkGetCookies = NetworkGetCookies {
     networkGetCookiesCookies :: [NetworkCookie]
@@ -2574,8 +2564,8 @@ instance ToJSON PNetworkGetCookies  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
 
-networkGetCookies :: Session -> PNetworkGetCookies -> IO (Either Error NetworkGetCookies)
-networkGetCookies session params = sendReceiveCommandResult session "Network.getCookies" (Just params)
+networkGetCookies :: Handle Event -> PNetworkGetCookies -> IO (Either Error NetworkGetCookies)
+networkGetCookies handle params = sendReceiveCommandResult handle "Network.getCookies" (Just params)
 
 data NetworkGetResponseBody = NetworkGetResponseBody {
     networkGetResponseBodyBody :: String,
@@ -2598,8 +2588,8 @@ instance ToJSON PNetworkGetResponseBody  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
 
-networkGetResponseBody :: Session -> PNetworkGetResponseBody -> IO (Either Error NetworkGetResponseBody)
-networkGetResponseBody session params = sendReceiveCommandResult session "Network.getResponseBody" (Just params)
+networkGetResponseBody :: Handle Event -> PNetworkGetResponseBody -> IO (Either Error NetworkGetResponseBody)
+networkGetResponseBody handle params = sendReceiveCommandResult handle "Network.getResponseBody" (Just params)
 
 data NetworkGetRequestPostData = NetworkGetRequestPostData {
     networkGetRequestPostDataPostData :: String
@@ -2621,8 +2611,8 @@ instance ToJSON PNetworkGetRequestPostData  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
 
-networkGetRequestPostData :: Session -> PNetworkGetRequestPostData -> IO (Either Error NetworkGetRequestPostData)
-networkGetRequestPostData session params = sendReceiveCommandResult session "Network.getRequestPostData" (Just params)
+networkGetRequestPostData :: Handle Event -> PNetworkGetRequestPostData -> IO (Either Error NetworkGetRequestPostData)
+networkGetRequestPostData handle params = sendReceiveCommandResult handle "Network.getRequestPostData" (Just params)
 
 
 
@@ -2636,8 +2626,8 @@ instance ToJSON PNetworkSetCacheDisabled  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
-networkSetCacheDisabled :: Session -> PNetworkSetCacheDisabled -> IO (Maybe Error)
-networkSetCacheDisabled session params = sendReceiveCommand session "Network.setCacheDisabled" (Just params)
+networkSetCacheDisabled :: Handle Event -> PNetworkSetCacheDisabled -> IO (Maybe Error)
+networkSetCacheDisabled handle params = sendReceiveCommand handle "Network.setCacheDisabled" (Just params)
 
 
 
@@ -2659,8 +2649,8 @@ instance ToJSON PNetworkSetCookie  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
 
-networkSetCookie :: Session -> PNetworkSetCookie -> IO (Maybe Error)
-networkSetCookie session params = sendReceiveCommand session "Network.setCookie" (Just params)
+networkSetCookie :: Handle Event -> PNetworkSetCookie -> IO (Maybe Error)
+networkSetCookie handle params = sendReceiveCommand handle "Network.setCookie" (Just params)
 
 
 
@@ -2674,8 +2664,8 @@ instance ToJSON PNetworkSetCookies  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
 
-networkSetCookies :: Session -> PNetworkSetCookies -> IO (Maybe Error)
-networkSetCookies session params = sendReceiveCommand session "Network.setCookies" (Just params)
+networkSetCookies :: Handle Event -> PNetworkSetCookies -> IO (Maybe Error)
+networkSetCookies handle params = sendReceiveCommand handle "Network.setCookies" (Just params)
 
 
 
@@ -2689,8 +2679,8 @@ instance ToJSON PNetworkSetExtraHttpHeaders  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
 
-networkSetExtraHttpHeaders :: Session -> PNetworkSetExtraHttpHeaders -> IO (Maybe Error)
-networkSetExtraHttpHeaders session params = sendReceiveCommand session "Network.setExtraHTTPHeaders" (Just params)
+networkSetExtraHttpHeaders :: Handle Event -> PNetworkSetExtraHttpHeaders -> IO (Maybe Error)
+networkSetExtraHttpHeaders handle params = sendReceiveCommand handle "Network.setExtraHTTPHeaders" (Just params)
 
 
 
@@ -2706,8 +2696,8 @@ instance ToJSON PNetworkSetUserAgentOverride  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
 
 
-networkSetUserAgentOverride :: Session -> PNetworkSetUserAgentOverride -> IO (Maybe Error)
-networkSetUserAgentOverride session params = sendReceiveCommand session "Network.setUserAgentOverride" (Just params)
+networkSetUserAgentOverride :: Handle Event -> PNetworkSetUserAgentOverride -> IO (Maybe Error)
+networkSetUserAgentOverride handle params = sendReceiveCommand handle "Network.setUserAgentOverride" (Just params)
 
 
 
@@ -3172,14 +3162,14 @@ instance ToJSON PPageAddScriptToEvaluateOnNewDocument  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 , A.omitNothingFields = True}
 
 
-pageAddScriptToEvaluateOnNewDocument :: Session -> PPageAddScriptToEvaluateOnNewDocument -> IO (Either Error PageAddScriptToEvaluateOnNewDocument)
-pageAddScriptToEvaluateOnNewDocument session params = sendReceiveCommandResult session "Page.addScriptToEvaluateOnNewDocument" (Just params)
+pageAddScriptToEvaluateOnNewDocument :: Handle Event -> PPageAddScriptToEvaluateOnNewDocument -> IO (Either Error PageAddScriptToEvaluateOnNewDocument)
+pageAddScriptToEvaluateOnNewDocument handle params = sendReceiveCommandResult handle "Page.addScriptToEvaluateOnNewDocument" (Just params)
 
 
 
 
-pageBringToFront :: Session -> IO (Maybe Error)
-pageBringToFront session = sendReceiveCommand session "Page.bringToFront" (Nothing :: Maybe ())
+pageBringToFront :: Handle Event -> IO (Maybe Error)
+pageBringToFront handle = sendReceiveCommand handle "Page.bringToFront" (Nothing :: Maybe ())
 
 data PageCaptureScreenshot = PageCaptureScreenshot {
     pageCaptureScreenshotData :: String
@@ -3203,8 +3193,8 @@ instance ToJSON PPageCaptureScreenshot  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
 
-pageCaptureScreenshot :: Session -> PPageCaptureScreenshot -> IO (Either Error PageCaptureScreenshot)
-pageCaptureScreenshot session params = sendReceiveCommandResult session "Page.captureScreenshot" (Just params)
+pageCaptureScreenshot :: Handle Event -> PPageCaptureScreenshot -> IO (Either Error PageCaptureScreenshot)
+pageCaptureScreenshot handle params = sendReceiveCommandResult handle "Page.captureScreenshot" (Just params)
 
 data PageCreateIsolatedWorld = PageCreateIsolatedWorld {
     pageCreateIsolatedWorldExecutionContextId :: RuntimeExecutionContextId
@@ -3228,20 +3218,20 @@ instance ToJSON PPageCreateIsolatedWorld  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
-pageCreateIsolatedWorld :: Session -> PPageCreateIsolatedWorld -> IO (Either Error PageCreateIsolatedWorld)
-pageCreateIsolatedWorld session params = sendReceiveCommandResult session "Page.createIsolatedWorld" (Just params)
+pageCreateIsolatedWorld :: Handle Event -> PPageCreateIsolatedWorld -> IO (Either Error PageCreateIsolatedWorld)
+pageCreateIsolatedWorld handle params = sendReceiveCommandResult handle "Page.createIsolatedWorld" (Just params)
 
 
 
 
-pageDisable :: Session -> IO (Maybe Error)
-pageDisable session = sendReceiveCommand session "Page.disable" (Nothing :: Maybe ())
+pageDisable :: Handle Event -> IO (Maybe Error)
+pageDisable handle = sendReceiveCommand handle "Page.disable" (Nothing :: Maybe ())
 
 
 
 
-pageEnable :: Session -> IO (Maybe Error)
-pageEnable session = sendReceiveCommand session "Page.enable" (Nothing :: Maybe ())
+pageEnable :: Handle Event -> IO (Maybe Error)
+pageEnable handle = sendReceiveCommand handle "Page.enable" (Nothing :: Maybe ())
 
 data PageGetAppManifest = PageGetAppManifest {
     pageGetAppManifestUrl :: String,
@@ -3256,8 +3246,8 @@ instance Command  PageGetAppManifest where
     commandName _ = "Page.getAppManifest"
 
 
-pageGetAppManifest :: Session -> IO (Either Error PageGetAppManifest)
-pageGetAppManifest session = sendReceiveCommandResult session "Page.getAppManifest" (Nothing :: Maybe ())
+pageGetAppManifest :: Handle Event -> IO (Either Error PageGetAppManifest)
+pageGetAppManifest handle = sendReceiveCommandResult handle "Page.getAppManifest" (Nothing :: Maybe ())
 
 data PageGetFrameTree = PageGetFrameTree {
     pageGetFrameTreeFrameTree :: PageFrameTree
@@ -3270,8 +3260,8 @@ instance Command  PageGetFrameTree where
     commandName _ = "Page.getFrameTree"
 
 
-pageGetFrameTree :: Session -> IO (Either Error PageGetFrameTree)
-pageGetFrameTree session = sendReceiveCommandResult session "Page.getFrameTree" (Nothing :: Maybe ())
+pageGetFrameTree :: Handle Event -> IO (Either Error PageGetFrameTree)
+pageGetFrameTree handle = sendReceiveCommandResult handle "Page.getFrameTree" (Nothing :: Maybe ())
 
 data PageGetLayoutMetrics = PageGetLayoutMetrics {
     pageGetLayoutMetricsCssLayoutViewport :: PageLayoutViewport,
@@ -3286,8 +3276,8 @@ instance Command  PageGetLayoutMetrics where
     commandName _ = "Page.getLayoutMetrics"
 
 
-pageGetLayoutMetrics :: Session -> IO (Either Error PageGetLayoutMetrics)
-pageGetLayoutMetrics session = sendReceiveCommandResult session "Page.getLayoutMetrics" (Nothing :: Maybe ())
+pageGetLayoutMetrics :: Handle Event -> IO (Either Error PageGetLayoutMetrics)
+pageGetLayoutMetrics handle = sendReceiveCommandResult handle "Page.getLayoutMetrics" (Nothing :: Maybe ())
 
 data PageGetNavigationHistory = PageGetNavigationHistory {
     pageGetNavigationHistoryCurrentIndex :: Int,
@@ -3301,14 +3291,14 @@ instance Command  PageGetNavigationHistory where
     commandName _ = "Page.getNavigationHistory"
 
 
-pageGetNavigationHistory :: Session -> IO (Either Error PageGetNavigationHistory)
-pageGetNavigationHistory session = sendReceiveCommandResult session "Page.getNavigationHistory" (Nothing :: Maybe ())
+pageGetNavigationHistory :: Handle Event -> IO (Either Error PageGetNavigationHistory)
+pageGetNavigationHistory handle = sendReceiveCommandResult handle "Page.getNavigationHistory" (Nothing :: Maybe ())
 
 
 
 
-pageResetNavigationHistory :: Session -> IO (Maybe Error)
-pageResetNavigationHistory session = sendReceiveCommand session "Page.resetNavigationHistory" (Nothing :: Maybe ())
+pageResetNavigationHistory :: Handle Event -> IO (Maybe Error)
+pageResetNavigationHistory handle = sendReceiveCommand handle "Page.resetNavigationHistory" (Nothing :: Maybe ())
 
 
 
@@ -3323,8 +3313,8 @@ instance ToJSON PPageHandleJavaScriptDialog  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
 
-pageHandleJavaScriptDialog :: Session -> PPageHandleJavaScriptDialog -> IO (Maybe Error)
-pageHandleJavaScriptDialog session params = sendReceiveCommand session "Page.handleJavaScriptDialog" (Just params)
+pageHandleJavaScriptDialog :: Handle Event -> PPageHandleJavaScriptDialog -> IO (Maybe Error)
+pageHandleJavaScriptDialog handle params = sendReceiveCommand handle "Page.handleJavaScriptDialog" (Just params)
 
 data PageNavigate = PageNavigate {
     pageNavigateFrameId :: PageFrameId,
@@ -3351,8 +3341,8 @@ instance ToJSON PPageNavigate  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 , A.omitNothingFields = True}
 
 
-pageNavigate :: Session -> PPageNavigate -> IO (Either Error PageNavigate)
-pageNavigate session params = sendReceiveCommandResult session "Page.navigate" (Just params)
+pageNavigate :: Handle Event -> PPageNavigate -> IO (Either Error PageNavigate)
+pageNavigate handle params = sendReceiveCommandResult handle "Page.navigate" (Just params)
 
 
 
@@ -3366,8 +3356,8 @@ instance ToJSON PPageNavigateToHistoryEntry  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
 
-pageNavigateToHistoryEntry :: Session -> PPageNavigateToHistoryEntry -> IO (Maybe Error)
-pageNavigateToHistoryEntry session params = sendReceiveCommand session "Page.navigateToHistoryEntry" (Just params)
+pageNavigateToHistoryEntry :: Handle Event -> PPageNavigateToHistoryEntry -> IO (Maybe Error)
+pageNavigateToHistoryEntry handle params = sendReceiveCommand handle "Page.navigateToHistoryEntry" (Just params)
 
 data PagePrintToPdf = PagePrintToPdf {
     pagePrintToPdfData :: String
@@ -3402,8 +3392,8 @@ instance ToJSON PPagePrintToPdf  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
 
-pagePrintToPdf :: Session -> PPagePrintToPdf -> IO (Either Error PagePrintToPdf)
-pagePrintToPdf session params = sendReceiveCommandResult session "Page.printToPDF" (Just params)
+pagePrintToPdf :: Handle Event -> PPagePrintToPdf -> IO (Either Error PagePrintToPdf)
+pagePrintToPdf handle params = sendReceiveCommandResult handle "Page.printToPDF" (Just params)
 
 
 
@@ -3418,8 +3408,8 @@ instance ToJSON PPageReload  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 , A.omitNothingFields = True}
 
 
-pageReload :: Session -> PPageReload -> IO (Maybe Error)
-pageReload session params = sendReceiveCommand session "Page.reload" (Just params)
+pageReload :: Handle Event -> PPageReload -> IO (Maybe Error)
+pageReload handle params = sendReceiveCommand handle "Page.reload" (Just params)
 
 
 
@@ -3433,8 +3423,8 @@ instance ToJSON PPageRemoveScriptToEvaluateOnNewDocument  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 , A.omitNothingFields = True}
 
 
-pageRemoveScriptToEvaluateOnNewDocument :: Session -> PPageRemoveScriptToEvaluateOnNewDocument -> IO (Maybe Error)
-pageRemoveScriptToEvaluateOnNewDocument session params = sendReceiveCommand session "Page.removeScriptToEvaluateOnNewDocument" (Just params)
+pageRemoveScriptToEvaluateOnNewDocument :: Handle Event -> PPageRemoveScriptToEvaluateOnNewDocument -> IO (Maybe Error)
+pageRemoveScriptToEvaluateOnNewDocument handle params = sendReceiveCommand handle "Page.removeScriptToEvaluateOnNewDocument" (Just params)
 
 
 
@@ -3449,14 +3439,14 @@ instance ToJSON PPageSetDocumentContent  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
 
-pageSetDocumentContent :: Session -> PPageSetDocumentContent -> IO (Maybe Error)
-pageSetDocumentContent session params = sendReceiveCommand session "Page.setDocumentContent" (Just params)
+pageSetDocumentContent :: Handle Event -> PPageSetDocumentContent -> IO (Maybe Error)
+pageSetDocumentContent handle params = sendReceiveCommand handle "Page.setDocumentContent" (Just params)
 
 
 
 
-pageStopLoading :: Session -> IO (Maybe Error)
-pageStopLoading session = sendReceiveCommand session "Page.stopLoading" (Nothing :: Maybe ())
+pageStopLoading :: Handle Event -> IO (Maybe Error)
+pageStopLoading handle = sendReceiveCommand handle "Page.stopLoading" (Nothing :: Maybe ())
 
 
 
@@ -3490,8 +3480,8 @@ instance ToJSON PerformanceMetric  where
 
 
 
-performanceDisable :: Session -> IO (Maybe Error)
-performanceDisable session = sendReceiveCommand session "Performance.disable" (Nothing :: Maybe ())
+performanceDisable :: Handle Event -> IO (Maybe Error)
+performanceDisable handle = sendReceiveCommand handle "Performance.disable" (Nothing :: Maybe ())
 
 
 
@@ -3505,8 +3495,8 @@ instance ToJSON PPerformanceEnable  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
 
-performanceEnable :: Session -> PPerformanceEnable -> IO (Maybe Error)
-performanceEnable session params = sendReceiveCommand session "Performance.enable" (Just params)
+performanceEnable :: Handle Event -> PPerformanceEnable -> IO (Maybe Error)
+performanceEnable handle params = sendReceiveCommand handle "Performance.enable" (Just params)
 
 data PerformanceGetMetrics = PerformanceGetMetrics {
     performanceGetMetricsMetrics :: [PerformanceMetric]
@@ -3519,8 +3509,8 @@ instance Command  PerformanceGetMetrics where
     commandName _ = "Performance.getMetrics"
 
 
-performanceGetMetrics :: Session -> IO (Either Error PerformanceGetMetrics)
-performanceGetMetrics session = sendReceiveCommandResult session "Performance.getMetrics" (Nothing :: Maybe ())
+performanceGetMetrics :: Handle Event -> IO (Either Error PerformanceGetMetrics)
+performanceGetMetrics handle = sendReceiveCommandResult handle "Performance.getMetrics" (Nothing :: Maybe ())
 
 
 
@@ -3607,14 +3597,14 @@ instance ToJSON SecurityCertificateErrorAction where
 
 
 
-securityDisable :: Session -> IO (Maybe Error)
-securityDisable session = sendReceiveCommand session "Security.disable" (Nothing :: Maybe ())
+securityDisable :: Handle Event -> IO (Maybe Error)
+securityDisable handle = sendReceiveCommand handle "Security.disable" (Nothing :: Maybe ())
 
 
 
 
-securityEnable :: Session -> IO (Maybe Error)
-securityEnable session = sendReceiveCommand session "Security.enable" (Nothing :: Maybe ())
+securityEnable :: Handle Event -> IO (Maybe Error)
+securityEnable handle = sendReceiveCommand handle "Security.enable" (Nothing :: Maybe ())
 
 
 
@@ -3723,8 +3713,8 @@ instance ToJSON PTargetActivateTarget  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
-targetActivateTarget :: Session -> PTargetActivateTarget -> IO (Maybe Error)
-targetActivateTarget session params = sendReceiveCommand session "Target.activateTarget" (Just params)
+targetActivateTarget :: Handle Event -> PTargetActivateTarget -> IO (Maybe Error)
+targetActivateTarget handle params = sendReceiveCommand handle "Target.activateTarget" (Just params)
 
 data TargetAttachToTarget = TargetAttachToTarget {
     targetAttachToTargetSessionId :: TargetSessionID
@@ -3747,8 +3737,8 @@ instance ToJSON PTargetAttachToTarget  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
-targetAttachToTarget :: Session -> PTargetAttachToTarget -> IO (Either Error TargetAttachToTarget)
-targetAttachToTarget session params = sendReceiveCommandResult session "Target.attachToTarget" (Just params)
+targetAttachToTarget :: Handle Event -> PTargetAttachToTarget -> IO (Either Error TargetAttachToTarget)
+targetAttachToTarget handle params = sendReceiveCommandResult handle "Target.attachToTarget" (Just params)
 
 
 
@@ -3762,8 +3752,8 @@ instance ToJSON PTargetCloseTarget  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
 
-targetCloseTarget :: Session -> PTargetCloseTarget -> IO (Maybe Error)
-targetCloseTarget session params = sendReceiveCommand session "Target.closeTarget" (Just params)
+targetCloseTarget :: Handle Event -> PTargetCloseTarget -> IO (Maybe Error)
+targetCloseTarget handle params = sendReceiveCommand handle "Target.closeTarget" (Just params)
 
 data TargetCreateTarget = TargetCreateTarget {
     targetCreateTargetTargetId :: TargetTargetID
@@ -3789,8 +3779,8 @@ instance ToJSON PTargetCreateTarget  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 
-targetCreateTarget :: Session -> PTargetCreateTarget -> IO (Either Error TargetCreateTarget)
-targetCreateTarget session params = sendReceiveCommandResult session "Target.createTarget" (Just params)
+targetCreateTarget :: Handle Event -> PTargetCreateTarget -> IO (Either Error TargetCreateTarget)
+targetCreateTarget handle params = sendReceiveCommandResult handle "Target.createTarget" (Just params)
 
 
 
@@ -3804,8 +3794,8 @@ instance ToJSON PTargetDetachFromTarget  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
 
-targetDetachFromTarget :: Session -> PTargetDetachFromTarget -> IO (Maybe Error)
-targetDetachFromTarget session params = sendReceiveCommand session "Target.detachFromTarget" (Just params)
+targetDetachFromTarget :: Handle Event -> PTargetDetachFromTarget -> IO (Maybe Error)
+targetDetachFromTarget handle params = sendReceiveCommand handle "Target.detachFromTarget" (Just params)
 
 data TargetGetTargets = TargetGetTargets {
     targetGetTargetsTargetInfos :: [TargetTargetInfo]
@@ -3818,8 +3808,8 @@ instance Command  TargetGetTargets where
     commandName _ = "Target.getTargets"
 
 
-targetGetTargets :: Session -> IO (Either Error TargetGetTargets)
-targetGetTargets session = sendReceiveCommandResult session "Target.getTargets" (Nothing :: Maybe ())
+targetGetTargets :: Handle Event -> IO (Either Error TargetGetTargets)
+targetGetTargets handle = sendReceiveCommandResult handle "Target.getTargets" (Nothing :: Maybe ())
 
 
 
@@ -3833,8 +3823,8 @@ instance ToJSON PTargetSetDiscoverTargets  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
 
 
-targetSetDiscoverTargets :: Session -> PTargetSetDiscoverTargets -> IO (Maybe Error)
-targetSetDiscoverTargets session params = sendReceiveCommand session "Target.setDiscoverTargets" (Just params)
+targetSetDiscoverTargets :: Handle Event -> PTargetSetDiscoverTargets -> IO (Maybe Error)
+targetSetDiscoverTargets handle params = sendReceiveCommand handle "Target.setDiscoverTargets" (Just params)
 
 
 
@@ -3952,8 +3942,8 @@ instance ToJSON FetchAuthChallengeResponse  where
 
 
 
-fetchDisable :: Session -> IO (Maybe Error)
-fetchDisable session = sendReceiveCommand session "Fetch.disable" (Nothing :: Maybe ())
+fetchDisable :: Handle Event -> IO (Maybe Error)
+fetchDisable handle = sendReceiveCommand handle "Fetch.disable" (Nothing :: Maybe ())
 
 
 
@@ -3968,8 +3958,8 @@ instance ToJSON PFetchEnable  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 , A.omitNothingFields = True}
 
 
-fetchEnable :: Session -> PFetchEnable -> IO (Maybe Error)
-fetchEnable session params = sendReceiveCommand session "Fetch.enable" (Just params)
+fetchEnable :: Handle Event -> PFetchEnable -> IO (Maybe Error)
+fetchEnable handle params = sendReceiveCommand handle "Fetch.enable" (Just params)
 
 
 
@@ -3984,8 +3974,8 @@ instance ToJSON PFetchFailRequest  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
 
-fetchFailRequest :: Session -> PFetchFailRequest -> IO (Maybe Error)
-fetchFailRequest session params = sendReceiveCommand session "Fetch.failRequest" (Just params)
+fetchFailRequest :: Handle Event -> PFetchFailRequest -> IO (Maybe Error)
+fetchFailRequest handle params = sendReceiveCommand handle "Fetch.failRequest" (Just params)
 
 
 
@@ -4004,8 +3994,8 @@ instance ToJSON PFetchFulfillRequest  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
 
-fetchFulfillRequest :: Session -> PFetchFulfillRequest -> IO (Maybe Error)
-fetchFulfillRequest session params = sendReceiveCommand session "Fetch.fulfillRequest" (Just params)
+fetchFulfillRequest :: Handle Event -> PFetchFulfillRequest -> IO (Maybe Error)
+fetchFulfillRequest handle params = sendReceiveCommand handle "Fetch.fulfillRequest" (Just params)
 
 
 
@@ -4023,8 +4013,8 @@ instance ToJSON PFetchContinueRequest  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
-fetchContinueRequest :: Session -> PFetchContinueRequest -> IO (Maybe Error)
-fetchContinueRequest session params = sendReceiveCommand session "Fetch.continueRequest" (Just params)
+fetchContinueRequest :: Handle Event -> PFetchContinueRequest -> IO (Maybe Error)
+fetchContinueRequest handle params = sendReceiveCommand handle "Fetch.continueRequest" (Just params)
 
 
 
@@ -4039,8 +4029,8 @@ instance ToJSON PFetchContinueWithAuth  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
 
-fetchContinueWithAuth :: Session -> PFetchContinueWithAuth -> IO (Maybe Error)
-fetchContinueWithAuth session params = sendReceiveCommand session "Fetch.continueWithAuth" (Just params)
+fetchContinueWithAuth :: Handle Event -> PFetchContinueWithAuth -> IO (Maybe Error)
+fetchContinueWithAuth handle params = sendReceiveCommand handle "Fetch.continueWithAuth" (Just params)
 
 data FetchGetResponseBody = FetchGetResponseBody {
     fetchGetResponseBodyBody :: String,
@@ -4063,8 +4053,8 @@ instance ToJSON PFetchGetResponseBody  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
-fetchGetResponseBody :: Session -> PFetchGetResponseBody -> IO (Either Error FetchGetResponseBody)
-fetchGetResponseBody session params = sendReceiveCommandResult session "Fetch.getResponseBody" (Just params)
+fetchGetResponseBody :: Handle Event -> PFetchGetResponseBody -> IO (Either Error FetchGetResponseBody)
+fetchGetResponseBody handle params = sendReceiveCommandResult handle "Fetch.getResponseBody" (Just params)
 
 data FetchTakeResponseBodyAsStream = FetchTakeResponseBodyAsStream {
     fetchTakeResponseBodyAsStreamStream :: IOStreamHandle
@@ -4086,8 +4076,8 @@ instance ToJSON PFetchTakeResponseBodyAsStream  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
 
 
-fetchTakeResponseBodyAsStream :: Session -> PFetchTakeResponseBodyAsStream -> IO (Either Error FetchTakeResponseBodyAsStream)
-fetchTakeResponseBodyAsStream session params = sendReceiveCommandResult session "Fetch.takeResponseBodyAsStream" (Just params)
+fetchTakeResponseBodyAsStream :: Handle Event -> PFetchTakeResponseBodyAsStream -> IO (Either Error FetchTakeResponseBodyAsStream)
+fetchTakeResponseBodyAsStream handle params = sendReceiveCommandResult handle "Fetch.takeResponseBodyAsStream" (Just params)
 
 
 
@@ -4124,20 +4114,20 @@ instance ToJSON ConsoleConsoleMessage  where
 
 
 
-consoleClearMessages :: Session -> IO (Maybe Error)
-consoleClearMessages session = sendReceiveCommand session "Console.clearMessages" (Nothing :: Maybe ())
+consoleClearMessages :: Handle Event -> IO (Maybe Error)
+consoleClearMessages handle = sendReceiveCommand handle "Console.clearMessages" (Nothing :: Maybe ())
 
 
 
 
-consoleDisable :: Session -> IO (Maybe Error)
-consoleDisable session = sendReceiveCommand session "Console.disable" (Nothing :: Maybe ())
+consoleDisable :: Handle Event -> IO (Maybe Error)
+consoleDisable handle = sendReceiveCommand handle "Console.disable" (Nothing :: Maybe ())
 
 
 
 
-consoleEnable :: Session -> IO (Maybe Error)
-consoleEnable session = sendReceiveCommand session "Console.enable" (Nothing :: Maybe ())
+consoleEnable :: Handle Event -> IO (Maybe Error)
+consoleEnable handle = sendReceiveCommand handle "Console.enable" (Nothing :: Maybe ())
 
 
 
@@ -4355,20 +4345,20 @@ instance ToJSON PDebuggerContinueToLocation  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
 
-debuggerContinueToLocation :: Session -> PDebuggerContinueToLocation -> IO (Maybe Error)
-debuggerContinueToLocation session params = sendReceiveCommand session "Debugger.continueToLocation" (Just params)
+debuggerContinueToLocation :: Handle Event -> PDebuggerContinueToLocation -> IO (Maybe Error)
+debuggerContinueToLocation handle params = sendReceiveCommand handle "Debugger.continueToLocation" (Just params)
 
 
 
 
-debuggerDisable :: Session -> IO (Maybe Error)
-debuggerDisable session = sendReceiveCommand session "Debugger.disable" (Nothing :: Maybe ())
+debuggerDisable :: Handle Event -> IO (Maybe Error)
+debuggerDisable handle = sendReceiveCommand handle "Debugger.disable" (Nothing :: Maybe ())
 
 
 
 
-debuggerEnable :: Session -> IO (Maybe Error)
-debuggerEnable session = sendReceiveCommand session "Debugger.enable" (Nothing :: Maybe ())
+debuggerEnable :: Handle Event -> IO (Maybe Error)
+debuggerEnable handle = sendReceiveCommand handle "Debugger.enable" (Nothing :: Maybe ())
 
 data DebuggerEvaluateOnCallFrame = DebuggerEvaluateOnCallFrame {
     debuggerEvaluateOnCallFrameResult :: RuntimeRemoteObject,
@@ -4397,8 +4387,8 @@ instance ToJSON PDebuggerEvaluateOnCallFrame  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
 
 
-debuggerEvaluateOnCallFrame :: Session -> PDebuggerEvaluateOnCallFrame -> IO (Either Error DebuggerEvaluateOnCallFrame)
-debuggerEvaluateOnCallFrame session params = sendReceiveCommandResult session "Debugger.evaluateOnCallFrame" (Just params)
+debuggerEvaluateOnCallFrame :: Handle Event -> PDebuggerEvaluateOnCallFrame -> IO (Either Error DebuggerEvaluateOnCallFrame)
+debuggerEvaluateOnCallFrame handle params = sendReceiveCommandResult handle "Debugger.evaluateOnCallFrame" (Just params)
 
 data DebuggerGetPossibleBreakpoints = DebuggerGetPossibleBreakpoints {
     debuggerGetPossibleBreakpointsLocations :: [DebuggerBreakLocation]
@@ -4422,8 +4412,8 @@ instance ToJSON PDebuggerGetPossibleBreakpoints  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
 
 
-debuggerGetPossibleBreakpoints :: Session -> PDebuggerGetPossibleBreakpoints -> IO (Either Error DebuggerGetPossibleBreakpoints)
-debuggerGetPossibleBreakpoints session params = sendReceiveCommandResult session "Debugger.getPossibleBreakpoints" (Just params)
+debuggerGetPossibleBreakpoints :: Handle Event -> PDebuggerGetPossibleBreakpoints -> IO (Either Error DebuggerGetPossibleBreakpoints)
+debuggerGetPossibleBreakpoints handle params = sendReceiveCommandResult handle "Debugger.getPossibleBreakpoints" (Just params)
 
 data DebuggerGetScriptSource = DebuggerGetScriptSource {
     debuggerGetScriptSourceScriptSource :: String,
@@ -4446,14 +4436,14 @@ instance ToJSON PDebuggerGetScriptSource  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
-debuggerGetScriptSource :: Session -> PDebuggerGetScriptSource -> IO (Either Error DebuggerGetScriptSource)
-debuggerGetScriptSource session params = sendReceiveCommandResult session "Debugger.getScriptSource" (Just params)
+debuggerGetScriptSource :: Handle Event -> PDebuggerGetScriptSource -> IO (Either Error DebuggerGetScriptSource)
+debuggerGetScriptSource handle params = sendReceiveCommandResult handle "Debugger.getScriptSource" (Just params)
 
 
 
 
-debuggerPause :: Session -> IO (Maybe Error)
-debuggerPause session = sendReceiveCommand session "Debugger.pause" (Nothing :: Maybe ())
+debuggerPause :: Handle Event -> IO (Maybe Error)
+debuggerPause handle = sendReceiveCommand handle "Debugger.pause" (Nothing :: Maybe ())
 
 
 
@@ -4467,8 +4457,8 @@ instance ToJSON PDebuggerRemoveBreakpoint  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
 
 
-debuggerRemoveBreakpoint :: Session -> PDebuggerRemoveBreakpoint -> IO (Maybe Error)
-debuggerRemoveBreakpoint session params = sendReceiveCommand session "Debugger.removeBreakpoint" (Just params)
+debuggerRemoveBreakpoint :: Handle Event -> PDebuggerRemoveBreakpoint -> IO (Maybe Error)
+debuggerRemoveBreakpoint handle params = sendReceiveCommand handle "Debugger.removeBreakpoint" (Just params)
 
 
 
@@ -4482,8 +4472,8 @@ instance ToJSON PDebuggerResume  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
 
-debuggerResume :: Session -> PDebuggerResume -> IO (Maybe Error)
-debuggerResume session params = sendReceiveCommand session "Debugger.resume" (Just params)
+debuggerResume :: Handle Event -> PDebuggerResume -> IO (Maybe Error)
+debuggerResume handle params = sendReceiveCommand handle "Debugger.resume" (Just params)
 
 data DebuggerSearchInContent = DebuggerSearchInContent {
     debuggerSearchInContentResult :: [DebuggerSearchMatch]
@@ -4508,8 +4498,8 @@ instance ToJSON PDebuggerSearchInContent  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
-debuggerSearchInContent :: Session -> PDebuggerSearchInContent -> IO (Either Error DebuggerSearchInContent)
-debuggerSearchInContent session params = sendReceiveCommandResult session "Debugger.searchInContent" (Just params)
+debuggerSearchInContent :: Handle Event -> PDebuggerSearchInContent -> IO (Either Error DebuggerSearchInContent)
+debuggerSearchInContent handle params = sendReceiveCommandResult handle "Debugger.searchInContent" (Just params)
 
 
 
@@ -4523,8 +4513,8 @@ instance ToJSON PDebuggerSetAsyncCallStackDepth  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
 
 
-debuggerSetAsyncCallStackDepth :: Session -> PDebuggerSetAsyncCallStackDepth -> IO (Maybe Error)
-debuggerSetAsyncCallStackDepth session params = sendReceiveCommand session "Debugger.setAsyncCallStackDepth" (Just params)
+debuggerSetAsyncCallStackDepth :: Handle Event -> PDebuggerSetAsyncCallStackDepth -> IO (Maybe Error)
+debuggerSetAsyncCallStackDepth handle params = sendReceiveCommand handle "Debugger.setAsyncCallStackDepth" (Just params)
 
 data DebuggerSetBreakpoint = DebuggerSetBreakpoint {
     debuggerSetBreakpointBreakpointId :: DebuggerBreakpointId,
@@ -4548,8 +4538,8 @@ instance ToJSON PDebuggerSetBreakpoint  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
 
-debuggerSetBreakpoint :: Session -> PDebuggerSetBreakpoint -> IO (Either Error DebuggerSetBreakpoint)
-debuggerSetBreakpoint session params = sendReceiveCommandResult session "Debugger.setBreakpoint" (Just params)
+debuggerSetBreakpoint :: Handle Event -> PDebuggerSetBreakpoint -> IO (Either Error DebuggerSetBreakpoint)
+debuggerSetBreakpoint handle params = sendReceiveCommandResult handle "Debugger.setBreakpoint" (Just params)
 
 data DebuggerSetInstrumentationBreakpoint = DebuggerSetInstrumentationBreakpoint {
     debuggerSetInstrumentationBreakpointBreakpointId :: DebuggerBreakpointId
@@ -4571,8 +4561,8 @@ instance ToJSON PDebuggerSetInstrumentationBreakpoint  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 , A.omitNothingFields = True}
 
 
-debuggerSetInstrumentationBreakpoint :: Session -> PDebuggerSetInstrumentationBreakpoint -> IO (Either Error DebuggerSetInstrumentationBreakpoint)
-debuggerSetInstrumentationBreakpoint session params = sendReceiveCommandResult session "Debugger.setInstrumentationBreakpoint" (Just params)
+debuggerSetInstrumentationBreakpoint :: Handle Event -> PDebuggerSetInstrumentationBreakpoint -> IO (Either Error DebuggerSetInstrumentationBreakpoint)
+debuggerSetInstrumentationBreakpoint handle params = sendReceiveCommandResult handle "Debugger.setInstrumentationBreakpoint" (Just params)
 
 data DebuggerSetBreakpointByUrl = DebuggerSetBreakpointByUrl {
     debuggerSetBreakpointByUrlBreakpointId :: DebuggerBreakpointId,
@@ -4600,8 +4590,8 @@ instance ToJSON PDebuggerSetBreakpointByUrl  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
 
-debuggerSetBreakpointByUrl :: Session -> PDebuggerSetBreakpointByUrl -> IO (Either Error DebuggerSetBreakpointByUrl)
-debuggerSetBreakpointByUrl session params = sendReceiveCommandResult session "Debugger.setBreakpointByUrl" (Just params)
+debuggerSetBreakpointByUrl :: Handle Event -> PDebuggerSetBreakpointByUrl -> IO (Either Error DebuggerSetBreakpointByUrl)
+debuggerSetBreakpointByUrl handle params = sendReceiveCommandResult handle "Debugger.setBreakpointByUrl" (Just params)
 
 
 
@@ -4615,8 +4605,8 @@ instance ToJSON PDebuggerSetBreakpointsActive  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
 
 
-debuggerSetBreakpointsActive :: Session -> PDebuggerSetBreakpointsActive -> IO (Maybe Error)
-debuggerSetBreakpointsActive session params = sendReceiveCommand session "Debugger.setBreakpointsActive" (Just params)
+debuggerSetBreakpointsActive :: Handle Event -> PDebuggerSetBreakpointsActive -> IO (Maybe Error)
+debuggerSetBreakpointsActive handle params = sendReceiveCommand handle "Debugger.setBreakpointsActive" (Just params)
 
 
 
@@ -4630,8 +4620,8 @@ instance ToJSON PDebuggerSetPauseOnExceptions  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
 
 
-debuggerSetPauseOnExceptions :: Session -> PDebuggerSetPauseOnExceptions -> IO (Maybe Error)
-debuggerSetPauseOnExceptions session params = sendReceiveCommand session "Debugger.setPauseOnExceptions" (Just params)
+debuggerSetPauseOnExceptions :: Handle Event -> PDebuggerSetPauseOnExceptions -> IO (Maybe Error)
+debuggerSetPauseOnExceptions handle params = sendReceiveCommand handle "Debugger.setPauseOnExceptions" (Just params)
 
 data DebuggerSetScriptSource = DebuggerSetScriptSource {
     debuggerSetScriptSourceCallFrames :: Maybe [DebuggerCallFrame],
@@ -4658,8 +4648,8 @@ instance ToJSON PDebuggerSetScriptSource  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
 
-debuggerSetScriptSource :: Session -> PDebuggerSetScriptSource -> IO (Either Error DebuggerSetScriptSource)
-debuggerSetScriptSource session params = sendReceiveCommandResult session "Debugger.setScriptSource" (Just params)
+debuggerSetScriptSource :: Handle Event -> PDebuggerSetScriptSource -> IO (Either Error DebuggerSetScriptSource)
+debuggerSetScriptSource handle params = sendReceiveCommandResult handle "Debugger.setScriptSource" (Just params)
 
 
 
@@ -4673,8 +4663,8 @@ instance ToJSON PDebuggerSetSkipAllPauses  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
 
 
-debuggerSetSkipAllPauses :: Session -> PDebuggerSetSkipAllPauses -> IO (Maybe Error)
-debuggerSetSkipAllPauses session params = sendReceiveCommand session "Debugger.setSkipAllPauses" (Just params)
+debuggerSetSkipAllPauses :: Handle Event -> PDebuggerSetSkipAllPauses -> IO (Maybe Error)
+debuggerSetSkipAllPauses handle params = sendReceiveCommand handle "Debugger.setSkipAllPauses" (Just params)
 
 
 
@@ -4691,26 +4681,26 @@ instance ToJSON PDebuggerSetVariableValue  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
 
 
-debuggerSetVariableValue :: Session -> PDebuggerSetVariableValue -> IO (Maybe Error)
-debuggerSetVariableValue session params = sendReceiveCommand session "Debugger.setVariableValue" (Just params)
+debuggerSetVariableValue :: Handle Event -> PDebuggerSetVariableValue -> IO (Maybe Error)
+debuggerSetVariableValue handle params = sendReceiveCommand handle "Debugger.setVariableValue" (Just params)
 
 
 
 
-debuggerStepInto :: Session -> IO (Maybe Error)
-debuggerStepInto session = sendReceiveCommand session "Debugger.stepInto" (Nothing :: Maybe ())
+debuggerStepInto :: Handle Event -> IO (Maybe Error)
+debuggerStepInto handle = sendReceiveCommand handle "Debugger.stepInto" (Nothing :: Maybe ())
 
 
 
 
-debuggerStepOut :: Session -> IO (Maybe Error)
-debuggerStepOut session = sendReceiveCommand session "Debugger.stepOut" (Nothing :: Maybe ())
+debuggerStepOut :: Handle Event -> IO (Maybe Error)
+debuggerStepOut handle = sendReceiveCommand handle "Debugger.stepOut" (Nothing :: Maybe ())
 
 
 
 
-debuggerStepOver :: Session -> IO (Maybe Error)
-debuggerStepOver session = sendReceiveCommand session "Debugger.stepOver" (Nothing :: Maybe ())
+debuggerStepOver :: Handle Event -> IO (Maybe Error)
+debuggerStepOver handle = sendReceiveCommand handle "Debugger.stepOver" (Nothing :: Maybe ())
 
 
 
@@ -4832,14 +4822,14 @@ instance ToJSON ProfilerScriptCoverage  where
 
 
 
-profilerDisable :: Session -> IO (Maybe Error)
-profilerDisable session = sendReceiveCommand session "Profiler.disable" (Nothing :: Maybe ())
+profilerDisable :: Handle Event -> IO (Maybe Error)
+profilerDisable handle = sendReceiveCommand handle "Profiler.disable" (Nothing :: Maybe ())
 
 
 
 
-profilerEnable :: Session -> IO (Maybe Error)
-profilerEnable session = sendReceiveCommand session "Profiler.enable" (Nothing :: Maybe ())
+profilerEnable :: Handle Event -> IO (Maybe Error)
+profilerEnable handle = sendReceiveCommand handle "Profiler.enable" (Nothing :: Maybe ())
 
 data ProfilerGetBestEffortCoverage = ProfilerGetBestEffortCoverage {
     profilerGetBestEffortCoverageResult :: [ProfilerScriptCoverage]
@@ -4852,8 +4842,8 @@ instance Command  ProfilerGetBestEffortCoverage where
     commandName _ = "Profiler.getBestEffortCoverage"
 
 
-profilerGetBestEffortCoverage :: Session -> IO (Either Error ProfilerGetBestEffortCoverage)
-profilerGetBestEffortCoverage session = sendReceiveCommandResult session "Profiler.getBestEffortCoverage" (Nothing :: Maybe ())
+profilerGetBestEffortCoverage :: Handle Event -> IO (Either Error ProfilerGetBestEffortCoverage)
+profilerGetBestEffortCoverage handle = sendReceiveCommandResult handle "Profiler.getBestEffortCoverage" (Nothing :: Maybe ())
 
 
 
@@ -4867,14 +4857,14 @@ instance ToJSON PProfilerSetSamplingInterval  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
 
 
-profilerSetSamplingInterval :: Session -> PProfilerSetSamplingInterval -> IO (Maybe Error)
-profilerSetSamplingInterval session params = sendReceiveCommand session "Profiler.setSamplingInterval" (Just params)
+profilerSetSamplingInterval :: Handle Event -> PProfilerSetSamplingInterval -> IO (Maybe Error)
+profilerSetSamplingInterval handle params = sendReceiveCommand handle "Profiler.setSamplingInterval" (Just params)
 
 
 
 
-profilerStart :: Session -> IO (Maybe Error)
-profilerStart session = sendReceiveCommand session "Profiler.start" (Nothing :: Maybe ())
+profilerStart :: Handle Event -> IO (Maybe Error)
+profilerStart handle = sendReceiveCommand handle "Profiler.start" (Nothing :: Maybe ())
 
 data ProfilerStartPreciseCoverage = ProfilerStartPreciseCoverage {
     profilerStartPreciseCoverageTimestamp :: Double
@@ -4898,8 +4888,8 @@ instance ToJSON PProfilerStartPreciseCoverage  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
 
 
-profilerStartPreciseCoverage :: Session -> PProfilerStartPreciseCoverage -> IO (Either Error ProfilerStartPreciseCoverage)
-profilerStartPreciseCoverage session params = sendReceiveCommandResult session "Profiler.startPreciseCoverage" (Just params)
+profilerStartPreciseCoverage :: Handle Event -> PProfilerStartPreciseCoverage -> IO (Either Error ProfilerStartPreciseCoverage)
+profilerStartPreciseCoverage handle params = sendReceiveCommandResult handle "Profiler.startPreciseCoverage" (Just params)
 
 data ProfilerStop = ProfilerStop {
     profilerStopProfile :: ProfilerProfile
@@ -4912,14 +4902,14 @@ instance Command  ProfilerStop where
     commandName _ = "Profiler.stop"
 
 
-profilerStop :: Session -> IO (Either Error ProfilerStop)
-profilerStop session = sendReceiveCommandResult session "Profiler.stop" (Nothing :: Maybe ())
+profilerStop :: Handle Event -> IO (Either Error ProfilerStop)
+profilerStop handle = sendReceiveCommandResult handle "Profiler.stop" (Nothing :: Maybe ())
 
 
 
 
-profilerStopPreciseCoverage :: Session -> IO (Maybe Error)
-profilerStopPreciseCoverage session = sendReceiveCommand session "Profiler.stopPreciseCoverage" (Nothing :: Maybe ())
+profilerStopPreciseCoverage :: Handle Event -> IO (Maybe Error)
+profilerStopPreciseCoverage handle = sendReceiveCommand handle "Profiler.stopPreciseCoverage" (Nothing :: Maybe ())
 
 data ProfilerTakePreciseCoverage = ProfilerTakePreciseCoverage {
     profilerTakePreciseCoverageResult :: [ProfilerScriptCoverage],
@@ -4933,8 +4923,8 @@ instance Command  ProfilerTakePreciseCoverage where
     commandName _ = "Profiler.takePreciseCoverage"
 
 
-profilerTakePreciseCoverage :: Session -> IO (Either Error ProfilerTakePreciseCoverage)
-profilerTakePreciseCoverage session = sendReceiveCommandResult session "Profiler.takePreciseCoverage" (Nothing :: Maybe ())
+profilerTakePreciseCoverage :: Handle Event -> IO (Either Error ProfilerTakePreciseCoverage)
+profilerTakePreciseCoverage handle = sendReceiveCommandResult handle "Profiler.takePreciseCoverage" (Nothing :: Maybe ())
 
 
 
@@ -5212,8 +5202,8 @@ instance ToJSON PRuntimeAwaitPromise  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
 
-runtimeAwaitPromise :: Session -> PRuntimeAwaitPromise -> IO (Either Error RuntimeAwaitPromise)
-runtimeAwaitPromise session params = sendReceiveCommandResult session "Runtime.awaitPromise" (Just params)
+runtimeAwaitPromise :: Handle Event -> PRuntimeAwaitPromise -> IO (Either Error RuntimeAwaitPromise)
+runtimeAwaitPromise handle params = sendReceiveCommandResult handle "Runtime.awaitPromise" (Just params)
 
 data RuntimeCallFunctionOn = RuntimeCallFunctionOn {
     runtimeCallFunctionOnResult :: RuntimeRemoteObject,
@@ -5244,8 +5234,8 @@ instance ToJSON PRuntimeCallFunctionOn  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
 
-runtimeCallFunctionOn :: Session -> PRuntimeCallFunctionOn -> IO (Either Error RuntimeCallFunctionOn)
-runtimeCallFunctionOn session params = sendReceiveCommandResult session "Runtime.callFunctionOn" (Just params)
+runtimeCallFunctionOn :: Handle Event -> PRuntimeCallFunctionOn -> IO (Either Error RuntimeCallFunctionOn)
+runtimeCallFunctionOn handle params = sendReceiveCommandResult handle "Runtime.callFunctionOn" (Just params)
 
 data RuntimeCompileScript = RuntimeCompileScript {
     runtimeCompileScriptScriptId :: Maybe RuntimeScriptId,
@@ -5271,26 +5261,26 @@ instance ToJSON PRuntimeCompileScript  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
-runtimeCompileScript :: Session -> PRuntimeCompileScript -> IO (Either Error RuntimeCompileScript)
-runtimeCompileScript session params = sendReceiveCommandResult session "Runtime.compileScript" (Just params)
+runtimeCompileScript :: Handle Event -> PRuntimeCompileScript -> IO (Either Error RuntimeCompileScript)
+runtimeCompileScript handle params = sendReceiveCommandResult handle "Runtime.compileScript" (Just params)
 
 
 
 
-runtimeDisable :: Session -> IO (Maybe Error)
-runtimeDisable session = sendReceiveCommand session "Runtime.disable" (Nothing :: Maybe ())
+runtimeDisable :: Handle Event -> IO (Maybe Error)
+runtimeDisable handle = sendReceiveCommand handle "Runtime.disable" (Nothing :: Maybe ())
 
 
 
 
-runtimeDiscardConsoleEntries :: Session -> IO (Maybe Error)
-runtimeDiscardConsoleEntries session = sendReceiveCommand session "Runtime.discardConsoleEntries" (Nothing :: Maybe ())
+runtimeDiscardConsoleEntries :: Handle Event -> IO (Maybe Error)
+runtimeDiscardConsoleEntries handle = sendReceiveCommand handle "Runtime.discardConsoleEntries" (Nothing :: Maybe ())
 
 
 
 
-runtimeEnable :: Session -> IO (Maybe Error)
-runtimeEnable session = sendReceiveCommand session "Runtime.enable" (Nothing :: Maybe ())
+runtimeEnable :: Handle Event -> IO (Maybe Error)
+runtimeEnable handle = sendReceiveCommand handle "Runtime.enable" (Nothing :: Maybe ())
 
 data RuntimeEvaluate = RuntimeEvaluate {
     runtimeEvaluateResult :: RuntimeRemoteObject,
@@ -5320,8 +5310,8 @@ instance ToJSON PRuntimeEvaluate  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
 
-runtimeEvaluate :: Session -> PRuntimeEvaluate -> IO (Either Error RuntimeEvaluate)
-runtimeEvaluate session params = sendReceiveCommandResult session "Runtime.evaluate" (Just params)
+runtimeEvaluate :: Handle Event -> PRuntimeEvaluate -> IO (Either Error RuntimeEvaluate)
+runtimeEvaluate handle params = sendReceiveCommandResult handle "Runtime.evaluate" (Just params)
 
 data RuntimeGetProperties = RuntimeGetProperties {
     runtimeGetPropertiesResult :: [RuntimePropertyDescriptor],
@@ -5346,8 +5336,8 @@ instance ToJSON PRuntimeGetProperties  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
-runtimeGetProperties :: Session -> PRuntimeGetProperties -> IO (Either Error RuntimeGetProperties)
-runtimeGetProperties session params = sendReceiveCommandResult session "Runtime.getProperties" (Just params)
+runtimeGetProperties :: Handle Event -> PRuntimeGetProperties -> IO (Either Error RuntimeGetProperties)
+runtimeGetProperties handle params = sendReceiveCommandResult handle "Runtime.getProperties" (Just params)
 
 data RuntimeGlobalLexicalScopeNames = RuntimeGlobalLexicalScopeNames {
     runtimeGlobalLexicalScopeNamesNames :: [String]
@@ -5369,8 +5359,8 @@ instance ToJSON PRuntimeGlobalLexicalScopeNames  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
 
 
-runtimeGlobalLexicalScopeNames :: Session -> PRuntimeGlobalLexicalScopeNames -> IO (Either Error RuntimeGlobalLexicalScopeNames)
-runtimeGlobalLexicalScopeNames session params = sendReceiveCommandResult session "Runtime.globalLexicalScopeNames" (Just params)
+runtimeGlobalLexicalScopeNames :: Handle Event -> PRuntimeGlobalLexicalScopeNames -> IO (Either Error RuntimeGlobalLexicalScopeNames)
+runtimeGlobalLexicalScopeNames handle params = sendReceiveCommandResult handle "Runtime.globalLexicalScopeNames" (Just params)
 
 data RuntimeQueryObjects = RuntimeQueryObjects {
     runtimeQueryObjectsObjects :: RuntimeRemoteObject
@@ -5393,8 +5383,8 @@ instance ToJSON PRuntimeQueryObjects  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
 
-runtimeQueryObjects :: Session -> PRuntimeQueryObjects -> IO (Either Error RuntimeQueryObjects)
-runtimeQueryObjects session params = sendReceiveCommandResult session "Runtime.queryObjects" (Just params)
+runtimeQueryObjects :: Handle Event -> PRuntimeQueryObjects -> IO (Either Error RuntimeQueryObjects)
+runtimeQueryObjects handle params = sendReceiveCommandResult handle "Runtime.queryObjects" (Just params)
 
 
 
@@ -5408,8 +5398,8 @@ instance ToJSON PRuntimeReleaseObject  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
 
-runtimeReleaseObject :: Session -> PRuntimeReleaseObject -> IO (Maybe Error)
-runtimeReleaseObject session params = sendReceiveCommand session "Runtime.releaseObject" (Just params)
+runtimeReleaseObject :: Handle Event -> PRuntimeReleaseObject -> IO (Maybe Error)
+runtimeReleaseObject handle params = sendReceiveCommand handle "Runtime.releaseObject" (Just params)
 
 
 
@@ -5423,14 +5413,14 @@ instance ToJSON PRuntimeReleaseObjectGroup  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
 
-runtimeReleaseObjectGroup :: Session -> PRuntimeReleaseObjectGroup -> IO (Maybe Error)
-runtimeReleaseObjectGroup session params = sendReceiveCommand session "Runtime.releaseObjectGroup" (Just params)
+runtimeReleaseObjectGroup :: Handle Event -> PRuntimeReleaseObjectGroup -> IO (Maybe Error)
+runtimeReleaseObjectGroup handle params = sendReceiveCommand handle "Runtime.releaseObjectGroup" (Just params)
 
 
 
 
-runtimeRunIfWaitingForDebugger :: Session -> IO (Maybe Error)
-runtimeRunIfWaitingForDebugger session = sendReceiveCommand session "Runtime.runIfWaitingForDebugger" (Nothing :: Maybe ())
+runtimeRunIfWaitingForDebugger :: Handle Event -> IO (Maybe Error)
+runtimeRunIfWaitingForDebugger handle = sendReceiveCommand handle "Runtime.runIfWaitingForDebugger" (Nothing :: Maybe ())
 
 data RuntimeRunScript = RuntimeRunScript {
     runtimeRunScriptResult :: RuntimeRemoteObject,
@@ -5460,8 +5450,8 @@ instance ToJSON PRuntimeRunScript  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
 
-runtimeRunScript :: Session -> PRuntimeRunScript -> IO (Either Error RuntimeRunScript)
-runtimeRunScript session params = sendReceiveCommandResult session "Runtime.runScript" (Just params)
+runtimeRunScript :: Handle Event -> PRuntimeRunScript -> IO (Either Error RuntimeRunScript)
+runtimeRunScript handle params = sendReceiveCommandResult handle "Runtime.runScript" (Just params)
 
 
 
@@ -5475,8 +5465,8 @@ instance ToJSON PRuntimeSetAsyncCallStackDepth  where
     toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
 
 
-runtimeSetAsyncCallStackDepth :: Session -> PRuntimeSetAsyncCallStackDepth -> IO (Maybe Error)
-runtimeSetAsyncCallStackDepth session params = sendReceiveCommand session "Runtime.setAsyncCallStackDepth" (Just params)
+runtimeSetAsyncCallStackDepth :: Handle Event -> PRuntimeSetAsyncCallStackDepth -> IO (Maybe Error)
+runtimeSetAsyncCallStackDepth handle params = sendReceiveCommand handle "Runtime.setAsyncCallStackDepth" (Just params)
 
 
 
@@ -5503,8 +5493,8 @@ instance Command  SchemaGetDomains where
     commandName _ = "Schema.getDomains"
 
 
-schemaGetDomains :: Session -> IO (Either Error SchemaGetDomains)
-schemaGetDomains session = sendReceiveCommandResult session "Schema.getDomains" (Nothing :: Maybe ())
+schemaGetDomains :: Handle Event -> IO (Either Error SchemaGetDomains)
+schemaGetDomains handle = sendReceiveCommandResult handle "Schema.getDomains" (Nothing :: Maybe ())
 
 
 

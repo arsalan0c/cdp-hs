@@ -19,8 +19,8 @@ prop_browser_get_version = property $ void .
 prop_dom_get_document :: Property
 prop_dom_get_document = property $ void . 
     evalEitherM . 
-        evalIO $ CDP.runClient def $ \session -> do
-            res <- CDP.dOMGetDocument session $ 
+        evalIO $ CDP.runClient def $ \handle -> do
+            res <- CDP.dOMGetDocument handle $ 
                 CDP.PDOMGetDocument Nothing Nothing
             pure res
 
@@ -31,18 +31,18 @@ prop_emulation_can_emulate = property $ void .
 
 prop_emulation_set_geolocationOverride :: Property
 prop_emulation_set_geolocationOverride = property $ do
-    res <- evalIO $ CDP.runClient def $ \session -> do
-        CDP.emulationSetGeolocationOverride session $ 
+    res <- evalIO $ CDP.runClient def $ \handle -> do
+        CDP.emulationSetGeolocationOverride handle $ 
             CDP.PEmulationSetGeolocationOverride (Just 90) (Just 90) Nothing
     res === Nothing
 
 prop_runtime_compileScript :: Property
 prop_runtime_compileScript = property $ do
-    (res1, resE2) <- evalIO $ CDP.runClient def $ \session -> do
-        CDP.runtimeEnable session
+    (res1, resE2) <- evalIO $ CDP.runClient def $ \handle -> do
+        CDP.runtimeEnable handle
 
         -- compile
-        (Right res1) <- CDP.runtimeCompileScript session $ 
+        (Right res1) <- CDP.runtimeCompileScript handle $ 
             CDP.PRuntimeCompileScript 
                 "function fact(x) { return x < 0 ? 0 : x == 0 || x == 1 ? 1 : x * fact(x - 1) }" 
                 "" True Nothing
@@ -50,7 +50,7 @@ prop_runtime_compileScript = property $ do
         -- run
         res2 <- do
             let (Just sid) = CDP.runtimeCompileScriptScriptId res1
-            CDP.runtimeRunScript session $
+            CDP.runtimeRunScript handle $
                 CDP.PRuntimeRunScript sid Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
         pure (res1, res2)
@@ -70,13 +70,13 @@ prop_network_cookies = property $ do
         value  = "value"
         domain = "localhost"
 
-    (clear, set, cookies, clear2) <- evalIO $ CDP.runClient def $ \session -> do
-        clear   <- CDP.networkClearBrowserCookies session
-        set     <- CDP.networkSetCookie session $ 
+    (clear, set, cookies, clear2) <- evalIO $ CDP.runClient def $ \handle -> do
+        clear   <- CDP.networkClearBrowserCookies handle
+        set     <- CDP.networkSetCookie handle $ 
             CDP.PNetworkSetCookie name value Nothing (Just domain) Nothing Nothing Nothing Nothing Nothing
-        cookies <- CDP.networkGetAllCookies session
+        cookies <- CDP.networkGetAllCookies handle
 
-        clear2  <- CDP.networkClearBrowserCookies session
+        clear2  <- CDP.networkClearBrowserCookies handle
         pure (clear, set, cookies, clear2)
 
     clear === Nothing        
@@ -99,8 +99,8 @@ prop_performance_get_metrics = property $ void .
 prop_targets :: Property
 prop_targets = property $ void . 
     evalEitherM . 
-        evalIO $ CDP.runClient def $ \session -> do
-            CDP.targetCreateTarget session $
+        evalIO $ CDP.runClient def $ \handle -> do
+            CDP.targetCreateTarget handle $
                 CDP.PTargetCreateTarget "http://haskell.foundation" Nothing Nothing Nothing Nothing
  
 main :: IO ()

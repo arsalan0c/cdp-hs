@@ -5,7 +5,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module CDP (Config(..), module CDP) where
+module CDP (Handle, Config(..), module CDP) where
 
 
 import           Control.Applicative  ((<$>))
@@ -36,26 +36,16 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDPPrelude
+import Internal
+import Runtime
 
+type ClientApp b = Handle Event -> IO b
 
-type ClientApp b = Session -> IO b
-data Session = Session { unSession :: Session' Event }
+runClient   :: Config -> ClientApp a -> IO a
+runClient config app = runClient' config app
 
-runClient  :: Config -> ClientApp a -> IO a
-runClient config app = runClient' config (app . Session)
+subscribe   :: forall a. FromEvent Event a => Handle Event -> (a -> IO ()) -> IO ()
+subscribe handle h = subscribe' handle h
 
-subscribe :: forall a. FromEvent Event a => Session -> (a -> IO ()) -> IO ()
-subscribe session h = subscribe' (unSession session) h
-
-unsubscribe :: forall a. FromEvent Event a => Session -> Proxy a -> IO ()
-unsubscribe session p = unsubscribe' (unSession session) p
-
-sendReceiveCommand :: (Show a, ToJSON a) => Session -> String -> Maybe a -> IO (Maybe Error)
-sendReceiveCommand session = sendReceiveCommand' (unSession session)
-
-sendReceiveCommandResult :: forall a b s. (Show a, ToJSON a, Command b) => Session -> String -> Maybe a -> IO (Either Error b)
-sendReceiveCommandResult session = sendReceiveCommandResult' (unSession session)
-
-uncapitalizeFirst [] = []
-uncapitalizeFirst (hd:tl) = toLower hd : tl
+unsubscribe :: forall a. FromEvent Event a => Handle Event -> Proxy a -> IO ()
+unsubscribe handle p = unsubscribe' handle p

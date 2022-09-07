@@ -9,6 +9,7 @@ import Data.Map
 import Control.Concurrent
 import Control.Monad
 import Data.Proxy
+import Data.Default
 
 import qualified CDP as CDP
 
@@ -16,7 +17,7 @@ main :: IO ()
 main = do
     putStrLn "Starting CDP example"
 
-    CDP.runClient Nothing $ \session -> do
+    CDP.runClient def $ \session -> do
         print =<< CDP.browserGetVersion session
 
         CDP.subscribe session (print . CDP.pageWindowOpenUrl)

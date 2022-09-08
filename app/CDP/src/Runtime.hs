@@ -22,8 +22,6 @@ import qualified Data.Vector          as V
 import Data.Aeson.Types (Parser(..))
 import           Data.Aeson           (FromJSON (..), ToJSON (..), (.:), (.:?), (.=), (.!=), (.:!))
 import qualified Data.Aeson           as A
-import qualified Network.HTTP.Simple as Http
-import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
 import qualified Text.Casing as C
@@ -34,37 +32,9 @@ import System.Random
 import Control.Applicative
 import Data.Default
 import Control.Exception
+import System.Timeout
 
-
--- :Config'
-hostPortToEndpoint :: (String, Int) -> Http.Request
-hostPortToEndpoint (host, port) = Http.parseRequest_ . 
-    ("GET " <>) . 
-    mconcat $ [host, ":", show port, "/json"]
-
-newtype PageInfo = PageInfo
-    { debuggerUrl :: String
-    } deriving Show
-instance FromJSON PageInfo where
-    parseJSON = A.withObject "PageInfo" $ \v ->
-        PageInfo <$> v .: "webSocketDebuggerUrl"
-
-parseUri :: String -> (String, Int, String)
-parseUri uri = fromMaybe (error "parseUri: Invalid URI") $ do
-    u    <- Uri.parseURI uri
-    auth <- Uri.uriAuthority u
-    let port = case Uri.uriPort auth of
-            (':':str)   -> read str
-            _           -> 80
-    pure (Uri.uriRegName auth, port, Uri.uriPath u)
-
-getPageInfo :: Http.Request -> IO PageInfo
-getPageInfo request = do
-    response <- Http.httpLBS request
-    let body = Http.getResponseBody response
-    case A.decode body of
-        Just mpis -> pure $ head . catMaybes $ mpis
-        Nothing   -> error "getPageInfo: Parse error"
+import Endpoints
 
 data ToJSONEx where
    ToJSONEx :: (ToJSON a, Show a) => a -> ToJSONEx
@@ -85,14 +55,19 @@ data Handle ev = MkHandle
     }
 
 data Config = Config
-    { hostPort       :: (String, Int)
-    , doLogResponses :: Bool
+    { hostPort              :: (String, Int)
+    , doLogResponses        :: Bool
+    , commandTimeout        :: Maybe Int
+        -- ^ number of microseconds to wait for a command response.
+        --   waits forever if Nothing 
     }
 instance Default Config where
     def = Config{..}
       where
         hostPort       = ("http://127.0.0.1", 9222) 
         doLogResponses = False
+        commandTimeout = def
+
 
 type FromJSONEvent ev = FromJSON (EventResponse ev)
 type ClientApp' ev b  = Handle ev -> IO b
@@ -292,15 +267,16 @@ untilJustLimit n act = do
 
 receiveCommandResponse :: forall ev b. Command b => Handle ev -> CommandId -> IO (Either Error (CommandResponse b))
 receiveCommandResponse handle id = do
-    bs <- untilJust $ do -- :Config'
-        updateCommandBufferM (commandBuffer handle) $ \b -> do
-            let bsM = Map.lookup id b
-            if isNothing bsM
-                then do threadDelay 1000; pure (b, bsM) -- :Config'
-                else pure $ (Map.delete id b, bsM)
+    bsM <- maybe (fmap Just) timeout (commandTimeout . config $ handle) $ 
+        untilJust $ do
+            updateCommandBufferM (commandBuffer handle) $ \buffer -> do
+                let bsM = Map.lookup id buffer
+                if isNothing bsM
+                    then do threadDelay 1000; pure (buffer, bsM)
+                    else pure $ (Map.delete id buffer, bsM)
 
-    logResponse handle (commandName p) bs
-    pure $ maybe (Left ERRNoResponse) (either (Left . ERRParse) Right . A.eitherDecode) $ (Just bs)
+    maybe (pure ()) (logResponse handle (commandName p)) bsM
+    pure $ maybe (Left ERRNoResponse) (either (Left . ERRParse) Right . A.eitherDecode) $ bsM
   where
     p = Proxy :: Proxy b
 

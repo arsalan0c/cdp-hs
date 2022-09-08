@@ -35,8 +35,8 @@ prop_page_frame = property $ do
 
     enabled === Nothing
     evalEither nav
-    -- check at least 1 event was received, 3 responses are for the commands
-    diff numResponses (>) 3 
+    -- check at least 1 event was received, 2 responses are for the commands
+    diff numResponses (>) 2 
 
 main :: IO Bool
 main = checkSequential . Group "events" $ [("page_frame", prop_page_frame)]

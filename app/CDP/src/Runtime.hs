@@ -42,7 +42,7 @@ hostPortToEndpoint (host, port) = Http.parseRequest_ .
     ("GET " <>) . 
     mconcat $ [host, ":", show port, "/json"]
 
-data PageInfo = PageInfo
+newtype PageInfo = PageInfo
     { debuggerUrl :: String
     } deriving Show
 instance FromJSON PageInfo where

@@ -14,7 +14,7 @@ jobs:
     - uses: cachix/install-nix-action@v14.1
     - name: cdp-gen build
       run: nix-build
-    - name: cdp-gen
+    - name: generate cdp
       run: ./result/bin/gen-exe
     - name: cdp build
       working-directory: cdp

@@ -1,0 +1,15 @@
+name: "build"
+on:
+  pull_request:
+  push:
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "macOS-10.15"]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v3
+    - uses: cachix/install-nix-action@v14.1
+    - name: cdp-gen-build
+      run: nix-build

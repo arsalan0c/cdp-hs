@@ -1,0 +1,3 @@
+[submodule "json-autotype"]
+	path = json-autotype
+	url = https://github.com/arsalan0c/json-autotype

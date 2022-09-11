@@ -5,7 +5,6 @@ on:
       - "**/*.md"
 jobs:
   build:
-    timeout-minutes: 60
     strategy:
       matrix:
         os: ["ubuntu-latest", "macOS-10.15"]
@@ -16,10 +15,10 @@ jobs:
         submodules: true
     - uses: cachix/install-nix-action@v14.1
     - name: cdp-gen build
-      run: nix-build
+      run: nix-build --attr exe
     - name: generate cdp
       run: ./result/bin/gen-exe
     - name: cdp build
       working-directory: cdp
-      run: nix-build
+      run: nix-build --attr exe
 

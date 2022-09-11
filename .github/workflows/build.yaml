@@ -5,6 +5,7 @@ on:
       - "**/*.md"
 jobs:
   build:
+    timeout-minutes: 60
     strategy:
       matrix:
         os: ["ubuntu-latest", "macOS-10.15"]

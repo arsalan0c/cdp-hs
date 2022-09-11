@@ -14,7 +14,7 @@ To get started:
 3. Drop into nix environment: `nix-shell --pure`
 4. Generate cabal file: `hpack`
 5. Run Chromium with debugging port enabled: `chromium --headless --remote-debugging-port=9222 http://wikipedia.com`
-6. Run the example program: `cabal run cdp-exe`
+6. Run the example program to print the [browser's version info](https://chromedevtools.github.io/devtools-protocol/tot/Browser/#method-getVersion) : `cabal run cdp-exe`
 
 ## Example usage
 

@@ -18,7 +18,8 @@ jobs:
       run: nix-build --attr exe
     - name: generate cdp library
       run: ./result/bin/gen-exe
-    - name: cdp build
-      working-directory: cdp
-      run: nix-build --attr exe
+    # Out of memory:
+    # - name: cdp build
+    #   working-directory: cdp
+    #   run: nix-build --attr exe
 

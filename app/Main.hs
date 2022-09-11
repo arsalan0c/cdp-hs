@@ -8,7 +8,7 @@ import CDP.Gen.Library
 
 main :: IO ()
 main = do
-    let preludePath  = ["prelude"]
+    let preludePath  = ["cdp", "prelude"]
         genPath      = ["cdp", "src"]
         protocolPath = ["CDP", FP.addExtension "Protocol" "hs"]
         mainPath     = [FP.addExtension "CDP" "hs"]

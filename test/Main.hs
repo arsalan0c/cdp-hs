@@ -4,7 +4,7 @@ module Main where
 
 import Hedgehog
 import Hedgehog.Main
-import Libgen
+import CDP.Gen.Library
 
 prop_test :: Property
 prop_test = property $ do

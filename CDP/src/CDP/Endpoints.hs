@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Endpoints where
+module CDP.Endpoints where
 
 import Data.Maybe
 import qualified Network.URI          as Uri

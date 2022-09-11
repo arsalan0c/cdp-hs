@@ -38,7 +38,7 @@ library:
   source-dirs: 
     - src
   exposed-modules:
-    - Libgen
+    - CDP.Gen.Library
   dependencies:
     - json-alt-fork
   

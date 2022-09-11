@@ -5,7 +5,7 @@
 {-# LANGUAGE GADTs                  #-}
 {-# LANGUAGE ScopedTypeVariables    #-}
 
-module Runtime (module Runtime) where
+module CDP.Runtime (module CDP.Runtime) where
 
 import           Control.Applicative  ((<$>))
 import           Control.Monad
@@ -33,15 +33,10 @@ import Control.Applicative
 import Data.Default
 import Control.Exception
 import System.Timeout
+import Data.Char
 
-import Endpoints
+import CDP.Endpoints
 
-data ToJSONEx where
-   ToJSONEx :: (ToJSON a, Show a) => a -> ToJSONEx
-instance ToJSON ToJSONEx where
-    toJSON (ToJSONEx v) = toJSON v
-instance Show ToJSONEx where
-    show (ToJSONEx v) = show v
 
 type CommandBuffer = Map.Map CommandId BS.ByteString
 data Handle ev = MkHandle
@@ -228,7 +223,7 @@ instance FromJSON ProtocolError where
         pure $ case (code :: Double) of
             -32700 -> PEParse          msg
             -32600 -> PEInvalidRequest msg
-            -32600 -> PEMethodNotFound msg
+            -32601 -> PEMethodNotFound msg
             -32602 -> PEInvalidParams  msg
             -32603 -> PEInternalError  msg
             _      -> if code > -32099 && code < -32000 then PEServerError msg else PEOther msg
@@ -293,3 +288,15 @@ sendReceiveCommand handle name params = do
     pure $ case response of
         Left err                  -> Just err
         Right CommandResponse{..} -> either (Just . ERRProtocol) (const Nothing) crResult
+
+
+uncapitalizeFirst :: String -> String
+uncapitalizeFirst [] = []
+uncapitalizeFirst (hd:tl) = toLower hd : tl
+
+data ToJSONEx where
+    ToJSONEx :: (ToJSON a, Show a) => a -> ToJSONEx
+instance ToJSON ToJSONEx where
+    toJSON (ToJSONEx v) = toJSON v
+instance Show ToJSONEx where
+    show (ToJSONEx v) = show v

@@ -4,10 +4,18 @@ module Main where
 
 import qualified System.FilePath as FP
 
-import Libgen
+import CDP.Gen.Library
 
 main :: IO ()
 main = do
-    main <- doGenerateLibrary
-    let basePath = ["app", "CDP", "src"]
-    writeFile (FP.joinPath $ basePath ++ [FP.addExtension "CDP" "hs"]) main
+    let preludePath  = ["prelude"]
+        genPath      = ["cdp", "src"]
+        protocolPath = ["CDP", FP.addExtension "Protocol" "hs"]
+        mainPath     = [FP.addExtension "CDP" "hs"]
+
+    protocol        <- doGenerateLibrary
+    protocolPrelude <- readFile $ FP.joinPath $ preludePath ++ protocolPath
+    writeFile (FP.joinPath $ genPath ++ protocolPath) $ unlines [protocolPrelude, protocol]
+
+    mainPrelude <- readFile $ FP.joinPath $ preludePath ++ mainPath 
+    writeFile (FP.joinPath $ genPath ++ mainPath) mainPrelude

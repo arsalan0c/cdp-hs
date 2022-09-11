@@ -4,11 +4,13 @@ module Main where
 
 import Hedgehog
 import Hedgehog.Main
-import ChromeDevtoolsProtocol
+import CDP.Gen.Library
 
 prop_test :: Property
 prop_test = property $ do
-  doChromeDevtoolsProtocol === "ChromeDevtoolsProtocol"
+    pure ()
+
+
 
 main :: IO ()
 main = defaultMain [checkParallel $$(discover)]

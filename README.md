@@ -61,6 +61,10 @@ printPDF handle = do
 
 `cdp`, the library folder, will contain the newly generated code.
 
+## Acknowledgements
+
+This began as a [Summer of Haskell](https://summer.haskell.org) / [GSoC](https://summerofcode.withgoogle.com) project with the guidance of Albert Krewinkel (@tarleb), Jasper Van Der Jeugt (@jaspervdj) and Romain Lesur (@RLesur).  
+
 ## References
 
 - https://jaspervdj.be/posts/2013-09-01-controlling-chromium-in-haskell.html

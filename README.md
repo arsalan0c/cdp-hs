@@ -63,7 +63,7 @@ printPDF handle = do
 
 ## Acknowledgements
 
-This began as a [Summer of Haskell](https://summer.haskell.org) / [GSoC](https://summerofcode.withgoogle.com) project with the guidance of Albert Krewinkel (@tarleb), Jasper Van Der Jeugt (@jaspervdj) and Romain Lesur (@RLesur).  
+This began as a [Summer of Haskell](https://summer.haskell.org) / [GSoC](https://summerofcode.withgoogle.com) project with the guidance of Albert Krewinkel ([@tarleb](https://github.com/tarleb)), Jasper Van Der Jeugt ([@jaspervdj](https://github.com/jaspervdj)) and Romain Lesur ([@RLesur](https://github.com/rlesur)).  
 
 ## References
 

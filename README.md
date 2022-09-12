@@ -61,6 +61,16 @@ printPDF handle = do
 
 `cdp`, the library folder, will contain the newly generated code.
 
+## Current state
+
+[Project board](https://github.com/users/arsalan0c/projects/1)
+
+Commands and events for all non-experimental domains are supported.
+
+Upcoming features:
+- support for experimental domains
+- sessions
+
 ## Acknowledgements
 
 This began as a [Summer of Haskell](https://summer.haskell.org) / [GSoC](https://summerofcode.withgoogle.com) project with the guidance of Albert Krewinkel ([@tarleb](https://github.com/tarleb)), Jasper Van Der Jeugt ([@jaspervdj](https://github.com/jaspervdj)) and Romain Lesur ([@RLesur](https://github.com/rlesur)).  

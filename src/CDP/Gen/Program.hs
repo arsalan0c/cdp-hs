@@ -4,6 +4,7 @@ module CDP.Gen.Program where
 
 import Control.Arrow
 import Data.List
+import Data.List.Extra (splitOn)
 import Data.Maybe
 import Data.Char
 import Data.Text (Text(..), unpack)
@@ -13,289 +14,268 @@ import qualified Data.Aeson as A
 
 import qualified CDP.Definition as D
 
-newtype StringAlt = StringAlt String
-instance Show StringAlt where
-    show (StringAlt s) = s
+----------- Constants from the handwritten runtime of the CDP library ----------- 
+
+eventClassName, eventResponseName, handleType, commandClassName, sendCommandName, sendCommandResultName, emptyReturnSig :: String
+eventClassName         = "FromEvent"
+eventResponseName      = "EventResponse"
+handleType             = "Handle " <> eventsSumTypeName
+commandClassName       = "Command"
+sendCommandName        = "sendReceiveCommand"
+sendCommandResultName  = "sendReceiveCommandResult"
+emptyReturnSig         = "IO (Maybe Error)"
+
+resultReturnSig :: String -> String
+resultReturnSig resultTy = "IO (Either Error " <> resultTy <> ")" 
+
+----------- Start of program generation ----------- 
 
 type Program = String
 
-supportedDomains :: [Text]
-supportedDomains = ["Browser", "Page"]
-
-generate :: [D.DomainsElt] -> Program
-generate des = ("\n\n" <>) $
-    unlines 
-        [ eventsSumType
-        , eventResponseFromJSON
-        , unlines . map genDomain $ validDomains
-        ]
+genProgram :: [D.DomainsElt] -> Program
+genProgram domainElts = unlines 
+    [ eventsSumType evnsHS
+    , eventResponseFromJSON evns evnsHS
+    , unlines . map genDomain $ delts
+    ]
   where
-    validDomains = 
-        filter (not . hasExperimentalDependencies) . 
-        filter (not . isTrue . D.domainsEltExperimental) $ 
-        des
+    evns    = allEventNames delts
+    evnsHS  = allEventNamesHS delts
+    delts   = validDomains domainElts
 
-    hasExperimentalDependencies domain = any (`elem` experimentalDomains) . (fromMaybe [] . D.domainsEltDependencies) $ domain
-    experimentalDomains = map D.domainsEltDomain . filter (isTrue . D.domainsEltExperimental) $ des
-    
-    allEventConstructors = concatMap (\d -> map (eventName (domainName d)) . (validEvents . fromMaybe []) $ D.domainsEltEvents d) $ validDomains 
-    allEventStrs = concatMap (\d -> map (eventStr (domainName d)) . (validEvents . fromMaybe []) $ D.domainsEltEvents d) $ validDomains 
+----------- Generation of global types / values ----------- 
 
-    eventsSumTypeName = "Event"
-    eventsSumType     = (<> "\n    deriving (Eq, Show, Read)") . 
+eventsSumTypeName :: String
+eventsSumTypeName = "Event"
+
+eventsSumTypeConstructor :: String -> String
+eventsSumTypeConstructor = ("EV" <>)
+
+eventsSumType :: [String] -> String
+eventsSumType eventNamesHS = (<> ("\n" <> space 3 <> derivingBase)) . 
         (unwords ["data", eventsSumTypeName, "= "] <>) .   
         intercalate " | " . 
-        map (\c -> unwords [eventsSumTypeConstructor c, c]) $ 
-        allEventConstructors
-
-    eventsSumTypeConstructor = ("EV" <>)
-            
-    allEventsType = (<> "\n    deriving (Ord, Eq, Show, Read)") . 
-        ("data EventName = "<>) . 
-        intercalate " | " . 
-        map ("EventName" <>) $ 
-        allEventConstructors
-
-    allEventsFromJSON = genFromJSONInstanceEnum "EventName" allEventConstructors (map ("EventName"<>) allEventConstructors)
-  
-    allEventReturns = (<> "\n    deriving (Eq, Show, Read)") . ("data EventReturn = "<>) . intercalate " | " .
-        map (\c -> unwords ["EventReturn" <> c, c]) $ 
-        allEventConstructors
-    eventResponseFromJSON = unlines $
-        [ unwords ["instance FromJSON", "(EventResponse", eventsSumTypeName, ") where"]
-        , unwords ["    parseJSON = A.withObject ", show "EventResponse", " $ \\obj -> do"]
-        , unwords ["        name", "<-", "obj", ".:", show "method"]
-        , unwords ["        case (name :: String) of"]
-        ] ++ 
-            (map (\(l,r) -> unwords ["               ", l, "->", r]) $ zip (map show allEventStrs)
-                (map ((\c -> unwords ["EventResponse", proxy eventsSumTypeName, proxy c, ". fmap", eventsSumTypeConstructor c, "<$> obj .:?", show "params"])) allEventConstructors) ++ 
-                [emptyCase "EventResponse"])
-    proxy s = "(Proxy :: Proxy " <> s <> ")"
-
-    validEvents  = filter (not . isTrue . D.eventsEltExperimental) . filter (not . isTrue . D.eventsEltDeprecated)
-
-    eventStr domainName    ev = (domainName <>) . ("." <>) . unpack . D.eventsEltName $ ev
-    commandStr domainName  c  = (domainName <>) . ("." <>) . unpack . D.commandsEltName $ c
-
-    eventClassName = "FromEvent"
-    eventName domainName   ev = (domainName <>) . C.pascal . unpack . D.eventsEltName $ ev
-    commandName domainName c  = (domainName <>) . C.pascal . unpack . D.commandsEltName $ c
-    domainName = unpack . D.domainsEltDomain
-    
-    genDomain de = unlines
-        [ events
-        , genTypes dn . D.domainsEltTypes $ de
-        , unlines . map (genCommand dn) $ validCommands
-        ]
-      where
-        validCommands = 
-            filter (not . isTrue . D.commandsEltDeprecated) . 
-            filter (not . isTrue . D.commandsEltExperimental) . 
-            D.domainsEltCommands $ de
-        events = maybe "" (unlines . concatMap (\ev -> [eventReturnType ev, eventInstance ev]) . validEvents) . D.domainsEltEvents $ de
-        eventReturnType ev = let evn = eventName (domainName de) ev in
-            maybe ((<> "\n" <> genFromJSONInstanceEnum evn [evn] [evn]) . (<> "\n    deriving (Eq, Show, Read)") $ unwords ["data", evn, "=", evn]) (genTypeObj dn evn "") . D.eventsEltParameters $ ev
-        dn = domainName de 
-        eventInstance ev = 
-            let evn = eventName dn ev
-                evc = eventsSumTypeConstructor evn in
-            unlines $
-                [ unwords ["instance", eventClassName, eventsSumTypeName, evn, "where"]
-                , unwords ["   ", "eventName  _ _    = ", show $ eventStr dn ev] -- TODO: parameterize
-                , unwords ["   ", "fromEvent ev = ", "case ev of", evc, "v -> Just v; _ -> Nothing"] -- TODO: parameterize
-                ]
-    
-    genCommand dn ce = 
-        let cn = unpack . D.commandsEltName $ ce
-            name = uncapitalizeFirst $ commandName dn ce
-            params = filter (not . isTrue . D.parametersEltDeprecated) . 
-                filter (not . isTrue . D.parametersEltExperimental) . 
-                fromMaybe [] . D.commandsEltParameters $ ce
-            
-            paramNameToHSName = ((C.toCamel . C.fromAny $ name) <>) . C.toPascal . C.fromAny
-            paramNames   = map (unpack . D.parametersEltName) params
-            paramHSNames = map paramNameToHSName paramNames
-            paramOptionals = map (isTrue . D.parametersEltOptional) params
-            paramTypes = map (\(isOpt, (t1, (t2, items))) -> (genEltType dn isOpt t1 t2 items)) . zip paramOptionals . map (D.parametersEltType &&& D.parametersEltRef &&& D.parametersEltItems) $ params
-            (returnTypeDecl, returnTypeSig, isEmptyReturn) = 
-                (\rets -> 
-                    if length rets == 0 
-                        then ("", emptyReturnSig, True) 
-                        else tupleToTriple False $ resultReturnSig <$> (genReturnType dn (rets, name))
-                ) .
-                filter (not . isTrue . D.returnsEltDeprecated) .
-                filter (not . isTrue . D.returnsEltExperimental) .
-                fromMaybe [] .
-                D.commandsEltReturns $ 
-                ce
-
-            isEmptyParams = length params == 0
-            paramsTypeName = "P" <> (commandName dn ce)
-            paramsTypeDecl = maybe ""
-                (genTypeObj dn paramsTypeName "") (D.commandsEltParameters ce)
-
-            commandInstance ce =
-                let cn = commandName dn ce in
-                unlines $
-                    [ unwords ["instance Command ", cn, "where"]
-                    , unwords ["   ", "commandName _ =", show $ commandStr dn ce]
-                    ]
-
-        in 
-        unlines [ returnTypeDecl, if isEmptyReturn then "" else commandInstance ce, paramsTypeDecl
-            , unwords 
-                [ name, "::"
-                , intercalate " -> " $ ["Handle Event"] ++ (if isEmptyParams then [] else [paramsTypeName]) ++ [returnTypeSig]
-                ]
-            , unwords
-                [ name, "handle", if isEmptyParams then "=" else "params ="
-                , genBody isEmptyParams isEmptyReturn dn ce (zip (zip paramNames paramHSNames) paramOptionals)
-                ]
-        ]
-
-    emptyReturnSig           = "IO (Maybe Error)"
-    resultReturnSig resultTy = "IO (Either Error " <> resultTy <> ")" 
-    capitalizeFirst [] = []
-    capitalizeFirst (hd:tl) = toUpper hd : tl
-    uncapitalizeFirst [] = []
-    uncapitalizeFirst (hd:tl) = toLower hd : tl
-
-    genReturnType dn (rets, commandName) = 
-        let name = capitalizeFirst commandName
-            reqRets = filter (not . isTrue . D.returnsEltOptional) $ rets
-            optRets = filter (isTrue . D.returnsEltOptional) $ rets
-        in
-        (,name) . unlines $
-                [ unwords ["data", name, "=", name, "{"]
-                , intercalate ",\n" . 
-                    map (\ret -> "    " <> (((uncapitalizeFirst name) <>) . C.toPascal . C.fromAny . unpack $ D.returnsEltName ret) <> 
-                        " :: " <> 
-                        (genEltType dn (isTrue . D.returnsEltOptional $ ret) 
-                                (D.returnsEltType ret)
-                                (D.returnsEltRef ret) 
-                                (D.returnsEltItems ret))) $ reqRets ++ optRets
-                , "} deriving (Eq, Show, Read, Generic)"
-                , genFromJSONInstance name 
-                    (map (unpack . D.returnsEltName) reqRets) 
-                    (map (unpack . D.returnsEltName) optRets)
-                ]
-                        
-    genFromJSONInstance name reqFields optFields = 
-        let fields = f False reqFields ++ f True optFields in
-        if length fields == 0 then "" else
-            let headField = head fields
-                sep isOpt = if isOpt then ".:? " else ".: " in
-            unlines
-            [ unwords ["instance FromJSON ", name, "where"]
-            , unwords ["    parseJSON = A.genericParseJSON", fromJSONOpts (length name)]
-            ]
-      where
-        f b = map (id &&& (const b))
-
-    toJSONOpts   n    = unwords ["A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop", show n, ", A.omitNothingFields = True}"]
-    fromJSONOpts n    = unwords ["A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop", show n, "}"]
-
-
-    genToJSONInstance name reqFieldsHS optFieldsHS =
-        unlines
-        [ unwords ["instance ToJSON", name, " where"]
-        , unwords ["    toJSON = A.genericToJSON", toJSONOpts (length name)]
-        ]
-    
-    genBody isEmptyParams isEmptyReturn dn commandName paramNamesOptional = 
-        unwords 
-        [ if isEmptyReturn then "sendReceiveCommand" else "sendReceiveCommandResult" 
-        , "handle"
-        , show $ commandStr dn commandName
-        , if isEmptyParams then "(Nothing :: Maybe ())" else "(Just params)" -- genBodyArgs paramNamesOptional
-        ]
+        map (\c -> unwords [eventsSumTypeConstructor c, c]) $ eventNamesHS
         
-    genBodyArgs paramNamesOptional = 
-        let optArgs = map fst . filter (not . snd) $ paramNamesOptional
-            reqArgs = map fst . filter (snd) $ paramNamesOptional
-            optArgsGen =  ("[" <>) . (<> "]") . intercalate ", " . map genOptArg $ optArgs
-            reqArgsGen =  ("catMaybes [" <>) . (<> "]") . intercalate ", " . map genReqArg $ reqArgs in
-        wrapRoundBrackets . unwords $ [optArgsGen, "++", wrapRoundBrackets reqArgsGen]
+eventResponseFromJSON :: [String] -> [String] -> String
+eventResponseFromJSON eventNames eventNamesHS = unlines $
+    [ unwords ["instance FromJSON", "(" <> eventResponseName, eventsSumTypeName, ") where"]
+    , unwords [space 3, "parseJSON = A.withObject ", show eventResponseName, " $ \\obj -> do"]
+    , unwords [space 7, "name", "<-", "obj", ".:", show "method"]
+    , unwords [space 7, "case (name :: String) of"]
+    ] ++ 
+        (map (\(l,r) -> unwords [space 11, l, "->", r]) $ zip (map show $ eventNames)
+            (map ((\c -> unwords [eventResponseName, proxy eventsSumTypeName, proxy c, ". fmap", eventsSumTypeConstructor c, "<$> obj .:?", show "params"])) eventNamesHS) ++ 
+            [emptyCase eventResponseName])
+
+----------- Generation of domain types / values ----------- 
+
+genDomain :: D.DomainsElt -> String
+genDomain domainElt = unlines . map unlines $
+    [ map (genType dn)    . validTypes    $ domainElt
+    , map (genEvent dn)   . validEvents   $ domainElt
+    , map (genCommand dn) . validCommands $ domainElt 
+    ]
+  where
+    dn = domainName domainElt
+
+genType :: String -> D.TypesElt -> String
+genType domainName telt = case D.typesEltEnum telt of
+    Just enumValues -> genTypeEnum tn . map unpack $ enumValues
+    Nothing         -> case tytelt of
+            "object" -> maybe 
+                (genTypeSynonynm domainName tn) 
+                (genParamsType domainName tn) 
+                tpelt
+            ty       ->  unwords ["type", tn, "=", lty]                 
+  where
+    lty    = leftType domainName (Just . AltLeft $ tytelt) Nothing (D.typesEltItems telt)
+    tytelt = D.typesEltType telt
+    tpelt  = filter isValidParam <$> D.typesEltProperties telt
+    tn     = typeNameHS domainName telt 
+
+genTypeEnum :: String -> [String] -> String
+genTypeEnum typeEnumName values = unlines
+    [ unwords ["data", typeEnumName, "=", intercalate " | " constructors]
+    , space 4 <> derivingOrd
+    , genFromJSONInstanceEnum typeEnumName values constructors
+    , genToJSONInstanceEnum typeEnumName values constructors
+    ]
+  where
+    constructors = map (tyNameHS typeEnumName) values
+
+genEvent :: String -> D.EventsElt -> String
+genEvent domainName eventElt = unlines
+    [ genEventReturnType domainName eventElt
+    , genEventInstance domainName eventElt
+    ]
+
+genEventReturnType :: String -> D.EventsElt -> String
+genEventReturnType domainName eventElt = maybe emptyParams genNonEmptyParams evelts
+  where
+    emptyParams = unlines 
+        [ unwords ["data", evrn, "=", evrn]
+        , space 4 <> derivingBase
+        , genFromJSONInstanceEnum evrn [evrn] [evrn]
+        ]
+    genNonEmptyParams = genParamsType domainName evrn
+    evelts = filter isValidParam <$> D.eventsEltParameters eventElt
+    evrn = eventNameHS domainName eventElt
+
+genEventInstance :: String -> D.EventsElt -> String
+genEventInstance domainName eventElt = unlines $
+    [ unwords ["instance", eventClassName, eventsSumTypeName, evrn, "where"]
+    , unwords [space 3, "eventName  _ _    = ", show $ eventName domainName eventElt] -- TODO: parameterize
+    , unwords [space 3, "fromEvent ev      = ", "case ev of", eventsSumTypeConstructor evrn, "v -> Just v; _ -> Nothing"] -- TODO: parameterize
+    ]
+  where
+    evrn = eventNameHS domainName eventElt
+
+genCommand :: String -> D.CommandsElt -> String
+genCommand domainName commandElt = unlines
+    [ paramsTypeDef
+    , genCommandFn (isNothing pelts) (isNothing relts) cn ptn rtn
+    , returns
+    ]
+  where
+    cn   = commandName domainName commandElt 
+    ptn  = commandParamsNameHS domainName commandElt
+    rtn  = commandNameHS domainName commandElt 
+
+    paramsTypeDef = maybe "" (genParamsType domainName ptn) pelts
+    pelts = filter isValidParam <$> D.commandsEltParameters commandElt
+
+    returns = maybe "" (genNonEmptyReturns) relts
+    genNonEmptyReturns relts = unlines
+        [ genReturnType domainName rtn relts
+        , genFromJSONInstance rtn
+        , genCommandInstance 
+            (commandNameHS domainName commandElt) 
+            (commandName domainName commandElt)
+        ]
+    relts = filter isValidReturn <$> D.commandsEltReturns commandElt
+
+genCommandInstance :: String -> String -> String
+genCommandInstance commandNameHS commandName =
+    unlines $
+        [ unwords ["instance", commandClassName, commandNameHS, "where"]
+        , unwords [space 3, "commandName _ =", show commandName]
+        ]
+
+genCommandFn :: Bool -> Bool -> String -> String -> String -> String
+genCommandFn isEmptyParams isEmptyReturn commandName paramsTypeName returnTypeName = unlines
+    [ fnType
+    , unwords [fnHeader, fnBody]
+    ]
+  where
+    fnType = unwords
+        [ fnName, "::"
+        , intercalate " -> " $ [handleType] ++ 
+            (if isEmptyParams then [] else [paramsTypeName]) ++ 
+            [returnTypeSig]
+        ]
+    fnHeader = unwords [fnName, "handle", if isEmptyParams then "=" else "params ="]
+    fnBody   = unwords 
+        [ if isEmptyReturn then sendCommandName else sendCommandResultName
+        , "handle"
+        , show commandName
+        , if isEmptyParams then "(Nothing :: Maybe ())" else "(Just params)"
+        ]
+    returnTypeSig  = if isEmptyReturn then emptyReturnSig else resultReturnSig returnTypeName
+    fnName         = uncapitalizeFirst returnTypeName
+
+genParamsType :: String -> String -> [D.ParametersElt] -> String
+genParamsType domainName paramsTypeName []     = genTypeSynonynm domainName paramsTypeName
+genParamsType domainName paramsTypeName paramElts = unlines
+    [ unlines enumDecls
+    , unwords ["data", paramsTypeName, "=", paramsTypeName, "{"]
+    , intercalate ",\n" fields
+    , "} " <> derivingGeneric
+    , genToJSONInstance paramsTypeName
+    , genFromJSONInstance paramsTypeName
+    ]
+  where
+    fields = map toField fieldSigDecls
+    toField (fn, ftn, _) = unwords [space 3, fn, "::", ftn]
+
+    enumDecls    = catMaybes . map (\(_,_,d) -> d) $ fieldSigDecls
+    fieldSigDecls = map peltToFieldSigDecl paramElts
+
+    peltToFieldSigDecl pelt = case D.parametersEltEnum pelt of
+        Just enumValues -> (fn, ftn, ) . Just . genTypeEnum ftn . map unpack $ enumValues
+        Nothing         -> (fn, , Nothing) $ genEltType domainName (isTrue . D.parametersEltOptional $ pelt)
+                (D.parametersEltType pelt)
+                (D.parametersEltRef pelt) 
+                (D.parametersEltItems pelt)
+      where
+        ftn = tyNameHS "" fn
+        fn = fieldNameHS paramsTypeName . unpack . D.parametersEltName $ pelt
+
+genTypeSynonynm :: String -> String -> String
+genTypeSynonynm domainName typeName = unwords ["type", typeName, "=", typeCDPToHS domainName "object" Nothing]
+
+genReturnType :: String -> String -> [D.ReturnsElt] -> String
+genReturnType domainName returnTypeName returnElts = unlines
+    [ unwords ["data", returnTypeName, "=", returnTypeName, "{"]
+    , intercalate ",\n" fields
+    , "} " <> derivingGeneric
+    ]
+  where
+    fields = map ((space 4 <>) . reltToField) $ returnElts
+    reltToField relt = unwords
+        [ fieldNameHS returnTypeName . unpack . D.returnsEltName $ relt
+        , "::"
+        , reltToTypeSig relt
+        ]
+
+    reltToTypeSig relt = genEltType domainName (isTrue . D.returnsEltOptional $ relt) 
+            (D.returnsEltType relt)
+            (D.returnsEltRef relt) 
+            (D.returnsEltItems relt)
             
-    genOptArg (paramName,paramHSName) = "(" <> show paramName <> ", ToJSONEx " <> paramHSName <> ")"
-    genReqArg (paramName,paramHSName) = "fmap ((" <> show paramName <> ",) . ToJSONEx) " <> paramHSName
+----------- Generation rules ----------- 
 
-    emptyCase name = ("_", unwords ["fail", show $ "failed to parse " <> name])
+genFromJSONInstance :: String -> String
+genFromJSONInstance name = unlines
+    [ unwords ["instance FromJSON ", name, "where"]
+    , unwords [space 3, "parseJSON = A.genericParseJSON", fromJSONOpts (length name)]
+    ]
 
-    genFromJSONInstanceEnum name vals hsVals = 
-        unlines $
-        [ unwords ["instance FromJSON", name, "where"]
-        , unwords ["    parseJSON = A.withText ", show name, " $ \\v -> do"]
-        , unwords ["        case v of"]
-        ] ++ (map (\(v, hsv) -> unwords ["               ", v, "->", hsv]) $ zip (map show vals) (map ("pure $ " <>) hsVals) ++ [emptyCase name])
+genToJSONInstance :: String -> String
+genToJSONInstance name = unlines
+    [ unwords ["instance ToJSON", name, " where"]
+    , unwords [space 3, "toJSON = A.genericToJSON", toJSONOpts (length name)]
+    ]
 
-    genToJSONInstanceEnum name vals hsVals = 
-        unlines $
-        [ unwords ["instance ToJSON", name, "where"]
-        , unwords ["    toJSON v = A.String $"]
-        , unwords ["        case v of"]
-        ] ++ (map (\(v, hsv) -> unwords ["               ", hsv, "->", show v]) $ zip vals hsVals)
+genFromJSONInstanceEnum :: String -> [String] -> [String] -> String
+genFromJSONInstanceEnum name vals hsVals = unlines $
+    [ unwords ["instance FromJSON", name, "where"]
+    , unwords [space 3, "parseJSON = A.withText ", show name, " $ \\v -> do"]
+    , unwords [space 6, "case v of"]
+    ] ++ (map (\(v, hsv) -> unwords [space 9, v, "->", hsv]) $ zip (map show vals) (map ("pure $ " <>) hsVals) ++ 
+        [emptyCase name])
     
-    genTypeName dn tn = dn <> tn
-    genTypes _ Nothing    = []
-    genTypes dn (Just tes) = intercalate "\n\n" . map (genType dn) . filter (not . isTrue . D.typesEltDeprecated) . filter (not . isTrue . D.typesEltExperimental) $ tes
-    genType dn te = let name = genTypeName dn (unpack . D.typesEltId $ te) in
-            case (D.typesEltEnum te, unpack . D.typesEltType $ te) of
-                (Just enumValues,_) -> genTypeEnum name . map unpack $ enumValues
-                (Nothing,"object") -> maybe 
-                        (genTypeObjNoParams dn name)
-                        (genTypeObj dn name "") 
-                        (D.typesEltProperties te)
-                (Nothing,ty) -> unwords ["type", name, "=", tyl]
-        where
-            tyl = leftType dn (Just . AltLeft . D.typesEltType $ te) Nothing (D.typesEltItems te)
+genToJSONInstanceEnum :: String -> [String] -> [String] -> String
+genToJSONInstanceEnum name vals hsVals = unlines $
+    [ unwords ["instance ToJSON", name, "where"]
+    , unwords [space 3, "toJSON v = A.String $"]
+    , unwords [space 6, "case v of"]
+    ] ++ (map (\(v, hsv) -> unwords [space 9, hsv, "->", show v]) $ zip vals hsVals)
 
-    genTypeEnum name values = let hsValues = map ((name <>) . C.toPascal . C.fromAny) values in
-        unlines
-            [ unwords 
-                ["data", name, "=", intercalate " | " hsValues]
-            , "    deriving (Eq, Show, Read, Generic)"
-            , genFromJSONInstanceEnum name values hsValues
-            , genToJSONInstanceEnum name values hsValues
-            ]
+toJSONOpts   :: Int -> String
+toJSONOpts   n    = unwords ["A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop", show n, ", A.omitNothingFields = True}"]
 
-    genTypeObjNoParams dn name = unwords ["type", name, "=", typeCDPToHS dn "object" Nothing]
-
-    genTypeObj dn name fieldPrefix [] = genTypeObjNoParams dn name 
-    genTypeObj dn name fieldPrefix params = 
-        let validParams =
-                filter (not . isTrue . D.parametersEltDeprecated) . 
-                filter (not . isTrue . D.parametersEltExperimental) $ params
-            reqParams =  filter (not . isTrue . D.parametersEltOptional) $ validParams
-            optParams =  filter (isTrue . D.parametersEltOptional) $ validParams
-            reqParamNames = map (unpack . D.parametersEltName) reqParams
-            optParamNames = map (unpack . D.parametersEltName) $ optParams
-            paramNameToHSName = (uncapitalizeFirst) . (fieldPrefix <>) . (name <>) . capitalizeFirst
-
-        in
-        if length validParams == 0 then "" else
-        unlines [ "data " <> name <> " = " <> name <> " {"
-                , intercalate ",\n" . 
-                    map (\param -> "    " <> (paramNameToHSName . unpack . D.parametersEltName $ param) <> 
-                        " :: " <> 
-                        (genEltType dn (isTrue . D.parametersEltOptional $ param) 
-                                (D.parametersEltType param)
-                                (D.parametersEltRef param) 
-                                (D.parametersEltItems param))) $ reqParams ++ optParams
-                , "} deriving (Eq, Show, Read, Generic)"
-                , genFromJSONInstance name reqParamNames optParamNames
-                , genToJSONInstance name 
-                    (zip reqParamNames (map paramNameToHSName reqParamNames)) 
-                    (zip optParamNames (map paramNameToHSName optParamNames))
-                ]
+fromJSONOpts :: Int -> String
+fromJSONOpts n    = unwords ["A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop", show n, "}"]
 
 genEltType :: String -> Bool -> (Maybe (Text:|:[(Maybe A.Value)])) -> (Maybe (Text:|:[(Maybe A.Value)])) -> (Maybe (D.Items:|:[(Maybe A.Value)])) -> String
-genEltType domain isOptional t1 t2 items = (if isOptional then "Maybe " else "") <> (leftType domain t1 t2 items)
+genEltType name isOptional t1 t2 items = (if isOptional then "Maybe " else "") <> (leftType name t1 t2 items)
+
 leftType :: String -> (Maybe (Text:|:[(Maybe A.Value)])) -> (Maybe (Text:|:[(Maybe A.Value)])) -> (Maybe (D.Items:|:[(Maybe A.Value)])) -> String
 leftType _ (Just (AltLeft ty1)) (Just (AltLeft ty2)) _ = error "impossible"
 leftType domain (Just (AltLeft ty)) _ itemsElt = typeCDPToHS domain (unpack ty) itemsElt
 leftType domain _ (Just (AltLeft ty)) itemsElt = typeCDPToHS domain (unpack ty) itemsElt
-leftType _ _ _ _ = error "no type found" 
+leftType _ _ _ _ = error "no type found"
 
 typeCDPToHS :: String -> String -> (Maybe (D.Items:|:[(Maybe A.Value)])) -> String
 typeCDPToHS _ "object" _ = "[(String, String)]"
@@ -304,10 +284,7 @@ typeCDPToHS _ ty (Just (AltLeft items)) = error $ "non-array type with items: " 
 typeCDPToHS domain ty Nothing = convertType domain ty
 typeCDPToHS _ _ _ = error "no matching type"
 
-isTrue = (== (Just $ AltLeft True))
-tupleToTriple c (a, b) = (a, b, c)
-wrapRoundBrackets s = "(" <> s <> ")"
-
+convertType :: String -> String -> String
 convertType _ "string" = "String"
 convertType _ "integer" = "Int"
 convertType _ "boolean" = "Bool"
@@ -318,17 +295,97 @@ convertType _ "array" = error "got array conversion" -- TODO
 convertType _ "object" = error "got object type"
 convertType _ "" = error "got empty type"
 convertType domain s = case splitOn "." s of
-    [otherDomain, ty] -> otherDomain <> ty
-    _ -> domain <> s 
+    [otherDomain, ty] -> tyNameHS otherDomain ty
+    _ -> tyNameHS domain s 
 
--- TODO: use Data.List.Extra
-breakOn :: Eq a => [a] -> [a] -> ([a], [a])
-breakOn needle haystack | needle `isPrefixOf` haystack = ([], haystack)
-breakOn needle [] = ([], [])
-breakOn needle (x:xs) = first (x:) $ breakOn needle xs
+domainName :: D.DomainsElt -> String
+domainName = unpack . D.domainsEltDomain
 
-splitOn :: (Eq a) => [a] -> [a] -> [[a]]
-splitOn [] _ = error "splitOn, needle may not be empty"
-splitOn _ [] = [[]]
-splitOn needle haystack = a : if null b then [] else splitOn needle $ drop (length needle) b
-    where (a,b) = breakOn needle haystack
+validDomains :: [D.DomainsElt] -> [D.DomainsElt]
+validDomains ds = filter (not . hasExperimentalDependencies) . filter (not . isTrue . D.domainsEltExperimental) $ ds
+  where
+    hasExperimentalDependencies d = any (`elem` experimentalDomains) . (fromMaybe [] . D.domainsEltDependencies) $ d
+    experimentalDomains = map D.domainsEltDomain . filter (isTrue . D.domainsEltExperimental) $ ds
+
+isValidType :: D.TypesElt -> Bool
+isValidType telt = (not . isTrue . D.typesEltDeprecated $ telt) && (not . isTrue . D.typesEltExperimental $ telt)
+
+isValidEvent :: D.EventsElt -> Bool
+isValidEvent evelt = (not . isTrue . D.eventsEltExperimental $ evelt) && (not . isTrue . D.eventsEltDeprecated $ evelt)
+
+isValidCommand :: D.CommandsElt -> Bool
+isValidCommand celt = (not . isTrue . D.commandsEltDeprecated $ celt) && (not . isTrue . D.commandsEltExperimental $ celt)
+
+isValidParam :: D.ParametersElt -> Bool
+isValidParam pelt = (not . isTrue . D.parametersEltDeprecated $ pelt) && (not . isTrue . D.parametersEltExperimental $ pelt)
+
+isValidReturn :: D.ReturnsElt -> Bool
+isValidReturn relt = (not . isTrue . D.returnsEltDeprecated $ relt) && (not . isTrue . D.returnsEltExperimental $ relt)
+
+validTypes :: D.DomainsElt -> [D.TypesElt]
+validTypes = filter isValidType . fromMaybe [] . D.domainsEltTypes
+
+validEvents :: D.DomainsElt -> [D.EventsElt]
+validEvents = filter isValidEvent . fromMaybe [] . D.domainsEltEvents
+
+validCommands :: D.DomainsElt -> [D.CommandsElt]
+validCommands = filter isValidCommand . D.domainsEltCommands
+
+allEventNamesHS :: [D.DomainsElt] -> [String]
+allEventNamesHS = concatMap (\(d, evs) -> map (eventNameHS $ domainName d) evs) . map (id &&& validEvents)
+
+allEventNames :: [D.DomainsElt] -> [String]
+allEventNames = concatMap (\(d, evs) -> map (eventName $ domainName d) evs) . map (id &&& validEvents)
+
+eventName   :: String -> D.EventsElt -> String
+eventName   domainName ev = (domainName <>) . ("." <>) . unpack . D.eventsEltName $ ev
+eventNameHS :: String -> D.EventsElt -> String
+eventNameHS domainName ev = tyNameHS domainName (unpack . D.eventsEltName $ ev)
+
+commandName   :: String -> D.CommandsElt -> String
+commandName domainName c = (domainName <>) . ("." <>) . unpack . D.commandsEltName $ c
+commandNameHS :: String -> D.CommandsElt -> String
+commandNameHS domainName c = tyNameHS domainName (unpack . D.commandsEltName $ c)
+commandParamsNameHS :: String -> D.CommandsElt -> String
+commandParamsNameHS domainName c = paramsTypePrefix $ commandNameHS domainName c
+
+typeNameHS :: String -> D.TypesElt -> String
+typeNameHS domainName t = tyNameHS domainName (unpack . D.typesEltId $ t)
+
+tyNameHS :: String -> String -> String
+tyNameHS prefix tyName = C.pascal prefix <> C.pascal tyName
+
+fieldNameHS :: String -> String -> String
+fieldNameHS tyName fieldName = (uncapitalizeFirst tyName <>) $ C.pascal fieldName 
+
+paramsTypePrefix :: String -> String
+paramsTypePrefix = ("P" <>)
+
+proxy :: String -> String
+proxy s = "(Proxy :: Proxy " <> s <> ")"
+
+emptyCase :: String -> (String, String)
+emptyCase name = ("_", unwords ["fail", show $ "failed to parse " <> name])
+
+derivingBase    :: String
+derivingBase    = "deriving (Eq, Show, Read)"
+derivingOrd     :: String
+derivingOrd     = "deriving (Ord, Eq, Show, Read)"
+derivingGeneric :: String
+derivingGeneric = "deriving (Generic, Eq, Show, Read)"
+
+-----------  Utilities ----------- 
+
+space :: Int -> String
+space n = unwords $ replicate n " "
+
+isTrue :: Eq a => Maybe (Bool:|:a) -> Bool
+isTrue = (== (Just $ AltLeft True))
+
+capitalizeFirst :: String -> String
+capitalizeFirst [] = []
+capitalizeFirst (hd:tl) = toUpper hd : tl
+
+uncapitalizeFirst :: String -> String
+uncapitalizeFirst [] = []
+uncapitalizeFirst (hd:tl) = toLower hd : tl

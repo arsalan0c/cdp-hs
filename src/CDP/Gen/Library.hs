@@ -13,4 +13,4 @@ doGenerateLibrary = do
     browserProtocolDomains <- fmap D.topLevelDomains $ D.parse $ FP.joinPath ["protocol", "browser_protocol.json"]
     jsProtocolDomains      <- fmap D.topLevelDomains $ D.parse $ FP.joinPath ["protocol", "js_protocol.json"]
     
-    pure $ GP.generate $ browserProtocolDomains ++ jsProtocolDomains
+    pure $ GP.genProgram $ browserProtocolDomains ++ jsProtocolDomains

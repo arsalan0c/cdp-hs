@@ -32,9 +32,7 @@ dependencies:
 
 library:
   source-dirs: src
-  exposed-modules:
-    - CDP
-
+  
 executables:
   cdp-exe:
     source-dirs: app

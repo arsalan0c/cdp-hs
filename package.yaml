@@ -10,7 +10,6 @@ license: BSD-3-Clause
 extra-doc-files:
   - README.md
 
-data-dir: .
 data-files:
   - cdp/prelude/**/*.hs
 

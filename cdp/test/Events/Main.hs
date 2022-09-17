@@ -9,7 +9,7 @@ import Control.Concurrent
 import Data.Default
 
 import qualified CDP as CDP
-import qualified Runtime as R
+import qualified CDP.Runtime as R
 
 prop_page_frame :: Property
 prop_page_frame = property $ do

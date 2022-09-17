@@ -85,13 +85,13 @@ genType domainName telt = case D.typesEltEnum telt of
             "object" -> maybe 
                 (genTypeSynonynm domainName tn) 
                 (genParamsType domainName tn) 
-                tpelt
+                tpeltsM
             ty       ->  T.unwords ["type", tn, "=", lty]                 
   where
-    lty    = leftType domainName (Just . AltLeft $ tytelt) Nothing (D.typesEltItems telt)
-    tytelt = D.typesEltType telt
-    tpelt  = filter isValidParam <$> D.typesEltProperties telt
-    tn     = typeNameHS domainName telt 
+    lty      = leftType domainName (Just . AltLeft $ tytelt) Nothing (D.typesEltItems telt)
+    tytelt   = D.typesEltType telt
+    tpeltsM  = guardEmptyList isValidParam $ D.typesEltProperties telt
+    tn       = typeNameHS domainName telt 
 
 genTypeEnum :: T.Text -> [T.Text] -> T.Text
 genTypeEnum typeEnumName values = T.unlines
@@ -110,7 +110,7 @@ genEvent domainName eventElt = T.unlines $
     ]
 
 genEventReturnType :: T.Text -> D.EventsElt -> T.Text
-genEventReturnType domainName eventElt = maybe emptyParams genNonEmptyParams evelts
+genEventReturnType domainName eventElt = maybe emptyParams genNonEmptyParams eveltsM
   where
     emptyParams = T.unlines 
         [ T.unwords ["data", evrn, "=", evrn]
@@ -118,7 +118,7 @@ genEventReturnType domainName eventElt = maybe emptyParams genNonEmptyParams eve
         , genFromJSONInstanceEnum evrn [evrn] [evrn]
         ]
     genNonEmptyParams = genParamsType domainName evrn
-    evelts = filter isValidParam <$> D.eventsEltParameters eventElt
+    eveltsM = guardEmptyList isValidParam $ D.eventsEltParameters eventElt
     evrn = eventNameHS domainName eventElt
 
 genEventInstance :: T.Text -> D.EventsElt -> T.Text

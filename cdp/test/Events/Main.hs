@@ -25,7 +25,7 @@ prop_page_frame = property $ do
         nav     <- CDP.pageNavigate handle $
             CDP.PPageNavigate "http://wikipedia.com" Nothing Nothing Nothing
         -- wait for events
-        threadDelay 300000
+        threadDelay 500000
         -- check the response buffer
         responses <- readMVar . R.responseBuffer $ handle
         pure (enabled, nav, length responses)

@@ -7,5 +7,5 @@ import qualified Events.Main as E
 
 main :: IO ()
 main = do
-    -- C.main
+    C.main
     E.main

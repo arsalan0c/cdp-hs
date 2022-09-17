@@ -122,9 +122,9 @@ instance ToJSON CommandsElt where
 data TypesElt = TypesElt { 
     typesEltItems :: (Maybe (Items:|:[(Maybe Value)])),
     typesEltExperimental :: (Maybe (Bool:|:[(Maybe Value)])),
-    typesEltId :: Text, --
-    typesEltType :: Text, -- 
-    typesEltEnum :: (Maybe ([Text])), --
+    typesEltId :: Text,
+    typesEltType :: Text,
+    typesEltEnum :: (Maybe ([Text])),
     typesEltProperties :: (Maybe ([ParametersElt])),
     typesEltDescription :: (Maybe (Text:|:[(Maybe Value)])),
     typesEltDeprecated :: (Maybe (Bool:|:[(Maybe Value)]))
@@ -163,22 +163,23 @@ instance ToJSON EventsElt where
 data DomainsElt = DomainsElt { 
     domainsEltCommands :: [CommandsElt],
     domainsEltDomain :: Text,
-    domainsEltDependencies :: (Maybe ([Text])), 
+    domainsEltDependencies :: (Maybe ([Text])),
     domainsEltExperimental :: (Maybe (Bool:|:[(Maybe Value)])),
     domainsEltTypes :: (Maybe ([TypesElt])),
     domainsEltEvents :: (Maybe ([EventsElt])),
-    domainsEltDescription :: (Maybe (Text:|:[(Maybe Value)]))
+    domainsEltDescription :: (Maybe (Text:|:[(Maybe Value)])),
+    domainsEltDeprecated :: (Maybe (Bool:|:[(Maybe Value)]))
   } deriving (Show,Eq,GHC.Generics.Generic)
 
 
 instance FromJSON DomainsElt where
-  parseJSON (Object v) = DomainsElt <$> v .:  "commands" <*> v .:  "domain" <*> v .:? "dependencies" <*> v .:? "experimental" <*> v .:? "types" <*> v .:? "events" <*> v .:? "description"
+  parseJSON (Object v) = DomainsElt <$> v .:  "commands" <*> v .:  "domain" <*> v .:? "dependencies" <*> v .:? "experimental" <*> v .:? "types" <*> v .:? "events" <*> v .:? "description" <*> v .:? "deprecated"
   parseJSON _          = mzero
 
 
 instance ToJSON DomainsElt where
-  toJSON     (DomainsElt {..}) = object ["commands" .= domainsEltCommands, "domain" .= domainsEltDomain, "dependencies" .= domainsEltDependencies, "experimental" .= domainsEltExperimental, "types" .= domainsEltTypes, "events" .= domainsEltEvents, "description" .= domainsEltDescription]
-  toEncoding (DomainsElt {..}) = pairs  ("commands" .= domainsEltCommands<>"domain" .= domainsEltDomain<>"dependencies" .= domainsEltDependencies<>"experimental" .= domainsEltExperimental<>"types" .= domainsEltTypes<>"events" .= domainsEltEvents<>"description" .= domainsEltDescription)
+  toJSON     (DomainsElt {..}) = object ["commands" .= domainsEltCommands, "domain" .= domainsEltDomain, "dependencies" .= domainsEltDependencies, "experimental" .= domainsEltExperimental, "types" .= domainsEltTypes, "events" .= domainsEltEvents, "description" .= domainsEltDescription, "deprecated" .= domainsEltDeprecated]
+  toEncoding (DomainsElt {..}) = pairs  ("commands" .= domainsEltCommands<>"domain" .= domainsEltDomain<>"dependencies" .= domainsEltDependencies<>"experimental" .= domainsEltExperimental<>"types" .= domainsEltTypes<>"events" .= domainsEltEvents<>"description" .= domainsEltDescription<>"deprecated" .= domainsEltDeprecated)
 
 
 data TopLevel = TopLevel { 
@@ -200,14 +201,9 @@ instance ToJSON TopLevel where
 
 
 
-parse :: FilePath -> IO TopLevel
-parse fp = do
-    res <- parse' fp
-    pure res
-
 -- | Use parser to get TopLevel object
-parse' :: FilePath -> IO TopLevel
-parse' filename = do
+parse :: FilePath -> IO TopLevel
+parse filename = do
     input <- BSL.readFile filename
     case eitherDecode input of
       Left errTop -> fatal $ case (eitherDecode input :: Either String Value) of

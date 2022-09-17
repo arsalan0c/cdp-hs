@@ -19,8 +19,8 @@ prop_dom_get_document :: Property
 prop_dom_get_document = property $ void . 
     evalEitherM . 
         evalIO $ CDP.runClient def $ \handle -> do
-            res <- CDP.dOMGetDocument handle $ 
-                CDP.PDOMGetDocument Nothing Nothing
+            res <- CDP.domGetDocument handle $ 
+                CDP.PDomGetDocument Nothing Nothing
             pure res
 
 prop_emulation_can_emulate :: Property

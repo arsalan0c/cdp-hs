@@ -5,12 +5,12 @@ module Events.Main (main) where
 
 import Hedgehog
 import Hedgehog.Main
-import Control.Concurrent
 import Control.Monad
+import Control.Concurrent
 import Data.Default
 
 import qualified CDP as CDP
-import qualified CDP.Runtime as R
+import qualified CDP.Internal.Runtime as R
 
 prop_page_frame :: Property
 prop_page_frame = property $ do

@@ -16,7 +16,7 @@ import qualified CDP as CDP
 
 main :: IO ()
 main = do
-    putStrLn "Starting CDP example"
+    putStrLn $ "Starting CDP example"
     CDP.runClient def browser
 
 browser :: CDP.Handle CDP.Event -> IO ()

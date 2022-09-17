@@ -9,7 +9,7 @@ module CDP (Handle, Config(..), module CDP, module CDP.Protocol) where
 
 import Data.Proxy
 
-import CDP.Runtime
+import CDP.Internal.Runtime
 import CDP.Protocol
 
 type ClientApp b = Handle Event -> IO b

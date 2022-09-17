@@ -35,6 +35,7 @@ library:
     - src
   exposed-modules:
     - CDP.Gen.Program
+  generated-exposed-modules:
     - CDP.Definition
   dependencies:
     - json-alt-fork

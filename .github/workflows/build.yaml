@@ -3,6 +3,7 @@ on:
   pull_request:
     paths-ignore:
       - "**/*.md"
+      - ".github/**/*"
 jobs:
   build:
     strategy:
@@ -14,12 +15,22 @@ jobs:
       with:
         submodules: true
     - uses: cachix/install-nix-action@v14.1
+    # - uses: dorny/paths-filter@v2
+    #   id: filter
+    #   with:
+    #     filters: |
+    #       cdp:
+    #         - 'cdp/**/*'
     - name: cdp-gen build
+      id: cgb
       run: nix-build --attr exe
     - name: generate cdp library
+      id: gc
+      if: steps.cgb.outcome == 'success'
       run: ./result/bin/gen-exe
-    # Out of memory:
+    # Takes too long:
     # - name: cdp build
+    #   if: steps.gc.outcome == 'success' && steps.filter.outputs.cdp == 'true'
     #   working-directory: cdp
     #   run: nix-build --attr exe
 

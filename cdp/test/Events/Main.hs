@@ -5,11 +5,12 @@ module Events.Main (main) where
 
 import Hedgehog
 import Hedgehog.Main
+import Control.Monad
 import Control.Concurrent
 import Data.Default
 
 import qualified CDP as CDP
-import qualified Runtime as R
+import qualified CDP.Internal.Runtime as R
 
 prop_page_frame :: Property
 prop_page_frame = property $ do
@@ -24,13 +25,13 @@ prop_page_frame = property $ do
         nav     <- CDP.pageNavigate handle $
             CDP.PPageNavigate "http://wikipedia.com" Nothing Nothing Nothing
         -- wait for events
-        threadDelay 1000000
+        threadDelay 500000
         -- check the response buffer
         responses <- readMVar . R.responseBuffer $ handle
         pure (enabled, nav, length responses)
 
     enabled === Nothing
-    evalEither nav
+    void $ evalEither nav
     -- check at least 1 event was received, 2 responses are for the commands
     diff numResponses (>) 2 
 

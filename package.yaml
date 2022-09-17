@@ -10,7 +10,6 @@ license: BSD-3-Clause
 extra-doc-files:
   - README.md
 
-data-dir: .
 data-files:
   - cdp/prelude/**/*.hs
 
@@ -36,6 +35,7 @@ library:
     - src
   exposed-modules:
     - CDP.Gen.Program
+  generated-exposed-modules:
     - CDP.Definition
   dependencies:
     - json-alt-fork

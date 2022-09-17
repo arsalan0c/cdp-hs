@@ -35,7 +35,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Runtime
+import CDP.Internal.Runtime
 data Event = EVDomAttributeModified DomAttributeModified | EVDomAttributeRemoved DomAttributeRemoved | EVDomCharacterDataModified DomCharacterDataModified | EVDomChildNodeCountUpdated DomChildNodeCountUpdated | EVDomChildNodeInserted DomChildNodeInserted | EVDomChildNodeRemoved DomChildNodeRemoved | EVDomDocumentUpdated DomDocumentUpdated | EVDomSetChildNodes DomSetChildNodes | EVLogEntryAdded LogEntryAdded | EVNetworkDataReceived NetworkDataReceived | EVNetworkEventSourceMessageReceived NetworkEventSourceMessageReceived | EVNetworkLoadingFailed NetworkLoadingFailed | EVNetworkLoadingFinished NetworkLoadingFinished | EVNetworkRequestServedFromCache NetworkRequestServedFromCache | EVNetworkRequestWillBeSent NetworkRequestWillBeSent | EVNetworkResponseReceived NetworkResponseReceived | EVNetworkWebSocketClosed NetworkWebSocketClosed | EVNetworkWebSocketCreated NetworkWebSocketCreated | EVNetworkWebSocketFrameError NetworkWebSocketFrameError | EVNetworkWebSocketFrameReceived NetworkWebSocketFrameReceived | EVNetworkWebSocketFrameSent NetworkWebSocketFrameSent | EVNetworkWebSocketHandshakeResponseReceived NetworkWebSocketHandshakeResponseReceived | EVNetworkWebSocketWillSendHandshakeRequest NetworkWebSocketWillSendHandshakeRequest | EVNetworkWebTransportCreated NetworkWebTransportCreated | EVNetworkWebTransportConnectionEstablished NetworkWebTransportConnectionEstablished | EVNetworkWebTransportClosed NetworkWebTransportClosed | EVPageDomContentEventFired PageDomContentEventFired | EVPageFileChooserOpened PageFileChooserOpened | EVPageFrameAttached PageFrameAttached | EVPageFrameDetached PageFrameDetached | EVPageFrameNavigated PageFrameNavigated | EVPageInterstitialHidden PageInterstitialHidden | EVPageInterstitialShown PageInterstitialShown | EVPageJavascriptDialogClosed PageJavascriptDialogClosed | EVPageJavascriptDialogOpening PageJavascriptDialogOpening | EVPageLifecycleEvent PageLifecycleEvent | EVPagePrerenderAttemptCompleted PagePrerenderAttemptCompleted | EVPageLoadEventFired PageLoadEventFired | EVPageWindowOpen PageWindowOpen | EVPerformanceMetrics PerformanceMetrics | EVTargetReceivedMessageFromTarget TargetReceivedMessageFromTarget | EVTargetTargetCreated TargetTargetCreated | EVTargetTargetDestroyed TargetTargetDestroyed | EVTargetTargetCrashed TargetTargetCrashed | EVTargetTargetInfoChanged TargetTargetInfoChanged | EVFetchRequestPaused FetchRequestPaused | EVFetchAuthRequired FetchAuthRequired | EVDebuggerBreakpointResolved DebuggerBreakpointResolved | EVDebuggerPaused DebuggerPaused | EVDebuggerResumed DebuggerResumed | EVDebuggerScriptFailedToParse DebuggerScriptFailedToParse | EVDebuggerScriptParsed DebuggerScriptParsed | EVProfilerConsoleProfileFinished ProfilerConsoleProfileFinished | EVProfilerConsoleProfileStarted ProfilerConsoleProfileStarted | EVRuntimeConsoleApiCalled RuntimeConsoleApiCalled | EVRuntimeExceptionRevoked RuntimeExceptionRevoked | EVRuntimeExceptionThrown RuntimeExceptionThrown | EVRuntimeExecutionContextCreated RuntimeExecutionContextCreated | EVRuntimeExecutionContextDestroyed RuntimeExecutionContextDestroyed | EVRuntimeExecutionContextsCleared RuntimeExecutionContextsCleared | EVRuntimeInspectRequested RuntimeInspectRequested
   deriving (Eq, Show, Read)
 instance FromJSON (EventResponse Event ) where
@@ -107,11 +107,8 @@ instance FromJSON (EventResponse Event ) where
 
 
 
-
 browserClose :: Handle Event -> IO (Maybe Error)
 browserClose handle = sendReceiveCommand handle "Browser.close" (Nothing :: Maybe ())
-
-
 
 
 browserGetVersion :: Handle Event -> IO (Either Error BrowserGetVersion)
@@ -525,16 +522,12 @@ instance Command DomDescribeNode where
 
 
 
-
 domDisable :: Handle Event -> IO (Maybe Error)
 domDisable handle = sendReceiveCommand handle "DOM.disable" (Nothing :: Maybe ())
 
 
-
-type PDomEnable = [(T.Text, T.Text)]
-domEnable :: Handle Event -> PDomEnable -> IO (Maybe Error)
-domEnable handle params = sendReceiveCommand handle "DOM.enable" (Just params)
-
+domEnable :: Handle Event -> IO (Maybe Error)
+domEnable handle = sendReceiveCommand handle "DOM.enable" (Nothing :: Maybe ())
 
 
 
@@ -552,7 +545,6 @@ instance FromJSON  PDomFocus where
 
 domFocus :: Handle Event -> PDomFocus -> IO (Maybe Error)
 domFocus handle params = sendReceiveCommand handle "DOM.focus" (Just params)
-
 
 
 
@@ -695,22 +687,16 @@ instance Command DomGetOuterHtml where
 
 
 
-
 domHideHighlight :: Handle Event -> IO (Maybe Error)
 domHideHighlight handle = sendReceiveCommand handle "DOM.hideHighlight" (Nothing :: Maybe ())
-
-
 
 
 domHighlightNode :: Handle Event -> IO (Maybe Error)
 domHighlightNode handle = sendReceiveCommand handle "DOM.highlightNode" (Nothing :: Maybe ())
 
 
-
-
 domHighlightRect :: Handle Event -> IO (Maybe Error)
 domHighlightRect handle = sendReceiveCommand handle "DOM.highlightRect" (Nothing :: Maybe ())
-
 
 
 
@@ -812,7 +798,6 @@ domRemoveAttribute handle params = sendReceiveCommand handle "DOM.removeAttribut
 
 
 
-
 data PDomRemoveNode = PDomRemoveNode {
    pDomRemoveNodeNodeId :: DomNodeId
 } deriving (Generic, Eq, Show, Read)
@@ -825,7 +810,6 @@ instance FromJSON  PDomRemoveNode where
 
 domRemoveNode :: Handle Event -> PDomRemoveNode -> IO (Maybe Error)
 domRemoveNode handle params = sendReceiveCommand handle "DOM.removeNode" (Just params)
-
 
 
 
@@ -843,7 +827,6 @@ instance FromJSON  PDomRequestChildNodes where
 
 domRequestChildNodes :: Handle Event -> PDomRequestChildNodes -> IO (Maybe Error)
 domRequestChildNodes handle params = sendReceiveCommand handle "DOM.requestChildNodes" (Just params)
-
 
 
 
@@ -919,7 +902,6 @@ domSetAttributeValue handle params = sendReceiveCommand handle "DOM.setAttribute
 
 
 
-
 data PDomSetAttributesAsText = PDomSetAttributesAsText {
    pDomSetAttributesAsTextNodeId :: DomNodeId,
    pDomSetAttributesAsTextText :: String,
@@ -934,7 +916,6 @@ instance FromJSON  PDomSetAttributesAsText where
 
 domSetAttributesAsText :: Handle Event -> PDomSetAttributesAsText -> IO (Maybe Error)
 domSetAttributesAsText handle params = sendReceiveCommand handle "DOM.setAttributesAsText" (Just params)
-
 
 
 
@@ -953,7 +934,6 @@ instance FromJSON  PDomSetFileInputFiles where
 
 domSetFileInputFiles :: Handle Event -> PDomSetFileInputFiles -> IO (Maybe Error)
 domSetFileInputFiles handle params = sendReceiveCommand handle "DOM.setFileInputFiles" (Just params)
-
 
 
 
@@ -1000,7 +980,6 @@ domSetNodeValue handle params = sendReceiveCommand handle "DOM.setNodeValue" (Ju
 
 
 
-
 data PDomSetOuterHtml = PDomSetOuterHtml {
    pDomSetOuterHtmlNodeId :: DomNodeId,
    pDomSetOuterHtmlOuterHtml :: String
@@ -1014,7 +993,6 @@ instance FromJSON  PDomSetOuterHtml where
 
 domSetOuterHtml :: Handle Event -> PDomSetOuterHtml -> IO (Maybe Error)
 domSetOuterHtml handle params = sendReceiveCommand handle "DOM.setOuterHTML" (Just params)
-
 
 
 
@@ -1104,7 +1082,6 @@ domDebuggerRemoveDomBreakpoint handle params = sendReceiveCommand handle "DOMDeb
 
 
 
-
 data PDomDebuggerRemoveEventListenerBreakpoint = PDomDebuggerRemoveEventListenerBreakpoint {
    pDomDebuggerRemoveEventListenerBreakpointEventName :: String
 } deriving (Generic, Eq, Show, Read)
@@ -1120,7 +1097,6 @@ domDebuggerRemoveEventListenerBreakpoint handle params = sendReceiveCommand hand
 
 
 
-
 data PDomDebuggerRemoveXhrBreakpoint = PDomDebuggerRemoveXhrBreakpoint {
    pDomDebuggerRemoveXhrBreakpointUrl :: String
 } deriving (Generic, Eq, Show, Read)
@@ -1133,7 +1109,6 @@ instance FromJSON  PDomDebuggerRemoveXhrBreakpoint where
 
 domDebuggerRemoveXhrBreakpoint :: Handle Event -> PDomDebuggerRemoveXhrBreakpoint -> IO (Maybe Error)
 domDebuggerRemoveXhrBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.removeXHRBreakpoint" (Just params)
-
 
 
 
@@ -1153,7 +1128,6 @@ domDebuggerSetDomBreakpoint handle params = sendReceiveCommand handle "DOMDebugg
 
 
 
-
 data PDomDebuggerSetEventListenerBreakpoint = PDomDebuggerSetEventListenerBreakpoint {
    pDomDebuggerSetEventListenerBreakpointEventName :: String
 } deriving (Generic, Eq, Show, Read)
@@ -1169,7 +1143,6 @@ domDebuggerSetEventListenerBreakpoint handle params = sendReceiveCommand handle 
 
 
 
-
 data PDomDebuggerSetXhrBreakpoint = PDomDebuggerSetXhrBreakpoint {
    pDomDebuggerSetXhrBreakpointUrl :: String
 } deriving (Generic, Eq, Show, Read)
@@ -1182,7 +1155,6 @@ instance FromJSON  PDomDebuggerSetXhrBreakpoint where
 
 domDebuggerSetXhrBreakpoint :: Handle Event -> PDomDebuggerSetXhrBreakpoint -> IO (Maybe Error)
 domDebuggerSetXhrBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.setXHRBreakpoint" (Just params)
-
 
 
 
@@ -1262,7 +1234,6 @@ instance FromJSON  EmulationMediaFeature where
 
 
 
-
 emulationCanEmulate :: Handle Event -> IO (Either Error EmulationCanEmulate)
 emulationCanEmulate handle = sendReceiveCommandResult handle "Emulation.canEmulate" (Nothing :: Maybe ())
 
@@ -1278,16 +1249,12 @@ instance Command EmulationCanEmulate where
 
 
 
-
 emulationClearDeviceMetricsOverride :: Handle Event -> IO (Maybe Error)
 emulationClearDeviceMetricsOverride handle = sendReceiveCommand handle "Emulation.clearDeviceMetricsOverride" (Nothing :: Maybe ())
 
 
-
-
 emulationClearGeolocationOverride :: Handle Event -> IO (Maybe Error)
 emulationClearGeolocationOverride handle = sendReceiveCommand handle "Emulation.clearGeolocationOverride" (Nothing :: Maybe ())
-
 
 
 
@@ -1303,7 +1270,6 @@ instance FromJSON  PEmulationSetDefaultBackgroundColorOverride where
 
 emulationSetDefaultBackgroundColorOverride :: Handle Event -> PEmulationSetDefaultBackgroundColorOverride -> IO (Maybe Error)
 emulationSetDefaultBackgroundColorOverride handle params = sendReceiveCommand handle "Emulation.setDefaultBackgroundColorOverride" (Just params)
-
 
 
 
@@ -1326,7 +1292,6 @@ emulationSetDeviceMetricsOverride handle params = sendReceiveCommand handle "Emu
 
 
 
-
 data PEmulationSetEmulatedMedia = PEmulationSetEmulatedMedia {
    pEmulationSetEmulatedMediaMedia :: Maybe String,
    pEmulationSetEmulatedMediaFeatures :: Maybe [EmulationMediaFeature]
@@ -1340,7 +1305,6 @@ instance FromJSON  PEmulationSetEmulatedMedia where
 
 emulationSetEmulatedMedia :: Handle Event -> PEmulationSetEmulatedMedia -> IO (Maybe Error)
 emulationSetEmulatedMedia handle params = sendReceiveCommand handle "Emulation.setEmulatedMedia" (Just params)
-
 
 
 
@@ -1361,7 +1325,6 @@ emulationSetGeolocationOverride handle params = sendReceiveCommand handle "Emula
 
 
 
-
 data PEmulationSetScriptExecutionDisabled = PEmulationSetScriptExecutionDisabled {
    pEmulationSetScriptExecutionDisabledValue :: Bool
 } deriving (Generic, Eq, Show, Read)
@@ -1374,7 +1337,6 @@ instance FromJSON  PEmulationSetScriptExecutionDisabled where
 
 emulationSetScriptExecutionDisabled :: Handle Event -> PEmulationSetScriptExecutionDisabled -> IO (Maybe Error)
 emulationSetScriptExecutionDisabled handle params = sendReceiveCommand handle "Emulation.setScriptExecutionDisabled" (Just params)
-
 
 
 
@@ -1391,7 +1353,6 @@ instance FromJSON  PEmulationSetTouchEmulationEnabled where
 
 emulationSetTouchEmulationEnabled :: Handle Event -> PEmulationSetTouchEmulationEnabled -> IO (Maybe Error)
 emulationSetTouchEmulationEnabled handle params = sendReceiveCommand handle "Emulation.setTouchEmulationEnabled" (Just params)
-
 
 
 
@@ -1413,7 +1374,6 @@ emulationSetUserAgentOverride handle params = sendReceiveCommand handle "Emulati
 
 
 
-
 type IoStreamHandle = String
 
 
@@ -1430,7 +1390,6 @@ instance FromJSON  PIoClose where
 
 ioClose :: Handle Event -> PIoClose -> IO (Maybe Error)
 ioClose handle params = sendReceiveCommand handle "IO.close" (Just params)
-
 
 
 
@@ -1583,7 +1542,6 @@ inputDispatchKeyEvent :: Handle Event -> PInputDispatchKeyEvent -> IO (Maybe Err
 inputDispatchKeyEvent handle params = sendReceiveCommand handle "Input.dispatchKeyEvent" (Just params)
 
 
-
 data PInputDispatchMouseEventType = PInputDispatchMouseEventTypeMousePressed | PInputDispatchMouseEventTypeMouseReleased | PInputDispatchMouseEventTypeMouseMoved | PInputDispatchMouseEventTypeMouseWheel
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PInputDispatchMouseEventType where
@@ -1645,7 +1603,6 @@ inputDispatchMouseEvent :: Handle Event -> PInputDispatchMouseEvent -> IO (Maybe
 inputDispatchMouseEvent handle params = sendReceiveCommand handle "Input.dispatchMouseEvent" (Just params)
 
 
-
 data PInputDispatchTouchEventType = PInputDispatchTouchEventTypeTouchStart | PInputDispatchTouchEventTypeTouchEnd | PInputDispatchTouchEventTypeTouchMove | PInputDispatchTouchEventTypeTouchCancel
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PInputDispatchTouchEventType where
@@ -1685,7 +1642,6 @@ inputDispatchTouchEvent handle params = sendReceiveCommand handle "Input.dispatc
 
 
 
-
 data PInputSetIgnoreInputEvents = PInputSetIgnoreInputEvents {
    pInputSetIgnoreInputEventsIgnore :: Bool
 } deriving (Generic, Eq, Show, Read)
@@ -1698,7 +1654,6 @@ instance FromJSON  PInputSetIgnoreInputEvents where
 
 inputSetIgnoreInputEvents :: Handle Event -> PInputSetIgnoreInputEvents -> IO (Maybe Error)
 inputSetIgnoreInputEvents handle params = sendReceiveCommand handle "Input.setIgnoreInputEvents" (Just params)
-
 
 
 
@@ -1852,22 +1807,16 @@ instance FromEvent Event LogEntryAdded where
 
 
 
-
 logClear :: Handle Event -> IO (Maybe Error)
 logClear handle = sendReceiveCommand handle "Log.clear" (Nothing :: Maybe ())
-
-
 
 
 logDisable :: Handle Event -> IO (Maybe Error)
 logDisable handle = sendReceiveCommand handle "Log.disable" (Nothing :: Maybe ())
 
 
-
-
 logEnable :: Handle Event -> IO (Maybe Error)
 logEnable handle = sendReceiveCommand handle "Log.enable" (Nothing :: Maybe ())
-
 
 
 
@@ -1885,11 +1834,8 @@ logStartViolationsReport :: Handle Event -> PLogStartViolationsReport -> IO (May
 logStartViolationsReport handle params = sendReceiveCommand handle "Log.startViolationsReport" (Just params)
 
 
-
-
 logStopViolationsReport :: Handle Event -> IO (Maybe Error)
 logStopViolationsReport handle = sendReceiveCommand handle "Log.stopViolationsReport" (Nothing :: Maybe ())
-
 
 
 
@@ -2824,16 +2770,12 @@ instance FromEvent Event NetworkWebTransportClosed where
 
 
 
-
 networkClearBrowserCache :: Handle Event -> IO (Maybe Error)
 networkClearBrowserCache handle = sendReceiveCommand handle "Network.clearBrowserCache" (Nothing :: Maybe ())
 
 
-
-
 networkClearBrowserCookies :: Handle Event -> IO (Maybe Error)
 networkClearBrowserCookies handle = sendReceiveCommand handle "Network.clearBrowserCookies" (Nothing :: Maybe ())
-
 
 
 
@@ -2854,11 +2796,8 @@ networkDeleteCookies :: Handle Event -> PNetworkDeleteCookies -> IO (Maybe Error
 networkDeleteCookies handle params = sendReceiveCommand handle "Network.deleteCookies" (Just params)
 
 
-
-
 networkDisable :: Handle Event -> IO (Maybe Error)
 networkDisable handle = sendReceiveCommand handle "Network.disable" (Nothing :: Maybe ())
-
 
 
 
@@ -2881,7 +2820,6 @@ networkEmulateNetworkConditions handle params = sendReceiveCommand handle "Netwo
 
 
 
-
 data PNetworkEnable = PNetworkEnable {
    pNetworkEnableMaxPostDataSize :: Maybe Int
 } deriving (Generic, Eq, Show, Read)
@@ -2894,8 +2832,6 @@ instance FromJSON  PNetworkEnable where
 
 networkEnable :: Handle Event -> PNetworkEnable -> IO (Maybe Error)
 networkEnable handle params = sendReceiveCommand handle "Network.enable" (Just params)
-
-
 
 
 networkGetAllCookies :: Handle Event -> IO (Either Error NetworkGetAllCookies)
@@ -3008,7 +2944,6 @@ networkSetCacheDisabled handle params = sendReceiveCommand handle "Network.setCa
 
 
 
-
 data PNetworkSetCookie = PNetworkSetCookie {
    pNetworkSetCookieName :: String,
    pNetworkSetCookieValue :: String,
@@ -3027,19 +2962,8 @@ instance FromJSON  PNetworkSetCookie where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
-networkSetCookie :: Handle Event -> PNetworkSetCookie -> IO (Either Error NetworkSetCookie)
-networkSetCookie handle params = sendReceiveCommandResult handle "Network.setCookie" (Just params)
-
-data NetworkSetCookie = NetworkSetCookie {
-
-} deriving (Generic, Eq, Show, Read)
-
-instance FromJSON  NetworkSetCookie where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
-
-instance Command NetworkSetCookie where
-   commandName _ = "Network.setCookie"
-
+networkSetCookie :: Handle Event -> PNetworkSetCookie -> IO (Maybe Error)
+networkSetCookie handle params = sendReceiveCommand handle "Network.setCookie" (Just params)
 
 
 
@@ -3058,7 +2982,6 @@ networkSetCookies handle params = sendReceiveCommand handle "Network.setCookies"
 
 
 
-
 data PNetworkSetExtraHttpHeaders = PNetworkSetExtraHttpHeaders {
    pNetworkSetExtraHttpHeadersHeaders :: NetworkHeaders
 } deriving (Generic, Eq, Show, Read)
@@ -3071,7 +2994,6 @@ instance FromJSON  PNetworkSetExtraHttpHeaders where
 
 networkSetExtraHttpHeaders :: Handle Event -> PNetworkSetExtraHttpHeaders -> IO (Maybe Error)
 networkSetExtraHttpHeaders handle params = sendReceiveCommand handle "Network.setExtraHTTPHeaders" (Just params)
-
 
 
 
@@ -3089,7 +3011,6 @@ instance FromJSON  PNetworkSetUserAgentOverride where
 
 networkSetUserAgentOverride :: Handle Event -> PNetworkSetUserAgentOverride -> IO (Maybe Error)
 networkSetUserAgentOverride handle params = sendReceiveCommand handle "Network.setUserAgentOverride" (Just params)
-
 
 
 
@@ -3600,10 +3521,8 @@ instance Command PageAddScriptToEvaluateOnNewDocument where
 
 
 
-
 pageBringToFront :: Handle Event -> IO (Maybe Error)
 pageBringToFront handle = sendReceiveCommand handle "Page.bringToFront" (Nothing :: Maybe ())
-
 
 
 data PPageCaptureScreenshotFormat = PPageCaptureScreenshotFormatJpeg | PPageCaptureScreenshotFormatPng | PPageCaptureScreenshotFormatWebp
@@ -3680,17 +3599,12 @@ instance Command PageCreateIsolatedWorld where
 
 
 
-
 pageDisable :: Handle Event -> IO (Maybe Error)
 pageDisable handle = sendReceiveCommand handle "Page.disable" (Nothing :: Maybe ())
 
 
-
-
 pageEnable :: Handle Event -> IO (Maybe Error)
 pageEnable handle = sendReceiveCommand handle "Page.enable" (Nothing :: Maybe ())
-
-
 
 
 pageGetAppManifest :: Handle Event -> IO (Either Error PageGetAppManifest)
@@ -3710,7 +3624,6 @@ instance Command PageGetAppManifest where
 
 
 
-
 pageGetFrameTree :: Handle Event -> IO (Either Error PageGetFrameTree)
 pageGetFrameTree handle = sendReceiveCommandResult handle "Page.getFrameTree" (Nothing :: Maybe ())
 
@@ -3723,7 +3636,6 @@ instance FromJSON  PageGetFrameTree where
 
 instance Command PageGetFrameTree where
    commandName _ = "Page.getFrameTree"
-
 
 
 
@@ -3744,7 +3656,6 @@ instance Command PageGetLayoutMetrics where
 
 
 
-
 pageGetNavigationHistory :: Handle Event -> IO (Either Error PageGetNavigationHistory)
 pageGetNavigationHistory handle = sendReceiveCommandResult handle "Page.getNavigationHistory" (Nothing :: Maybe ())
 
@@ -3761,10 +3672,8 @@ instance Command PageGetNavigationHistory where
 
 
 
-
 pageResetNavigationHistory :: Handle Event -> IO (Maybe Error)
 pageResetNavigationHistory handle = sendReceiveCommand handle "Page.resetNavigationHistory" (Nothing :: Maybe ())
-
 
 
 
@@ -3781,7 +3690,6 @@ instance FromJSON  PPageHandleJavaScriptDialog where
 
 pageHandleJavaScriptDialog :: Handle Event -> PPageHandleJavaScriptDialog -> IO (Maybe Error)
 pageHandleJavaScriptDialog handle params = sendReceiveCommand handle "Page.handleJavaScriptDialog" (Just params)
-
 
 
 
@@ -3828,7 +3736,6 @@ instance FromJSON  PPageNavigateToHistoryEntry where
 
 pageNavigateToHistoryEntry :: Handle Event -> PPageNavigateToHistoryEntry -> IO (Maybe Error)
 pageNavigateToHistoryEntry handle params = sendReceiveCommand handle "Page.navigateToHistoryEntry" (Just params)
-
 
 
 
@@ -3887,7 +3794,6 @@ pageReload handle params = sendReceiveCommand handle "Page.reload" (Just params)
 
 
 
-
 data PPageRemoveScriptToEvaluateOnNewDocument = PPageRemoveScriptToEvaluateOnNewDocument {
    pPageRemoveScriptToEvaluateOnNewDocumentIdentifier :: PageScriptIdentifier
 } deriving (Generic, Eq, Show, Read)
@@ -3900,7 +3806,6 @@ instance FromJSON  PPageRemoveScriptToEvaluateOnNewDocument where
 
 pageRemoveScriptToEvaluateOnNewDocument :: Handle Event -> PPageRemoveScriptToEvaluateOnNewDocument -> IO (Maybe Error)
 pageRemoveScriptToEvaluateOnNewDocument handle params = sendReceiveCommand handle "Page.removeScriptToEvaluateOnNewDocument" (Just params)
-
 
 
 
@@ -3919,11 +3824,8 @@ pageSetDocumentContent :: Handle Event -> PPageSetDocumentContent -> IO (Maybe E
 pageSetDocumentContent handle params = sendReceiveCommand handle "Page.setDocumentContent" (Just params)
 
 
-
-
 pageStopLoading :: Handle Event -> IO (Maybe Error)
 pageStopLoading handle = sendReceiveCommand handle "Page.stopLoading" (Nothing :: Maybe ())
-
 
 
 
@@ -3959,10 +3861,8 @@ instance FromEvent Event PerformanceMetrics where
 
 
 
-
 performanceDisable :: Handle Event -> IO (Maybe Error)
 performanceDisable handle = sendReceiveCommand handle "Performance.disable" (Nothing :: Maybe ())
-
 
 
 data PPerformanceEnableTimeDomain = PPerformanceEnableTimeDomainTimeTicks | PPerformanceEnableTimeDomainThreadTicks
@@ -3994,8 +3894,6 @@ instance FromJSON  PPerformanceEnable where
 
 performanceEnable :: Handle Event -> PPerformanceEnable -> IO (Maybe Error)
 performanceEnable handle params = sendReceiveCommand handle "Performance.enable" (Just params)
-
-
 
 
 performanceGetMetrics :: Handle Event -> IO (Either Error PerformanceGetMetrics)
@@ -4093,16 +3991,12 @@ instance ToJSON SecurityCertificateErrorAction where
 
 
 
-
 securityDisable :: Handle Event -> IO (Maybe Error)
 securityDisable handle = sendReceiveCommand handle "Security.disable" (Nothing :: Maybe ())
 
 
-
-
 securityEnable :: Handle Event -> IO (Maybe Error)
 securityEnable handle = sendReceiveCommand handle "Security.enable" (Nothing :: Maybe ())
-
 
 
 
@@ -4226,7 +4120,6 @@ targetActivateTarget handle params = sendReceiveCommand handle "Target.activateT
 
 
 
-
 data PTargetAttachToTarget = PTargetAttachToTarget {
    pTargetAttachToTargetTargetId :: TargetTargetId,
    pTargetAttachToTargetFlatten :: Maybe Bool
@@ -4264,19 +4157,8 @@ instance FromJSON  PTargetCloseTarget where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
-targetCloseTarget :: Handle Event -> PTargetCloseTarget -> IO (Either Error TargetCloseTarget)
-targetCloseTarget handle params = sendReceiveCommandResult handle "Target.closeTarget" (Just params)
-
-data TargetCloseTarget = TargetCloseTarget {
-
-} deriving (Generic, Eq, Show, Read)
-
-instance FromJSON  TargetCloseTarget where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
-
-instance Command TargetCloseTarget where
-   commandName _ = "Target.closeTarget"
-
+targetCloseTarget :: Handle Event -> PTargetCloseTarget -> IO (Maybe Error)
+targetCloseTarget handle params = sendReceiveCommand handle "Target.closeTarget" (Just params)
 
 
 
@@ -4324,8 +4206,6 @@ targetDetachFromTarget :: Handle Event -> PTargetDetachFromTarget -> IO (Maybe E
 targetDetachFromTarget handle params = sendReceiveCommand handle "Target.detachFromTarget" (Just params)
 
 
-
-
 targetGetTargets :: Handle Event -> IO (Either Error TargetGetTargets)
 targetGetTargets handle = sendReceiveCommandResult handle "Target.getTargets" (Nothing :: Maybe ())
 
@@ -4354,7 +4234,6 @@ instance FromJSON  PTargetSetDiscoverTargets where
 
 targetSetDiscoverTargets :: Handle Event -> PTargetSetDiscoverTargets -> IO (Maybe Error)
 targetSetDiscoverTargets handle params = sendReceiveCommand handle "Target.setDiscoverTargets" (Just params)
-
 
 
 
@@ -4508,10 +4387,8 @@ instance FromEvent Event FetchAuthRequired where
 
 
 
-
 fetchDisable :: Handle Event -> IO (Maybe Error)
 fetchDisable handle = sendReceiveCommand handle "Fetch.disable" (Nothing :: Maybe ())
-
 
 
 
@@ -4531,7 +4408,6 @@ fetchEnable handle params = sendReceiveCommand handle "Fetch.enable" (Just param
 
 
 
-
 data PFetchFailRequest = PFetchFailRequest {
    pFetchFailRequestRequestId :: FetchRequestId,
    pFetchFailRequestErrorReason :: NetworkErrorReason
@@ -4545,7 +4421,6 @@ instance FromJSON  PFetchFailRequest where
 
 fetchFailRequest :: Handle Event -> PFetchFailRequest -> IO (Maybe Error)
 fetchFailRequest handle params = sendReceiveCommand handle "Fetch.failRequest" (Just params)
-
 
 
 
@@ -4569,7 +4444,6 @@ fetchFulfillRequest handle params = sendReceiveCommand handle "Fetch.fulfillRequ
 
 
 
-
 data PFetchContinueRequest = PFetchContinueRequest {
    pFetchContinueRequestRequestId :: FetchRequestId,
    pFetchContinueRequestUrl :: Maybe String,
@@ -4589,7 +4463,6 @@ fetchContinueRequest handle params = sendReceiveCommand handle "Fetch.continueRe
 
 
 
-
 data PFetchContinueWithAuth = PFetchContinueWithAuth {
    pFetchContinueWithAuthRequestId :: FetchRequestId,
    pFetchContinueWithAuthAuthChallengeResponse :: FetchAuthChallengeResponse
@@ -4603,7 +4476,6 @@ instance FromJSON  PFetchContinueWithAuth where
 
 fetchContinueWithAuth :: Handle Event -> PFetchContinueWithAuth -> IO (Maybe Error)
 fetchContinueWithAuth handle params = sendReceiveCommand handle "Fetch.continueWithAuth" (Just params)
-
 
 
 
@@ -5009,27 +4881,12 @@ debuggerContinueToLocation :: Handle Event -> PDebuggerContinueToLocation -> IO 
 debuggerContinueToLocation handle params = sendReceiveCommand handle "Debugger.continueToLocation" (Just params)
 
 
-
-
 debuggerDisable :: Handle Event -> IO (Maybe Error)
 debuggerDisable handle = sendReceiveCommand handle "Debugger.disable" (Nothing :: Maybe ())
 
 
-
-type PDebuggerEnable = [(T.Text, T.Text)]
-debuggerEnable :: Handle Event -> PDebuggerEnable -> IO (Either Error DebuggerEnable)
-debuggerEnable handle params = sendReceiveCommandResult handle "Debugger.enable" (Just params)
-
-data DebuggerEnable = DebuggerEnable {
-
-} deriving (Generic, Eq, Show, Read)
-
-instance FromJSON  DebuggerEnable where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
-
-instance Command DebuggerEnable where
-   commandName _ = "Debugger.enable"
-
+debuggerEnable :: Handle Event -> IO (Maybe Error)
+debuggerEnable handle = sendReceiveCommand handle "Debugger.enable" (Nothing :: Maybe ())
 
 
 
@@ -5120,10 +4977,8 @@ instance Command DebuggerGetScriptSource where
 
 
 
-
 debuggerPause :: Handle Event -> IO (Maybe Error)
 debuggerPause handle = sendReceiveCommand handle "Debugger.pause" (Nothing :: Maybe ())
-
 
 
 
@@ -5142,7 +4997,6 @@ debuggerRemoveBreakpoint handle params = sendReceiveCommand handle "Debugger.rem
 
 
 
-
 data PDebuggerResume = PDebuggerResume {
    pDebuggerResumeTerminateOnResume :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
@@ -5155,7 +5009,6 @@ instance FromJSON  PDebuggerResume where
 
 debuggerResume :: Handle Event -> PDebuggerResume -> IO (Maybe Error)
 debuggerResume handle params = sendReceiveCommand handle "Debugger.resume" (Just params)
-
 
 
 
@@ -5200,7 +5053,6 @@ instance FromJSON  PDebuggerSetAsyncCallStackDepth where
 
 debuggerSetAsyncCallStackDepth :: Handle Event -> PDebuggerSetAsyncCallStackDepth -> IO (Maybe Error)
 debuggerSetAsyncCallStackDepth handle params = sendReceiveCommand handle "Debugger.setAsyncCallStackDepth" (Just params)
-
 
 
 
@@ -5320,7 +5172,6 @@ debuggerSetBreakpointsActive :: Handle Event -> PDebuggerSetBreakpointsActive ->
 debuggerSetBreakpointsActive handle params = sendReceiveCommand handle "Debugger.setBreakpointsActive" (Just params)
 
 
-
 data PDebuggerSetPauseOnExceptionsState = PDebuggerSetPauseOnExceptionsStateNone | PDebuggerSetPauseOnExceptionsStateUncaught | PDebuggerSetPauseOnExceptionsStateAll
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PDebuggerSetPauseOnExceptionsState where
@@ -5352,7 +5203,6 @@ instance FromJSON  PDebuggerSetPauseOnExceptions where
 
 debuggerSetPauseOnExceptions :: Handle Event -> PDebuggerSetPauseOnExceptions -> IO (Maybe Error)
 debuggerSetPauseOnExceptions handle params = sendReceiveCommand handle "Debugger.setPauseOnExceptions" (Just params)
-
 
 
 
@@ -5402,7 +5252,6 @@ debuggerSetSkipAllPauses handle params = sendReceiveCommand handle "Debugger.set
 
 
 
-
 data PDebuggerSetVariableValue = PDebuggerSetVariableValue {
    pDebuggerSetVariableValueScopeNumber :: Int,
    pDebuggerSetVariableValueVariableName :: String,
@@ -5420,23 +5269,16 @@ debuggerSetVariableValue :: Handle Event -> PDebuggerSetVariableValue -> IO (May
 debuggerSetVariableValue handle params = sendReceiveCommand handle "Debugger.setVariableValue" (Just params)
 
 
-
-type PDebuggerStepInto = [(T.Text, T.Text)]
-debuggerStepInto :: Handle Event -> PDebuggerStepInto -> IO (Maybe Error)
-debuggerStepInto handle params = sendReceiveCommand handle "Debugger.stepInto" (Just params)
-
-
+debuggerStepInto :: Handle Event -> IO (Maybe Error)
+debuggerStepInto handle = sendReceiveCommand handle "Debugger.stepInto" (Nothing :: Maybe ())
 
 
 debuggerStepOut :: Handle Event -> IO (Maybe Error)
 debuggerStepOut handle = sendReceiveCommand handle "Debugger.stepOut" (Nothing :: Maybe ())
 
 
-
-type PDebuggerStepOver = [(T.Text, T.Text)]
-debuggerStepOver :: Handle Event -> PDebuggerStepOver -> IO (Maybe Error)
-debuggerStepOver handle params = sendReceiveCommand handle "Debugger.stepOver" (Just params)
-
+debuggerStepOver :: Handle Event -> IO (Maybe Error)
+debuggerStepOver handle = sendReceiveCommand handle "Debugger.stepOver" (Nothing :: Maybe ())
 
 
 
@@ -5562,17 +5404,12 @@ instance FromEvent Event ProfilerConsoleProfileStarted where
 
 
 
-
 profilerDisable :: Handle Event -> IO (Maybe Error)
 profilerDisable handle = sendReceiveCommand handle "Profiler.disable" (Nothing :: Maybe ())
 
 
-
-
 profilerEnable :: Handle Event -> IO (Maybe Error)
 profilerEnable handle = sendReceiveCommand handle "Profiler.enable" (Nothing :: Maybe ())
-
-
 
 
 profilerGetBestEffortCoverage :: Handle Event -> IO (Either Error ProfilerGetBestEffortCoverage)
@@ -5605,11 +5442,8 @@ profilerSetSamplingInterval :: Handle Event -> PProfilerSetSamplingInterval -> I
 profilerSetSamplingInterval handle params = sendReceiveCommand handle "Profiler.setSamplingInterval" (Just params)
 
 
-
-
 profilerStart :: Handle Event -> IO (Maybe Error)
 profilerStart handle = sendReceiveCommand handle "Profiler.start" (Nothing :: Maybe ())
-
 
 
 
@@ -5640,7 +5474,6 @@ instance Command ProfilerStartPreciseCoverage where
 
 
 
-
 profilerStop :: Handle Event -> IO (Either Error ProfilerStop)
 profilerStop handle = sendReceiveCommandResult handle "Profiler.stop" (Nothing :: Maybe ())
 
@@ -5656,11 +5489,8 @@ instance Command ProfilerStop where
 
 
 
-
 profilerStopPreciseCoverage :: Handle Event -> IO (Maybe Error)
 profilerStopPreciseCoverage handle = sendReceiveCommand handle "Profiler.stopPreciseCoverage" (Nothing :: Maybe ())
-
-
 
 
 profilerTakePreciseCoverage :: Handle Event -> IO (Either Error ProfilerTakePreciseCoverage)
@@ -6220,22 +6050,16 @@ instance Command RuntimeCompileScript where
 
 
 
-
 runtimeDisable :: Handle Event -> IO (Maybe Error)
 runtimeDisable handle = sendReceiveCommand handle "Runtime.disable" (Nothing :: Maybe ())
-
-
 
 
 runtimeDiscardConsoleEntries :: Handle Event -> IO (Maybe Error)
 runtimeDiscardConsoleEntries handle = sendReceiveCommand handle "Runtime.discardConsoleEntries" (Nothing :: Maybe ())
 
 
-
-
 runtimeEnable :: Handle Event -> IO (Maybe Error)
 runtimeEnable handle = sendReceiveCommand handle "Runtime.enable" (Nothing :: Maybe ())
-
 
 
 
@@ -6370,7 +6194,6 @@ runtimeReleaseObject handle params = sendReceiveCommand handle "Runtime.releaseO
 
 
 
-
 data PRuntimeReleaseObjectGroup = PRuntimeReleaseObjectGroup {
    pRuntimeReleaseObjectGroupObjectGroup :: String
 } deriving (Generic, Eq, Show, Read)
@@ -6385,11 +6208,8 @@ runtimeReleaseObjectGroup :: Handle Event -> PRuntimeReleaseObjectGroup -> IO (M
 runtimeReleaseObjectGroup handle params = sendReceiveCommand handle "Runtime.releaseObjectGroup" (Just params)
 
 
-
-
 runtimeRunIfWaitingForDebugger :: Handle Event -> IO (Maybe Error)
 runtimeRunIfWaitingForDebugger handle = sendReceiveCommand handle "Runtime.runIfWaitingForDebugger" (Nothing :: Maybe ())
-
 
 
 
@@ -6439,7 +6259,6 @@ instance FromJSON  PRuntimeSetAsyncCallStackDepth where
 
 runtimeSetAsyncCallStackDepth :: Handle Event -> PRuntimeSetAsyncCallStackDepth -> IO (Maybe Error)
 runtimeSetAsyncCallStackDepth handle params = sendReceiveCommand handle "Runtime.setAsyncCallStackDepth" (Just params)
-
 
 
 

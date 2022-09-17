@@ -85,13 +85,13 @@ genType domainName telt = case D.typesEltEnum telt of
             "object" -> maybe 
                 (genTypeSynonynm domainName tn) 
                 (genParamsType domainName tn) 
-                tpelt
+                tpeltsM
             ty       ->  T.unwords ["type", tn, "=", lty]                 
   where
-    lty    = leftType domainName (Just . AltLeft $ tytelt) Nothing (D.typesEltItems telt)
-    tytelt = D.typesEltType telt
-    tpelt  = filter isValidParam <$> D.typesEltProperties telt
-    tn     = typeNameHS domainName telt 
+    lty      = leftType domainName (Just . AltLeft $ tytelt) Nothing (D.typesEltItems telt)
+    tytelt   = D.typesEltType telt
+    tpeltsM  = guardEmptyList isValidParam $ D.typesEltProperties telt
+    tn       = typeNameHS domainName telt 
 
 genTypeEnum :: T.Text -> [T.Text] -> T.Text
 genTypeEnum typeEnumName values = T.unlines
@@ -104,13 +104,13 @@ genTypeEnum typeEnumName values = T.unlines
     constructors = map (tyNameHS typeEnumName) values
 
 genEvent :: T.Text -> D.EventsElt -> T.Text
-genEvent domainName eventElt = T.unlines
+genEvent domainName eventElt = T.unlines $
     [ genEventReturnType domainName eventElt
     , genEventInstance domainName eventElt
     ]
 
 genEventReturnType :: T.Text -> D.EventsElt -> T.Text
-genEventReturnType domainName eventElt = maybe emptyParams genNonEmptyParams evelts
+genEventReturnType domainName eventElt = maybe emptyParams genNonEmptyParams eveltsM
   where
     emptyParams = T.unlines 
         [ T.unwords ["data", evrn, "=", evrn]
@@ -118,7 +118,7 @@ genEventReturnType domainName eventElt = maybe emptyParams genNonEmptyParams eve
         , genFromJSONInstanceEnum evrn [evrn] [evrn]
         ]
     genNonEmptyParams = genParamsType domainName evrn
-    evelts = filter isValidParam <$> D.eventsEltParameters eventElt
+    eveltsM = guardEmptyList isValidParam $ D.eventsEltParameters eventElt
     evrn = eventNameHS domainName eventElt
 
 genEventInstance :: T.Text -> D.EventsElt -> T.Text
@@ -131,9 +131,9 @@ genEventInstance domainName eventElt = T.unlines $
     evrn = eventNameHS domainName eventElt
 
 genCommand :: T.Text -> D.CommandsElt -> T.Text
-genCommand domainName commandElt = T.unlines
+genCommand domainName commandElt = T.unlines . catMaybes $
     [ paramsTypeDef
-    , genCommandFn (isNothing pelts) (isNothing relts) cn ptn rtn
+    , Just $ genCommandFn (peltsM == Nothing) (reltsM == Nothing) cn ptn rtn
     , returns
     ]
   where
@@ -141,10 +141,10 @@ genCommand domainName commandElt = T.unlines
     ptn  = commandParamsNameHS domainName commandElt
     rtn  = commandNameHS domainName commandElt 
 
-    paramsTypeDef = maybe "" (genParamsType domainName ptn) pelts
-    pelts = filter isValidParam <$> D.commandsEltParameters commandElt
+    paramsTypeDef = genParamsType domainName ptn <$> peltsM
+    peltsM = guardEmptyList isValidParam $ D.commandsEltParameters commandElt
 
-    returns = maybe "" (genNonEmptyReturns) relts
+    returns = genNonEmptyReturns <$> reltsM
     genNonEmptyReturns relts = T.unlines
         [ genReturnType domainName rtn relts
         , genFromJSONInstance rtn
@@ -152,7 +152,8 @@ genCommand domainName commandElt = T.unlines
             (commandNameHS domainName commandElt) 
             (commandName domainName commandElt)
         ]
-    relts = filter isValidReturn <$> D.commandsEltReturns commandElt
+
+    reltsM = guardEmptyList isValidReturn $ D.commandsEltReturns commandElt
 
 genCommandInstance :: T.Text -> T.Text -> T.Text
 genCommandInstance commandNameHS commandName =
@@ -378,6 +379,12 @@ derivingGeneric :: T.Text
 derivingGeneric = "deriving (Generic, Eq, Show, Read)"
 
 -----------  Utilities ----------- 
+
+guardEmptyList :: (a -> Bool) -> Maybe [a] -> Maybe [a]
+guardEmptyList f v = filter f <$> v >>= go 
+  where
+    go [] = Nothing
+    go xs = Just xs 
 
 space :: Int -> T.Text
 space n = T.unwords $ replicate n ""

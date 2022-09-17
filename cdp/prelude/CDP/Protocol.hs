@@ -5,7 +5,7 @@
  {-# LANGUAGE FlexibleInstances #-}
  {-# LANGUAGE DeriveGeneric #-}
 
- module CDP.Protocol where
+ module CDP.Internal.Protocol where
 
 import           Control.Applicative  ((<$>))
 import           Control.Monad
@@ -35,4 +35,4 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Runtime
+import CDP.Internal.Runtime

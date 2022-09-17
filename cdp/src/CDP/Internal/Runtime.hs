@@ -5,7 +5,7 @@
 {-# LANGUAGE GADTs                  #-}
 {-# LANGUAGE ScopedTypeVariables    #-}
 
-module CDP.Runtime (module CDP.Runtime) where
+module CDP.Internal.Runtime (module CDP.Internal.Runtime) where
 
 import           Control.Applicative  ((<$>))
 import           Control.Monad
@@ -35,7 +35,7 @@ import Control.Exception
 import System.Timeout
 import Data.Char
 
-import CDP.Endpoints
+import CDP.Internal.Endpoints
 
 
 type CommandBuffer = Map.Map CommandId BS.ByteString
@@ -55,7 +55,7 @@ data Config = Config
     , commandTimeout        :: Maybe Int
         -- ^ number of microseconds to wait for a command response.
         --   waits forever if Nothing 
-    }
+    } deriving Show
 instance Default Config where
     def = Config{..}
       where

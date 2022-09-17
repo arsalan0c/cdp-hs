@@ -7,6 +7,9 @@ github: arsalan0c/cdp-hs
 category: Package.Category
 license: BSD-3-Clause
 
+default-extensions:
+  - Strict
+
 dependencies:
   - base
   - aeson

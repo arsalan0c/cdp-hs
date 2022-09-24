@@ -6,6 +6,10 @@ import Control.Arrow
 import Data.List
 import Data.Maybe
 import Data.Char
+import Control.Monad
+import qualified Data.Map as Map
+import qualified Data.Set as Set
+import qualified Data.Graph as Graph
 import qualified Data.Text as T
 import qualified Text.Casing as C
 import Data.Aeson.AutoType.Alternative ((:|:)(AltLeft, AltRight))
@@ -18,31 +22,88 @@ import qualified CDP.Definition as D
 eventClassName, eventResponseName, handleType, commandClassName, sendCommandName, sendCommandResultName, emptyReturnSig :: T.Text
 eventClassName         = "FromEvent"
 eventResponseName      = "EventResponse"
-handleType             = "Handle " <> eventsSumTypeName
+handleType             = "Handle ev" -- <> eventsSumTypeName
+handleTypeName         = "Handle"
 commandClassName       = "Command"
 sendCommandName        = "sendReceiveCommand"
 sendCommandResultName  = "sendReceiveCommandResult"
 emptyReturnSig         = "IO (Maybe Error)"
+configType              = "Config(..)"
 
 resultReturnSig :: T.Text -> T.Text
 resultReturnSig resultTy = "IO (Either Error " <> resultTy <> ")" 
 
 ----------- Start of program generation ----------- 
 
-type Program = T.Text
+data Program = Program
+    { pComponents       :: Map.Map ComponentName T.Text
+    , pComponentImports :: T.Text
+    , pEvents           :: T.Text
+    }
 
-genProgram :: [D.DomainsElt] -> Program
-genProgram domainElts = T.unlines 
-    [ eventsSumType evnsHS
-    , eventResponseFromJSON evns evnsHS
-    , T.unlines . map genDomain $ delts
-    ]
+data Context = Context { ctDomainComponents :: DomainComponents }
+
+genProgram :: T.Text -> T.Text -> [D.DomainsElt] -> Program
+genProgram domainExtensions domainImports domainElts = Program
+    { pComponents        = allComponents ctx domainExtensions domainImports $ Map.elems dc
+    , pComponentImports  = T.unlines $ allComponentImports ctx
+    , pEvents            = genEvents ctx delts 
+    }
   where
-    evns    = allEventNames delts
-    evnsHS  = allEventNamesHS delts
-    delts   = validDomains domainElts
+    ctx    = Context dc
+    dc     = domainComponents delts
+    delts  = validDomains domainElts
 
 ----------- Generation of global types / values ----------- 
+
+genProtocolModule :: T.Text -> T.Text -> [ComponentName] -> T.Text -> T.Text
+genProtocolModule extensions imports names source = T.unlines
+    [ extensions
+    , ""
+    , protocolModuleHeader names
+    , imports
+    , source
+    ]
+
+allComponentImports :: Context -> [T.Text]
+allComponentImports = Set.toList . Set.fromList . 
+    concatMap ((\n -> [importDomain False n, importDomain True n]) . unComponentName . cName) . Map.elems . ctDomainComponents
+
+allComponents :: Context -> T.Text -> T.Text -> [Component] -> Map.Map ComponentName T.Text
+allComponents ctx extensions imports components = Map.fromList . 
+    map (cName &&& genComponent ctx extensions imports) $ 
+    components
+
+genEvents :: Context -> [D.DomainsElt] -> T.Text
+genEvents ctx delts = T.unlines $ 
+    [ eventsSumType evnCs evnQNs
+    , eventResponseFromJSON evnQNs evnCs evns 
+    , T.unlines $ evnInsts 
+    ]
+  where
+    evnInsts = map evnInst $ zip evnQNs . zip evnCs $ evns
+    evnInst (evnHS, (evnC, evn)) = genEventInstance evnHS evnC evn
+
+    evnQNs = allEventQualifiedNames ctx delts
+    evnCs  = map eventsSumTypeConstructor evnHS'
+    evnHS' = allEventNamesHS delts
+    evns   = allEventNames delts
+
+allEventNamesHS :: [D.DomainsElt] -> [T.Text]
+allEventNamesHS = concatMap f . map (id &&& validEvents)
+  where
+    f (d, evelts) = map (eventNameHS $ domainName d) evelts
+
+allEventQualifiedNames :: Context -> [D.DomainsElt] -> [T.Text]
+allEventQualifiedNames ctx = concatMap f
+  where
+    f d = map (g (cn d) (domainName d)) (validEvents d)
+    g cn dn evelt = domainQualifiedName cn (eventNameHS dn evelt)
+    cn d = unComponentName . domainToComponentName ctx . domainName $ d
+    dn d = domainName d
+
+allEventNames :: [D.DomainsElt] -> [T.Text]
+allEventNames = concatMap (\(d, evs) -> map (eventName $ domainName d) evs) . map (id &&& validEvents)
 
 eventsSumTypeName :: T.Text
 eventsSumTypeName = "Event"
@@ -50,51 +111,74 @@ eventsSumTypeName = "Event"
 eventsSumTypeConstructor :: T.Text -> T.Text
 eventsSumTypeConstructor = ("EV" <>)
 
-eventsSumType :: [T.Text] -> T.Text
-eventsSumType eventNamesHS = (<> ("\n" <> space 3 <> derivingBase)) . 
+eventsSumType :: [T.Text] -> [T.Text] -> T.Text
+eventsSumType constructors qualifiedNames = (<> ("\n" <> space 3 <> derivingBase)) . 
         (T.unwords ["data", eventsSumTypeName, "= "] <>) .
         T.intercalate " | " . 
-        map (\c -> T.unwords [eventsSumTypeConstructor c, c]) $ eventNamesHS
+        map f $ zip constructors qualifiedNames
+  where
+    f (evnC, evnQN) = T.unwords [evnC, evnQN]
         
-eventResponseFromJSON :: [T.Text] -> [T.Text] -> T.Text
-eventResponseFromJSON eventNames eventNamesHS = T.unlines $
+eventResponseFromJSON :: [T.Text] -> [T.Text] -> [T.Text] -> T.Text
+eventResponseFromJSON eventNamesHS eventConstructorNames eventNames = T.unlines $
     [ T.unwords ["instance FromJSON", "(" <> eventResponseName, eventsSumTypeName, ") where"]
     , T.unwords [space 3, "parseJSON = A.withObject ", (T.pack . show) eventResponseName, " $ \\obj -> do"]
     , T.unwords [space 7, "name", "<-", "obj", ".:", (T.pack . show) "method"]
     , T.unwords [space 7, "case (name :: String) of"]
     ] ++ 
         (map (\(l,r) -> T.unwords [space 11, l, "->", r]) $ zip (map (T.pack . show) $ eventNames)
-            (map ((\c -> T.unwords [eventResponseName, proxy eventsSumTypeName, proxy c, ". fmap", eventsSumTypeConstructor c, "<$> obj .:?", (T.pack . show) "params"])) eventNamesHS) ++ 
+            (map ((\(evnHS, evnC) -> T.unwords [eventResponseName, proxy eventsSumTypeName, proxy evnHS, ". fmap", evnC, "<$> obj .:?", (T.pack . show) "params"])) $ zip eventNamesHS eventConstructorNames) ++ 
             [emptyCase eventResponseName])
+      
+genEventInstance :: T.Text -> T.Text -> T.Text -> T.Text
+genEventInstance eventNameHS eventConstructorName eventName = T.unlines $
+    [ T.unwords ["instance", eventClassName, eventsSumTypeName, eventNameHS, "where"]
+    , T.unwords [space 3, "eventName  _ _    = ", (T.pack . show) $ eventName]
+    , T.unwords [space 3, "fromEvent ev      = ", "case ev of", eventConstructorName, "v -> Just v; _ -> Nothing"]
+    ]
+ 
+----------- Generation of domain types / values -----------
 
------------ Generation of domain types / values ----------- 
-
-genDomain :: D.DomainsElt -> T.Text
-genDomain domainElt = T.unlines . map T.unlines $
-    [ map (genType dn)    . validTypes    $ domainElt
-    , map (genEvent dn)   . validEvents   $ domainElt
-    , map (genCommand dn) . validCommands $ domainElt 
+genComponent :: Context -> T.Text -> T.Text -> Component -> T.Text
+genComponent ctx extensions imports component = T.intercalate "\n\n" $
+    [ extensions
+    , domainModuleHeader cn
+    , imports
+    , T.unlines $ map (importDomain True) deps
+    , T.unlines $ map (genDomain ctx) delts
     ]
   where
-    dn = domainName domainElt
+    deps  = Set.toList . Set.fromList . map unComponentName . 
+        map (domainToComponentName ctx) . concatMap snd . Map.elems $ cDomDeps component
+    delts = map fst . Map.elems $ cDomDeps component
+    cn    = unComponentName . cName $ component
 
-genType :: T.Text -> D.TypesElt -> T.Text
-genType domainName telt = case D.typesEltEnum telt of
-    Just enumValues -> genTypeEnum tn enumValues
+genDomain :: Context -> D.DomainsElt -> T.Text
+genDomain ctx domainElt = T.intercalate "\n\n" $
+    [ T.unlines $ map (genType ctx dn)             . validTypes    $ domainElt
+    , T.unlines $ map (genEventReturnType ctx dn)  . validEvents   $ domainElt
+    , T.unlines $ map (genCommand ctx dn)          . validCommands $ domainElt 
+    ]
+  where
+    dn    = domainName domainElt
+
+genType :: Context -> T.Text -> D.TypesElt -> T.Text
+genType ctx domainName telt = case D.typesEltEnum telt of
+    Just enumValues -> genTypeEnum ctx tn enumValues
     Nothing         -> case tytelt of
             "object" -> maybe 
-                (genTypeSynonynm domainName tn) 
-                (genParamsType domainName tn) 
+                (genTypeSynonynm ctx domainName tn) 
+                (genParamsType ctx domainName tn) 
                 tpeltsM
             ty       ->  T.unwords ["type", tn, "=", lty]                 
   where
-    lty      = leftType domainName (Just . AltLeft $ tytelt) Nothing (D.typesEltItems telt)
+    lty      = leftType ctx domainName (Just . AltLeft $ tytelt) Nothing (D.typesEltItems telt)
     tytelt   = D.typesEltType telt
     tpeltsM  = guardEmptyList isValidParam $ D.typesEltProperties telt
     tn       = typeNameHS domainName telt 
 
-genTypeEnum :: T.Text -> [T.Text] -> T.Text
-genTypeEnum typeEnumName values = T.unlines
+genTypeEnum :: Context -> T.Text -> [T.Text] -> T.Text
+genTypeEnum _ typeEnumName values = T.unlines
     [ T.unwords ["data", typeEnumName, "=", T.intercalate " | " constructors]
     , space 4 <> derivingOrd
     , genFromJSONInstanceEnum typeEnumName values constructors
@@ -103,37 +187,22 @@ genTypeEnum typeEnumName values = T.unlines
   where
     constructors = map (tyNameHS typeEnumName) values
 
-genEvent :: T.Text -> D.EventsElt -> T.Text
-genEvent domainName eventElt = T.unlines $
-    [ genEventReturnType domainName eventElt
-    , genEventInstance domainName eventElt
-    ]
-
-genEventReturnType :: T.Text -> D.EventsElt -> T.Text
-genEventReturnType domainName eventElt = maybe emptyParams genNonEmptyParams eveltsM
+genEventReturnType :: Context -> T.Text -> D.EventsElt -> T.Text
+genEventReturnType ctx domainName eventElt = maybe emptyParams genNonEmptyParams eveltsM
   where
     emptyParams = T.unlines 
         [ T.unwords ["data", evrn, "=", evrn]
         , space 4 <> derivingBase
         , genFromJSONInstanceEnum evrn [evrn] [evrn]
         ]
-    genNonEmptyParams = genParamsType domainName evrn
+    genNonEmptyParams = genParamsType ctx domainName evrn
     eveltsM = guardEmptyList isValidParam $ D.eventsEltParameters eventElt
     evrn = eventNameHS domainName eventElt
 
-genEventInstance :: T.Text -> D.EventsElt -> T.Text
-genEventInstance domainName eventElt = T.unlines $
-    [ T.unwords ["instance", eventClassName, eventsSumTypeName, evrn, "where"]
-    , T.unwords [space 3, "eventName  _ _    = ", (T.pack . show) $ eventName domainName eventElt] -- TODO: parameterize
-    , T.unwords [space 3, "fromEvent ev      = ", "case ev of", eventsSumTypeConstructor evrn, "v -> Just v; _ -> Nothing"] -- TODO: parameterize
-    ]
-  where
-    evrn = eventNameHS domainName eventElt
-
-genCommand :: T.Text -> D.CommandsElt -> T.Text
-genCommand domainName commandElt = T.unlines . catMaybes $
+genCommand :: Context -> T.Text -> D.CommandsElt -> T.Text
+genCommand ctx domainName commandElt = T.unlines . catMaybes $
     [ paramsTypeDef
-    , Just $ genCommandFn (peltsM == Nothing) (reltsM == Nothing) cn ptn rtn
+    , Just $ genCommandFn ctx (peltsM == Nothing) (reltsM == Nothing) cn ptn rtn
     , returns
     ]
   where
@@ -141,29 +210,29 @@ genCommand domainName commandElt = T.unlines . catMaybes $
     ptn  = commandParamsNameHS domainName commandElt
     rtn  = commandNameHS domainName commandElt 
 
-    paramsTypeDef = genParamsType domainName ptn <$> peltsM
+    paramsTypeDef = genParamsType ctx domainName ptn <$> peltsM
     peltsM = guardEmptyList isValidParam $ D.commandsEltParameters commandElt
 
     returns = genNonEmptyReturns <$> reltsM
     genNonEmptyReturns relts = T.unlines
-        [ genReturnType domainName rtn relts
+        [ genReturnType ctx domainName rtn relts
         , genFromJSONInstance rtn
-        , genCommandInstance 
+        , genCommandInstance ctx
             (commandNameHS domainName commandElt) 
             (commandName domainName commandElt)
         ]
 
     reltsM = guardEmptyList isValidReturn $ D.commandsEltReturns commandElt
 
-genCommandInstance :: T.Text -> T.Text -> T.Text
-genCommandInstance commandNameHS commandName =
+genCommandInstance :: Context -> T.Text -> T.Text -> T.Text
+genCommandInstance _ commandNameHS commandName =
     T.unlines $
         [ T.unwords ["instance", commandClassName, commandNameHS, "where"]
         , T.unwords [space 3, "commandName _ =", (T.pack . show) commandName]
         ]
 
-genCommandFn :: Bool -> Bool -> T.Text -> T.Text -> T.Text -> T.Text
-genCommandFn isEmptyParams isEmptyReturn commandName paramsTypeName returnTypeName = T.unlines
+genCommandFn :: Context -> Bool -> Bool -> T.Text -> T.Text -> T.Text -> T.Text
+genCommandFn _ isEmptyParams isEmptyReturn commandName paramsTypeName returnTypeName = T.unlines
     [ fnType
     , T.unwords [fnHeader, fnBody]
     ]
@@ -185,9 +254,9 @@ genCommandFn isEmptyParams isEmptyReturn commandName paramsTypeName returnTypeNa
     returnTypeSig  = if isEmptyReturn then emptyReturnSig else resultReturnSig returnTypeName
     fnName         = uncapitalizeFirst returnTypeName
 
-genParamsType :: T.Text -> T.Text -> [D.ParametersElt] -> T.Text
-genParamsType domainName paramsTypeName []     = genTypeSynonynm domainName paramsTypeName
-genParamsType domainName paramsTypeName paramElts = T.unlines
+genParamsType :: Context -> T.Text -> T.Text -> [D.ParametersElt] -> T.Text
+genParamsType ctx domainName paramsTypeName []        = genTypeSynonynm ctx domainName paramsTypeName
+genParamsType ctx domainName paramsTypeName paramElts = T.unlines
     [ T.unlines enumDecls
     , T.unwords ["data", paramsTypeName, "=", paramsTypeName, "{"]
     , T.intercalate ",\n" $ fields
@@ -203,8 +272,8 @@ genParamsType domainName paramsTypeName paramElts = T.unlines
     fieldSigDecls = map peltToFieldSigDecl paramElts
 
     peltToFieldSigDecl pelt = case D.parametersEltEnum pelt of
-        Just enumValues -> (fn, ftn, ) . Just $ genTypeEnum ftn enumValues
-        Nothing         -> (fn, , Nothing) $ genEltType domainName (isTrue . D.parametersEltOptional $ pelt)
+        Just enumValues -> (fn, ftn, ) . Just $ genTypeEnum ctx ftn enumValues
+        Nothing         -> (fn, , Nothing) $ genEltType ctx domainName (isTrue . D.parametersEltOptional $ pelt)
                 (D.parametersEltType pelt)
                 (D.parametersEltRef pelt) 
                 (D.parametersEltItems pelt)
@@ -212,11 +281,11 @@ genParamsType domainName paramsTypeName paramElts = T.unlines
         ftn = tyNameHS "" fn
         fn = fieldNameHS paramsTypeName . D.parametersEltName $ pelt
 
-genTypeSynonynm :: T.Text -> T.Text -> T.Text
-genTypeSynonynm domainName typeName = T.unwords ["type", typeName, "=", typeCDPToHS domainName "object" Nothing]
+genTypeSynonynm :: Context -> T.Text -> T.Text -> T.Text
+genTypeSynonynm ctx domainName typeName = T.unwords ["type", typeName, "=", typeCDPToHS ctx domainName "object" Nothing]
 
-genReturnType :: T.Text -> T.Text -> [D.ReturnsElt] -> T.Text
-genReturnType domainName returnTypeName returnElts = T.unlines
+genReturnType :: Context -> T.Text -> T.Text -> [D.ReturnsElt] -> T.Text
+genReturnType ctx domainName returnTypeName returnElts = T.unlines
     [ T.unwords ["data", returnTypeName, "=", returnTypeName, "{"]
     , T.intercalate ",\n" $ fields
     , "} " <> derivingGeneric
@@ -229,13 +298,48 @@ genReturnType domainName returnTypeName returnElts = T.unlines
         , reltToTypeSig relt
         ]
 
-    reltToTypeSig relt = genEltType domainName (isTrue . D.returnsEltOptional $ relt) 
+    reltToTypeSig relt = genEltType ctx domainName (isTrue . D.returnsEltOptional $ relt) 
             (D.returnsEltType relt)
             (D.returnsEltRef relt) 
             (D.returnsEltItems relt)
             
 ----------- Generation rules ----------- 
 
+----- Imports -----
+importDomain :: Bool -> T.Text -> T.Text 
+importDomain as' domainName = T.unwords $ 
+    if as' then imp ++ ["as", domainName] else imp
+  where
+    imp = ["import", domainModuleName domainName]
+   
+componentToImport :: [ComponentName] -> [T.Text]
+componentToImport = map (("module " <>) . domainModuleName . unComponentName)
+
+protocolModuleHeader :: [ComponentName] -> T.Text
+protocolModuleHeader names = T.unlines
+    [ mod
+    , "( " <> (T.intercalate "\n, " $ handleTypeName : configType : mod : componentToImport names)
+    , ") where"
+    ]
+  where
+    mod = T.unwords [ "module", protocolModuleName ]
+
+protocolModuleName :: T.Text
+protocolModuleName = "CDP"
+
+domainModuleHeader :: T.Text -> T.Text
+domainModuleHeader domainName = T.unwords ["module", domainModuleName domainName, "(module", domainModuleName domainName <>")", "where"]
+
+domainModuleName :: T.Text -> T.Text
+domainModuleName domainName = T.intercalate "." ["CDP", "Domains", domainName]
+
+domainQualifiedName :: T.Text -> T.Text -> T.Text
+domainQualifiedName domainName n =  T.intercalate "." [domainName, n]
+
+domainName :: D.DomainsElt -> T.Text
+domainName = D.domainsEltDomain
+
+----- JSON -----
 genFromJSONInstance :: T.Text -> T.Text
 genFromJSONInstance name = T.unlines
     [ T.unwords ["instance FromJSON ", name, "where"]
@@ -253,7 +357,7 @@ genFromJSONInstanceEnum name vals hsVals = T.unlines $
     [ T.unwords ["instance FromJSON", name, "where"]
     , T.unwords [space 3, "parseJSON = A.withText ", (T.pack . show) name, " $ \\v -> do"]
     , T.unwords [space 6, "case v of"]
-    ] ++ (map (\(v, hsv) -> T.unwords [space 9, v, "->", hsv]) $ zip (map (T.pack . show) vals) (map ("pure $ " <>) hsVals) ++ 
+    ] ++ (map (\(v, hsv) -> T.unwords [space 9, v, "->", hsv]) $ zip (map (T.pack . show) vals) (map ("pure " <>) hsVals) ++ 
         [emptyCase name])
     
 genToJSONInstanceEnum :: T.Text -> [T.Text] -> [T.Text] -> T.Text
@@ -269,47 +373,163 @@ toJSONOpts   n    = T.unwords ["A.defaultOptions{A.fieldLabelModifier = uncapita
 fromJSONOpts :: Int -> T.Text
 fromJSONOpts n    = T.unwords ["A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop", ((T.pack . show) n), "}"]
 
-genEltType :: T.Text -> Bool -> (Maybe (T.Text:|:[(Maybe A.Value)])) -> (Maybe (T.Text:|:[(Maybe A.Value)])) -> (Maybe (D.Items:|:[(Maybe A.Value)])) -> T.Text
-genEltType name isOptional t1 t2 items = (if isOptional then "Maybe " else "") <> (leftType name t1 t2 items)
+----- Types -----
+genEltType :: Context -> T.Text -> Bool -> (Maybe (T.Text:|:[(Maybe A.Value)])) -> (Maybe (T.Text:|:[(Maybe A.Value)])) -> (Maybe (D.Items:|:[(Maybe A.Value)])) -> T.Text
+genEltType ctx name isOptional t1 t2 items = (if isOptional then "Maybe " else "") <> (leftType ctx name t1 t2 items)
 
-leftType :: T.Text -> (Maybe (T.Text:|:[(Maybe A.Value)])) -> (Maybe (T.Text:|:[(Maybe A.Value)])) -> (Maybe (D.Items:|:[(Maybe A.Value)])) -> T.Text
-leftType _ (Just (AltLeft ty1)) (Just (AltLeft ty2)) _ = error "impossible"
-leftType domain (Just (AltLeft ty)) _ itemsElt = typeCDPToHS domain ty itemsElt
-leftType domain _ (Just (AltLeft ty)) itemsElt = typeCDPToHS domain ty itemsElt
-leftType _ _ _ _ = error "no type found"
+leftType :: Context -> T.Text -> (Maybe (T.Text:|:[(Maybe A.Value)])) -> (Maybe (T.Text:|:[(Maybe A.Value)])) -> (Maybe (D.Items:|:[(Maybe A.Value)])) -> T.Text
+leftType ctx _ (Just (AltLeft ty1)) (Just (AltLeft ty2)) _ = error "impossible"
+leftType ctx domain (Just (AltLeft ty)) _ itemsElt = typeCDPToHS ctx domain ty itemsElt
+leftType ctx domain _ (Just (AltLeft ty)) itemsElt = typeCDPToHS ctx domain ty itemsElt
+leftType ctx _ _ _ _ = error "no type found"
 
-typeCDPToHS :: T.Text -> T.Text -> (Maybe (D.Items:|:[(Maybe A.Value)])) -> T.Text
-typeCDPToHS _ "object" _ = "[(T.Text, T.Text)]"
-typeCDPToHS domain "array" (Just (AltLeft items)) = "[" <> (leftType domain (D.itemsType items) (D.itemsRef items) Nothing) <> "]"
-typeCDPToHS _ ty (Just (AltLeft items)) = error . T.unpack $ "non-array type with items: " <> ty
-typeCDPToHS domain ty Nothing = convertType domain ty
-typeCDPToHS _ _ _ = error "no matching type"
+typeCDPToHS :: Context -> T.Text -> T.Text -> (Maybe (D.Items:|:[(Maybe A.Value)])) -> T.Text
+typeCDPToHS ctx _ "object" _ = "[(String, String)]"
+typeCDPToHS ctx domain "array" (Just (AltLeft items)) = "[" <> (leftType ctx domain (D.itemsType items) (D.itemsRef items) Nothing) <> "]"
+typeCDPToHS ctx _ ty (Just (AltLeft items)) = error . T.unpack $ "non-array type with items: " <> ty
+typeCDPToHS ctx domain ty Nothing = convertType ctx domain ty
+typeCDPToHS ctx _ _ _ = error "no matching type"
 
-convertType :: T.Text -> T.Text -> T.Text
-convertType _ "string" = "String"
-convertType _ "integer" = "Int"
-convertType _ "boolean" = "Bool"
-convertType _ "number" = "Double"
-convertType _ "()" = "()"
-convertType _ "any" = "Int" -- TODO
-convertType _ "array" = error "got array conversion" -- TODO
-convertType _ "object" = error "got object type"
-convertType _ "" = error "got empty type"
-convertType domain s = case T.splitOn "." s of
-    [otherDomain, ty] -> tyNameHS otherDomain ty
+convertType :: Context -> T.Text -> T.Text -> T.Text
+convertType _ _ "string"  = "String"
+convertType _ _ "integer" = "Int"
+convertType _ _ "boolean" = "Bool"
+convertType _ _ "number"  = "Double"
+convertType _ _ "()" = "()"
+convertType _ _ "any" = "Int" -- TODO
+convertType _ _ "array" = error "got array conversion" -- TODO
+convertType _ _ "object" = error "got object type"
+convertType _ _ "" = error "got empty type"
+convertType ctx domain s = case T.splitOn "." s of
+    [otherDomain, ty] -> if cn otherDomain == cn domain
+            then tyNameHS otherDomain ty -- both domains are in the same component, so the type is not qualified
+            else domainQualifiedName (cn otherDomain) (tyNameHS otherDomain ty)
     _ -> tyNameHS domain s 
+  where
+    cn dn = unComponentName . domainToComponentName ctx $ dn
 
-domainName :: D.DomainsElt -> T.Text
-domainName = D.domainsEltDomain
+----- Dependencies -----    
+{- : Domain dependencies specified in the protocol seem inaccurate:
+    https://bugs.chromium.org/p/chromium/issues/detail?id=1354980#c0
 
+    So they are collected by inspecting each domain.
+-}
+
+domainToComponentName :: Context -> T.Text -> ComponentName
+domainToComponentName ctx domainName = cName . (flip (Map.!) domainName) . ctDomainComponents $ ctx 
+
+newtype ComponentName = ComponentName { unComponentName :: T.Text }
+    deriving (Show, Eq, Ord)
+
+type DomainDependencies = Map.Map T.Text (D.DomainsElt, [T.Text])
+data Component = Component {
+  cName     :: ComponentName
+, cDomDeps  :: DomainDependencies
+}
+
+type DomainComponents = Map.Map T.Text Component
+    -- original domain name, component the domain belongs to
+    -- domain name for each vertex is the modified domain name
+type Vertex = (D.DomainsElt, T.Text, [T.Text]) -- domain, domain name, domain dependencies 
+
+domainComponents :: [D.DomainsElt] -> DomainComponents
+domainComponents delts = Map.fromList . concatMap verticesToDomainComponents $ vsc2
+  where
+    vsc2  = map removeSameComponentDependencies vsc1   
+    vsc1  = map Graph.flattenSCC . Graph.stronglyConnCompR $ g
+    g     = map (\delt -> (delt, domainName delt, deps delt)) delts
+    deps  = Set.toList . domainDependencies
+
+verticesToDomainComponents :: [Vertex] -> [(T.Text, Component)]
+verticesToDomainComponents vs = map (,c) dns
+  where
+    dns = map vertexToDomainName vs 
+    c   = verticesToComponent vs
+
+vertexToDomainName :: Vertex -> T.Text
+vertexToDomainName (_,dn,_) = dn 
+
+verticesToComponent :: [Vertex] -> Component
+verticesToComponent vs = Component cn . Map.fromList . map toComponent $ vs
+  where
+    toComponent (delt,dn,deps) = (dn, (delt, deps))
+    cn = componentName vs
+
+componentName :: [Vertex] -> ComponentName
+componentName [v] = ComponentName $ vertexToDomainName v 
+componentName vs  = ComponentName $ mconcat . map vertexToDomainName $ vs
+
+removeSameComponentDependencies :: [Vertex] -> [Vertex]
+removeSameComponentDependencies vs = map (go vs) vs
+  where
+    go vs (delt, dn, deps) = (delt,dn,) . Set.toList $ 
+        (Set.fromList deps) `Set.difference` dns
+    dns = Set.fromList $ map vertexToDomainName vs
+
+domainDependencies :: D.DomainsElt -> Set.Set T.Text
+domainDependencies delt = removeSelf . Set.fromList . concat $
+    [ concatMap typeDependencies    . fromMaybe [] $ D.domainsEltTypes delt
+    , concatMap commandDependencies $ D.domainsEltCommands delt
+    , concatMap eventDependencies   . fromMaybe [] $ D.domainsEltEvents delt
+    ]
+  where
+    removeSelf = Set.filter (/= dn)
+    dn = domainName delt
+
+typeDependencies :: D.TypesElt -> [T.Text]
+typeDependencies telt = if not (isValidType telt) then [] else
+    case D.typesEltEnum telt of 
+        Just _  -> []
+        Nothing -> case D.typesEltType telt of
+            "array"  -> maybe [] pure . join $ itemDependencies . fromAltLeft <$> D.typesEltItems telt
+            "object" -> fromMaybe [] $ catMaybes . map paramDependencies <$> D.typesEltProperties telt
+            s -> maybe [] pure $ refTypeToDomain s
+
+commandDependencies :: D.CommandsElt -> [T.Text]
+commandDependencies celt = if not (isValidCommand celt) then [] else 
+    concat
+        [ catMaybes . map returnDependencies . fromMaybe [] $ D.commandsEltReturns celt
+        , catMaybes . map paramDependencies  . fromMaybe [] $ D.commandsEltParameters celt
+        ]
+
+eventDependencies :: D.EventsElt -> [T.Text]
+eventDependencies evelt = if not (isValidEvent evelt) then [] else 
+    catMaybes . map paramDependencies . fromMaybe [] $ D.eventsEltParameters evelt
+
+paramDependencies :: D.ParametersElt -> Maybe T.Text
+paramDependencies pelt = if not (isValidParam pelt) then Nothing else 
+    case D.parametersEltEnum pelt of 
+        Just _  -> Nothing
+        Nothing -> case D.parametersEltRef pelt of
+            Just r  -> refTypeToDomain . fromAltLeft $ r
+            Nothing -> case fromAltLeft <$> D.parametersEltType pelt of
+                Just "object" -> Nothing
+                Just "array"  -> itemDependencies =<< fromAltLeft <$> D.parametersEltItems pelt
+                Just s -> refTypeToDomain s
+                _      -> Nothing
+
+returnDependencies :: D.ReturnsElt -> Maybe T.Text
+returnDependencies relt = if not (isValidReturn relt) then Nothing else
+    case D.returnsEltRef relt of
+        Just r  -> refTypeToDomain . fromAltLeft $ r
+        Nothing -> case fromAltLeft <$> D.returnsEltType relt of
+            Just "object" -> Nothing
+            Just "array"  -> itemDependencies =<< fromAltLeft <$> D.returnsEltItems relt
+            Just s -> refTypeToDomain s
+            _     -> Nothing
+
+itemDependencies :: D.Items -> Maybe T.Text
+itemDependencies itelt = refTypeToDomain =<< fromAltLeft <$> D.itemsRef itelt
+
+----- Validity -----
 validDomains :: [D.DomainsElt] -> [D.DomainsElt]
-validDomains ds = filter (not . hasExperimentalDependencies) . 
-    filter (not . isTrue . D.domainsEltExperimental) .
-    filter (not . isTrue . D.domainsEltDeprecated) $
-    ds
+validDomains ds = filter (not . hasExperimentalDependencies) . filter isValidDomain $ ds
   where
     hasExperimentalDependencies d = any (`elem` experimentalDomains) . (fromMaybe [] . D.domainsEltDependencies) $ d
     experimentalDomains = map D.domainsEltDomain . filter (isTrue . D.domainsEltExperimental) $ ds
+
+isValidDomain :: D.DomainsElt -> Bool
+isValidDomain delt = (not . isTrue . D.domainsEltExperimental $ delt) && (not . isTrue . D.domainsEltDeprecated $ delt)
 
 isValidType :: D.TypesElt -> Bool
 isValidType telt = (not . isTrue . D.typesEltDeprecated $ telt) && (not . isTrue . D.typesEltExperimental $ telt)
@@ -335,12 +555,7 @@ validEvents = filter isValidEvent . fromMaybe [] . D.domainsEltEvents
 validCommands :: D.DomainsElt -> [D.CommandsElt]
 validCommands = filter isValidCommand . D.domainsEltCommands
 
-allEventNamesHS :: [D.DomainsElt] -> [T.Text]
-allEventNamesHS = concatMap (\(d, evs) -> map (eventNameHS $ domainName d) evs) . map (id &&& validEvents)
-
-allEventNames :: [D.DomainsElt] -> [T.Text]
-allEventNames = concatMap (\(d, evs) -> map (eventName $ domainName d) evs) . map (id &&& validEvents)
-
+----- Names -----
 eventName   :: T.Text -> D.EventsElt -> T.Text
 eventName   domainName ev = (domainName <>) . ("." <>) . D.eventsEltName $ ev
 eventNameHS :: T.Text -> D.EventsElt -> T.Text
@@ -365,6 +580,12 @@ fieldNameHS tyName fieldName = (uncapitalizeFirst tyName <>) . T.pack . C.pascal
 paramsTypePrefix :: T.Text -> T.Text
 paramsTypePrefix = ("P" <>)
 
+refTypeToDomain :: T.Text -> Maybe T.Text
+refTypeToDomain r = case T.splitOn "." r of
+    [domain, _] -> Just domain
+    _           -> Nothing
+
+-----
 proxy :: T.Text -> T.Text
 proxy s = "(Proxy :: Proxy " <> s <> ")"
 
@@ -388,6 +609,12 @@ guardEmptyList f v = filter f <$> v >>= go
 
 space :: Int -> T.Text
 space n = T.unwords $ replicate n ""
+
+fromMaybeAltLeft :: Maybe (a :|: b) -> a
+fromMaybeAltLeft (Just al) = fromAltLeft al 
+
+fromAltLeft :: a :|: b -> a
+fromAltLeft (AltLeft a) = a
 
 isTrue :: Eq a => Maybe (Bool:|:a) -> Bool
 isTrue = (== (Just $ AltLeft True))

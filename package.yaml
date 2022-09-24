@@ -22,6 +22,7 @@ dependencies:
   - casing
   - filepath
   - aeson
+  - directory
 
 internal-libraries:
   json-alt-fork:

@@ -21,6 +21,7 @@ main = do
     domainImports    <- fmap T.pack . readFile . FP.joinPath $ pathToPrelude ++ pathToDomains ++ ["DomainImports.txt"]   
     let program = GP.genProgram domainExtensions domainImports $ domains
 
+    Dir.removePathForcibly domainDir
     Dir.createDirectory domainDir
     mapM (\(dn,d) -> writeFile (domainPath . T.unpack . GP.unComponentName $ dn) (T.unpack d)) $ Map.toList . GP.pComponents $ program
     cdpExtensions <- fmap T.pack . readFile . FP.joinPath $ pathToPrelude ++ ["CDPExtensions.txt"]

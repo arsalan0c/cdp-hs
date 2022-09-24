@@ -1,12 +1,3 @@
-{-# LANGUAGE OverloadedStrings, RecordWildCards, TupleSections #-}
- {-# LANGUAGE ScopedTypeVariables #-}
- {-# LANGUAGE FlexibleContexts #-}
- {-# LANGUAGE MultiParamTypeClasses #-}
- {-# LANGUAGE FlexibleInstances #-}
- {-# LANGUAGE DeriveGeneric #-}
-
- module CDP.Internal.Protocol where
-
 import           Control.Applicative  ((<$>))
 import           Control.Monad
 import           Control.Monad.Loops
@@ -36,3 +27,4 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
+import CDP.Handle

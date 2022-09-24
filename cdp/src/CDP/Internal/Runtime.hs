@@ -39,7 +39,7 @@ import CDP.Internal.Endpoints
 
 
 type CommandBuffer = Map.Map CommandId BS.ByteString
-data Handle ev = MkHandle
+data Handle' ev = MkHandle
     { config            :: Config
     , randomGen        :: MVar StdGen
     , eventHandlers    :: MVar (Map.Map String (ev -> IO ()))
@@ -64,7 +64,7 @@ instance Default Config where
         commandTimeout = def
 
 type FromJSONEvent ev = FromJSON (EventResponse ev)
-type ClientApp' ev b  = Handle ev -> IO b
+type ClientApp' ev b  = Handle' ev -> IO b
 runClient' :: forall ev b. FromJSONEvent ev => Config -> ClientApp' ev b -> IO b
 runClient' config app = do
     randomGen      <- newMVar . mkStdGen $ 42
@@ -106,16 +106,16 @@ updateCommandBuffer commandBuffer f = ($ pure . f) . modifyMVar_ $ commandBuffer
 updateCommandBufferM :: MVar CommandBuffer -> (CommandBuffer -> IO (CommandBuffer, a)) -> IO a
 updateCommandBufferM = modifyMVar
 
-logResponse :: forall ev. Handle ev -> String -> BS.ByteString -> IO ()
+logResponse :: forall ev. Handle' ev -> String -> BS.ByteString -> IO ()
 logResponse handle s bs = if (doLogResponses (config handle)) 
         then modifyMVar_ (responseBuffer handle) $ pure . (++ [(s, bs)])
         else pure ()
 
-dispatchEventResponse :: forall ev. FromJSONEvent ev => Handle ev -> BS.ByteString -> IO ()
+dispatchEventResponse :: forall ev. FromJSONEvent ev => Handle' ev -> BS.ByteString -> IO ()
 dispatchEventResponse handle bs = do
     void $ go handle . A.decode $ bs
   where
-    go :: forall ev. FromJSONEvent ev => Handle ev -> Maybe (EventResponse ev) -> IO ()
+    go :: forall ev. FromJSONEvent ev => Handle' ev -> Maybe (EventResponse ev) -> IO ()
     go handle evr = maybe (pure ()) f evr -- TODO: throw error
       where
         f (EventResponse ps p v) = do
@@ -128,17 +128,17 @@ dispatchEventResponse handle bs = do
             let handler = fromMaybe print handlerM -- :CONFIG
             maybe (pure ()) handler v
 
-updateEventHandlers :: forall ev. FromJSONEvent ev => Handle ev -> (Map.Map String (ev -> IO ()) -> Map.Map String (ev -> IO ())) -> IO ()
+updateEventHandlers :: forall ev. FromJSONEvent ev => Handle' ev -> (Map.Map String (ev -> IO ()) -> Map.Map String (ev -> IO ())) -> IO ()
 updateEventHandlers handle f = ($ pure . f) . modifyMVar_ . eventHandlers $ handle
 
-subscribe' :: forall ev a . (FromJSONEvent ev, FromEvent ev a) => Handle ev -> (a -> IO ()) -> IO ()
+subscribe' :: forall ev a . (FromJSONEvent ev, FromEvent ev a) => Handle' ev -> (a -> IO ()) -> IO ()
 subscribe' handle h = updateEventHandlers handle $ Map.insert (eventName ps p) handler
   where
     handler = maybe (pure ()) h . fromEvent
     p  = (Proxy :: Proxy a)
     ps = (Proxy :: Proxy s)
 
-unsubscribe' :: forall ev a. (FromJSONEvent ev, FromEvent ev a) => Handle ev -> Proxy a -> IO ()
+unsubscribe' :: forall ev a. (FromJSONEvent ev, FromEvent ev a) => Handle' ev -> Proxy a -> IO ()
 unsubscribe' handle p = updateEventHandlers handle (Map.delete (eventName ps p))
   where
     ps = Proxy :: Proxy ev
@@ -171,13 +171,13 @@ instance (ToJSON a) => ToJSON (CommandObj a) where
         , maybe [] (\p -> [ "params" .= p ]) $ coParams cmd
         ]
 
-randomCommandId :: Handle ev -> IO CommandId
-randomCommandId mg = modifyMVar (randomGen mg) $ \g -> do
+randomCommandId :: Handle' ev -> IO CommandId
+randomCommandId handle = modifyMVar (randomGen handle) $ \g -> do
     let (id, g2) = uniformR (0 :: Int, 1000 :: Int) g
     pure (g2, CommandId id)
 
 class (FromJSON b) => Command b where
-    commandName               :: Proxy b -> String
+    commandName :: Proxy b -> String
 
 data CommandResponse b = CommandResponse 
     { crId      :: CommandId
@@ -254,7 +254,7 @@ untilJustLimit n act = do
             vM <- act
             maybe (untilJustLimit (n - 1) act) (pure . Just) vM
 
-receiveCommandResponse :: forall ev b. Command b => Handle ev -> CommandId -> IO (Either Error (CommandResponse b))
+receiveCommandResponse :: forall ev b. Command b => Handle' ev -> CommandId -> IO (Either Error (CommandResponse b))
 receiveCommandResponse handle id = do
     bsM <- maybe (fmap Just) timeout (commandTimeout . config $ handle) $ 
         untilJust $ do
@@ -269,8 +269,8 @@ receiveCommandResponse handle id = do
   where
     p = Proxy :: Proxy b
 
-sendReceiveCommandResult :: forall a b ev. (Show a, ToJSON a, Command b) => Handle ev -> String -> Maybe a -> IO (Either Error b)
-sendReceiveCommandResult handle name params = do
+sendReceiveCommandResult' :: forall a b ev. (Show a, ToJSON a, Command b) => Handle' ev -> String -> Maybe a -> IO (Either Error b)
+sendReceiveCommandResult' handle name params = do
     cid <- randomCommandId handle
     sendCommand (conn handle) cid name params
     response <- receiveCommandResponse handle cid
@@ -280,8 +280,8 @@ sendReceiveCommandResult handle name params = do
   where
     resultProxy = Proxy :: Proxy b
     
-sendReceiveCommand :: (Show a, ToJSON a) => Handle ev -> String -> Maybe a -> IO (Maybe Error)
-sendReceiveCommand handle name params = do
+sendReceiveCommand' :: (Show a, ToJSON a) => Handle' ev -> String -> Maybe a -> IO (Maybe Error)
+sendReceiveCommand' handle name params = do
     cid <- randomCommandId handle
     sendCommand (conn handle) cid name params
     response <- receiveCommandResponse handle cid :: IO (Either Error (CommandResponse NoResponse))

@@ -125,6 +125,42 @@ instance FromJSON  ProfilerScriptCoverage where
 
 
 
+data ProfilerTypeObject = ProfilerTypeObject {
+   profilerTypeObjectName :: String
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON ProfilerTypeObject  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
+
+instance FromJSON  ProfilerTypeObject where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
+
+
+
+data ProfilerTypeProfileEntry = ProfilerTypeProfileEntry {
+   profilerTypeProfileEntryOffset :: Int,
+   profilerTypeProfileEntryTypes :: [ProfilerTypeObject]
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON ProfilerTypeProfileEntry  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
+
+instance FromJSON  ProfilerTypeProfileEntry where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
+
+
+
+data ProfilerScriptTypeProfile = ProfilerScriptTypeProfile {
+   profilerScriptTypeProfileScriptId :: Runtime.RuntimeScriptId,
+   profilerScriptTypeProfileUrl :: String,
+   profilerScriptTypeProfileEntries :: [ProfilerTypeProfileEntry]
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON ProfilerScriptTypeProfile  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
+
+instance FromJSON  ProfilerScriptTypeProfile where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
+
+
+
 
 
 data ProfilerConsoleProfileFinished = ProfilerConsoleProfileFinished {
@@ -151,6 +187,19 @@ instance ToJSON ProfilerConsoleProfileStarted  where
 
 instance FromJSON  ProfilerConsoleProfileStarted where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
+
+
+
+data ProfilerPreciseCoverageDeltaUpdate = ProfilerPreciseCoverageDeltaUpdate {
+   profilerPreciseCoverageDeltaUpdateTimestamp :: Double,
+   profilerPreciseCoverageDeltaUpdateOccasion :: String,
+   profilerPreciseCoverageDeltaUpdateResult :: [ProfilerScriptCoverage]
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON ProfilerPreciseCoverageDeltaUpdate  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 , A.omitNothingFields = True}
+
+instance FromJSON  ProfilerPreciseCoverageDeltaUpdate where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
 
 
 
@@ -225,6 +274,10 @@ instance Command ProfilerStartPreciseCoverage where
 
 
 
+profilerStartTypeProfile :: Handle ev -> IO (Maybe Error)
+profilerStartTypeProfile handle = sendReceiveCommand handle "Profiler.startTypeProfile" (Nothing :: Maybe ())
+
+
 profilerStop :: Handle ev -> IO (Either Error ProfilerStop)
 profilerStop handle = sendReceiveCommandResult handle "Profiler.stop" (Nothing :: Maybe ())
 
@@ -244,6 +297,10 @@ profilerStopPreciseCoverage :: Handle ev -> IO (Maybe Error)
 profilerStopPreciseCoverage handle = sendReceiveCommand handle "Profiler.stopPreciseCoverage" (Nothing :: Maybe ())
 
 
+profilerStopTypeProfile :: Handle ev -> IO (Maybe Error)
+profilerStopTypeProfile handle = sendReceiveCommand handle "Profiler.stopTypeProfile" (Nothing :: Maybe ())
+
+
 profilerTakePreciseCoverage :: Handle ev -> IO (Either Error ProfilerTakePreciseCoverage)
 profilerTakePreciseCoverage handle = sendReceiveCommandResult handle "Profiler.takePreciseCoverage" (Nothing :: Maybe ())
 
@@ -257,6 +314,21 @@ instance FromJSON  ProfilerTakePreciseCoverage where
 
 instance Command ProfilerTakePreciseCoverage where
    commandName _ = "Profiler.takePreciseCoverage"
+
+
+
+profilerTakeTypeProfile :: Handle ev -> IO (Either Error ProfilerTakeTypeProfile)
+profilerTakeTypeProfile handle = sendReceiveCommandResult handle "Profiler.takeTypeProfile" (Nothing :: Maybe ())
+
+data ProfilerTakeTypeProfile = ProfilerTakeTypeProfile {
+   profilerTakeTypeProfileResult :: [ProfilerScriptTypeProfile]
+} deriving (Generic, Eq, Show, Read)
+
+instance FromJSON  ProfilerTakeTypeProfile where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
+
+instance Command ProfilerTakeTypeProfile where
+   commandName _ = "Profiler.takeTypeProfile"
 
 
 

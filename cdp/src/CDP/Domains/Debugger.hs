@@ -57,6 +57,31 @@ instance FromJSON  DebuggerLocation where
 
 
 
+data DebuggerScriptPosition = DebuggerScriptPosition {
+   debuggerScriptPositionLineNumber :: Int,
+   debuggerScriptPositionColumnNumber :: Int
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON DebuggerScriptPosition  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
+
+instance FromJSON  DebuggerScriptPosition where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
+
+
+
+data DebuggerLocationRange = DebuggerLocationRange {
+   debuggerLocationRangeScriptId :: Runtime.RuntimeScriptId,
+   debuggerLocationRangeStart :: DebuggerScriptPosition,
+   debuggerLocationRangeEnd :: DebuggerScriptPosition
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON DebuggerLocationRange  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
+
+instance FromJSON  DebuggerLocationRange where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
+
+
+
 data DebuggerCallFrame = DebuggerCallFrame {
    debuggerCallFrameCallFrameId :: DebuggerCallFrameId,
    debuggerCallFrameFunctionName :: String,
@@ -64,7 +89,8 @@ data DebuggerCallFrame = DebuggerCallFrame {
    debuggerCallFrameLocation :: DebuggerLocation,
    debuggerCallFrameScopeChain :: [DebuggerScope],
    debuggerCallFrameThis :: Runtime.RuntimeRemoteObject,
-   debuggerCallFrameReturnValue :: Maybe Runtime.RuntimeRemoteObject
+   debuggerCallFrameReturnValue :: Maybe Runtime.RuntimeRemoteObject,
+   debuggerCallFrameCanBeRestarted :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DebuggerCallFrame  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -268,7 +294,8 @@ data DebuggerPaused = DebuggerPaused {
    debuggerPausedReason :: DebuggerPausedReason,
    debuggerPausedData :: Maybe [(String, String)],
    debuggerPausedHitBreakpoints :: Maybe [String],
-   debuggerPausedAsyncStackTrace :: Maybe Runtime.RuntimeStackTrace
+   debuggerPausedAsyncStackTrace :: Maybe Runtime.RuntimeStackTrace,
+   debuggerPausedAsyncStackTraceId :: Maybe Runtime.RuntimeStackTraceId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DebuggerPaused  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
@@ -300,7 +327,11 @@ data DebuggerScriptFailedToParse = DebuggerScriptFailedToParse {
    debuggerScriptFailedToParseSourceMapUrl :: Maybe String,
    debuggerScriptFailedToParseHasSourceUrl :: Maybe Bool,
    debuggerScriptFailedToParseIsModule :: Maybe Bool,
-   debuggerScriptFailedToParseLength :: Maybe Int
+   debuggerScriptFailedToParseLength :: Maybe Int,
+   debuggerScriptFailedToParseStackTrace :: Maybe Runtime.RuntimeStackTrace,
+   debuggerScriptFailedToParseCodeOffset :: Maybe Int,
+   debuggerScriptFailedToParseScriptLanguage :: Maybe DebuggerScriptLanguage,
+   debuggerScriptFailedToParseEmbedderName :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DebuggerScriptFailedToParse  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -320,10 +351,16 @@ data DebuggerScriptParsed = DebuggerScriptParsed {
    debuggerScriptParsedExecutionContextId :: Runtime.RuntimeExecutionContextId,
    debuggerScriptParsedHash :: String,
    debuggerScriptParsedExecutionContextAuxData :: Maybe [(String, String)],
+   debuggerScriptParsedIsLiveEdit :: Maybe Bool,
    debuggerScriptParsedSourceMapUrl :: Maybe String,
    debuggerScriptParsedHasSourceUrl :: Maybe Bool,
    debuggerScriptParsedIsModule :: Maybe Bool,
-   debuggerScriptParsedLength :: Maybe Int
+   debuggerScriptParsedLength :: Maybe Int,
+   debuggerScriptParsedStackTrace :: Maybe Runtime.RuntimeStackTrace,
+   debuggerScriptParsedCodeOffset :: Maybe Int,
+   debuggerScriptParsedScriptLanguage :: Maybe DebuggerScriptLanguage,
+   debuggerScriptParsedDebugSymbols :: Maybe DebuggerDebugSymbols,
+   debuggerScriptParsedEmbedderName :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DebuggerScriptParsed  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -370,8 +407,30 @@ debuggerDisable :: Handle ev -> IO (Maybe Error)
 debuggerDisable handle = sendReceiveCommand handle "Debugger.disable" (Nothing :: Maybe ())
 
 
-debuggerEnable :: Handle ev -> IO (Maybe Error)
-debuggerEnable handle = sendReceiveCommand handle "Debugger.enable" (Nothing :: Maybe ())
+
+data PDebuggerEnable = PDebuggerEnable {
+   pDebuggerEnableMaxScriptsCacheSize :: Maybe Double
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PDebuggerEnable  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
+
+instance FromJSON  PDebuggerEnable where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
+
+
+debuggerEnable :: Handle ev -> PDebuggerEnable -> IO (Either Error DebuggerEnable)
+debuggerEnable handle params = sendReceiveCommandResult handle "Debugger.enable" (Just params)
+
+data DebuggerEnable = DebuggerEnable {
+   debuggerEnableDebuggerId :: Runtime.RuntimeUniqueDebuggerId
+} deriving (Generic, Eq, Show, Read)
+
+instance FromJSON  DebuggerEnable where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
+
+instance Command DebuggerEnable where
+   commandName _ = "Debugger.enable"
+
 
 
 
@@ -382,7 +441,9 @@ data PDebuggerEvaluateOnCallFrame = PDebuggerEvaluateOnCallFrame {
    pDebuggerEvaluateOnCallFrameIncludeCommandLineApi :: Maybe Bool,
    pDebuggerEvaluateOnCallFrameSilent :: Maybe Bool,
    pDebuggerEvaluateOnCallFrameReturnByValue :: Maybe Bool,
-   pDebuggerEvaluateOnCallFrameThrowOnSideEffect :: Maybe Bool
+   pDebuggerEvaluateOnCallFrameGeneratePreview :: Maybe Bool,
+   pDebuggerEvaluateOnCallFrameThrowOnSideEffect :: Maybe Bool,
+   pDebuggerEvaluateOnCallFrameTimeout :: Maybe Runtime.RuntimeTimeDelta
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDebuggerEvaluateOnCallFrame  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -462,6 +523,32 @@ instance Command DebuggerGetScriptSource where
 
 
 
+
+data PDebuggerGetStackTrace = PDebuggerGetStackTrace {
+   pDebuggerGetStackTraceStackTraceId :: Runtime.RuntimeStackTraceId
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PDebuggerGetStackTrace  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
+
+instance FromJSON  PDebuggerGetStackTrace where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
+
+
+debuggerGetStackTrace :: Handle ev -> PDebuggerGetStackTrace -> IO (Either Error DebuggerGetStackTrace)
+debuggerGetStackTrace handle params = sendReceiveCommandResult handle "Debugger.getStackTrace" (Just params)
+
+data DebuggerGetStackTrace = DebuggerGetStackTrace {
+   debuggerGetStackTraceStackTrace :: Runtime.RuntimeStackTrace
+} deriving (Generic, Eq, Show, Read)
+
+instance FromJSON  DebuggerGetStackTrace where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
+
+instance Command DebuggerGetStackTrace where
+   commandName _ = "Debugger.getStackTrace"
+
+
+
 debuggerPause :: Handle ev -> IO (Maybe Error)
 debuggerPause handle = sendReceiveCommand handle "Debugger.pause" (Nothing :: Maybe ())
 
@@ -538,6 +625,37 @@ instance FromJSON  PDebuggerSetAsyncCallStackDepth where
 
 debuggerSetAsyncCallStackDepth :: Handle ev -> PDebuggerSetAsyncCallStackDepth -> IO (Maybe Error)
 debuggerSetAsyncCallStackDepth handle params = sendReceiveCommand handle "Debugger.setAsyncCallStackDepth" (Just params)
+
+
+
+data PDebuggerSetBlackboxPatterns = PDebuggerSetBlackboxPatterns {
+   pDebuggerSetBlackboxPatternsPatterns :: [String]
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PDebuggerSetBlackboxPatterns  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
+
+instance FromJSON  PDebuggerSetBlackboxPatterns where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
+
+
+debuggerSetBlackboxPatterns :: Handle ev -> PDebuggerSetBlackboxPatterns -> IO (Maybe Error)
+debuggerSetBlackboxPatterns handle params = sendReceiveCommand handle "Debugger.setBlackboxPatterns" (Just params)
+
+
+
+data PDebuggerSetBlackboxedRanges = PDebuggerSetBlackboxedRanges {
+   pDebuggerSetBlackboxedRangesScriptId :: Runtime.RuntimeScriptId,
+   pDebuggerSetBlackboxedRangesPositions :: [DebuggerScriptPosition]
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PDebuggerSetBlackboxedRanges  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
+
+instance FromJSON  PDebuggerSetBlackboxedRanges where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
+
+
+debuggerSetBlackboxedRanges :: Handle ev -> PDebuggerSetBlackboxedRanges -> IO (Maybe Error)
+debuggerSetBlackboxedRanges handle params = sendReceiveCommand handle "Debugger.setBlackboxedRanges" (Just params)
 
 
 
@@ -643,6 +761,33 @@ instance Command DebuggerSetBreakpointByUrl where
 
 
 
+data PDebuggerSetBreakpointOnFunctionCall = PDebuggerSetBreakpointOnFunctionCall {
+   pDebuggerSetBreakpointOnFunctionCallObjectId :: Runtime.RuntimeRemoteObjectId,
+   pDebuggerSetBreakpointOnFunctionCallCondition :: Maybe String
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PDebuggerSetBreakpointOnFunctionCall  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
+
+instance FromJSON  PDebuggerSetBreakpointOnFunctionCall where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 }
+
+
+debuggerSetBreakpointOnFunctionCall :: Handle ev -> PDebuggerSetBreakpointOnFunctionCall -> IO (Either Error DebuggerSetBreakpointOnFunctionCall)
+debuggerSetBreakpointOnFunctionCall handle params = sendReceiveCommandResult handle "Debugger.setBreakpointOnFunctionCall" (Just params)
+
+data DebuggerSetBreakpointOnFunctionCall = DebuggerSetBreakpointOnFunctionCall {
+   debuggerSetBreakpointOnFunctionCallBreakpointId :: DebuggerBreakpointId
+} deriving (Generic, Eq, Show, Read)
+
+instance FromJSON  DebuggerSetBreakpointOnFunctionCall where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 }
+
+instance Command DebuggerSetBreakpointOnFunctionCall where
+   commandName _ = "Debugger.setBreakpointOnFunctionCall"
+
+
+
+
 data PDebuggerSetBreakpointsActive = PDebuggerSetBreakpointsActive {
    pDebuggerSetBreakpointsActiveActive :: Bool
 } deriving (Generic, Eq, Show, Read)
@@ -691,6 +836,21 @@ debuggerSetPauseOnExceptions handle params = sendReceiveCommand handle "Debugger
 
 
 
+data PDebuggerSetReturnValue = PDebuggerSetReturnValue {
+   pDebuggerSetReturnValueNewValue :: Runtime.RuntimeCallArgument
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PDebuggerSetReturnValue  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
+
+instance FromJSON  PDebuggerSetReturnValue where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
+
+
+debuggerSetReturnValue :: Handle ev -> PDebuggerSetReturnValue -> IO (Maybe Error)
+debuggerSetReturnValue handle params = sendReceiveCommand handle "Debugger.setReturnValue" (Just params)
+
+
+
 data PDebuggerSetScriptSource = PDebuggerSetScriptSource {
    pDebuggerSetScriptSourceScriptId :: Runtime.RuntimeScriptId,
    pDebuggerSetScriptSourceScriptSource :: String,
@@ -710,6 +870,7 @@ data DebuggerSetScriptSource = DebuggerSetScriptSource {
    debuggerSetScriptSourceCallFrames :: Maybe [DebuggerCallFrame],
    debuggerSetScriptSourceStackChanged :: Maybe Bool,
    debuggerSetScriptSourceAsyncStackTrace :: Maybe Runtime.RuntimeStackTrace,
+   debuggerSetScriptSourceAsyncStackTraceId :: Maybe Runtime.RuntimeStackTraceId,
    debuggerSetScriptSourceExceptionDetails :: Maybe Runtime.RuntimeExceptionDetails
 } deriving (Generic, Eq, Show, Read)
 
@@ -754,16 +915,39 @@ debuggerSetVariableValue :: Handle ev -> PDebuggerSetVariableValue -> IO (Maybe 
 debuggerSetVariableValue handle params = sendReceiveCommand handle "Debugger.setVariableValue" (Just params)
 
 
-debuggerStepInto :: Handle ev -> IO (Maybe Error)
-debuggerStepInto handle = sendReceiveCommand handle "Debugger.stepInto" (Nothing :: Maybe ())
+
+data PDebuggerStepInto = PDebuggerStepInto {
+   pDebuggerStepIntoBreakOnAsyncCall :: Maybe Bool,
+   pDebuggerStepIntoSkipList :: Maybe [DebuggerLocationRange]
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PDebuggerStepInto  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
+
+instance FromJSON  PDebuggerStepInto where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
+
+
+debuggerStepInto :: Handle ev -> PDebuggerStepInto -> IO (Maybe Error)
+debuggerStepInto handle params = sendReceiveCommand handle "Debugger.stepInto" (Just params)
 
 
 debuggerStepOut :: Handle ev -> IO (Maybe Error)
 debuggerStepOut handle = sendReceiveCommand handle "Debugger.stepOut" (Nothing :: Maybe ())
 
 
-debuggerStepOver :: Handle ev -> IO (Maybe Error)
-debuggerStepOver handle = sendReceiveCommand handle "Debugger.stepOver" (Nothing :: Maybe ())
+
+data PDebuggerStepOver = PDebuggerStepOver {
+   pDebuggerStepOverSkipList :: Maybe [DebuggerLocationRange]
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PDebuggerStepOver  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
+
+instance FromJSON  PDebuggerStepOver where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
+
+
+debuggerStepOver :: Handle ev -> PDebuggerStepOver -> IO (Maybe Error)
+debuggerStepOver handle params = sendReceiveCommand handle "Debugger.stepOver" (Just params)
 
 
 

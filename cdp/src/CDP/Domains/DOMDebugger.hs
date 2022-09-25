@@ -38,7 +38,7 @@ import Data.Default
 import CDP.Internal.Runtime
 import CDP.Handle
 
-import CDP.Domains.DOMPageNetwork as DOMPageNetwork
+import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
 import CDP.Domains.Runtime as Runtime
 
 
@@ -60,6 +60,22 @@ instance ToJSON DomDebuggerDomBreakpointType where
          DomDebuggerDomBreakpointTypeNodeRemoved -> "node-removed"
 
 
+data DomDebuggerCspViolationType = DomDebuggerCspViolationTypeTrustedtypeSinkViolation | DomDebuggerCspViolationTypeTrustedtypePolicyViolation
+   deriving (Ord, Eq, Show, Read)
+instance FromJSON DomDebuggerCspViolationType where
+   parseJSON = A.withText  "DomDebuggerCspViolationType"  $ \v -> do
+      case v of
+         "trustedtype-sink-violation" -> pure DomDebuggerCspViolationTypeTrustedtypeSinkViolation
+         "trustedtype-policy-violation" -> pure DomDebuggerCspViolationTypeTrustedtypePolicyViolation
+         _ -> fail "failed to parse DomDebuggerCspViolationType"
+
+instance ToJSON DomDebuggerCspViolationType where
+   toJSON v = A.String $
+      case v of
+         DomDebuggerCspViolationTypeTrustedtypeSinkViolation -> "trustedtype-sink-violation"
+         DomDebuggerCspViolationTypeTrustedtypePolicyViolation -> "trustedtype-policy-violation"
+
+
 
 data DomDebuggerEventListener = DomDebuggerEventListener {
    domDebuggerEventListenerType :: String,
@@ -71,7 +87,7 @@ data DomDebuggerEventListener = DomDebuggerEventListener {
    domDebuggerEventListenerColumnNumber :: Int,
    domDebuggerEventListenerHandler :: Maybe Runtime.RuntimeRemoteObject,
    domDebuggerEventListenerOriginalHandler :: Maybe Runtime.RuntimeRemoteObject,
-   domDebuggerEventListenerBackendNodeId :: Maybe DOMPageNetwork.DomBackendNodeId
+   domDebuggerEventListenerBackendNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomBackendNodeId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomDebuggerEventListener  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -114,7 +130,7 @@ instance Command DomDebuggerGetEventListeners where
 
 
 data PDomDebuggerRemoveDomBreakpoint = PDomDebuggerRemoveDomBreakpoint {
-   pDomDebuggerRemoveDomBreakpointNodeId :: DOMPageNetwork.DomNodeId,
+   pDomDebuggerRemoveDomBreakpointNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId,
    pDomDebuggerRemoveDomBreakpointType :: DomDebuggerDomBreakpointType
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomDebuggerRemoveDomBreakpoint  where
@@ -130,7 +146,8 @@ domDebuggerRemoveDomBreakpoint handle params = sendReceiveCommand handle "DOMDeb
 
 
 data PDomDebuggerRemoveEventListenerBreakpoint = PDomDebuggerRemoveEventListenerBreakpoint {
-   pDomDebuggerRemoveEventListenerBreakpointEventName :: String
+   pDomDebuggerRemoveEventListenerBreakpointEventName :: String,
+   pDomDebuggerRemoveEventListenerBreakpointTargetName :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomDebuggerRemoveEventListenerBreakpoint  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 41 , A.omitNothingFields = True}
@@ -141,6 +158,21 @@ instance FromJSON  PDomDebuggerRemoveEventListenerBreakpoint where
 
 domDebuggerRemoveEventListenerBreakpoint :: Handle ev -> PDomDebuggerRemoveEventListenerBreakpoint -> IO (Maybe Error)
 domDebuggerRemoveEventListenerBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.removeEventListenerBreakpoint" (Just params)
+
+
+
+data PDomDebuggerRemoveInstrumentationBreakpoint = PDomDebuggerRemoveInstrumentationBreakpoint {
+   pDomDebuggerRemoveInstrumentationBreakpointEventName :: String
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PDomDebuggerRemoveInstrumentationBreakpoint  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 43 , A.omitNothingFields = True}
+
+instance FromJSON  PDomDebuggerRemoveInstrumentationBreakpoint where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 43 }
+
+
+domDebuggerRemoveInstrumentationBreakpoint :: Handle ev -> PDomDebuggerRemoveInstrumentationBreakpoint -> IO (Maybe Error)
+domDebuggerRemoveInstrumentationBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.removeInstrumentationBreakpoint" (Just params)
 
 
 
@@ -159,8 +191,23 @@ domDebuggerRemoveXhrBreakpoint handle params = sendReceiveCommand handle "DOMDeb
 
 
 
+data PDomDebuggerSetBreakOnCspViolation = PDomDebuggerSetBreakOnCspViolation {
+   pDomDebuggerSetBreakOnCspViolationViolationTypes :: [DomDebuggerCspViolationType]
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PDomDebuggerSetBreakOnCspViolation  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 , A.omitNothingFields = True}
+
+instance FromJSON  PDomDebuggerSetBreakOnCspViolation where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
+
+
+domDebuggerSetBreakOnCspViolation :: Handle ev -> PDomDebuggerSetBreakOnCspViolation -> IO (Maybe Error)
+domDebuggerSetBreakOnCspViolation handle params = sendReceiveCommand handle "DOMDebugger.setBreakOnCSPViolation" (Just params)
+
+
+
 data PDomDebuggerSetDomBreakpoint = PDomDebuggerSetDomBreakpoint {
-   pDomDebuggerSetDomBreakpointNodeId :: DOMPageNetwork.DomNodeId,
+   pDomDebuggerSetDomBreakpointNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId,
    pDomDebuggerSetDomBreakpointType :: DomDebuggerDomBreakpointType
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomDebuggerSetDomBreakpoint  where
@@ -176,7 +223,8 @@ domDebuggerSetDomBreakpoint handle params = sendReceiveCommand handle "DOMDebugg
 
 
 data PDomDebuggerSetEventListenerBreakpoint = PDomDebuggerSetEventListenerBreakpoint {
-   pDomDebuggerSetEventListenerBreakpointEventName :: String
+   pDomDebuggerSetEventListenerBreakpointEventName :: String,
+   pDomDebuggerSetEventListenerBreakpointTargetName :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomDebuggerSetEventListenerBreakpoint  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 , A.omitNothingFields = True}
@@ -187,6 +235,21 @@ instance FromJSON  PDomDebuggerSetEventListenerBreakpoint where
 
 domDebuggerSetEventListenerBreakpoint :: Handle ev -> PDomDebuggerSetEventListenerBreakpoint -> IO (Maybe Error)
 domDebuggerSetEventListenerBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.setEventListenerBreakpoint" (Just params)
+
+
+
+data PDomDebuggerSetInstrumentationBreakpoint = PDomDebuggerSetInstrumentationBreakpoint {
+   pDomDebuggerSetInstrumentationBreakpointEventName :: String
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PDomDebuggerSetInstrumentationBreakpoint  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 , A.omitNothingFields = True}
+
+instance FromJSON  PDomDebuggerSetInstrumentationBreakpoint where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 }
+
+
+domDebuggerSetInstrumentationBreakpoint :: Handle ev -> PDomDebuggerSetInstrumentationBreakpoint -> IO (Maybe Error)
+domDebuggerSetInstrumentationBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.setInstrumentationBreakpoint" (Just params)
 
 
 

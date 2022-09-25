@@ -5,7 +5,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module CDP.Domains.Browser (module CDP.Domains.Browser) where
+module CDP.Domains.DeviceOrientation (module CDP.Domains.DeviceOrientation) where
 
 import           Control.Applicative  ((<$>))
 import           Control.Monad
@@ -44,27 +44,25 @@ import CDP.Handle
 
 
 
-browserClose :: Handle ev -> IO (Maybe Error)
-browserClose handle = sendReceiveCommand handle "Browser.close" (Nothing :: Maybe ())
+deviceOrientationClearDeviceOrientationOverride :: Handle ev -> IO (Maybe Error)
+deviceOrientationClearDeviceOrientationOverride handle = sendReceiveCommand handle "DeviceOrientation.clearDeviceOrientationOverride" (Nothing :: Maybe ())
 
 
-browserGetVersion :: Handle ev -> IO (Either Error BrowserGetVersion)
-browserGetVersion handle = sendReceiveCommandResult handle "Browser.getVersion" (Nothing :: Maybe ())
 
-data BrowserGetVersion = BrowserGetVersion {
-   browserGetVersionProtocolVersion :: String,
-   browserGetVersionProduct :: String,
-   browserGetVersionRevision :: String,
-   browserGetVersionUserAgent :: String,
-   browserGetVersionJsVersion :: String
+data PDeviceOrientationSetDeviceOrientationOverride = PDeviceOrientationSetDeviceOrientationOverride {
+   pDeviceOrientationSetDeviceOrientationOverrideAlpha :: Double,
+   pDeviceOrientationSetDeviceOrientationOverrideBeta :: Double,
+   pDeviceOrientationSetDeviceOrientationOverrideGamma :: Double
 } deriving (Generic, Eq, Show, Read)
+instance ToJSON PDeviceOrientationSetDeviceOrientationOverride  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 46 , A.omitNothingFields = True}
 
-instance FromJSON  BrowserGetVersion where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
+instance FromJSON  PDeviceOrientationSetDeviceOrientationOverride where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 46 }
 
-instance Command BrowserGetVersion where
-   commandName _ = "Browser.getVersion"
 
+deviceOrientationSetDeviceOrientationOverride :: Handle ev -> PDeviceOrientationSetDeviceOrientationOverride -> IO (Maybe Error)
+deviceOrientationSetDeviceOrientationOverride handle params = sendReceiveCommand handle "DeviceOrientation.setDeviceOrientationOverride" (Just params)
 
 
 

@@ -38,7 +38,7 @@ import Data.Default
 import CDP.Internal.Runtime
 import CDP.Handle
 
-import CDP.Domains.DOMPageNetwork as DOMPageNetwork
+import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
 import CDP.Domains.IO as IO
 
 
@@ -62,7 +62,7 @@ instance ToJSON FetchRequestStage where
 
 data FetchRequestPattern = FetchRequestPattern {
    fetchRequestPatternUrlPattern :: Maybe String,
-   fetchRequestPatternResourceType :: Maybe DOMPageNetwork.NetworkResourceType,
+   fetchRequestPatternResourceType :: Maybe DOMPageNetworkEmulationSecurity.NetworkResourceType,
    fetchRequestPatternRequestStage :: Maybe FetchRequestStage
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON FetchRequestPattern  where
@@ -150,10 +150,10 @@ instance FromJSON  FetchAuthChallengeResponse where
 
 data FetchRequestPaused = FetchRequestPaused {
    fetchRequestPausedRequestId :: FetchRequestId,
-   fetchRequestPausedRequest :: DOMPageNetwork.NetworkRequest,
-   fetchRequestPausedFrameId :: DOMPageNetwork.PageFrameId,
-   fetchRequestPausedResourceType :: DOMPageNetwork.NetworkResourceType,
-   fetchRequestPausedResponseErrorReason :: Maybe DOMPageNetwork.NetworkErrorReason,
+   fetchRequestPausedRequest :: DOMPageNetworkEmulationSecurity.NetworkRequest,
+   fetchRequestPausedFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId,
+   fetchRequestPausedResourceType :: DOMPageNetworkEmulationSecurity.NetworkResourceType,
+   fetchRequestPausedResponseErrorReason :: Maybe DOMPageNetworkEmulationSecurity.NetworkErrorReason,
    fetchRequestPausedResponseStatusCode :: Maybe Int,
    fetchRequestPausedResponseStatusText :: Maybe String,
    fetchRequestPausedResponseHeaders :: Maybe [FetchHeaderEntry],
@@ -169,9 +169,9 @@ instance FromJSON  FetchRequestPaused where
 
 data FetchAuthRequired = FetchAuthRequired {
    fetchAuthRequiredRequestId :: FetchRequestId,
-   fetchAuthRequiredRequest :: DOMPageNetwork.NetworkRequest,
-   fetchAuthRequiredFrameId :: DOMPageNetwork.PageFrameId,
-   fetchAuthRequiredResourceType :: DOMPageNetwork.NetworkResourceType,
+   fetchAuthRequiredRequest :: DOMPageNetworkEmulationSecurity.NetworkRequest,
+   fetchAuthRequiredFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId,
+   fetchAuthRequiredResourceType :: DOMPageNetworkEmulationSecurity.NetworkResourceType,
    fetchAuthRequiredAuthChallenge :: FetchAuthChallenge
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON FetchAuthRequired  where
@@ -206,7 +206,7 @@ fetchEnable handle params = sendReceiveCommand handle "Fetch.enable" (Just param
 
 data PFetchFailRequest = PFetchFailRequest {
    pFetchFailRequestRequestId :: FetchRequestId,
-   pFetchFailRequestErrorReason :: DOMPageNetwork.NetworkErrorReason
+   pFetchFailRequestErrorReason :: DOMPageNetworkEmulationSecurity.NetworkErrorReason
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PFetchFailRequest  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -245,7 +245,8 @@ data PFetchContinueRequest = PFetchContinueRequest {
    pFetchContinueRequestUrl :: Maybe String,
    pFetchContinueRequestMethod :: Maybe String,
    pFetchContinueRequestPostData :: Maybe String,
-   pFetchContinueRequestHeaders :: Maybe [FetchHeaderEntry]
+   pFetchContinueRequestHeaders :: Maybe [FetchHeaderEntry],
+   pFetchContinueRequestInterceptResponse :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PFetchContinueRequest  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -272,6 +273,25 @@ instance FromJSON  PFetchContinueWithAuth where
 
 fetchContinueWithAuth :: Handle ev -> PFetchContinueWithAuth -> IO (Maybe Error)
 fetchContinueWithAuth handle params = sendReceiveCommand handle "Fetch.continueWithAuth" (Just params)
+
+
+
+data PFetchContinueResponse = PFetchContinueResponse {
+   pFetchContinueResponseRequestId :: FetchRequestId,
+   pFetchContinueResponseResponseCode :: Maybe Int,
+   pFetchContinueResponseResponsePhrase :: Maybe String,
+   pFetchContinueResponseResponseHeaders :: Maybe [FetchHeaderEntry],
+   pFetchContinueResponseBinaryResponseHeaders :: Maybe String
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PFetchContinueResponse  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
+
+instance FromJSON  PFetchContinueResponse where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
+
+
+fetchContinueResponse :: Handle ev -> PFetchContinueResponse -> IO (Maybe Error)
+fetchContinueResponse handle params = sendReceiveCommand handle "Fetch.continueResponse" (Just params)
 
 
 

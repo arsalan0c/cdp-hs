@@ -68,7 +68,6 @@ printPDF handle = do
 Commands and events for all non-deprecated domains are supported.
 
 Upcoming features:
-- support for experimental domains
 - sessions
 
 ## Acknowledgements

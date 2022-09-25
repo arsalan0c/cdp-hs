@@ -523,28 +523,25 @@ itemDependencies itelt = refTypeToDomain =<< fromAltLeft <$> D.itemsRef itelt
 
 ----- Validity -----
 validDomains :: [D.DomainsElt] -> [D.DomainsElt]
-validDomains ds = filter (not . hasExperimentalDependencies) . filter isValidDomain $ ds
-  where
-    hasExperimentalDependencies d = any (`elem` experimentalDomains) . (fromMaybe [] . D.domainsEltDependencies) $ d
-    experimentalDomains = map D.domainsEltDomain . filter (isTrue . D.domainsEltExperimental) $ ds
-
+validDomains ds = filter isValidDomain $ ds
+  
 isValidDomain :: D.DomainsElt -> Bool
-isValidDomain delt = (not . isTrue . D.domainsEltExperimental $ delt) && (not . isTrue . D.domainsEltDeprecated $ delt)
+isValidDomain delt = (not . isTrue . D.domainsEltDeprecated $ delt)
 
 isValidType :: D.TypesElt -> Bool
-isValidType telt = (not . isTrue . D.typesEltDeprecated $ telt) && (not . isTrue . D.typesEltExperimental $ telt)
+isValidType telt = (not . isTrue . D.typesEltDeprecated $ telt)
 
 isValidEvent :: D.EventsElt -> Bool
-isValidEvent evelt = (not . isTrue . D.eventsEltExperimental $ evelt) && (not . isTrue . D.eventsEltDeprecated $ evelt)
+isValidEvent evelt = (not . isTrue . D.eventsEltDeprecated $ evelt)
 
 isValidCommand :: D.CommandsElt -> Bool
-isValidCommand celt = (not . isTrue . D.commandsEltDeprecated $ celt) && (not . isTrue . D.commandsEltExperimental $ celt)
+isValidCommand celt = (not . isTrue . D.commandsEltDeprecated $ celt)
 
 isValidParam :: D.ParametersElt -> Bool
-isValidParam pelt = (not . isTrue . D.parametersEltDeprecated $ pelt) && (not . isTrue . D.parametersEltExperimental $ pelt)
+isValidParam pelt = (not . isTrue . D.parametersEltDeprecated $ pelt)
 
 isValidReturn :: D.ReturnsElt -> Bool
-isValidReturn relt = (not . isTrue . D.returnsEltDeprecated $ relt) && (not . isTrue . D.returnsEltExperimental $ relt)
+isValidReturn relt = (not . isTrue . D.returnsEltDeprecated $ relt)
 
 validTypes :: D.DomainsElt -> [D.TypesElt]
 validTypes = filter isValidType . fromMaybe [] . D.domainsEltTypes

@@ -38,7 +38,7 @@ import Data.Default
 import CDP.Internal.Runtime
 import CDP.Handle
 
-import CDP.Domains.DOMPageNetwork as DOMPageNetwork
+import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
 import CDP.Domains.Runtime as Runtime
 
 
@@ -124,7 +124,7 @@ data LogLogEntry = LogLogEntry {
    logLogEntryUrl :: Maybe String,
    logLogEntryLineNumber :: Maybe Int,
    logLogEntryStackTrace :: Maybe Runtime.RuntimeStackTrace,
-   logLogEntryNetworkRequestId :: Maybe DOMPageNetwork.NetworkRequestId,
+   logLogEntryNetworkRequestId :: Maybe DOMPageNetworkEmulationSecurity.NetworkRequestId,
    logLogEntryWorkerId :: Maybe String,
    logLogEntryArgs :: Maybe [Runtime.RuntimeRemoteObject]
 } deriving (Generic, Eq, Show, Read)

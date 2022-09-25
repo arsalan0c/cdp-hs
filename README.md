@@ -65,7 +65,7 @@ printPDF handle = do
 
 [Project board](https://github.com/users/arsalan0c/projects/1)
 
-Commands and events for all non-experimental domains are supported.
+Commands and events for all non-deprecated domains are supported.
 
 Upcoming features:
 - support for experimental domains
@@ -73,7 +73,7 @@ Upcoming features:
 
 ## Acknowledgements
 
-This began as a [Summer of Haskell](https://summer.haskell.org) / [GSoC](https://summerofcode.withgoogle.com) project with the guidance of Albert Krewinkel ([@tarleb](https://github.com/tarleb)), Jasper Van Der Jeugt ([@jaspervdj](https://github.com/jaspervdj)) and Romain Lesur ([@RLesur](https://github.com/rlesur)).  
+This began as a [Summer of Haskell](https://summer.haskell.org) / [GSoC](https://summerofcode.withgoogle.com) project. Albert Krewinkel ([@tarleb](https://github.com/tarleb)), Jasper Van der Jeugt ([@jaspervdj](https://github.com/jaspervdj)) and Romain Lesur ([@RLesur](https://github.com/rlesur)). 
 
 ## References
 

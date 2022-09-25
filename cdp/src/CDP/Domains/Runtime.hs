@@ -200,12 +200,228 @@ data RuntimeRemoteObject = RuntimeRemoteObject {
    runtimeRemoteObjectValue :: Maybe Int,
    runtimeRemoteObjectUnserializableValue :: Maybe RuntimeUnserializableValue,
    runtimeRemoteObjectDescription :: Maybe String,
-   runtimeRemoteObjectObjectId :: Maybe RuntimeRemoteObjectId
+   runtimeRemoteObjectWebDriverValue :: Maybe RuntimeWebDriverValue,
+   runtimeRemoteObjectObjectId :: Maybe RuntimeRemoteObjectId,
+   runtimeRemoteObjectPreview :: Maybe RuntimeObjectPreview,
+   runtimeRemoteObjectCustomPreview :: Maybe RuntimeCustomPreview
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON RuntimeRemoteObject  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
 instance FromJSON  RuntimeRemoteObject where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
+
+
+
+data RuntimeCustomPreview = RuntimeCustomPreview {
+   runtimeCustomPreviewHeader :: String,
+   runtimeCustomPreviewBodyGetterId :: Maybe RuntimeRemoteObjectId
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON RuntimeCustomPreview  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
+
+instance FromJSON  RuntimeCustomPreview where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
+
+
+data RuntimeObjectPreviewType = RuntimeObjectPreviewTypeObject | RuntimeObjectPreviewTypeFunction | RuntimeObjectPreviewTypeUndefined | RuntimeObjectPreviewTypeString | RuntimeObjectPreviewTypeNumber | RuntimeObjectPreviewTypeBoolean | RuntimeObjectPreviewTypeSymbol | RuntimeObjectPreviewTypeBigint
+   deriving (Ord, Eq, Show, Read)
+instance FromJSON RuntimeObjectPreviewType where
+   parseJSON = A.withText  "RuntimeObjectPreviewType"  $ \v -> do
+      case v of
+         "object" -> pure RuntimeObjectPreviewTypeObject
+         "function" -> pure RuntimeObjectPreviewTypeFunction
+         "undefined" -> pure RuntimeObjectPreviewTypeUndefined
+         "string" -> pure RuntimeObjectPreviewTypeString
+         "number" -> pure RuntimeObjectPreviewTypeNumber
+         "boolean" -> pure RuntimeObjectPreviewTypeBoolean
+         "symbol" -> pure RuntimeObjectPreviewTypeSymbol
+         "bigint" -> pure RuntimeObjectPreviewTypeBigint
+         _ -> fail "failed to parse RuntimeObjectPreviewType"
+
+instance ToJSON RuntimeObjectPreviewType where
+   toJSON v = A.String $
+      case v of
+         RuntimeObjectPreviewTypeObject -> "object"
+         RuntimeObjectPreviewTypeFunction -> "function"
+         RuntimeObjectPreviewTypeUndefined -> "undefined"
+         RuntimeObjectPreviewTypeString -> "string"
+         RuntimeObjectPreviewTypeNumber -> "number"
+         RuntimeObjectPreviewTypeBoolean -> "boolean"
+         RuntimeObjectPreviewTypeSymbol -> "symbol"
+         RuntimeObjectPreviewTypeBigint -> "bigint"
+
+
+data RuntimeObjectPreviewSubtype = RuntimeObjectPreviewSubtypeArray | RuntimeObjectPreviewSubtypeNull | RuntimeObjectPreviewSubtypeNode | RuntimeObjectPreviewSubtypeRegexp | RuntimeObjectPreviewSubtypeDate | RuntimeObjectPreviewSubtypeMap | RuntimeObjectPreviewSubtypeSet | RuntimeObjectPreviewSubtypeWeakmap | RuntimeObjectPreviewSubtypeWeakset | RuntimeObjectPreviewSubtypeIterator | RuntimeObjectPreviewSubtypeGenerator | RuntimeObjectPreviewSubtypeError | RuntimeObjectPreviewSubtypeProxy | RuntimeObjectPreviewSubtypePromise | RuntimeObjectPreviewSubtypeTypedarray | RuntimeObjectPreviewSubtypeArraybuffer | RuntimeObjectPreviewSubtypeDataview | RuntimeObjectPreviewSubtypeWebassemblymemory | RuntimeObjectPreviewSubtypeWasmvalue
+   deriving (Ord, Eq, Show, Read)
+instance FromJSON RuntimeObjectPreviewSubtype where
+   parseJSON = A.withText  "RuntimeObjectPreviewSubtype"  $ \v -> do
+      case v of
+         "array" -> pure RuntimeObjectPreviewSubtypeArray
+         "null" -> pure RuntimeObjectPreviewSubtypeNull
+         "node" -> pure RuntimeObjectPreviewSubtypeNode
+         "regexp" -> pure RuntimeObjectPreviewSubtypeRegexp
+         "date" -> pure RuntimeObjectPreviewSubtypeDate
+         "map" -> pure RuntimeObjectPreviewSubtypeMap
+         "set" -> pure RuntimeObjectPreviewSubtypeSet
+         "weakmap" -> pure RuntimeObjectPreviewSubtypeWeakmap
+         "weakset" -> pure RuntimeObjectPreviewSubtypeWeakset
+         "iterator" -> pure RuntimeObjectPreviewSubtypeIterator
+         "generator" -> pure RuntimeObjectPreviewSubtypeGenerator
+         "error" -> pure RuntimeObjectPreviewSubtypeError
+         "proxy" -> pure RuntimeObjectPreviewSubtypeProxy
+         "promise" -> pure RuntimeObjectPreviewSubtypePromise
+         "typedarray" -> pure RuntimeObjectPreviewSubtypeTypedarray
+         "arraybuffer" -> pure RuntimeObjectPreviewSubtypeArraybuffer
+         "dataview" -> pure RuntimeObjectPreviewSubtypeDataview
+         "webassemblymemory" -> pure RuntimeObjectPreviewSubtypeWebassemblymemory
+         "wasmvalue" -> pure RuntimeObjectPreviewSubtypeWasmvalue
+         _ -> fail "failed to parse RuntimeObjectPreviewSubtype"
+
+instance ToJSON RuntimeObjectPreviewSubtype where
+   toJSON v = A.String $
+      case v of
+         RuntimeObjectPreviewSubtypeArray -> "array"
+         RuntimeObjectPreviewSubtypeNull -> "null"
+         RuntimeObjectPreviewSubtypeNode -> "node"
+         RuntimeObjectPreviewSubtypeRegexp -> "regexp"
+         RuntimeObjectPreviewSubtypeDate -> "date"
+         RuntimeObjectPreviewSubtypeMap -> "map"
+         RuntimeObjectPreviewSubtypeSet -> "set"
+         RuntimeObjectPreviewSubtypeWeakmap -> "weakmap"
+         RuntimeObjectPreviewSubtypeWeakset -> "weakset"
+         RuntimeObjectPreviewSubtypeIterator -> "iterator"
+         RuntimeObjectPreviewSubtypeGenerator -> "generator"
+         RuntimeObjectPreviewSubtypeError -> "error"
+         RuntimeObjectPreviewSubtypeProxy -> "proxy"
+         RuntimeObjectPreviewSubtypePromise -> "promise"
+         RuntimeObjectPreviewSubtypeTypedarray -> "typedarray"
+         RuntimeObjectPreviewSubtypeArraybuffer -> "arraybuffer"
+         RuntimeObjectPreviewSubtypeDataview -> "dataview"
+         RuntimeObjectPreviewSubtypeWebassemblymemory -> "webassemblymemory"
+         RuntimeObjectPreviewSubtypeWasmvalue -> "wasmvalue"
+
+
+
+data RuntimeObjectPreview = RuntimeObjectPreview {
+   runtimeObjectPreviewType :: RuntimeObjectPreviewType,
+   runtimeObjectPreviewSubtype :: RuntimeObjectPreviewSubtype,
+   runtimeObjectPreviewDescription :: Maybe String,
+   runtimeObjectPreviewOverflow :: Bool,
+   runtimeObjectPreviewProperties :: [RuntimePropertyPreview],
+   runtimeObjectPreviewEntries :: Maybe [RuntimeEntryPreview]
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON RuntimeObjectPreview  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
+
+instance FromJSON  RuntimeObjectPreview where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
+
+
+data RuntimePropertyPreviewType = RuntimePropertyPreviewTypeObject | RuntimePropertyPreviewTypeFunction | RuntimePropertyPreviewTypeUndefined | RuntimePropertyPreviewTypeString | RuntimePropertyPreviewTypeNumber | RuntimePropertyPreviewTypeBoolean | RuntimePropertyPreviewTypeSymbol | RuntimePropertyPreviewTypeAccessor | RuntimePropertyPreviewTypeBigint
+   deriving (Ord, Eq, Show, Read)
+instance FromJSON RuntimePropertyPreviewType where
+   parseJSON = A.withText  "RuntimePropertyPreviewType"  $ \v -> do
+      case v of
+         "object" -> pure RuntimePropertyPreviewTypeObject
+         "function" -> pure RuntimePropertyPreviewTypeFunction
+         "undefined" -> pure RuntimePropertyPreviewTypeUndefined
+         "string" -> pure RuntimePropertyPreviewTypeString
+         "number" -> pure RuntimePropertyPreviewTypeNumber
+         "boolean" -> pure RuntimePropertyPreviewTypeBoolean
+         "symbol" -> pure RuntimePropertyPreviewTypeSymbol
+         "accessor" -> pure RuntimePropertyPreviewTypeAccessor
+         "bigint" -> pure RuntimePropertyPreviewTypeBigint
+         _ -> fail "failed to parse RuntimePropertyPreviewType"
+
+instance ToJSON RuntimePropertyPreviewType where
+   toJSON v = A.String $
+      case v of
+         RuntimePropertyPreviewTypeObject -> "object"
+         RuntimePropertyPreviewTypeFunction -> "function"
+         RuntimePropertyPreviewTypeUndefined -> "undefined"
+         RuntimePropertyPreviewTypeString -> "string"
+         RuntimePropertyPreviewTypeNumber -> "number"
+         RuntimePropertyPreviewTypeBoolean -> "boolean"
+         RuntimePropertyPreviewTypeSymbol -> "symbol"
+         RuntimePropertyPreviewTypeAccessor -> "accessor"
+         RuntimePropertyPreviewTypeBigint -> "bigint"
+
+
+data RuntimePropertyPreviewSubtype = RuntimePropertyPreviewSubtypeArray | RuntimePropertyPreviewSubtypeNull | RuntimePropertyPreviewSubtypeNode | RuntimePropertyPreviewSubtypeRegexp | RuntimePropertyPreviewSubtypeDate | RuntimePropertyPreviewSubtypeMap | RuntimePropertyPreviewSubtypeSet | RuntimePropertyPreviewSubtypeWeakmap | RuntimePropertyPreviewSubtypeWeakset | RuntimePropertyPreviewSubtypeIterator | RuntimePropertyPreviewSubtypeGenerator | RuntimePropertyPreviewSubtypeError | RuntimePropertyPreviewSubtypeProxy | RuntimePropertyPreviewSubtypePromise | RuntimePropertyPreviewSubtypeTypedarray | RuntimePropertyPreviewSubtypeArraybuffer | RuntimePropertyPreviewSubtypeDataview | RuntimePropertyPreviewSubtypeWebassemblymemory | RuntimePropertyPreviewSubtypeWasmvalue
+   deriving (Ord, Eq, Show, Read)
+instance FromJSON RuntimePropertyPreviewSubtype where
+   parseJSON = A.withText  "RuntimePropertyPreviewSubtype"  $ \v -> do
+      case v of
+         "array" -> pure RuntimePropertyPreviewSubtypeArray
+         "null" -> pure RuntimePropertyPreviewSubtypeNull
+         "node" -> pure RuntimePropertyPreviewSubtypeNode
+         "regexp" -> pure RuntimePropertyPreviewSubtypeRegexp
+         "date" -> pure RuntimePropertyPreviewSubtypeDate
+         "map" -> pure RuntimePropertyPreviewSubtypeMap
+         "set" -> pure RuntimePropertyPreviewSubtypeSet
+         "weakmap" -> pure RuntimePropertyPreviewSubtypeWeakmap
+         "weakset" -> pure RuntimePropertyPreviewSubtypeWeakset
+         "iterator" -> pure RuntimePropertyPreviewSubtypeIterator
+         "generator" -> pure RuntimePropertyPreviewSubtypeGenerator
+         "error" -> pure RuntimePropertyPreviewSubtypeError
+         "proxy" -> pure RuntimePropertyPreviewSubtypeProxy
+         "promise" -> pure RuntimePropertyPreviewSubtypePromise
+         "typedarray" -> pure RuntimePropertyPreviewSubtypeTypedarray
+         "arraybuffer" -> pure RuntimePropertyPreviewSubtypeArraybuffer
+         "dataview" -> pure RuntimePropertyPreviewSubtypeDataview
+         "webassemblymemory" -> pure RuntimePropertyPreviewSubtypeWebassemblymemory
+         "wasmvalue" -> pure RuntimePropertyPreviewSubtypeWasmvalue
+         _ -> fail "failed to parse RuntimePropertyPreviewSubtype"
+
+instance ToJSON RuntimePropertyPreviewSubtype where
+   toJSON v = A.String $
+      case v of
+         RuntimePropertyPreviewSubtypeArray -> "array"
+         RuntimePropertyPreviewSubtypeNull -> "null"
+         RuntimePropertyPreviewSubtypeNode -> "node"
+         RuntimePropertyPreviewSubtypeRegexp -> "regexp"
+         RuntimePropertyPreviewSubtypeDate -> "date"
+         RuntimePropertyPreviewSubtypeMap -> "map"
+         RuntimePropertyPreviewSubtypeSet -> "set"
+         RuntimePropertyPreviewSubtypeWeakmap -> "weakmap"
+         RuntimePropertyPreviewSubtypeWeakset -> "weakset"
+         RuntimePropertyPreviewSubtypeIterator -> "iterator"
+         RuntimePropertyPreviewSubtypeGenerator -> "generator"
+         RuntimePropertyPreviewSubtypeError -> "error"
+         RuntimePropertyPreviewSubtypeProxy -> "proxy"
+         RuntimePropertyPreviewSubtypePromise -> "promise"
+         RuntimePropertyPreviewSubtypeTypedarray -> "typedarray"
+         RuntimePropertyPreviewSubtypeArraybuffer -> "arraybuffer"
+         RuntimePropertyPreviewSubtypeDataview -> "dataview"
+         RuntimePropertyPreviewSubtypeWebassemblymemory -> "webassemblymemory"
+         RuntimePropertyPreviewSubtypeWasmvalue -> "wasmvalue"
+
+
+
+data RuntimePropertyPreview = RuntimePropertyPreview {
+   runtimePropertyPreviewName :: String,
+   runtimePropertyPreviewType :: RuntimePropertyPreviewType,
+   runtimePropertyPreviewValue :: Maybe String,
+   runtimePropertyPreviewValuePreview :: Maybe RuntimeObjectPreview,
+   runtimePropertyPreviewSubtype :: RuntimePropertyPreviewSubtype
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON RuntimePropertyPreview  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
+
+instance FromJSON  RuntimePropertyPreview where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
+
+
+
+data RuntimeEntryPreview = RuntimeEntryPreview {
+   runtimeEntryPreviewKey :: Maybe RuntimeObjectPreview,
+   runtimeEntryPreviewValue :: RuntimeObjectPreview
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON RuntimeEntryPreview  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
+
+instance FromJSON  RuntimeEntryPreview where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
@@ -242,6 +458,20 @@ instance FromJSON  RuntimeInternalPropertyDescriptor where
 
 
 
+data RuntimePrivatePropertyDescriptor = RuntimePrivatePropertyDescriptor {
+   runtimePrivatePropertyDescriptorName :: String,
+   runtimePrivatePropertyDescriptorValue :: Maybe RuntimeRemoteObject,
+   runtimePrivatePropertyDescriptorGet :: Maybe RuntimeRemoteObject,
+   runtimePrivatePropertyDescriptorSet :: Maybe RuntimeRemoteObject
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON RuntimePrivatePropertyDescriptor  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
+
+instance FromJSON  RuntimePrivatePropertyDescriptor where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
+
+
+
 data RuntimeCallArgument = RuntimeCallArgument {
    runtimeCallArgumentValue :: Maybe Int,
    runtimeCallArgumentUnserializableValue :: Maybe RuntimeUnserializableValue,
@@ -260,6 +490,7 @@ data RuntimeExecutionContextDescription = RuntimeExecutionContextDescription {
    runtimeExecutionContextDescriptionId :: RuntimeExecutionContextId,
    runtimeExecutionContextDescriptionOrigin :: String,
    runtimeExecutionContextDescriptionName :: String,
+   runtimeExecutionContextDescriptionUniqueId :: String,
    runtimeExecutionContextDescriptionAuxData :: Maybe [(String, String)]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON RuntimeExecutionContextDescription  where
@@ -279,7 +510,8 @@ data RuntimeExceptionDetails = RuntimeExceptionDetails {
    runtimeExceptionDetailsUrl :: Maybe String,
    runtimeExceptionDetailsStackTrace :: Maybe RuntimeStackTrace,
    runtimeExceptionDetailsException :: Maybe RuntimeRemoteObject,
-   runtimeExceptionDetailsExecutionContextId :: Maybe RuntimeExecutionContextId
+   runtimeExceptionDetailsExecutionContextId :: Maybe RuntimeExecutionContextId,
+   runtimeExceptionDetailsExceptionMetaData :: Maybe [(String, String)]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON RuntimeExceptionDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -309,7 +541,8 @@ instance FromJSON  RuntimeCallFrame where
 data RuntimeStackTrace = RuntimeStackTrace {
    runtimeStackTraceDescription :: Maybe String,
    runtimeStackTraceCallFrames :: [RuntimeCallFrame],
-   runtimeStackTraceParent :: Maybe RuntimeStackTrace
+   runtimeStackTraceParent :: Maybe RuntimeStackTrace,
+   runtimeStackTraceParentId :: Maybe RuntimeStackTraceId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON RuntimeStackTrace  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -318,6 +551,32 @@ instance FromJSON  RuntimeStackTrace where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
+type RuntimeUniqueDebuggerId = String
+
+data RuntimeStackTraceId = RuntimeStackTraceId {
+   runtimeStackTraceIdId :: String,
+   runtimeStackTraceIdDebuggerId :: Maybe RuntimeUniqueDebuggerId
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON RuntimeStackTraceId  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
+
+instance FromJSON  RuntimeStackTraceId where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
+
+
+
+
+
+data RuntimeBindingCalled = RuntimeBindingCalled {
+   runtimeBindingCalledName :: String,
+   runtimeBindingCalledPayload :: String,
+   runtimeBindingCalledExecutionContextId :: RuntimeExecutionContextId
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON RuntimeBindingCalled  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
+
+instance FromJSON  RuntimeBindingCalled where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
 data RuntimeConsoleApiCalledType = RuntimeConsoleApiCalledTypeLog | RuntimeConsoleApiCalledTypeDebug | RuntimeConsoleApiCalledTypeInfo | RuntimeConsoleApiCalledTypeError | RuntimeConsoleApiCalledTypeWarning | RuntimeConsoleApiCalledTypeDir | RuntimeConsoleApiCalledTypeDirxml | RuntimeConsoleApiCalledTypeTable | RuntimeConsoleApiCalledTypeTrace | RuntimeConsoleApiCalledTypeClear | RuntimeConsoleApiCalledTypeStartGroup | RuntimeConsoleApiCalledTypeStartGroupCollapsed | RuntimeConsoleApiCalledTypeEndGroup | RuntimeConsoleApiCalledTypeAssert | RuntimeConsoleApiCalledTypeProfile | RuntimeConsoleApiCalledTypeProfileEnd | RuntimeConsoleApiCalledTypeCount | RuntimeConsoleApiCalledTypeTimeEnd
@@ -374,7 +633,8 @@ data RuntimeConsoleApiCalled = RuntimeConsoleApiCalled {
    runtimeConsoleApiCalledArgs :: [RuntimeRemoteObject],
    runtimeConsoleApiCalledExecutionContextId :: RuntimeExecutionContextId,
    runtimeConsoleApiCalledTimestamp :: RuntimeTimestamp,
-   runtimeConsoleApiCalledStackTrace :: Maybe RuntimeStackTrace
+   runtimeConsoleApiCalledStackTrace :: Maybe RuntimeStackTrace,
+   runtimeConsoleApiCalledContext :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON RuntimeConsoleApiCalled  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -441,7 +701,8 @@ instance FromJSON RuntimeExecutionContextsCleared where
 
 data RuntimeInspectRequested = RuntimeInspectRequested {
    runtimeInspectRequestedObject :: RuntimeRemoteObject,
-   runtimeInspectRequestedHints :: [(String, String)]
+   runtimeInspectRequestedHints :: [(String, String)],
+   runtimeInspectRequestedExecutionContextId :: Maybe RuntimeExecutionContextId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON RuntimeInspectRequested  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -488,10 +749,13 @@ data PRuntimeCallFunctionOn = PRuntimeCallFunctionOn {
    pRuntimeCallFunctionOnArguments :: Maybe [RuntimeCallArgument],
    pRuntimeCallFunctionOnSilent :: Maybe Bool,
    pRuntimeCallFunctionOnReturnByValue :: Maybe Bool,
+   pRuntimeCallFunctionOnGeneratePreview :: Maybe Bool,
    pRuntimeCallFunctionOnUserGesture :: Maybe Bool,
    pRuntimeCallFunctionOnAwaitPromise :: Maybe Bool,
    pRuntimeCallFunctionOnExecutionContextId :: Maybe RuntimeExecutionContextId,
-   pRuntimeCallFunctionOnObjectGroup :: Maybe String
+   pRuntimeCallFunctionOnObjectGroup :: Maybe String,
+   pRuntimeCallFunctionOnThrowOnSideEffect :: Maybe Bool,
+   pRuntimeCallFunctionOnGenerateWebDriverValue :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PRuntimeCallFunctionOn  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -566,8 +830,16 @@ data PRuntimeEvaluate = PRuntimeEvaluate {
    pRuntimeEvaluateSilent :: Maybe Bool,
    pRuntimeEvaluateContextId :: Maybe RuntimeExecutionContextId,
    pRuntimeEvaluateReturnByValue :: Maybe Bool,
+   pRuntimeEvaluateGeneratePreview :: Maybe Bool,
    pRuntimeEvaluateUserGesture :: Maybe Bool,
-   pRuntimeEvaluateAwaitPromise :: Maybe Bool
+   pRuntimeEvaluateAwaitPromise :: Maybe Bool,
+   pRuntimeEvaluateThrowOnSideEffect :: Maybe Bool,
+   pRuntimeEvaluateTimeout :: Maybe RuntimeTimeDelta,
+   pRuntimeEvaluateDisableBreaks :: Maybe Bool,
+   pRuntimeEvaluateReplMode :: Maybe Bool,
+   pRuntimeEvaluateAllowUnsafeEvalBlockedByCsp :: Maybe Bool,
+   pRuntimeEvaluateUniqueContextId :: Maybe String,
+   pRuntimeEvaluateGenerateWebDriverValue :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PRuntimeEvaluate  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -592,10 +864,44 @@ instance Command RuntimeEvaluate where
 
 
 
+runtimeGetIsolateId :: Handle ev -> IO (Either Error RuntimeGetIsolateId)
+runtimeGetIsolateId handle = sendReceiveCommandResult handle "Runtime.getIsolateId" (Nothing :: Maybe ())
+
+data RuntimeGetIsolateId = RuntimeGetIsolateId {
+   runtimeGetIsolateIdId :: String
+} deriving (Generic, Eq, Show, Read)
+
+instance FromJSON  RuntimeGetIsolateId where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
+
+instance Command RuntimeGetIsolateId where
+   commandName _ = "Runtime.getIsolateId"
+
+
+
+runtimeGetHeapUsage :: Handle ev -> IO (Either Error RuntimeGetHeapUsage)
+runtimeGetHeapUsage handle = sendReceiveCommandResult handle "Runtime.getHeapUsage" (Nothing :: Maybe ())
+
+data RuntimeGetHeapUsage = RuntimeGetHeapUsage {
+   runtimeGetHeapUsageUsedSize :: Double,
+   runtimeGetHeapUsageTotalSize :: Double
+} deriving (Generic, Eq, Show, Read)
+
+instance FromJSON  RuntimeGetHeapUsage where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
+
+instance Command RuntimeGetHeapUsage where
+   commandName _ = "Runtime.getHeapUsage"
+
+
+
 
 data PRuntimeGetProperties = PRuntimeGetProperties {
    pRuntimeGetPropertiesObjectId :: RuntimeRemoteObjectId,
-   pRuntimeGetPropertiesOwnProperties :: Maybe Bool
+   pRuntimeGetPropertiesOwnProperties :: Maybe Bool,
+   pRuntimeGetPropertiesAccessorPropertiesOnly :: Maybe Bool,
+   pRuntimeGetPropertiesGeneratePreview :: Maybe Bool,
+   pRuntimeGetPropertiesNonIndexedPropertiesOnly :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PRuntimeGetProperties  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -610,6 +916,7 @@ runtimeGetProperties handle params = sendReceiveCommandResult handle "Runtime.ge
 data RuntimeGetProperties = RuntimeGetProperties {
    runtimeGetPropertiesResult :: [RuntimePropertyDescriptor],
    runtimeGetPropertiesInternalProperties :: Maybe [RuntimeInternalPropertyDescriptor],
+   runtimeGetPropertiesPrivateProperties :: Maybe [RuntimePrivatePropertyDescriptor],
    runtimeGetPropertiesExceptionDetails :: Maybe RuntimeExceptionDetails
 } deriving (Generic, Eq, Show, Read)
 
@@ -755,6 +1062,97 @@ instance FromJSON  PRuntimeSetAsyncCallStackDepth where
 
 runtimeSetAsyncCallStackDepth :: Handle ev -> PRuntimeSetAsyncCallStackDepth -> IO (Maybe Error)
 runtimeSetAsyncCallStackDepth handle params = sendReceiveCommand handle "Runtime.setAsyncCallStackDepth" (Just params)
+
+
+
+data PRuntimeSetCustomObjectFormatterEnabled = PRuntimeSetCustomObjectFormatterEnabled {
+   pRuntimeSetCustomObjectFormatterEnabledEnabled :: Bool
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PRuntimeSetCustomObjectFormatterEnabled  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 39 , A.omitNothingFields = True}
+
+instance FromJSON  PRuntimeSetCustomObjectFormatterEnabled where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 39 }
+
+
+runtimeSetCustomObjectFormatterEnabled :: Handle ev -> PRuntimeSetCustomObjectFormatterEnabled -> IO (Maybe Error)
+runtimeSetCustomObjectFormatterEnabled handle params = sendReceiveCommand handle "Runtime.setCustomObjectFormatterEnabled" (Just params)
+
+
+
+data PRuntimeSetMaxCallStackSizeToCapture = PRuntimeSetMaxCallStackSizeToCapture {
+   pRuntimeSetMaxCallStackSizeToCaptureSize :: Int
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PRuntimeSetMaxCallStackSizeToCapture  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
+
+instance FromJSON  PRuntimeSetMaxCallStackSizeToCapture where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 }
+
+
+runtimeSetMaxCallStackSizeToCapture :: Handle ev -> PRuntimeSetMaxCallStackSizeToCapture -> IO (Maybe Error)
+runtimeSetMaxCallStackSizeToCapture handle params = sendReceiveCommand handle "Runtime.setMaxCallStackSizeToCapture" (Just params)
+
+
+runtimeTerminateExecution :: Handle ev -> IO (Maybe Error)
+runtimeTerminateExecution handle = sendReceiveCommand handle "Runtime.terminateExecution" (Nothing :: Maybe ())
+
+
+
+data PRuntimeAddBinding = PRuntimeAddBinding {
+   pRuntimeAddBindingName :: String,
+   pRuntimeAddBindingExecutionContextName :: Maybe String
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PRuntimeAddBinding  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
+
+instance FromJSON  PRuntimeAddBinding where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
+
+
+runtimeAddBinding :: Handle ev -> PRuntimeAddBinding -> IO (Maybe Error)
+runtimeAddBinding handle params = sendReceiveCommand handle "Runtime.addBinding" (Just params)
+
+
+
+data PRuntimeRemoveBinding = PRuntimeRemoveBinding {
+   pRuntimeRemoveBindingName :: String
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PRuntimeRemoveBinding  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
+
+instance FromJSON  PRuntimeRemoveBinding where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
+
+
+runtimeRemoveBinding :: Handle ev -> PRuntimeRemoveBinding -> IO (Maybe Error)
+runtimeRemoveBinding handle params = sendReceiveCommand handle "Runtime.removeBinding" (Just params)
+
+
+
+data PRuntimeGetExceptionDetails = PRuntimeGetExceptionDetails {
+   pRuntimeGetExceptionDetailsErrorObjectId :: RuntimeRemoteObjectId
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PRuntimeGetExceptionDetails  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
+
+instance FromJSON  PRuntimeGetExceptionDetails where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
+
+
+runtimeGetExceptionDetails :: Handle ev -> PRuntimeGetExceptionDetails -> IO (Either Error RuntimeGetExceptionDetails)
+runtimeGetExceptionDetails handle params = sendReceiveCommandResult handle "Runtime.getExceptionDetails" (Just params)
+
+data RuntimeGetExceptionDetails = RuntimeGetExceptionDetails {
+   runtimeGetExceptionDetailsExceptionDetails :: Maybe RuntimeExceptionDetails
+} deriving (Generic, Eq, Show, Read)
+
+instance FromJSON  RuntimeGetExceptionDetails where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
+
+instance Command RuntimeGetExceptionDetails where
+   commandName _ = "Runtime.getExceptionDetails"
+
 
 
 

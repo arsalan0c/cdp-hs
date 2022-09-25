@@ -34,7 +34,8 @@ subUnsub handle = do
 printPDF :: CDP.Handle CDP.Event -> IO ()
 printPDF handle = do
     r <- CDP.pagePrintToPdf handle $ 
-        CDP.PPagePrintToPdf Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+        CDP.PPagePrintToPdf Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing $
+            CDP.PPagePrintToPdfTransferModeReturnAsBase64
 
     let dat  = either (error . show) CDP.pagePrintToPdfData r
         path = "mypdf.pdf" 

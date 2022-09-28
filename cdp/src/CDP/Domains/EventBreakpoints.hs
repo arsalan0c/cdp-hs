@@ -5,6 +5,16 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
 
+{- |
+  EventBreakpoints :
+     EventBreakpoints permits setting breakpoints on particular operations and
+     events in targets that run JavaScript but do not have a DOM.
+     JavaScript execution will stop on these operations as if there was a regular
+     breakpoint set.
+
+-}
+
+
 module CDP.Domains.EventBreakpoints (module CDP.Domains.EventBreakpoints) where
 
 import           Control.Applicative  ((<$>))
@@ -44,9 +54,9 @@ import CDP.Handle
 
 
 
-
+-- | Parameters of the 'eventBreakpointsSetInstrumentationBreakpoint' command.
 data PEventBreakpointsSetInstrumentationBreakpoint = PEventBreakpointsSetInstrumentationBreakpoint {
-   pEventBreakpointsSetInstrumentationBreakpointEventName :: String
+   pEventBreakpointsSetInstrumentationBreakpointEventName :: PEventBreakpointsSetInstrumentationBreakpointEventName -- ^ Instrumentation name to stop on.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEventBreakpointsSetInstrumentationBreakpoint  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 45 , A.omitNothingFields = True}
@@ -55,13 +65,16 @@ instance FromJSON  PEventBreakpointsSetInstrumentationBreakpoint where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 45 }
 
 
+-- | Function for the command 'EventBreakpoints.setInstrumentationBreakpoint'.
+-- Sets breakpoint on particular native event.
+-- Parameters: 'PEventBreakpointsSetInstrumentationBreakpoint'
 eventBreakpointsSetInstrumentationBreakpoint :: Handle ev -> PEventBreakpointsSetInstrumentationBreakpoint -> IO (Maybe Error)
 eventBreakpointsSetInstrumentationBreakpoint handle params = sendReceiveCommand handle "EventBreakpoints.setInstrumentationBreakpoint" (Just params)
 
 
-
+-- | Parameters of the 'eventBreakpointsRemoveInstrumentationBreakpoint' command.
 data PEventBreakpointsRemoveInstrumentationBreakpoint = PEventBreakpointsRemoveInstrumentationBreakpoint {
-   pEventBreakpointsRemoveInstrumentationBreakpointEventName :: String
+   pEventBreakpointsRemoveInstrumentationBreakpointEventName :: PEventBreakpointsRemoveInstrumentationBreakpointEventName -- ^ Instrumentation name to stop on.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEventBreakpointsRemoveInstrumentationBreakpoint  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 48 , A.omitNothingFields = True}
@@ -70,6 +83,9 @@ instance FromJSON  PEventBreakpointsRemoveInstrumentationBreakpoint where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 48 }
 
 
+-- | Function for the command 'EventBreakpoints.removeInstrumentationBreakpoint'.
+-- Removes breakpoint on particular native event.
+-- Parameters: 'PEventBreakpointsRemoveInstrumentationBreakpoint'
 eventBreakpointsRemoveInstrumentationBreakpoint :: Handle ev -> PEventBreakpointsRemoveInstrumentationBreakpoint -> IO (Maybe Error)
 eventBreakpointsRemoveInstrumentationBreakpoint handle params = sendReceiveCommand handle "EventBreakpoints.removeInstrumentationBreakpoint" (Just params)
 

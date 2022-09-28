@@ -41,7 +41,7 @@ data Program = Program
     , pEvents           :: T.Text
     }
 
-data Context = Context { ctDomainComponents :: DomainComponents }
+data Context = Context { ctxDomainComponents :: DomainComponents }
 
 genProgram :: T.Text -> T.Text -> [D.DomainsElt] -> Program
 genProgram domainExtensions domainImports domainElts = Program
@@ -67,7 +67,7 @@ genProtocolModule extensions imports names source = T.unlines
 
 allComponentImports :: Context -> [T.Text]
 allComponentImports = Set.toList . Set.fromList . 
-    concatMap ((\n -> [importDomain False n, importDomain True n]) . unComponentName . cName) . Map.elems . ctDomainComponents
+    concatMap ((\n -> [importDomain False n, importDomain True n]) . unComponentName . cName) . Map.elems . ctxDomainComponents
 
 allComponents :: Context -> T.Text -> T.Text -> [Component] -> Map.Map ComponentName T.Text
 allComponents ctx extensions imports components = Map.fromList . 
@@ -142,6 +142,7 @@ genEventInstance eventNameHS eventConstructorName eventName = T.unlines $
 genComponent :: Context -> T.Text -> T.Text -> Component -> T.Text
 genComponent ctx extensions imports component = T.intercalate "\n\n" $
     [ extensions
+    , formatComponentDescription component
     , domainModuleHeader cn
     , imports
     , T.unlines $ map (importDomain True) deps
@@ -163,7 +164,7 @@ genDomain ctx domainElt = T.intercalate "\n\n" $
     dn    = domainName domainElt
 
 genType :: Context -> T.Text -> D.TypesElt -> T.Text
-genType ctx domainName telt = case D.typesEltEnum telt of
+genType ctx domainName telt = T.unlines . (desc :) . pure $ case D.typesEltEnum telt of
     Just enumValues -> genTypeEnum ctx tn enumValues
     Nothing         -> case tytelt of
             "object" -> maybe 
@@ -172,6 +173,8 @@ genType ctx domainName telt = case D.typesEltEnum telt of
                 tpeltsM
             ty       ->  T.unwords ["type", tn, "=", lty]                 
   where
+    desc     = let td = "Type '" <> (domainName <> "." <> D.typesEltId telt) <> "' ." in 
+        formatDescription td . maybe td fromAltLeft $ D.typesEltDescription telt
     lty      = leftType ctx domainName (Just . AltLeft $ tytelt) Nothing (D.typesEltItems telt)
     tytelt   = D.typesEltType telt
     tpeltsM  = guardEmptyList isValidParam $ D.typesEltProperties telt
@@ -188,8 +191,11 @@ genTypeEnum _ typeEnumName values = T.unlines
     constructors = map (tyNameHS typeEnumName) values
 
 genEventReturnType :: Context -> T.Text -> D.EventsElt -> T.Text
-genEventReturnType ctx domainName eventElt = maybe emptyParams genNonEmptyParams eveltsM
+genEventReturnType ctx domainName eventElt = T.unlines . (desc :) . pure $
+    maybe emptyParams genNonEmptyParams eveltsM
   where
+    desc = formatDescription "" $ "Type of the '" <> 
+        (eventName domainName eventElt) <> "' event."
     emptyParams = T.unlines 
         [ T.unwords ["data", evrn, "=", evrn]
         , space 4 <> derivingBase
@@ -201,11 +207,19 @@ genEventReturnType ctx domainName eventElt = maybe emptyParams genNonEmptyParams
 
 genCommand :: Context -> T.Text -> D.CommandsElt -> T.Text
 genCommand ctx domainName commandElt = T.unlines . catMaybes $
-    [ paramsTypeDef
+    [ ((pdesc <> "\n") <>) <$> paramsTypeDef
+    , Just desc
     , Just $ genCommandFn ctx (peltsM == Nothing) (reltsM == Nothing) cn ptn rtn
     , returns
     ]
   where
+    pdesc = formatDescription "" $ "Parameters of the '" <> (commandFnName rtn) <> "' command."
+    desc = let td = "Function for the command '" <> cn <> "'.\n" in
+        T.intercalate "\n" . catMaybes $ 
+            [ Just $ formatDescription td . (td <>) . maybe "" fromAltLeft $ D.commandsEltDescription commandElt
+            , const ("-- Parameters: '" <> ptn <> "'") <$> peltsM
+            , const ("-- Returns: '" <> rtn <> "'")    <$> reltsM
+            ]
     cn   = commandName domainName commandElt 
     ptn  = commandParamsNameHS domainName commandElt
     rtn  = commandNameHS domainName commandElt 
@@ -252,21 +266,24 @@ genCommandFn _ isEmptyParams isEmptyReturn commandName paramsTypeName returnType
         , if isEmptyParams then "(Nothing :: Maybe ())" else "(Just params)"
         ]
     returnTypeSig  = if isEmptyReturn then emptyReturnSig else resultReturnSig returnTypeName
-    fnName         = uncapitalizeFirst returnTypeName
+    fnName         = commandFnName returnTypeName
 
 genParamsType :: Context -> T.Text -> T.Text -> [D.ParametersElt] -> T.Text
 genParamsType ctx domainName paramsTypeName []        = genTypeSynonynm ctx domainName paramsTypeName
-genParamsType ctx domainName paramsTypeName paramElts = T.unlines
+genParamsType ctx domainName paramsTypeName paramElts = T.unlines . filter ((> 0) . T.length) $
     [ T.unlines enumDecls
     , T.unwords ["data", paramsTypeName, "=", paramsTypeName, "{"]
-    , T.intercalate ",\n" $ fields
+    , T.intercalate "\n" fields
     , "} " <> derivingGeneric
     , genToJSONInstance paramsTypeName
     , genFromJSONInstance paramsTypeName
     ]
   where
-    fields = map toField fieldSigDecls
-    toField (fn, ftn, _) = T.unwords [space 3, fn, "::", ftn]
+    fields = formatFieldDescription . map toField $ paramElts
+    toField pelt = (T.unwords [space 3, fn, "::", ftn], fmap fromAltLeft $ D.parametersEltDescription pelt)
+      where
+        ftn = tyNameHS "" fn
+        fn = fieldNameHS paramsTypeName . D.parametersEltName $ pelt
 
     enumDecls    = catMaybes . map (\(_,_,d) -> d) $ fieldSigDecls
     fieldSigDecls = map peltToFieldSigDecl paramElts
@@ -286,12 +303,16 @@ genTypeSynonynm ctx domainName typeName = T.unwords ["type", typeName, "=", type
 
 genReturnType :: Context -> T.Text -> T.Text -> [D.ReturnsElt] -> T.Text
 genReturnType ctx domainName returnTypeName returnElts = T.unlines
-    [ T.unwords ["data", returnTypeName, "=", returnTypeName, "{"]
-    , T.intercalate ",\n" $ fields
+    [ desc
+    , T.unwords ["data", returnTypeName, "=", returnTypeName, "{"]
+    , T.intercalate "\n" fields
     , "} " <> derivingGeneric
     ]
   where
-    fields = map ((space 4 <>) . reltToField) $ returnElts
+    desc = formatDescription "" $ "Return type of the '" <> 
+        (commandFnName returnTypeName) <> "' command."
+    fields = formatFieldDescription . 
+        map (((space 4 <>) . reltToField) &&& fmap fromAltLeft . D.returnsEltDescription) $ returnElts
     reltToField relt = T.unwords
         [ fieldNameHS returnTypeName . D.returnsEltName $ relt
         , "::"
@@ -304,6 +325,38 @@ genReturnType ctx domainName returnTypeName returnElts = T.unlines
             (D.returnsEltItems relt)
             
 ----------- Generation rules ----------- 
+----- Docs    -----
+formatComponentDescription :: Component -> T.Text
+formatComponentDescription component = T.unlines
+    [ "{- |"
+    , T.intercalate "\n" $ map f delts
+    , "-}"
+    ]
+  where
+    f delt = T.unwords 
+        [ space 2
+        , domainName delt
+        , flip (maybe "") (D.domainsEltDescription delt) $ \descAltM -> 
+                (":\n" <>) . T.unlines . map (space 6 <>) . T.lines $ 
+                fromAltLeft $
+                descAltM
+        ]
+    delts  = map fst . Map.elems . cDomDeps $ component
+
+formatDescription :: T.Text -> T.Text -> T.Text
+formatDescription alt desc = go $ T.lines desc 
+  where
+    go []      = alt
+    go (hd:tl) = T.intercalate "\n" $ ("-- | " <> hd) : map ("-- " <>) tl
+
+formatFieldDescription :: [(T.Text, Maybe T.Text)] -> [T.Text]
+formatFieldDescription fieldDescs = go fieldDescs
+  where
+    go [] = error "formatFieldDescription: got 0 fields"
+    go xs = map (\(field, descM) -> f (field <> ",", descM)) (init xs) ++
+        [f $ last xs]
+    
+    f (field,descM) = maybe "" ((field <> " -- ^ ") <>) descM
 
 ----- Imports -----
 importDomain :: Bool -> T.Text -> T.Text 
@@ -416,7 +469,7 @@ convertType ctx domain s = case T.splitOn "." s of
 -}
 
 domainToComponentName :: Context -> T.Text -> ComponentName
-domainToComponentName ctx domainName = cName . (flip (Map.!) domainName) . ctDomainComponents $ ctx 
+domainToComponentName ctx domainName = cName . (flip (Map.!) domainName) . ctxDomainComponents $ ctx 
 
 newtype ComponentName = ComponentName { unComponentName :: T.Text }
     deriving (Show, Eq, Ord)
@@ -558,6 +611,8 @@ eventName   domainName ev = (domainName <>) . ("." <>) . D.eventsEltName $ ev
 eventNameHS :: T.Text -> D.EventsElt -> T.Text
 eventNameHS domainName ev = tyNameHS domainName (D.eventsEltName ev)
 
+commandFnName :: T.Text -> T.Text
+commandFnName = uncapitalizeFirst
 commandName   :: T.Text -> D.CommandsElt -> T.Text
 commandName domainName c = (domainName <>) . ("." <>) . D.commandsEltName $ c
 commandNameHS :: T.Text -> D.CommandsElt -> T.Text

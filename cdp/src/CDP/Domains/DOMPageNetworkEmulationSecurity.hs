@@ -5,6 +5,32 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
 
+{- |
+  DOM :
+     This domain exposes DOM read/write operations. Each DOM Node is represented with its mirror object
+     that has an `id`. This `id` can be used to get additional information on the Node, resolve it into
+     the JavaScript object wrapper, etc. It is important that client receives DOM events only for the
+     nodes that are known to the client. Backend keeps track of the nodes that were sent to the client
+     and never sends the same node twice. It is client's responsibility to collect information about
+     the nodes that were sent to the client.<p>Note that `iframe` owner elements will return
+     corresponding document elements as their child nodes.</p>
+
+  Emulation :
+     This domain emulates different environments for the page.
+
+  Network :
+     Network domain allows tracking network activities of the page. It exposes information about http,
+     file, data and other requests and responses, their headers, bodies, timing, etc.
+
+  Page :
+     Actions and events related to the inspected page belong to the page domain.
+
+  Security :
+     Security
+
+-}
+
+
 module CDP.Domains.DOMPageNetworkEmulationSecurity (module CDP.Domains.DOMPageNetworkEmulationSecurity) where
 
 import           Control.Applicative  ((<$>))
@@ -43,13 +69,18 @@ import CDP.Domains.IO as IO
 import CDP.Domains.Runtime as Runtime
 
 
+-- | Unique DOM node identifier.
 type DomNodeId = Int
+
+-- | Unique DOM node identifier used to reference a node that may not have been pushed to the
+-- front-end.
 type DomBackendNodeId = Int
 
+-- | Backend node with a friendly name.
 data DomBackendNode = DomBackendNode {
-   domBackendNodeNodeType :: Int,
-   domBackendNodeNodeName :: String,
-   domBackendNodeBackendNodeId :: DomBackendNodeId
+   domBackendNodeNodeType :: DomBackendNodeNodeType, -- ^ `Node`'s nodeType.
+   domBackendNodeNodeName :: DomBackendNodeNodeName, -- ^ `Node`'s nodeName.
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomBackendNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
@@ -58,6 +89,8 @@ instance FromJSON  DomBackendNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
+
+-- | Pseudo element type.
 data DomPseudoType = DomPseudoTypeFirstLine | DomPseudoTypeFirstLetter | DomPseudoTypeBefore | DomPseudoTypeAfter | DomPseudoTypeMarker | DomPseudoTypeBackdrop | DomPseudoTypeSelection | DomPseudoTypeTargetText | DomPseudoTypeSpellingError | DomPseudoTypeGrammarError | DomPseudoTypeHighlight | DomPseudoTypeFirstLineInherited | DomPseudoTypeScrollbar | DomPseudoTypeScrollbarThumb | DomPseudoTypeScrollbarButton | DomPseudoTypeScrollbarTrack | DomPseudoTypeScrollbarTrackPiece | DomPseudoTypeScrollbarCorner | DomPseudoTypeResizer | DomPseudoTypeInputListButton | DomPseudoTypePageTransition | DomPseudoTypePageTransitionContainer | DomPseudoTypePageTransitionImageWrapper | DomPseudoTypePageTransitionOutgoingImage | DomPseudoTypePageTransitionIncomingImage
    deriving (Ord, Eq, Show, Read)
 instance FromJSON DomPseudoType where
@@ -120,6 +153,8 @@ instance ToJSON DomPseudoType where
          DomPseudoTypePageTransitionIncomingImage -> "page-transition-incoming-image"
 
 
+
+-- | Shadow root type.
 data DomShadowRootType = DomShadowRootTypeUserAgent | DomShadowRootTypeOpen | DomShadowRootTypeClosed
    deriving (Ord, Eq, Show, Read)
 instance FromJSON DomShadowRootType where
@@ -138,6 +173,8 @@ instance ToJSON DomShadowRootType where
          DomShadowRootTypeClosed -> "closed"
 
 
+
+-- | Document compatibility mode.
 data DomCompatibilityMode = DomCompatibilityModeQuirksMode | DomCompatibilityModeLimitedQuirksMode | DomCompatibilityModeNoQuirksMode
    deriving (Ord, Eq, Show, Read)
 instance FromJSON DomCompatibilityMode where
@@ -157,36 +194,40 @@ instance ToJSON DomCompatibilityMode where
 
 
 
+-- | DOM interaction is implemented in terms of mirror objects that represent the actual DOM nodes.
+-- DOMNode is a base node mirror type.
 data DomNode = DomNode {
-   domNodeNodeId :: DomNodeId,
-   domNodeParentId :: Maybe DomNodeId,
-   domNodeBackendNodeId :: DomBackendNodeId,
-   domNodeNodeType :: Int,
-   domNodeNodeName :: String,
-   domNodeLocalName :: String,
-   domNodeNodeValue :: String,
-   domNodeChildNodeCount :: Maybe Int,
-   domNodeChildren :: Maybe [DomNode],
-   domNodeAttributes :: Maybe [String],
-   domNodeDocumentUrl :: Maybe String,
-   domNodeBaseUrl :: Maybe String,
-   domNodePublicId :: Maybe String,
-   domNodeSystemId :: Maybe String,
-   domNodeInternalSubset :: Maybe String,
-   domNodeXmlVersion :: Maybe String,
-   domNodeName :: Maybe String,
-   domNodeValue :: Maybe String,
-   domNodePseudoType :: Maybe DomPseudoType,
-   domNodeShadowRootType :: Maybe DomShadowRootType,
-   domNodeFrameId :: Maybe PageFrameId,
-   domNodeContentDocument :: Maybe DomNode,
-   domNodeShadowRoots :: Maybe [DomNode],
-   domNodeTemplateContent :: Maybe DomNode,
-   domNodePseudoElements :: Maybe [DomNode],
-   domNodeDistributedNodes :: Maybe [DomBackendNode],
-   domNodeIsSvg :: Maybe Bool,
-   domNodeCompatibilityMode :: Maybe DomCompatibilityMode,
-   domNodeAssignedSlot :: Maybe DomBackendNode
+   domNodeNodeId :: DomNodeNodeId, -- ^ Node identifier that is passed into the rest of the DOM messages as the `nodeId`. Backend
+will only push node with given `id` once. It is aware of all requested nodes and will only
+fire DOM events for nodes known to the client.
+   domNodeParentId :: DomNodeParentId, -- ^ The id of the parent node if any.
+   domNodeBackendNodeId :: DomNodeBackendNodeId, -- ^ The BackendNodeId for this node.
+   domNodeNodeType :: DomNodeNodeType, -- ^ `Node`'s nodeType.
+   domNodeNodeName :: DomNodeNodeName, -- ^ `Node`'s nodeName.
+   domNodeLocalName :: DomNodeLocalName, -- ^ `Node`'s localName.
+   domNodeNodeValue :: DomNodeNodeValue, -- ^ `Node`'s nodeValue.
+   domNodeChildNodeCount :: DomNodeChildNodeCount, -- ^ Child count for `Container` nodes.
+   domNodeChildren :: DomNodeChildren, -- ^ Child nodes of this node when requested with children.
+   domNodeAttributes :: DomNodeAttributes, -- ^ Attributes of the `Element` node in the form of flat array `[name1, value1, name2, value2]`.
+   domNodeDocumentUrl :: DomNodeDocumentUrl, -- ^ Document URL that `Document` or `FrameOwner` node points to.
+   domNodeBaseUrl :: DomNodeBaseUrl, -- ^ Base URL that `Document` or `FrameOwner` node uses for URL completion.
+   domNodePublicId :: DomNodePublicId, -- ^ `DocumentType`'s publicId.
+   domNodeSystemId :: DomNodeSystemId, -- ^ `DocumentType`'s systemId.
+   domNodeInternalSubset :: DomNodeInternalSubset, -- ^ `DocumentType`'s internalSubset.
+   domNodeXmlVersion :: DomNodeXmlVersion, -- ^ `Document`'s XML version in case of XML documents.
+   domNodeName :: DomNodeName, -- ^ `Attr`'s name.
+   domNodeValue :: DomNodeValue, -- ^ `Attr`'s value.
+   domNodePseudoType :: DomNodePseudoType, -- ^ Pseudo element type for this node.
+   domNodeShadowRootType :: DomNodeShadowRootType, -- ^ Shadow root type.
+   domNodeFrameId :: DomNodeFrameId, -- ^ Frame ID for frame owner elements.
+   domNodeContentDocument :: DomNodeContentDocument, -- ^ Content document for frame owner elements.
+   domNodeShadowRoots :: DomNodeShadowRoots, -- ^ Shadow root list for given element host.
+   domNodeTemplateContent :: DomNodeTemplateContent, -- ^ Content document fragment for template elements.
+   domNodePseudoElements :: DomNodePseudoElements, -- ^ Pseudo elements associated with this node.
+   domNodeDistributedNodes :: DomNodeDistributedNodes, -- ^ Distributed nodes for given insertion point.
+   domNodeIsSvg :: DomNodeIsSvg, -- ^ Whether the node is SVG.
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 , A.omitNothingFields = True}
@@ -196,11 +237,12 @@ instance FromJSON  DomNode where
 
 
 
+-- | A structure holding an RGBA color.
 data DomRgba = DomRgba {
-   domRgbaR :: Int,
-   domRgbaG :: Int,
-   domRgbaB :: Int,
-   domRgbaA :: Maybe Double
+   domRgbaR :: DomRgbaR, -- ^ The red component, in the [0-255] range.
+   domRgbaG :: DomRgbaG, -- ^ The green component, in the [0-255] range.
+   domRgbaB :: DomRgbaB, -- ^ The blue component, in the [0-255] range.
+   domRgbaA :: DomRgbaA -- ^ The alpha component, in the [0-1] range (default: 1).
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomRgba  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 , A.omitNothingFields = True}
@@ -209,16 +251,19 @@ instance FromJSON  DomRgba where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 }
 
 
+
+-- | An array of quad vertices, x immediately followed by y for each point, points clock-wise.
 type DomQuad = [Double]
 
+-- | Box model.
 data DomBoxModel = DomBoxModel {
-   domBoxModelContent :: DomQuad,
-   domBoxModelPadding :: DomQuad,
-   domBoxModelBorder :: DomQuad,
-   domBoxModelMargin :: DomQuad,
-   domBoxModelWidth :: Int,
-   domBoxModelHeight :: Int,
-   domBoxModelShapeOutside :: Maybe DomShapeOutsideInfo
+   domBoxModelContent :: DomBoxModelContent, -- ^ Content box
+   domBoxModelPadding :: DomBoxModelPadding, -- ^ Padding box
+   domBoxModelBorder :: DomBoxModelBorder, -- ^ Border box
+   domBoxModelMargin :: DomBoxModelMargin, -- ^ Margin box
+   domBoxModelWidth :: DomBoxModelWidth, -- ^ Node width
+   domBoxModelHeight :: DomBoxModelHeight, -- ^ Node height
+   domBoxModelShapeOutside :: DomBoxModelShapeOutside -- ^ Shape outside coordinates
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomBoxModel  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 , A.omitNothingFields = True}
@@ -228,10 +273,11 @@ instance FromJSON  DomBoxModel where
 
 
 
+-- | CSS Shape Outside details.
 data DomShapeOutsideInfo = DomShapeOutsideInfo {
-   domShapeOutsideInfoBounds :: DomQuad,
-   domShapeOutsideInfoShape :: [Int],
-   domShapeOutsideInfoMarginShape :: [Int]
+   domShapeOutsideInfoBounds :: DomShapeOutsideInfoBounds, -- ^ Shape bounds
+   domShapeOutsideInfoShape :: DomShapeOutsideInfoShape, -- ^ Shape coordinate details
+   domShapeOutsideInfoMarginShape :: DomShapeOutsideInfoMarginShape -- ^ Margin shape bounds
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomShapeOutsideInfo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -241,11 +287,12 @@ instance FromJSON  DomShapeOutsideInfo where
 
 
 
+-- | Rectangle.
 data DomRect = DomRect {
-   domRectX :: Double,
-   domRectY :: Double,
-   domRectWidth :: Double,
-   domRectHeight :: Double
+   domRectX :: DomRectX, -- ^ X coordinate
+   domRectY :: DomRectY, -- ^ Y coordinate
+   domRectWidth :: DomRectWidth, -- ^ Rectangle width
+   domRectHeight :: DomRectHeight -- ^ Rectangle height
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomRect  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 , A.omitNothingFields = True}
@@ -255,9 +302,10 @@ instance FromJSON  DomRect where
 
 
 
+-- | Type 'DOM.CSSComputedStyleProperty' .
 data DomCssComputedStyleProperty = DomCssComputedStyleProperty {
-   domCssComputedStylePropertyName :: String,
-   domCssComputedStylePropertyValue :: String
+   domCssComputedStylePropertyName :: DomCssComputedStylePropertyName, -- ^ Computed style property name.
+   domCssComputedStylePropertyValue :: DomCssComputedStylePropertyValue -- ^ Computed style property value.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomCssComputedStyleProperty  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -269,10 +317,11 @@ instance FromJSON  DomCssComputedStyleProperty where
 
 
 
+-- | Type of the 'DOM.attributeModified' event.
 data DomAttributeModified = DomAttributeModified {
-   domAttributeModifiedNodeId :: DomNodeId,
-   domAttributeModifiedName :: String,
-   domAttributeModifiedValue :: String
+   domAttributeModifiedNodeId :: DomAttributeModifiedNodeId, -- ^ Id of the node that has changed.
+   domAttributeModifiedName :: DomAttributeModifiedName, -- ^ Attribute name.
+   domAttributeModifiedValue :: DomAttributeModifiedValue -- ^ Attribute value.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomAttributeModified  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -282,9 +331,10 @@ instance FromJSON  DomAttributeModified where
 
 
 
+-- | Type of the 'DOM.attributeRemoved' event.
 data DomAttributeRemoved = DomAttributeRemoved {
-   domAttributeRemovedNodeId :: DomNodeId,
-   domAttributeRemovedName :: String
+   domAttributeRemovedNodeId :: DomAttributeRemovedNodeId, -- ^ Id of the node that has changed.
+   domAttributeRemovedName :: DomAttributeRemovedName -- ^ A ttribute name.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomAttributeRemoved  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -294,9 +344,10 @@ instance FromJSON  DomAttributeRemoved where
 
 
 
+-- | Type of the 'DOM.characterDataModified' event.
 data DomCharacterDataModified = DomCharacterDataModified {
-   domCharacterDataModifiedNodeId :: DomNodeId,
-   domCharacterDataModifiedCharacterData :: String
+   domCharacterDataModifiedNodeId :: DomCharacterDataModifiedNodeId, -- ^ Id of the node that has changed.
+   domCharacterDataModifiedCharacterData :: DomCharacterDataModifiedCharacterData -- ^ New text value.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomCharacterDataModified  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -306,9 +357,10 @@ instance FromJSON  DomCharacterDataModified where
 
 
 
+-- | Type of the 'DOM.childNodeCountUpdated' event.
 data DomChildNodeCountUpdated = DomChildNodeCountUpdated {
-   domChildNodeCountUpdatedNodeId :: DomNodeId,
-   domChildNodeCountUpdatedChildNodeCount :: Int
+   domChildNodeCountUpdatedNodeId :: DomChildNodeCountUpdatedNodeId, -- ^ Id of the node that has changed.
+   domChildNodeCountUpdatedChildNodeCount :: DomChildNodeCountUpdatedChildNodeCount -- ^ New node count.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomChildNodeCountUpdated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -318,10 +370,11 @@ instance FromJSON  DomChildNodeCountUpdated where
 
 
 
+-- | Type of the 'DOM.childNodeInserted' event.
 data DomChildNodeInserted = DomChildNodeInserted {
-   domChildNodeInsertedParentNodeId :: DomNodeId,
-   domChildNodeInsertedPreviousNodeId :: DomNodeId,
-   domChildNodeInsertedNode :: DomNode
+   domChildNodeInsertedParentNodeId :: DomChildNodeInsertedParentNodeId, -- ^ Id of the node that has changed.
+   domChildNodeInsertedPreviousNodeId :: DomChildNodeInsertedPreviousNodeId, -- ^ If of the previous siblint.
+   domChildNodeInsertedNode :: DomChildNodeInsertedNode -- ^ Inserted node data.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomChildNodeInserted  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -331,9 +384,10 @@ instance FromJSON  DomChildNodeInserted where
 
 
 
+-- | Type of the 'DOM.childNodeRemoved' event.
 data DomChildNodeRemoved = DomChildNodeRemoved {
-   domChildNodeRemovedParentNodeId :: DomNodeId,
-   domChildNodeRemovedNodeId :: DomNodeId
+   domChildNodeRemovedParentNodeId :: DomChildNodeRemovedParentNodeId, -- ^ Parent id.
+   domChildNodeRemovedNodeId :: DomChildNodeRemovedNodeId -- ^ Id of the node that has been removed.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomChildNodeRemoved  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -343,9 +397,10 @@ instance FromJSON  DomChildNodeRemoved where
 
 
 
+-- | Type of the 'DOM.distributedNodesUpdated' event.
 data DomDistributedNodesUpdated = DomDistributedNodesUpdated {
-   domDistributedNodesUpdatedInsertionPointId :: DomNodeId,
-   domDistributedNodesUpdatedDistributedNodes :: [DomBackendNode]
+   domDistributedNodesUpdatedInsertionPointId :: DomDistributedNodesUpdatedInsertionPointId, -- ^ Insertion point where distributed nodes were updated.
+   domDistributedNodesUpdatedDistributedNodes :: DomDistributedNodesUpdatedDistributedNodes -- ^ Distributed nodes for given insertion point.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomDistributedNodesUpdated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -354,6 +409,8 @@ instance FromJSON  DomDistributedNodesUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
+
+-- | Type of the 'DOM.documentUpdated' event.
 data DomDocumentUpdated = DomDocumentUpdated
    deriving (Eq, Show, Read)
 instance FromJSON DomDocumentUpdated where
@@ -364,8 +421,9 @@ instance FromJSON DomDocumentUpdated where
 
 
 
+-- | Type of the 'DOM.inlineStyleInvalidated' event.
 data DomInlineStyleInvalidated = DomInlineStyleInvalidated {
-   domInlineStyleInvalidatedNodeIds :: [DomNodeId]
+   domInlineStyleInvalidatedNodeIds :: DomInlineStyleInvalidatedNodeIds -- ^ Ids of the nodes for which the inline styles have been invalidated.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomInlineStyleInvalidated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -375,9 +433,10 @@ instance FromJSON  DomInlineStyleInvalidated where
 
 
 
+-- | Type of the 'DOM.pseudoElementAdded' event.
 data DomPseudoElementAdded = DomPseudoElementAdded {
-   domPseudoElementAddedParentId :: DomNodeId,
-   domPseudoElementAddedPseudoElement :: DomNode
+   domPseudoElementAddedParentId :: DomPseudoElementAddedParentId, -- ^ Pseudo element's parent element id.
+   domPseudoElementAddedPseudoElement :: DomPseudoElementAddedPseudoElement -- ^ The added pseudo element.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomPseudoElementAdded  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -387,9 +446,10 @@ instance FromJSON  DomPseudoElementAdded where
 
 
 
+-- | Type of the 'DOM.pseudoElementRemoved' event.
 data DomPseudoElementRemoved = DomPseudoElementRemoved {
-   domPseudoElementRemovedParentId :: DomNodeId,
-   domPseudoElementRemovedPseudoElementId :: DomNodeId
+   domPseudoElementRemovedParentId :: DomPseudoElementRemovedParentId, -- ^ Pseudo element's parent element id.
+   domPseudoElementRemovedPseudoElementId :: DomPseudoElementRemovedPseudoElementId -- ^ The removed pseudo element id.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomPseudoElementRemoved  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -399,9 +459,10 @@ instance FromJSON  DomPseudoElementRemoved where
 
 
 
+-- | Type of the 'DOM.setChildNodes' event.
 data DomSetChildNodes = DomSetChildNodes {
-   domSetChildNodesParentId :: DomNodeId,
-   domSetChildNodesNodes :: [DomNode]
+   domSetChildNodesParentId :: DomSetChildNodesParentId, -- ^ Parent node id to populate with children.
+   domSetChildNodesNodes :: DomSetChildNodesNodes -- ^ Child nodes array.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomSetChildNodes  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -411,9 +472,10 @@ instance FromJSON  DomSetChildNodes where
 
 
 
+-- | Type of the 'DOM.shadowRootPopped' event.
 data DomShadowRootPopped = DomShadowRootPopped {
-   domShadowRootPoppedHostId :: DomNodeId,
-   domShadowRootPoppedRootId :: DomNodeId
+   domShadowRootPoppedHostId :: DomShadowRootPoppedHostId, -- ^ Host element id.
+   domShadowRootPoppedRootId :: DomShadowRootPoppedRootId -- ^ Shadow root id.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomShadowRootPopped  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -423,9 +485,10 @@ instance FromJSON  DomShadowRootPopped where
 
 
 
+-- | Type of the 'DOM.shadowRootPushed' event.
 data DomShadowRootPushed = DomShadowRootPushed {
-   domShadowRootPushedHostId :: DomNodeId,
-   domShadowRootPushedRoot :: DomNode
+   domShadowRootPushedHostId :: DomShadowRootPushedHostId, -- ^ Host element id.
+   domShadowRootPushedRoot :: DomShadowRootPushedRoot -- ^ Shadow root.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomShadowRootPushed  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -437,8 +500,9 @@ instance FromJSON  DomShadowRootPushed where
 
 
 
+-- | Parameters of the 'domCollectClassNamesFromSubtree' command.
 data PDomCollectClassNamesFromSubtree = PDomCollectClassNamesFromSubtree {
-   pDomCollectClassNamesFromSubtreeNodeId :: DomNodeId
+   pDomCollectClassNamesFromSubtreeNodeId :: PDomCollectClassNamesFromSubtreeNodeId -- ^ Id of the node to collect class names.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomCollectClassNamesFromSubtree  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
@@ -447,11 +511,16 @@ instance FromJSON  PDomCollectClassNamesFromSubtree where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
+-- | Function for the command 'DOM.collectClassNamesFromSubtree'.
+-- Collects class names for the node with given id and all of it's child nodes.
+-- Parameters: 'PDomCollectClassNamesFromSubtree'
+-- Returns: 'DomCollectClassNamesFromSubtree'
 domCollectClassNamesFromSubtree :: Handle ev -> PDomCollectClassNamesFromSubtree -> IO (Either Error DomCollectClassNamesFromSubtree)
 domCollectClassNamesFromSubtree handle params = sendReceiveCommandResult handle "DOM.collectClassNamesFromSubtree" (Just params)
 
+-- | Return type of the 'domCollectClassNamesFromSubtree' command.
 data DomCollectClassNamesFromSubtree = DomCollectClassNamesFromSubtree {
-   domCollectClassNamesFromSubtreeClassNames :: [String]
+   domCollectClassNamesFromSubtreeClassNames :: [String] -- ^ Class name list.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomCollectClassNamesFromSubtree where
@@ -462,11 +531,12 @@ instance Command DomCollectClassNamesFromSubtree where
 
 
 
-
+-- | Parameters of the 'domCopyTo' command.
 data PDomCopyTo = PDomCopyTo {
-   pDomCopyToNodeId :: DomNodeId,
-   pDomCopyToTargetNodeId :: DomNodeId,
-   pDomCopyToInsertBeforeNodeId :: Maybe DomNodeId
+   pDomCopyToNodeId :: PDomCopyToNodeId, -- ^ Id of the node to copy.
+   pDomCopyToTargetNodeId :: PDomCopyToTargetNodeId, -- ^ Id of the element to drop the copy into.
+   pDomCopyToInsertBeforeNodeId :: PDomCopyToInsertBeforeNodeId -- ^ Drop the copy before this node (if absent, the copy becomes the last child of
+`targetNodeId`).
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomCopyTo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 , A.omitNothingFields = True}
@@ -475,11 +545,17 @@ instance FromJSON  PDomCopyTo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 }
 
 
+-- | Function for the command 'DOM.copyTo'.
+-- Creates a deep copy of the specified node and places it into the target container before the
+-- given anchor.
+-- Parameters: 'PDomCopyTo'
+-- Returns: 'DomCopyTo'
 domCopyTo :: Handle ev -> PDomCopyTo -> IO (Either Error DomCopyTo)
 domCopyTo handle params = sendReceiveCommandResult handle "DOM.copyTo" (Just params)
 
+-- | Return type of the 'domCopyTo' command.
 data DomCopyTo = DomCopyTo {
-   domCopyToNodeId :: DomNodeId
+   domCopyToNodeId :: DomNodeId -- ^ Id of the node clone.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomCopyTo where
@@ -490,13 +566,15 @@ instance Command DomCopyTo where
 
 
 
-
+-- | Parameters of the 'domDescribeNode' command.
 data PDomDescribeNode = PDomDescribeNode {
-   pDomDescribeNodeNodeId :: Maybe DomNodeId,
-   pDomDescribeNodeBackendNodeId :: Maybe DomBackendNodeId,
-   pDomDescribeNodeObjectId :: Maybe Runtime.RuntimeRemoteObjectId,
-   pDomDescribeNodeDepth :: Maybe Int,
-   pDomDescribeNodePierce :: Maybe Bool
+   pDomDescribeNodeNodeId :: PDomDescribeNodeNodeId, -- ^ Identifier of the node.
+   pDomDescribeNodeBackendNodeId :: PDomDescribeNodeBackendNodeId, -- ^ Identifier of the backend node.
+   pDomDescribeNodeObjectId :: PDomDescribeNodeObjectId, -- ^ JavaScript object id of the node wrapper.
+   pDomDescribeNodeDepth :: PDomDescribeNodeDepth, -- ^ The maximum depth at which children should be retrieved, defaults to 1. Use -1 for the
+entire subtree or provide an integer larger than 0.
+   pDomDescribeNodePierce :: PDomDescribeNodePierce -- ^ Whether or not iframes and shadow roots should be traversed when returning the subtree
+(default is false).
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomDescribeNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -505,11 +583,17 @@ instance FromJSON  PDomDescribeNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
+-- | Function for the command 'DOM.describeNode'.
+-- Describes node given its id, does not require domain to be enabled. Does not start tracking any
+-- objects, can be used for automation.
+-- Parameters: 'PDomDescribeNode'
+-- Returns: 'DomDescribeNode'
 domDescribeNode :: Handle ev -> PDomDescribeNode -> IO (Either Error DomDescribeNode)
 domDescribeNode handle params = sendReceiveCommandResult handle "DOM.describeNode" (Just params)
 
+-- | Return type of the 'domDescribeNode' command.
 data DomDescribeNode = DomDescribeNode {
-   domDescribeNodeNode :: DomNode
+   domDescribeNodeNode :: DomNode -- ^ Node description.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomDescribeNode where
@@ -520,12 +604,13 @@ instance Command DomDescribeNode where
 
 
 
-
+-- | Parameters of the 'domScrollIntoViewIfNeeded' command.
 data PDomScrollIntoViewIfNeeded = PDomScrollIntoViewIfNeeded {
-   pDomScrollIntoViewIfNeededNodeId :: Maybe DomNodeId,
-   pDomScrollIntoViewIfNeededBackendNodeId :: Maybe DomBackendNodeId,
-   pDomScrollIntoViewIfNeededObjectId :: Maybe Runtime.RuntimeRemoteObjectId,
-   pDomScrollIntoViewIfNeededRect :: Maybe DomRect
+   pDomScrollIntoViewIfNeededNodeId :: PDomScrollIntoViewIfNeededNodeId, -- ^ Identifier of the node.
+   pDomScrollIntoViewIfNeededBackendNodeId :: PDomScrollIntoViewIfNeededBackendNodeId, -- ^ Identifier of the backend node.
+   pDomScrollIntoViewIfNeededObjectId :: PDomScrollIntoViewIfNeededObjectId, -- ^ JavaScript object id of the node wrapper.
+   pDomScrollIntoViewIfNeededRect :: PDomScrollIntoViewIfNeededRect -- ^ The rect to be scrolled into view, relative to the node's border box, in CSS pixels.
+When omitted, center of the node will be used, similar to Element.scrollIntoView.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomScrollIntoViewIfNeeded  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -534,17 +619,24 @@ instance FromJSON  PDomScrollIntoViewIfNeeded where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
+-- | Function for the command 'DOM.scrollIntoViewIfNeeded'.
+-- Scrolls the specified rect of the given node into view if not already visible.
+-- Note: exactly one between nodeId, backendNodeId and objectId should be passed
+-- to identify the node.
+-- Parameters: 'PDomScrollIntoViewIfNeeded'
 domScrollIntoViewIfNeeded :: Handle ev -> PDomScrollIntoViewIfNeeded -> IO (Maybe Error)
 domScrollIntoViewIfNeeded handle params = sendReceiveCommand handle "DOM.scrollIntoViewIfNeeded" (Just params)
 
 
+-- | Function for the command 'DOM.disable'.
+-- Disables DOM agent for the given page.
 domDisable :: Handle ev -> IO (Maybe Error)
 domDisable handle = sendReceiveCommand handle "DOM.disable" (Nothing :: Maybe ())
 
 
-
+-- | Parameters of the 'domDiscardSearchResults' command.
 data PDomDiscardSearchResults = PDomDiscardSearchResults {
-   pDomDiscardSearchResultsSearchId :: String
+   pDomDiscardSearchResultsSearchId :: PDomDiscardSearchResultsSearchId -- ^ Unique search session identifier.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomDiscardSearchResults  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -553,10 +645,15 @@ instance FromJSON  PDomDiscardSearchResults where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
+-- | Function for the command 'DOM.discardSearchResults'.
+-- Discards search results from the session with the given id. `getSearchResults` should no longer
+-- be called for that search.
+-- Parameters: 'PDomDiscardSearchResults'
 domDiscardSearchResults :: Handle ev -> PDomDiscardSearchResults -> IO (Maybe Error)
 domDiscardSearchResults handle params = sendReceiveCommand handle "DOM.discardSearchResults" (Just params)
 
 
+-- | Parameters of the 'domEnable' command.
 data PDomEnableIncludeWhitespace = PDomEnableIncludeWhitespaceNone | PDomEnableIncludeWhitespaceAll
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PDomEnableIncludeWhitespace where
@@ -575,7 +672,7 @@ instance ToJSON PDomEnableIncludeWhitespace where
 
 
 data PDomEnable = PDomEnable {
-   pDomEnableIncludeWhitespace :: PDomEnableIncludeWhitespace
+   pDomEnableIncludeWhitespace :: PDomEnableIncludeWhitespace -- ^ Whether to include whitespaces in the children array of returned Nodes.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomEnable  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 , A.omitNothingFields = True}
@@ -584,15 +681,18 @@ instance FromJSON  PDomEnable where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 }
 
 
+-- | Function for the command 'DOM.enable'.
+-- Enables DOM agent for the given page.
+-- Parameters: 'PDomEnable'
 domEnable :: Handle ev -> PDomEnable -> IO (Maybe Error)
 domEnable handle params = sendReceiveCommand handle "DOM.enable" (Just params)
 
 
-
+-- | Parameters of the 'domFocus' command.
 data PDomFocus = PDomFocus {
-   pDomFocusNodeId :: Maybe DomNodeId,
-   pDomFocusBackendNodeId :: Maybe DomBackendNodeId,
-   pDomFocusObjectId :: Maybe Runtime.RuntimeRemoteObjectId
+   pDomFocusNodeId :: PDomFocusNodeId, -- ^ Identifier of the node.
+   pDomFocusBackendNodeId :: PDomFocusBackendNodeId, -- ^ Identifier of the backend node.
+   pDomFocusObjectId :: PDomFocusObjectId -- ^ JavaScript object id of the node wrapper.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomFocus  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 9 , A.omitNothingFields = True}
@@ -601,13 +701,16 @@ instance FromJSON  PDomFocus where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 9 }
 
 
+-- | Function for the command 'DOM.focus'.
+-- Focuses the given element.
+-- Parameters: 'PDomFocus'
 domFocus :: Handle ev -> PDomFocus -> IO (Maybe Error)
 domFocus handle params = sendReceiveCommand handle "DOM.focus" (Just params)
 
 
-
+-- | Parameters of the 'domGetAttributes' command.
 data PDomGetAttributes = PDomGetAttributes {
-   pDomGetAttributesNodeId :: DomNodeId
+   pDomGetAttributesNodeId :: PDomGetAttributesNodeId -- ^ Id of the node to retrieve attibutes for.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomGetAttributes  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -616,11 +719,16 @@ instance FromJSON  PDomGetAttributes where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
+-- | Function for the command 'DOM.getAttributes'.
+-- Returns attributes for the specified node.
+-- Parameters: 'PDomGetAttributes'
+-- Returns: 'DomGetAttributes'
 domGetAttributes :: Handle ev -> PDomGetAttributes -> IO (Either Error DomGetAttributes)
 domGetAttributes handle params = sendReceiveCommandResult handle "DOM.getAttributes" (Just params)
 
+-- | Return type of the 'domGetAttributes' command.
 data DomGetAttributes = DomGetAttributes {
-   domGetAttributesAttributes :: [String]
+   domGetAttributesAttributes :: [String] -- ^ An interleaved array of node attribute names and values.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomGetAttributes where
@@ -631,11 +739,11 @@ instance Command DomGetAttributes where
 
 
 
-
+-- | Parameters of the 'domGetBoxModel' command.
 data PDomGetBoxModel = PDomGetBoxModel {
-   pDomGetBoxModelNodeId :: Maybe DomNodeId,
-   pDomGetBoxModelBackendNodeId :: Maybe DomBackendNodeId,
-   pDomGetBoxModelObjectId :: Maybe Runtime.RuntimeRemoteObjectId
+   pDomGetBoxModelNodeId :: PDomGetBoxModelNodeId, -- ^ Identifier of the node.
+   pDomGetBoxModelBackendNodeId :: PDomGetBoxModelBackendNodeId, -- ^ Identifier of the backend node.
+   pDomGetBoxModelObjectId :: PDomGetBoxModelObjectId -- ^ JavaScript object id of the node wrapper.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomGetBoxModel  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
@@ -644,11 +752,16 @@ instance FromJSON  PDomGetBoxModel where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
+-- | Function for the command 'DOM.getBoxModel'.
+-- Returns boxes for the given node.
+-- Parameters: 'PDomGetBoxModel'
+-- Returns: 'DomGetBoxModel'
 domGetBoxModel :: Handle ev -> PDomGetBoxModel -> IO (Either Error DomGetBoxModel)
 domGetBoxModel handle params = sendReceiveCommandResult handle "DOM.getBoxModel" (Just params)
 
+-- | Return type of the 'domGetBoxModel' command.
 data DomGetBoxModel = DomGetBoxModel {
-   domGetBoxModelModel :: DomBoxModel
+   domGetBoxModelModel :: DomBoxModel -- ^ Box model for the node.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomGetBoxModel where
@@ -659,11 +772,11 @@ instance Command DomGetBoxModel where
 
 
 
-
+-- | Parameters of the 'domGetContentQuads' command.
 data PDomGetContentQuads = PDomGetContentQuads {
-   pDomGetContentQuadsNodeId :: Maybe DomNodeId,
-   pDomGetContentQuadsBackendNodeId :: Maybe DomBackendNodeId,
-   pDomGetContentQuadsObjectId :: Maybe Runtime.RuntimeRemoteObjectId
+   pDomGetContentQuadsNodeId :: PDomGetContentQuadsNodeId, -- ^ Identifier of the node.
+   pDomGetContentQuadsBackendNodeId :: PDomGetContentQuadsBackendNodeId, -- ^ Identifier of the backend node.
+   pDomGetContentQuadsObjectId :: PDomGetContentQuadsObjectId -- ^ JavaScript object id of the node wrapper.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomGetContentQuads  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -672,11 +785,17 @@ instance FromJSON  PDomGetContentQuads where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
+-- | Function for the command 'DOM.getContentQuads'.
+-- Returns quads that describe node position on the page. This method
+-- might return multiple quads for inline nodes.
+-- Parameters: 'PDomGetContentQuads'
+-- Returns: 'DomGetContentQuads'
 domGetContentQuads :: Handle ev -> PDomGetContentQuads -> IO (Either Error DomGetContentQuads)
 domGetContentQuads handle params = sendReceiveCommandResult handle "DOM.getContentQuads" (Just params)
 
+-- | Return type of the 'domGetContentQuads' command.
 data DomGetContentQuads = DomGetContentQuads {
-   domGetContentQuadsQuads :: [DomQuad]
+   domGetContentQuadsQuads :: [DomQuad] -- ^ Quads that describe node layout relative to viewport.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomGetContentQuads where
@@ -687,10 +806,12 @@ instance Command DomGetContentQuads where
 
 
 
-
+-- | Parameters of the 'domGetDocument' command.
 data PDomGetDocument = PDomGetDocument {
-   pDomGetDocumentDepth :: Maybe Int,
-   pDomGetDocumentPierce :: Maybe Bool
+   pDomGetDocumentDepth :: PDomGetDocumentDepth, -- ^ The maximum depth at which children should be retrieved, defaults to 1. Use -1 for the
+entire subtree or provide an integer larger than 0.
+   pDomGetDocumentPierce :: PDomGetDocumentPierce -- ^ Whether or not iframes and shadow roots should be traversed when returning the subtree
+(default is false).
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomGetDocument  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
@@ -699,11 +820,16 @@ instance FromJSON  PDomGetDocument where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
+-- | Function for the command 'DOM.getDocument'.
+-- Returns the root DOM node (and optionally the subtree) to the caller.
+-- Parameters: 'PDomGetDocument'
+-- Returns: 'DomGetDocument'
 domGetDocument :: Handle ev -> PDomGetDocument -> IO (Either Error DomGetDocument)
 domGetDocument handle params = sendReceiveCommandResult handle "DOM.getDocument" (Just params)
 
+-- | Return type of the 'domGetDocument' command.
 data DomGetDocument = DomGetDocument {
-   domGetDocumentRoot :: DomNode
+   domGetDocumentRoot :: DomNode -- ^ Resulting node.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomGetDocument where
@@ -714,11 +840,12 @@ instance Command DomGetDocument where
 
 
 
-
+-- | Parameters of the 'domGetNodesForSubtreeByStyle' command.
 data PDomGetNodesForSubtreeByStyle = PDomGetNodesForSubtreeByStyle {
-   pDomGetNodesForSubtreeByStyleNodeId :: DomNodeId,
-   pDomGetNodesForSubtreeByStyleComputedStyles :: [DomCssComputedStyleProperty],
-   pDomGetNodesForSubtreeByStylePierce :: Maybe Bool
+   pDomGetNodesForSubtreeByStyleNodeId :: PDomGetNodesForSubtreeByStyleNodeId, -- ^ Node ID pointing to the root of a subtree.
+   pDomGetNodesForSubtreeByStyleComputedStyles :: PDomGetNodesForSubtreeByStyleComputedStyles, -- ^ The style to filter nodes by (includes nodes if any of properties matches).
+   pDomGetNodesForSubtreeByStylePierce :: PDomGetNodesForSubtreeByStylePierce -- ^ Whether or not iframes and shadow roots in the same target should be traversed when returning the
+results (default is false).
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomGetNodesForSubtreeByStyle  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -727,11 +854,16 @@ instance FromJSON  PDomGetNodesForSubtreeByStyle where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
+-- | Function for the command 'DOM.getNodesForSubtreeByStyle'.
+-- Finds nodes with a given computed style in a subtree.
+-- Parameters: 'PDomGetNodesForSubtreeByStyle'
+-- Returns: 'DomGetNodesForSubtreeByStyle'
 domGetNodesForSubtreeByStyle :: Handle ev -> PDomGetNodesForSubtreeByStyle -> IO (Either Error DomGetNodesForSubtreeByStyle)
 domGetNodesForSubtreeByStyle handle params = sendReceiveCommandResult handle "DOM.getNodesForSubtreeByStyle" (Just params)
 
+-- | Return type of the 'domGetNodesForSubtreeByStyle' command.
 data DomGetNodesForSubtreeByStyle = DomGetNodesForSubtreeByStyle {
-   domGetNodesForSubtreeByStyleNodeIds :: [DomNodeId]
+   domGetNodesForSubtreeByStyleNodeIds :: [DomNodeId] -- ^ Resulting nodes.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomGetNodesForSubtreeByStyle where
@@ -742,12 +874,12 @@ instance Command DomGetNodesForSubtreeByStyle where
 
 
 
-
+-- | Parameters of the 'domGetNodeForLocation' command.
 data PDomGetNodeForLocation = PDomGetNodeForLocation {
-   pDomGetNodeForLocationX :: Int,
-   pDomGetNodeForLocationY :: Int,
-   pDomGetNodeForLocationIncludeUserAgentShadowDom :: Maybe Bool,
-   pDomGetNodeForLocationIgnorePointerEventsNone :: Maybe Bool
+   pDomGetNodeForLocationX :: PDomGetNodeForLocationX, -- ^ X coordinate.
+   pDomGetNodeForLocationY :: PDomGetNodeForLocationY, -- ^ Y coordinate.
+   pDomGetNodeForLocationIncludeUserAgentShadowDom :: PDomGetNodeForLocationIncludeUserAgentShadowDom, -- ^ False to skip to the nearest non-UA shadow root ancestor (default: false).
+   pDomGetNodeForLocationIgnorePointerEventsNone :: PDomGetNodeForLocationIgnorePointerEventsNone -- ^ Whether to ignore pointer-events: none on elements and hit test them.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomGetNodeForLocation  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -756,13 +888,19 @@ instance FromJSON  PDomGetNodeForLocation where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
+-- | Function for the command 'DOM.getNodeForLocation'.
+-- Returns node id at given location. Depending on whether DOM domain is enabled, nodeId is
+-- either returned or not.
+-- Parameters: 'PDomGetNodeForLocation'
+-- Returns: 'DomGetNodeForLocation'
 domGetNodeForLocation :: Handle ev -> PDomGetNodeForLocation -> IO (Either Error DomGetNodeForLocation)
 domGetNodeForLocation handle params = sendReceiveCommandResult handle "DOM.getNodeForLocation" (Just params)
 
+-- | Return type of the 'domGetNodeForLocation' command.
 data DomGetNodeForLocation = DomGetNodeForLocation {
-   domGetNodeForLocationBackendNodeId :: DomBackendNodeId,
-   domGetNodeForLocationFrameId :: PageFrameId,
-   domGetNodeForLocationNodeId :: Maybe DomNodeId
+   domGetNodeForLocationBackendNodeId :: DomBackendNodeId, -- ^ Resulting node.
+   domGetNodeForLocationFrameId :: PageFrameId, -- ^ Frame this node belongs to.
+   domGetNodeForLocationNodeId :: Maybe DomNodeId -- ^ Id of the node at given coordinates, only when enabled and requested document.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomGetNodeForLocation where
@@ -773,11 +911,11 @@ instance Command DomGetNodeForLocation where
 
 
 
-
+-- | Parameters of the 'domGetOuterHtml' command.
 data PDomGetOuterHtml = PDomGetOuterHtml {
-   pDomGetOuterHtmlNodeId :: Maybe DomNodeId,
-   pDomGetOuterHtmlBackendNodeId :: Maybe DomBackendNodeId,
-   pDomGetOuterHtmlObjectId :: Maybe Runtime.RuntimeRemoteObjectId
+   pDomGetOuterHtmlNodeId :: PDomGetOuterHtmlNodeId, -- ^ Identifier of the node.
+   pDomGetOuterHtmlBackendNodeId :: PDomGetOuterHtmlBackendNodeId, -- ^ Identifier of the backend node.
+   pDomGetOuterHtmlObjectId :: PDomGetOuterHtmlObjectId -- ^ JavaScript object id of the node wrapper.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomGetOuterHtml  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -786,11 +924,16 @@ instance FromJSON  PDomGetOuterHtml where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
+-- | Function for the command 'DOM.getOuterHTML'.
+-- Returns node's HTML markup.
+-- Parameters: 'PDomGetOuterHtml'
+-- Returns: 'DomGetOuterHtml'
 domGetOuterHtml :: Handle ev -> PDomGetOuterHtml -> IO (Either Error DomGetOuterHtml)
 domGetOuterHtml handle params = sendReceiveCommandResult handle "DOM.getOuterHTML" (Just params)
 
+-- | Return type of the 'domGetOuterHtml' command.
 data DomGetOuterHtml = DomGetOuterHtml {
-   domGetOuterHtmlOuterHtml :: String
+   domGetOuterHtmlOuterHtml :: String -- ^ Outer HTML markup.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomGetOuterHtml where
@@ -801,9 +944,9 @@ instance Command DomGetOuterHtml where
 
 
 
-
+-- | Parameters of the 'domGetRelayoutBoundary' command.
 data PDomGetRelayoutBoundary = PDomGetRelayoutBoundary {
-   pDomGetRelayoutBoundaryNodeId :: DomNodeId
+   pDomGetRelayoutBoundaryNodeId :: PDomGetRelayoutBoundaryNodeId -- ^ Id of the node.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomGetRelayoutBoundary  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -812,11 +955,16 @@ instance FromJSON  PDomGetRelayoutBoundary where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+-- | Function for the command 'DOM.getRelayoutBoundary'.
+-- Returns the id of the nearest ancestor that is a relayout boundary.
+-- Parameters: 'PDomGetRelayoutBoundary'
+-- Returns: 'DomGetRelayoutBoundary'
 domGetRelayoutBoundary :: Handle ev -> PDomGetRelayoutBoundary -> IO (Either Error DomGetRelayoutBoundary)
 domGetRelayoutBoundary handle params = sendReceiveCommandResult handle "DOM.getRelayoutBoundary" (Just params)
 
+-- | Return type of the 'domGetRelayoutBoundary' command.
 data DomGetRelayoutBoundary = DomGetRelayoutBoundary {
-   domGetRelayoutBoundaryNodeId :: DomNodeId
+   domGetRelayoutBoundaryNodeId :: DomNodeId -- ^ Relayout boundary node id for the given node.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomGetRelayoutBoundary where
@@ -827,11 +975,11 @@ instance Command DomGetRelayoutBoundary where
 
 
 
-
+-- | Parameters of the 'domGetSearchResults' command.
 data PDomGetSearchResults = PDomGetSearchResults {
-   pDomGetSearchResultsSearchId :: String,
-   pDomGetSearchResultsFromIndex :: Int,
-   pDomGetSearchResultsToIndex :: Int
+   pDomGetSearchResultsSearchId :: PDomGetSearchResultsSearchId, -- ^ Unique search session identifier.
+   pDomGetSearchResultsFromIndex :: PDomGetSearchResultsFromIndex, -- ^ Start index of the search result to be returned.
+   pDomGetSearchResultsToIndex :: PDomGetSearchResultsToIndex -- ^ End index of the search result to be returned.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomGetSearchResults  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -840,11 +988,17 @@ instance FromJSON  PDomGetSearchResults where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
+-- | Function for the command 'DOM.getSearchResults'.
+-- Returns search results from given `fromIndex` to given `toIndex` from the search with the given
+-- identifier.
+-- Parameters: 'PDomGetSearchResults'
+-- Returns: 'DomGetSearchResults'
 domGetSearchResults :: Handle ev -> PDomGetSearchResults -> IO (Either Error DomGetSearchResults)
 domGetSearchResults handle params = sendReceiveCommandResult handle "DOM.getSearchResults" (Just params)
 
+-- | Return type of the 'domGetSearchResults' command.
 data DomGetSearchResults = DomGetSearchResults {
-   domGetSearchResultsNodeIds :: [DomNodeId]
+   domGetSearchResultsNodeIds :: [DomNodeId] -- ^ Ids of the search result nodes.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomGetSearchResults where
@@ -855,27 +1009,36 @@ instance Command DomGetSearchResults where
 
 
 
+-- | Function for the command 'DOM.hideHighlight'.
+-- Hides any highlight.
 domHideHighlight :: Handle ev -> IO (Maybe Error)
 domHideHighlight handle = sendReceiveCommand handle "DOM.hideHighlight" (Nothing :: Maybe ())
 
 
+-- | Function for the command 'DOM.highlightNode'.
+-- Highlights DOM node.
 domHighlightNode :: Handle ev -> IO (Maybe Error)
 domHighlightNode handle = sendReceiveCommand handle "DOM.highlightNode" (Nothing :: Maybe ())
 
 
+-- | Function for the command 'DOM.highlightRect'.
+-- Highlights given rectangle.
 domHighlightRect :: Handle ev -> IO (Maybe Error)
 domHighlightRect handle = sendReceiveCommand handle "DOM.highlightRect" (Nothing :: Maybe ())
 
 
+-- | Function for the command 'DOM.markUndoableState'.
+-- Marks last undoable state.
 domMarkUndoableState :: Handle ev -> IO (Maybe Error)
 domMarkUndoableState handle = sendReceiveCommand handle "DOM.markUndoableState" (Nothing :: Maybe ())
 
 
-
+-- | Parameters of the 'domMoveTo' command.
 data PDomMoveTo = PDomMoveTo {
-   pDomMoveToNodeId :: DomNodeId,
-   pDomMoveToTargetNodeId :: DomNodeId,
-   pDomMoveToInsertBeforeNodeId :: Maybe DomNodeId
+   pDomMoveToNodeId :: PDomMoveToNodeId, -- ^ Id of the node to move.
+   pDomMoveToTargetNodeId :: PDomMoveToTargetNodeId, -- ^ Id of the element to drop the moved node into.
+   pDomMoveToInsertBeforeNodeId :: PDomMoveToInsertBeforeNodeId -- ^ Drop node before this one (if absent, the moved node becomes the last child of
+`targetNodeId`).
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomMoveTo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 , A.omitNothingFields = True}
@@ -884,11 +1047,16 @@ instance FromJSON  PDomMoveTo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 }
 
 
+-- | Function for the command 'DOM.moveTo'.
+-- Moves node into the new container, places it before the given anchor.
+-- Parameters: 'PDomMoveTo'
+-- Returns: 'DomMoveTo'
 domMoveTo :: Handle ev -> PDomMoveTo -> IO (Either Error DomMoveTo)
 domMoveTo handle params = sendReceiveCommandResult handle "DOM.moveTo" (Just params)
 
+-- | Return type of the 'domMoveTo' command.
 data DomMoveTo = DomMoveTo {
-   domMoveToNodeId :: DomNodeId
+   domMoveToNodeId :: DomNodeId -- ^ New id of the moved node.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomMoveTo where
@@ -899,10 +1067,10 @@ instance Command DomMoveTo where
 
 
 
-
+-- | Parameters of the 'domPerformSearch' command.
 data PDomPerformSearch = PDomPerformSearch {
-   pDomPerformSearchQuery :: String,
-   pDomPerformSearchIncludeUserAgentShadowDom :: Maybe Bool
+   pDomPerformSearchQuery :: PDomPerformSearchQuery, -- ^ Plain text or query selector or XPath search query.
+   pDomPerformSearchIncludeUserAgentShadowDom :: PDomPerformSearchIncludeUserAgentShadowDom -- ^ True to search in user agent shadow DOM.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomPerformSearch  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -911,12 +1079,18 @@ instance FromJSON  PDomPerformSearch where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
+-- | Function for the command 'DOM.performSearch'.
+-- Searches for a given string in the DOM tree. Use `getSearchResults` to access search results or
+-- `cancelSearch` to end this search session.
+-- Parameters: 'PDomPerformSearch'
+-- Returns: 'DomPerformSearch'
 domPerformSearch :: Handle ev -> PDomPerformSearch -> IO (Either Error DomPerformSearch)
 domPerformSearch handle params = sendReceiveCommandResult handle "DOM.performSearch" (Just params)
 
+-- | Return type of the 'domPerformSearch' command.
 data DomPerformSearch = DomPerformSearch {
-   domPerformSearchSearchId :: String,
-   domPerformSearchResultCount :: Int
+   domPerformSearchSearchId :: String, -- ^ Unique search session identifier.
+   domPerformSearchResultCount :: Int -- ^ Number of search results.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomPerformSearch where
@@ -927,9 +1101,9 @@ instance Command DomPerformSearch where
 
 
 
-
+-- | Parameters of the 'domPushNodeByPathToFrontend' command.
 data PDomPushNodeByPathToFrontend = PDomPushNodeByPathToFrontend {
-   pDomPushNodeByPathToFrontendPath :: String
+   pDomPushNodeByPathToFrontendPath :: PDomPushNodeByPathToFrontendPath -- ^ Path to node in the proprietary format.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomPushNodeByPathToFrontend  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -938,11 +1112,16 @@ instance FromJSON  PDomPushNodeByPathToFrontend where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
+-- | Function for the command 'DOM.pushNodeByPathToFrontend'.
+-- Requests that the node is sent to the caller given its path. // FIXME, use XPath
+-- Parameters: 'PDomPushNodeByPathToFrontend'
+-- Returns: 'DomPushNodeByPathToFrontend'
 domPushNodeByPathToFrontend :: Handle ev -> PDomPushNodeByPathToFrontend -> IO (Either Error DomPushNodeByPathToFrontend)
 domPushNodeByPathToFrontend handle params = sendReceiveCommandResult handle "DOM.pushNodeByPathToFrontend" (Just params)
 
+-- | Return type of the 'domPushNodeByPathToFrontend' command.
 data DomPushNodeByPathToFrontend = DomPushNodeByPathToFrontend {
-   domPushNodeByPathToFrontendNodeId :: DomNodeId
+   domPushNodeByPathToFrontendNodeId :: DomNodeId -- ^ Id of the node for given path.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomPushNodeByPathToFrontend where
@@ -953,9 +1132,9 @@ instance Command DomPushNodeByPathToFrontend where
 
 
 
-
+-- | Parameters of the 'domPushNodesByBackendIdsToFrontend' command.
 data PDomPushNodesByBackendIdsToFrontend = PDomPushNodesByBackendIdsToFrontend {
-   pDomPushNodesByBackendIdsToFrontendBackendNodeIds :: [DomBackendNodeId]
+   pDomPushNodesByBackendIdsToFrontendBackendNodeIds :: PDomPushNodesByBackendIdsToFrontendBackendNodeIds -- ^ The array of backend node ids.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomPushNodesByBackendIdsToFrontend  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 , A.omitNothingFields = True}
@@ -964,11 +1143,17 @@ instance FromJSON  PDomPushNodesByBackendIdsToFrontend where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 }
 
 
+-- | Function for the command 'DOM.pushNodesByBackendIdsToFrontend'.
+-- Requests that a batch of nodes is sent to the caller given their backend node ids.
+-- Parameters: 'PDomPushNodesByBackendIdsToFrontend'
+-- Returns: 'DomPushNodesByBackendIdsToFrontend'
 domPushNodesByBackendIdsToFrontend :: Handle ev -> PDomPushNodesByBackendIdsToFrontend -> IO (Either Error DomPushNodesByBackendIdsToFrontend)
 domPushNodesByBackendIdsToFrontend handle params = sendReceiveCommandResult handle "DOM.pushNodesByBackendIdsToFrontend" (Just params)
 
+-- | Return type of the 'domPushNodesByBackendIdsToFrontend' command.
 data DomPushNodesByBackendIdsToFrontend = DomPushNodesByBackendIdsToFrontend {
-   domPushNodesByBackendIdsToFrontendNodeIds :: [DomNodeId]
+   domPushNodesByBackendIdsToFrontendNodeIds :: [DomNodeId] -- ^ The array of ids of pushed nodes that correspond to the backend ids specified in
+backendNodeIds.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomPushNodesByBackendIdsToFrontend where
@@ -979,10 +1164,10 @@ instance Command DomPushNodesByBackendIdsToFrontend where
 
 
 
-
+-- | Parameters of the 'domQuerySelector' command.
 data PDomQuerySelector = PDomQuerySelector {
-   pDomQuerySelectorNodeId :: DomNodeId,
-   pDomQuerySelectorSelector :: String
+   pDomQuerySelectorNodeId :: PDomQuerySelectorNodeId, -- ^ Id of the node to query upon.
+   pDomQuerySelectorSelector :: PDomQuerySelectorSelector -- ^ Selector string.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomQuerySelector  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -991,11 +1176,16 @@ instance FromJSON  PDomQuerySelector where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
+-- | Function for the command 'DOM.querySelector'.
+-- Executes `querySelector` on a given node.
+-- Parameters: 'PDomQuerySelector'
+-- Returns: 'DomQuerySelector'
 domQuerySelector :: Handle ev -> PDomQuerySelector -> IO (Either Error DomQuerySelector)
 domQuerySelector handle params = sendReceiveCommandResult handle "DOM.querySelector" (Just params)
 
+-- | Return type of the 'domQuerySelector' command.
 data DomQuerySelector = DomQuerySelector {
-   domQuerySelectorNodeId :: DomNodeId
+   domQuerySelectorNodeId :: DomNodeId -- ^ Query selector result.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomQuerySelector where
@@ -1006,10 +1196,10 @@ instance Command DomQuerySelector where
 
 
 
-
+-- | Parameters of the 'domQuerySelectorAll' command.
 data PDomQuerySelectorAll = PDomQuerySelectorAll {
-   pDomQuerySelectorAllNodeId :: DomNodeId,
-   pDomQuerySelectorAllSelector :: String
+   pDomQuerySelectorAllNodeId :: PDomQuerySelectorAllNodeId, -- ^ Id of the node to query upon.
+   pDomQuerySelectorAllSelector :: PDomQuerySelectorAllSelector -- ^ Selector string.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomQuerySelectorAll  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -1018,11 +1208,16 @@ instance FromJSON  PDomQuerySelectorAll where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
+-- | Function for the command 'DOM.querySelectorAll'.
+-- Executes `querySelectorAll` on a given node.
+-- Parameters: 'PDomQuerySelectorAll'
+-- Returns: 'DomQuerySelectorAll'
 domQuerySelectorAll :: Handle ev -> PDomQuerySelectorAll -> IO (Either Error DomQuerySelectorAll)
 domQuerySelectorAll handle params = sendReceiveCommandResult handle "DOM.querySelectorAll" (Just params)
 
+-- | Return type of the 'domQuerySelectorAll' command.
 data DomQuerySelectorAll = DomQuerySelectorAll {
-   domQuerySelectorAllNodeIds :: [DomNodeId]
+   domQuerySelectorAllNodeIds :: [DomNodeId] -- ^ Query selector result.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomQuerySelectorAll where
@@ -1033,14 +1228,16 @@ instance Command DomQuerySelectorAll where
 
 
 
+-- | Function for the command 'DOM.redo'.
+-- Re-does the last undone action.
 domRedo :: Handle ev -> IO (Maybe Error)
 domRedo handle = sendReceiveCommand handle "DOM.redo" (Nothing :: Maybe ())
 
 
-
+-- | Parameters of the 'domRemoveAttribute' command.
 data PDomRemoveAttribute = PDomRemoveAttribute {
-   pDomRemoveAttributeNodeId :: DomNodeId,
-   pDomRemoveAttributeName :: String
+   pDomRemoveAttributeNodeId :: PDomRemoveAttributeNodeId, -- ^ Id of the element to remove attribute from.
+   pDomRemoveAttributeName :: PDomRemoveAttributeName -- ^ Name of the attribute to remove.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomRemoveAttribute  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -1049,13 +1246,16 @@ instance FromJSON  PDomRemoveAttribute where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
+-- | Function for the command 'DOM.removeAttribute'.
+-- Removes attribute with given name from an element with given id.
+-- Parameters: 'PDomRemoveAttribute'
 domRemoveAttribute :: Handle ev -> PDomRemoveAttribute -> IO (Maybe Error)
 domRemoveAttribute handle params = sendReceiveCommand handle "DOM.removeAttribute" (Just params)
 
 
-
+-- | Parameters of the 'domRemoveNode' command.
 data PDomRemoveNode = PDomRemoveNode {
-   pDomRemoveNodeNodeId :: DomNodeId
+   pDomRemoveNodeNodeId :: PDomRemoveNodeNodeId -- ^ Id of the node to remove.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomRemoveNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
@@ -1064,15 +1264,20 @@ instance FromJSON  PDomRemoveNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
+-- | Function for the command 'DOM.removeNode'.
+-- Removes node with given id.
+-- Parameters: 'PDomRemoveNode'
 domRemoveNode :: Handle ev -> PDomRemoveNode -> IO (Maybe Error)
 domRemoveNode handle params = sendReceiveCommand handle "DOM.removeNode" (Just params)
 
 
-
+-- | Parameters of the 'domRequestChildNodes' command.
 data PDomRequestChildNodes = PDomRequestChildNodes {
-   pDomRequestChildNodesNodeId :: DomNodeId,
-   pDomRequestChildNodesDepth :: Maybe Int,
-   pDomRequestChildNodesPierce :: Maybe Bool
+   pDomRequestChildNodesNodeId :: PDomRequestChildNodesNodeId, -- ^ Id of the node to get children for.
+   pDomRequestChildNodesDepth :: PDomRequestChildNodesDepth, -- ^ The maximum depth at which children should be retrieved, defaults to 1. Use -1 for the
+entire subtree or provide an integer larger than 0.
+   pDomRequestChildNodesPierce :: PDomRequestChildNodesPierce -- ^ Whether or not iframes and shadow roots should be traversed when returning the sub-tree
+(default is false).
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomRequestChildNodes  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -1081,13 +1286,18 @@ instance FromJSON  PDomRequestChildNodes where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
+-- | Function for the command 'DOM.requestChildNodes'.
+-- Requests that children of the node with given id are returned to the caller in form of
+-- `setChildNodes` events where not only immediate children are retrieved, but all children down to
+-- the specified depth.
+-- Parameters: 'PDomRequestChildNodes'
 domRequestChildNodes :: Handle ev -> PDomRequestChildNodes -> IO (Maybe Error)
 domRequestChildNodes handle params = sendReceiveCommand handle "DOM.requestChildNodes" (Just params)
 
 
-
+-- | Parameters of the 'domRequestNode' command.
 data PDomRequestNode = PDomRequestNode {
-   pDomRequestNodeObjectId :: Runtime.RuntimeRemoteObjectId
+   pDomRequestNodeObjectId :: PDomRequestNodeObjectId -- ^ JavaScript object id to convert into node.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomRequestNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
@@ -1096,11 +1306,18 @@ instance FromJSON  PDomRequestNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
+-- | Function for the command 'DOM.requestNode'.
+-- Requests that the node is sent to the caller given the JavaScript node object reference. All
+-- nodes that form the path from the node to the root are also sent to the client as a series of
+-- `setChildNodes` notifications.
+-- Parameters: 'PDomRequestNode'
+-- Returns: 'DomRequestNode'
 domRequestNode :: Handle ev -> PDomRequestNode -> IO (Either Error DomRequestNode)
 domRequestNode handle params = sendReceiveCommandResult handle "DOM.requestNode" (Just params)
 
+-- | Return type of the 'domRequestNode' command.
 data DomRequestNode = DomRequestNode {
-   domRequestNodeNodeId :: DomNodeId
+   domRequestNodeNodeId :: DomNodeId -- ^ Node id for given object.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomRequestNode where
@@ -1111,12 +1328,12 @@ instance Command DomRequestNode where
 
 
 
-
+-- | Parameters of the 'domResolveNode' command.
 data PDomResolveNode = PDomResolveNode {
-   pDomResolveNodeNodeId :: Maybe DomNodeId,
-   pDomResolveNodeBackendNodeId :: Maybe DomBackendNodeId,
-   pDomResolveNodeObjectGroup :: Maybe String,
-   pDomResolveNodeExecutionContextId :: Maybe Runtime.RuntimeExecutionContextId
+   pDomResolveNodeNodeId :: PDomResolveNodeNodeId, -- ^ Id of the node to resolve.
+   pDomResolveNodeBackendNodeId :: PDomResolveNodeBackendNodeId, -- ^ Backend identifier of the node to resolve.
+   pDomResolveNodeObjectGroup :: PDomResolveNodeObjectGroup, -- ^ Symbolic group name that can be used to release multiple objects.
+   pDomResolveNodeExecutionContextId :: PDomResolveNodeExecutionContextId -- ^ Execution context in which to resolve the node.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomResolveNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
@@ -1125,11 +1342,16 @@ instance FromJSON  PDomResolveNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
+-- | Function for the command 'DOM.resolveNode'.
+-- Resolves the JavaScript node object for a given NodeId or BackendNodeId.
+-- Parameters: 'PDomResolveNode'
+-- Returns: 'DomResolveNode'
 domResolveNode :: Handle ev -> PDomResolveNode -> IO (Either Error DomResolveNode)
 domResolveNode handle params = sendReceiveCommandResult handle "DOM.resolveNode" (Just params)
 
+-- | Return type of the 'domResolveNode' command.
 data DomResolveNode = DomResolveNode {
-   domResolveNodeObject :: Runtime.RuntimeRemoteObject
+   domResolveNodeObject :: Runtime.RuntimeRemoteObject -- ^ JavaScript object wrapper for given node.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomResolveNode where
@@ -1140,11 +1362,11 @@ instance Command DomResolveNode where
 
 
 
-
+-- | Parameters of the 'domSetAttributeValue' command.
 data PDomSetAttributeValue = PDomSetAttributeValue {
-   pDomSetAttributeValueNodeId :: DomNodeId,
-   pDomSetAttributeValueName :: String,
-   pDomSetAttributeValueValue :: String
+   pDomSetAttributeValueNodeId :: PDomSetAttributeValueNodeId, -- ^ Id of the element to set attribute for.
+   pDomSetAttributeValueName :: PDomSetAttributeValueName, -- ^ Attribute name.
+   pDomSetAttributeValueValue :: PDomSetAttributeValueValue -- ^ Attribute value.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomSetAttributeValue  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -1153,15 +1375,19 @@ instance FromJSON  PDomSetAttributeValue where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
+-- | Function for the command 'DOM.setAttributeValue'.
+-- Sets attribute for an element with given id.
+-- Parameters: 'PDomSetAttributeValue'
 domSetAttributeValue :: Handle ev -> PDomSetAttributeValue -> IO (Maybe Error)
 domSetAttributeValue handle params = sendReceiveCommand handle "DOM.setAttributeValue" (Just params)
 
 
-
+-- | Parameters of the 'domSetAttributesAsText' command.
 data PDomSetAttributesAsText = PDomSetAttributesAsText {
-   pDomSetAttributesAsTextNodeId :: DomNodeId,
-   pDomSetAttributesAsTextText :: String,
-   pDomSetAttributesAsTextName :: Maybe String
+   pDomSetAttributesAsTextNodeId :: PDomSetAttributesAsTextNodeId, -- ^ Id of the element to set attributes for.
+   pDomSetAttributesAsTextText :: PDomSetAttributesAsTextText, -- ^ Text with a number of attributes. Will parse this text using HTML parser.
+   pDomSetAttributesAsTextName :: PDomSetAttributesAsTextName -- ^ Attribute name to replace with new attributes derived from text in case text parsed
+successfully.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomSetAttributesAsText  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -1170,16 +1396,20 @@ instance FromJSON  PDomSetAttributesAsText where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+-- | Function for the command 'DOM.setAttributesAsText'.
+-- Sets attributes on element with given id. This method is useful when user edits some existing
+-- attribute value and types in several attribute name/value pairs.
+-- Parameters: 'PDomSetAttributesAsText'
 domSetAttributesAsText :: Handle ev -> PDomSetAttributesAsText -> IO (Maybe Error)
 domSetAttributesAsText handle params = sendReceiveCommand handle "DOM.setAttributesAsText" (Just params)
 
 
-
+-- | Parameters of the 'domSetFileInputFiles' command.
 data PDomSetFileInputFiles = PDomSetFileInputFiles {
-   pDomSetFileInputFilesFiles :: [String],
-   pDomSetFileInputFilesNodeId :: Maybe DomNodeId,
-   pDomSetFileInputFilesBackendNodeId :: Maybe DomBackendNodeId,
-   pDomSetFileInputFilesObjectId :: Maybe Runtime.RuntimeRemoteObjectId
+   pDomSetFileInputFilesFiles :: PDomSetFileInputFilesFiles, -- ^ Array of file paths to set.
+   pDomSetFileInputFilesNodeId :: PDomSetFileInputFilesNodeId, -- ^ Identifier of the node.
+   pDomSetFileInputFilesBackendNodeId :: PDomSetFileInputFilesBackendNodeId, -- ^ Identifier of the backend node.
+   pDomSetFileInputFilesObjectId :: PDomSetFileInputFilesObjectId -- ^ JavaScript object id of the node wrapper.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomSetFileInputFiles  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -1188,13 +1418,16 @@ instance FromJSON  PDomSetFileInputFiles where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
+-- | Function for the command 'DOM.setFileInputFiles'.
+-- Sets files for the given file input element.
+-- Parameters: 'PDomSetFileInputFiles'
 domSetFileInputFiles :: Handle ev -> PDomSetFileInputFiles -> IO (Maybe Error)
 domSetFileInputFiles handle params = sendReceiveCommand handle "DOM.setFileInputFiles" (Just params)
 
 
-
+-- | Parameters of the 'domSetNodeStackTracesEnabled' command.
 data PDomSetNodeStackTracesEnabled = PDomSetNodeStackTracesEnabled {
-   pDomSetNodeStackTracesEnabledEnable :: Bool
+   pDomSetNodeStackTracesEnabledEnable :: PDomSetNodeStackTracesEnabledEnable -- ^ Enable or disable.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomSetNodeStackTracesEnabled  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -1203,13 +1436,16 @@ instance FromJSON  PDomSetNodeStackTracesEnabled where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
+-- | Function for the command 'DOM.setNodeStackTracesEnabled'.
+-- Sets if stack traces should be captured for Nodes. See `Node.getNodeStackTraces`. Default is disabled.
+-- Parameters: 'PDomSetNodeStackTracesEnabled'
 domSetNodeStackTracesEnabled :: Handle ev -> PDomSetNodeStackTracesEnabled -> IO (Maybe Error)
 domSetNodeStackTracesEnabled handle params = sendReceiveCommand handle "DOM.setNodeStackTracesEnabled" (Just params)
 
 
-
+-- | Parameters of the 'domGetNodeStackTraces' command.
 data PDomGetNodeStackTraces = PDomGetNodeStackTraces {
-   pDomGetNodeStackTracesNodeId :: DomNodeId
+   pDomGetNodeStackTracesNodeId :: PDomGetNodeStackTracesNodeId -- ^ Id of the node to get stack traces for.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomGetNodeStackTraces  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -1218,11 +1454,16 @@ instance FromJSON  PDomGetNodeStackTraces where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
+-- | Function for the command 'DOM.getNodeStackTraces'.
+-- Gets stack traces associated with a Node. As of now, only provides stack trace for Node creation.
+-- Parameters: 'PDomGetNodeStackTraces'
+-- Returns: 'DomGetNodeStackTraces'
 domGetNodeStackTraces :: Handle ev -> PDomGetNodeStackTraces -> IO (Either Error DomGetNodeStackTraces)
 domGetNodeStackTraces handle params = sendReceiveCommandResult handle "DOM.getNodeStackTraces" (Just params)
 
+-- | Return type of the 'domGetNodeStackTraces' command.
 data DomGetNodeStackTraces = DomGetNodeStackTraces {
-   domGetNodeStackTracesCreation :: Maybe Runtime.RuntimeStackTrace
+   domGetNodeStackTracesCreation :: Maybe Runtime.RuntimeStackTrace -- ^ Creation stack trace, if available.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomGetNodeStackTraces where
@@ -1233,9 +1474,9 @@ instance Command DomGetNodeStackTraces where
 
 
 
-
+-- | Parameters of the 'domGetFileInfo' command.
 data PDomGetFileInfo = PDomGetFileInfo {
-   pDomGetFileInfoObjectId :: Runtime.RuntimeRemoteObjectId
+   pDomGetFileInfoObjectId :: PDomGetFileInfoObjectId -- ^ JavaScript object id of the node wrapper.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomGetFileInfo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
@@ -1244,11 +1485,17 @@ instance FromJSON  PDomGetFileInfo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
+-- | Function for the command 'DOM.getFileInfo'.
+-- Returns file information for the given
+-- File wrapper.
+-- Parameters: 'PDomGetFileInfo'
+-- Returns: 'DomGetFileInfo'
 domGetFileInfo :: Handle ev -> PDomGetFileInfo -> IO (Either Error DomGetFileInfo)
 domGetFileInfo handle params = sendReceiveCommandResult handle "DOM.getFileInfo" (Just params)
 
+-- | Return type of the 'domGetFileInfo' command.
 data DomGetFileInfo = DomGetFileInfo {
-   domGetFileInfoPath :: String
+
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomGetFileInfo where
@@ -1259,9 +1506,9 @@ instance Command DomGetFileInfo where
 
 
 
-
+-- | Parameters of the 'domSetInspectedNode' command.
 data PDomSetInspectedNode = PDomSetInspectedNode {
-   pDomSetInspectedNodeNodeId :: DomNodeId
+   pDomSetInspectedNodeNodeId :: PDomSetInspectedNodeNodeId -- ^ DOM node id to be accessible by means of $x command line API.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomSetInspectedNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -1270,14 +1517,18 @@ instance FromJSON  PDomSetInspectedNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
+-- | Function for the command 'DOM.setInspectedNode'.
+-- Enables console to refer to the node with given id via $x (see Command Line API for more details
+-- $x functions).
+-- Parameters: 'PDomSetInspectedNode'
 domSetInspectedNode :: Handle ev -> PDomSetInspectedNode -> IO (Maybe Error)
 domSetInspectedNode handle params = sendReceiveCommand handle "DOM.setInspectedNode" (Just params)
 
 
-
+-- | Parameters of the 'domSetNodeName' command.
 data PDomSetNodeName = PDomSetNodeName {
-   pDomSetNodeNameNodeId :: DomNodeId,
-   pDomSetNodeNameName :: String
+   pDomSetNodeNameNodeId :: PDomSetNodeNameNodeId, -- ^ Id of the node to set name for.
+   pDomSetNodeNameName :: PDomSetNodeNameName -- ^ New node's name.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomSetNodeName  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
@@ -1286,11 +1537,16 @@ instance FromJSON  PDomSetNodeName where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
+-- | Function for the command 'DOM.setNodeName'.
+-- Sets node name for a node with given id.
+-- Parameters: 'PDomSetNodeName'
+-- Returns: 'DomSetNodeName'
 domSetNodeName :: Handle ev -> PDomSetNodeName -> IO (Either Error DomSetNodeName)
 domSetNodeName handle params = sendReceiveCommandResult handle "DOM.setNodeName" (Just params)
 
+-- | Return type of the 'domSetNodeName' command.
 data DomSetNodeName = DomSetNodeName {
-   domSetNodeNameNodeId :: DomNodeId
+   domSetNodeNameNodeId :: DomNodeId -- ^ New node's id.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomSetNodeName where
@@ -1301,10 +1557,10 @@ instance Command DomSetNodeName where
 
 
 
-
+-- | Parameters of the 'domSetNodeValue' command.
 data PDomSetNodeValue = PDomSetNodeValue {
-   pDomSetNodeValueNodeId :: DomNodeId,
-   pDomSetNodeValueValue :: String
+   pDomSetNodeValueNodeId :: PDomSetNodeValueNodeId, -- ^ Id of the node to set value for.
+   pDomSetNodeValueValue :: PDomSetNodeValueValue -- ^ New node's value.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomSetNodeValue  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -1313,14 +1569,17 @@ instance FromJSON  PDomSetNodeValue where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
+-- | Function for the command 'DOM.setNodeValue'.
+-- Sets node value for a node with given id.
+-- Parameters: 'PDomSetNodeValue'
 domSetNodeValue :: Handle ev -> PDomSetNodeValue -> IO (Maybe Error)
 domSetNodeValue handle params = sendReceiveCommand handle "DOM.setNodeValue" (Just params)
 
 
-
+-- | Parameters of the 'domSetOuterHtml' command.
 data PDomSetOuterHtml = PDomSetOuterHtml {
-   pDomSetOuterHtmlNodeId :: DomNodeId,
-   pDomSetOuterHtmlOuterHtml :: String
+   pDomSetOuterHtmlNodeId :: PDomSetOuterHtmlNodeId, -- ^ Id of the node to set markup for.
+   pDomSetOuterHtmlOuterHtml :: PDomSetOuterHtmlOuterHtml -- ^ Outer HTML markup to set.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomSetOuterHtml  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -1329,17 +1588,21 @@ instance FromJSON  PDomSetOuterHtml where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
+-- | Function for the command 'DOM.setOuterHTML'.
+-- Sets node HTML markup, returns new node id.
+-- Parameters: 'PDomSetOuterHtml'
 domSetOuterHtml :: Handle ev -> PDomSetOuterHtml -> IO (Maybe Error)
 domSetOuterHtml handle params = sendReceiveCommand handle "DOM.setOuterHTML" (Just params)
 
 
+-- | Function for the command 'DOM.undo'.
+-- Undoes the last performed action.
 domUndo :: Handle ev -> IO (Maybe Error)
 domUndo handle = sendReceiveCommand handle "DOM.undo" (Nothing :: Maybe ())
 
 
-
+-- | Parameters of the 'domGetFrameOwner' command.
 data PDomGetFrameOwner = PDomGetFrameOwner {
-   pDomGetFrameOwnerFrameId :: PageFrameId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomGetFrameOwner  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -1348,12 +1611,17 @@ instance FromJSON  PDomGetFrameOwner where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
+-- | Function for the command 'DOM.getFrameOwner'.
+-- Returns iframe node that owns iframe with the given domain.
+-- Parameters: 'PDomGetFrameOwner'
+-- Returns: 'DomGetFrameOwner'
 domGetFrameOwner :: Handle ev -> PDomGetFrameOwner -> IO (Either Error DomGetFrameOwner)
 domGetFrameOwner handle params = sendReceiveCommandResult handle "DOM.getFrameOwner" (Just params)
 
+-- | Return type of the 'domGetFrameOwner' command.
 data DomGetFrameOwner = DomGetFrameOwner {
-   domGetFrameOwnerBackendNodeId :: DomBackendNodeId,
-   domGetFrameOwnerNodeId :: Maybe DomNodeId
+   domGetFrameOwnerBackendNodeId :: DomBackendNodeId, -- ^ Resulting node.
+   domGetFrameOwnerNodeId :: Maybe DomNodeId -- ^ Id of the node at given coordinates, only when enabled and requested document.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomGetFrameOwner where
@@ -1364,10 +1632,10 @@ instance Command DomGetFrameOwner where
 
 
 
-
+-- | Parameters of the 'domGetContainerForNode' command.
 data PDomGetContainerForNode = PDomGetContainerForNode {
-   pDomGetContainerForNodeNodeId :: DomNodeId,
-   pDomGetContainerForNodeContainerName :: Maybe String
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomGetContainerForNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -1376,11 +1644,18 @@ instance FromJSON  PDomGetContainerForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+-- | Function for the command 'DOM.getContainerForNode'.
+-- Returns the container of the given node based on container query conditions.
+-- If containerName is given, it will find the nearest container with a matching name;
+-- otherwise it will find the nearest container regardless of its container name.
+-- Parameters: 'PDomGetContainerForNode'
+-- Returns: 'DomGetContainerForNode'
 domGetContainerForNode :: Handle ev -> PDomGetContainerForNode -> IO (Either Error DomGetContainerForNode)
 domGetContainerForNode handle params = sendReceiveCommandResult handle "DOM.getContainerForNode" (Just params)
 
+-- | Return type of the 'domGetContainerForNode' command.
 data DomGetContainerForNode = DomGetContainerForNode {
-   domGetContainerForNodeNodeId :: Maybe DomNodeId
+   domGetContainerForNodeNodeId :: Maybe DomNodeId -- ^ The container node for the given node, or null if not found.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomGetContainerForNode where
@@ -1391,9 +1666,9 @@ instance Command DomGetContainerForNode where
 
 
 
-
+-- | Parameters of the 'domGetQueryingDescendantsForContainer' command.
 data PDomGetQueryingDescendantsForContainer = PDomGetQueryingDescendantsForContainer {
-   pDomGetQueryingDescendantsForContainerNodeId :: DomNodeId
+   pDomGetQueryingDescendantsForContainerNodeId :: PDomGetQueryingDescendantsForContainerNodeId -- ^ Id of the container node to find querying descendants from.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomGetQueryingDescendantsForContainer  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 , A.omitNothingFields = True}
@@ -1402,11 +1677,17 @@ instance FromJSON  PDomGetQueryingDescendantsForContainer where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 }
 
 
+-- | Function for the command 'DOM.getQueryingDescendantsForContainer'.
+-- Returns the descendants of a container query container that have
+-- container queries against this container.
+-- Parameters: 'PDomGetQueryingDescendantsForContainer'
+-- Returns: 'DomGetQueryingDescendantsForContainer'
 domGetQueryingDescendantsForContainer :: Handle ev -> PDomGetQueryingDescendantsForContainer -> IO (Either Error DomGetQueryingDescendantsForContainer)
 domGetQueryingDescendantsForContainer handle params = sendReceiveCommandResult handle "DOM.getQueryingDescendantsForContainer" (Just params)
 
+-- | Return type of the 'domGetQueryingDescendantsForContainer' command.
 data DomGetQueryingDescendantsForContainer = DomGetQueryingDescendantsForContainer {
-   domGetQueryingDescendantsForContainerNodeIds :: [DomNodeId]
+   domGetQueryingDescendantsForContainerNodeIds :: [DomNodeId] -- ^ Descendant nodes with container queries against the given container.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomGetQueryingDescendantsForContainer where
@@ -1418,6 +1699,7 @@ instance Command DomGetQueryingDescendantsForContainer where
 
 
 
+-- | Screen orientation.
 data EmulationScreenOrientationType = EmulationScreenOrientationTypePortraitPrimary | EmulationScreenOrientationTypePortraitSecondary | EmulationScreenOrientationTypeLandscapePrimary | EmulationScreenOrientationTypeLandscapeSecondary
    deriving (Ord, Eq, Show, Read)
 instance FromJSON EmulationScreenOrientationType where
@@ -1440,8 +1722,8 @@ instance ToJSON EmulationScreenOrientationType where
 
 
 data EmulationScreenOrientation = EmulationScreenOrientation {
-   emulationScreenOrientationType :: EmulationScreenOrientationType,
-   emulationScreenOrientationAngle :: Int
+   emulationScreenOrientationType :: EmulationScreenOrientationType, -- ^ Orientation type.
+   emulationScreenOrientationAngle :: EmulationScreenOrientationAngle -- ^ Orientation angle.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON EmulationScreenOrientation  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -1450,6 +1732,8 @@ instance FromJSON  EmulationScreenOrientation where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
+
+-- | Type 'Emulation.DisplayFeature' .
 data EmulationDisplayFeatureOrientation = EmulationDisplayFeatureOrientationVertical | EmulationDisplayFeatureOrientationHorizontal
    deriving (Ord, Eq, Show, Read)
 instance FromJSON EmulationDisplayFeatureOrientation where
@@ -1468,9 +1752,12 @@ instance ToJSON EmulationDisplayFeatureOrientation where
 
 
 data EmulationDisplayFeature = EmulationDisplayFeature {
-   emulationDisplayFeatureOrientation :: EmulationDisplayFeatureOrientation,
-   emulationDisplayFeatureOffset :: Int,
-   emulationDisplayFeatureMaskLength :: Int
+   emulationDisplayFeatureOrientation :: EmulationDisplayFeatureOrientation, -- ^ Orientation of a display feature in relation to screen
+   emulationDisplayFeatureOffset :: EmulationDisplayFeatureOffset, -- ^ The offset from the screen origin in either the x (for vertical
+orientation) or y (for horizontal orientation) direction.
+   emulationDisplayFeatureMaskLength :: EmulationDisplayFeatureMaskLength -- ^ A display feature may mask content such that it is not physically
+displayed - this length along with the offset describes this area.
+A display feature that only splits content will have a 0 mask_length.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON EmulationDisplayFeature  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -1480,9 +1767,10 @@ instance FromJSON  EmulationDisplayFeature where
 
 
 
+-- | Type 'Emulation.MediaFeature' .
 data EmulationMediaFeature = EmulationMediaFeature {
-   emulationMediaFeatureName :: String,
-   emulationMediaFeatureValue :: String
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON EmulationMediaFeature  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -1491,6 +1779,11 @@ instance FromJSON  EmulationMediaFeature where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
+
+-- | advance: If the scheduler runs out of immediate work, the virtual time base may fast forward to
+-- allow the next delayed task (if any) to run; pause: The virtual time base may not advance;
+-- pauseIfNetworkFetchesPending: The virtual time base may not advance if there are any pending
+-- resource fetches.
 data EmulationVirtualTimePolicy = EmulationVirtualTimePolicyAdvance | EmulationVirtualTimePolicyPause | EmulationVirtualTimePolicyPauseIfNetworkFetchesPending
    deriving (Ord, Eq, Show, Read)
 instance FromJSON EmulationVirtualTimePolicy where
@@ -1510,9 +1803,10 @@ instance ToJSON EmulationVirtualTimePolicy where
 
 
 
+-- | Used to specify User Agent Cient Hints to emulate. See https://wicg.github.io/ua-client-hints
 data EmulationUserAgentBrandVersion = EmulationUserAgentBrandVersion {
-   emulationUserAgentBrandVersionBrand :: String,
-   emulationUserAgentBrandVersionVersion :: String
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON EmulationUserAgentBrandVersion  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -1522,16 +1816,18 @@ instance FromJSON  EmulationUserAgentBrandVersion where
 
 
 
+-- | Used to specify User Agent Cient Hints to emulate. See https://wicg.github.io/ua-client-hints
+-- Missing optional values will be filled in by the target with what it would normally use.
 data EmulationUserAgentMetadata = EmulationUserAgentMetadata {
-   emulationUserAgentMetadataBrands :: Maybe [EmulationUserAgentBrandVersion],
-   emulationUserAgentMetadataFullVersionList :: Maybe [EmulationUserAgentBrandVersion],
-   emulationUserAgentMetadataPlatform :: String,
-   emulationUserAgentMetadataPlatformVersion :: String,
-   emulationUserAgentMetadataArchitecture :: String,
-   emulationUserAgentMetadataModel :: String,
-   emulationUserAgentMetadataMobile :: Bool,
-   emulationUserAgentMetadataBitness :: Maybe String,
-   emulationUserAgentMetadataWow64 :: Maybe Bool
+
+
+
+
+
+
+
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON EmulationUserAgentMetadata  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -1540,6 +1836,8 @@ instance FromJSON  EmulationUserAgentMetadata where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
+
+-- | Enum of image types that can be disabled.
 data EmulationDisabledImageType = EmulationDisabledImageTypeAvif | EmulationDisabledImageTypeJxl | EmulationDisabledImageTypeWebp
    deriving (Ord, Eq, Show, Read)
 instance FromJSON EmulationDisabledImageType where
@@ -1560,6 +1858,8 @@ instance ToJSON EmulationDisabledImageType where
 
 
 
+
+-- | Type of the 'Emulation.virtualTimeBudgetExpired' event.
 data EmulationVirtualTimeBudgetExpired = EmulationVirtualTimeBudgetExpired
    deriving (Eq, Show, Read)
 instance FromJSON EmulationVirtualTimeBudgetExpired where
@@ -1571,11 +1871,16 @@ instance FromJSON EmulationVirtualTimeBudgetExpired where
 
 
 
+
+-- | Function for the command 'Emulation.canEmulate'.
+-- Tells whether emulation is supported.
+-- Returns: 'EmulationCanEmulate'
 emulationCanEmulate :: Handle ev -> IO (Either Error EmulationCanEmulate)
 emulationCanEmulate handle = sendReceiveCommandResult handle "Emulation.canEmulate" (Nothing :: Maybe ())
 
+-- | Return type of the 'emulationCanEmulate' command.
 data EmulationCanEmulate = EmulationCanEmulate {
-   emulationCanEmulateResult :: Bool
+   emulationCanEmulateResult :: Bool -- ^ True if emulation is supported.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  EmulationCanEmulate where
@@ -1586,21 +1891,27 @@ instance Command EmulationCanEmulate where
 
 
 
+-- | Function for the command 'Emulation.clearDeviceMetricsOverride'.
+-- Clears the overridden device metrics.
 emulationClearDeviceMetricsOverride :: Handle ev -> IO (Maybe Error)
 emulationClearDeviceMetricsOverride handle = sendReceiveCommand handle "Emulation.clearDeviceMetricsOverride" (Nothing :: Maybe ())
 
 
+-- | Function for the command 'Emulation.clearGeolocationOverride'.
+-- Clears the overridden Geolocation Position and Error.
 emulationClearGeolocationOverride :: Handle ev -> IO (Maybe Error)
 emulationClearGeolocationOverride handle = sendReceiveCommand handle "Emulation.clearGeolocationOverride" (Nothing :: Maybe ())
 
 
+-- | Function for the command 'Emulation.resetPageScaleFactor'.
+-- Requests that page scale factor is reset to initial values.
 emulationResetPageScaleFactor :: Handle ev -> IO (Maybe Error)
 emulationResetPageScaleFactor handle = sendReceiveCommand handle "Emulation.resetPageScaleFactor" (Nothing :: Maybe ())
 
 
-
+-- | Parameters of the 'emulationSetFocusEmulationEnabled' command.
 data PEmulationSetFocusEmulationEnabled = PEmulationSetFocusEmulationEnabled {
-   pEmulationSetFocusEmulationEnabledEnabled :: Bool
+   pEmulationSetFocusEmulationEnabledEnabled :: PEmulationSetFocusEmulationEnabledEnabled -- ^ Whether to enable to disable focus emulation.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetFocusEmulationEnabled  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 , A.omitNothingFields = True}
@@ -1609,13 +1920,17 @@ instance FromJSON  PEmulationSetFocusEmulationEnabled where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
 
 
+-- | Function for the command 'Emulation.setFocusEmulationEnabled'.
+-- Enables or disables simulating a focused and active page.
+-- Parameters: 'PEmulationSetFocusEmulationEnabled'
 emulationSetFocusEmulationEnabled :: Handle ev -> PEmulationSetFocusEmulationEnabled -> IO (Maybe Error)
 emulationSetFocusEmulationEnabled handle params = sendReceiveCommand handle "Emulation.setFocusEmulationEnabled" (Just params)
 
 
-
+-- | Parameters of the 'emulationSetAutoDarkModeOverride' command.
 data PEmulationSetAutoDarkModeOverride = PEmulationSetAutoDarkModeOverride {
-   pEmulationSetAutoDarkModeOverrideEnabled :: Maybe Bool
+   pEmulationSetAutoDarkModeOverrideEnabled :: PEmulationSetAutoDarkModeOverrideEnabled -- ^ Whether to enable or disable automatic dark mode.
+If not specified, any existing override will be cleared.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetAutoDarkModeOverride  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
@@ -1624,13 +1939,16 @@ instance FromJSON  PEmulationSetAutoDarkModeOverride where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 }
 
 
+-- | Function for the command 'Emulation.setAutoDarkModeOverride'.
+-- Automatically render all web contents using a dark theme.
+-- Parameters: 'PEmulationSetAutoDarkModeOverride'
 emulationSetAutoDarkModeOverride :: Handle ev -> PEmulationSetAutoDarkModeOverride -> IO (Maybe Error)
 emulationSetAutoDarkModeOverride handle params = sendReceiveCommand handle "Emulation.setAutoDarkModeOverride" (Just params)
 
 
-
+-- | Parameters of the 'emulationSetCpuThrottlingRate' command.
 data PEmulationSetCpuThrottlingRate = PEmulationSetCpuThrottlingRate {
-   pEmulationSetCpuThrottlingRateRate :: Double
+   pEmulationSetCpuThrottlingRateRate :: PEmulationSetCpuThrottlingRateRate -- ^ Throttling rate as a slowdown factor (1 is no throttle, 2 is 2x slowdown, etc).
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetCpuThrottlingRate  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -1639,13 +1957,17 @@ instance FromJSON  PEmulationSetCpuThrottlingRate where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
+-- | Function for the command 'Emulation.setCPUThrottlingRate'.
+-- Enables CPU throttling to emulate slow CPUs.
+-- Parameters: 'PEmulationSetCpuThrottlingRate'
 emulationSetCpuThrottlingRate :: Handle ev -> PEmulationSetCpuThrottlingRate -> IO (Maybe Error)
 emulationSetCpuThrottlingRate handle params = sendReceiveCommand handle "Emulation.setCPUThrottlingRate" (Just params)
 
 
-
+-- | Parameters of the 'emulationSetDefaultBackgroundColorOverride' command.
 data PEmulationSetDefaultBackgroundColorOverride = PEmulationSetDefaultBackgroundColorOverride {
-   pEmulationSetDefaultBackgroundColorOverrideColor :: Maybe DomRgba
+   pEmulationSetDefaultBackgroundColorOverrideColor :: PEmulationSetDefaultBackgroundColorOverrideColor -- ^ RGBA of the default background color. If not specified, any existing override will be
+cleared.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetDefaultBackgroundColorOverride  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 43 , A.omitNothingFields = True}
@@ -1654,25 +1976,32 @@ instance FromJSON  PEmulationSetDefaultBackgroundColorOverride where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 43 }
 
 
+-- | Function for the command 'Emulation.setDefaultBackgroundColorOverride'.
+-- Sets or clears an override of the default background color of the frame. This override is used
+-- if the content does not specify one.
+-- Parameters: 'PEmulationSetDefaultBackgroundColorOverride'
 emulationSetDefaultBackgroundColorOverride :: Handle ev -> PEmulationSetDefaultBackgroundColorOverride -> IO (Maybe Error)
 emulationSetDefaultBackgroundColorOverride handle params = sendReceiveCommand handle "Emulation.setDefaultBackgroundColorOverride" (Just params)
 
 
-
+-- | Parameters of the 'emulationSetDeviceMetricsOverride' command.
 data PEmulationSetDeviceMetricsOverride = PEmulationSetDeviceMetricsOverride {
-   pEmulationSetDeviceMetricsOverrideWidth :: Int,
-   pEmulationSetDeviceMetricsOverrideHeight :: Int,
-   pEmulationSetDeviceMetricsOverrideDeviceScaleFactor :: Double,
-   pEmulationSetDeviceMetricsOverrideMobile :: Bool,
-   pEmulationSetDeviceMetricsOverrideScale :: Maybe Double,
-   pEmulationSetDeviceMetricsOverrideScreenWidth :: Maybe Int,
-   pEmulationSetDeviceMetricsOverrideScreenHeight :: Maybe Int,
-   pEmulationSetDeviceMetricsOverridePositionX :: Maybe Int,
-   pEmulationSetDeviceMetricsOverridePositionY :: Maybe Int,
-   pEmulationSetDeviceMetricsOverrideDontSetVisibleSize :: Maybe Bool,
-   pEmulationSetDeviceMetricsOverrideScreenOrientation :: Maybe EmulationScreenOrientation,
-   pEmulationSetDeviceMetricsOverrideViewport :: Maybe PageViewport,
-   pEmulationSetDeviceMetricsOverrideDisplayFeature :: Maybe EmulationDisplayFeature
+   pEmulationSetDeviceMetricsOverrideWidth :: PEmulationSetDeviceMetricsOverrideWidth, -- ^ Overriding width value in pixels (minimum 0, maximum 10000000). 0 disables the override.
+   pEmulationSetDeviceMetricsOverrideHeight :: PEmulationSetDeviceMetricsOverrideHeight, -- ^ Overriding height value in pixels (minimum 0, maximum 10000000). 0 disables the override.
+   pEmulationSetDeviceMetricsOverrideDeviceScaleFactor :: PEmulationSetDeviceMetricsOverrideDeviceScaleFactor, -- ^ Overriding device scale factor value. 0 disables the override.
+   pEmulationSetDeviceMetricsOverrideMobile :: PEmulationSetDeviceMetricsOverrideMobile, -- ^ Whether to emulate mobile device. This includes viewport meta tag, overlay scrollbars, text
+autosizing and more.
+   pEmulationSetDeviceMetricsOverrideScale :: PEmulationSetDeviceMetricsOverrideScale, -- ^ Scale to apply to resulting view image.
+   pEmulationSetDeviceMetricsOverrideScreenWidth :: PEmulationSetDeviceMetricsOverrideScreenWidth, -- ^ Overriding screen width value in pixels (minimum 0, maximum 10000000).
+   pEmulationSetDeviceMetricsOverrideScreenHeight :: PEmulationSetDeviceMetricsOverrideScreenHeight, -- ^ Overriding screen height value in pixels (minimum 0, maximum 10000000).
+   pEmulationSetDeviceMetricsOverridePositionX :: PEmulationSetDeviceMetricsOverridePositionX, -- ^ Overriding view X position on screen in pixels (minimum 0, maximum 10000000).
+   pEmulationSetDeviceMetricsOverridePositionY :: PEmulationSetDeviceMetricsOverridePositionY, -- ^ Overriding view Y position on screen in pixels (minimum 0, maximum 10000000).
+   pEmulationSetDeviceMetricsOverrideDontSetVisibleSize :: PEmulationSetDeviceMetricsOverrideDontSetVisibleSize, -- ^ Do not set visible view size, rely upon explicit setVisibleSize call.
+   pEmulationSetDeviceMetricsOverrideScreenOrientation :: PEmulationSetDeviceMetricsOverrideScreenOrientation, -- ^ Screen orientation override.
+   pEmulationSetDeviceMetricsOverrideViewport :: PEmulationSetDeviceMetricsOverrideViewport, -- ^ If set, the visible area of the page will be overridden to this viewport. This viewport
+change is not observed by the page, e.g. viewport-relative elements do not change positions.
+   pEmulationSetDeviceMetricsOverrideDisplayFeature :: PEmulationSetDeviceMetricsOverrideDisplayFeature -- ^ If set, the display feature of a multi-segment screen. If not set, multi-segment support
+is turned-off.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetDeviceMetricsOverride  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 , A.omitNothingFields = True}
@@ -1681,13 +2010,18 @@ instance FromJSON  PEmulationSetDeviceMetricsOverride where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
 
 
+-- | Function for the command 'Emulation.setDeviceMetricsOverride'.
+-- Overrides the values of device screen dimensions (window.screen.width, window.screen.height,
+-- window.innerWidth, window.innerHeight, and "device-width"/"device-height"-related CSS media
+-- query results).
+-- Parameters: 'PEmulationSetDeviceMetricsOverride'
 emulationSetDeviceMetricsOverride :: Handle ev -> PEmulationSetDeviceMetricsOverride -> IO (Maybe Error)
 emulationSetDeviceMetricsOverride handle params = sendReceiveCommand handle "Emulation.setDeviceMetricsOverride" (Just params)
 
 
-
+-- | Parameters of the 'emulationSetScrollbarsHidden' command.
 data PEmulationSetScrollbarsHidden = PEmulationSetScrollbarsHidden {
-   pEmulationSetScrollbarsHiddenHidden :: Bool
+   pEmulationSetScrollbarsHiddenHidden :: PEmulationSetScrollbarsHiddenHidden -- ^ Whether scrollbars should be always hidden.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetScrollbarsHidden  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -1696,13 +2030,15 @@ instance FromJSON  PEmulationSetScrollbarsHidden where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
+-- | Function for the command 'Emulation.setScrollbarsHidden'.
+-- Parameters: 'PEmulationSetScrollbarsHidden'
 emulationSetScrollbarsHidden :: Handle ev -> PEmulationSetScrollbarsHidden -> IO (Maybe Error)
 emulationSetScrollbarsHidden handle params = sendReceiveCommand handle "Emulation.setScrollbarsHidden" (Just params)
 
 
-
+-- | Parameters of the 'emulationSetDocumentCookieDisabled' command.
 data PEmulationSetDocumentCookieDisabled = PEmulationSetDocumentCookieDisabled {
-   pEmulationSetDocumentCookieDisabledDisabled :: Bool
+   pEmulationSetDocumentCookieDisabledDisabled :: PEmulationSetDocumentCookieDisabledDisabled -- ^ Whether document.coookie API should be disabled.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetDocumentCookieDisabled  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 , A.omitNothingFields = True}
@@ -1711,10 +2047,13 @@ instance FromJSON  PEmulationSetDocumentCookieDisabled where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 }
 
 
+-- | Function for the command 'Emulation.setDocumentCookieDisabled'.
+-- Parameters: 'PEmulationSetDocumentCookieDisabled'
 emulationSetDocumentCookieDisabled :: Handle ev -> PEmulationSetDocumentCookieDisabled -> IO (Maybe Error)
 emulationSetDocumentCookieDisabled handle params = sendReceiveCommand handle "Emulation.setDocumentCookieDisabled" (Just params)
 
 
+-- | Parameters of the 'emulationSetEmitTouchEventsForMouse' command.
 data PEmulationSetEmitTouchEventsForMouseConfiguration = PEmulationSetEmitTouchEventsForMouseConfigurationMobile | PEmulationSetEmitTouchEventsForMouseConfigurationDesktop
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PEmulationSetEmitTouchEventsForMouseConfiguration where
@@ -1733,8 +2072,8 @@ instance ToJSON PEmulationSetEmitTouchEventsForMouseConfiguration where
 
 
 data PEmulationSetEmitTouchEventsForMouse = PEmulationSetEmitTouchEventsForMouse {
-   pEmulationSetEmitTouchEventsForMouseEnabled :: Bool,
-   pEmulationSetEmitTouchEventsForMouseConfiguration :: PEmulationSetEmitTouchEventsForMouseConfiguration
+   pEmulationSetEmitTouchEventsForMouseEnabled :: PEmulationSetEmitTouchEventsForMouseEnabled, -- ^ Whether touch emulation based on mouse input should be enabled.
+   pEmulationSetEmitTouchEventsForMouseConfiguration :: PEmulationSetEmitTouchEventsForMouseConfiguration -- ^ Touch/gesture events configuration. Default: current platform.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetEmitTouchEventsForMouse  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
@@ -1743,14 +2082,16 @@ instance FromJSON  PEmulationSetEmitTouchEventsForMouse where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 }
 
 
+-- | Function for the command 'Emulation.setEmitTouchEventsForMouse'.
+-- Parameters: 'PEmulationSetEmitTouchEventsForMouse'
 emulationSetEmitTouchEventsForMouse :: Handle ev -> PEmulationSetEmitTouchEventsForMouse -> IO (Maybe Error)
 emulationSetEmitTouchEventsForMouse handle params = sendReceiveCommand handle "Emulation.setEmitTouchEventsForMouse" (Just params)
 
 
-
+-- | Parameters of the 'emulationSetEmulatedMedia' command.
 data PEmulationSetEmulatedMedia = PEmulationSetEmulatedMedia {
-   pEmulationSetEmulatedMediaMedia :: Maybe String,
-   pEmulationSetEmulatedMediaFeatures :: Maybe [EmulationMediaFeature]
+   pEmulationSetEmulatedMediaMedia :: PEmulationSetEmulatedMediaMedia, -- ^ Media type to emulate. Empty string disables the override.
+   pEmulationSetEmulatedMediaFeatures :: PEmulationSetEmulatedMediaFeatures -- ^ Media features to emulate.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetEmulatedMedia  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -1759,10 +2100,14 @@ instance FromJSON  PEmulationSetEmulatedMedia where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
+-- | Function for the command 'Emulation.setEmulatedMedia'.
+-- Emulates the given media type or media feature for CSS media queries.
+-- Parameters: 'PEmulationSetEmulatedMedia'
 emulationSetEmulatedMedia :: Handle ev -> PEmulationSetEmulatedMedia -> IO (Maybe Error)
 emulationSetEmulatedMedia handle params = sendReceiveCommand handle "Emulation.setEmulatedMedia" (Just params)
 
 
+-- | Parameters of the 'emulationSetEmulatedVisionDeficiency' command.
 data PEmulationSetEmulatedVisionDeficiencyType = PEmulationSetEmulatedVisionDeficiencyTypeNone | PEmulationSetEmulatedVisionDeficiencyTypeAchromatopsia | PEmulationSetEmulatedVisionDeficiencyTypeBlurredVision | PEmulationSetEmulatedVisionDeficiencyTypeDeuteranopia | PEmulationSetEmulatedVisionDeficiencyTypeProtanopia | PEmulationSetEmulatedVisionDeficiencyTypeTritanopia
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PEmulationSetEmulatedVisionDeficiencyType where
@@ -1789,7 +2134,7 @@ instance ToJSON PEmulationSetEmulatedVisionDeficiencyType where
 
 
 data PEmulationSetEmulatedVisionDeficiency = PEmulationSetEmulatedVisionDeficiency {
-   pEmulationSetEmulatedVisionDeficiencyType :: PEmulationSetEmulatedVisionDeficiencyType
+   pEmulationSetEmulatedVisionDeficiencyType :: PEmulationSetEmulatedVisionDeficiencyType -- ^ Vision deficiency to emulate.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetEmulatedVisionDeficiency  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 , A.omitNothingFields = True}
@@ -1798,15 +2143,18 @@ instance FromJSON  PEmulationSetEmulatedVisionDeficiency where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 }
 
 
+-- | Function for the command 'Emulation.setEmulatedVisionDeficiency'.
+-- Emulates the given vision deficiency.
+-- Parameters: 'PEmulationSetEmulatedVisionDeficiency'
 emulationSetEmulatedVisionDeficiency :: Handle ev -> PEmulationSetEmulatedVisionDeficiency -> IO (Maybe Error)
 emulationSetEmulatedVisionDeficiency handle params = sendReceiveCommand handle "Emulation.setEmulatedVisionDeficiency" (Just params)
 
 
-
+-- | Parameters of the 'emulationSetGeolocationOverride' command.
 data PEmulationSetGeolocationOverride = PEmulationSetGeolocationOverride {
-   pEmulationSetGeolocationOverrideLatitude :: Maybe Double,
-   pEmulationSetGeolocationOverrideLongitude :: Maybe Double,
-   pEmulationSetGeolocationOverrideAccuracy :: Maybe Double
+   pEmulationSetGeolocationOverrideLatitude :: PEmulationSetGeolocationOverrideLatitude, -- ^ Mock latitude
+   pEmulationSetGeolocationOverrideLongitude :: PEmulationSetGeolocationOverrideLongitude, -- ^ Mock longitude
+   pEmulationSetGeolocationOverrideAccuracy :: PEmulationSetGeolocationOverrideAccuracy -- ^ Mock accuracy
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetGeolocationOverride  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
@@ -1815,14 +2163,18 @@ instance FromJSON  PEmulationSetGeolocationOverride where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
+-- | Function for the command 'Emulation.setGeolocationOverride'.
+-- Overrides the Geolocation Position or Error. Omitting any of the parameters emulates position
+-- unavailable.
+-- Parameters: 'PEmulationSetGeolocationOverride'
 emulationSetGeolocationOverride :: Handle ev -> PEmulationSetGeolocationOverride -> IO (Maybe Error)
 emulationSetGeolocationOverride handle params = sendReceiveCommand handle "Emulation.setGeolocationOverride" (Just params)
 
 
-
+-- | Parameters of the 'emulationSetIdleOverride' command.
 data PEmulationSetIdleOverride = PEmulationSetIdleOverride {
-   pEmulationSetIdleOverrideIsUserActive :: Bool,
-   pEmulationSetIdleOverrideIsScreenUnlocked :: Bool
+   pEmulationSetIdleOverrideIsUserActive :: PEmulationSetIdleOverrideIsUserActive, -- ^ Mock isUserActive
+   pEmulationSetIdleOverrideIsScreenUnlocked :: PEmulationSetIdleOverrideIsScreenUnlocked -- ^ Mock isScreenUnlocked
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetIdleOverride  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -1831,17 +2183,22 @@ instance FromJSON  PEmulationSetIdleOverride where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
+-- | Function for the command 'Emulation.setIdleOverride'.
+-- Overrides the Idle state.
+-- Parameters: 'PEmulationSetIdleOverride'
 emulationSetIdleOverride :: Handle ev -> PEmulationSetIdleOverride -> IO (Maybe Error)
 emulationSetIdleOverride handle params = sendReceiveCommand handle "Emulation.setIdleOverride" (Just params)
 
 
+-- | Function for the command 'Emulation.clearIdleOverride'.
+-- Clears Idle state overrides.
 emulationClearIdleOverride :: Handle ev -> IO (Maybe Error)
 emulationClearIdleOverride handle = sendReceiveCommand handle "Emulation.clearIdleOverride" (Nothing :: Maybe ())
 
 
-
+-- | Parameters of the 'emulationSetPageScaleFactor' command.
 data PEmulationSetPageScaleFactor = PEmulationSetPageScaleFactor {
-   pEmulationSetPageScaleFactorPageScaleFactor :: Double
+   pEmulationSetPageScaleFactorPageScaleFactor :: PEmulationSetPageScaleFactorPageScaleFactor -- ^ Page scale factor.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetPageScaleFactor  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -1850,13 +2207,16 @@ instance FromJSON  PEmulationSetPageScaleFactor where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
+-- | Function for the command 'Emulation.setPageScaleFactor'.
+-- Sets a specified page scale factor.
+-- Parameters: 'PEmulationSetPageScaleFactor'
 emulationSetPageScaleFactor :: Handle ev -> PEmulationSetPageScaleFactor -> IO (Maybe Error)
 emulationSetPageScaleFactor handle params = sendReceiveCommand handle "Emulation.setPageScaleFactor" (Just params)
 
 
-
+-- | Parameters of the 'emulationSetScriptExecutionDisabled' command.
 data PEmulationSetScriptExecutionDisabled = PEmulationSetScriptExecutionDisabled {
-   pEmulationSetScriptExecutionDisabledValue :: Bool
+   pEmulationSetScriptExecutionDisabledValue :: PEmulationSetScriptExecutionDisabledValue -- ^ Whether script execution should be disabled in the page.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetScriptExecutionDisabled  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
@@ -1865,14 +2225,17 @@ instance FromJSON  PEmulationSetScriptExecutionDisabled where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 }
 
 
+-- | Function for the command 'Emulation.setScriptExecutionDisabled'.
+-- Switches script execution in the page.
+-- Parameters: 'PEmulationSetScriptExecutionDisabled'
 emulationSetScriptExecutionDisabled :: Handle ev -> PEmulationSetScriptExecutionDisabled -> IO (Maybe Error)
 emulationSetScriptExecutionDisabled handle params = sendReceiveCommand handle "Emulation.setScriptExecutionDisabled" (Just params)
 
 
-
+-- | Parameters of the 'emulationSetTouchEmulationEnabled' command.
 data PEmulationSetTouchEmulationEnabled = PEmulationSetTouchEmulationEnabled {
-   pEmulationSetTouchEmulationEnabledEnabled :: Bool,
-   pEmulationSetTouchEmulationEnabledMaxTouchPoints :: Maybe Int
+   pEmulationSetTouchEmulationEnabledEnabled :: PEmulationSetTouchEmulationEnabledEnabled, -- ^ Whether the touch event emulation should be enabled.
+   pEmulationSetTouchEmulationEnabledMaxTouchPoints :: PEmulationSetTouchEmulationEnabledMaxTouchPoints -- ^ Maximum touch points supported. Defaults to one.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetTouchEmulationEnabled  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 , A.omitNothingFields = True}
@@ -1881,16 +2244,21 @@ instance FromJSON  PEmulationSetTouchEmulationEnabled where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
 
 
+-- | Function for the command 'Emulation.setTouchEmulationEnabled'.
+-- Enables touch on platforms which do not support them.
+-- Parameters: 'PEmulationSetTouchEmulationEnabled'
 emulationSetTouchEmulationEnabled :: Handle ev -> PEmulationSetTouchEmulationEnabled -> IO (Maybe Error)
 emulationSetTouchEmulationEnabled handle params = sendReceiveCommand handle "Emulation.setTouchEmulationEnabled" (Just params)
 
 
-
+-- | Parameters of the 'emulationSetVirtualTimePolicy' command.
 data PEmulationSetVirtualTimePolicy = PEmulationSetVirtualTimePolicy {
-   pEmulationSetVirtualTimePolicyPolicy :: EmulationVirtualTimePolicy,
-   pEmulationSetVirtualTimePolicyBudget :: Maybe Double,
-   pEmulationSetVirtualTimePolicyMaxVirtualTimeTaskStarvationCount :: Maybe Int,
-   pEmulationSetVirtualTimePolicyInitialVirtualTime :: Maybe NetworkTimeSinceEpoch
+
+   pEmulationSetVirtualTimePolicyBudget :: PEmulationSetVirtualTimePolicyBudget, -- ^ If set, after this many virtual milliseconds have elapsed virtual time will be paused and a
+virtualTimeBudgetExpired event is sent.
+   pEmulationSetVirtualTimePolicyMaxVirtualTimeTaskStarvationCount :: PEmulationSetVirtualTimePolicyMaxVirtualTimeTaskStarvationCount, -- ^ If set this specifies the maximum number of tasks that can be run before virtual is forced
+forwards to prevent deadlock.
+   pEmulationSetVirtualTimePolicyInitialVirtualTime :: PEmulationSetVirtualTimePolicyInitialVirtualTime -- ^ If set, base::Time::Now will be overridden to initially return this value.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetVirtualTimePolicy  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -1899,11 +2267,17 @@ instance FromJSON  PEmulationSetVirtualTimePolicy where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
+-- | Function for the command 'Emulation.setVirtualTimePolicy'.
+-- Turns on virtual time for all frames (replacing real-time with a synthetic time source) and sets
+-- the current virtual time policy.  Note this supersedes any previous time budget.
+-- Parameters: 'PEmulationSetVirtualTimePolicy'
+-- Returns: 'EmulationSetVirtualTimePolicy'
 emulationSetVirtualTimePolicy :: Handle ev -> PEmulationSetVirtualTimePolicy -> IO (Either Error EmulationSetVirtualTimePolicy)
 emulationSetVirtualTimePolicy handle params = sendReceiveCommandResult handle "Emulation.setVirtualTimePolicy" (Just params)
 
+-- | Return type of the 'emulationSetVirtualTimePolicy' command.
 data EmulationSetVirtualTimePolicy = EmulationSetVirtualTimePolicy {
-   emulationSetVirtualTimePolicyVirtualTimeTicksBase :: Double
+   emulationSetVirtualTimePolicyVirtualTimeTicksBase :: Double -- ^ Absolute timestamp at which virtual time was first enabled (up time in milliseconds).
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  EmulationSetVirtualTimePolicy where
@@ -1914,9 +2288,10 @@ instance Command EmulationSetVirtualTimePolicy where
 
 
 
-
+-- | Parameters of the 'emulationSetLocaleOverride' command.
 data PEmulationSetLocaleOverride = PEmulationSetLocaleOverride {
-   pEmulationSetLocaleOverrideLocale :: Maybe String
+   pEmulationSetLocaleOverrideLocale :: PEmulationSetLocaleOverrideLocale -- ^ ICU style C locale (e.g. "en_US"). If not specified or empty, disables the override and
+restores default host system locale.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetLocaleOverride  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -1925,13 +2300,17 @@ instance FromJSON  PEmulationSetLocaleOverride where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
+-- | Function for the command 'Emulation.setLocaleOverride'.
+-- Overrides default host system locale with the specified one.
+-- Parameters: 'PEmulationSetLocaleOverride'
 emulationSetLocaleOverride :: Handle ev -> PEmulationSetLocaleOverride -> IO (Maybe Error)
 emulationSetLocaleOverride handle params = sendReceiveCommand handle "Emulation.setLocaleOverride" (Just params)
 
 
-
+-- | Parameters of the 'emulationSetTimezoneOverride' command.
 data PEmulationSetTimezoneOverride = PEmulationSetTimezoneOverride {
-   pEmulationSetTimezoneOverrideTimezoneId :: String
+   pEmulationSetTimezoneOverrideTimezoneId :: PEmulationSetTimezoneOverrideTimezoneId -- ^ The timezone identifier. If empty, disables the override and
+restores default host system timezone.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetTimezoneOverride  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -1940,13 +2319,16 @@ instance FromJSON  PEmulationSetTimezoneOverride where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
+-- | Function for the command 'Emulation.setTimezoneOverride'.
+-- Overrides default host system timezone with the specified one.
+-- Parameters: 'PEmulationSetTimezoneOverride'
 emulationSetTimezoneOverride :: Handle ev -> PEmulationSetTimezoneOverride -> IO (Maybe Error)
 emulationSetTimezoneOverride handle params = sendReceiveCommand handle "Emulation.setTimezoneOverride" (Just params)
 
 
-
+-- | Parameters of the 'emulationSetDisabledImageTypes' command.
 data PEmulationSetDisabledImageTypes = PEmulationSetDisabledImageTypes {
-   pEmulationSetDisabledImageTypesImageTypes :: [EmulationDisabledImageType]
+   pEmulationSetDisabledImageTypesImageTypes :: PEmulationSetDisabledImageTypesImageTypes -- ^ Image types to disable.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetDisabledImageTypes  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
@@ -1955,13 +2337,15 @@ instance FromJSON  PEmulationSetDisabledImageTypes where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
+-- | Function for the command 'Emulation.setDisabledImageTypes'.
+-- Parameters: 'PEmulationSetDisabledImageTypes'
 emulationSetDisabledImageTypes :: Handle ev -> PEmulationSetDisabledImageTypes -> IO (Maybe Error)
 emulationSetDisabledImageTypes handle params = sendReceiveCommand handle "Emulation.setDisabledImageTypes" (Just params)
 
 
-
+-- | Parameters of the 'emulationSetHardwareConcurrencyOverride' command.
 data PEmulationSetHardwareConcurrencyOverride = PEmulationSetHardwareConcurrencyOverride {
-   pEmulationSetHardwareConcurrencyOverrideHardwareConcurrency :: Int
+   pEmulationSetHardwareConcurrencyOverrideHardwareConcurrency :: PEmulationSetHardwareConcurrencyOverrideHardwareConcurrency -- ^ Hardware concurrency to report
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetHardwareConcurrencyOverride  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 , A.omitNothingFields = True}
@@ -1970,16 +2354,18 @@ instance FromJSON  PEmulationSetHardwareConcurrencyOverride where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 }
 
 
+-- | Function for the command 'Emulation.setHardwareConcurrencyOverride'.
+-- Parameters: 'PEmulationSetHardwareConcurrencyOverride'
 emulationSetHardwareConcurrencyOverride :: Handle ev -> PEmulationSetHardwareConcurrencyOverride -> IO (Maybe Error)
 emulationSetHardwareConcurrencyOverride handle params = sendReceiveCommand handle "Emulation.setHardwareConcurrencyOverride" (Just params)
 
 
-
+-- | Parameters of the 'emulationSetUserAgentOverride' command.
 data PEmulationSetUserAgentOverride = PEmulationSetUserAgentOverride {
-   pEmulationSetUserAgentOverrideUserAgent :: String,
-   pEmulationSetUserAgentOverrideAcceptLanguage :: Maybe String,
-   pEmulationSetUserAgentOverridePlatform :: Maybe String,
-   pEmulationSetUserAgentOverrideUserAgentMetadata :: Maybe EmulationUserAgentMetadata
+   pEmulationSetUserAgentOverrideUserAgent :: PEmulationSetUserAgentOverrideUserAgent, -- ^ User agent to use.
+   pEmulationSetUserAgentOverrideAcceptLanguage :: PEmulationSetUserAgentOverrideAcceptLanguage, -- ^ Browser langugage to emulate.
+   pEmulationSetUserAgentOverridePlatform :: PEmulationSetUserAgentOverridePlatform, -- ^ The platform navigator.platform should return.
+   pEmulationSetUserAgentOverrideUserAgentMetadata :: PEmulationSetUserAgentOverrideUserAgentMetadata -- ^ To be sent in Sec-CH-UA-* headers and returned in navigator.userAgentData
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetUserAgentOverride  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -1988,13 +2374,16 @@ instance FromJSON  PEmulationSetUserAgentOverride where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
+-- | Function for the command 'Emulation.setUserAgentOverride'.
+-- Allows overriding user agent with the given string.
+-- Parameters: 'PEmulationSetUserAgentOverride'
 emulationSetUserAgentOverride :: Handle ev -> PEmulationSetUserAgentOverride -> IO (Maybe Error)
 emulationSetUserAgentOverride handle params = sendReceiveCommand handle "Emulation.setUserAgentOverride" (Just params)
 
 
-
+-- | Parameters of the 'emulationSetAutomationOverride' command.
 data PEmulationSetAutomationOverride = PEmulationSetAutomationOverride {
-   pEmulationSetAutomationOverrideEnabled :: Bool
+   pEmulationSetAutomationOverrideEnabled :: PEmulationSetAutomationOverrideEnabled -- ^ Whether the override should be enabled.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetAutomationOverride  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
@@ -2003,11 +2392,15 @@ instance FromJSON  PEmulationSetAutomationOverride where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
+-- | Function for the command 'Emulation.setAutomationOverride'.
+-- Allows overriding the automation flag.
+-- Parameters: 'PEmulationSetAutomationOverride'
 emulationSetAutomationOverride :: Handle ev -> PEmulationSetAutomationOverride -> IO (Maybe Error)
 emulationSetAutomationOverride handle params = sendReceiveCommand handle "Emulation.setAutomationOverride" (Just params)
 
 
 
+-- | Resource type as it was perceived by the rendering engine.
 data NetworkResourceType = NetworkResourceTypeDocument | NetworkResourceTypeStylesheet | NetworkResourceTypeImage | NetworkResourceTypeMedia | NetworkResourceTypeFont | NetworkResourceTypeScript | NetworkResourceTypeTextTrack | NetworkResourceTypeXhr | NetworkResourceTypeFetch | NetworkResourceTypeEventSource | NetworkResourceTypeWebSocket | NetworkResourceTypeManifest | NetworkResourceTypeSignedExchange | NetworkResourceTypePing | NetworkResourceTypeCspViolationReport | NetworkResourceTypePreflight | NetworkResourceTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkResourceType where
@@ -2054,9 +2447,17 @@ instance ToJSON NetworkResourceType where
          NetworkResourceTypeOther -> "Other"
 
 
+
+-- | Unique loader identifier.
 type NetworkLoaderId = String
+
+-- | Unique request identifier.
 type NetworkRequestId = String
+
+-- | Unique intercepted request identifier.
 type NetworkInterceptionId = String
+
+-- | Network level fetch failure reason.
 data NetworkErrorReason = NetworkErrorReasonFailed | NetworkErrorReasonAborted | NetworkErrorReasonTimedOut | NetworkErrorReasonAccessDenied | NetworkErrorReasonConnectionClosed | NetworkErrorReasonConnectionReset | NetworkErrorReasonConnectionRefused | NetworkErrorReasonConnectionAborted | NetworkErrorReasonConnectionFailed | NetworkErrorReasonNameNotResolved | NetworkErrorReasonInternetDisconnected | NetworkErrorReasonAddressUnreachable | NetworkErrorReasonBlockedByClient | NetworkErrorReasonBlockedByResponse
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkErrorReason where
@@ -2097,9 +2498,17 @@ instance ToJSON NetworkErrorReason where
          NetworkErrorReasonBlockedByResponse -> "BlockedByResponse"
 
 
+
+-- | UTC time in seconds, counted from January 1, 1970.
 type NetworkTimeSinceEpoch = Double
+
+-- | Monotonically increasing time in seconds since an arbitrary point in the past.
 type NetworkMonotonicTime = Double
+
+-- | Request / response headers as keys / values of JSON object.
 type NetworkHeaders = [(String, String)]
+
+-- | The underlying connection technology that the browser is supposedly using.
 data NetworkConnectionType = NetworkConnectionTypeNone | NetworkConnectionTypeCellular2g | NetworkConnectionTypeCellular3g | NetworkConnectionTypeCellular4g | NetworkConnectionTypeBluetooth | NetworkConnectionTypeEthernet | NetworkConnectionTypeWifi | NetworkConnectionTypeWimax | NetworkConnectionTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkConnectionType where
@@ -2130,6 +2539,9 @@ instance ToJSON NetworkConnectionType where
          NetworkConnectionTypeOther -> "other"
 
 
+
+-- | Represents the cookie's 'SameSite' status:
+-- https://tools.ietf.org/html/draft-west-first-party-cookies
 data NetworkCookieSameSite = NetworkCookieSameSiteStrict | NetworkCookieSameSiteLax | NetworkCookieSameSiteNone
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCookieSameSite where
@@ -2148,6 +2560,9 @@ instance ToJSON NetworkCookieSameSite where
          NetworkCookieSameSiteNone -> "None"
 
 
+
+-- | Represents the cookie's 'Priority' status:
+-- https://tools.ietf.org/html/draft-west-cookie-priority-00
 data NetworkCookiePriority = NetworkCookiePriorityLow | NetworkCookiePriorityMedium | NetworkCookiePriorityHigh
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCookiePriority where
@@ -2166,6 +2581,10 @@ instance ToJSON NetworkCookiePriority where
          NetworkCookiePriorityHigh -> "High"
 
 
+
+-- | Represents the source scheme of the origin that originally set the cookie.
+-- A value of "Unset" allows protocol clients to emulate legacy cookie scope for the scheme.
+-- This is a temporary ability and it will be removed in the future.
 data NetworkCookieSourceScheme = NetworkCookieSourceSchemeUnset | NetworkCookieSourceSchemeNonSecure | NetworkCookieSourceSchemeSecure
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCookieSourceScheme where
@@ -2185,25 +2604,27 @@ instance ToJSON NetworkCookieSourceScheme where
 
 
 
+-- | Timing information for the request.
 data NetworkResourceTiming = NetworkResourceTiming {
-   networkResourceTimingRequestTime :: Double,
-   networkResourceTimingProxyStart :: Double,
-   networkResourceTimingProxyEnd :: Double,
-   networkResourceTimingDnsStart :: Double,
-   networkResourceTimingDnsEnd :: Double,
-   networkResourceTimingConnectStart :: Double,
-   networkResourceTimingConnectEnd :: Double,
-   networkResourceTimingSslStart :: Double,
-   networkResourceTimingSslEnd :: Double,
-   networkResourceTimingWorkerStart :: Double,
-   networkResourceTimingWorkerReady :: Double,
-   networkResourceTimingWorkerFetchStart :: Double,
-   networkResourceTimingWorkerRespondWithSettled :: Double,
-   networkResourceTimingSendStart :: Double,
-   networkResourceTimingSendEnd :: Double,
-   networkResourceTimingPushStart :: Double,
-   networkResourceTimingPushEnd :: Double,
-   networkResourceTimingReceiveHeadersEnd :: Double
+   networkResourceTimingRequestTime :: NetworkResourceTimingRequestTime, -- ^ Timing's requestTime is a baseline in seconds, while the other numbers are ticks in
+milliseconds relatively to this requestTime.
+   networkResourceTimingProxyStart :: NetworkResourceTimingProxyStart, -- ^ Started resolving proxy.
+   networkResourceTimingProxyEnd :: NetworkResourceTimingProxyEnd, -- ^ Finished resolving proxy.
+   networkResourceTimingDnsStart :: NetworkResourceTimingDnsStart, -- ^ Started DNS address resolve.
+   networkResourceTimingDnsEnd :: NetworkResourceTimingDnsEnd, -- ^ Finished DNS address resolve.
+   networkResourceTimingConnectStart :: NetworkResourceTimingConnectStart, -- ^ Started connecting to the remote host.
+   networkResourceTimingConnectEnd :: NetworkResourceTimingConnectEnd, -- ^ Connected to the remote host.
+   networkResourceTimingSslStart :: NetworkResourceTimingSslStart, -- ^ Started SSL handshake.
+   networkResourceTimingSslEnd :: NetworkResourceTimingSslEnd, -- ^ Finished SSL handshake.
+   networkResourceTimingWorkerStart :: NetworkResourceTimingWorkerStart, -- ^ Started running ServiceWorker.
+   networkResourceTimingWorkerReady :: NetworkResourceTimingWorkerReady, -- ^ Finished Starting ServiceWorker.
+   networkResourceTimingWorkerFetchStart :: NetworkResourceTimingWorkerFetchStart, -- ^ Started fetch event.
+   networkResourceTimingWorkerRespondWithSettled :: NetworkResourceTimingWorkerRespondWithSettled, -- ^ Settled fetch event respondWith promise.
+   networkResourceTimingSendStart :: NetworkResourceTimingSendStart, -- ^ Started sending request.
+   networkResourceTimingSendEnd :: NetworkResourceTimingSendEnd, -- ^ Finished sending request.
+   networkResourceTimingPushStart :: NetworkResourceTimingPushStart, -- ^ Time the server started pushing request.
+   networkResourceTimingPushEnd :: NetworkResourceTimingPushEnd, -- ^ Time the server finished pushing request.
+   networkResourceTimingReceiveHeadersEnd :: NetworkResourceTimingReceiveHeadersEnd -- ^ Finished receiving response headers.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkResourceTiming  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -2212,6 +2633,8 @@ instance FromJSON  NetworkResourceTiming where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
+
+-- | Loading priority of a resource request.
 data NetworkResourcePriority = NetworkResourcePriorityVeryLow | NetworkResourcePriorityLow | NetworkResourcePriorityMedium | NetworkResourcePriorityHigh | NetworkResourcePriorityVeryHigh
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkResourcePriority where
@@ -2235,8 +2658,8 @@ instance ToJSON NetworkResourcePriority where
 
 
 
+-- | Post data entry for HTTP request
 data NetworkPostDataEntry = NetworkPostDataEntry {
-   networkPostDataEntryBytes :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkPostDataEntry  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -2245,6 +2668,8 @@ instance FromJSON  NetworkPostDataEntry where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
+
+-- | HTTP request data.
 data NetworkRequestReferrerPolicy = NetworkRequestReferrerPolicyUnsafeUrl | NetworkRequestReferrerPolicyNoReferrerWhenDowngrade | NetworkRequestReferrerPolicyNoReferrer | NetworkRequestReferrerPolicyOrigin | NetworkRequestReferrerPolicyOriginWhenCrossOrigin | NetworkRequestReferrerPolicySameOrigin | NetworkRequestReferrerPolicyStrictOrigin | NetworkRequestReferrerPolicyStrictOriginWhenCrossOrigin
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkRequestReferrerPolicy where
@@ -2275,19 +2700,21 @@ instance ToJSON NetworkRequestReferrerPolicy where
 
 
 data NetworkRequest = NetworkRequest {
-   networkRequestUrl :: String,
-   networkRequestUrlFragment :: Maybe String,
-   networkRequestMethod :: String,
-   networkRequestHeaders :: NetworkHeaders,
-   networkRequestPostData :: Maybe String,
-   networkRequestHasPostData :: Maybe Bool,
-   networkRequestPostDataEntries :: Maybe [NetworkPostDataEntry],
-   networkRequestMixedContentType :: Maybe SecurityMixedContentType,
-   networkRequestInitialPriority :: NetworkResourcePriority,
-   networkRequestReferrerPolicy :: NetworkRequestReferrerPolicy,
-   networkRequestIsLinkPreload :: Maybe Bool,
-   networkRequestTrustTokenParams :: Maybe NetworkTrustTokenParams,
-   networkRequestIsSameSite :: Maybe Bool
+   networkRequestUrl :: NetworkRequestUrl, -- ^ Request URL (without fragment).
+   networkRequestUrlFragment :: NetworkRequestUrlFragment, -- ^ Fragment of the requested URL starting with hash, if present.
+   networkRequestMethod :: NetworkRequestMethod, -- ^ HTTP request method.
+   networkRequestHeaders :: NetworkRequestHeaders, -- ^ HTTP request headers.
+   networkRequestPostData :: NetworkRequestPostData, -- ^ HTTP POST request data.
+   networkRequestHasPostData :: NetworkRequestHasPostData, -- ^ True when the request has POST data. Note that postData might still be omitted when this flag is true when the data is too long.
+   networkRequestPostDataEntries :: NetworkRequestPostDataEntries, -- ^ Request body elements. This will be converted from base64 to binary
+   networkRequestMixedContentType :: NetworkRequestMixedContentType, -- ^ The mixed content type of the request.
+   networkRequestInitialPriority :: NetworkRequestInitialPriority, -- ^ Priority of the resource request at the time request is sent.
+   networkRequestReferrerPolicy :: NetworkRequestReferrerPolicy, -- ^ The referrer policy of the request, as defined in https://www.w3.org/TR/referrer-policy/
+   networkRequestIsLinkPreload :: NetworkRequestIsLinkPreload, -- ^ Whether is loaded via link preload.
+   networkRequestTrustTokenParams :: NetworkRequestTrustTokenParams, -- ^ Set for requests when the TrustToken API is used. Contains the parameters
+passed by the developer (e.g. via "fetch") as understood by the backend.
+   networkRequestIsSameSite :: NetworkRequestIsSameSite -- ^ True if this resource request is considered to be the 'same site' as the
+request correspondinfg to the main frame.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkRequest  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
@@ -2297,15 +2724,17 @@ instance FromJSON  NetworkRequest where
 
 
 
+-- | Details of a signed certificate timestamp (SCT).
 data NetworkSignedCertificateTimestamp = NetworkSignedCertificateTimestamp {
-   networkSignedCertificateTimestampStatus :: String,
-   networkSignedCertificateTimestampOrigin :: String,
-   networkSignedCertificateTimestampLogDescription :: String,
-   networkSignedCertificateTimestampLogId :: String,
-   networkSignedCertificateTimestampTimestamp :: Double,
-   networkSignedCertificateTimestampHashAlgorithm :: String,
-   networkSignedCertificateTimestampSignatureAlgorithm :: String,
-   networkSignedCertificateTimestampSignatureData :: String
+   networkSignedCertificateTimestampStatus :: NetworkSignedCertificateTimestampStatus, -- ^ Validation status.
+   networkSignedCertificateTimestampOrigin :: NetworkSignedCertificateTimestampOrigin, -- ^ Origin.
+   networkSignedCertificateTimestampLogDescription :: NetworkSignedCertificateTimestampLogDescription, -- ^ Log name / description.
+   networkSignedCertificateTimestampLogId :: NetworkSignedCertificateTimestampLogId, -- ^ Log ID.
+   networkSignedCertificateTimestampTimestamp :: NetworkSignedCertificateTimestampTimestamp, -- ^ Issuance date. Unlike TimeSinceEpoch, this contains the number of
+milliseconds since January 1, 1970, UTC, not the number of seconds.
+   networkSignedCertificateTimestampHashAlgorithm :: NetworkSignedCertificateTimestampHashAlgorithm, -- ^ Hash algorithm.
+   networkSignedCertificateTimestampSignatureAlgorithm :: NetworkSignedCertificateTimestampSignatureAlgorithm, -- ^ Signature algorithm.
+   networkSignedCertificateTimestampSignatureData :: NetworkSignedCertificateTimestampSignatureData -- ^ Signature data.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkSignedCertificateTimestamp  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
@@ -2315,20 +2744,21 @@ instance FromJSON  NetworkSignedCertificateTimestamp where
 
 
 
+-- | Security details about a request.
 data NetworkSecurityDetails = NetworkSecurityDetails {
-   networkSecurityDetailsProtocol :: String,
-   networkSecurityDetailsKeyExchange :: String,
-   networkSecurityDetailsKeyExchangeGroup :: Maybe String,
-   networkSecurityDetailsCipher :: String,
-   networkSecurityDetailsMac :: Maybe String,
-   networkSecurityDetailsCertificateId :: SecurityCertificateId,
-   networkSecurityDetailsSubjectName :: String,
-   networkSecurityDetailsSanList :: [String],
-   networkSecurityDetailsIssuer :: String,
-   networkSecurityDetailsValidFrom :: NetworkTimeSinceEpoch,
-   networkSecurityDetailsValidTo :: NetworkTimeSinceEpoch,
-   networkSecurityDetailsSignedCertificateTimestampList :: [NetworkSignedCertificateTimestamp],
-   networkSecurityDetailsCertificateTransparencyCompliance :: NetworkCertificateTransparencyCompliance
+   networkSecurityDetailsProtocol :: NetworkSecurityDetailsProtocol, -- ^ Protocol name (e.g. "TLS 1.2" or "QUIC").
+   networkSecurityDetailsKeyExchange :: NetworkSecurityDetailsKeyExchange, -- ^ Key Exchange used by the connection, or the empty string if not applicable.
+   networkSecurityDetailsKeyExchangeGroup :: NetworkSecurityDetailsKeyExchangeGroup, -- ^ (EC)DH group used by the connection, if applicable.
+   networkSecurityDetailsCipher :: NetworkSecurityDetailsCipher, -- ^ Cipher name.
+   networkSecurityDetailsMac :: NetworkSecurityDetailsMac, -- ^ TLS MAC. Note that AEAD ciphers do not have separate MACs.
+   networkSecurityDetailsCertificateId :: NetworkSecurityDetailsCertificateId, -- ^ Certificate ID value.
+   networkSecurityDetailsSubjectName :: NetworkSecurityDetailsSubjectName, -- ^ Certificate subject name.
+   networkSecurityDetailsSanList :: NetworkSecurityDetailsSanList, -- ^ Subject Alternative Name (SAN) DNS names and IP addresses.
+   networkSecurityDetailsIssuer :: NetworkSecurityDetailsIssuer, -- ^ Name of the issuing CA.
+   networkSecurityDetailsValidFrom :: NetworkSecurityDetailsValidFrom, -- ^ Certificate valid from date.
+   networkSecurityDetailsValidTo :: NetworkSecurityDetailsValidTo, -- ^ Certificate valid to (expiration) date
+   networkSecurityDetailsSignedCertificateTimestampList :: NetworkSecurityDetailsSignedCertificateTimestampList, -- ^ List of signed certificate timestamps (SCTs).
+   networkSecurityDetailsCertificateTransparencyCompliance :: NetworkSecurityDetailsCertificateTransparencyCompliance -- ^ Whether the request complied with Certificate Transparency policy
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkSecurityDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -2337,6 +2767,8 @@ instance FromJSON  NetworkSecurityDetails where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
+
+-- | Whether the request complied with Certificate Transparency policy.
 data NetworkCertificateTransparencyCompliance = NetworkCertificateTransparencyComplianceUnknown | NetworkCertificateTransparencyComplianceNotCompliant | NetworkCertificateTransparencyComplianceCompliant
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCertificateTransparencyCompliance where
@@ -2355,6 +2787,8 @@ instance ToJSON NetworkCertificateTransparencyCompliance where
          NetworkCertificateTransparencyComplianceCompliant -> "compliant"
 
 
+
+-- | The reason why request was blocked.
 data NetworkBlockedReason = NetworkBlockedReasonOther | NetworkBlockedReasonCsp | NetworkBlockedReasonMixedContent | NetworkBlockedReasonOrigin | NetworkBlockedReasonInspector | NetworkBlockedReasonSubresourceFilter | NetworkBlockedReasonContentType | NetworkBlockedReasonCoepFrameResourceNeedsCoepHeader | NetworkBlockedReasonCoopSandboxedIframeCannotNavigateToCoopPage | NetworkBlockedReasonCorpNotSameOrigin | NetworkBlockedReasonCorpNotSameOriginAfterDefaultedToSameOriginByCoep | NetworkBlockedReasonCorpNotSameSite
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkBlockedReason where
@@ -2391,6 +2825,8 @@ instance ToJSON NetworkBlockedReason where
          NetworkBlockedReasonCorpNotSameSite -> "corp-not-same-site"
 
 
+
+-- | The reason why request was blocked.
 data NetworkCorsError = NetworkCorsErrorDisallowedByMode | NetworkCorsErrorInvalidResponse | NetworkCorsErrorWildcardOriginNotAllowed | NetworkCorsErrorMissingAllowOriginHeader | NetworkCorsErrorMultipleAllowOriginValues | NetworkCorsErrorInvalidAllowOriginValue | NetworkCorsErrorAllowOriginMismatch | NetworkCorsErrorInvalidAllowCredentials | NetworkCorsErrorCorsDisabledScheme | NetworkCorsErrorPreflightInvalidStatus | NetworkCorsErrorPreflightDisallowedRedirect | NetworkCorsErrorPreflightWildcardOriginNotAllowed | NetworkCorsErrorPreflightMissingAllowOriginHeader | NetworkCorsErrorPreflightMultipleAllowOriginValues | NetworkCorsErrorPreflightInvalidAllowOriginValue | NetworkCorsErrorPreflightAllowOriginMismatch | NetworkCorsErrorPreflightInvalidAllowCredentials | NetworkCorsErrorPreflightMissingAllowExternal | NetworkCorsErrorPreflightInvalidAllowExternal | NetworkCorsErrorPreflightMissingAllowPrivateNetwork | NetworkCorsErrorPreflightInvalidAllowPrivateNetwork | NetworkCorsErrorInvalidAllowMethodsPreflightResponse | NetworkCorsErrorInvalidAllowHeadersPreflightResponse | NetworkCorsErrorMethodDisallowedByPreflightResponse | NetworkCorsErrorHeaderDisallowedByPreflightResponse | NetworkCorsErrorRedirectContainsCredentials | NetworkCorsErrorInsecurePrivateNetwork | NetworkCorsErrorInvalidPrivateNetworkAccess | NetworkCorsErrorUnexpectedPrivateNetworkAccess | NetworkCorsErrorNoCorsRedirectModeNotFollow
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCorsError where
@@ -2464,9 +2900,10 @@ instance ToJSON NetworkCorsError where
 
 
 
+-- | Type 'Network.CorsErrorStatus' .
 data NetworkCorsErrorStatus = NetworkCorsErrorStatus {
-   networkCorsErrorStatusCorsError :: NetworkCorsError,
-   networkCorsErrorStatusFailedParameter :: String
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkCorsErrorStatus  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -2475,6 +2912,8 @@ instance FromJSON  NetworkCorsErrorStatus where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
+
+-- | Source of serviceworker response.
 data NetworkServiceWorkerResponseSource = NetworkServiceWorkerResponseSourceCacheStorage | NetworkServiceWorkerResponseSourceHttpCache | NetworkServiceWorkerResponseSourceFallbackCode | NetworkServiceWorkerResponseSourceNetwork
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkServiceWorkerResponseSource where
@@ -2495,6 +2934,10 @@ instance ToJSON NetworkServiceWorkerResponseSource where
          NetworkServiceWorkerResponseSourceNetwork -> "network"
 
 
+
+-- | Determines what type of Trust Token operation is executed and
+-- depending on the type, some additional parameters. The values
+-- are specified in third_party/blink/renderer/core/fetch/trust_token.idl.
 data NetworkTrustTokenParamsRefreshPolicy = NetworkTrustTokenParamsRefreshPolicyUseCached | NetworkTrustTokenParamsRefreshPolicyRefresh
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkTrustTokenParamsRefreshPolicy where
@@ -2513,9 +2956,11 @@ instance ToJSON NetworkTrustTokenParamsRefreshPolicy where
 
 
 data NetworkTrustTokenParams = NetworkTrustTokenParams {
-   networkTrustTokenParamsType :: NetworkTrustTokenOperationType,
-   networkTrustTokenParamsRefreshPolicy :: NetworkTrustTokenParamsRefreshPolicy,
-   networkTrustTokenParamsIssuers :: Maybe [String]
+
+   networkTrustTokenParamsRefreshPolicy :: NetworkTrustTokenParamsRefreshPolicy, -- ^ Only set for "token-redemption" type and determine whether
+to request a fresh SRR or use a still valid cached SRR.
+   networkTrustTokenParamsIssuers :: NetworkTrustTokenParamsIssuers -- ^ Origins of issuers from whom to request tokens or redemption
+records.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkTrustTokenParams  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -2524,6 +2969,8 @@ instance FromJSON  NetworkTrustTokenParams where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+
+-- | Type 'Network.TrustTokenOperationType' .
 data NetworkTrustTokenOperationType = NetworkTrustTokenOperationTypeIssuance | NetworkTrustTokenOperationTypeRedemption | NetworkTrustTokenOperationTypeSigning
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkTrustTokenOperationType where
@@ -2543,28 +2990,29 @@ instance ToJSON NetworkTrustTokenOperationType where
 
 
 
+-- | HTTP response data.
 data NetworkResponse = NetworkResponse {
-   networkResponseUrl :: String,
-   networkResponseStatus :: Int,
-   networkResponseStatusText :: String,
-   networkResponseHeaders :: NetworkHeaders,
-   networkResponseMimeType :: String,
-   networkResponseRequestHeaders :: Maybe NetworkHeaders,
-   networkResponseConnectionReused :: Bool,
-   networkResponseConnectionId :: Double,
-   networkResponseRemoteIpAddress :: Maybe String,
-   networkResponseRemotePort :: Maybe Int,
-   networkResponseFromDiskCache :: Maybe Bool,
-   networkResponseFromServiceWorker :: Maybe Bool,
-   networkResponseFromPrefetchCache :: Maybe Bool,
-   networkResponseEncodedDataLength :: Double,
-   networkResponseTiming :: Maybe NetworkResourceTiming,
-   networkResponseServiceWorkerResponseSource :: Maybe NetworkServiceWorkerResponseSource,
-   networkResponseResponseTime :: Maybe NetworkTimeSinceEpoch,
-   networkResponseCacheStorageCacheName :: Maybe String,
-   networkResponseProtocol :: Maybe String,
-   networkResponseSecurityState :: SecuritySecurityState,
-   networkResponseSecurityDetails :: Maybe NetworkSecurityDetails
+   networkResponseUrl :: NetworkResponseUrl, -- ^ Response URL. This URL can be different from CachedResource.url in case of redirect.
+   networkResponseStatus :: NetworkResponseStatus, -- ^ HTTP response status code.
+   networkResponseStatusText :: NetworkResponseStatusText, -- ^ HTTP response status text.
+   networkResponseHeaders :: NetworkResponseHeaders, -- ^ HTTP response headers.
+   networkResponseMimeType :: NetworkResponseMimeType, -- ^ Resource mimeType as determined by the browser.
+   networkResponseRequestHeaders :: NetworkResponseRequestHeaders, -- ^ Refined HTTP request headers that were actually transmitted over the network.
+   networkResponseConnectionReused :: NetworkResponseConnectionReused, -- ^ Specifies whether physical connection was actually reused for this request.
+   networkResponseConnectionId :: NetworkResponseConnectionId, -- ^ Physical connection id that was actually used for this request.
+   networkResponseRemoteIpAddress :: NetworkResponseRemoteIpAddress, -- ^ Remote IP address.
+   networkResponseRemotePort :: NetworkResponseRemotePort, -- ^ Remote port.
+   networkResponseFromDiskCache :: NetworkResponseFromDiskCache, -- ^ Specifies that the request was served from the disk cache.
+   networkResponseFromServiceWorker :: NetworkResponseFromServiceWorker, -- ^ Specifies that the request was served from the ServiceWorker.
+   networkResponseFromPrefetchCache :: NetworkResponseFromPrefetchCache, -- ^ Specifies that the request was served from the prefetch cache.
+   networkResponseEncodedDataLength :: NetworkResponseEncodedDataLength, -- ^ Total number of bytes received for this request so far.
+   networkResponseTiming :: NetworkResponseTiming, -- ^ Timing information for the given request.
+   networkResponseServiceWorkerResponseSource :: NetworkResponseServiceWorkerResponseSource, -- ^ Response source of response from ServiceWorker.
+   networkResponseResponseTime :: NetworkResponseResponseTime, -- ^ The time at which the returned response was generated.
+   networkResponseCacheStorageCacheName :: NetworkResponseCacheStorageCacheName, -- ^ Cache Storage Cache Name.
+   networkResponseProtocol :: NetworkResponseProtocol, -- ^ Protocol used to fetch this request.
+   networkResponseSecurityState :: NetworkResponseSecurityState, -- ^ Security state of the request resource.
+   networkResponseSecurityDetails :: NetworkResponseSecurityDetails -- ^ Security details for the request.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkResponse  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
@@ -2574,8 +3022,9 @@ instance FromJSON  NetworkResponse where
 
 
 
+-- | WebSocket request data.
 data NetworkWebSocketRequest = NetworkWebSocketRequest {
-   networkWebSocketRequestHeaders :: NetworkHeaders
+   networkWebSocketRequestHeaders :: NetworkWebSocketRequestHeaders -- ^ HTTP request headers.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkWebSocketRequest  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -2585,13 +3034,14 @@ instance FromJSON  NetworkWebSocketRequest where
 
 
 
+-- | WebSocket response data.
 data NetworkWebSocketResponse = NetworkWebSocketResponse {
-   networkWebSocketResponseStatus :: Int,
-   networkWebSocketResponseStatusText :: String,
-   networkWebSocketResponseHeaders :: NetworkHeaders,
-   networkWebSocketResponseHeadersText :: Maybe String,
-   networkWebSocketResponseRequestHeaders :: Maybe NetworkHeaders,
-   networkWebSocketResponseRequestHeadersText :: Maybe String
+   networkWebSocketResponseStatus :: NetworkWebSocketResponseStatus, -- ^ HTTP response status code.
+   networkWebSocketResponseStatusText :: NetworkWebSocketResponseStatusText, -- ^ HTTP response status text.
+   networkWebSocketResponseHeaders :: NetworkWebSocketResponseHeaders, -- ^ HTTP response headers.
+   networkWebSocketResponseHeadersText :: NetworkWebSocketResponseHeadersText, -- ^ HTTP response headers text.
+   networkWebSocketResponseRequestHeaders :: NetworkWebSocketResponseRequestHeaders, -- ^ HTTP request headers.
+   networkWebSocketResponseRequestHeadersText :: NetworkWebSocketResponseRequestHeadersText -- ^ HTTP request headers text.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkWebSocketResponse  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -2601,10 +3051,13 @@ instance FromJSON  NetworkWebSocketResponse where
 
 
 
+-- | WebSocket message data. This represents an entire WebSocket message, not just a fragmented frame as the name suggests.
 data NetworkWebSocketFrame = NetworkWebSocketFrame {
-   networkWebSocketFrameOpcode :: Double,
-   networkWebSocketFrameMask :: Bool,
-   networkWebSocketFramePayloadData :: String
+   networkWebSocketFrameOpcode :: NetworkWebSocketFrameOpcode, -- ^ WebSocket message opcode.
+   networkWebSocketFrameMask :: NetworkWebSocketFrameMask, -- ^ WebSocket message mask.
+   networkWebSocketFramePayloadData :: NetworkWebSocketFramePayloadData -- ^ WebSocket message payload data.
+If the opcode is 1, this is a text message and payloadData is a UTF-8 string.
+If the opcode isn't 1, then payloadData is a base64 encoded string representing binary data.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkWebSocketFrame  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -2614,11 +3067,12 @@ instance FromJSON  NetworkWebSocketFrame where
 
 
 
+-- | Information about the cached resource.
 data NetworkCachedResource = NetworkCachedResource {
-   networkCachedResourceUrl :: String,
-   networkCachedResourceType :: NetworkResourceType,
-   networkCachedResourceResponse :: Maybe NetworkResponse,
-   networkCachedResourceBodySize :: Double
+   networkCachedResourceUrl :: NetworkCachedResourceUrl, -- ^ Resource URL. This is the url of the original network request.
+   networkCachedResourceType :: NetworkCachedResourceType, -- ^ Type of this resource.
+   networkCachedResourceResponse :: NetworkCachedResourceResponse, -- ^ Cached response data.
+   networkCachedResourceBodySize :: NetworkCachedResourceBodySize -- ^ Cached response body size.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkCachedResource  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -2627,6 +3081,8 @@ instance FromJSON  NetworkCachedResource where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
+
+-- | Information about the request initiator.
 data NetworkInitiatorType = NetworkInitiatorTypeParser | NetworkInitiatorTypeScript | NetworkInitiatorTypePreload | NetworkInitiatorTypeSignedExchange | NetworkInitiatorTypePreflight | NetworkInitiatorTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkInitiatorType where
@@ -2653,12 +3109,14 @@ instance ToJSON NetworkInitiatorType where
 
 
 data NetworkInitiator = NetworkInitiator {
-   networkInitiatorType :: NetworkInitiatorType,
-   networkInitiatorStack :: Maybe Runtime.RuntimeStackTrace,
-   networkInitiatorUrl :: Maybe String,
-   networkInitiatorLineNumber :: Maybe Double,
-   networkInitiatorColumnNumber :: Maybe Double,
-   networkInitiatorRequestId :: Maybe NetworkRequestId
+   networkInitiatorType :: NetworkInitiatorType, -- ^ Type of this initiator.
+   networkInitiatorStack :: NetworkInitiatorStack, -- ^ Initiator JavaScript stack trace, set for Script only.
+   networkInitiatorUrl :: NetworkInitiatorUrl, -- ^ Initiator URL, set for Parser type or for Script type (when script is importing module) or for SignedExchange type.
+   networkInitiatorLineNumber :: NetworkInitiatorLineNumber, -- ^ Initiator line number, set for Parser type or for Script type (when script is importing
+module) (0-based).
+   networkInitiatorColumnNumber :: NetworkInitiatorColumnNumber, -- ^ Initiator column number, set for Parser type or for Script type (when script is importing
+module) (0-based).
+   networkInitiatorRequestId :: NetworkInitiatorRequestId -- ^ Set if another request triggered this request (e.g. preflight).
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkInitiator  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -2668,23 +3126,27 @@ instance FromJSON  NetworkInitiator where
 
 
 
+-- | Cookie object
 data NetworkCookie = NetworkCookie {
-   networkCookieName :: String,
-   networkCookieValue :: String,
-   networkCookieDomain :: String,
-   networkCookiePath :: String,
-   networkCookieExpires :: Double,
-   networkCookieSize :: Int,
-   networkCookieHttpOnly :: Bool,
-   networkCookieSecure :: Bool,
-   networkCookieSession :: Bool,
-   networkCookieSameSite :: Maybe NetworkCookieSameSite,
-   networkCookiePriority :: NetworkCookiePriority,
-   networkCookieSameParty :: Bool,
-   networkCookieSourceScheme :: NetworkCookieSourceScheme,
-   networkCookieSourcePort :: Int,
-   networkCookiePartitionKey :: Maybe String,
-   networkCookiePartitionKeyOpaque :: Maybe Bool
+   networkCookieName :: NetworkCookieName, -- ^ Cookie name.
+   networkCookieValue :: NetworkCookieValue, -- ^ Cookie value.
+   networkCookieDomain :: NetworkCookieDomain, -- ^ Cookie domain.
+   networkCookiePath :: NetworkCookiePath, -- ^ Cookie path.
+   networkCookieExpires :: NetworkCookieExpires, -- ^ Cookie expiration date as the number of seconds since the UNIX epoch.
+   networkCookieSize :: NetworkCookieSize, -- ^ Cookie size.
+   networkCookieHttpOnly :: NetworkCookieHttpOnly, -- ^ True if cookie is http-only.
+   networkCookieSecure :: NetworkCookieSecure, -- ^ True if cookie is secure.
+   networkCookieSession :: NetworkCookieSession, -- ^ True in case of session cookie.
+   networkCookieSameSite :: NetworkCookieSameSite, -- ^ Cookie SameSite type.
+   networkCookiePriority :: NetworkCookiePriority, -- ^ Cookie Priority
+   networkCookieSameParty :: NetworkCookieSameParty, -- ^ True if cookie is SameParty.
+   networkCookieSourceScheme :: NetworkCookieSourceScheme, -- ^ Cookie source scheme type.
+   networkCookieSourcePort :: NetworkCookieSourcePort, -- ^ Cookie source port. Valid values are {-1, [1, 65535]}, -1 indicates an unspecified port.
+An unspecified port value allows protocol clients to emulate legacy cookie scope for the port.
+This is a temporary ability and it will be removed in the future.
+   networkCookiePartitionKey :: NetworkCookiePartitionKey, -- ^ Cookie partition key. The site of the top-level URL the browser was visiting at the start
+of the request to the endpoint that set the cookie.
+   networkCookiePartitionKeyOpaque :: NetworkCookiePartitionKeyOpaque -- ^ True if cookie partition key is opaque.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkCookie  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 , A.omitNothingFields = True}
@@ -2693,6 +3155,8 @@ instance FromJSON  NetworkCookie where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 }
 
 
+
+-- | Types of reasons why a cookie may not be stored from a response.
 data NetworkSetCookieBlockedReason = NetworkSetCookieBlockedReasonSecureOnly | NetworkSetCookieBlockedReasonSameSiteStrict | NetworkSetCookieBlockedReasonSameSiteLax | NetworkSetCookieBlockedReasonSameSiteUnspecifiedTreatedAsLax | NetworkSetCookieBlockedReasonSameSiteNoneInsecure | NetworkSetCookieBlockedReasonUserPreferences | NetworkSetCookieBlockedReasonSyntaxError | NetworkSetCookieBlockedReasonSchemeNotSupported | NetworkSetCookieBlockedReasonOverwriteSecure | NetworkSetCookieBlockedReasonInvalidDomain | NetworkSetCookieBlockedReasonInvalidPrefix | NetworkSetCookieBlockedReasonUnknownError | NetworkSetCookieBlockedReasonSchemefulSameSiteStrict | NetworkSetCookieBlockedReasonSchemefulSameSiteLax | NetworkSetCookieBlockedReasonSchemefulSameSiteUnspecifiedTreatedAsLax | NetworkSetCookieBlockedReasonSamePartyFromCrossPartyContext | NetworkSetCookieBlockedReasonSamePartyConflictsWithOtherAttributes | NetworkSetCookieBlockedReasonNameValuePairExceedsMaxSize
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkSetCookieBlockedReason where
@@ -2741,6 +3205,8 @@ instance ToJSON NetworkSetCookieBlockedReason where
          NetworkSetCookieBlockedReasonNameValuePairExceedsMaxSize -> "NameValuePairExceedsMaxSize"
 
 
+
+-- | Types of reasons why a cookie may not be sent with a request.
 data NetworkCookieBlockedReason = NetworkCookieBlockedReasonSecureOnly | NetworkCookieBlockedReasonNotOnPath | NetworkCookieBlockedReasonDomainMismatch | NetworkCookieBlockedReasonSameSiteStrict | NetworkCookieBlockedReasonSameSiteLax | NetworkCookieBlockedReasonSameSiteUnspecifiedTreatedAsLax | NetworkCookieBlockedReasonSameSiteNoneInsecure | NetworkCookieBlockedReasonUserPreferences | NetworkCookieBlockedReasonUnknownError | NetworkCookieBlockedReasonSchemefulSameSiteStrict | NetworkCookieBlockedReasonSchemefulSameSiteLax | NetworkCookieBlockedReasonSchemefulSameSiteUnspecifiedTreatedAsLax | NetworkCookieBlockedReasonSamePartyFromCrossPartyContext | NetworkCookieBlockedReasonNameValuePairExceedsMaxSize
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCookieBlockedReason where
@@ -2782,10 +3248,14 @@ instance ToJSON NetworkCookieBlockedReason where
 
 
 
+-- | A cookie which was not stored from a response with the corresponding reason.
 data NetworkBlockedSetCookieWithReason = NetworkBlockedSetCookieWithReason {
-   networkBlockedSetCookieWithReasonBlockedReasons :: [NetworkSetCookieBlockedReason],
-   networkBlockedSetCookieWithReasonCookieLine :: String,
-   networkBlockedSetCookieWithReasonCookie :: Maybe NetworkCookie
+   networkBlockedSetCookieWithReasonBlockedReasons :: NetworkBlockedSetCookieWithReasonBlockedReasons, -- ^ The reason(s) this cookie was blocked.
+   networkBlockedSetCookieWithReasonCookieLine :: NetworkBlockedSetCookieWithReasonCookieLine, -- ^ The string representing this individual cookie as it would appear in the header.
+This is not the entire "cookie" or "set-cookie" header which could have multiple cookies.
+   networkBlockedSetCookieWithReasonCookie :: NetworkBlockedSetCookieWithReasonCookie -- ^ The cookie object which represents the cookie which was not stored. It is optional because
+sometimes complete cookie information is not available, such as in the case of parsing
+errors.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkBlockedSetCookieWithReason  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
@@ -2795,9 +3265,10 @@ instance FromJSON  NetworkBlockedSetCookieWithReason where
 
 
 
+-- | A cookie with was not sent with a request with the corresponding reason.
 data NetworkBlockedCookieWithReason = NetworkBlockedCookieWithReason {
-   networkBlockedCookieWithReasonBlockedReasons :: [NetworkCookieBlockedReason],
-   networkBlockedCookieWithReasonCookie :: NetworkCookie
+   networkBlockedCookieWithReasonBlockedReasons :: NetworkBlockedCookieWithReasonBlockedReasons, -- ^ The reason(s) the cookie was blocked.
+   networkBlockedCookieWithReasonCookie :: NetworkBlockedCookieWithReasonCookie -- ^ The cookie object representing the cookie which was not sent.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkBlockedCookieWithReason  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -2807,21 +3278,27 @@ instance FromJSON  NetworkBlockedCookieWithReason where
 
 
 
+-- | Cookie parameter object
 data NetworkCookieParam = NetworkCookieParam {
-   networkCookieParamName :: String,
-   networkCookieParamValue :: String,
-   networkCookieParamUrl :: Maybe String,
-   networkCookieParamDomain :: Maybe String,
-   networkCookieParamPath :: Maybe String,
-   networkCookieParamSecure :: Maybe Bool,
-   networkCookieParamHttpOnly :: Maybe Bool,
-   networkCookieParamSameSite :: Maybe NetworkCookieSameSite,
-   networkCookieParamExpires :: Maybe NetworkTimeSinceEpoch,
-   networkCookieParamPriority :: Maybe NetworkCookiePriority,
-   networkCookieParamSameParty :: Maybe Bool,
-   networkCookieParamSourceScheme :: Maybe NetworkCookieSourceScheme,
-   networkCookieParamSourcePort :: Maybe Int,
-   networkCookieParamPartitionKey :: Maybe String
+   networkCookieParamName :: NetworkCookieParamName, -- ^ Cookie name.
+   networkCookieParamValue :: NetworkCookieParamValue, -- ^ Cookie value.
+   networkCookieParamUrl :: NetworkCookieParamUrl, -- ^ The request-URI to associate with the setting of the cookie. This value can affect the
+default domain, path, source port, and source scheme values of the created cookie.
+   networkCookieParamDomain :: NetworkCookieParamDomain, -- ^ Cookie domain.
+   networkCookieParamPath :: NetworkCookieParamPath, -- ^ Cookie path.
+   networkCookieParamSecure :: NetworkCookieParamSecure, -- ^ True if cookie is secure.
+   networkCookieParamHttpOnly :: NetworkCookieParamHttpOnly, -- ^ True if cookie is http-only.
+   networkCookieParamSameSite :: NetworkCookieParamSameSite, -- ^ Cookie SameSite type.
+   networkCookieParamExpires :: NetworkCookieParamExpires, -- ^ Cookie expiration date, session cookie if not set
+   networkCookieParamPriority :: NetworkCookieParamPriority, -- ^ Cookie Priority.
+   networkCookieParamSameParty :: NetworkCookieParamSameParty, -- ^ True if cookie is SameParty.
+   networkCookieParamSourceScheme :: NetworkCookieParamSourceScheme, -- ^ Cookie source scheme type.
+   networkCookieParamSourcePort :: NetworkCookieParamSourcePort, -- ^ Cookie source port. Valid values are {-1, [1, 65535]}, -1 indicates an unspecified port.
+An unspecified port value allows protocol clients to emulate legacy cookie scope for the port.
+This is a temporary ability and it will be removed in the future.
+   networkCookieParamPartitionKey :: NetworkCookieParamPartitionKey -- ^ Cookie partition key. The site of the top-level URL the browser was visiting at the start
+of the request to the endpoint that set the cookie.
+If not set, the cookie will be set as not partitioned.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkCookieParam  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -2830,6 +3307,8 @@ instance FromJSON  NetworkCookieParam where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
+
+-- | Authorization challenge for HTTP status code 401 or 407.
 data NetworkAuthChallengeSource = NetworkAuthChallengeSourceServer | NetworkAuthChallengeSourceProxy
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkAuthChallengeSource where
@@ -2848,10 +3327,10 @@ instance ToJSON NetworkAuthChallengeSource where
 
 
 data NetworkAuthChallenge = NetworkAuthChallenge {
-   networkAuthChallengeSource :: NetworkAuthChallengeSource,
-   networkAuthChallengeOrigin :: String,
-   networkAuthChallengeScheme :: String,
-   networkAuthChallengeRealm :: String
+   networkAuthChallengeSource :: NetworkAuthChallengeSource, -- ^ Source of the authentication challenge.
+   networkAuthChallengeOrigin :: NetworkAuthChallengeOrigin, -- ^ Origin of the challenger.
+   networkAuthChallengeScheme :: NetworkAuthChallengeScheme, -- ^ The authentication scheme used, such as basic or digest
+   networkAuthChallengeRealm :: NetworkAuthChallengeRealm -- ^ The realm of the challenge. May be empty.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkAuthChallenge  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -2860,6 +3339,8 @@ instance FromJSON  NetworkAuthChallenge where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
+
+-- | Response to an AuthChallenge.
 data NetworkAuthChallengeResponseResponse = NetworkAuthChallengeResponseResponseDefault | NetworkAuthChallengeResponseResponseCancelAuth | NetworkAuthChallengeResponseResponseProvideCredentials
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkAuthChallengeResponseResponse where
@@ -2880,9 +3361,13 @@ instance ToJSON NetworkAuthChallengeResponseResponse where
 
 
 data NetworkAuthChallengeResponse = NetworkAuthChallengeResponse {
-   networkAuthChallengeResponseResponse :: NetworkAuthChallengeResponseResponse,
-   networkAuthChallengeResponseUsername :: Maybe String,
-   networkAuthChallengeResponsePassword :: Maybe String
+   networkAuthChallengeResponseResponse :: NetworkAuthChallengeResponseResponse, -- ^ The decision on what to do in response to the authorization challenge.  Default means
+deferring to the default behavior of the net stack, which will likely either the Cancel
+authentication or display a popup dialog box.
+   networkAuthChallengeResponseUsername :: NetworkAuthChallengeResponseUsername, -- ^ The username to provide, possibly empty. Should only be set if response is
+ProvideCredentials.
+   networkAuthChallengeResponsePassword :: NetworkAuthChallengeResponsePassword -- ^ The password to provide, possibly empty. Should only be set if response is
+ProvideCredentials.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkAuthChallengeResponse  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -2891,6 +3376,9 @@ instance FromJSON  NetworkAuthChallengeResponse where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
+
+-- | Stages of the interception to begin intercepting. Request will intercept before the request is
+-- sent. Response will intercept after the response is received.
 data NetworkInterceptionStage = NetworkInterceptionStageRequest | NetworkInterceptionStageHeadersReceived
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkInterceptionStage where
@@ -2908,10 +3396,12 @@ instance ToJSON NetworkInterceptionStage where
 
 
 
+-- | Request pattern for interception.
 data NetworkRequestPattern = NetworkRequestPattern {
-   networkRequestPatternUrlPattern :: Maybe String,
-   networkRequestPatternResourceType :: Maybe NetworkResourceType,
-   networkRequestPatternInterceptionStage :: Maybe NetworkInterceptionStage
+   networkRequestPatternUrlPattern :: NetworkRequestPatternUrlPattern, -- ^ Wildcards (`'*'` -> zero or more, `'?'` -> exactly one) are allowed. Escape character is
+backslash. Omitting is equivalent to `"*"`.
+   networkRequestPatternResourceType :: NetworkRequestPatternResourceType, -- ^ If set, only requests for matching resource types will be intercepted.
+   networkRequestPatternInterceptionStage :: NetworkRequestPatternInterceptionStage -- ^ Stage at which to begin intercepting requests. Default is Request.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkRequestPattern  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -2921,16 +3411,18 @@ instance FromJSON  NetworkRequestPattern where
 
 
 
+-- | Information about a signed exchange signature.
+-- https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-impl.html#rfc.section.3.1
 data NetworkSignedExchangeSignature = NetworkSignedExchangeSignature {
-   networkSignedExchangeSignatureLabel :: String,
-   networkSignedExchangeSignatureSignature :: String,
-   networkSignedExchangeSignatureIntegrity :: String,
-   networkSignedExchangeSignatureCertUrl :: Maybe String,
-   networkSignedExchangeSignatureCertSha256 :: Maybe String,
-   networkSignedExchangeSignatureValidityUrl :: String,
-   networkSignedExchangeSignatureDate :: Int,
-   networkSignedExchangeSignatureExpires :: Int,
-   networkSignedExchangeSignatureCertificates :: Maybe [String]
+   networkSignedExchangeSignatureLabel :: NetworkSignedExchangeSignatureLabel, -- ^ Signed exchange signature label.
+   networkSignedExchangeSignatureSignature :: NetworkSignedExchangeSignatureSignature, -- ^ The hex string of signed exchange signature.
+   networkSignedExchangeSignatureIntegrity :: NetworkSignedExchangeSignatureIntegrity, -- ^ Signed exchange signature integrity.
+   networkSignedExchangeSignatureCertUrl :: NetworkSignedExchangeSignatureCertUrl, -- ^ Signed exchange signature cert Url.
+   networkSignedExchangeSignatureCertSha256 :: NetworkSignedExchangeSignatureCertSha256, -- ^ The hex string of signed exchange signature cert sha256.
+   networkSignedExchangeSignatureValidityUrl :: NetworkSignedExchangeSignatureValidityUrl, -- ^ Signed exchange signature validity Url.
+   networkSignedExchangeSignatureDate :: NetworkSignedExchangeSignatureDate, -- ^ Signed exchange signature date.
+   networkSignedExchangeSignatureExpires :: NetworkSignedExchangeSignatureExpires, -- ^ Signed exchange signature expires.
+   networkSignedExchangeSignatureCertificates :: NetworkSignedExchangeSignatureCertificates -- ^ The encoded certificates.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkSignedExchangeSignature  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -2940,12 +3432,14 @@ instance FromJSON  NetworkSignedExchangeSignature where
 
 
 
+-- | Information about a signed exchange header.
+-- https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-impl.html#cbor-representation
 data NetworkSignedExchangeHeader = NetworkSignedExchangeHeader {
-   networkSignedExchangeHeaderRequestUrl :: String,
-   networkSignedExchangeHeaderResponseCode :: Int,
-   networkSignedExchangeHeaderResponseHeaders :: NetworkHeaders,
-   networkSignedExchangeHeaderSignatures :: [NetworkSignedExchangeSignature],
-   networkSignedExchangeHeaderHeaderIntegrity :: String
+   networkSignedExchangeHeaderRequestUrl :: NetworkSignedExchangeHeaderRequestUrl, -- ^ Signed exchange request URL.
+   networkSignedExchangeHeaderResponseCode :: NetworkSignedExchangeHeaderResponseCode, -- ^ Signed exchange response code.
+   networkSignedExchangeHeaderResponseHeaders :: NetworkSignedExchangeHeaderResponseHeaders, -- ^ Signed exchange response headers.
+   networkSignedExchangeHeaderSignatures :: NetworkSignedExchangeHeaderSignatures, -- ^ Signed exchange response signature.
+   networkSignedExchangeHeaderHeaderIntegrity :: NetworkSignedExchangeHeaderHeaderIntegrity -- ^ Signed exchange header integrity hash in the form of "sha256-<base64-hash-value>".
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkSignedExchangeHeader  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -2954,6 +3448,8 @@ instance FromJSON  NetworkSignedExchangeHeader where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
+
+-- | Field type for a signed exchange related error.
 data NetworkSignedExchangeErrorField = NetworkSignedExchangeErrorFieldSignatureSig | NetworkSignedExchangeErrorFieldSignatureIntegrity | NetworkSignedExchangeErrorFieldSignatureCertUrl | NetworkSignedExchangeErrorFieldSignatureCertSha256 | NetworkSignedExchangeErrorFieldSignatureValidityUrl | NetworkSignedExchangeErrorFieldSignatureTimestamps
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkSignedExchangeErrorField where
@@ -2979,10 +3475,11 @@ instance ToJSON NetworkSignedExchangeErrorField where
 
 
 
+-- | Information about a signed exchange response.
 data NetworkSignedExchangeError = NetworkSignedExchangeError {
-   networkSignedExchangeErrorMessage :: String,
-   networkSignedExchangeErrorSignatureIndex :: Maybe Int,
-   networkSignedExchangeErrorErrorField :: Maybe NetworkSignedExchangeErrorField
+   networkSignedExchangeErrorMessage :: NetworkSignedExchangeErrorMessage, -- ^ Error message.
+   networkSignedExchangeErrorSignatureIndex :: NetworkSignedExchangeErrorSignatureIndex, -- ^ The index of the signature which caused the error.
+   networkSignedExchangeErrorErrorField :: NetworkSignedExchangeErrorErrorField -- ^ The field which caused the error.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkSignedExchangeError  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -2992,11 +3489,12 @@ instance FromJSON  NetworkSignedExchangeError where
 
 
 
+-- | Information about a signed exchange response.
 data NetworkSignedExchangeInfo = NetworkSignedExchangeInfo {
-   networkSignedExchangeInfoOuterResponse :: NetworkResponse,
-   networkSignedExchangeInfoHeader :: Maybe NetworkSignedExchangeHeader,
-   networkSignedExchangeInfoSecurityDetails :: Maybe NetworkSecurityDetails,
-   networkSignedExchangeInfoErrors :: Maybe [NetworkSignedExchangeError]
+   networkSignedExchangeInfoOuterResponse :: NetworkSignedExchangeInfoOuterResponse, -- ^ The outer response of signed HTTP exchange which was received from network.
+   networkSignedExchangeInfoHeader :: NetworkSignedExchangeInfoHeader, -- ^ Information about the signed exchange header.
+   networkSignedExchangeInfoSecurityDetails :: NetworkSignedExchangeInfoSecurityDetails, -- ^ Security details for the signed exchange header.
+   networkSignedExchangeInfoErrors :: NetworkSignedExchangeInfoErrors -- ^ Errors occurred while handling the signed exchagne.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkSignedExchangeInfo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -3005,6 +3503,8 @@ instance FromJSON  NetworkSignedExchangeInfo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
+
+-- | List of content encodings supported by the backend.
 data NetworkContentEncoding = NetworkContentEncodingDeflate | NetworkContentEncodingGzip | NetworkContentEncodingBr
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkContentEncoding where
@@ -3023,6 +3523,8 @@ instance ToJSON NetworkContentEncoding where
          NetworkContentEncodingBr -> "br"
 
 
+
+-- | Type 'Network.PrivateNetworkRequestPolicy' .
 data NetworkPrivateNetworkRequestPolicy = NetworkPrivateNetworkRequestPolicyAllow | NetworkPrivateNetworkRequestPolicyBlockFromInsecureToMorePrivate | NetworkPrivateNetworkRequestPolicyWarnFromInsecureToMorePrivate | NetworkPrivateNetworkRequestPolicyPreflightBlock | NetworkPrivateNetworkRequestPolicyPreflightWarn
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkPrivateNetworkRequestPolicy where
@@ -3045,6 +3547,8 @@ instance ToJSON NetworkPrivateNetworkRequestPolicy where
          NetworkPrivateNetworkRequestPolicyPreflightWarn -> "PreflightWarn"
 
 
+
+-- | Type 'Network.IPAddressSpace' .
 data NetworkIpAddressSpace = NetworkIpAddressSpaceLocal | NetworkIpAddressSpacePrivate | NetworkIpAddressSpacePublic | NetworkIpAddressSpaceUnknown
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkIpAddressSpace where
@@ -3066,8 +3570,11 @@ instance ToJSON NetworkIpAddressSpace where
 
 
 
+-- | Type 'Network.ConnectTiming' .
 data NetworkConnectTiming = NetworkConnectTiming {
-   networkConnectTimingRequestTime :: Double
+   networkConnectTimingRequestTime :: NetworkConnectTimingRequestTime -- ^ Timing's requestTime is a baseline in seconds, while the other numbers are ticks in
+milliseconds relatively to this requestTime. Matches ResourceTiming's requestTime for
+the same request (but not for redirected requests).
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkConnectTiming  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -3077,10 +3584,11 @@ instance FromJSON  NetworkConnectTiming where
 
 
 
+-- | Type 'Network.ClientSecurityState' .
 data NetworkClientSecurityState = NetworkClientSecurityState {
-   networkClientSecurityStateInitiatorIsSecureContext :: Bool,
-   networkClientSecurityStateInitiatorIpAddressSpace :: NetworkIpAddressSpace,
-   networkClientSecurityStatePrivateNetworkRequestPolicy :: NetworkPrivateNetworkRequestPolicy
+
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkClientSecurityState  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -3089,6 +3597,8 @@ instance FromJSON  NetworkClientSecurityState where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
+
+-- | Type 'Network.CrossOriginOpenerPolicyValue' .
 data NetworkCrossOriginOpenerPolicyValue = NetworkCrossOriginOpenerPolicyValueSameOrigin | NetworkCrossOriginOpenerPolicyValueSameOriginAllowPopups | NetworkCrossOriginOpenerPolicyValueUnsafeNone | NetworkCrossOriginOpenerPolicyValueSameOriginPlusCoep | NetworkCrossOriginOpenerPolicyValueSameOriginAllowPopupsPlusCoep
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCrossOriginOpenerPolicyValue where
@@ -3112,11 +3622,12 @@ instance ToJSON NetworkCrossOriginOpenerPolicyValue where
 
 
 
+-- | Type 'Network.CrossOriginOpenerPolicyStatus' .
 data NetworkCrossOriginOpenerPolicyStatus = NetworkCrossOriginOpenerPolicyStatus {
-   networkCrossOriginOpenerPolicyStatusValue :: NetworkCrossOriginOpenerPolicyValue,
-   networkCrossOriginOpenerPolicyStatusReportOnlyValue :: NetworkCrossOriginOpenerPolicyValue,
-   networkCrossOriginOpenerPolicyStatusReportingEndpoint :: Maybe String,
-   networkCrossOriginOpenerPolicyStatusReportOnlyReportingEndpoint :: Maybe String
+
+
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkCrossOriginOpenerPolicyStatus  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
@@ -3125,6 +3636,8 @@ instance FromJSON  NetworkCrossOriginOpenerPolicyStatus where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 }
 
 
+
+-- | Type 'Network.CrossOriginEmbedderPolicyValue' .
 data NetworkCrossOriginEmbedderPolicyValue = NetworkCrossOriginEmbedderPolicyValueNone | NetworkCrossOriginEmbedderPolicyValueCredentialless | NetworkCrossOriginEmbedderPolicyValueRequireCorp
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCrossOriginEmbedderPolicyValue where
@@ -3144,11 +3657,12 @@ instance ToJSON NetworkCrossOriginEmbedderPolicyValue where
 
 
 
+-- | Type 'Network.CrossOriginEmbedderPolicyStatus' .
 data NetworkCrossOriginEmbedderPolicyStatus = NetworkCrossOriginEmbedderPolicyStatus {
-   networkCrossOriginEmbedderPolicyStatusValue :: NetworkCrossOriginEmbedderPolicyValue,
-   networkCrossOriginEmbedderPolicyStatusReportOnlyValue :: NetworkCrossOriginEmbedderPolicyValue,
-   networkCrossOriginEmbedderPolicyStatusReportingEndpoint :: Maybe String,
-   networkCrossOriginEmbedderPolicyStatusReportOnlyReportingEndpoint :: Maybe String
+
+
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkCrossOriginEmbedderPolicyStatus  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 , A.omitNothingFields = True}
@@ -3158,9 +3672,10 @@ instance FromJSON  NetworkCrossOriginEmbedderPolicyStatus where
 
 
 
+-- | Type 'Network.SecurityIsolationStatus' .
 data NetworkSecurityIsolationStatus = NetworkSecurityIsolationStatus {
-   networkSecurityIsolationStatusCoop :: Maybe NetworkCrossOriginOpenerPolicyStatus,
-   networkSecurityIsolationStatusCoep :: Maybe NetworkCrossOriginEmbedderPolicyStatus
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkSecurityIsolationStatus  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -3169,6 +3684,8 @@ instance FromJSON  NetworkSecurityIsolationStatus where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
+
+-- | The status of a Reporting API report.
 data NetworkReportStatus = NetworkReportStatusQueued | NetworkReportStatusPending | NetworkReportStatusMarkedForRemoval | NetworkReportStatusSuccess
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkReportStatus where
@@ -3189,18 +3706,21 @@ instance ToJSON NetworkReportStatus where
          NetworkReportStatusSuccess -> "Success"
 
 
+
+-- | Type 'Network.ReportId' .
 type NetworkReportId = String
 
+-- | An object representing a report generated by the Reporting API.
 data NetworkReportingApiReport = NetworkReportingApiReport {
-   networkReportingApiReportId :: NetworkReportId,
-   networkReportingApiReportInitiatorUrl :: String,
-   networkReportingApiReportDestination :: String,
-   networkReportingApiReportType :: String,
-   networkReportingApiReportTimestamp :: NetworkTimeSinceEpoch,
-   networkReportingApiReportDepth :: Int,
-   networkReportingApiReportCompletedAttempts :: Int,
-   networkReportingApiReportBody :: [(String, String)],
-   networkReportingApiReportStatus :: NetworkReportStatus
+
+   networkReportingApiReportInitiatorUrl :: NetworkReportingApiReportInitiatorUrl, -- ^ The URL of the document that triggered the report.
+   networkReportingApiReportDestination :: NetworkReportingApiReportDestination, -- ^ The name of the endpoint group that should be used to deliver the report.
+   networkReportingApiReportType :: NetworkReportingApiReportType, -- ^ The type of the report (specifies the set of data that is contained in the report body).
+   networkReportingApiReportTimestamp :: NetworkReportingApiReportTimestamp, -- ^ When the report was generated.
+   networkReportingApiReportDepth :: NetworkReportingApiReportDepth, -- ^ How many uploads deep the related request was.
+   networkReportingApiReportCompletedAttempts :: NetworkReportingApiReportCompletedAttempts, -- ^ The number of delivery attempts made so far, not including an active attempt.
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkReportingApiReport  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -3210,9 +3730,10 @@ instance FromJSON  NetworkReportingApiReport where
 
 
 
+-- | Type 'Network.ReportingApiEndpoint' .
 data NetworkReportingApiEndpoint = NetworkReportingApiEndpoint {
-   networkReportingApiEndpointUrl :: String,
-   networkReportingApiEndpointGroupName :: String
+   networkReportingApiEndpointUrl :: NetworkReportingApiEndpointUrl, -- ^ The URL of the endpoint to which reports may be delivered.
+   networkReportingApiEndpointGroupName :: NetworkReportingApiEndpointGroupName -- ^ Name of the endpoint group.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkReportingApiEndpoint  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -3222,13 +3743,14 @@ instance FromJSON  NetworkReportingApiEndpoint where
 
 
 
+-- | An object providing the result of a network resource load.
 data NetworkLoadNetworkResourcePageResult = NetworkLoadNetworkResourcePageResult {
-   networkLoadNetworkResourcePageResultSuccess :: Bool,
-   networkLoadNetworkResourcePageResultNetError :: Maybe Double,
-   networkLoadNetworkResourcePageResultNetErrorName :: Maybe String,
-   networkLoadNetworkResourcePageResultHttpStatusCode :: Maybe Double,
-   networkLoadNetworkResourcePageResultStream :: Maybe IO.IoStreamHandle,
-   networkLoadNetworkResourcePageResultHeaders :: Maybe NetworkHeaders
+
+   networkLoadNetworkResourcePageResultNetError :: NetworkLoadNetworkResourcePageResultNetError, -- ^ Optional values used for error reporting.
+
+
+   networkLoadNetworkResourcePageResultStream :: NetworkLoadNetworkResourcePageResultStream, -- ^ If successful, one of the following two fields holds the result.
+   networkLoadNetworkResourcePageResultHeaders :: NetworkLoadNetworkResourcePageResultHeaders -- ^ Response headers.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkLoadNetworkResourcePageResult  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
@@ -3238,9 +3760,11 @@ instance FromJSON  NetworkLoadNetworkResourcePageResult where
 
 
 
+-- | An options object that may be extended later to better support CORS,
+-- CORB and streaming.
 data NetworkLoadNetworkResourceOptions = NetworkLoadNetworkResourceOptions {
-   networkLoadNetworkResourceOptionsDisableCache :: Bool,
-   networkLoadNetworkResourceOptionsIncludeCredentials :: Bool
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkLoadNetworkResourceOptions  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
@@ -3252,11 +3776,12 @@ instance FromJSON  NetworkLoadNetworkResourceOptions where
 
 
 
+-- | Type of the 'Network.dataReceived' event.
 data NetworkDataReceived = NetworkDataReceived {
-   networkDataReceivedRequestId :: NetworkRequestId,
-   networkDataReceivedTimestamp :: NetworkMonotonicTime,
-   networkDataReceivedDataLength :: Int,
-   networkDataReceivedEncodedDataLength :: Int
+   networkDataReceivedRequestId :: NetworkDataReceivedRequestId, -- ^ Request identifier.
+   networkDataReceivedTimestamp :: NetworkDataReceivedTimestamp, -- ^ Timestamp.
+   networkDataReceivedDataLength :: NetworkDataReceivedDataLength, -- ^ Data chunk length.
+   networkDataReceivedEncodedDataLength :: NetworkDataReceivedEncodedDataLength -- ^ Actual bytes received (might be less than dataLength for compressed encodings).
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkDataReceived  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -3266,12 +3791,13 @@ instance FromJSON  NetworkDataReceived where
 
 
 
+-- | Type of the 'Network.eventSourceMessageReceived' event.
 data NetworkEventSourceMessageReceived = NetworkEventSourceMessageReceived {
-   networkEventSourceMessageReceivedRequestId :: NetworkRequestId,
-   networkEventSourceMessageReceivedTimestamp :: NetworkMonotonicTime,
-   networkEventSourceMessageReceivedEventName :: String,
-   networkEventSourceMessageReceivedEventId :: String,
-   networkEventSourceMessageReceivedData :: String
+   networkEventSourceMessageReceivedRequestId :: NetworkEventSourceMessageReceivedRequestId, -- ^ Request identifier.
+   networkEventSourceMessageReceivedTimestamp :: NetworkEventSourceMessageReceivedTimestamp, -- ^ Timestamp.
+   networkEventSourceMessageReceivedEventName :: NetworkEventSourceMessageReceivedEventName, -- ^ Message type.
+   networkEventSourceMessageReceivedEventId :: NetworkEventSourceMessageReceivedEventId, -- ^ Message identifier.
+   networkEventSourceMessageReceivedData :: NetworkEventSourceMessageReceivedData -- ^ Message content.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkEventSourceMessageReceived  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
@@ -3281,14 +3807,15 @@ instance FromJSON  NetworkEventSourceMessageReceived where
 
 
 
+-- | Type of the 'Network.loadingFailed' event.
 data NetworkLoadingFailed = NetworkLoadingFailed {
-   networkLoadingFailedRequestId :: NetworkRequestId,
-   networkLoadingFailedTimestamp :: NetworkMonotonicTime,
-   networkLoadingFailedType :: NetworkResourceType,
-   networkLoadingFailedErrorText :: String,
-   networkLoadingFailedCanceled :: Maybe Bool,
-   networkLoadingFailedBlockedReason :: Maybe NetworkBlockedReason,
-   networkLoadingFailedCorsErrorStatus :: Maybe NetworkCorsErrorStatus
+   networkLoadingFailedRequestId :: NetworkLoadingFailedRequestId, -- ^ Request identifier.
+   networkLoadingFailedTimestamp :: NetworkLoadingFailedTimestamp, -- ^ Timestamp.
+   networkLoadingFailedType :: NetworkLoadingFailedType, -- ^ Resource type.
+   networkLoadingFailedErrorText :: NetworkLoadingFailedErrorText, -- ^ User friendly error message.
+   networkLoadingFailedCanceled :: NetworkLoadingFailedCanceled, -- ^ True if loading was canceled.
+   networkLoadingFailedBlockedReason :: NetworkLoadingFailedBlockedReason, -- ^ The reason why loading was blocked, if any.
+   networkLoadingFailedCorsErrorStatus :: NetworkLoadingFailedCorsErrorStatus -- ^ The reason why loading was blocked by CORS, if any.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkLoadingFailed  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -3298,11 +3825,13 @@ instance FromJSON  NetworkLoadingFailed where
 
 
 
+-- | Type of the 'Network.loadingFinished' event.
 data NetworkLoadingFinished = NetworkLoadingFinished {
-   networkLoadingFinishedRequestId :: NetworkRequestId,
-   networkLoadingFinishedTimestamp :: NetworkMonotonicTime,
-   networkLoadingFinishedEncodedDataLength :: Double,
-   networkLoadingFinishedShouldReportCorbBlocking :: Maybe Bool
+   networkLoadingFinishedRequestId :: NetworkLoadingFinishedRequestId, -- ^ Request identifier.
+   networkLoadingFinishedTimestamp :: NetworkLoadingFinishedTimestamp, -- ^ Timestamp.
+   networkLoadingFinishedEncodedDataLength :: NetworkLoadingFinishedEncodedDataLength, -- ^ Total number of bytes received for this request.
+   networkLoadingFinishedShouldReportCorbBlocking :: NetworkLoadingFinishedShouldReportCorbBlocking -- ^ Set when 1) response was blocked by Cross-Origin Read Blocking and also
+2) this needs to be reported to the DevTools console.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkLoadingFinished  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -3312,8 +3841,9 @@ instance FromJSON  NetworkLoadingFinished where
 
 
 
+-- | Type of the 'Network.requestServedFromCache' event.
 data NetworkRequestServedFromCache = NetworkRequestServedFromCache {
-   networkRequestServedFromCacheRequestId :: NetworkRequestId
+   networkRequestServedFromCacheRequestId :: NetworkRequestServedFromCacheRequestId -- ^ Request identifier.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkRequestServedFromCache  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -3323,19 +3853,22 @@ instance FromJSON  NetworkRequestServedFromCache where
 
 
 
+-- | Type of the 'Network.requestWillBeSent' event.
 data NetworkRequestWillBeSent = NetworkRequestWillBeSent {
-   networkRequestWillBeSentRequestId :: NetworkRequestId,
-   networkRequestWillBeSentLoaderId :: NetworkLoaderId,
-   networkRequestWillBeSentDocumentUrl :: String,
-   networkRequestWillBeSentRequest :: NetworkRequest,
-   networkRequestWillBeSentTimestamp :: NetworkMonotonicTime,
-   networkRequestWillBeSentWallTime :: NetworkTimeSinceEpoch,
-   networkRequestWillBeSentInitiator :: NetworkInitiator,
-   networkRequestWillBeSentRedirectHasExtraInfo :: Bool,
-   networkRequestWillBeSentRedirectResponse :: Maybe NetworkResponse,
-   networkRequestWillBeSentType :: Maybe NetworkResourceType,
-   networkRequestWillBeSentFrameId :: Maybe PageFrameId,
-   networkRequestWillBeSentHasUserGesture :: Maybe Bool
+   networkRequestWillBeSentRequestId :: NetworkRequestWillBeSentRequestId, -- ^ Request identifier.
+   networkRequestWillBeSentLoaderId :: NetworkRequestWillBeSentLoaderId, -- ^ Loader identifier. Empty string if the request is fetched from worker.
+   networkRequestWillBeSentDocumentUrl :: NetworkRequestWillBeSentDocumentUrl, -- ^ URL of the document this request is loaded for.
+   networkRequestWillBeSentRequest :: NetworkRequestWillBeSentRequest, -- ^ Request data.
+   networkRequestWillBeSentTimestamp :: NetworkRequestWillBeSentTimestamp, -- ^ Timestamp.
+   networkRequestWillBeSentWallTime :: NetworkRequestWillBeSentWallTime, -- ^ Timestamp.
+   networkRequestWillBeSentInitiator :: NetworkRequestWillBeSentInitiator, -- ^ Request initiator.
+   networkRequestWillBeSentRedirectHasExtraInfo :: NetworkRequestWillBeSentRedirectHasExtraInfo, -- ^ In the case that redirectResponse is populated, this flag indicates whether
+requestWillBeSentExtraInfo and responseReceivedExtraInfo events will be or were emitted
+for the request which was just redirected.
+   networkRequestWillBeSentRedirectResponse :: NetworkRequestWillBeSentRedirectResponse, -- ^ Redirect response data.
+   networkRequestWillBeSentType :: NetworkRequestWillBeSentType, -- ^ Type of this resource.
+   networkRequestWillBeSentFrameId :: NetworkRequestWillBeSentFrameId, -- ^ Frame identifier.
+   networkRequestWillBeSentHasUserGesture :: NetworkRequestWillBeSentHasUserGesture -- ^ Whether the request is initiated by a user gesture. Defaults to false.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkRequestWillBeSent  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -3345,10 +3878,11 @@ instance FromJSON  NetworkRequestWillBeSent where
 
 
 
+-- | Type of the 'Network.resourceChangedPriority' event.
 data NetworkResourceChangedPriority = NetworkResourceChangedPriority {
-   networkResourceChangedPriorityRequestId :: NetworkRequestId,
-   networkResourceChangedPriorityNewPriority :: NetworkResourcePriority,
-   networkResourceChangedPriorityTimestamp :: NetworkMonotonicTime
+   networkResourceChangedPriorityRequestId :: NetworkResourceChangedPriorityRequestId, -- ^ Request identifier.
+   networkResourceChangedPriorityNewPriority :: NetworkResourceChangedPriorityNewPriority, -- ^ New priority
+   networkResourceChangedPriorityTimestamp :: NetworkResourceChangedPriorityTimestamp -- ^ Timestamp.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkResourceChangedPriority  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -3358,9 +3892,10 @@ instance FromJSON  NetworkResourceChangedPriority where
 
 
 
+-- | Type of the 'Network.signedExchangeReceived' event.
 data NetworkSignedExchangeReceived = NetworkSignedExchangeReceived {
-   networkSignedExchangeReceivedRequestId :: NetworkRequestId,
-   networkSignedExchangeReceivedInfo :: NetworkSignedExchangeInfo
+   networkSignedExchangeReceivedRequestId :: NetworkSignedExchangeReceivedRequestId, -- ^ Request identifier.
+   networkSignedExchangeReceivedInfo :: NetworkSignedExchangeReceivedInfo -- ^ Information about the signed exchange response.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkSignedExchangeReceived  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -3370,14 +3905,16 @@ instance FromJSON  NetworkSignedExchangeReceived where
 
 
 
+-- | Type of the 'Network.responseReceived' event.
 data NetworkResponseReceived = NetworkResponseReceived {
-   networkResponseReceivedRequestId :: NetworkRequestId,
-   networkResponseReceivedLoaderId :: NetworkLoaderId,
-   networkResponseReceivedTimestamp :: NetworkMonotonicTime,
-   networkResponseReceivedType :: NetworkResourceType,
-   networkResponseReceivedResponse :: NetworkResponse,
-   networkResponseReceivedHasExtraInfo :: Bool,
-   networkResponseReceivedFrameId :: Maybe PageFrameId
+   networkResponseReceivedRequestId :: NetworkResponseReceivedRequestId, -- ^ Request identifier.
+   networkResponseReceivedLoaderId :: NetworkResponseReceivedLoaderId, -- ^ Loader identifier. Empty string if the request is fetched from worker.
+   networkResponseReceivedTimestamp :: NetworkResponseReceivedTimestamp, -- ^ Timestamp.
+   networkResponseReceivedType :: NetworkResponseReceivedType, -- ^ Resource type.
+   networkResponseReceivedResponse :: NetworkResponseReceivedResponse, -- ^ Response data.
+   networkResponseReceivedHasExtraInfo :: NetworkResponseReceivedHasExtraInfo, -- ^ Indicates whether requestWillBeSentExtraInfo and responseReceivedExtraInfo events will be
+or were emitted for this request.
+   networkResponseReceivedFrameId :: NetworkResponseReceivedFrameId -- ^ Frame identifier.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkResponseReceived  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -3387,9 +3924,10 @@ instance FromJSON  NetworkResponseReceived where
 
 
 
+-- | Type of the 'Network.webSocketClosed' event.
 data NetworkWebSocketClosed = NetworkWebSocketClosed {
-   networkWebSocketClosedRequestId :: NetworkRequestId,
-   networkWebSocketClosedTimestamp :: NetworkMonotonicTime
+   networkWebSocketClosedRequestId :: NetworkWebSocketClosedRequestId, -- ^ Request identifier.
+   networkWebSocketClosedTimestamp :: NetworkWebSocketClosedTimestamp -- ^ Timestamp.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkWebSocketClosed  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -3399,10 +3937,11 @@ instance FromJSON  NetworkWebSocketClosed where
 
 
 
+-- | Type of the 'Network.webSocketCreated' event.
 data NetworkWebSocketCreated = NetworkWebSocketCreated {
-   networkWebSocketCreatedRequestId :: NetworkRequestId,
-   networkWebSocketCreatedUrl :: String,
-   networkWebSocketCreatedInitiator :: Maybe NetworkInitiator
+   networkWebSocketCreatedRequestId :: NetworkWebSocketCreatedRequestId, -- ^ Request identifier.
+   networkWebSocketCreatedUrl :: NetworkWebSocketCreatedUrl, -- ^ WebSocket request URL.
+   networkWebSocketCreatedInitiator :: NetworkWebSocketCreatedInitiator -- ^ Request initiator.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkWebSocketCreated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -3412,10 +3951,11 @@ instance FromJSON  NetworkWebSocketCreated where
 
 
 
+-- | Type of the 'Network.webSocketFrameError' event.
 data NetworkWebSocketFrameError = NetworkWebSocketFrameError {
-   networkWebSocketFrameErrorRequestId :: NetworkRequestId,
-   networkWebSocketFrameErrorTimestamp :: NetworkMonotonicTime,
-   networkWebSocketFrameErrorErrorMessage :: String
+   networkWebSocketFrameErrorRequestId :: NetworkWebSocketFrameErrorRequestId, -- ^ Request identifier.
+   networkWebSocketFrameErrorTimestamp :: NetworkWebSocketFrameErrorTimestamp, -- ^ Timestamp.
+   networkWebSocketFrameErrorErrorMessage :: NetworkWebSocketFrameErrorErrorMessage -- ^ WebSocket error message.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkWebSocketFrameError  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -3425,10 +3965,11 @@ instance FromJSON  NetworkWebSocketFrameError where
 
 
 
+-- | Type of the 'Network.webSocketFrameReceived' event.
 data NetworkWebSocketFrameReceived = NetworkWebSocketFrameReceived {
-   networkWebSocketFrameReceivedRequestId :: NetworkRequestId,
-   networkWebSocketFrameReceivedTimestamp :: NetworkMonotonicTime,
-   networkWebSocketFrameReceivedResponse :: NetworkWebSocketFrame
+   networkWebSocketFrameReceivedRequestId :: NetworkWebSocketFrameReceivedRequestId, -- ^ Request identifier.
+   networkWebSocketFrameReceivedTimestamp :: NetworkWebSocketFrameReceivedTimestamp, -- ^ Timestamp.
+   networkWebSocketFrameReceivedResponse :: NetworkWebSocketFrameReceivedResponse -- ^ WebSocket response data.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkWebSocketFrameReceived  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -3438,10 +3979,11 @@ instance FromJSON  NetworkWebSocketFrameReceived where
 
 
 
+-- | Type of the 'Network.webSocketFrameSent' event.
 data NetworkWebSocketFrameSent = NetworkWebSocketFrameSent {
-   networkWebSocketFrameSentRequestId :: NetworkRequestId,
-   networkWebSocketFrameSentTimestamp :: NetworkMonotonicTime,
-   networkWebSocketFrameSentResponse :: NetworkWebSocketFrame
+   networkWebSocketFrameSentRequestId :: NetworkWebSocketFrameSentRequestId, -- ^ Request identifier.
+   networkWebSocketFrameSentTimestamp :: NetworkWebSocketFrameSentTimestamp, -- ^ Timestamp.
+   networkWebSocketFrameSentResponse :: NetworkWebSocketFrameSentResponse -- ^ WebSocket response data.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkWebSocketFrameSent  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -3451,10 +3993,11 @@ instance FromJSON  NetworkWebSocketFrameSent where
 
 
 
+-- | Type of the 'Network.webSocketHandshakeResponseReceived' event.
 data NetworkWebSocketHandshakeResponseReceived = NetworkWebSocketHandshakeResponseReceived {
-   networkWebSocketHandshakeResponseReceivedRequestId :: NetworkRequestId,
-   networkWebSocketHandshakeResponseReceivedTimestamp :: NetworkMonotonicTime,
-   networkWebSocketHandshakeResponseReceivedResponse :: NetworkWebSocketResponse
+   networkWebSocketHandshakeResponseReceivedRequestId :: NetworkWebSocketHandshakeResponseReceivedRequestId, -- ^ Request identifier.
+   networkWebSocketHandshakeResponseReceivedTimestamp :: NetworkWebSocketHandshakeResponseReceivedTimestamp, -- ^ Timestamp.
+   networkWebSocketHandshakeResponseReceivedResponse :: NetworkWebSocketHandshakeResponseReceivedResponse -- ^ WebSocket response data.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkWebSocketHandshakeResponseReceived  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 41 , A.omitNothingFields = True}
@@ -3464,11 +4007,12 @@ instance FromJSON  NetworkWebSocketHandshakeResponseReceived where
 
 
 
+-- | Type of the 'Network.webSocketWillSendHandshakeRequest' event.
 data NetworkWebSocketWillSendHandshakeRequest = NetworkWebSocketWillSendHandshakeRequest {
-   networkWebSocketWillSendHandshakeRequestRequestId :: NetworkRequestId,
-   networkWebSocketWillSendHandshakeRequestTimestamp :: NetworkMonotonicTime,
-   networkWebSocketWillSendHandshakeRequestWallTime :: NetworkTimeSinceEpoch,
-   networkWebSocketWillSendHandshakeRequestRequest :: NetworkWebSocketRequest
+   networkWebSocketWillSendHandshakeRequestRequestId :: NetworkWebSocketWillSendHandshakeRequestRequestId, -- ^ Request identifier.
+   networkWebSocketWillSendHandshakeRequestTimestamp :: NetworkWebSocketWillSendHandshakeRequestTimestamp, -- ^ Timestamp.
+   networkWebSocketWillSendHandshakeRequestWallTime :: NetworkWebSocketWillSendHandshakeRequestWallTime, -- ^ UTC Timestamp.
+   networkWebSocketWillSendHandshakeRequestRequest :: NetworkWebSocketWillSendHandshakeRequestRequest -- ^ WebSocket request data.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkWebSocketWillSendHandshakeRequest  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 , A.omitNothingFields = True}
@@ -3478,11 +4022,12 @@ instance FromJSON  NetworkWebSocketWillSendHandshakeRequest where
 
 
 
+-- | Type of the 'Network.webTransportCreated' event.
 data NetworkWebTransportCreated = NetworkWebTransportCreated {
-   networkWebTransportCreatedTransportId :: NetworkRequestId,
-   networkWebTransportCreatedUrl :: String,
-   networkWebTransportCreatedTimestamp :: NetworkMonotonicTime,
-   networkWebTransportCreatedInitiator :: Maybe NetworkInitiator
+   networkWebTransportCreatedTransportId :: NetworkWebTransportCreatedTransportId, -- ^ WebTransport identifier.
+   networkWebTransportCreatedUrl :: NetworkWebTransportCreatedUrl, -- ^ WebTransport request URL.
+   networkWebTransportCreatedTimestamp :: NetworkWebTransportCreatedTimestamp, -- ^ Timestamp.
+   networkWebTransportCreatedInitiator :: NetworkWebTransportCreatedInitiator -- ^ Request initiator.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkWebTransportCreated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -3492,9 +4037,10 @@ instance FromJSON  NetworkWebTransportCreated where
 
 
 
+-- | Type of the 'Network.webTransportConnectionEstablished' event.
 data NetworkWebTransportConnectionEstablished = NetworkWebTransportConnectionEstablished {
-   networkWebTransportConnectionEstablishedTransportId :: NetworkRequestId,
-   networkWebTransportConnectionEstablishedTimestamp :: NetworkMonotonicTime
+   networkWebTransportConnectionEstablishedTransportId :: NetworkWebTransportConnectionEstablishedTransportId, -- ^ WebTransport identifier.
+   networkWebTransportConnectionEstablishedTimestamp :: NetworkWebTransportConnectionEstablishedTimestamp -- ^ Timestamp.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkWebTransportConnectionEstablished  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 , A.omitNothingFields = True}
@@ -3504,9 +4050,10 @@ instance FromJSON  NetworkWebTransportConnectionEstablished where
 
 
 
+-- | Type of the 'Network.webTransportClosed' event.
 data NetworkWebTransportClosed = NetworkWebTransportClosed {
-   networkWebTransportClosedTransportId :: NetworkRequestId,
-   networkWebTransportClosedTimestamp :: NetworkMonotonicTime
+   networkWebTransportClosedTransportId :: NetworkWebTransportClosedTransportId, -- ^ WebTransport identifier.
+   networkWebTransportClosedTimestamp :: NetworkWebTransportClosedTimestamp -- ^ Timestamp.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkWebTransportClosed  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -3516,12 +4063,14 @@ instance FromJSON  NetworkWebTransportClosed where
 
 
 
+-- | Type of the 'Network.requestWillBeSentExtraInfo' event.
 data NetworkRequestWillBeSentExtraInfo = NetworkRequestWillBeSentExtraInfo {
-   networkRequestWillBeSentExtraInfoRequestId :: NetworkRequestId,
-   networkRequestWillBeSentExtraInfoAssociatedCookies :: [NetworkBlockedCookieWithReason],
-   networkRequestWillBeSentExtraInfoHeaders :: NetworkHeaders,
-   networkRequestWillBeSentExtraInfoConnectTiming :: NetworkConnectTiming,
-   networkRequestWillBeSentExtraInfoClientSecurityState :: Maybe NetworkClientSecurityState
+   networkRequestWillBeSentExtraInfoRequestId :: NetworkRequestWillBeSentExtraInfoRequestId, -- ^ Request identifier. Used to match this information to an existing requestWillBeSent event.
+   networkRequestWillBeSentExtraInfoAssociatedCookies :: NetworkRequestWillBeSentExtraInfoAssociatedCookies, -- ^ A list of cookies potentially associated to the requested URL. This includes both cookies sent with
+the request and the ones not sent; the latter are distinguished by having blockedReason field set.
+   networkRequestWillBeSentExtraInfoHeaders :: NetworkRequestWillBeSentExtraInfoHeaders, -- ^ Raw request headers as they will be sent over the wire.
+   networkRequestWillBeSentExtraInfoConnectTiming :: NetworkRequestWillBeSentExtraInfoConnectTiming, -- ^ Connection timing information for the request.
+   networkRequestWillBeSentExtraInfoClientSecurityState :: NetworkRequestWillBeSentExtraInfoClientSecurityState -- ^ The client security state set for the request.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkRequestWillBeSentExtraInfo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
@@ -3531,13 +4080,20 @@ instance FromJSON  NetworkRequestWillBeSentExtraInfo where
 
 
 
+-- | Type of the 'Network.responseReceivedExtraInfo' event.
 data NetworkResponseReceivedExtraInfo = NetworkResponseReceivedExtraInfo {
-   networkResponseReceivedExtraInfoRequestId :: NetworkRequestId,
-   networkResponseReceivedExtraInfoBlockedCookies :: [NetworkBlockedSetCookieWithReason],
-   networkResponseReceivedExtraInfoHeaders :: NetworkHeaders,
-   networkResponseReceivedExtraInfoResourceIpAddressSpace :: NetworkIpAddressSpace,
-   networkResponseReceivedExtraInfoStatusCode :: Int,
-   networkResponseReceivedExtraInfoHeadersText :: Maybe String
+   networkResponseReceivedExtraInfoRequestId :: NetworkResponseReceivedExtraInfoRequestId, -- ^ Request identifier. Used to match this information to another responseReceived event.
+   networkResponseReceivedExtraInfoBlockedCookies :: NetworkResponseReceivedExtraInfoBlockedCookies, -- ^ A list of cookies which were not stored from the response along with the corresponding
+reasons for blocking. The cookies here may not be valid due to syntax errors, which
+are represented by the invalid cookie line string instead of a proper cookie.
+   networkResponseReceivedExtraInfoHeaders :: NetworkResponseReceivedExtraInfoHeaders, -- ^ Raw response headers as they were received over the wire.
+   networkResponseReceivedExtraInfoResourceIpAddressSpace :: NetworkResponseReceivedExtraInfoResourceIpAddressSpace, -- ^ The IP address space of the resource. The address space can only be determined once the transport
+established the connection, so we can't send it in `requestWillBeSentExtraInfo`.
+   networkResponseReceivedExtraInfoStatusCode :: NetworkResponseReceivedExtraInfoStatusCode, -- ^ The status code of the response. This is useful in cases the request failed and no responseReceived
+event is triggered, which is the case for, e.g., CORS errors. This is also the correct status code
+for cached requests, where the status in responseReceived is a 200 and this will be 304.
+   networkResponseReceivedExtraInfoHeadersText :: NetworkResponseReceivedExtraInfoHeadersText -- ^ Raw response header text as it was received over the wire. The raw text may not always be
+available, such as in the case of HTTP/2 or QUIC.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkResponseReceivedExtraInfo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
@@ -3546,6 +4102,8 @@ instance FromJSON  NetworkResponseReceivedExtraInfo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
+
+-- | Type of the 'Network.trustTokenOperationDone' event.
 data NetworkTrustTokenOperationDoneStatus = NetworkTrustTokenOperationDoneStatusOk | NetworkTrustTokenOperationDoneStatusInvalidArgument | NetworkTrustTokenOperationDoneStatusFailedPrecondition | NetworkTrustTokenOperationDoneStatusResourceExhausted | NetworkTrustTokenOperationDoneStatusAlreadyExists | NetworkTrustTokenOperationDoneStatusUnavailable | NetworkTrustTokenOperationDoneStatusBadResponse | NetworkTrustTokenOperationDoneStatusInternalError | NetworkTrustTokenOperationDoneStatusUnknownError | NetworkTrustTokenOperationDoneStatusFulfilledLocally
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkTrustTokenOperationDoneStatus where
@@ -3580,12 +4138,15 @@ instance ToJSON NetworkTrustTokenOperationDoneStatus where
 
 
 data NetworkTrustTokenOperationDone = NetworkTrustTokenOperationDone {
-   networkTrustTokenOperationDoneStatus :: NetworkTrustTokenOperationDoneStatus,
-   networkTrustTokenOperationDoneType :: NetworkTrustTokenOperationType,
-   networkTrustTokenOperationDoneRequestId :: NetworkRequestId,
-   networkTrustTokenOperationDoneTopLevelOrigin :: Maybe String,
-   networkTrustTokenOperationDoneIssuerOrigin :: Maybe String,
-   networkTrustTokenOperationDoneIssuedTokenCount :: Maybe Int
+   networkTrustTokenOperationDoneStatus :: NetworkTrustTokenOperationDoneStatus, -- ^ Detailed success or error status of the operation.
+'AlreadyExists' also signifies a successful operation, as the result
+of the operation already exists und thus, the operation was abort
+preemptively (e.g. a cache hit).
+
+
+   networkTrustTokenOperationDoneTopLevelOrigin :: NetworkTrustTokenOperationDoneTopLevelOrigin, -- ^ Top level origin. The context in which the operation was attempted.
+   networkTrustTokenOperationDoneIssuerOrigin :: NetworkTrustTokenOperationDoneIssuerOrigin, -- ^ Origin of the issuer in case of a "Issuance" or "Redemption" operation.
+   networkTrustTokenOperationDoneIssuedTokenCount :: NetworkTrustTokenOperationDoneIssuedTokenCount -- ^ The number of obtained Trust Tokens on a successful "Issuance" operation.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkTrustTokenOperationDone  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -3595,9 +4156,10 @@ instance FromJSON  NetworkTrustTokenOperationDone where
 
 
 
+-- | Type of the 'Network.subresourceWebBundleMetadataReceived' event.
 data NetworkSubresourceWebBundleMetadataReceived = NetworkSubresourceWebBundleMetadataReceived {
-   networkSubresourceWebBundleMetadataReceivedRequestId :: NetworkRequestId,
-   networkSubresourceWebBundleMetadataReceivedUrls :: [String]
+   networkSubresourceWebBundleMetadataReceivedRequestId :: NetworkSubresourceWebBundleMetadataReceivedRequestId, -- ^ Request identifier. Used to match this information to another event.
+   networkSubresourceWebBundleMetadataReceivedUrls :: NetworkSubresourceWebBundleMetadataReceivedUrls -- ^ A list of URLs of resources in the subresource Web Bundle.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkSubresourceWebBundleMetadataReceived  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 43 , A.omitNothingFields = True}
@@ -3607,9 +4169,10 @@ instance FromJSON  NetworkSubresourceWebBundleMetadataReceived where
 
 
 
+-- | Type of the 'Network.subresourceWebBundleMetadataError' event.
 data NetworkSubresourceWebBundleMetadataError = NetworkSubresourceWebBundleMetadataError {
-   networkSubresourceWebBundleMetadataErrorRequestId :: NetworkRequestId,
-   networkSubresourceWebBundleMetadataErrorErrorMessage :: String
+   networkSubresourceWebBundleMetadataErrorRequestId :: NetworkSubresourceWebBundleMetadataErrorRequestId, -- ^ Request identifier. Used to match this information to another event.
+   networkSubresourceWebBundleMetadataErrorErrorMessage :: NetworkSubresourceWebBundleMetadataErrorErrorMessage -- ^ Error message
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkSubresourceWebBundleMetadataError  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 , A.omitNothingFields = True}
@@ -3619,10 +4182,13 @@ instance FromJSON  NetworkSubresourceWebBundleMetadataError where
 
 
 
+-- | Type of the 'Network.subresourceWebBundleInnerResponseParsed' event.
 data NetworkSubresourceWebBundleInnerResponseParsed = NetworkSubresourceWebBundleInnerResponseParsed {
-   networkSubresourceWebBundleInnerResponseParsedInnerRequestId :: NetworkRequestId,
-   networkSubresourceWebBundleInnerResponseParsedInnerRequestUrl :: String,
-   networkSubresourceWebBundleInnerResponseParsedBundleRequestId :: Maybe NetworkRequestId
+   networkSubresourceWebBundleInnerResponseParsedInnerRequestId :: NetworkSubresourceWebBundleInnerResponseParsedInnerRequestId, -- ^ Request identifier of the subresource request
+   networkSubresourceWebBundleInnerResponseParsedInnerRequestUrl :: NetworkSubresourceWebBundleInnerResponseParsedInnerRequestUrl, -- ^ URL of the subresource resource.
+   networkSubresourceWebBundleInnerResponseParsedBundleRequestId :: NetworkSubresourceWebBundleInnerResponseParsedBundleRequestId -- ^ Bundle request identifier. Used to match this information to another event.
+This made be absent in case when the instrumentation was enabled only
+after webbundle was parsed.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkSubresourceWebBundleInnerResponseParsed  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 46 , A.omitNothingFields = True}
@@ -3632,11 +4198,14 @@ instance FromJSON  NetworkSubresourceWebBundleInnerResponseParsed where
 
 
 
+-- | Type of the 'Network.subresourceWebBundleInnerResponseError' event.
 data NetworkSubresourceWebBundleInnerResponseError = NetworkSubresourceWebBundleInnerResponseError {
-   networkSubresourceWebBundleInnerResponseErrorInnerRequestId :: NetworkRequestId,
-   networkSubresourceWebBundleInnerResponseErrorInnerRequestUrl :: String,
-   networkSubresourceWebBundleInnerResponseErrorErrorMessage :: String,
-   networkSubresourceWebBundleInnerResponseErrorBundleRequestId :: Maybe NetworkRequestId
+   networkSubresourceWebBundleInnerResponseErrorInnerRequestId :: NetworkSubresourceWebBundleInnerResponseErrorInnerRequestId, -- ^ Request identifier of the subresource request
+   networkSubresourceWebBundleInnerResponseErrorInnerRequestUrl :: NetworkSubresourceWebBundleInnerResponseErrorInnerRequestUrl, -- ^ URL of the subresource resource.
+   networkSubresourceWebBundleInnerResponseErrorErrorMessage :: NetworkSubresourceWebBundleInnerResponseErrorErrorMessage, -- ^ Error message
+   networkSubresourceWebBundleInnerResponseErrorBundleRequestId :: NetworkSubresourceWebBundleInnerResponseErrorBundleRequestId -- ^ Bundle request identifier. Used to match this information to another event.
+This made be absent in case when the instrumentation was enabled only
+after webbundle was parsed.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkSubresourceWebBundleInnerResponseError  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 45 , A.omitNothingFields = True}
@@ -3646,8 +4215,8 @@ instance FromJSON  NetworkSubresourceWebBundleInnerResponseError where
 
 
 
+-- | Type of the 'Network.reportingApiReportAdded' event.
 data NetworkReportingApiReportAdded = NetworkReportingApiReportAdded {
-   networkReportingApiReportAddedReport :: NetworkReportingApiReport
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkReportingApiReportAdded  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -3657,8 +4226,8 @@ instance FromJSON  NetworkReportingApiReportAdded where
 
 
 
+-- | Type of the 'Network.reportingApiReportUpdated' event.
 data NetworkReportingApiReportUpdated = NetworkReportingApiReportUpdated {
-   networkReportingApiReportUpdatedReport :: NetworkReportingApiReport
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkReportingApiReportUpdated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
@@ -3668,9 +4237,10 @@ instance FromJSON  NetworkReportingApiReportUpdated where
 
 
 
+-- | Type of the 'Network.reportingApiEndpointsChangedForOrigin' event.
 data NetworkReportingApiEndpointsChangedForOrigin = NetworkReportingApiEndpointsChangedForOrigin {
-   networkReportingApiEndpointsChangedForOriginOrigin :: String,
-   networkReportingApiEndpointsChangedForOriginEndpoints :: [NetworkReportingApiEndpoint]
+   networkReportingApiEndpointsChangedForOriginOrigin :: NetworkReportingApiEndpointsChangedForOriginOrigin, -- ^ Origin of the document(s) which configured the endpoints.
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkReportingApiEndpointsChangedForOrigin  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 44 , A.omitNothingFields = True}
@@ -3682,8 +4252,9 @@ instance FromJSON  NetworkReportingApiEndpointsChangedForOrigin where
 
 
 
+-- | Parameters of the 'networkSetAcceptedEncodings' command.
 data PNetworkSetAcceptedEncodings = PNetworkSetAcceptedEncodings {
-   pNetworkSetAcceptedEncodingsEncodings :: [NetworkContentEncoding]
+   pNetworkSetAcceptedEncodingsEncodings :: PNetworkSetAcceptedEncodingsEncodings -- ^ List of accepted content encodings.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkSetAcceptedEncodings  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -3692,28 +4263,38 @@ instance FromJSON  PNetworkSetAcceptedEncodings where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
+-- | Function for the command 'Network.setAcceptedEncodings'.
+-- Sets a list of content encodings that will be accepted. Empty list means no encoding is accepted.
+-- Parameters: 'PNetworkSetAcceptedEncodings'
 networkSetAcceptedEncodings :: Handle ev -> PNetworkSetAcceptedEncodings -> IO (Maybe Error)
 networkSetAcceptedEncodings handle params = sendReceiveCommand handle "Network.setAcceptedEncodings" (Just params)
 
 
+-- | Function for the command 'Network.clearAcceptedEncodingsOverride'.
+-- Clears accepted encodings set by setAcceptedEncodings
 networkClearAcceptedEncodingsOverride :: Handle ev -> IO (Maybe Error)
 networkClearAcceptedEncodingsOverride handle = sendReceiveCommand handle "Network.clearAcceptedEncodingsOverride" (Nothing :: Maybe ())
 
 
+-- | Function for the command 'Network.clearBrowserCache'.
+-- Clears browser cache.
 networkClearBrowserCache :: Handle ev -> IO (Maybe Error)
 networkClearBrowserCache handle = sendReceiveCommand handle "Network.clearBrowserCache" (Nothing :: Maybe ())
 
 
+-- | Function for the command 'Network.clearBrowserCookies'.
+-- Clears browser cookies.
 networkClearBrowserCookies :: Handle ev -> IO (Maybe Error)
 networkClearBrowserCookies handle = sendReceiveCommand handle "Network.clearBrowserCookies" (Nothing :: Maybe ())
 
 
-
+-- | Parameters of the 'networkDeleteCookies' command.
 data PNetworkDeleteCookies = PNetworkDeleteCookies {
-   pNetworkDeleteCookiesName :: String,
-   pNetworkDeleteCookiesUrl :: Maybe String,
-   pNetworkDeleteCookiesDomain :: Maybe String,
-   pNetworkDeleteCookiesPath :: Maybe String
+   pNetworkDeleteCookiesName :: PNetworkDeleteCookiesName, -- ^ Name of the cookies to remove.
+   pNetworkDeleteCookiesUrl :: PNetworkDeleteCookiesUrl, -- ^ If specified, deletes all the cookies with the given name where domain and path match
+provided URL.
+   pNetworkDeleteCookiesDomain :: PNetworkDeleteCookiesDomain, -- ^ If specified, deletes only cookies with the exact domain.
+   pNetworkDeleteCookiesPath :: PNetworkDeleteCookiesPath -- ^ If specified, deletes only cookies with the exact path.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkDeleteCookies  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -3722,21 +4303,26 @@ instance FromJSON  PNetworkDeleteCookies where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
+-- | Function for the command 'Network.deleteCookies'.
+-- Deletes browser cookies with matching name and url or domain/path pair.
+-- Parameters: 'PNetworkDeleteCookies'
 networkDeleteCookies :: Handle ev -> PNetworkDeleteCookies -> IO (Maybe Error)
 networkDeleteCookies handle params = sendReceiveCommand handle "Network.deleteCookies" (Just params)
 
 
+-- | Function for the command 'Network.disable'.
+-- Disables network tracking, prevents network events from being sent to the client.
 networkDisable :: Handle ev -> IO (Maybe Error)
 networkDisable handle = sendReceiveCommand handle "Network.disable" (Nothing :: Maybe ())
 
 
-
+-- | Parameters of the 'networkEmulateNetworkConditions' command.
 data PNetworkEmulateNetworkConditions = PNetworkEmulateNetworkConditions {
-   pNetworkEmulateNetworkConditionsOffline :: Bool,
-   pNetworkEmulateNetworkConditionsLatency :: Double,
-   pNetworkEmulateNetworkConditionsDownloadThroughput :: Double,
-   pNetworkEmulateNetworkConditionsUploadThroughput :: Double,
-   pNetworkEmulateNetworkConditionsConnectionType :: Maybe NetworkConnectionType
+   pNetworkEmulateNetworkConditionsOffline :: PNetworkEmulateNetworkConditionsOffline, -- ^ True to emulate internet disconnection.
+   pNetworkEmulateNetworkConditionsLatency :: PNetworkEmulateNetworkConditionsLatency, -- ^ Minimum latency from request sent to response headers received (ms).
+   pNetworkEmulateNetworkConditionsDownloadThroughput :: PNetworkEmulateNetworkConditionsDownloadThroughput, -- ^ Maximal aggregated download throughput (bytes/sec). -1 disables download throttling.
+   pNetworkEmulateNetworkConditionsUploadThroughput :: PNetworkEmulateNetworkConditionsUploadThroughput, -- ^ Maximal aggregated upload throughput (bytes/sec).  -1 disables upload throttling.
+   pNetworkEmulateNetworkConditionsConnectionType :: PNetworkEmulateNetworkConditionsConnectionType -- ^ Connection type if known.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkEmulateNetworkConditions  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
@@ -3745,15 +4331,18 @@ instance FromJSON  PNetworkEmulateNetworkConditions where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
+-- | Function for the command 'Network.emulateNetworkConditions'.
+-- Activates emulation of network conditions.
+-- Parameters: 'PNetworkEmulateNetworkConditions'
 networkEmulateNetworkConditions :: Handle ev -> PNetworkEmulateNetworkConditions -> IO (Maybe Error)
 networkEmulateNetworkConditions handle params = sendReceiveCommand handle "Network.emulateNetworkConditions" (Just params)
 
 
-
+-- | Parameters of the 'networkEnable' command.
 data PNetworkEnable = PNetworkEnable {
-   pNetworkEnableMaxTotalBufferSize :: Maybe Int,
-   pNetworkEnableMaxResourceBufferSize :: Maybe Int,
-   pNetworkEnableMaxPostDataSize :: Maybe Int
+   pNetworkEnableMaxTotalBufferSize :: PNetworkEnableMaxTotalBufferSize, -- ^ Buffer size in bytes to use when preserving network payloads (XHRs, etc).
+   pNetworkEnableMaxResourceBufferSize :: PNetworkEnableMaxResourceBufferSize, -- ^ Per-resource buffer size in bytes to use when preserving network payloads (XHRs, etc).
+   pNetworkEnableMaxPostDataSize :: PNetworkEnableMaxPostDataSize -- ^ Longest post body size (in bytes) that would be included in requestWillBeSent notification
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkEnable  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
@@ -3762,15 +4351,23 @@ instance FromJSON  PNetworkEnable where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
+-- | Function for the command 'Network.enable'.
+-- Enables network tracking, network events will now be delivered to the client.
+-- Parameters: 'PNetworkEnable'
 networkEnable :: Handle ev -> PNetworkEnable -> IO (Maybe Error)
 networkEnable handle params = sendReceiveCommand handle "Network.enable" (Just params)
 
 
+-- | Function for the command 'Network.getAllCookies'.
+-- Returns all browser cookies. Depending on the backend support, will return detailed cookie
+-- information in the `cookies` field.
+-- Returns: 'NetworkGetAllCookies'
 networkGetAllCookies :: Handle ev -> IO (Either Error NetworkGetAllCookies)
 networkGetAllCookies handle = sendReceiveCommandResult handle "Network.getAllCookies" (Nothing :: Maybe ())
 
+-- | Return type of the 'networkGetAllCookies' command.
 data NetworkGetAllCookies = NetworkGetAllCookies {
-   networkGetAllCookiesCookies :: [NetworkCookie]
+   networkGetAllCookiesCookies :: [NetworkCookie] -- ^ Array of cookie objects.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  NetworkGetAllCookies where
@@ -3781,9 +4378,9 @@ instance Command NetworkGetAllCookies where
 
 
 
-
+-- | Parameters of the 'networkGetCertificate' command.
 data PNetworkGetCertificate = PNetworkGetCertificate {
-   pNetworkGetCertificateOrigin :: String
+   pNetworkGetCertificateOrigin :: PNetworkGetCertificateOrigin -- ^ Origin to get certificate for.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkGetCertificate  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -3792,11 +4389,16 @@ instance FromJSON  PNetworkGetCertificate where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
+-- | Function for the command 'Network.getCertificate'.
+-- Returns the DER-encoded certificate.
+-- Parameters: 'PNetworkGetCertificate'
+-- Returns: 'NetworkGetCertificate'
 networkGetCertificate :: Handle ev -> PNetworkGetCertificate -> IO (Either Error NetworkGetCertificate)
 networkGetCertificate handle params = sendReceiveCommandResult handle "Network.getCertificate" (Just params)
 
+-- | Return type of the 'networkGetCertificate' command.
 data NetworkGetCertificate = NetworkGetCertificate {
-   networkGetCertificateTableNames :: [String]
+
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  NetworkGetCertificate where
@@ -3807,9 +4409,11 @@ instance Command NetworkGetCertificate where
 
 
 
-
+-- | Parameters of the 'networkGetCookies' command.
 data PNetworkGetCookies = PNetworkGetCookies {
-   pNetworkGetCookiesUrls :: Maybe [String]
+   pNetworkGetCookiesUrls :: PNetworkGetCookiesUrls -- ^ The list of URLs for which applicable cookies will be fetched.
+If not specified, it's assumed to be set to the list containing
+the URLs of the page and all of its subframes.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkGetCookies  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -3818,11 +4422,17 @@ instance FromJSON  PNetworkGetCookies where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
+-- | Function for the command 'Network.getCookies'.
+-- Returns all browser cookies for the current URL. Depending on the backend support, will return
+-- detailed cookie information in the `cookies` field.
+-- Parameters: 'PNetworkGetCookies'
+-- Returns: 'NetworkGetCookies'
 networkGetCookies :: Handle ev -> PNetworkGetCookies -> IO (Either Error NetworkGetCookies)
 networkGetCookies handle params = sendReceiveCommandResult handle "Network.getCookies" (Just params)
 
+-- | Return type of the 'networkGetCookies' command.
 data NetworkGetCookies = NetworkGetCookies {
-   networkGetCookiesCookies :: [NetworkCookie]
+   networkGetCookiesCookies :: [NetworkCookie] -- ^ Array of cookie objects.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  NetworkGetCookies where
@@ -3833,9 +4443,9 @@ instance Command NetworkGetCookies where
 
 
 
-
+-- | Parameters of the 'networkGetResponseBody' command.
 data PNetworkGetResponseBody = PNetworkGetResponseBody {
-   pNetworkGetResponseBodyRequestId :: NetworkRequestId
+   pNetworkGetResponseBodyRequestId :: PNetworkGetResponseBodyRequestId -- ^ Identifier of the network request to get content for.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkGetResponseBody  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -3844,12 +4454,17 @@ instance FromJSON  PNetworkGetResponseBody where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+-- | Function for the command 'Network.getResponseBody'.
+-- Returns content served for the given request.
+-- Parameters: 'PNetworkGetResponseBody'
+-- Returns: 'NetworkGetResponseBody'
 networkGetResponseBody :: Handle ev -> PNetworkGetResponseBody -> IO (Either Error NetworkGetResponseBody)
 networkGetResponseBody handle params = sendReceiveCommandResult handle "Network.getResponseBody" (Just params)
 
+-- | Return type of the 'networkGetResponseBody' command.
 data NetworkGetResponseBody = NetworkGetResponseBody {
-   networkGetResponseBodyBody :: String,
-   networkGetResponseBodyBase64Encoded :: Bool
+   networkGetResponseBodyBody :: String, -- ^ Response body.
+   networkGetResponseBodyBase64Encoded :: Bool -- ^ True, if content was sent as base64.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  NetworkGetResponseBody where
@@ -3860,9 +4475,9 @@ instance Command NetworkGetResponseBody where
 
 
 
-
+-- | Parameters of the 'networkGetRequestPostData' command.
 data PNetworkGetRequestPostData = PNetworkGetRequestPostData {
-   pNetworkGetRequestPostDataRequestId :: NetworkRequestId
+   pNetworkGetRequestPostDataRequestId :: PNetworkGetRequestPostDataRequestId -- ^ Identifier of the network request to get content for.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkGetRequestPostData  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -3871,11 +4486,16 @@ instance FromJSON  PNetworkGetRequestPostData where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
+-- | Function for the command 'Network.getRequestPostData'.
+-- Returns post data sent with the request. Returns an error when no data was sent with the request.
+-- Parameters: 'PNetworkGetRequestPostData'
+-- Returns: 'NetworkGetRequestPostData'
 networkGetRequestPostData :: Handle ev -> PNetworkGetRequestPostData -> IO (Either Error NetworkGetRequestPostData)
 networkGetRequestPostData handle params = sendReceiveCommandResult handle "Network.getRequestPostData" (Just params)
 
+-- | Return type of the 'networkGetRequestPostData' command.
 data NetworkGetRequestPostData = NetworkGetRequestPostData {
-   networkGetRequestPostDataPostData :: String
+   networkGetRequestPostDataPostData :: String -- ^ Request body string, omitting files from multipart requests
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  NetworkGetRequestPostData where
@@ -3886,9 +4506,9 @@ instance Command NetworkGetRequestPostData where
 
 
 
-
+-- | Parameters of the 'networkGetResponseBodyForInterception' command.
 data PNetworkGetResponseBodyForInterception = PNetworkGetResponseBodyForInterception {
-   pNetworkGetResponseBodyForInterceptionInterceptionId :: NetworkInterceptionId
+   pNetworkGetResponseBodyForInterceptionInterceptionId :: PNetworkGetResponseBodyForInterceptionInterceptionId -- ^ Identifier for the intercepted request to get body for.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkGetResponseBodyForInterception  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 , A.omitNothingFields = True}
@@ -3897,12 +4517,17 @@ instance FromJSON  PNetworkGetResponseBodyForInterception where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 }
 
 
+-- | Function for the command 'Network.getResponseBodyForInterception'.
+-- Returns content served for the given currently intercepted request.
+-- Parameters: 'PNetworkGetResponseBodyForInterception'
+-- Returns: 'NetworkGetResponseBodyForInterception'
 networkGetResponseBodyForInterception :: Handle ev -> PNetworkGetResponseBodyForInterception -> IO (Either Error NetworkGetResponseBodyForInterception)
 networkGetResponseBodyForInterception handle params = sendReceiveCommandResult handle "Network.getResponseBodyForInterception" (Just params)
 
+-- | Return type of the 'networkGetResponseBodyForInterception' command.
 data NetworkGetResponseBodyForInterception = NetworkGetResponseBodyForInterception {
-   networkGetResponseBodyForInterceptionBody :: String,
-   networkGetResponseBodyForInterceptionBase64Encoded :: Bool
+   networkGetResponseBodyForInterceptionBody :: String, -- ^ Response body.
+   networkGetResponseBodyForInterceptionBase64Encoded :: Bool -- ^ True, if content was sent as base64.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  NetworkGetResponseBodyForInterception where
@@ -3913,9 +4538,8 @@ instance Command NetworkGetResponseBodyForInterception where
 
 
 
-
+-- | Parameters of the 'networkTakeResponseBodyForInterceptionAsStream' command.
 data PNetworkTakeResponseBodyForInterceptionAsStream = PNetworkTakeResponseBodyForInterceptionAsStream {
-   pNetworkTakeResponseBodyForInterceptionAsStreamInterceptionId :: NetworkInterceptionId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkTakeResponseBodyForInterceptionAsStream  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 47 , A.omitNothingFields = True}
@@ -3924,11 +4548,19 @@ instance FromJSON  PNetworkTakeResponseBodyForInterceptionAsStream where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 47 }
 
 
+-- | Function for the command 'Network.takeResponseBodyForInterceptionAsStream'.
+-- Returns a handle to the stream representing the response body. Note that after this command,
+-- the intercepted request can't be continued as is -- you either need to cancel it or to provide
+-- the response body. The stream only supports sequential read, IO.read will fail if the position
+-- is specified.
+-- Parameters: 'PNetworkTakeResponseBodyForInterceptionAsStream'
+-- Returns: 'NetworkTakeResponseBodyForInterceptionAsStream'
 networkTakeResponseBodyForInterceptionAsStream :: Handle ev -> PNetworkTakeResponseBodyForInterceptionAsStream -> IO (Either Error NetworkTakeResponseBodyForInterceptionAsStream)
 networkTakeResponseBodyForInterceptionAsStream handle params = sendReceiveCommandResult handle "Network.takeResponseBodyForInterceptionAsStream" (Just params)
 
+-- | Return type of the 'networkTakeResponseBodyForInterceptionAsStream' command.
 data NetworkTakeResponseBodyForInterceptionAsStream = NetworkTakeResponseBodyForInterceptionAsStream {
-   networkTakeResponseBodyForInterceptionAsStreamStream :: IO.IoStreamHandle
+
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  NetworkTakeResponseBodyForInterceptionAsStream where
@@ -3939,9 +4571,9 @@ instance Command NetworkTakeResponseBodyForInterceptionAsStream where
 
 
 
-
+-- | Parameters of the 'networkReplayXhr' command.
 data PNetworkReplayXhr = PNetworkReplayXhr {
-   pNetworkReplayXhrRequestId :: NetworkRequestId
+   pNetworkReplayXhrRequestId :: PNetworkReplayXhrRequestId -- ^ Identifier of XHR to replay.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkReplayXhr  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -3950,16 +4582,21 @@ instance FromJSON  PNetworkReplayXhr where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
+-- | Function for the command 'Network.replayXHR'.
+-- This method sends a new XMLHttpRequest which is identical to the original one. The following
+-- parameters should be identical: method, url, async, request body, extra headers, withCredentials
+-- attribute, user, password.
+-- Parameters: 'PNetworkReplayXhr'
 networkReplayXhr :: Handle ev -> PNetworkReplayXhr -> IO (Maybe Error)
 networkReplayXhr handle params = sendReceiveCommand handle "Network.replayXHR" (Just params)
 
 
-
+-- | Parameters of the 'networkSearchInResponseBody' command.
 data PNetworkSearchInResponseBody = PNetworkSearchInResponseBody {
-   pNetworkSearchInResponseBodyRequestId :: NetworkRequestId,
-   pNetworkSearchInResponseBodyQuery :: String,
-   pNetworkSearchInResponseBodyCaseSensitive :: Maybe Bool,
-   pNetworkSearchInResponseBodyIsRegex :: Maybe Bool
+   pNetworkSearchInResponseBodyRequestId :: PNetworkSearchInResponseBodyRequestId, -- ^ Identifier of the network response to search.
+   pNetworkSearchInResponseBodyQuery :: PNetworkSearchInResponseBodyQuery, -- ^ String to search for.
+   pNetworkSearchInResponseBodyCaseSensitive :: PNetworkSearchInResponseBodyCaseSensitive, -- ^ If true, search is case sensitive.
+   pNetworkSearchInResponseBodyIsRegex :: PNetworkSearchInResponseBodyIsRegex -- ^ If true, treats string parameter as regex.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkSearchInResponseBody  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -3968,11 +4605,16 @@ instance FromJSON  PNetworkSearchInResponseBody where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
+-- | Function for the command 'Network.searchInResponseBody'.
+-- Searches for given string in response content.
+-- Parameters: 'PNetworkSearchInResponseBody'
+-- Returns: 'NetworkSearchInResponseBody'
 networkSearchInResponseBody :: Handle ev -> PNetworkSearchInResponseBody -> IO (Either Error NetworkSearchInResponseBody)
 networkSearchInResponseBody handle params = sendReceiveCommandResult handle "Network.searchInResponseBody" (Just params)
 
+-- | Return type of the 'networkSearchInResponseBody' command.
 data NetworkSearchInResponseBody = NetworkSearchInResponseBody {
-   networkSearchInResponseBodyResult :: [Debugger.DebuggerSearchMatch]
+   networkSearchInResponseBodyResult :: [Debugger.DebuggerSearchMatch] -- ^ List of search matches.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  NetworkSearchInResponseBody where
@@ -3983,9 +4625,9 @@ instance Command NetworkSearchInResponseBody where
 
 
 
-
+-- | Parameters of the 'networkSetBlockedUrLs' command.
 data PNetworkSetBlockedUrLs = PNetworkSetBlockedUrLs {
-   pNetworkSetBlockedUrLsUrls :: [String]
+   pNetworkSetBlockedUrLsUrls :: PNetworkSetBlockedUrLsUrls -- ^ URL patterns to block. Wildcards ('*') are allowed.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkSetBlockedUrLs  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -3994,13 +4636,16 @@ instance FromJSON  PNetworkSetBlockedUrLs where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
+-- | Function for the command 'Network.setBlockedURLs'.
+-- Blocks URLs from loading.
+-- Parameters: 'PNetworkSetBlockedUrLs'
 networkSetBlockedUrLs :: Handle ev -> PNetworkSetBlockedUrLs -> IO (Maybe Error)
 networkSetBlockedUrLs handle params = sendReceiveCommand handle "Network.setBlockedURLs" (Just params)
 
 
-
+-- | Parameters of the 'networkSetBypassServiceWorker' command.
 data PNetworkSetBypassServiceWorker = PNetworkSetBypassServiceWorker {
-   pNetworkSetBypassServiceWorkerBypass :: Bool
+   pNetworkSetBypassServiceWorkerBypass :: PNetworkSetBypassServiceWorkerBypass -- ^ Bypass service worker and load from network.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkSetBypassServiceWorker  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -4009,13 +4654,16 @@ instance FromJSON  PNetworkSetBypassServiceWorker where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
+-- | Function for the command 'Network.setBypassServiceWorker'.
+-- Toggles ignoring of service worker for each request.
+-- Parameters: 'PNetworkSetBypassServiceWorker'
 networkSetBypassServiceWorker :: Handle ev -> PNetworkSetBypassServiceWorker -> IO (Maybe Error)
 networkSetBypassServiceWorker handle params = sendReceiveCommand handle "Network.setBypassServiceWorker" (Just params)
 
 
-
+-- | Parameters of the 'networkSetCacheDisabled' command.
 data PNetworkSetCacheDisabled = PNetworkSetCacheDisabled {
-   pNetworkSetCacheDisabledCacheDisabled :: Bool
+   pNetworkSetCacheDisabledCacheDisabled :: PNetworkSetCacheDisabledCacheDisabled -- ^ Cache disabled state.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkSetCacheDisabled  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -4024,26 +4672,34 @@ instance FromJSON  PNetworkSetCacheDisabled where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
+-- | Function for the command 'Network.setCacheDisabled'.
+-- Toggles ignoring cache for each request. If `true`, cache will not be used.
+-- Parameters: 'PNetworkSetCacheDisabled'
 networkSetCacheDisabled :: Handle ev -> PNetworkSetCacheDisabled -> IO (Maybe Error)
 networkSetCacheDisabled handle params = sendReceiveCommand handle "Network.setCacheDisabled" (Just params)
 
 
-
+-- | Parameters of the 'networkSetCookie' command.
 data PNetworkSetCookie = PNetworkSetCookie {
-   pNetworkSetCookieName :: String,
-   pNetworkSetCookieValue :: String,
-   pNetworkSetCookieUrl :: Maybe String,
-   pNetworkSetCookieDomain :: Maybe String,
-   pNetworkSetCookiePath :: Maybe String,
-   pNetworkSetCookieSecure :: Maybe Bool,
-   pNetworkSetCookieHttpOnly :: Maybe Bool,
-   pNetworkSetCookieSameSite :: Maybe NetworkCookieSameSite,
-   pNetworkSetCookieExpires :: Maybe NetworkTimeSinceEpoch,
-   pNetworkSetCookiePriority :: Maybe NetworkCookiePriority,
-   pNetworkSetCookieSameParty :: Maybe Bool,
-   pNetworkSetCookieSourceScheme :: Maybe NetworkCookieSourceScheme,
-   pNetworkSetCookieSourcePort :: Maybe Int,
-   pNetworkSetCookiePartitionKey :: Maybe String
+   pNetworkSetCookieName :: PNetworkSetCookieName, -- ^ Cookie name.
+   pNetworkSetCookieValue :: PNetworkSetCookieValue, -- ^ Cookie value.
+   pNetworkSetCookieUrl :: PNetworkSetCookieUrl, -- ^ The request-URI to associate with the setting of the cookie. This value can affect the
+default domain, path, source port, and source scheme values of the created cookie.
+   pNetworkSetCookieDomain :: PNetworkSetCookieDomain, -- ^ Cookie domain.
+   pNetworkSetCookiePath :: PNetworkSetCookiePath, -- ^ Cookie path.
+   pNetworkSetCookieSecure :: PNetworkSetCookieSecure, -- ^ True if cookie is secure.
+   pNetworkSetCookieHttpOnly :: PNetworkSetCookieHttpOnly, -- ^ True if cookie is http-only.
+   pNetworkSetCookieSameSite :: PNetworkSetCookieSameSite, -- ^ Cookie SameSite type.
+   pNetworkSetCookieExpires :: PNetworkSetCookieExpires, -- ^ Cookie expiration date, session cookie if not set
+   pNetworkSetCookiePriority :: PNetworkSetCookiePriority, -- ^ Cookie Priority type.
+   pNetworkSetCookieSameParty :: PNetworkSetCookieSameParty, -- ^ True if cookie is SameParty.
+   pNetworkSetCookieSourceScheme :: PNetworkSetCookieSourceScheme, -- ^ Cookie source scheme type.
+   pNetworkSetCookieSourcePort :: PNetworkSetCookieSourcePort, -- ^ Cookie source port. Valid values are {-1, [1, 65535]}, -1 indicates an unspecified port.
+An unspecified port value allows protocol clients to emulate legacy cookie scope for the port.
+This is a temporary ability and it will be removed in the future.
+   pNetworkSetCookiePartitionKey :: PNetworkSetCookiePartitionKey -- ^ Cookie partition key. The site of the top-level URL the browser was visiting at the start
+of the request to the endpoint that set the cookie.
+If not set, the cookie will be set as not partitioned.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkSetCookie  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -4052,13 +4708,16 @@ instance FromJSON  PNetworkSetCookie where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
+-- | Function for the command 'Network.setCookie'.
+-- Sets a cookie with the given cookie data; may overwrite equivalent cookies if they exist.
+-- Parameters: 'PNetworkSetCookie'
 networkSetCookie :: Handle ev -> PNetworkSetCookie -> IO (Maybe Error)
 networkSetCookie handle params = sendReceiveCommand handle "Network.setCookie" (Just params)
 
 
-
+-- | Parameters of the 'networkSetCookies' command.
 data PNetworkSetCookies = PNetworkSetCookies {
-   pNetworkSetCookiesCookies :: [NetworkCookieParam]
+   pNetworkSetCookiesCookies :: PNetworkSetCookiesCookies -- ^ Cookies to be set.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkSetCookies  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -4067,13 +4726,16 @@ instance FromJSON  PNetworkSetCookies where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
+-- | Function for the command 'Network.setCookies'.
+-- Sets given cookies.
+-- Parameters: 'PNetworkSetCookies'
 networkSetCookies :: Handle ev -> PNetworkSetCookies -> IO (Maybe Error)
 networkSetCookies handle params = sendReceiveCommand handle "Network.setCookies" (Just params)
 
 
-
+-- | Parameters of the 'networkSetExtraHttpHeaders' command.
 data PNetworkSetExtraHttpHeaders = PNetworkSetExtraHttpHeaders {
-   pNetworkSetExtraHttpHeadersHeaders :: NetworkHeaders
+   pNetworkSetExtraHttpHeadersHeaders :: PNetworkSetExtraHttpHeadersHeaders -- ^ Map with extra HTTP headers.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkSetExtraHttpHeaders  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -4082,13 +4744,16 @@ instance FromJSON  PNetworkSetExtraHttpHeaders where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
+-- | Function for the command 'Network.setExtraHTTPHeaders'.
+-- Specifies whether to always send extra HTTP headers with the requests from this page.
+-- Parameters: 'PNetworkSetExtraHttpHeaders'
 networkSetExtraHttpHeaders :: Handle ev -> PNetworkSetExtraHttpHeaders -> IO (Maybe Error)
 networkSetExtraHttpHeaders handle params = sendReceiveCommand handle "Network.setExtraHTTPHeaders" (Just params)
 
 
-
+-- | Parameters of the 'networkSetAttachDebugStack' command.
 data PNetworkSetAttachDebugStack = PNetworkSetAttachDebugStack {
-   pNetworkSetAttachDebugStackEnabled :: Bool
+   pNetworkSetAttachDebugStackEnabled :: PNetworkSetAttachDebugStackEnabled -- ^ Whether to attach a page script stack for debugging purpose.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkSetAttachDebugStack  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -4097,16 +4762,19 @@ instance FromJSON  PNetworkSetAttachDebugStack where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
+-- | Function for the command 'Network.setAttachDebugStack'.
+-- Specifies whether to attach a page script stack id in requests
+-- Parameters: 'PNetworkSetAttachDebugStack'
 networkSetAttachDebugStack :: Handle ev -> PNetworkSetAttachDebugStack -> IO (Maybe Error)
 networkSetAttachDebugStack handle params = sendReceiveCommand handle "Network.setAttachDebugStack" (Just params)
 
 
-
+-- | Parameters of the 'networkSetUserAgentOverride' command.
 data PNetworkSetUserAgentOverride = PNetworkSetUserAgentOverride {
-   pNetworkSetUserAgentOverrideUserAgent :: String,
-   pNetworkSetUserAgentOverrideAcceptLanguage :: Maybe String,
-   pNetworkSetUserAgentOverridePlatform :: Maybe String,
-   pNetworkSetUserAgentOverrideUserAgentMetadata :: Maybe EmulationUserAgentMetadata
+   pNetworkSetUserAgentOverrideUserAgent :: PNetworkSetUserAgentOverrideUserAgent, -- ^ User agent to use.
+   pNetworkSetUserAgentOverrideAcceptLanguage :: PNetworkSetUserAgentOverrideAcceptLanguage, -- ^ Browser langugage to emulate.
+   pNetworkSetUserAgentOverridePlatform :: PNetworkSetUserAgentOverridePlatform, -- ^ The platform navigator.platform should return.
+   pNetworkSetUserAgentOverrideUserAgentMetadata :: PNetworkSetUserAgentOverrideUserAgentMetadata -- ^ To be sent in Sec-CH-UA-* headers and returned in navigator.userAgentData
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkSetUserAgentOverride  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -4115,13 +4783,16 @@ instance FromJSON  PNetworkSetUserAgentOverride where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
+-- | Function for the command 'Network.setUserAgentOverride'.
+-- Allows overriding user agent with the given string.
+-- Parameters: 'PNetworkSetUserAgentOverride'
 networkSetUserAgentOverride :: Handle ev -> PNetworkSetUserAgentOverride -> IO (Maybe Error)
 networkSetUserAgentOverride handle params = sendReceiveCommand handle "Network.setUserAgentOverride" (Just params)
 
 
-
+-- | Parameters of the 'networkGetSecurityIsolationStatus' command.
 data PNetworkGetSecurityIsolationStatus = PNetworkGetSecurityIsolationStatus {
-   pNetworkGetSecurityIsolationStatusFrameId :: Maybe PageFrameId
+   pNetworkGetSecurityIsolationStatusFrameId :: PNetworkGetSecurityIsolationStatusFrameId -- ^ If no frameId is provided, the status of the target is provided.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkGetSecurityIsolationStatus  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 , A.omitNothingFields = True}
@@ -4130,11 +4801,16 @@ instance FromJSON  PNetworkGetSecurityIsolationStatus where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
 
 
+-- | Function for the command 'Network.getSecurityIsolationStatus'.
+-- Returns information about the COEP/COOP isolation status.
+-- Parameters: 'PNetworkGetSecurityIsolationStatus'
+-- Returns: 'NetworkGetSecurityIsolationStatus'
 networkGetSecurityIsolationStatus :: Handle ev -> PNetworkGetSecurityIsolationStatus -> IO (Either Error NetworkGetSecurityIsolationStatus)
 networkGetSecurityIsolationStatus handle params = sendReceiveCommandResult handle "Network.getSecurityIsolationStatus" (Just params)
 
+-- | Return type of the 'networkGetSecurityIsolationStatus' command.
 data NetworkGetSecurityIsolationStatus = NetworkGetSecurityIsolationStatus {
-   networkGetSecurityIsolationStatusStatus :: NetworkSecurityIsolationStatus
+
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  NetworkGetSecurityIsolationStatus where
@@ -4145,9 +4821,9 @@ instance Command NetworkGetSecurityIsolationStatus where
 
 
 
-
+-- | Parameters of the 'networkEnableReportingApi' command.
 data PNetworkEnableReportingApi = PNetworkEnableReportingApi {
-   pNetworkEnableReportingApiEnable :: Bool
+   pNetworkEnableReportingApiEnable :: PNetworkEnableReportingApiEnable -- ^ Whether to enable or disable events for the Reporting API
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkEnableReportingApi  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -4156,15 +4832,20 @@ instance FromJSON  PNetworkEnableReportingApi where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
+-- | Function for the command 'Network.enableReportingApi'.
+-- Enables tracking for the Reporting API, events generated by the Reporting API will now be delivered to the client.
+-- Enabling triggers 'reportingApiReportAdded' for all existing reports.
+-- Parameters: 'PNetworkEnableReportingApi'
 networkEnableReportingApi :: Handle ev -> PNetworkEnableReportingApi -> IO (Maybe Error)
 networkEnableReportingApi handle params = sendReceiveCommand handle "Network.enableReportingApi" (Just params)
 
 
-
+-- | Parameters of the 'networkLoadNetworkResource' command.
 data PNetworkLoadNetworkResource = PNetworkLoadNetworkResource {
-   pNetworkLoadNetworkResourceFrameId :: Maybe PageFrameId,
-   pNetworkLoadNetworkResourceUrl :: String,
-   pNetworkLoadNetworkResourceOptions :: NetworkLoadNetworkResourceOptions
+   pNetworkLoadNetworkResourceFrameId :: PNetworkLoadNetworkResourceFrameId, -- ^ Frame id to get the resource for. Mandatory for frame targets, and
+should be omitted for worker targets.
+   pNetworkLoadNetworkResourceUrl :: PNetworkLoadNetworkResourceUrl, -- ^ URL of the resource to get content for.
+   pNetworkLoadNetworkResourceOptions :: PNetworkLoadNetworkResourceOptions -- ^ Options for the request.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkLoadNetworkResource  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -4173,11 +4854,16 @@ instance FromJSON  PNetworkLoadNetworkResource where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
+-- | Function for the command 'Network.loadNetworkResource'.
+-- Fetches the resource and returns the content.
+-- Parameters: 'PNetworkLoadNetworkResource'
+-- Returns: 'NetworkLoadNetworkResource'
 networkLoadNetworkResource :: Handle ev -> PNetworkLoadNetworkResource -> IO (Either Error NetworkLoadNetworkResource)
 networkLoadNetworkResource handle params = sendReceiveCommandResult handle "Network.loadNetworkResource" (Just params)
 
+-- | Return type of the 'networkLoadNetworkResource' command.
 data NetworkLoadNetworkResource = NetworkLoadNetworkResource {
-   networkLoadNetworkResourceResource :: NetworkLoadNetworkResourcePageResult
+
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  NetworkLoadNetworkResource where
@@ -4189,7 +4875,10 @@ instance Command NetworkLoadNetworkResource where
 
 
 
+-- | Unique frame identifier.
 type PageFrameId = String
+
+-- | Indicates whether a frame has been identified as an ad.
 data PageAdFrameType = PageAdFrameTypeNone | PageAdFrameTypeChild | PageAdFrameTypeRoot
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageAdFrameType where
@@ -4208,6 +4897,8 @@ instance ToJSON PageAdFrameType where
          PageAdFrameTypeRoot -> "root"
 
 
+
+-- | Type 'Page.AdFrameExplanation' .
 data PageAdFrameExplanation = PageAdFrameExplanationParentIsAd | PageAdFrameExplanationCreatedByAdScript | PageAdFrameExplanationMatchedBlockingRule
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageAdFrameExplanation where
@@ -4227,9 +4918,10 @@ instance ToJSON PageAdFrameExplanation where
 
 
 
+-- | Indicates whether a frame has been identified as an ad and why.
 data PageAdFrameStatus = PageAdFrameStatus {
-   pageAdFrameStatusAdFrameType :: PageAdFrameType,
-   pageAdFrameStatusExplanations :: Maybe [PageAdFrameExplanation]
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageAdFrameStatus  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -4238,6 +4930,8 @@ instance FromJSON  PageAdFrameStatus where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
+
+-- | Indicates whether the frame is a secure context and why it is the case.
 data PageSecureContextType = PageSecureContextTypeSecure | PageSecureContextTypeSecureLocalhost | PageSecureContextTypeInsecureScheme | PageSecureContextTypeInsecureAncestor
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageSecureContextType where
@@ -4258,6 +4952,8 @@ instance ToJSON PageSecureContextType where
          PageSecureContextTypeInsecureAncestor -> "InsecureAncestor"
 
 
+
+-- | Indicates whether the frame is cross-origin isolated and why it is the case.
 data PageCrossOriginIsolatedContextType = PageCrossOriginIsolatedContextTypeIsolated | PageCrossOriginIsolatedContextTypeNotIsolated | PageCrossOriginIsolatedContextTypeNotIsolatedFeatureDisabled
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageCrossOriginIsolatedContextType where
@@ -4276,6 +4972,8 @@ instance ToJSON PageCrossOriginIsolatedContextType where
          PageCrossOriginIsolatedContextTypeNotIsolatedFeatureDisabled -> "NotIsolatedFeatureDisabled"
 
 
+
+-- | Type 'Page.GatedAPIFeatures' .
 data PageGatedApiFeatures = PageGatedApiFeaturesSharedArrayBuffers | PageGatedApiFeaturesSharedArrayBuffersTransferAllowed | PageGatedApiFeaturesPerformanceMeasureMemory | PageGatedApiFeaturesPerformanceProfile
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageGatedApiFeatures where
@@ -4296,6 +4994,9 @@ instance ToJSON PageGatedApiFeatures where
          PageGatedApiFeaturesPerformanceProfile -> "PerformanceProfile"
 
 
+
+-- | All Permissions Policy features. This enum should match the one defined
+-- in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
 data PagePermissionsPolicyFeature = PagePermissionsPolicyFeatureAccelerometer | PagePermissionsPolicyFeatureAmbientLightSensor | PagePermissionsPolicyFeatureAttributionReporting | PagePermissionsPolicyFeatureAutoplay | PagePermissionsPolicyFeatureBluetooth | PagePermissionsPolicyFeatureBrowsingTopics | PagePermissionsPolicyFeatureCamera | PagePermissionsPolicyFeatureChDpr | PagePermissionsPolicyFeatureChDeviceMemory | PagePermissionsPolicyFeatureChDownlink | PagePermissionsPolicyFeatureChEct | PagePermissionsPolicyFeatureChPrefersColorScheme | PagePermissionsPolicyFeatureChRtt | PagePermissionsPolicyFeatureChSaveData | PagePermissionsPolicyFeatureChUa | PagePermissionsPolicyFeatureChUaArch | PagePermissionsPolicyFeatureChUaBitness | PagePermissionsPolicyFeatureChUaPlatform | PagePermissionsPolicyFeatureChUaModel | PagePermissionsPolicyFeatureChUaMobile | PagePermissionsPolicyFeatureChUaFull | PagePermissionsPolicyFeatureChUaFullVersion | PagePermissionsPolicyFeatureChUaFullVersionList | PagePermissionsPolicyFeatureChUaPlatformVersion | PagePermissionsPolicyFeatureChUaReduced | PagePermissionsPolicyFeatureChUaWow64 | PagePermissionsPolicyFeatureChViewportHeight | PagePermissionsPolicyFeatureChViewportWidth | PagePermissionsPolicyFeatureChWidth | PagePermissionsPolicyFeatureClipboardRead | PagePermissionsPolicyFeatureClipboardWrite | PagePermissionsPolicyFeatureCrossOriginIsolated | PagePermissionsPolicyFeatureDirectSockets | PagePermissionsPolicyFeatureDisplayCapture | PagePermissionsPolicyFeatureDocumentDomain | PagePermissionsPolicyFeatureEncryptedMedia | PagePermissionsPolicyFeatureExecutionWhileOutOfViewport | PagePermissionsPolicyFeatureExecutionWhileNotRendered | PagePermissionsPolicyFeatureFocusWithoutUserActivation | PagePermissionsPolicyFeatureFullscreen | PagePermissionsPolicyFeatureFrobulate | PagePermissionsPolicyFeatureGamepad | PagePermissionsPolicyFeatureGeolocation | PagePermissionsPolicyFeatureGyroscope | PagePermissionsPolicyFeatureHid | PagePermissionsPolicyFeatureIdleDetection | PagePermissionsPolicyFeatureInterestCohort | PagePermissionsPolicyFeatureJoinAdInterestGroup | PagePermissionsPolicyFeatureKeyboardMap | PagePermissionsPolicyFeatureLocalFonts | PagePermissionsPolicyFeatureMagnetometer | PagePermissionsPolicyFeatureMicrophone | PagePermissionsPolicyFeatureMidi | PagePermissionsPolicyFeatureOtpCredentials | PagePermissionsPolicyFeaturePayment | PagePermissionsPolicyFeaturePictureInPicture | PagePermissionsPolicyFeaturePublickeyCredentialsGet | PagePermissionsPolicyFeatureRunAdAuction | PagePermissionsPolicyFeatureScreenWakeLock | PagePermissionsPolicyFeatureSerial | PagePermissionsPolicyFeatureSharedAutofill | PagePermissionsPolicyFeatureStorageAccessApi | PagePermissionsPolicyFeatureSyncXhr | PagePermissionsPolicyFeatureTrustTokenRedemption | PagePermissionsPolicyFeatureUsb | PagePermissionsPolicyFeatureVerticalScroll | PagePermissionsPolicyFeatureWebShare | PagePermissionsPolicyFeatureWindowPlacement | PagePermissionsPolicyFeatureXrSpatialTracking
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PagePermissionsPolicyFeature where
@@ -4446,6 +5147,8 @@ instance ToJSON PagePermissionsPolicyFeature where
          PagePermissionsPolicyFeatureXrSpatialTracking -> "xr-spatial-tracking"
 
 
+
+-- | Reason for a permissions policy feature to be disabled.
 data PagePermissionsPolicyBlockReason = PagePermissionsPolicyBlockReasonHeader | PagePermissionsPolicyBlockReasonIframeAttribute | PagePermissionsPolicyBlockReasonInFencedFrameTree
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PagePermissionsPolicyBlockReason where
@@ -4465,9 +5168,10 @@ instance ToJSON PagePermissionsPolicyBlockReason where
 
 
 
+-- | Type 'Page.PermissionsPolicyBlockLocator' .
 data PagePermissionsPolicyBlockLocator = PagePermissionsPolicyBlockLocator {
-   pagePermissionsPolicyBlockLocatorFrameId :: PageFrameId,
-   pagePermissionsPolicyBlockLocatorBlockReason :: PagePermissionsPolicyBlockReason
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PagePermissionsPolicyBlockLocator  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
@@ -4477,10 +5181,11 @@ instance FromJSON  PagePermissionsPolicyBlockLocator where
 
 
 
+-- | Type 'Page.PermissionsPolicyFeatureState' .
 data PagePermissionsPolicyFeatureState = PagePermissionsPolicyFeatureState {
-   pagePermissionsPolicyFeatureStateFeature :: PagePermissionsPolicyFeature,
-   pagePermissionsPolicyFeatureStateAllowed :: Bool,
-   pagePermissionsPolicyFeatureStateLocator :: Maybe PagePermissionsPolicyBlockLocator
+
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PagePermissionsPolicyFeatureState  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
@@ -4489,6 +5194,9 @@ instance FromJSON  PagePermissionsPolicyFeatureState where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 }
 
 
+
+-- | Origin Trial(https://www.chromium.org/blink/origin-trials) support.
+-- Status for an Origin Trial token.
 data PageOriginTrialTokenStatus = PageOriginTrialTokenStatusSuccess | PageOriginTrialTokenStatusNotSupported | PageOriginTrialTokenStatusInsecure | PageOriginTrialTokenStatusExpired | PageOriginTrialTokenStatusWrongOrigin | PageOriginTrialTokenStatusInvalidSignature | PageOriginTrialTokenStatusMalformed | PageOriginTrialTokenStatusWrongVersion | PageOriginTrialTokenStatusFeatureDisabled | PageOriginTrialTokenStatusTokenDisabled | PageOriginTrialTokenStatusFeatureDisabledForUser | PageOriginTrialTokenStatusUnknownTrial
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageOriginTrialTokenStatus where
@@ -4525,6 +5233,8 @@ instance ToJSON PageOriginTrialTokenStatus where
          PageOriginTrialTokenStatusUnknownTrial -> "UnknownTrial"
 
 
+
+-- | Status for an Origin Trial.
 data PageOriginTrialStatus = PageOriginTrialStatusEnabled | PageOriginTrialStatusValidTokenNotProvided | PageOriginTrialStatusOsNotSupported | PageOriginTrialStatusTrialNotAllowed
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageOriginTrialStatus where
@@ -4545,6 +5255,8 @@ instance ToJSON PageOriginTrialStatus where
          PageOriginTrialStatusTrialNotAllowed -> "TrialNotAllowed"
 
 
+
+-- | Type 'Page.OriginTrialUsageRestriction' .
 data PageOriginTrialUsageRestriction = PageOriginTrialUsageRestrictionNone | PageOriginTrialUsageRestrictionSubset
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageOriginTrialUsageRestriction where
@@ -4562,13 +5274,14 @@ instance ToJSON PageOriginTrialUsageRestriction where
 
 
 
+-- | Type 'Page.OriginTrialToken' .
 data PageOriginTrialToken = PageOriginTrialToken {
-   pageOriginTrialTokenOrigin :: String,
-   pageOriginTrialTokenMatchSubDomains :: Bool,
-   pageOriginTrialTokenTrialName :: String,
-   pageOriginTrialTokenExpiryTime :: NetworkTimeSinceEpoch,
-   pageOriginTrialTokenIsThirdParty :: Bool,
-   pageOriginTrialTokenUsageRestriction :: PageOriginTrialUsageRestriction
+
+
+
+
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageOriginTrialToken  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -4578,10 +5291,12 @@ instance FromJSON  PageOriginTrialToken where
 
 
 
+-- | Type 'Page.OriginTrialTokenWithStatus' .
 data PageOriginTrialTokenWithStatus = PageOriginTrialTokenWithStatus {
-   pageOriginTrialTokenWithStatusRawTokenText :: String,
-   pageOriginTrialTokenWithStatusParsedToken :: Maybe PageOriginTrialToken,
-   pageOriginTrialTokenWithStatusStatus :: PageOriginTrialTokenStatus
+
+   pageOriginTrialTokenWithStatusParsedToken :: PageOriginTrialTokenWithStatusParsedToken, -- ^ `parsedToken` is present only when the token is extractable and
+parsable.
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageOriginTrialTokenWithStatus  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -4591,10 +5306,11 @@ instance FromJSON  PageOriginTrialTokenWithStatus where
 
 
 
+-- | Type 'Page.OriginTrial' .
 data PageOriginTrial = PageOriginTrial {
-   pageOriginTrialTrialName :: String,
-   pageOriginTrialStatus :: PageOriginTrialStatus,
-   pageOriginTrialTokensWithStatus :: [PageOriginTrialTokenWithStatus]
+
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageOriginTrial  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
@@ -4604,21 +5320,25 @@ instance FromJSON  PageOriginTrial where
 
 
 
+-- | Information about the Frame on the page.
 data PageFrame = PageFrame {
-   pageFrameId :: PageFrameId,
-   pageFrameParentId :: Maybe PageFrameId,
-   pageFrameLoaderId :: NetworkLoaderId,
-   pageFrameName :: Maybe String,
-   pageFrameUrl :: String,
-   pageFrameUrlFragment :: Maybe String,
-   pageFrameDomainAndRegistry :: String,
-   pageFrameSecurityOrigin :: String,
-   pageFrameMimeType :: String,
-   pageFrameUnreachableUrl :: Maybe String,
-   pageFrameAdFrameStatus :: Maybe PageAdFrameStatus,
-   pageFrameSecureContextType :: PageSecureContextType,
-   pageFrameCrossOriginIsolatedContextType :: PageCrossOriginIsolatedContextType,
-   pageFrameGatedApiFeatures :: [PageGatedApiFeatures]
+   pageFrameId :: PageFrameId, -- ^ Frame unique identifier.
+   pageFrameParentId :: PageFrameParentId, -- ^ Parent frame identifier.
+   pageFrameLoaderId :: PageFrameLoaderId, -- ^ Identifier of the loader associated with this frame.
+   pageFrameName :: PageFrameName, -- ^ Frame's name as specified in the tag.
+   pageFrameUrl :: PageFrameUrl, -- ^ Frame document's URL without fragment.
+   pageFrameUrlFragment :: PageFrameUrlFragment, -- ^ Frame document's URL fragment including the '#'.
+   pageFrameDomainAndRegistry :: PageFrameDomainAndRegistry, -- ^ Frame document's registered domain, taking the public suffixes list into account.
+Extracted from the Frame's url.
+Example URLs: http://www.google.com/file.html -> "google.com"
+              http://a.b.co.uk/file.html      -> "b.co.uk"
+   pageFrameSecurityOrigin :: PageFrameSecurityOrigin, -- ^ Frame document's security origin.
+   pageFrameMimeType :: PageFrameMimeType, -- ^ Frame document's mimeType as determined by the browser.
+   pageFrameUnreachableUrl :: PageFrameUnreachableUrl, -- ^ If the frame failed to load, this contains the URL that could not be loaded. Note that unlike url above, this URL may contain a fragment.
+   pageFrameAdFrameStatus :: PageFrameAdFrameStatus, -- ^ Indicates whether this frame was tagged as an ad and why.
+   pageFrameSecureContextType :: PageFrameSecureContextType, -- ^ Indicates whether the main document is a secure context and explains why that is the case.
+   pageFrameCrossOriginIsolatedContextType :: PageFrameCrossOriginIsolatedContextType, -- ^ Indicates whether this is a cross origin isolated context.
+   pageFrameGatedApiFeatures :: PageFrameGatedApiFeatures -- ^ Indicated which gated APIs / features are available.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageFrame  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 9 , A.omitNothingFields = True}
@@ -4628,14 +5348,15 @@ instance FromJSON  PageFrame where
 
 
 
+-- | Information about the Resource on the page.
 data PageFrameResource = PageFrameResource {
-   pageFrameResourceUrl :: String,
-   pageFrameResourceType :: NetworkResourceType,
-   pageFrameResourceMimeType :: String,
-   pageFrameResourceLastModified :: Maybe NetworkTimeSinceEpoch,
-   pageFrameResourceContentSize :: Maybe Double,
-   pageFrameResourceFailed :: Maybe Bool,
-   pageFrameResourceCanceled :: Maybe Bool
+   pageFrameResourceUrl :: PageFrameResourceUrl, -- ^ Resource URL.
+   pageFrameResourceType :: PageFrameResourceType, -- ^ Type of this resource.
+   pageFrameResourceMimeType :: PageFrameResourceMimeType, -- ^ Resource mimeType as determined by the browser.
+   pageFrameResourceLastModified :: PageFrameResourceLastModified, -- ^ last-modified timestamp as reported by server.
+   pageFrameResourceContentSize :: PageFrameResourceContentSize, -- ^ Resource content size.
+   pageFrameResourceFailed :: PageFrameResourceFailed, -- ^ True if the resource failed to load.
+   pageFrameResourceCanceled :: PageFrameResourceCanceled -- ^ True if the resource was canceled during loading.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageFrameResource  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -4645,10 +5366,11 @@ instance FromJSON  PageFrameResource where
 
 
 
+-- | Information about the Frame hierarchy along with their cached resources.
 data PageFrameResourceTree = PageFrameResourceTree {
-   pageFrameResourceTreeFrame :: PageFrame,
-   pageFrameResourceTreeChildFrames :: Maybe [PageFrameResourceTree],
-   pageFrameResourceTreeResources :: [PageFrameResource]
+   pageFrameResourceTreeFrame :: PageFrameResourceTreeFrame, -- ^ Frame information for this tree item.
+   pageFrameResourceTreeChildFrames :: PageFrameResourceTreeChildFrames, -- ^ Child frames.
+   pageFrameResourceTreeResources :: PageFrameResourceTreeResources -- ^ Information about frame resources.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageFrameResourceTree  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -4658,9 +5380,10 @@ instance FromJSON  PageFrameResourceTree where
 
 
 
+-- | Information about the Frame hierarchy.
 data PageFrameTree = PageFrameTree {
-   pageFrameTreeFrame :: PageFrame,
-   pageFrameTreeChildFrames :: Maybe [PageFrameTree]
+   pageFrameTreeFrame :: PageFrameTreeFrame, -- ^ Frame information for this tree item.
+   pageFrameTreeChildFrames :: PageFrameTreeChildFrames -- ^ Child frames.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageFrameTree  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 , A.omitNothingFields = True}
@@ -4669,7 +5392,11 @@ instance FromJSON  PageFrameTree where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 }
 
 
+
+-- | Unique script identifier.
 type PageScriptIdentifier = String
+
+-- | Transition type.
 data PageTransitionType = PageTransitionTypeLink | PageTransitionTypeTyped | PageTransitionTypeAddressBar | PageTransitionTypeAutoBookmark | PageTransitionTypeAutoSubframe | PageTransitionTypeManualSubframe | PageTransitionTypeGenerated | PageTransitionTypeAutoToplevel | PageTransitionTypeFormSubmit | PageTransitionTypeReload | PageTransitionTypeKeyword | PageTransitionTypeKeywordGenerated | PageTransitionTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageTransitionType where
@@ -4709,12 +5436,13 @@ instance ToJSON PageTransitionType where
 
 
 
+-- | Navigation history entry.
 data PageNavigationEntry = PageNavigationEntry {
-   pageNavigationEntryId :: Int,
-   pageNavigationEntryUrl :: String,
-   pageNavigationEntryUserTypedUrl :: String,
-   pageNavigationEntryTitle :: String,
-   pageNavigationEntryTransitionType :: PageTransitionType
+   pageNavigationEntryId :: PageNavigationEntryId, -- ^ Unique id of the navigation history entry.
+   pageNavigationEntryUrl :: PageNavigationEntryUrl, -- ^ URL of the navigation history entry.
+   pageNavigationEntryUserTypedUrl :: PageNavigationEntryUserTypedUrl, -- ^ URL that the user typed in the url bar.
+   pageNavigationEntryTitle :: PageNavigationEntryTitle, -- ^ Title of the navigation history entry.
+   pageNavigationEntryTransitionType :: PageNavigationEntryTransitionType -- ^ Transition type.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageNavigationEntry  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -4724,14 +5452,15 @@ instance FromJSON  PageNavigationEntry where
 
 
 
+-- | Screencast frame metadata.
 data PageScreencastFrameMetadata = PageScreencastFrameMetadata {
-   pageScreencastFrameMetadataOffsetTop :: Double,
-   pageScreencastFrameMetadataPageScaleFactor :: Double,
-   pageScreencastFrameMetadataDeviceWidth :: Double,
-   pageScreencastFrameMetadataDeviceHeight :: Double,
-   pageScreencastFrameMetadataScrollOffsetX :: Double,
-   pageScreencastFrameMetadataScrollOffsetY :: Double,
-   pageScreencastFrameMetadataTimestamp :: Maybe NetworkTimeSinceEpoch
+   pageScreencastFrameMetadataOffsetTop :: PageScreencastFrameMetadataOffsetTop, -- ^ Top offset in DIP.
+   pageScreencastFrameMetadataPageScaleFactor :: PageScreencastFrameMetadataPageScaleFactor, -- ^ Page scale factor.
+   pageScreencastFrameMetadataDeviceWidth :: PageScreencastFrameMetadataDeviceWidth, -- ^ Device screen width in DIP.
+   pageScreencastFrameMetadataDeviceHeight :: PageScreencastFrameMetadataDeviceHeight, -- ^ Device screen height in DIP.
+   pageScreencastFrameMetadataScrollOffsetX :: PageScreencastFrameMetadataScrollOffsetX, -- ^ Position of horizontal scroll in CSS pixels.
+   pageScreencastFrameMetadataScrollOffsetY :: PageScreencastFrameMetadataScrollOffsetY, -- ^ Position of vertical scroll in CSS pixels.
+   pageScreencastFrameMetadataTimestamp :: PageScreencastFrameMetadataTimestamp -- ^ Frame swap timestamp.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageScreencastFrameMetadata  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -4740,6 +5469,8 @@ instance FromJSON  PageScreencastFrameMetadata where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
+
+-- | Javascript dialog type.
 data PageDialogType = PageDialogTypeAlert | PageDialogTypeConfirm | PageDialogTypePrompt | PageDialogTypeBeforeunload
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageDialogType where
@@ -4761,11 +5492,12 @@ instance ToJSON PageDialogType where
 
 
 
+-- | Error while paring app manifest.
 data PageAppManifestError = PageAppManifestError {
-   pageAppManifestErrorMessage :: String,
-   pageAppManifestErrorCritical :: Int,
-   pageAppManifestErrorLine :: Int,
-   pageAppManifestErrorColumn :: Int
+   pageAppManifestErrorMessage :: PageAppManifestErrorMessage, -- ^ Error message.
+   pageAppManifestErrorCritical :: PageAppManifestErrorCritical, -- ^ If criticial, this is a non-recoverable parse error.
+   pageAppManifestErrorLine :: PageAppManifestErrorLine, -- ^ Error line.
+   pageAppManifestErrorColumn :: PageAppManifestErrorColumn -- ^ Error column.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageAppManifestError  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -4775,8 +5507,9 @@ instance FromJSON  PageAppManifestError where
 
 
 
+-- | Parsed app manifest properties.
 data PageAppManifestParsedProperties = PageAppManifestParsedProperties {
-   pageAppManifestParsedPropertiesScope :: String
+   pageAppManifestParsedPropertiesScope :: PageAppManifestParsedPropertiesScope -- ^ Computed scope value
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageAppManifestParsedProperties  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
@@ -4786,11 +5519,12 @@ instance FromJSON  PageAppManifestParsedProperties where
 
 
 
+-- | Layout viewport position and dimensions.
 data PageLayoutViewport = PageLayoutViewport {
-   pageLayoutViewportPageX :: Int,
-   pageLayoutViewportPageY :: Int,
-   pageLayoutViewportClientWidth :: Int,
-   pageLayoutViewportClientHeight :: Int
+   pageLayoutViewportPageX :: PageLayoutViewportPageX, -- ^ Horizontal offset relative to the document (CSS pixels).
+   pageLayoutViewportPageY :: PageLayoutViewportPageY, -- ^ Vertical offset relative to the document (CSS pixels).
+   pageLayoutViewportClientWidth :: PageLayoutViewportClientWidth, -- ^ Width (CSS pixels), excludes scrollbar if present.
+   pageLayoutViewportClientHeight :: PageLayoutViewportClientHeight -- ^ Height (CSS pixels), excludes scrollbar if present.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageLayoutViewport  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -4800,15 +5534,16 @@ instance FromJSON  PageLayoutViewport where
 
 
 
+-- | Visual viewport position, dimensions, and scale.
 data PageVisualViewport = PageVisualViewport {
-   pageVisualViewportOffsetX :: Double,
-   pageVisualViewportOffsetY :: Double,
-   pageVisualViewportPageX :: Double,
-   pageVisualViewportPageY :: Double,
-   pageVisualViewportClientWidth :: Double,
-   pageVisualViewportClientHeight :: Double,
-   pageVisualViewportScale :: Double,
-   pageVisualViewportZoom :: Maybe Double
+   pageVisualViewportOffsetX :: PageVisualViewportOffsetX, -- ^ Horizontal offset relative to the layout viewport (CSS pixels).
+   pageVisualViewportOffsetY :: PageVisualViewportOffsetY, -- ^ Vertical offset relative to the layout viewport (CSS pixels).
+   pageVisualViewportPageX :: PageVisualViewportPageX, -- ^ Horizontal offset relative to the document (CSS pixels).
+   pageVisualViewportPageY :: PageVisualViewportPageY, -- ^ Vertical offset relative to the document (CSS pixels).
+   pageVisualViewportClientWidth :: PageVisualViewportClientWidth, -- ^ Width (CSS pixels), excludes scrollbar if present.
+   pageVisualViewportClientHeight :: PageVisualViewportClientHeight, -- ^ Height (CSS pixels), excludes scrollbar if present.
+   pageVisualViewportScale :: PageVisualViewportScale, -- ^ Scale relative to the ideal viewport (size at width=device-width).
+   pageVisualViewportZoom :: PageVisualViewportZoom -- ^ Page zoom factor (CSS to device independent pixels ratio).
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageVisualViewport  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -4818,12 +5553,13 @@ instance FromJSON  PageVisualViewport where
 
 
 
+-- | Viewport for capturing screenshot.
 data PageViewport = PageViewport {
-   pageViewportX :: Double,
-   pageViewportY :: Double,
-   pageViewportWidth :: Double,
-   pageViewportHeight :: Double,
-   pageViewportScale :: Double
+   pageViewportX :: PageViewportX, -- ^ X offset in device independent pixels (dip).
+   pageViewportY :: PageViewportY, -- ^ Y offset in device independent pixels (dip).
+   pageViewportWidth :: PageViewportWidth, -- ^ Rectangle width in device independent pixels (dip).
+   pageViewportHeight :: PageViewportHeight, -- ^ Rectangle height in device independent pixels (dip).
+   pageViewportScale :: PageViewportScale -- ^ Page scale factor.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageViewport  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 , A.omitNothingFields = True}
@@ -4833,14 +5569,15 @@ instance FromJSON  PageViewport where
 
 
 
+-- | Generic font families collection.
 data PageFontFamilies = PageFontFamilies {
-   pageFontFamiliesStandard :: Maybe String,
-   pageFontFamiliesFixed :: Maybe String,
-   pageFontFamiliesSerif :: Maybe String,
-   pageFontFamiliesSansSerif :: Maybe String,
-   pageFontFamiliesCursive :: Maybe String,
-   pageFontFamiliesFantasy :: Maybe String,
-   pageFontFamiliesMath :: Maybe String
+   pageFontFamiliesStandard :: PageFontFamiliesStandard, -- ^ The standard font-family.
+   pageFontFamiliesFixed :: PageFontFamiliesFixed, -- ^ The fixed font-family.
+   pageFontFamiliesSerif :: PageFontFamiliesSerif, -- ^ The serif font-family.
+   pageFontFamiliesSansSerif :: PageFontFamiliesSansSerif, -- ^ The sansSerif font-family.
+   pageFontFamiliesCursive :: PageFontFamiliesCursive, -- ^ The cursive font-family.
+   pageFontFamiliesFantasy :: PageFontFamiliesFantasy, -- ^ The fantasy font-family.
+   pageFontFamiliesMath :: PageFontFamiliesMath -- ^ The math font-family.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageFontFamilies  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -4850,9 +5587,10 @@ instance FromJSON  PageFontFamilies where
 
 
 
+-- | Font families collection for a script.
 data PageScriptFontFamilies = PageScriptFontFamilies {
-   pageScriptFontFamiliesScript :: String,
-   pageScriptFontFamiliesFontFamilies :: PageFontFamilies
+   pageScriptFontFamiliesScript :: PageScriptFontFamiliesScript, -- ^ Name of the script which these font families are defined for.
+   pageScriptFontFamiliesFontFamilies :: PageScriptFontFamiliesFontFamilies -- ^ Generic font families collection for the script.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageScriptFontFamilies  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -4862,9 +5600,10 @@ instance FromJSON  PageScriptFontFamilies where
 
 
 
+-- | Default font sizes.
 data PageFontSizes = PageFontSizes {
-   pageFontSizesStandard :: Maybe Int,
-   pageFontSizesFixed :: Maybe Int
+   pageFontSizesStandard :: PageFontSizesStandard, -- ^ Default standard font size.
+   pageFontSizesFixed :: PageFontSizesFixed -- ^ Default fixed font size.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageFontSizes  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 , A.omitNothingFields = True}
@@ -4873,6 +5612,8 @@ instance FromJSON  PageFontSizes where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 }
 
 
+
+-- | Type 'Page.ClientNavigationReason' .
 data PageClientNavigationReason = PageClientNavigationReasonFormSubmissionGet | PageClientNavigationReasonFormSubmissionPost | PageClientNavigationReasonHttpHeaderRefresh | PageClientNavigationReasonScriptInitiated | PageClientNavigationReasonMetaTagRefresh | PageClientNavigationReasonPageBlockInterstitial | PageClientNavigationReasonReload | PageClientNavigationReasonAnchorClick
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageClientNavigationReason where
@@ -4901,6 +5642,8 @@ instance ToJSON PageClientNavigationReason where
          PageClientNavigationReasonAnchorClick -> "anchorClick"
 
 
+
+-- | Type 'Page.ClientNavigationDisposition' .
 data PageClientNavigationDisposition = PageClientNavigationDispositionCurrentTab | PageClientNavigationDispositionNewTab | PageClientNavigationDispositionNewWindow | PageClientNavigationDispositionDownload
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageClientNavigationDisposition where
@@ -4922,9 +5665,10 @@ instance ToJSON PageClientNavigationDisposition where
 
 
 
+-- | Type 'Page.InstallabilityErrorArgument' .
 data PageInstallabilityErrorArgument = PageInstallabilityErrorArgument {
-   pageInstallabilityErrorArgumentName :: String,
-   pageInstallabilityErrorArgumentValue :: String
+   pageInstallabilityErrorArgumentName :: PageInstallabilityErrorArgumentName, -- ^ Argument name (e.g. name:'minimum-icon-size-in-pixels').
+   pageInstallabilityErrorArgumentValue :: PageInstallabilityErrorArgumentValue -- ^ Argument value (e.g. value:'64').
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageInstallabilityErrorArgument  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
@@ -4934,9 +5678,10 @@ instance FromJSON  PageInstallabilityErrorArgument where
 
 
 
+-- | The installability error
 data PageInstallabilityError = PageInstallabilityError {
-   pageInstallabilityErrorErrorId :: String,
-   pageInstallabilityErrorErrorArguments :: [PageInstallabilityErrorArgument]
+   pageInstallabilityErrorErrorId :: PageInstallabilityErrorErrorId, -- ^ The error id (e.g. 'manifest-missing-suitable-icon').
+   pageInstallabilityErrorErrorArguments :: PageInstallabilityErrorErrorArguments -- ^ The list of error arguments (e.g. {name:'minimum-icon-size-in-pixels', value:'64'}).
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageInstallabilityError  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -4945,6 +5690,8 @@ instance FromJSON  PageInstallabilityError where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+
+-- | The referring-policy used for the navigation.
 data PageReferrerPolicy = PageReferrerPolicyNoReferrer | PageReferrerPolicyNoReferrerWhenDowngrade | PageReferrerPolicyOrigin | PageReferrerPolicyOriginWhenCrossOrigin | PageReferrerPolicySameOrigin | PageReferrerPolicyStrictOrigin | PageReferrerPolicyStrictOriginWhenCrossOrigin | PageReferrerPolicyUnsafeUrl
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageReferrerPolicy where
@@ -4974,9 +5721,11 @@ instance ToJSON PageReferrerPolicy where
 
 
 
+-- | Per-script compilation cache parameters for `Page.produceCompilationCache`
 data PageCompilationCacheParams = PageCompilationCacheParams {
-   pageCompilationCacheParamsUrl :: String,
-   pageCompilationCacheParamsEager :: Maybe Bool
+   pageCompilationCacheParamsUrl :: PageCompilationCacheParamsUrl, -- ^ The URL of the script to produce a compilation cache entry for.
+   pageCompilationCacheParamsEager :: PageCompilationCacheParamsEager -- ^ A hint to the backend whether eager compilation is recommended.
+(the actual compilation mode used is upon backend discretion).
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageCompilationCacheParams  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -4985,6 +5734,8 @@ instance FromJSON  PageCompilationCacheParams where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
+
+-- | The type of a frameNavigated event.
 data PageNavigationType = PageNavigationTypeNavigation | PageNavigationTypeBackForwardCacheRestore
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageNavigationType where
@@ -5001,6 +5752,8 @@ instance ToJSON PageNavigationType where
          PageNavigationTypeBackForwardCacheRestore -> "BackForwardCacheRestore"
 
 
+
+-- | List of not restored reasons for back-forward cache.
 data PageBackForwardCacheNotRestoredReason = PageBackForwardCacheNotRestoredReasonNotPrimaryMainFrame | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabled | PageBackForwardCacheNotRestoredReasonRelatedActiveContentsExist | PageBackForwardCacheNotRestoredReasonHttpStatusNotOk | PageBackForwardCacheNotRestoredReasonSchemeNotHttpOrHttps | PageBackForwardCacheNotRestoredReasonLoading | PageBackForwardCacheNotRestoredReasonWasGrantedMediaAccess | PageBackForwardCacheNotRestoredReasonDisableForRenderFrameHostCalled | PageBackForwardCacheNotRestoredReasonDomainNotAllowed | PageBackForwardCacheNotRestoredReasonHttpMethodNotGet | PageBackForwardCacheNotRestoredReasonSubframeIsNavigating | PageBackForwardCacheNotRestoredReasonTimeout | PageBackForwardCacheNotRestoredReasonCacheLimit | PageBackForwardCacheNotRestoredReasonJavaScriptExecution | PageBackForwardCacheNotRestoredReasonRendererProcessKilled | PageBackForwardCacheNotRestoredReasonRendererProcessCrashed | PageBackForwardCacheNotRestoredReasonSchedulerTrackedFeatureUsed | PageBackForwardCacheNotRestoredReasonConflictingBrowsingInstance | PageBackForwardCacheNotRestoredReasonCacheFlushed | PageBackForwardCacheNotRestoredReasonServiceWorkerVersionActivation | PageBackForwardCacheNotRestoredReasonSessionRestored | PageBackForwardCacheNotRestoredReasonServiceWorkerPostMessage | PageBackForwardCacheNotRestoredReasonEnteredBackForwardCacheBeforeServiceWorkerHostAdded | PageBackForwardCacheNotRestoredReasonRenderFrameHostReusedSameSite | PageBackForwardCacheNotRestoredReasonRenderFrameHostReusedCrossSite | PageBackForwardCacheNotRestoredReasonServiceWorkerClaim | PageBackForwardCacheNotRestoredReasonIgnoreEventAndEvict | PageBackForwardCacheNotRestoredReasonHaveInnerContents | PageBackForwardCacheNotRestoredReasonTimeoutPuttingInCache | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledByLowMemory | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledByCommandLine | PageBackForwardCacheNotRestoredReasonNetworkRequestDatapipeDrainedAsBytesConsumer | PageBackForwardCacheNotRestoredReasonNetworkRequestRedirected | PageBackForwardCacheNotRestoredReasonNetworkRequestTimeout | PageBackForwardCacheNotRestoredReasonNetworkExceedsBufferLimit | PageBackForwardCacheNotRestoredReasonNavigationCancelledWhileRestoring | PageBackForwardCacheNotRestoredReasonNotMostRecentNavigationEntry | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledForPrerender | PageBackForwardCacheNotRestoredReasonUserAgentOverrideDiffers | PageBackForwardCacheNotRestoredReasonForegroundCacheLimit | PageBackForwardCacheNotRestoredReasonBrowsingInstanceNotSwapped | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledForDelegate | PageBackForwardCacheNotRestoredReasonUnloadHandlerExistsInMainFrame | PageBackForwardCacheNotRestoredReasonUnloadHandlerExistsInSubFrame | PageBackForwardCacheNotRestoredReasonServiceWorkerUnregistration | PageBackForwardCacheNotRestoredReasonCacheControlNoStore | PageBackForwardCacheNotRestoredReasonCacheControlNoStoreCookieModified | PageBackForwardCacheNotRestoredReasonCacheControlNoStoreHttpOnlyCookieModified | PageBackForwardCacheNotRestoredReasonNoResponseHead | PageBackForwardCacheNotRestoredReasonUnknown | PageBackForwardCacheNotRestoredReasonActivationNavigationsDisallowedForBug1234857 | PageBackForwardCacheNotRestoredReasonErrorDocument | PageBackForwardCacheNotRestoredReasonFencedFramesEmbedder | PageBackForwardCacheNotRestoredReasonWebSocket | PageBackForwardCacheNotRestoredReasonWebTransport | PageBackForwardCacheNotRestoredReasonWebRtc | PageBackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoStore | PageBackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoCache | PageBackForwardCacheNotRestoredReasonSubresourceHasCacheControlNoStore | PageBackForwardCacheNotRestoredReasonSubresourceHasCacheControlNoCache | PageBackForwardCacheNotRestoredReasonContainsPlugins | PageBackForwardCacheNotRestoredReasonDocumentLoaded | PageBackForwardCacheNotRestoredReasonDedicatedWorkerOrWorklet | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestOthers | PageBackForwardCacheNotRestoredReasonOutstandingIndexedDbTransaction | PageBackForwardCacheNotRestoredReasonRequestedNotificationsPermission | PageBackForwardCacheNotRestoredReasonRequestedMidiPermission | PageBackForwardCacheNotRestoredReasonRequestedAudioCapturePermission | PageBackForwardCacheNotRestoredReasonRequestedVideoCapturePermission | PageBackForwardCacheNotRestoredReasonRequestedBackForwardCacheBlockedSensors | PageBackForwardCacheNotRestoredReasonRequestedBackgroundWorkPermission | PageBackForwardCacheNotRestoredReasonBroadcastChannel | PageBackForwardCacheNotRestoredReasonIndexedDbConnection | PageBackForwardCacheNotRestoredReasonWebXr | PageBackForwardCacheNotRestoredReasonSharedWorker | PageBackForwardCacheNotRestoredReasonWebLocks | PageBackForwardCacheNotRestoredReasonWebHid | PageBackForwardCacheNotRestoredReasonWebShare | PageBackForwardCacheNotRestoredReasonRequestedStorageAccessGrant | PageBackForwardCacheNotRestoredReasonWebNfc | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestFetch | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestXhr | PageBackForwardCacheNotRestoredReasonAppBanner | PageBackForwardCacheNotRestoredReasonPrinting | PageBackForwardCacheNotRestoredReasonWebDatabase | PageBackForwardCacheNotRestoredReasonPictureInPicture | PageBackForwardCacheNotRestoredReasonPortal | PageBackForwardCacheNotRestoredReasonSpeechRecognizer | PageBackForwardCacheNotRestoredReasonIdleManager | PageBackForwardCacheNotRestoredReasonPaymentManager | PageBackForwardCacheNotRestoredReasonSpeechSynthesis | PageBackForwardCacheNotRestoredReasonKeyboardLock | PageBackForwardCacheNotRestoredReasonWebOtpService | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestDirectSocket | PageBackForwardCacheNotRestoredReasonInjectedJavascript | PageBackForwardCacheNotRestoredReasonInjectedStyleSheet | PageBackForwardCacheNotRestoredReasonDummy | PageBackForwardCacheNotRestoredReasonContentSecurityHandler | PageBackForwardCacheNotRestoredReasonContentWebAuthenticationApi | PageBackForwardCacheNotRestoredReasonContentFileChooser | PageBackForwardCacheNotRestoredReasonContentSerial | PageBackForwardCacheNotRestoredReasonContentFileSystemAccess | PageBackForwardCacheNotRestoredReasonContentMediaDevicesDispatcherHost | PageBackForwardCacheNotRestoredReasonContentWebBluetooth | PageBackForwardCacheNotRestoredReasonContentWebUsb | PageBackForwardCacheNotRestoredReasonContentMediaSessionService | PageBackForwardCacheNotRestoredReasonContentScreenReader | PageBackForwardCacheNotRestoredReasonEmbedderPopupBlockerTabHelper | PageBackForwardCacheNotRestoredReasonEmbedderSafeBrowsingTriggeredPopupBlocker | PageBackForwardCacheNotRestoredReasonEmbedderSafeBrowsingThreatDetails | PageBackForwardCacheNotRestoredReasonEmbedderAppBannerManager | PageBackForwardCacheNotRestoredReasonEmbedderDomDistillerViewerSource | PageBackForwardCacheNotRestoredReasonEmbedderDomDistillerSelfDeletingRequestDelegate | PageBackForwardCacheNotRestoredReasonEmbedderOomInterventionTabHelper | PageBackForwardCacheNotRestoredReasonEmbedderOfflinePage | PageBackForwardCacheNotRestoredReasonEmbedderChromePasswordManagerClientBindCredentialManager | PageBackForwardCacheNotRestoredReasonEmbedderPermissionRequestManager | PageBackForwardCacheNotRestoredReasonEmbedderModalDialog | PageBackForwardCacheNotRestoredReasonEmbedderExtensions | PageBackForwardCacheNotRestoredReasonEmbedderExtensionMessaging | PageBackForwardCacheNotRestoredReasonEmbedderExtensionMessagingForOpenPort | PageBackForwardCacheNotRestoredReasonEmbedderExtensionSentMessageToCachedFrame
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageBackForwardCacheNotRestoredReason where
@@ -5257,6 +6010,8 @@ instance ToJSON PageBackForwardCacheNotRestoredReason where
          PageBackForwardCacheNotRestoredReasonEmbedderExtensionSentMessageToCachedFrame -> "EmbedderExtensionSentMessageToCachedFrame"
 
 
+
+-- | Types of not restored reasons for back-forward cache.
 data PageBackForwardCacheNotRestoredReasonType = PageBackForwardCacheNotRestoredReasonTypeSupportPending | PageBackForwardCacheNotRestoredReasonTypePageSupportNeeded | PageBackForwardCacheNotRestoredReasonTypeCircumstantial
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageBackForwardCacheNotRestoredReasonType where
@@ -5276,10 +6031,13 @@ instance ToJSON PageBackForwardCacheNotRestoredReasonType where
 
 
 
+-- | Type 'Page.BackForwardCacheNotRestoredExplanation' .
 data PageBackForwardCacheNotRestoredExplanation = PageBackForwardCacheNotRestoredExplanation {
-   pageBackForwardCacheNotRestoredExplanationType :: PageBackForwardCacheNotRestoredReasonType,
-   pageBackForwardCacheNotRestoredExplanationReason :: PageBackForwardCacheNotRestoredReason,
-   pageBackForwardCacheNotRestoredExplanationContext :: Maybe String
+   pageBackForwardCacheNotRestoredExplanationType :: PageBackForwardCacheNotRestoredExplanationType, -- ^ Type of the reason
+   pageBackForwardCacheNotRestoredExplanationReason :: PageBackForwardCacheNotRestoredExplanationReason, -- ^ Not restored reason
+   pageBackForwardCacheNotRestoredExplanationContext :: PageBackForwardCacheNotRestoredExplanationContext -- ^ Context associated with the reason. The meaning of this context is
+dependent on the reason:
+- EmbedderExtensionSentMessageToCachedFrame: the extension ID.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageBackForwardCacheNotRestoredExplanation  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 42 , A.omitNothingFields = True}
@@ -5289,10 +6047,11 @@ instance FromJSON  PageBackForwardCacheNotRestoredExplanation where
 
 
 
+-- | Type 'Page.BackForwardCacheNotRestoredExplanationTree' .
 data PageBackForwardCacheNotRestoredExplanationTree = PageBackForwardCacheNotRestoredExplanationTree {
-   pageBackForwardCacheNotRestoredExplanationTreeUrl :: String,
-   pageBackForwardCacheNotRestoredExplanationTreeExplanations :: [PageBackForwardCacheNotRestoredExplanation],
-   pageBackForwardCacheNotRestoredExplanationTreeChildren :: [PageBackForwardCacheNotRestoredExplanationTree]
+   pageBackForwardCacheNotRestoredExplanationTreeUrl :: PageBackForwardCacheNotRestoredExplanationTreeUrl, -- ^ URL of each frame
+   pageBackForwardCacheNotRestoredExplanationTreeExplanations :: PageBackForwardCacheNotRestoredExplanationTreeExplanations, -- ^ Not restored reasons of each frame
+   pageBackForwardCacheNotRestoredExplanationTreeChildren :: PageBackForwardCacheNotRestoredExplanationTreeChildren -- ^ Array of children frame
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageBackForwardCacheNotRestoredExplanationTree  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 46 , A.omitNothingFields = True}
@@ -5301,6 +6060,8 @@ instance FromJSON  PageBackForwardCacheNotRestoredExplanationTree where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 46 }
 
 
+
+-- | List of FinalStatus reasons for Prerender2.
 data PagePrerenderFinalStatus = PagePrerenderFinalStatusActivated | PagePrerenderFinalStatusDestroyed | PagePrerenderFinalStatusLowEndDevice | PagePrerenderFinalStatusCrossOriginRedirect | PagePrerenderFinalStatusCrossOriginNavigation | PagePrerenderFinalStatusInvalidSchemeRedirect | PagePrerenderFinalStatusInvalidSchemeNavigation | PagePrerenderFinalStatusInProgressNavigation | PagePrerenderFinalStatusNavigationRequestBlockedByCsp | PagePrerenderFinalStatusMainFrameNavigation | PagePrerenderFinalStatusMojoBinderPolicy | PagePrerenderFinalStatusRendererProcessCrashed | PagePrerenderFinalStatusRendererProcessKilled | PagePrerenderFinalStatusDownload | PagePrerenderFinalStatusTriggerDestroyed | PagePrerenderFinalStatusNavigationNotCommitted | PagePrerenderFinalStatusNavigationBadHttpStatus | PagePrerenderFinalStatusClientCertRequested | PagePrerenderFinalStatusNavigationRequestNetworkError | PagePrerenderFinalStatusMaxNumOfRunningPrerendersExceeded | PagePrerenderFinalStatusCancelAllHostsForTesting | PagePrerenderFinalStatusDidFailLoad | PagePrerenderFinalStatusStop | PagePrerenderFinalStatusSslCertificateError | PagePrerenderFinalStatusLoginAuthRequested | PagePrerenderFinalStatusUaChangeRequiresReload | PagePrerenderFinalStatusBlockedByClient | PagePrerenderFinalStatusAudioOutputDeviceRequested | PagePrerenderFinalStatusMixedContent | PagePrerenderFinalStatusTriggerBackgrounded | PagePrerenderFinalStatusEmbedderTriggeredAndSameOriginRedirected | PagePrerenderFinalStatusEmbedderTriggeredAndCrossOriginRedirected | PagePrerenderFinalStatusEmbedderTriggeredAndDestroyed
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PagePrerenderFinalStatus where
@@ -5382,8 +6143,8 @@ instance ToJSON PagePrerenderFinalStatus where
 
 
 
+-- | Type of the 'Page.domContentEventFired' event.
 data PageDomContentEventFired = PageDomContentEventFired {
-   pageDomContentEventFiredTimestamp :: NetworkMonotonicTime
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageDomContentEventFired  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -5392,6 +6153,8 @@ instance FromJSON  PageDomContentEventFired where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
+
+-- | Type of the 'Page.fileChooserOpened' event.
 data PageFileChooserOpenedMode = PageFileChooserOpenedModeSelectSingle | PageFileChooserOpenedModeSelectMultiple
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageFileChooserOpenedMode where
@@ -5410,9 +6173,9 @@ instance ToJSON PageFileChooserOpenedMode where
 
 
 data PageFileChooserOpened = PageFileChooserOpened {
-   pageFileChooserOpenedFrameId :: PageFrameId,
-   pageFileChooserOpenedBackendNodeId :: DomBackendNodeId,
-   pageFileChooserOpenedMode :: PageFileChooserOpenedMode
+   pageFileChooserOpenedFrameId :: PageFileChooserOpenedFrameId, -- ^ Id of the frame containing input node.
+   pageFileChooserOpenedBackendNodeId :: PageFileChooserOpenedBackendNodeId, -- ^ Input node id.
+   pageFileChooserOpenedMode :: PageFileChooserOpenedMode -- ^ Input mode.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageFileChooserOpened  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -5422,10 +6185,11 @@ instance FromJSON  PageFileChooserOpened where
 
 
 
+-- | Type of the 'Page.frameAttached' event.
 data PageFrameAttached = PageFrameAttached {
-   pageFrameAttachedFrameId :: PageFrameId,
-   pageFrameAttachedParentFrameId :: PageFrameId,
-   pageFrameAttachedStack :: Maybe Runtime.RuntimeStackTrace
+   pageFrameAttachedFrameId :: PageFrameAttachedFrameId, -- ^ Id of the frame that has been attached.
+   pageFrameAttachedParentFrameId :: PageFrameAttachedParentFrameId, -- ^ Parent frame identifier.
+   pageFrameAttachedStack :: PageFrameAttachedStack -- ^ JavaScript stack trace of when frame was attached, only set if frame initiated from script.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageFrameAttached  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -5434,6 +6198,8 @@ instance FromJSON  PageFrameAttached where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
+
+-- | Type of the 'Page.frameDetached' event.
 data PageFrameDetachedReason = PageFrameDetachedReasonRemove | PageFrameDetachedReasonSwap
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageFrameDetachedReason where
@@ -5452,8 +6218,8 @@ instance ToJSON PageFrameDetachedReason where
 
 
 data PageFrameDetached = PageFrameDetached {
-   pageFrameDetachedFrameId :: PageFrameId,
-   pageFrameDetachedReason :: PageFrameDetachedReason
+   pageFrameDetachedFrameId :: PageFrameDetachedFrameId, -- ^ Id of the frame that has been detached.
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageFrameDetached  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -5463,9 +6229,10 @@ instance FromJSON  PageFrameDetached where
 
 
 
+-- | Type of the 'Page.frameNavigated' event.
 data PageFrameNavigated = PageFrameNavigated {
-   pageFrameNavigatedFrame :: PageFrame,
-   pageFrameNavigatedType :: PageNavigationType
+   pageFrameNavigatedFrame :: PageFrameNavigatedFrame, -- ^ Frame object.
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageFrameNavigated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -5475,8 +6242,9 @@ instance FromJSON  PageFrameNavigated where
 
 
 
+-- | Type of the 'Page.documentOpened' event.
 data PageDocumentOpened = PageDocumentOpened {
-   pageDocumentOpenedFrame :: PageFrame
+   pageDocumentOpenedFrame :: PageDocumentOpenedFrame -- ^ Frame object.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageDocumentOpened  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -5485,6 +6253,8 @@ instance FromJSON  PageDocumentOpened where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
+
+-- | Type of the 'Page.frameResized' event.
 data PageFrameResized = PageFrameResized
    deriving (Eq, Show, Read)
 instance FromJSON PageFrameResized where
@@ -5495,11 +6265,12 @@ instance FromJSON PageFrameResized where
 
 
 
+-- | Type of the 'Page.frameRequestedNavigation' event.
 data PageFrameRequestedNavigation = PageFrameRequestedNavigation {
-   pageFrameRequestedNavigationFrameId :: PageFrameId,
-   pageFrameRequestedNavigationReason :: PageClientNavigationReason,
-   pageFrameRequestedNavigationUrl :: String,
-   pageFrameRequestedNavigationDisposition :: PageClientNavigationDisposition
+   pageFrameRequestedNavigationFrameId :: PageFrameRequestedNavigationFrameId, -- ^ Id of the frame that is being navigated.
+   pageFrameRequestedNavigationReason :: PageFrameRequestedNavigationReason, -- ^ The reason for the navigation.
+   pageFrameRequestedNavigationUrl :: PageFrameRequestedNavigationUrl, -- ^ The destination URL for the requested navigation.
+   pageFrameRequestedNavigationDisposition :: PageFrameRequestedNavigationDisposition -- ^ The disposition for the navigation.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageFrameRequestedNavigation  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -5509,8 +6280,9 @@ instance FromJSON  PageFrameRequestedNavigation where
 
 
 
+-- | Type of the 'Page.frameStartedLoading' event.
 data PageFrameStartedLoading = PageFrameStartedLoading {
-   pageFrameStartedLoadingFrameId :: PageFrameId
+   pageFrameStartedLoadingFrameId :: PageFrameStartedLoadingFrameId -- ^ Id of the frame that has started loading.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageFrameStartedLoading  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -5520,8 +6292,9 @@ instance FromJSON  PageFrameStartedLoading where
 
 
 
+-- | Type of the 'Page.frameStoppedLoading' event.
 data PageFrameStoppedLoading = PageFrameStoppedLoading {
-   pageFrameStoppedLoadingFrameId :: PageFrameId
+   pageFrameStoppedLoadingFrameId :: PageFrameStoppedLoadingFrameId -- ^ Id of the frame that has stopped loading.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageFrameStoppedLoading  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -5530,6 +6303,8 @@ instance FromJSON  PageFrameStoppedLoading where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+
+-- | Type of the 'Page.interstitialHidden' event.
 data PageInterstitialHidden = PageInterstitialHidden
    deriving (Eq, Show, Read)
 instance FromJSON PageInterstitialHidden where
@@ -5539,6 +6314,8 @@ instance FromJSON PageInterstitialHidden where
          _ -> fail "failed to parse PageInterstitialHidden"
 
 
+
+-- | Type of the 'Page.interstitialShown' event.
 data PageInterstitialShown = PageInterstitialShown
    deriving (Eq, Show, Read)
 instance FromJSON PageInterstitialShown where
@@ -5549,9 +6326,10 @@ instance FromJSON PageInterstitialShown where
 
 
 
+-- | Type of the 'Page.javascriptDialogClosed' event.
 data PageJavascriptDialogClosed = PageJavascriptDialogClosed {
-   pageJavascriptDialogClosedResult :: Bool,
-   pageJavascriptDialogClosedUserInput :: String
+   pageJavascriptDialogClosedResult :: PageJavascriptDialogClosedResult, -- ^ Whether dialog was confirmed.
+   pageJavascriptDialogClosedUserInput :: PageJavascriptDialogClosedUserInput -- ^ User input in case of prompt.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageJavascriptDialogClosed  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -5561,12 +6339,15 @@ instance FromJSON  PageJavascriptDialogClosed where
 
 
 
+-- | Type of the 'Page.javascriptDialogOpening' event.
 data PageJavascriptDialogOpening = PageJavascriptDialogOpening {
-   pageJavascriptDialogOpeningUrl :: String,
-   pageJavascriptDialogOpeningMessage :: String,
-   pageJavascriptDialogOpeningType :: PageDialogType,
-   pageJavascriptDialogOpeningHasBrowserHandler :: Bool,
-   pageJavascriptDialogOpeningDefaultPrompt :: Maybe String
+   pageJavascriptDialogOpeningUrl :: PageJavascriptDialogOpeningUrl, -- ^ Frame url.
+   pageJavascriptDialogOpeningMessage :: PageJavascriptDialogOpeningMessage, -- ^ Message that will be displayed by the dialog.
+   pageJavascriptDialogOpeningType :: PageJavascriptDialogOpeningType, -- ^ Dialog type.
+   pageJavascriptDialogOpeningHasBrowserHandler :: PageJavascriptDialogOpeningHasBrowserHandler, -- ^ True iff browser is capable showing or acting on the given dialog. When browser has no
+dialog handler for given target, calling alert while Page domain is engaged will stall
+the page execution. Execution can be resumed via calling Page.handleJavaScriptDialog.
+   pageJavascriptDialogOpeningDefaultPrompt :: PageJavascriptDialogOpeningDefaultPrompt -- ^ Default dialog prompt.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageJavascriptDialogOpening  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -5576,11 +6357,12 @@ instance FromJSON  PageJavascriptDialogOpening where
 
 
 
+-- | Type of the 'Page.lifecycleEvent' event.
 data PageLifecycleEvent = PageLifecycleEvent {
-   pageLifecycleEventFrameId :: PageFrameId,
-   pageLifecycleEventLoaderId :: NetworkLoaderId,
-   pageLifecycleEventName :: String,
-   pageLifecycleEventTimestamp :: NetworkMonotonicTime
+   pageLifecycleEventFrameId :: PageLifecycleEventFrameId, -- ^ Id of the frame.
+   pageLifecycleEventLoaderId :: PageLifecycleEventLoaderId, -- ^ Loader identifier. Empty string if the request is fetched from worker.
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageLifecycleEvent  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -5590,11 +6372,12 @@ instance FromJSON  PageLifecycleEvent where
 
 
 
+-- | Type of the 'Page.backForwardCacheNotUsed' event.
 data PageBackForwardCacheNotUsed = PageBackForwardCacheNotUsed {
-   pageBackForwardCacheNotUsedLoaderId :: NetworkLoaderId,
-   pageBackForwardCacheNotUsedFrameId :: PageFrameId,
-   pageBackForwardCacheNotUsedNotRestoredExplanations :: [PageBackForwardCacheNotRestoredExplanation],
-   pageBackForwardCacheNotUsedNotRestoredExplanationsTree :: Maybe PageBackForwardCacheNotRestoredExplanationTree
+   pageBackForwardCacheNotUsedLoaderId :: PageBackForwardCacheNotUsedLoaderId, -- ^ The loader id for the associated navgation.
+   pageBackForwardCacheNotUsedFrameId :: PageBackForwardCacheNotUsedFrameId, -- ^ The frame id of the associated frame.
+   pageBackForwardCacheNotUsedNotRestoredExplanations :: PageBackForwardCacheNotUsedNotRestoredExplanations, -- ^ Array of reasons why the page could not be cached. This must not be empty.
+   pageBackForwardCacheNotUsedNotRestoredExplanationsTree :: PageBackForwardCacheNotUsedNotRestoredExplanationsTree -- ^ Tree structure of reasons why the page could not be cached for each frame.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageBackForwardCacheNotUsed  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -5604,10 +6387,11 @@ instance FromJSON  PageBackForwardCacheNotUsed where
 
 
 
+-- | Type of the 'Page.prerenderAttemptCompleted' event.
 data PagePrerenderAttemptCompleted = PagePrerenderAttemptCompleted {
-   pagePrerenderAttemptCompletedInitiatingFrameId :: PageFrameId,
-   pagePrerenderAttemptCompletedPrerenderingUrl :: String,
-   pagePrerenderAttemptCompletedFinalStatus :: PagePrerenderFinalStatus
+   pagePrerenderAttemptCompletedInitiatingFrameId :: PagePrerenderAttemptCompletedInitiatingFrameId, -- ^ The frame id of the frame initiating prerendering.
+
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PagePrerenderAttemptCompleted  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -5617,8 +6401,8 @@ instance FromJSON  PagePrerenderAttemptCompleted where
 
 
 
+-- | Type of the 'Page.loadEventFired' event.
 data PageLoadEventFired = PageLoadEventFired {
-   pageLoadEventFiredTimestamp :: NetworkMonotonicTime
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageLoadEventFired  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -5628,9 +6412,10 @@ instance FromJSON  PageLoadEventFired where
 
 
 
+-- | Type of the 'Page.navigatedWithinDocument' event.
 data PageNavigatedWithinDocument = PageNavigatedWithinDocument {
-   pageNavigatedWithinDocumentFrameId :: PageFrameId,
-   pageNavigatedWithinDocumentUrl :: String
+   pageNavigatedWithinDocumentFrameId :: PageNavigatedWithinDocumentFrameId, -- ^ Id of the frame.
+   pageNavigatedWithinDocumentUrl :: PageNavigatedWithinDocumentUrl -- ^ Frame's new url.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageNavigatedWithinDocument  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -5640,10 +6425,11 @@ instance FromJSON  PageNavigatedWithinDocument where
 
 
 
+-- | Type of the 'Page.screencastFrame' event.
 data PageScreencastFrame = PageScreencastFrame {
-   pageScreencastFrameData :: String,
-   pageScreencastFrameMetadata :: PageScreencastFrameMetadata,
-   pageScreencastFrameSessionId :: Int
+   pageScreencastFrameData :: PageScreencastFrameData, -- ^ Base64-encoded compressed image. (Encoded as a base64 string when passed over JSON)
+   pageScreencastFrameMetadata :: PageScreencastFrameMetadata, -- ^ Screencast frame metadata.
+   pageScreencastFrameSessionId :: PageScreencastFrameSessionId -- ^ Frame number.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageScreencastFrame  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -5653,8 +6439,9 @@ instance FromJSON  PageScreencastFrame where
 
 
 
+-- | Type of the 'Page.screencastVisibilityChanged' event.
 data PageScreencastVisibilityChanged = PageScreencastVisibilityChanged {
-   pageScreencastVisibilityChangedVisible :: Bool
+   pageScreencastVisibilityChangedVisible :: PageScreencastVisibilityChangedVisible -- ^ True if the page is visible.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageScreencastVisibilityChanged  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
@@ -5664,11 +6451,12 @@ instance FromJSON  PageScreencastVisibilityChanged where
 
 
 
+-- | Type of the 'Page.windowOpen' event.
 data PageWindowOpen = PageWindowOpen {
-   pageWindowOpenUrl :: String,
-   pageWindowOpenWindowName :: String,
-   pageWindowOpenWindowFeatures :: [String],
-   pageWindowOpenUserGesture :: Bool
+   pageWindowOpenUrl :: PageWindowOpenUrl, -- ^ The URL for the new window.
+   pageWindowOpenWindowName :: PageWindowOpenWindowName, -- ^ Window name.
+   pageWindowOpenWindowFeatures :: PageWindowOpenWindowFeatures, -- ^ An array of enabled window features.
+   pageWindowOpenUserGesture :: PageWindowOpenUserGesture -- ^ Whether or not it was triggered by user gesture.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageWindowOpen  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
@@ -5678,9 +6466,10 @@ instance FromJSON  PageWindowOpen where
 
 
 
+-- | Type of the 'Page.compilationCacheProduced' event.
 data PageCompilationCacheProduced = PageCompilationCacheProduced {
-   pageCompilationCacheProducedUrl :: String,
-   pageCompilationCacheProducedData :: String
+
+   pageCompilationCacheProducedData :: PageCompilationCacheProducedData -- ^ Base64-encoded data (Encoded as a base64 string when passed over JSON)
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageCompilationCacheProduced  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -5692,10 +6481,14 @@ instance FromJSON  PageCompilationCacheProduced where
 
 
 
+-- | Parameters of the 'pageAddScriptToEvaluateOnNewDocument' command.
 data PPageAddScriptToEvaluateOnNewDocument = PPageAddScriptToEvaluateOnNewDocument {
-   pPageAddScriptToEvaluateOnNewDocumentSource :: String,
-   pPageAddScriptToEvaluateOnNewDocumentWorldName :: Maybe String,
-   pPageAddScriptToEvaluateOnNewDocumentIncludeCommandLineApi :: Maybe Bool
+
+   pPageAddScriptToEvaluateOnNewDocumentWorldName :: PPageAddScriptToEvaluateOnNewDocumentWorldName, -- ^ If specified, creates an isolated world with the given name and evaluates given script in it.
+This world name will be used as the ExecutionContextDescription::name when the corresponding
+event is emitted.
+   pPageAddScriptToEvaluateOnNewDocumentIncludeCommandLineApi :: PPageAddScriptToEvaluateOnNewDocumentIncludeCommandLineApi -- ^ Specifies whether command line API should be available to the script, defaults
+to false.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageAddScriptToEvaluateOnNewDocument  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 , A.omitNothingFields = True}
@@ -5704,11 +6497,16 @@ instance FromJSON  PPageAddScriptToEvaluateOnNewDocument where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 }
 
 
+-- | Function for the command 'Page.addScriptToEvaluateOnNewDocument'.
+-- Evaluates given script in every frame upon creation (before loading frame's scripts).
+-- Parameters: 'PPageAddScriptToEvaluateOnNewDocument'
+-- Returns: 'PageAddScriptToEvaluateOnNewDocument'
 pageAddScriptToEvaluateOnNewDocument :: Handle ev -> PPageAddScriptToEvaluateOnNewDocument -> IO (Either Error PageAddScriptToEvaluateOnNewDocument)
 pageAddScriptToEvaluateOnNewDocument handle params = sendReceiveCommandResult handle "Page.addScriptToEvaluateOnNewDocument" (Just params)
 
+-- | Return type of the 'pageAddScriptToEvaluateOnNewDocument' command.
 data PageAddScriptToEvaluateOnNewDocument = PageAddScriptToEvaluateOnNewDocument {
-   pageAddScriptToEvaluateOnNewDocumentIdentifier :: PageScriptIdentifier
+   pageAddScriptToEvaluateOnNewDocumentIdentifier :: PageScriptIdentifier -- ^ Identifier of the added script.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PageAddScriptToEvaluateOnNewDocument where
@@ -5719,10 +6517,13 @@ instance Command PageAddScriptToEvaluateOnNewDocument where
 
 
 
+-- | Function for the command 'Page.bringToFront'.
+-- Brings page to front (activates tab).
 pageBringToFront :: Handle ev -> IO (Maybe Error)
 pageBringToFront handle = sendReceiveCommand handle "Page.bringToFront" (Nothing :: Maybe ())
 
 
+-- | Parameters of the 'pageCaptureScreenshot' command.
 data PPageCaptureScreenshotFormat = PPageCaptureScreenshotFormatJpeg | PPageCaptureScreenshotFormatPng | PPageCaptureScreenshotFormatWebp
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PPageCaptureScreenshotFormat where
@@ -5743,11 +6544,11 @@ instance ToJSON PPageCaptureScreenshotFormat where
 
 
 data PPageCaptureScreenshot = PPageCaptureScreenshot {
-   pPageCaptureScreenshotFormat :: PPageCaptureScreenshotFormat,
-   pPageCaptureScreenshotQuality :: Maybe Int,
-   pPageCaptureScreenshotClip :: Maybe PageViewport,
-   pPageCaptureScreenshotFromSurface :: Maybe Bool,
-   pPageCaptureScreenshotCaptureBeyondViewport :: Maybe Bool
+   pPageCaptureScreenshotFormat :: PPageCaptureScreenshotFormat, -- ^ Image compression format (defaults to png).
+   pPageCaptureScreenshotQuality :: PPageCaptureScreenshotQuality, -- ^ Compression quality from range [0..100] (jpeg only).
+   pPageCaptureScreenshotClip :: PPageCaptureScreenshotClip, -- ^ Capture the screenshot of a given region only.
+   pPageCaptureScreenshotFromSurface :: PPageCaptureScreenshotFromSurface, -- ^ Capture the screenshot from the surface, rather than the view. Defaults to true.
+   pPageCaptureScreenshotCaptureBeyondViewport :: PPageCaptureScreenshotCaptureBeyondViewport -- ^ Capture the screenshot beyond the viewport. Defaults to false.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageCaptureScreenshot  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -5756,11 +6557,16 @@ instance FromJSON  PPageCaptureScreenshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
+-- | Function for the command 'Page.captureScreenshot'.
+-- Capture page screenshot.
+-- Parameters: 'PPageCaptureScreenshot'
+-- Returns: 'PageCaptureScreenshot'
 pageCaptureScreenshot :: Handle ev -> PPageCaptureScreenshot -> IO (Either Error PageCaptureScreenshot)
 pageCaptureScreenshot handle params = sendReceiveCommandResult handle "Page.captureScreenshot" (Just params)
 
+-- | Return type of the 'pageCaptureScreenshot' command.
 data PageCaptureScreenshot = PageCaptureScreenshot {
-   pageCaptureScreenshotData :: String
+   pageCaptureScreenshotData :: String -- ^ Base64-encoded image data. (Encoded as a base64 string when passed over JSON)
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PageCaptureScreenshot where
@@ -5771,6 +6577,7 @@ instance Command PageCaptureScreenshot where
 
 
 
+-- | Parameters of the 'pageCaptureSnapshot' command.
 data PPageCaptureSnapshotFormat = PPageCaptureSnapshotFormatMhtml
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PPageCaptureSnapshotFormat where
@@ -5787,7 +6594,7 @@ instance ToJSON PPageCaptureSnapshotFormat where
 
 
 data PPageCaptureSnapshot = PPageCaptureSnapshot {
-   pPageCaptureSnapshotFormat :: PPageCaptureSnapshotFormat
+   pPageCaptureSnapshotFormat :: PPageCaptureSnapshotFormat -- ^ Format (defaults to mhtml).
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageCaptureSnapshot  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -5796,11 +6603,17 @@ instance FromJSON  PPageCaptureSnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
+-- | Function for the command 'Page.captureSnapshot'.
+-- Returns a snapshot of the page as a string. For MHTML format, the serialization includes
+-- iframes, shadow DOM, external resources, and element-inline styles.
+-- Parameters: 'PPageCaptureSnapshot'
+-- Returns: 'PageCaptureSnapshot'
 pageCaptureSnapshot :: Handle ev -> PPageCaptureSnapshot -> IO (Either Error PageCaptureSnapshot)
 pageCaptureSnapshot handle params = sendReceiveCommandResult handle "Page.captureSnapshot" (Just params)
 
+-- | Return type of the 'pageCaptureSnapshot' command.
 data PageCaptureSnapshot = PageCaptureSnapshot {
-   pageCaptureSnapshotData :: String
+   pageCaptureSnapshotData :: String -- ^ Serialized page data.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PageCaptureSnapshot where
@@ -5811,11 +6624,12 @@ instance Command PageCaptureSnapshot where
 
 
 
-
+-- | Parameters of the 'pageCreateIsolatedWorld' command.
 data PPageCreateIsolatedWorld = PPageCreateIsolatedWorld {
-   pPageCreateIsolatedWorldFrameId :: PageFrameId,
-   pPageCreateIsolatedWorldWorldName :: Maybe String,
-   pPageCreateIsolatedWorldGrantUniveralAccess :: Maybe Bool
+   pPageCreateIsolatedWorldFrameId :: PPageCreateIsolatedWorldFrameId, -- ^ Id of the frame in which the isolated world should be created.
+   pPageCreateIsolatedWorldWorldName :: PPageCreateIsolatedWorldWorldName, -- ^ An optional name which is reported in the Execution Context.
+   pPageCreateIsolatedWorldGrantUniveralAccess :: PPageCreateIsolatedWorldGrantUniveralAccess -- ^ Whether or not universal access should be granted to the isolated world. This is a powerful
+option, use with caution.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageCreateIsolatedWorld  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -5824,11 +6638,16 @@ instance FromJSON  PPageCreateIsolatedWorld where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
+-- | Function for the command 'Page.createIsolatedWorld'.
+-- Creates an isolated world for the given frame.
+-- Parameters: 'PPageCreateIsolatedWorld'
+-- Returns: 'PageCreateIsolatedWorld'
 pageCreateIsolatedWorld :: Handle ev -> PPageCreateIsolatedWorld -> IO (Either Error PageCreateIsolatedWorld)
 pageCreateIsolatedWorld handle params = sendReceiveCommandResult handle "Page.createIsolatedWorld" (Just params)
 
+-- | Return type of the 'pageCreateIsolatedWorld' command.
 data PageCreateIsolatedWorld = PageCreateIsolatedWorld {
-   pageCreateIsolatedWorldExecutionContextId :: Runtime.RuntimeExecutionContextId
+   pageCreateIsolatedWorldExecutionContextId :: Runtime.RuntimeExecutionContextId -- ^ Execution context of the isolated world.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PageCreateIsolatedWorld where
@@ -5839,22 +6658,29 @@ instance Command PageCreateIsolatedWorld where
 
 
 
+-- | Function for the command 'Page.disable'.
+-- Disables page domain notifications.
 pageDisable :: Handle ev -> IO (Maybe Error)
 pageDisable handle = sendReceiveCommand handle "Page.disable" (Nothing :: Maybe ())
 
 
+-- | Function for the command 'Page.enable'.
+-- Enables page domain notifications.
 pageEnable :: Handle ev -> IO (Maybe Error)
 pageEnable handle = sendReceiveCommand handle "Page.enable" (Nothing :: Maybe ())
 
 
+-- | Function for the command 'Page.getAppManifest'.
+-- Returns: 'PageGetAppManifest'
 pageGetAppManifest :: Handle ev -> IO (Either Error PageGetAppManifest)
 pageGetAppManifest handle = sendReceiveCommandResult handle "Page.getAppManifest" (Nothing :: Maybe ())
 
+-- | Return type of the 'pageGetAppManifest' command.
 data PageGetAppManifest = PageGetAppManifest {
-   pageGetAppManifestUrl :: String,
-   pageGetAppManifestErrors :: [PageAppManifestError],
-   pageGetAppManifestData :: Maybe String,
-   pageGetAppManifestParsed :: Maybe PageAppManifestParsedProperties
+   pageGetAppManifestUrl :: String, -- ^ Manifest location.
+
+   pageGetAppManifestData :: Maybe String, -- ^ Manifest content.
+   pageGetAppManifestParsed :: Maybe PageAppManifestParsedProperties -- ^ Parsed manifest properties
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PageGetAppManifest where
@@ -5865,11 +6691,14 @@ instance Command PageGetAppManifest where
 
 
 
+-- | Function for the command 'Page.getInstallabilityErrors'.
+-- Returns: 'PageGetInstallabilityErrors'
 pageGetInstallabilityErrors :: Handle ev -> IO (Either Error PageGetInstallabilityErrors)
 pageGetInstallabilityErrors handle = sendReceiveCommandResult handle "Page.getInstallabilityErrors" (Nothing :: Maybe ())
 
+-- | Return type of the 'pageGetInstallabilityErrors' command.
 data PageGetInstallabilityErrors = PageGetInstallabilityErrors {
-   pageGetInstallabilityErrorsInstallabilityErrors :: [PageInstallabilityError]
+
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PageGetInstallabilityErrors where
@@ -5880,11 +6709,14 @@ instance Command PageGetInstallabilityErrors where
 
 
 
+-- | Function for the command 'Page.getManifestIcons'.
+-- Returns: 'PageGetManifestIcons'
 pageGetManifestIcons :: Handle ev -> IO (Either Error PageGetManifestIcons)
 pageGetManifestIcons handle = sendReceiveCommandResult handle "Page.getManifestIcons" (Nothing :: Maybe ())
 
+-- | Return type of the 'pageGetManifestIcons' command.
 data PageGetManifestIcons = PageGetManifestIcons {
-   pageGetManifestIconsPrimaryIcon :: Maybe String
+
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PageGetManifestIcons where
@@ -5895,12 +6727,17 @@ instance Command PageGetManifestIcons where
 
 
 
+-- | Function for the command 'Page.getAppId'.
+-- Returns the unique (PWA) app id.
+-- Only returns values if the feature flag 'WebAppEnableManifestId' is enabled
+-- Returns: 'PageGetAppId'
 pageGetAppId :: Handle ev -> IO (Either Error PageGetAppId)
 pageGetAppId handle = sendReceiveCommandResult handle "Page.getAppId" (Nothing :: Maybe ())
 
+-- | Return type of the 'pageGetAppId' command.
 data PageGetAppId = PageGetAppId {
-   pageGetAppIdAppId :: Maybe String,
-   pageGetAppIdRecommendedId :: Maybe String
+   pageGetAppIdAppId :: Maybe String, -- ^ App id, either from manifest's id attribute or computed from start_url
+   pageGetAppIdRecommendedId :: Maybe String -- ^ Recommendation for manifest's id attribute to match current id computed from start_url
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PageGetAppId where
@@ -5911,11 +6748,15 @@ instance Command PageGetAppId where
 
 
 
+-- | Function for the command 'Page.getFrameTree'.
+-- Returns present frame tree structure.
+-- Returns: 'PageGetFrameTree'
 pageGetFrameTree :: Handle ev -> IO (Either Error PageGetFrameTree)
 pageGetFrameTree handle = sendReceiveCommandResult handle "Page.getFrameTree" (Nothing :: Maybe ())
 
+-- | Return type of the 'pageGetFrameTree' command.
 data PageGetFrameTree = PageGetFrameTree {
-   pageGetFrameTreeFrameTree :: PageFrameTree
+   pageGetFrameTreeFrameTree :: PageFrameTree -- ^ Present frame tree structure.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PageGetFrameTree where
@@ -5926,13 +6767,17 @@ instance Command PageGetFrameTree where
 
 
 
+-- | Function for the command 'Page.getLayoutMetrics'.
+-- Returns metrics relating to the layouting of the page, such as viewport bounds/scale.
+-- Returns: 'PageGetLayoutMetrics'
 pageGetLayoutMetrics :: Handle ev -> IO (Either Error PageGetLayoutMetrics)
 pageGetLayoutMetrics handle = sendReceiveCommandResult handle "Page.getLayoutMetrics" (Nothing :: Maybe ())
 
+-- | Return type of the 'pageGetLayoutMetrics' command.
 data PageGetLayoutMetrics = PageGetLayoutMetrics {
-   pageGetLayoutMetricsCssLayoutViewport :: PageLayoutViewport,
-   pageGetLayoutMetricsCssVisualViewport :: PageVisualViewport,
-   pageGetLayoutMetricsCssContentSize :: DomRect
+   pageGetLayoutMetricsCssLayoutViewport :: PageLayoutViewport, -- ^ Metrics relating to the layout viewport in CSS pixels.
+   pageGetLayoutMetricsCssVisualViewport :: PageVisualViewport, -- ^ Metrics relating to the visual viewport in CSS pixels.
+   pageGetLayoutMetricsCssContentSize :: DomRect -- ^ Size of scrollable area in CSS pixels.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PageGetLayoutMetrics where
@@ -5943,12 +6788,16 @@ instance Command PageGetLayoutMetrics where
 
 
 
+-- | Function for the command 'Page.getNavigationHistory'.
+-- Returns navigation history for the current page.
+-- Returns: 'PageGetNavigationHistory'
 pageGetNavigationHistory :: Handle ev -> IO (Either Error PageGetNavigationHistory)
 pageGetNavigationHistory handle = sendReceiveCommandResult handle "Page.getNavigationHistory" (Nothing :: Maybe ())
 
+-- | Return type of the 'pageGetNavigationHistory' command.
 data PageGetNavigationHistory = PageGetNavigationHistory {
-   pageGetNavigationHistoryCurrentIndex :: Int,
-   pageGetNavigationHistoryEntries :: [PageNavigationEntry]
+   pageGetNavigationHistoryCurrentIndex :: Int, -- ^ Index of the current navigation history entry.
+   pageGetNavigationHistoryEntries :: [PageNavigationEntry] -- ^ Array of navigation history entries.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PageGetNavigationHistory where
@@ -5959,14 +6808,16 @@ instance Command PageGetNavigationHistory where
 
 
 
+-- | Function for the command 'Page.resetNavigationHistory'.
+-- Resets navigation history for the current page.
 pageResetNavigationHistory :: Handle ev -> IO (Maybe Error)
 pageResetNavigationHistory handle = sendReceiveCommand handle "Page.resetNavigationHistory" (Nothing :: Maybe ())
 
 
-
+-- | Parameters of the 'pageGetResourceContent' command.
 data PPageGetResourceContent = PPageGetResourceContent {
-   pPageGetResourceContentFrameId :: PageFrameId,
-   pPageGetResourceContentUrl :: String
+   pPageGetResourceContentFrameId :: PPageGetResourceContentFrameId, -- ^ Frame id to get resource for.
+   pPageGetResourceContentUrl :: PPageGetResourceContentUrl -- ^ URL of the resource to get content for.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageGetResourceContent  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -5975,12 +6826,17 @@ instance FromJSON  PPageGetResourceContent where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+-- | Function for the command 'Page.getResourceContent'.
+-- Returns content of the given resource.
+-- Parameters: 'PPageGetResourceContent'
+-- Returns: 'PageGetResourceContent'
 pageGetResourceContent :: Handle ev -> PPageGetResourceContent -> IO (Either Error PageGetResourceContent)
 pageGetResourceContent handle params = sendReceiveCommandResult handle "Page.getResourceContent" (Just params)
 
+-- | Return type of the 'pageGetResourceContent' command.
 data PageGetResourceContent = PageGetResourceContent {
-   pageGetResourceContentContent :: String,
-   pageGetResourceContentBase64Encoded :: Bool
+   pageGetResourceContentContent :: String, -- ^ Resource content.
+   pageGetResourceContentBase64Encoded :: Bool -- ^ True, if content was served as base64.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PageGetResourceContent where
@@ -5991,11 +6847,15 @@ instance Command PageGetResourceContent where
 
 
 
+-- | Function for the command 'Page.getResourceTree'.
+-- Returns present frame / resource tree structure.
+-- Returns: 'PageGetResourceTree'
 pageGetResourceTree :: Handle ev -> IO (Either Error PageGetResourceTree)
 pageGetResourceTree handle = sendReceiveCommandResult handle "Page.getResourceTree" (Nothing :: Maybe ())
 
+-- | Return type of the 'pageGetResourceTree' command.
 data PageGetResourceTree = PageGetResourceTree {
-   pageGetResourceTreeFrameTree :: PageFrameResourceTree
+   pageGetResourceTreeFrameTree :: PageFrameResourceTree -- ^ Present frame / resource tree structure.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PageGetResourceTree where
@@ -6006,10 +6866,11 @@ instance Command PageGetResourceTree where
 
 
 
-
+-- | Parameters of the 'pageHandleJavaScriptDialog' command.
 data PPageHandleJavaScriptDialog = PPageHandleJavaScriptDialog {
-   pPageHandleJavaScriptDialogAccept :: Bool,
-   pPageHandleJavaScriptDialogPromptText :: Maybe String
+   pPageHandleJavaScriptDialogAccept :: PPageHandleJavaScriptDialogAccept, -- ^ Whether to accept or dismiss the dialog.
+   pPageHandleJavaScriptDialogPromptText :: PPageHandleJavaScriptDialogPromptText -- ^ The text to enter into the dialog prompt before accepting. Used only if this is a prompt
+dialog.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageHandleJavaScriptDialog  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -6018,17 +6879,20 @@ instance FromJSON  PPageHandleJavaScriptDialog where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
+-- | Function for the command 'Page.handleJavaScriptDialog'.
+-- Accepts or dismisses a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload).
+-- Parameters: 'PPageHandleJavaScriptDialog'
 pageHandleJavaScriptDialog :: Handle ev -> PPageHandleJavaScriptDialog -> IO (Maybe Error)
 pageHandleJavaScriptDialog handle params = sendReceiveCommand handle "Page.handleJavaScriptDialog" (Just params)
 
 
-
+-- | Parameters of the 'pageNavigate' command.
 data PPageNavigate = PPageNavigate {
-   pPageNavigateUrl :: String,
-   pPageNavigateReferrer :: Maybe String,
-   pPageNavigateTransitionType :: Maybe PageTransitionType,
-   pPageNavigateFrameId :: Maybe PageFrameId,
-   pPageNavigateReferrerPolicy :: Maybe PageReferrerPolicy
+   pPageNavigateUrl :: PPageNavigateUrl, -- ^ URL to navigate the page to.
+   pPageNavigateReferrer :: PPageNavigateReferrer, -- ^ Referrer URL.
+   pPageNavigateTransitionType :: PPageNavigateTransitionType, -- ^ Intended transition type.
+   pPageNavigateFrameId :: PPageNavigateFrameId, -- ^ Frame id to navigate, if not specified navigates the top frame.
+   pPageNavigateReferrerPolicy :: PPageNavigateReferrerPolicy -- ^ Referrer-policy used for the navigation.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageNavigate  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 , A.omitNothingFields = True}
@@ -6037,13 +6901,19 @@ instance FromJSON  PPageNavigate where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 }
 
 
+-- | Function for the command 'Page.navigate'.
+-- Navigates current page to the given URL.
+-- Parameters: 'PPageNavigate'
+-- Returns: 'PageNavigate'
 pageNavigate :: Handle ev -> PPageNavigate -> IO (Either Error PageNavigate)
 pageNavigate handle params = sendReceiveCommandResult handle "Page.navigate" (Just params)
 
+-- | Return type of the 'pageNavigate' command.
 data PageNavigate = PageNavigate {
-   pageNavigateFrameId :: PageFrameId,
-   pageNavigateLoaderId :: Maybe NetworkLoaderId,
-   pageNavigateErrorText :: Maybe String
+   pageNavigateFrameId :: PageFrameId, -- ^ Frame id that has navigated (or failed to navigate)
+   pageNavigateLoaderId :: Maybe NetworkLoaderId, -- ^ Loader identifier. This is omitted in case of same-document navigation,
+as the previously committed loaderId would not change.
+   pageNavigateErrorText :: Maybe String -- ^ User friendly error message, present if and only if navigation has failed.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PageNavigate where
@@ -6054,9 +6924,9 @@ instance Command PageNavigate where
 
 
 
-
+-- | Parameters of the 'pageNavigateToHistoryEntry' command.
 data PPageNavigateToHistoryEntry = PPageNavigateToHistoryEntry {
-   pPageNavigateToHistoryEntryEntryId :: Int
+   pPageNavigateToHistoryEntryEntryId :: PPageNavigateToHistoryEntryEntryId -- ^ Unique id of the entry to navigate to.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageNavigateToHistoryEntry  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -6065,10 +6935,14 @@ instance FromJSON  PPageNavigateToHistoryEntry where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
+-- | Function for the command 'Page.navigateToHistoryEntry'.
+-- Navigates current page to the given history entry.
+-- Parameters: 'PPageNavigateToHistoryEntry'
 pageNavigateToHistoryEntry :: Handle ev -> PPageNavigateToHistoryEntry -> IO (Maybe Error)
 pageNavigateToHistoryEntry handle params = sendReceiveCommand handle "Page.navigateToHistoryEntry" (Just params)
 
 
+-- | Parameters of the 'pagePrintToPdf' command.
 data PPagePrintToPdfTransferMode = PPagePrintToPdfTransferModeReturnAsBase64 | PPagePrintToPdfTransferModeReturnAsStream
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PPagePrintToPdfTransferMode where
@@ -6087,21 +6961,37 @@ instance ToJSON PPagePrintToPdfTransferMode where
 
 
 data PPagePrintToPdf = PPagePrintToPdf {
-   pPagePrintToPdfLandscape :: Maybe Bool,
-   pPagePrintToPdfDisplayHeaderFooter :: Maybe Bool,
-   pPagePrintToPdfPrintBackground :: Maybe Bool,
-   pPagePrintToPdfScale :: Maybe Double,
-   pPagePrintToPdfPaperWidth :: Maybe Double,
-   pPagePrintToPdfPaperHeight :: Maybe Double,
-   pPagePrintToPdfMarginTop :: Maybe Double,
-   pPagePrintToPdfMarginBottom :: Maybe Double,
-   pPagePrintToPdfMarginLeft :: Maybe Double,
-   pPagePrintToPdfMarginRight :: Maybe Double,
-   pPagePrintToPdfPageRanges :: Maybe String,
-   pPagePrintToPdfHeaderTemplate :: Maybe String,
-   pPagePrintToPdfFooterTemplate :: Maybe String,
-   pPagePrintToPdfPreferCssPageSize :: Maybe Bool,
-   pPagePrintToPdfTransferMode :: PPagePrintToPdfTransferMode
+   pPagePrintToPdfLandscape :: PPagePrintToPdfLandscape, -- ^ Paper orientation. Defaults to false.
+   pPagePrintToPdfDisplayHeaderFooter :: PPagePrintToPdfDisplayHeaderFooter, -- ^ Display header and footer. Defaults to false.
+   pPagePrintToPdfPrintBackground :: PPagePrintToPdfPrintBackground, -- ^ Print background graphics. Defaults to false.
+   pPagePrintToPdfScale :: PPagePrintToPdfScale, -- ^ Scale of the webpage rendering. Defaults to 1.
+   pPagePrintToPdfPaperWidth :: PPagePrintToPdfPaperWidth, -- ^ Paper width in inches. Defaults to 8.5 inches.
+   pPagePrintToPdfPaperHeight :: PPagePrintToPdfPaperHeight, -- ^ Paper height in inches. Defaults to 11 inches.
+   pPagePrintToPdfMarginTop :: PPagePrintToPdfMarginTop, -- ^ Top margin in inches. Defaults to 1cm (~0.4 inches).
+   pPagePrintToPdfMarginBottom :: PPagePrintToPdfMarginBottom, -- ^ Bottom margin in inches. Defaults to 1cm (~0.4 inches).
+   pPagePrintToPdfMarginLeft :: PPagePrintToPdfMarginLeft, -- ^ Left margin in inches. Defaults to 1cm (~0.4 inches).
+   pPagePrintToPdfMarginRight :: PPagePrintToPdfMarginRight, -- ^ Right margin in inches. Defaults to 1cm (~0.4 inches).
+   pPagePrintToPdfPageRanges :: PPagePrintToPdfPageRanges, -- ^ Paper ranges to print, one based, e.g., '1-5, 8, 11-13'. Pages are
+printed in the document order, not in the order specified, and no
+more than once.
+Defaults to empty string, which implies the entire document is printed.
+The page numbers are quietly capped to actual page count of the
+document, and ranges beyond the end of the document are ignored.
+If this results in no pages to print, an error is reported.
+It is an error to specify a range with start greater than end.
+   pPagePrintToPdfHeaderTemplate :: PPagePrintToPdfHeaderTemplate, -- ^ HTML template for the print header. Should be valid HTML markup with following
+classes used to inject printing values into them:
+- `date`: formatted print date
+- `title`: document title
+- `url`: document location
+- `pageNumber`: current page number
+- `totalPages`: total pages in the document
+
+For example, `<span class=title></span>` would generate span containing the title.
+   pPagePrintToPdfFooterTemplate :: PPagePrintToPdfFooterTemplate, -- ^ HTML template for the print footer. Should use the same format as the `headerTemplate`.
+   pPagePrintToPdfPreferCssPageSize :: PPagePrintToPdfPreferCssPageSize, -- ^ Whether or not to prefer page size as defined by css. Defaults to false,
+in which case the content will be scaled to fit the paper size.
+   pPagePrintToPdfTransferMode :: PPagePrintToPdfTransferMode -- ^ return as stream
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPagePrintToPdf  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
@@ -6110,12 +7000,17 @@ instance FromJSON  PPagePrintToPdf where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
+-- | Function for the command 'Page.printToPDF'.
+-- Print page as PDF.
+-- Parameters: 'PPagePrintToPdf'
+-- Returns: 'PagePrintToPdf'
 pagePrintToPdf :: Handle ev -> PPagePrintToPdf -> IO (Either Error PagePrintToPdf)
 pagePrintToPdf handle params = sendReceiveCommandResult handle "Page.printToPDF" (Just params)
 
+-- | Return type of the 'pagePrintToPdf' command.
 data PagePrintToPdf = PagePrintToPdf {
-   pagePrintToPdfData :: String,
-   pagePrintToPdfStream :: Maybe IO.IoStreamHandle
+   pagePrintToPdfData :: String, -- ^ Base64-encoded pdf data. Empty if |returnAsStream| is specified. (Encoded as a base64 string when passed over JSON)
+   pagePrintToPdfStream :: Maybe IO.IoStreamHandle -- ^ A handle of the stream that holds resulting PDF data.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PagePrintToPdf where
@@ -6126,10 +7021,11 @@ instance Command PagePrintToPdf where
 
 
 
-
+-- | Parameters of the 'pageReload' command.
 data PPageReload = PPageReload {
-   pPageReloadIgnoreCache :: Maybe Bool,
-   pPageReloadScriptToEvaluateOnLoad :: Maybe String
+   pPageReloadIgnoreCache :: PPageReloadIgnoreCache, -- ^ If true, browser cache is ignored (as if the user pressed Shift+refresh).
+   pPageReloadScriptToEvaluateOnLoad :: PPageReloadScriptToEvaluateOnLoad -- ^ If set, the script will be injected into all frames of the inspected page after reload.
+Argument will be ignored if reloading dataURL origin.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageReload  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 , A.omitNothingFields = True}
@@ -6138,13 +7034,15 @@ instance FromJSON  PPageReload where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 }
 
 
+-- | Function for the command 'Page.reload'.
+-- Reloads given page optionally ignoring the cache.
+-- Parameters: 'PPageReload'
 pageReload :: Handle ev -> PPageReload -> IO (Maybe Error)
 pageReload handle params = sendReceiveCommand handle "Page.reload" (Just params)
 
 
-
+-- | Parameters of the 'pageRemoveScriptToEvaluateOnNewDocument' command.
 data PPageRemoveScriptToEvaluateOnNewDocument = PPageRemoveScriptToEvaluateOnNewDocument {
-   pPageRemoveScriptToEvaluateOnNewDocumentIdentifier :: PageScriptIdentifier
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageRemoveScriptToEvaluateOnNewDocument  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 , A.omitNothingFields = True}
@@ -6153,13 +7051,16 @@ instance FromJSON  PPageRemoveScriptToEvaluateOnNewDocument where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 }
 
 
+-- | Function for the command 'Page.removeScriptToEvaluateOnNewDocument'.
+-- Removes given script from the list.
+-- Parameters: 'PPageRemoveScriptToEvaluateOnNewDocument'
 pageRemoveScriptToEvaluateOnNewDocument :: Handle ev -> PPageRemoveScriptToEvaluateOnNewDocument -> IO (Maybe Error)
 pageRemoveScriptToEvaluateOnNewDocument handle params = sendReceiveCommand handle "Page.removeScriptToEvaluateOnNewDocument" (Just params)
 
 
-
+-- | Parameters of the 'pageScreencastFrameAck' command.
 data PPageScreencastFrameAck = PPageScreencastFrameAck {
-   pPageScreencastFrameAckSessionId :: Int
+   pPageScreencastFrameAckSessionId :: PPageScreencastFrameAckSessionId -- ^ Frame number.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageScreencastFrameAck  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -6168,17 +7069,20 @@ instance FromJSON  PPageScreencastFrameAck where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+-- | Function for the command 'Page.screencastFrameAck'.
+-- Acknowledges that a screencast frame has been received by the frontend.
+-- Parameters: 'PPageScreencastFrameAck'
 pageScreencastFrameAck :: Handle ev -> PPageScreencastFrameAck -> IO (Maybe Error)
 pageScreencastFrameAck handle params = sendReceiveCommand handle "Page.screencastFrameAck" (Just params)
 
 
-
+-- | Parameters of the 'pageSearchInResource' command.
 data PPageSearchInResource = PPageSearchInResource {
-   pPageSearchInResourceFrameId :: PageFrameId,
-   pPageSearchInResourceUrl :: String,
-   pPageSearchInResourceQuery :: String,
-   pPageSearchInResourceCaseSensitive :: Maybe Bool,
-   pPageSearchInResourceIsRegex :: Maybe Bool
+   pPageSearchInResourceFrameId :: PPageSearchInResourceFrameId, -- ^ Frame id for resource to search in.
+   pPageSearchInResourceUrl :: PPageSearchInResourceUrl, -- ^ URL of the resource to search in.
+   pPageSearchInResourceQuery :: PPageSearchInResourceQuery, -- ^ String to search for.
+   pPageSearchInResourceCaseSensitive :: PPageSearchInResourceCaseSensitive, -- ^ If true, search is case sensitive.
+   pPageSearchInResourceIsRegex :: PPageSearchInResourceIsRegex -- ^ If true, treats string parameter as regex.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageSearchInResource  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -6187,11 +7091,16 @@ instance FromJSON  PPageSearchInResource where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
+-- | Function for the command 'Page.searchInResource'.
+-- Searches for given string in resource content.
+-- Parameters: 'PPageSearchInResource'
+-- Returns: 'PageSearchInResource'
 pageSearchInResource :: Handle ev -> PPageSearchInResource -> IO (Either Error PageSearchInResource)
 pageSearchInResource handle params = sendReceiveCommandResult handle "Page.searchInResource" (Just params)
 
+-- | Return type of the 'pageSearchInResource' command.
 data PageSearchInResource = PageSearchInResource {
-   pageSearchInResourceResult :: [Debugger.DebuggerSearchMatch]
+   pageSearchInResourceResult :: [Debugger.DebuggerSearchMatch] -- ^ List of search matches.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PageSearchInResource where
@@ -6202,9 +7111,9 @@ instance Command PageSearchInResource where
 
 
 
-
+-- | Parameters of the 'pageSetAdBlockingEnabled' command.
 data PPageSetAdBlockingEnabled = PPageSetAdBlockingEnabled {
-   pPageSetAdBlockingEnabledEnabled :: Bool
+   pPageSetAdBlockingEnabledEnabled :: PPageSetAdBlockingEnabledEnabled -- ^ Whether to block ads.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageSetAdBlockingEnabled  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -6213,13 +7122,16 @@ instance FromJSON  PPageSetAdBlockingEnabled where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
+-- | Function for the command 'Page.setAdBlockingEnabled'.
+-- Enable Chrome's experimental ad filter on all sites.
+-- Parameters: 'PPageSetAdBlockingEnabled'
 pageSetAdBlockingEnabled :: Handle ev -> PPageSetAdBlockingEnabled -> IO (Maybe Error)
 pageSetAdBlockingEnabled handle params = sendReceiveCommand handle "Page.setAdBlockingEnabled" (Just params)
 
 
-
+-- | Parameters of the 'pageSetBypassCsp' command.
 data PPageSetBypassCsp = PPageSetBypassCsp {
-   pPageSetBypassCspEnabled :: Bool
+   pPageSetBypassCspEnabled :: PPageSetBypassCspEnabled -- ^ Whether to bypass page CSP.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageSetBypassCsp  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -6228,13 +7140,15 @@ instance FromJSON  PPageSetBypassCsp where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
+-- | Function for the command 'Page.setBypassCSP'.
+-- Enable page Content Security Policy by-passing.
+-- Parameters: 'PPageSetBypassCsp'
 pageSetBypassCsp :: Handle ev -> PPageSetBypassCsp -> IO (Maybe Error)
 pageSetBypassCsp handle params = sendReceiveCommand handle "Page.setBypassCSP" (Just params)
 
 
-
+-- | Parameters of the 'pageGetPermissionsPolicyState' command.
 data PPageGetPermissionsPolicyState = PPageGetPermissionsPolicyState {
-   pPageGetPermissionsPolicyStateFrameId :: PageFrameId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageGetPermissionsPolicyState  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -6243,11 +7157,16 @@ instance FromJSON  PPageGetPermissionsPolicyState where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
+-- | Function for the command 'Page.getPermissionsPolicyState'.
+-- Get Permissions Policy state on given frame.
+-- Parameters: 'PPageGetPermissionsPolicyState'
+-- Returns: 'PageGetPermissionsPolicyState'
 pageGetPermissionsPolicyState :: Handle ev -> PPageGetPermissionsPolicyState -> IO (Either Error PageGetPermissionsPolicyState)
 pageGetPermissionsPolicyState handle params = sendReceiveCommandResult handle "Page.getPermissionsPolicyState" (Just params)
 
+-- | Return type of the 'pageGetPermissionsPolicyState' command.
 data PageGetPermissionsPolicyState = PageGetPermissionsPolicyState {
-   pageGetPermissionsPolicyStateStates :: [PagePermissionsPolicyFeatureState]
+
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PageGetPermissionsPolicyState where
@@ -6258,9 +7177,8 @@ instance Command PageGetPermissionsPolicyState where
 
 
 
-
+-- | Parameters of the 'pageGetOriginTrials' command.
 data PPageGetOriginTrials = PPageGetOriginTrials {
-   pPageGetOriginTrialsFrameId :: PageFrameId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageGetOriginTrials  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -6269,11 +7187,16 @@ instance FromJSON  PPageGetOriginTrials where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
+-- | Function for the command 'Page.getOriginTrials'.
+-- Get Origin Trials on given frame.
+-- Parameters: 'PPageGetOriginTrials'
+-- Returns: 'PageGetOriginTrials'
 pageGetOriginTrials :: Handle ev -> PPageGetOriginTrials -> IO (Either Error PageGetOriginTrials)
 pageGetOriginTrials handle params = sendReceiveCommandResult handle "Page.getOriginTrials" (Just params)
 
+-- | Return type of the 'pageGetOriginTrials' command.
 data PageGetOriginTrials = PageGetOriginTrials {
-   pageGetOriginTrialsOriginTrials :: [PageOriginTrial]
+
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PageGetOriginTrials where
@@ -6284,10 +7207,10 @@ instance Command PageGetOriginTrials where
 
 
 
-
+-- | Parameters of the 'pageSetFontFamilies' command.
 data PPageSetFontFamilies = PPageSetFontFamilies {
-   pPageSetFontFamiliesFontFamilies :: PageFontFamilies,
-   pPageSetFontFamiliesForScripts :: Maybe [PageScriptFontFamilies]
+   pPageSetFontFamiliesFontFamilies :: PPageSetFontFamiliesFontFamilies, -- ^ Specifies font families to set. If a font family is not specified, it won't be changed.
+   pPageSetFontFamiliesForScripts :: PPageSetFontFamiliesForScripts -- ^ Specifies font families to set for individual scripts.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageSetFontFamilies  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -6296,13 +7219,16 @@ instance FromJSON  PPageSetFontFamilies where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
+-- | Function for the command 'Page.setFontFamilies'.
+-- Set generic font families.
+-- Parameters: 'PPageSetFontFamilies'
 pageSetFontFamilies :: Handle ev -> PPageSetFontFamilies -> IO (Maybe Error)
 pageSetFontFamilies handle params = sendReceiveCommand handle "Page.setFontFamilies" (Just params)
 
 
-
+-- | Parameters of the 'pageSetFontSizes' command.
 data PPageSetFontSizes = PPageSetFontSizes {
-   pPageSetFontSizesFontSizes :: PageFontSizes
+   pPageSetFontSizesFontSizes :: PPageSetFontSizesFontSizes -- ^ Specifies font sizes to set. If a font size is not specified, it won't be changed.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageSetFontSizes  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -6311,14 +7237,17 @@ instance FromJSON  PPageSetFontSizes where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
+-- | Function for the command 'Page.setFontSizes'.
+-- Set default font sizes.
+-- Parameters: 'PPageSetFontSizes'
 pageSetFontSizes :: Handle ev -> PPageSetFontSizes -> IO (Maybe Error)
 pageSetFontSizes handle params = sendReceiveCommand handle "Page.setFontSizes" (Just params)
 
 
-
+-- | Parameters of the 'pageSetDocumentContent' command.
 data PPageSetDocumentContent = PPageSetDocumentContent {
-   pPageSetDocumentContentFrameId :: PageFrameId,
-   pPageSetDocumentContentHtml :: String
+   pPageSetDocumentContentFrameId :: PPageSetDocumentContentFrameId, -- ^ Frame id to set HTML for.
+   pPageSetDocumentContentHtml :: PPageSetDocumentContentHtml -- ^ HTML content to set.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageSetDocumentContent  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -6327,13 +7256,16 @@ instance FromJSON  PPageSetDocumentContent where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+-- | Function for the command 'Page.setDocumentContent'.
+-- Sets given markup as the document's HTML.
+-- Parameters: 'PPageSetDocumentContent'
 pageSetDocumentContent :: Handle ev -> PPageSetDocumentContent -> IO (Maybe Error)
 pageSetDocumentContent handle params = sendReceiveCommand handle "Page.setDocumentContent" (Just params)
 
 
-
+-- | Parameters of the 'pageSetLifecycleEventsEnabled' command.
 data PPageSetLifecycleEventsEnabled = PPageSetLifecycleEventsEnabled {
-   pPageSetLifecycleEventsEnabledEnabled :: Bool
+   pPageSetLifecycleEventsEnabledEnabled :: PPageSetLifecycleEventsEnabledEnabled -- ^ If true, starts emitting lifecycle events.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageSetLifecycleEventsEnabled  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -6342,10 +7274,14 @@ instance FromJSON  PPageSetLifecycleEventsEnabled where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
+-- | Function for the command 'Page.setLifecycleEventsEnabled'.
+-- Controls whether page will emit lifecycle events.
+-- Parameters: 'PPageSetLifecycleEventsEnabled'
 pageSetLifecycleEventsEnabled :: Handle ev -> PPageSetLifecycleEventsEnabled -> IO (Maybe Error)
 pageSetLifecycleEventsEnabled handle params = sendReceiveCommand handle "Page.setLifecycleEventsEnabled" (Just params)
 
 
+-- | Parameters of the 'pageStartScreencast' command.
 data PPageStartScreencastFormat = PPageStartScreencastFormatJpeg | PPageStartScreencastFormatPng
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PPageStartScreencastFormat where
@@ -6364,11 +7300,11 @@ instance ToJSON PPageStartScreencastFormat where
 
 
 data PPageStartScreencast = PPageStartScreencast {
-   pPageStartScreencastFormat :: PPageStartScreencastFormat,
-   pPageStartScreencastQuality :: Maybe Int,
-   pPageStartScreencastMaxWidth :: Maybe Int,
-   pPageStartScreencastMaxHeight :: Maybe Int,
-   pPageStartScreencastEveryNthFrame :: Maybe Int
+   pPageStartScreencastFormat :: PPageStartScreencastFormat, -- ^ Image compression format.
+   pPageStartScreencastQuality :: PPageStartScreencastQuality, -- ^ Compression quality from range [0..100].
+   pPageStartScreencastMaxWidth :: PPageStartScreencastMaxWidth, -- ^ Maximum screenshot width.
+   pPageStartScreencastMaxHeight :: PPageStartScreencastMaxHeight, -- ^ Maximum screenshot height.
+   pPageStartScreencastEveryNthFrame :: PPageStartScreencastEveryNthFrame -- ^ Send every n-th frame.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageStartScreencast  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -6377,22 +7313,32 @@ instance FromJSON  PPageStartScreencast where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
+-- | Function for the command 'Page.startScreencast'.
+-- Starts sending each frame using the `screencastFrame` event.
+-- Parameters: 'PPageStartScreencast'
 pageStartScreencast :: Handle ev -> PPageStartScreencast -> IO (Maybe Error)
 pageStartScreencast handle params = sendReceiveCommand handle "Page.startScreencast" (Just params)
 
 
+-- | Function for the command 'Page.stopLoading'.
+-- Force the page stop all navigations and pending resource fetches.
 pageStopLoading :: Handle ev -> IO (Maybe Error)
 pageStopLoading handle = sendReceiveCommand handle "Page.stopLoading" (Nothing :: Maybe ())
 
 
+-- | Function for the command 'Page.crash'.
+-- Crashes renderer on the IO thread, generates minidumps.
 pageCrash :: Handle ev -> IO (Maybe Error)
 pageCrash handle = sendReceiveCommand handle "Page.crash" (Nothing :: Maybe ())
 
 
+-- | Function for the command 'Page.close'.
+-- Tries to close page, running its beforeunload hooks, if any.
 pageClose :: Handle ev -> IO (Maybe Error)
 pageClose handle = sendReceiveCommand handle "Page.close" (Nothing :: Maybe ())
 
 
+-- | Parameters of the 'pageSetWebLifecycleState' command.
 data PPageSetWebLifecycleStateState = PPageSetWebLifecycleStateStateFrozen | PPageSetWebLifecycleStateStateActive
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PPageSetWebLifecycleStateState where
@@ -6411,7 +7357,7 @@ instance ToJSON PPageSetWebLifecycleStateState where
 
 
 data PPageSetWebLifecycleState = PPageSetWebLifecycleState {
-   pPageSetWebLifecycleStateState :: PPageSetWebLifecycleStateState
+   pPageSetWebLifecycleStateState :: PPageSetWebLifecycleStateState -- ^ Target lifecycle state
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageSetWebLifecycleState  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -6420,17 +7366,23 @@ instance FromJSON  PPageSetWebLifecycleState where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
+-- | Function for the command 'Page.setWebLifecycleState'.
+-- Tries to update the web lifecycle state of the page.
+-- It will transition the page to the given state according to:
+-- https://github.com/WICG/web-lifecycle/
+-- Parameters: 'PPageSetWebLifecycleState'
 pageSetWebLifecycleState :: Handle ev -> PPageSetWebLifecycleState -> IO (Maybe Error)
 pageSetWebLifecycleState handle params = sendReceiveCommand handle "Page.setWebLifecycleState" (Just params)
 
 
+-- | Function for the command 'Page.stopScreencast'.
+-- Stops sending each frame in the `screencastFrame`.
 pageStopScreencast :: Handle ev -> IO (Maybe Error)
 pageStopScreencast handle = sendReceiveCommand handle "Page.stopScreencast" (Nothing :: Maybe ())
 
 
-
+-- | Parameters of the 'pageProduceCompilationCache' command.
 data PPageProduceCompilationCache = PPageProduceCompilationCache {
-   pPageProduceCompilationCacheScripts :: [PageCompilationCacheParams]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageProduceCompilationCache  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -6439,14 +7391,22 @@ instance FromJSON  PPageProduceCompilationCache where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
+-- | Function for the command 'Page.produceCompilationCache'.
+-- Requests backend to produce compilation cache for the specified scripts.
+-- `scripts` are appeneded to the list of scripts for which the cache
+-- would be produced. The list may be reset during page navigation.
+-- When script with a matching URL is encountered, the cache is optionally
+-- produced upon backend discretion, based on internal heuristics.
+-- See also: `Page.compilationCacheProduced`.
+-- Parameters: 'PPageProduceCompilationCache'
 pageProduceCompilationCache :: Handle ev -> PPageProduceCompilationCache -> IO (Maybe Error)
 pageProduceCompilationCache handle params = sendReceiveCommand handle "Page.produceCompilationCache" (Just params)
 
 
-
+-- | Parameters of the 'pageAddCompilationCache' command.
 data PPageAddCompilationCache = PPageAddCompilationCache {
-   pPageAddCompilationCacheUrl :: String,
-   pPageAddCompilationCacheData :: String
+
+   pPageAddCompilationCacheData :: PPageAddCompilationCacheData -- ^ Base64-encoded data (Encoded as a base64 string when passed over JSON)
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageAddCompilationCache  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -6455,14 +7415,21 @@ instance FromJSON  PPageAddCompilationCache where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
+-- | Function for the command 'Page.addCompilationCache'.
+-- Seeds compilation cache for given url. Compilation cache does not survive
+-- cross-process navigation.
+-- Parameters: 'PPageAddCompilationCache'
 pageAddCompilationCache :: Handle ev -> PPageAddCompilationCache -> IO (Maybe Error)
 pageAddCompilationCache handle params = sendReceiveCommand handle "Page.addCompilationCache" (Just params)
 
 
+-- | Function for the command 'Page.clearCompilationCache'.
+-- Clears seeded compilation cache.
 pageClearCompilationCache :: Handle ev -> IO (Maybe Error)
 pageClearCompilationCache handle = sendReceiveCommand handle "Page.clearCompilationCache" (Nothing :: Maybe ())
 
 
+-- | Parameters of the 'pageSetSpcTransactionMode' command.
 data PPageSetSpcTransactionModeMode = PPageSetSpcTransactionModeModeNone | PPageSetSpcTransactionModeModeAutoaccept | PPageSetSpcTransactionModeModeAutoreject
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PPageSetSpcTransactionModeMode where
@@ -6483,7 +7450,6 @@ instance ToJSON PPageSetSpcTransactionModeMode where
 
 
 data PPageSetSpcTransactionMode = PPageSetSpcTransactionMode {
-   pPageSetSpcTransactionModeMode :: PPageSetSpcTransactionModeMode
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageSetSpcTransactionMode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -6492,14 +7458,18 @@ instance FromJSON  PPageSetSpcTransactionMode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
+-- | Function for the command 'Page.setSPCTransactionMode'.
+-- Sets the Secure Payment Confirmation transaction mode.
+-- https://w3c.github.io/secure-payment-confirmation/#sctn-automation-set-spc-transaction-mode
+-- Parameters: 'PPageSetSpcTransactionMode'
 pageSetSpcTransactionMode :: Handle ev -> PPageSetSpcTransactionMode -> IO (Maybe Error)
 pageSetSpcTransactionMode handle params = sendReceiveCommand handle "Page.setSPCTransactionMode" (Just params)
 
 
-
+-- | Parameters of the 'pageGenerateTestReport' command.
 data PPageGenerateTestReport = PPageGenerateTestReport {
-   pPageGenerateTestReportMessage :: String,
-   pPageGenerateTestReportGroup :: Maybe String
+   pPageGenerateTestReportMessage :: PPageGenerateTestReportMessage, -- ^ Message to be displayed in the report.
+   pPageGenerateTestReportGroup :: PPageGenerateTestReportGroup -- ^ Specifies the endpoint group to deliver the report to.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageGenerateTestReport  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -6508,17 +7478,21 @@ instance FromJSON  PPageGenerateTestReport where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+-- | Function for the command 'Page.generateTestReport'.
+-- Generates a report for testing.
+-- Parameters: 'PPageGenerateTestReport'
 pageGenerateTestReport :: Handle ev -> PPageGenerateTestReport -> IO (Maybe Error)
 pageGenerateTestReport handle params = sendReceiveCommand handle "Page.generateTestReport" (Just params)
 
 
+-- | Function for the command 'Page.waitForDebugger'.
+-- Pauses page execution. Can be resumed using generic Runtime.runIfWaitingForDebugger.
 pageWaitForDebugger :: Handle ev -> IO (Maybe Error)
 pageWaitForDebugger handle = sendReceiveCommand handle "Page.waitForDebugger" (Nothing :: Maybe ())
 
 
-
+-- | Parameters of the 'pageSetInterceptFileChooserDialog' command.
 data PPageSetInterceptFileChooserDialog = PPageSetInterceptFileChooserDialog {
-   pPageSetInterceptFileChooserDialogEnabled :: Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageSetInterceptFileChooserDialog  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 , A.omitNothingFields = True}
@@ -6527,12 +7501,21 @@ instance FromJSON  PPageSetInterceptFileChooserDialog where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
 
 
+-- | Function for the command 'Page.setInterceptFileChooserDialog'.
+-- Intercept file chooser requests and transfer control to protocol clients.
+-- When file chooser interception is enabled, native file chooser dialog is not shown.
+-- Instead, a protocol event `Page.fileChooserOpened` is emitted.
+-- Parameters: 'PPageSetInterceptFileChooserDialog'
 pageSetInterceptFileChooserDialog :: Handle ev -> PPageSetInterceptFileChooserDialog -> IO (Maybe Error)
 pageSetInterceptFileChooserDialog handle params = sendReceiveCommand handle "Page.setInterceptFileChooserDialog" (Just params)
 
 
 
+-- | An internal certificate ID value.
 type SecurityCertificateId = Int
+
+-- | A description of mixed content (HTTP resources on HTTPS pages), as defined by
+-- https://www.w3.org/TR/mixed-content/#categories
 data SecurityMixedContentType = SecurityMixedContentTypeBlockable | SecurityMixedContentTypeOptionallyBlockable | SecurityMixedContentTypeNone
    deriving (Ord, Eq, Show, Read)
 instance FromJSON SecurityMixedContentType where
@@ -6551,6 +7534,8 @@ instance ToJSON SecurityMixedContentType where
          SecurityMixedContentTypeNone -> "none"
 
 
+
+-- | The security level of a page or resource.
 data SecuritySecurityState = SecuritySecurityStateUnknown | SecuritySecurityStateNeutral | SecuritySecurityStateInsecure | SecuritySecurityStateSecure | SecuritySecurityStateInfo | SecuritySecurityStateInsecureBroken
    deriving (Ord, Eq, Show, Read)
 instance FromJSON SecuritySecurityState where
@@ -6576,25 +7561,26 @@ instance ToJSON SecuritySecurityState where
 
 
 
+-- | Details about the security state of the page certificate.
 data SecurityCertificateSecurityState = SecurityCertificateSecurityState {
-   securityCertificateSecurityStateProtocol :: String,
-   securityCertificateSecurityStateKeyExchange :: String,
-   securityCertificateSecurityStateKeyExchangeGroup :: Maybe String,
-   securityCertificateSecurityStateCipher :: String,
-   securityCertificateSecurityStateMac :: Maybe String,
-   securityCertificateSecurityStateCertificate :: [String],
-   securityCertificateSecurityStateSubjectName :: String,
-   securityCertificateSecurityStateIssuer :: String,
-   securityCertificateSecurityStateValidFrom :: NetworkTimeSinceEpoch,
-   securityCertificateSecurityStateValidTo :: NetworkTimeSinceEpoch,
-   securityCertificateSecurityStateCertificateNetworkError :: Maybe String,
-   securityCertificateSecurityStateCertificateHasWeakSignature :: Bool,
-   securityCertificateSecurityStateCertificateHasSha1Signature :: Bool,
-   securityCertificateSecurityStateModernSsl :: Bool,
-   securityCertificateSecurityStateObsoleteSslProtocol :: Bool,
-   securityCertificateSecurityStateObsoleteSslKeyExchange :: Bool,
-   securityCertificateSecurityStateObsoleteSslCipher :: Bool,
-   securityCertificateSecurityStateObsoleteSslSignature :: Bool
+   securityCertificateSecurityStateProtocol :: SecurityCertificateSecurityStateProtocol, -- ^ Protocol name (e.g. "TLS 1.2" or "QUIC").
+   securityCertificateSecurityStateKeyExchange :: SecurityCertificateSecurityStateKeyExchange, -- ^ Key Exchange used by the connection, or the empty string if not applicable.
+   securityCertificateSecurityStateKeyExchangeGroup :: SecurityCertificateSecurityStateKeyExchangeGroup, -- ^ (EC)DH group used by the connection, if applicable.
+   securityCertificateSecurityStateCipher :: SecurityCertificateSecurityStateCipher, -- ^ Cipher name.
+   securityCertificateSecurityStateMac :: SecurityCertificateSecurityStateMac, -- ^ TLS MAC. Note that AEAD ciphers do not have separate MACs.
+   securityCertificateSecurityStateCertificate :: SecurityCertificateSecurityStateCertificate, -- ^ Page certificate.
+   securityCertificateSecurityStateSubjectName :: SecurityCertificateSecurityStateSubjectName, -- ^ Certificate subject name.
+   securityCertificateSecurityStateIssuer :: SecurityCertificateSecurityStateIssuer, -- ^ Name of the issuing CA.
+   securityCertificateSecurityStateValidFrom :: SecurityCertificateSecurityStateValidFrom, -- ^ Certificate valid from date.
+   securityCertificateSecurityStateValidTo :: SecurityCertificateSecurityStateValidTo, -- ^ Certificate valid to (expiration) date
+   securityCertificateSecurityStateCertificateNetworkError :: SecurityCertificateSecurityStateCertificateNetworkError, -- ^ The highest priority network error code, if the certificate has an error.
+   securityCertificateSecurityStateCertificateHasWeakSignature :: SecurityCertificateSecurityStateCertificateHasWeakSignature, -- ^ True if the certificate uses a weak signature aglorithm.
+   securityCertificateSecurityStateCertificateHasSha1Signature :: SecurityCertificateSecurityStateCertificateHasSha1Signature, -- ^ True if the certificate has a SHA1 signature in the chain.
+   securityCertificateSecurityStateModernSsl :: SecurityCertificateSecurityStateModernSsl, -- ^ True if modern SSL
+   securityCertificateSecurityStateObsoleteSslProtocol :: SecurityCertificateSecurityStateObsoleteSslProtocol, -- ^ True if the connection is using an obsolete SSL protocol.
+   securityCertificateSecurityStateObsoleteSslKeyExchange :: SecurityCertificateSecurityStateObsoleteSslKeyExchange, -- ^ True if the connection is using an obsolete SSL key exchange.
+   securityCertificateSecurityStateObsoleteSslCipher :: SecurityCertificateSecurityStateObsoleteSslCipher, -- ^ True if the connection is using an obsolete SSL cipher.
+   securityCertificateSecurityStateObsoleteSslSignature :: SecurityCertificateSecurityStateObsoleteSslSignature -- ^ True if the connection is using an obsolete SSL signature.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON SecurityCertificateSecurityState  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
@@ -6603,6 +7589,8 @@ instance FromJSON  SecurityCertificateSecurityState where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
+
+-- | Type 'Security.SafetyTipStatus' .
 data SecuritySafetyTipStatus = SecuritySafetyTipStatusBadReputation | SecuritySafetyTipStatusLookalike
    deriving (Ord, Eq, Show, Read)
 instance FromJSON SecuritySafetyTipStatus where
@@ -6620,9 +7608,10 @@ instance ToJSON SecuritySafetyTipStatus where
 
 
 
+-- | Type 'Security.SafetyTipInfo' .
 data SecuritySafetyTipInfo = SecuritySafetyTipInfo {
-   securitySafetyTipInfoSafetyTipStatus :: SecuritySafetyTipStatus,
-   securitySafetyTipInfoSafeUrl :: Maybe String
+   securitySafetyTipInfoSafetyTipStatus :: SecuritySafetyTipInfoSafetyTipStatus, -- ^ Describes whether the page triggers any safety tips or reputation warnings. Default is unknown.
+   securitySafetyTipInfoSafeUrl :: SecuritySafetyTipInfoSafeUrl -- ^ The URL the safety tip suggested ("Did you mean?"). Only filled in for lookalike matches.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON SecuritySafetyTipInfo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -6632,11 +7621,12 @@ instance FromJSON  SecuritySafetyTipInfo where
 
 
 
+-- | Security state information about the page.
 data SecurityVisibleSecurityState = SecurityVisibleSecurityState {
-   securityVisibleSecurityStateSecurityState :: SecuritySecurityState,
-   securityVisibleSecurityStateCertificateSecurityState :: Maybe SecurityCertificateSecurityState,
-   securityVisibleSecurityStateSafetyTipInfo :: Maybe SecuritySafetyTipInfo,
-   securityVisibleSecurityStateSecurityStateIssueIds :: [String]
+   securityVisibleSecurityStateSecurityState :: SecurityVisibleSecurityStateSecurityState, -- ^ The security level of the page.
+   securityVisibleSecurityStateCertificateSecurityState :: SecurityVisibleSecurityStateCertificateSecurityState, -- ^ Security state details about the page certificate.
+   securityVisibleSecurityStateSafetyTipInfo :: SecurityVisibleSecurityStateSafetyTipInfo, -- ^ The type of Safety Tip triggered on the page. Note that this field will be set even if the Safety Tip UI was not actually shown.
+   securityVisibleSecurityStateSecurityStateIssueIds :: SecurityVisibleSecurityStateSecurityStateIssueIds -- ^ Array of security state issues ids.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON SecurityVisibleSecurityState  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -6646,14 +7636,15 @@ instance FromJSON  SecurityVisibleSecurityState where
 
 
 
+-- | An explanation of an factor contributing to the security state.
 data SecuritySecurityStateExplanation = SecuritySecurityStateExplanation {
-   securitySecurityStateExplanationSecurityState :: SecuritySecurityState,
-   securitySecurityStateExplanationTitle :: String,
-   securitySecurityStateExplanationSummary :: String,
-   securitySecurityStateExplanationDescription :: String,
-   securitySecurityStateExplanationMixedContentType :: SecurityMixedContentType,
-   securitySecurityStateExplanationCertificate :: [String],
-   securitySecurityStateExplanationRecommendations :: Maybe [String]
+   securitySecurityStateExplanationSecurityState :: SecuritySecurityStateExplanationSecurityState, -- ^ Security state representing the severity of the factor being explained.
+   securitySecurityStateExplanationTitle :: SecuritySecurityStateExplanationTitle, -- ^ Title describing the type of factor.
+   securitySecurityStateExplanationSummary :: SecuritySecurityStateExplanationSummary, -- ^ Short phrase describing the type of factor.
+   securitySecurityStateExplanationDescription :: SecuritySecurityStateExplanationDescription, -- ^ Full text explanation of the factor.
+   securitySecurityStateExplanationMixedContentType :: SecuritySecurityStateExplanationMixedContentType, -- ^ The type of mixed content described by the explanation.
+   securitySecurityStateExplanationCertificate :: SecuritySecurityStateExplanationCertificate, -- ^ Page certificate.
+   securitySecurityStateExplanationRecommendations :: SecuritySecurityStateExplanationRecommendations -- ^ Recommendations to fix any issues.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON SecuritySecurityStateExplanation  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
@@ -6662,6 +7653,9 @@ instance FromJSON  SecuritySecurityStateExplanation where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
+
+-- | The action to take when a certificate error occurs. continue will continue processing the
+-- request and cancel will cancel the request.
 data SecurityCertificateErrorAction = SecurityCertificateErrorActionContinue | SecurityCertificateErrorActionCancel
    deriving (Ord, Eq, Show, Read)
 instance FromJSON SecurityCertificateErrorAction where
@@ -6681,8 +7675,9 @@ instance ToJSON SecurityCertificateErrorAction where
 
 
 
+-- | Type of the 'Security.visibleSecurityStateChanged' event.
 data SecurityVisibleSecurityStateChanged = SecurityVisibleSecurityStateChanged {
-   securityVisibleSecurityStateChangedVisibleSecurityState :: SecurityVisibleSecurityState
+   securityVisibleSecurityStateChangedVisibleSecurityState :: SecurityVisibleSecurityStateChangedVisibleSecurityState -- ^ Security state information about the page.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON SecurityVisibleSecurityStateChanged  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 , A.omitNothingFields = True}
@@ -6693,17 +7688,22 @@ instance FromJSON  SecurityVisibleSecurityStateChanged where
 
 
 
+
+-- | Function for the command 'Security.disable'.
+-- Disables tracking security state changes.
 securityDisable :: Handle ev -> IO (Maybe Error)
 securityDisable handle = sendReceiveCommand handle "Security.disable" (Nothing :: Maybe ())
 
 
+-- | Function for the command 'Security.enable'.
+-- Enables tracking security state changes.
 securityEnable :: Handle ev -> IO (Maybe Error)
 securityEnable handle = sendReceiveCommand handle "Security.enable" (Nothing :: Maybe ())
 
 
-
+-- | Parameters of the 'securitySetIgnoreCertificateErrors' command.
 data PSecuritySetIgnoreCertificateErrors = PSecuritySetIgnoreCertificateErrors {
-   pSecuritySetIgnoreCertificateErrorsIgnore :: Bool
+   pSecuritySetIgnoreCertificateErrorsIgnore :: PSecuritySetIgnoreCertificateErrorsIgnore -- ^ If true, all certificate errors will be ignored.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PSecuritySetIgnoreCertificateErrors  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 , A.omitNothingFields = True}
@@ -6712,6 +7712,9 @@ instance FromJSON  PSecuritySetIgnoreCertificateErrors where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 }
 
 
+-- | Function for the command 'Security.setIgnoreCertificateErrors'.
+-- Enable/disable whether all certificate errors should be ignored.
+-- Parameters: 'PSecuritySetIgnoreCertificateErrors'
 securitySetIgnoreCertificateErrors :: Handle ev -> PSecuritySetIgnoreCertificateErrors -> IO (Maybe Error)
 securitySetIgnoreCertificateErrors handle params = sendReceiveCommand handle "Security.setIgnoreCertificateErrors" (Just params)
 

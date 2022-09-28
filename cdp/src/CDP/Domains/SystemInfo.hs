@@ -5,6 +5,13 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
 
+{- |
+  SystemInfo :
+     The SystemInfo domain defines methods and events for querying low-level system information.
+
+-}
+
+
 module CDP.Domains.SystemInfo (module CDP.Domains.SystemInfo) where
 
 import           Control.Applicative  ((<$>))
@@ -40,16 +47,16 @@ import CDP.Handle
 
 
 
-
+-- | Describes a single graphics processor (GPU).
 data SystemInfoGpuDevice = SystemInfoGpuDevice {
-   systemInfoGpuDeviceVendorId :: Double,
-   systemInfoGpuDeviceDeviceId :: Double,
-   systemInfoGpuDeviceSubSysId :: Maybe Double,
-   systemInfoGpuDeviceRevision :: Maybe Double,
-   systemInfoGpuDeviceVendorString :: String,
-   systemInfoGpuDeviceDeviceString :: String,
-   systemInfoGpuDeviceDriverVendor :: String,
-   systemInfoGpuDeviceDriverVersion :: String
+   systemInfoGpuDeviceVendorId :: SystemInfoGpuDeviceVendorId, -- ^ PCI ID of the GPU vendor, if available; 0 otherwise.
+   systemInfoGpuDeviceDeviceId :: SystemInfoGpuDeviceDeviceId, -- ^ PCI ID of the GPU device, if available; 0 otherwise.
+   systemInfoGpuDeviceSubSysId :: SystemInfoGpuDeviceSubSysId, -- ^ Sub sys ID of the GPU, only available on Windows.
+   systemInfoGpuDeviceRevision :: SystemInfoGpuDeviceRevision, -- ^ Revision of the GPU, only available on Windows.
+   systemInfoGpuDeviceVendorString :: SystemInfoGpuDeviceVendorString, -- ^ String description of the GPU vendor, if the PCI ID is not available.
+   systemInfoGpuDeviceDeviceString :: SystemInfoGpuDeviceDeviceString, -- ^ String description of the GPU device, if the PCI ID is not available.
+   systemInfoGpuDeviceDriverVendor :: SystemInfoGpuDeviceDriverVendor, -- ^ String description of the GPU driver vendor.
+   systemInfoGpuDeviceDriverVersion :: SystemInfoGpuDeviceDriverVersion -- ^ String description of the GPU driver version.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON SystemInfoGpuDevice  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -59,9 +66,10 @@ instance FromJSON  SystemInfoGpuDevice where
 
 
 
+-- | Describes the width and height dimensions of an entity.
 data SystemInfoSize = SystemInfoSize {
-   systemInfoSizeWidth :: Int,
-   systemInfoSizeHeight :: Int
+   systemInfoSizeWidth :: SystemInfoSizeWidth, -- ^ Width in pixels.
+   systemInfoSizeHeight :: SystemInfoSizeHeight -- ^ Height in pixels.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON SystemInfoSize  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
@@ -71,10 +79,12 @@ instance FromJSON  SystemInfoSize where
 
 
 
+-- | Describes a supported video decoding profile with its associated minimum and
+-- maximum resolutions.
 data SystemInfoVideoDecodeAcceleratorCapability = SystemInfoVideoDecodeAcceleratorCapability {
-   systemInfoVideoDecodeAcceleratorCapabilityProfile :: String,
-   systemInfoVideoDecodeAcceleratorCapabilityMaxResolution :: SystemInfoSize,
-   systemInfoVideoDecodeAcceleratorCapabilityMinResolution :: SystemInfoSize
+   systemInfoVideoDecodeAcceleratorCapabilityProfile :: SystemInfoVideoDecodeAcceleratorCapabilityProfile, -- ^ Video codec profile that is supported, e.g. VP9 Profile 2.
+   systemInfoVideoDecodeAcceleratorCapabilityMaxResolution :: SystemInfoVideoDecodeAcceleratorCapabilityMaxResolution, -- ^ Maximum video dimensions in pixels supported for this |profile|.
+   systemInfoVideoDecodeAcceleratorCapabilityMinResolution :: SystemInfoVideoDecodeAcceleratorCapabilityMinResolution -- ^ Minimum video dimensions in pixels supported for this |profile|.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON SystemInfoVideoDecodeAcceleratorCapability  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 42 , A.omitNothingFields = True}
@@ -84,11 +94,15 @@ instance FromJSON  SystemInfoVideoDecodeAcceleratorCapability where
 
 
 
+-- | Describes a supported video encoding profile with its associated maximum
+-- resolution and maximum framerate.
 data SystemInfoVideoEncodeAcceleratorCapability = SystemInfoVideoEncodeAcceleratorCapability {
-   systemInfoVideoEncodeAcceleratorCapabilityProfile :: String,
-   systemInfoVideoEncodeAcceleratorCapabilityMaxResolution :: SystemInfoSize,
-   systemInfoVideoEncodeAcceleratorCapabilityMaxFramerateNumerator :: Int,
-   systemInfoVideoEncodeAcceleratorCapabilityMaxFramerateDenominator :: Int
+   systemInfoVideoEncodeAcceleratorCapabilityProfile :: SystemInfoVideoEncodeAcceleratorCapabilityProfile, -- ^ Video codec profile that is supported, e.g H264 Main.
+   systemInfoVideoEncodeAcceleratorCapabilityMaxResolution :: SystemInfoVideoEncodeAcceleratorCapabilityMaxResolution, -- ^ Maximum video dimensions in pixels supported for this |profile|.
+   systemInfoVideoEncodeAcceleratorCapabilityMaxFramerateNumerator :: SystemInfoVideoEncodeAcceleratorCapabilityMaxFramerateNumerator, -- ^ Maximum encoding framerate in frames per second supported for this
+|profile|, as fraction's numerator and denominator, e.g. 24/1 fps,
+24000/1001 fps, etc.
+
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON SystemInfoVideoEncodeAcceleratorCapability  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 42 , A.omitNothingFields = True}
@@ -97,6 +111,8 @@ instance FromJSON  SystemInfoVideoEncodeAcceleratorCapability where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 42 }
 
 
+
+-- | YUV subsampling type of the pixels of a given image.
 data SystemInfoSubsamplingFormat = SystemInfoSubsamplingFormatYuv420 | SystemInfoSubsamplingFormatYuv422 | SystemInfoSubsamplingFormatYuv444
    deriving (Ord, Eq, Show, Read)
 instance FromJSON SystemInfoSubsamplingFormat where
@@ -115,6 +131,8 @@ instance ToJSON SystemInfoSubsamplingFormat where
          SystemInfoSubsamplingFormatYuv444 -> "yuv444"
 
 
+
+-- | Image format of a given image.
 data SystemInfoImageType = SystemInfoImageTypeJpeg | SystemInfoImageTypeWebp | SystemInfoImageTypeUnknown
    deriving (Ord, Eq, Show, Read)
 instance FromJSON SystemInfoImageType where
@@ -134,11 +152,13 @@ instance ToJSON SystemInfoImageType where
 
 
 
+-- | Describes a supported image decoding profile with its associated minimum and
+-- maximum resolutions and subsampling.
 data SystemInfoImageDecodeAcceleratorCapability = SystemInfoImageDecodeAcceleratorCapability {
-   systemInfoImageDecodeAcceleratorCapabilityImageType :: SystemInfoImageType,
-   systemInfoImageDecodeAcceleratorCapabilityMaxDimensions :: SystemInfoSize,
-   systemInfoImageDecodeAcceleratorCapabilityMinDimensions :: SystemInfoSize,
-   systemInfoImageDecodeAcceleratorCapabilitySubsamplings :: [SystemInfoSubsamplingFormat]
+   systemInfoImageDecodeAcceleratorCapabilityImageType :: SystemInfoImageDecodeAcceleratorCapabilityImageType, -- ^ Image coded, e.g. Jpeg.
+   systemInfoImageDecodeAcceleratorCapabilityMaxDimensions :: SystemInfoImageDecodeAcceleratorCapabilityMaxDimensions, -- ^ Maximum supported dimensions of the image in pixels.
+   systemInfoImageDecodeAcceleratorCapabilityMinDimensions :: SystemInfoImageDecodeAcceleratorCapabilityMinDimensions, -- ^ Minimum supported dimensions of the image in pixels.
+   systemInfoImageDecodeAcceleratorCapabilitySubsamplings :: SystemInfoImageDecodeAcceleratorCapabilitySubsamplings -- ^ Optional array of supported subsampling formats, e.g. 4:2:0, if known.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON SystemInfoImageDecodeAcceleratorCapability  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 42 , A.omitNothingFields = True}
@@ -148,14 +168,15 @@ instance FromJSON  SystemInfoImageDecodeAcceleratorCapability where
 
 
 
+-- | Provides information about the GPU(s) on the system.
 data SystemInfoGpuInfo = SystemInfoGpuInfo {
-   systemInfoGpuInfoDevices :: [SystemInfoGpuDevice],
-   systemInfoGpuInfoAuxAttributes :: Maybe [(String, String)],
-   systemInfoGpuInfoFeatureStatus :: Maybe [(String, String)],
-   systemInfoGpuInfoDriverBugWorkarounds :: [String],
-   systemInfoGpuInfoVideoDecoding :: [SystemInfoVideoDecodeAcceleratorCapability],
-   systemInfoGpuInfoVideoEncoding :: [SystemInfoVideoEncodeAcceleratorCapability],
-   systemInfoGpuInfoImageDecoding :: [SystemInfoImageDecodeAcceleratorCapability]
+   systemInfoGpuInfoDevices :: SystemInfoGpuInfoDevices, -- ^ The graphics devices on the system. Element 0 is the primary GPU.
+   systemInfoGpuInfoAuxAttributes :: SystemInfoGpuInfoAuxAttributes, -- ^ An optional dictionary of additional GPU related attributes.
+   systemInfoGpuInfoFeatureStatus :: SystemInfoGpuInfoFeatureStatus, -- ^ An optional dictionary of graphics features and their status.
+   systemInfoGpuInfoDriverBugWorkarounds :: SystemInfoGpuInfoDriverBugWorkarounds, -- ^ An optional array of GPU driver bug workarounds.
+   systemInfoGpuInfoVideoDecoding :: SystemInfoGpuInfoVideoDecoding, -- ^ Supported accelerated video decoding capabilities.
+   systemInfoGpuInfoVideoEncoding :: SystemInfoGpuInfoVideoEncoding, -- ^ Supported accelerated video encoding capabilities.
+   systemInfoGpuInfoImageDecoding :: SystemInfoGpuInfoImageDecoding -- ^ Supported accelerated image decoding capabilities.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON SystemInfoGpuInfo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -165,10 +186,12 @@ instance FromJSON  SystemInfoGpuInfo where
 
 
 
+-- | Represents process info.
 data SystemInfoProcessInfo = SystemInfoProcessInfo {
-   systemInfoProcessInfoType :: String,
-   systemInfoProcessInfoId :: Int,
-   systemInfoProcessInfoCpuTime :: Double
+   systemInfoProcessInfoType :: SystemInfoProcessInfoType, -- ^ Specifies process type.
+   systemInfoProcessInfoId :: SystemInfoProcessInfoId, -- ^ Specifies process id.
+   systemInfoProcessInfoCpuTime :: SystemInfoProcessInfoCpuTime -- ^ Specifies cumulative CPU usage in seconds across all threads of the
+process since the process start.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON SystemInfoProcessInfo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -181,14 +204,22 @@ instance FromJSON  SystemInfoProcessInfo where
 
 
 
+
+-- | Function for the command 'SystemInfo.getInfo'.
+-- Returns information about the system.
+-- Returns: 'SystemInfoGetInfo'
 systemInfoGetInfo :: Handle ev -> IO (Either Error SystemInfoGetInfo)
 systemInfoGetInfo handle = sendReceiveCommandResult handle "SystemInfo.getInfo" (Nothing :: Maybe ())
 
+-- | Return type of the 'systemInfoGetInfo' command.
 data SystemInfoGetInfo = SystemInfoGetInfo {
-   systemInfoGetInfoGpu :: SystemInfoGpuInfo,
-   systemInfoGetInfoModelName :: String,
-   systemInfoGetInfoModelVersion :: String,
-   systemInfoGetInfoCommandLine :: String
+   systemInfoGetInfoGpu :: SystemInfoGpuInfo, -- ^ Information about the GPUs on the system.
+   systemInfoGetInfoModelName :: String, -- ^ A platform-dependent description of the model of the machine. On Mac OS, this is, for
+example, 'MacBookPro'. Will be the empty string if not supported.
+   systemInfoGetInfoModelVersion :: String, -- ^ A platform-dependent description of the version of the machine. On Mac OS, this is, for
+example, '10.1'. Will be the empty string if not supported.
+   systemInfoGetInfoCommandLine :: String -- ^ The command line string used to launch the browser. Will be the empty string if not
+supported.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  SystemInfoGetInfo where
@@ -199,11 +230,15 @@ instance Command SystemInfoGetInfo where
 
 
 
+-- | Function for the command 'SystemInfo.getProcessInfo'.
+-- Returns information about all running processes.
+-- Returns: 'SystemInfoGetProcessInfo'
 systemInfoGetProcessInfo :: Handle ev -> IO (Either Error SystemInfoGetProcessInfo)
 systemInfoGetProcessInfo handle = sendReceiveCommandResult handle "SystemInfo.getProcessInfo" (Nothing :: Maybe ())
 
+-- | Return type of the 'systemInfoGetProcessInfo' command.
 data SystemInfoGetProcessInfo = SystemInfoGetProcessInfo {
-   systemInfoGetProcessInfoProcessInfo :: [SystemInfoProcessInfo]
+   systemInfoGetProcessInfoProcessInfo :: [SystemInfoProcessInfo] -- ^ An array of process info blocks.
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  SystemInfoGetProcessInfo where

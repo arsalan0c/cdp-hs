@@ -5,6 +5,11 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
 
+{- |
+  DeviceOrientation 
+-}
+
+
 module CDP.Domains.DeviceOrientation (module CDP.Domains.DeviceOrientation) where
 
 import           Control.Applicative  ((<$>))
@@ -44,15 +49,17 @@ import CDP.Handle
 
 
 
+-- | Function for the command 'DeviceOrientation.clearDeviceOrientationOverride'.
+-- Clears the overridden Device Orientation.
 deviceOrientationClearDeviceOrientationOverride :: Handle ev -> IO (Maybe Error)
 deviceOrientationClearDeviceOrientationOverride handle = sendReceiveCommand handle "DeviceOrientation.clearDeviceOrientationOverride" (Nothing :: Maybe ())
 
 
-
+-- | Parameters of the 'deviceOrientationSetDeviceOrientationOverride' command.
 data PDeviceOrientationSetDeviceOrientationOverride = PDeviceOrientationSetDeviceOrientationOverride {
-   pDeviceOrientationSetDeviceOrientationOverrideAlpha :: Double,
-   pDeviceOrientationSetDeviceOrientationOverrideBeta :: Double,
-   pDeviceOrientationSetDeviceOrientationOverrideGamma :: Double
+   pDeviceOrientationSetDeviceOrientationOverrideAlpha :: PDeviceOrientationSetDeviceOrientationOverrideAlpha, -- ^ Mock alpha
+   pDeviceOrientationSetDeviceOrientationOverrideBeta :: PDeviceOrientationSetDeviceOrientationOverrideBeta, -- ^ Mock beta
+   pDeviceOrientationSetDeviceOrientationOverrideGamma :: PDeviceOrientationSetDeviceOrientationOverrideGamma -- ^ Mock gamma
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDeviceOrientationSetDeviceOrientationOverride  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 46 , A.omitNothingFields = True}
@@ -61,6 +68,9 @@ instance FromJSON  PDeviceOrientationSetDeviceOrientationOverride where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 46 }
 
 
+-- | Function for the command 'DeviceOrientation.setDeviceOrientationOverride'.
+-- Overrides the Device Orientation.
+-- Parameters: 'PDeviceOrientationSetDeviceOrientationOverride'
 deviceOrientationSetDeviceOrientationOverride :: Handle ev -> PDeviceOrientationSetDeviceOrientationOverride -> IO (Maybe Error)
 deviceOrientationSetDeviceOrientationOverride handle params = sendReceiveCommand handle "DeviceOrientation.setDeviceOrientationOverride" (Just params)
 

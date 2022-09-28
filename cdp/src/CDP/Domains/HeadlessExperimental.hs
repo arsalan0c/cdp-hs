@@ -5,6 +5,13 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
 
+{- |
+  HeadlessExperimental :
+     This domain provides experimental commands only supported in headless mode.
+
+-}
+
+
 module CDP.Domains.HeadlessExperimental (module CDP.Domains.HeadlessExperimental) where
 
 import           Control.Applicative  ((<$>))
@@ -40,6 +47,7 @@ import CDP.Handle
 
 
 
+-- | Encoding options for a screenshot.
 data HeadlessExperimentalScreenshotParamsFormat = HeadlessExperimentalScreenshotParamsFormatJpeg | HeadlessExperimentalScreenshotParamsFormatPng
    deriving (Ord, Eq, Show, Read)
 instance FromJSON HeadlessExperimentalScreenshotParamsFormat where
@@ -58,8 +66,8 @@ instance ToJSON HeadlessExperimentalScreenshotParamsFormat where
 
 
 data HeadlessExperimentalScreenshotParams = HeadlessExperimentalScreenshotParams {
-   headlessExperimentalScreenshotParamsFormat :: HeadlessExperimentalScreenshotParamsFormat,
-   headlessExperimentalScreenshotParamsQuality :: Maybe Int
+   headlessExperimentalScreenshotParamsFormat :: HeadlessExperimentalScreenshotParamsFormat, -- ^ Image compression format (defaults to png).
+   headlessExperimentalScreenshotParamsQuality :: HeadlessExperimentalScreenshotParamsQuality -- ^ Compression quality from range [0..100] (jpeg only).
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON HeadlessExperimentalScreenshotParams  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
@@ -73,11 +81,18 @@ instance FromJSON  HeadlessExperimentalScreenshotParams where
 
 
 
+-- | Parameters of the 'headlessExperimentalBeginFrame' command.
 data PHeadlessExperimentalBeginFrame = PHeadlessExperimentalBeginFrame {
-   pHeadlessExperimentalBeginFrameFrameTimeTicks :: Maybe Double,
-   pHeadlessExperimentalBeginFrameInterval :: Maybe Double,
-   pHeadlessExperimentalBeginFrameNoDisplayUpdates :: Maybe Bool,
-   pHeadlessExperimentalBeginFrameScreenshot :: Maybe HeadlessExperimentalScreenshotParams
+   pHeadlessExperimentalBeginFrameFrameTimeTicks :: PHeadlessExperimentalBeginFrameFrameTimeTicks, -- ^ Timestamp of this BeginFrame in Renderer TimeTicks (milliseconds of uptime). If not set,
+the current time will be used.
+   pHeadlessExperimentalBeginFrameInterval :: PHeadlessExperimentalBeginFrameInterval, -- ^ The interval between BeginFrames that is reported to the compositor, in milliseconds.
+Defaults to a 60 frames/second interval, i.e. about 16.666 milliseconds.
+   pHeadlessExperimentalBeginFrameNoDisplayUpdates :: PHeadlessExperimentalBeginFrameNoDisplayUpdates, -- ^ Whether updates should not be committed and drawn onto the display. False by default. If
+true, only side effects of the BeginFrame will be run, such as layout and animations, but
+any visual updates may not be visible on the display or in screenshots.
+   pHeadlessExperimentalBeginFrameScreenshot :: PHeadlessExperimentalBeginFrameScreenshot -- ^ If set, a screenshot of the frame will be captured and returned in the response. Otherwise,
+no screenshot will be captured. Note that capturing a screenshot can fail, for example,
+during renderer initialization. In such a case, no screenshot data will be returned.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PHeadlessExperimentalBeginFrame  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
@@ -86,12 +101,21 @@ instance FromJSON  PHeadlessExperimentalBeginFrame where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
+-- | Function for the command 'HeadlessExperimental.beginFrame'.
+-- Sends a BeginFrame to the target and returns when the frame was completed. Optionally captures a
+-- screenshot from the resulting frame. Requires that the target was created with enabled
+-- BeginFrameControl. Designed for use with --run-all-compositor-stages-before-draw, see also
+-- https://goo.gle/chrome-headless-rendering for more background.
+-- Parameters: 'PHeadlessExperimentalBeginFrame'
+-- Returns: 'HeadlessExperimentalBeginFrame'
 headlessExperimentalBeginFrame :: Handle ev -> PHeadlessExperimentalBeginFrame -> IO (Either Error HeadlessExperimentalBeginFrame)
 headlessExperimentalBeginFrame handle params = sendReceiveCommandResult handle "HeadlessExperimental.beginFrame" (Just params)
 
+-- | Return type of the 'headlessExperimentalBeginFrame' command.
 data HeadlessExperimentalBeginFrame = HeadlessExperimentalBeginFrame {
-   headlessExperimentalBeginFrameHasDamage :: Bool,
-   headlessExperimentalBeginFrameScreenshotData :: Maybe String
+   headlessExperimentalBeginFrameHasDamage :: Bool, -- ^ Whether the BeginFrame resulted in damage and, thus, a new frame was committed to the
+display. Reported for diagnostic uses, may be removed in the future.
+   headlessExperimentalBeginFrameScreenshotData :: Maybe String -- ^ Base64-encoded image data of the screenshot, if one was requested and successfully taken. (Encoded as a base64 string when passed over JSON)
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  HeadlessExperimentalBeginFrame where
@@ -102,10 +126,14 @@ instance Command HeadlessExperimentalBeginFrame where
 
 
 
+-- | Function for the command 'HeadlessExperimental.disable'.
+-- Disables headless events for the target.
 headlessExperimentalDisable :: Handle ev -> IO (Maybe Error)
 headlessExperimentalDisable handle = sendReceiveCommand handle "HeadlessExperimental.disable" (Nothing :: Maybe ())
 
 
+-- | Function for the command 'HeadlessExperimental.enable'.
+-- Enables headless events for the target.
 headlessExperimentalEnable :: Handle ev -> IO (Maybe Error)
 headlessExperimentalEnable handle = sendReceiveCommand handle "HeadlessExperimental.enable" (Nothing :: Maybe ())
 

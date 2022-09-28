@@ -5,6 +5,11 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
 
+{- |
+  Inspector 
+-}
+
+
 module CDP.Domains.Inspector (module CDP.Domains.Inspector) where
 
 import           Control.Applicative  ((<$>))
@@ -42,9 +47,9 @@ import CDP.Handle
 
 
 
-
+-- | Type of the 'Inspector.detached' event.
 data InspectorDetached = InspectorDetached {
-   inspectorDetachedReason :: String
+   inspectorDetachedReason :: InspectorDetachedReason -- ^ The reason why connection has been terminated.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON InspectorDetached  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -53,6 +58,8 @@ instance FromJSON  InspectorDetached where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
+
+-- | Type of the 'Inspector.targetCrashed' event.
 data InspectorTargetCrashed = InspectorTargetCrashed
    deriving (Eq, Show, Read)
 instance FromJSON InspectorTargetCrashed where
@@ -62,6 +69,8 @@ instance FromJSON InspectorTargetCrashed where
          _ -> fail "failed to parse InspectorTargetCrashed"
 
 
+
+-- | Type of the 'Inspector.targetReloadedAfterCrash' event.
 data InspectorTargetReloadedAfterCrash = InspectorTargetReloadedAfterCrash
    deriving (Eq, Show, Read)
 instance FromJSON InspectorTargetReloadedAfterCrash where
@@ -73,10 +82,15 @@ instance FromJSON InspectorTargetReloadedAfterCrash where
 
 
 
+
+-- | Function for the command 'Inspector.disable'.
+-- Disables inspector domain notifications.
 inspectorDisable :: Handle ev -> IO (Maybe Error)
 inspectorDisable handle = sendReceiveCommand handle "Inspector.disable" (Nothing :: Maybe ())
 
 
+-- | Function for the command 'Inspector.enable'.
+-- Enables inspector domain notifications.
 inspectorEnable :: Handle ev -> IO (Maybe Error)
 inspectorEnable handle = sendReceiveCommand handle "Inspector.enable" (Nothing :: Maybe ())
 

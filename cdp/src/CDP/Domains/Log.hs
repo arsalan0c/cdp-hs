@@ -5,6 +5,13 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
 
+{- |
+  Log :
+     Provides access to log entries.
+
+-}
+
+
 module CDP.Domains.Log (module CDP.Domains.Log) where
 
 import           Control.Applicative  ((<$>))
@@ -42,6 +49,7 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 import CDP.Domains.Runtime as Runtime
 
 
+-- | Log entry.
 data LogLogEntrySource = LogLogEntrySourceXml | LogLogEntrySourceJavascript | LogLogEntrySourceNetwork | LogLogEntrySourceStorage | LogLogEntrySourceAppcache | LogLogEntrySourceRendering | LogLogEntrySourceSecurity | LogLogEntrySourceDeprecation | LogLogEntrySourceWorker | LogLogEntrySourceViolation | LogLogEntrySourceIntervention | LogLogEntrySourceRecommendation | LogLogEntrySourceOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON LogLogEntrySource where
@@ -116,17 +124,17 @@ instance ToJSON LogLogEntryCategory where
 
 
 data LogLogEntry = LogLogEntry {
-   logLogEntrySource :: LogLogEntrySource,
-   logLogEntryLevel :: LogLogEntryLevel,
-   logLogEntryText :: String,
-   logLogEntryCategory :: LogLogEntryCategory,
-   logLogEntryTimestamp :: Runtime.RuntimeTimestamp,
-   logLogEntryUrl :: Maybe String,
-   logLogEntryLineNumber :: Maybe Int,
-   logLogEntryStackTrace :: Maybe Runtime.RuntimeStackTrace,
-   logLogEntryNetworkRequestId :: Maybe DOMPageNetworkEmulationSecurity.NetworkRequestId,
-   logLogEntryWorkerId :: Maybe String,
-   logLogEntryArgs :: Maybe [Runtime.RuntimeRemoteObject]
+   logLogEntrySource :: LogLogEntrySource, -- ^ Log entry source.
+   logLogEntryLevel :: LogLogEntryLevel, -- ^ Log entry severity.
+   logLogEntryText :: LogLogEntryText, -- ^ Logged text.
+
+   logLogEntryTimestamp :: LogLogEntryTimestamp, -- ^ Timestamp when this entry was added.
+   logLogEntryUrl :: LogLogEntryUrl, -- ^ URL of the resource if known.
+   logLogEntryLineNumber :: LogLogEntryLineNumber, -- ^ Line number in the resource.
+   logLogEntryStackTrace :: LogLogEntryStackTrace, -- ^ JavaScript stack trace.
+   logLogEntryNetworkRequestId :: LogLogEntryNetworkRequestId, -- ^ Identifier of the network request associated with this entry.
+   logLogEntryWorkerId :: LogLogEntryWorkerId, -- ^ Identifier of the worker associated with this entry.
+   logLogEntryArgs :: LogLogEntryArgs -- ^ Call arguments.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON LogLogEntry  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 , A.omitNothingFields = True}
@@ -135,6 +143,8 @@ instance FromJSON  LogLogEntry where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 }
 
 
+
+-- | Violation configuration setting.
 data LogViolationSettingName = LogViolationSettingNameLongTask | LogViolationSettingNameLongLayout | LogViolationSettingNameBlockedEvent | LogViolationSettingNameBlockedParser | LogViolationSettingNameDiscouragedApiUse | LogViolationSettingNameHandler | LogViolationSettingNameRecurringHandler
    deriving (Ord, Eq, Show, Read)
 instance FromJSON LogViolationSettingName where
@@ -163,8 +173,8 @@ instance ToJSON LogViolationSettingName where
 
 
 data LogViolationSetting = LogViolationSetting {
-   logViolationSettingName :: LogViolationSettingName,
-   logViolationSettingThreshold :: Double
+   logViolationSettingName :: LogViolationSettingName, -- ^ Violation type.
+   logViolationSettingThreshold :: LogViolationSettingThreshold -- ^ Time threshold to trigger upon.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON LogViolationSetting  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -176,8 +186,9 @@ instance FromJSON  LogViolationSetting where
 
 
 
+-- | Type of the 'Log.entryAdded' event.
 data LogEntryAdded = LogEntryAdded {
-   logEntryAddedEntry :: LogLogEntry
+   logEntryAddedEntry :: LogEntryAddedEntry -- ^ The entry.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON LogEntryAdded  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 , A.omitNothingFields = True}
@@ -188,21 +199,29 @@ instance FromJSON  LogEntryAdded where
 
 
 
+
+-- | Function for the command 'Log.clear'.
+-- Clears the log.
 logClear :: Handle ev -> IO (Maybe Error)
 logClear handle = sendReceiveCommand handle "Log.clear" (Nothing :: Maybe ())
 
 
+-- | Function for the command 'Log.disable'.
+-- Disables log domain, prevents further log entries from being reported to the client.
 logDisable :: Handle ev -> IO (Maybe Error)
 logDisable handle = sendReceiveCommand handle "Log.disable" (Nothing :: Maybe ())
 
 
+-- | Function for the command 'Log.enable'.
+-- Enables log domain, sends the entries collected so far to the client by means of the
+-- `entryAdded` notification.
 logEnable :: Handle ev -> IO (Maybe Error)
 logEnable handle = sendReceiveCommand handle "Log.enable" (Nothing :: Maybe ())
 
 
-
+-- | Parameters of the 'logStartViolationsReport' command.
 data PLogStartViolationsReport = PLogStartViolationsReport {
-   pLogStartViolationsReportConfig :: [LogViolationSetting]
+   pLogStartViolationsReportConfig :: PLogStartViolationsReportConfig -- ^ Configuration for violations.
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PLogStartViolationsReport  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -211,10 +230,15 @@ instance FromJSON  PLogStartViolationsReport where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
+-- | Function for the command 'Log.startViolationsReport'.
+-- start violation reporting.
+-- Parameters: 'PLogStartViolationsReport'
 logStartViolationsReport :: Handle ev -> PLogStartViolationsReport -> IO (Maybe Error)
 logStartViolationsReport handle params = sendReceiveCommand handle "Log.startViolationsReport" (Just params)
 
 
+-- | Function for the command 'Log.stopViolationsReport'.
+-- Stop violation reporting.
 logStopViolationsReport :: Handle ev -> IO (Maybe Error)
 logStopViolationsReport handle = sendReceiveCommand handle "Log.stopViolationsReport" (Nothing :: Maybe ())
 

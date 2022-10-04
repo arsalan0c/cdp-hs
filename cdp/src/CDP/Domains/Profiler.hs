@@ -49,13 +49,19 @@ import CDP.Domains.Runtime as Runtime
 
 -- | Profile node. Holds callsite information, execution statistics and child nodes.
 data ProfilerProfileNode = ProfilerProfileNode {
-   profilerProfileNodeId :: ProfilerProfileNodeId, -- ^ Unique id of the node.
-   profilerProfileNodeCallFrame :: ProfilerProfileNodeCallFrame, -- ^ Function location.
-   profilerProfileNodeHitCount :: ProfilerProfileNodeHitCount, -- ^ Number of samples where this node was on top of the call stack.
-   profilerProfileNodeChildren :: ProfilerProfileNodeChildren, -- ^ Child node ids.
-   profilerProfileNodeDeoptReason :: ProfilerProfileNodeDeoptReason, -- ^ The reason of being not optimized. The function may be deoptimized or marked as don't
-optimize.
-   profilerProfileNodePositionTicks :: ProfilerProfileNodePositionTicks -- ^ An array of source position ticks.
+  -- | Unique id of the node.
+  profilerProfileNodeId :: Int,
+  -- | Function location.
+  profilerProfileNodeCallFrame :: Runtime.RuntimeCallFrame,
+  -- | Number of samples where this node was on top of the call stack.
+  profilerProfileNodeHitCount :: Maybe Int,
+  -- | Child node ids.
+  profilerProfileNodeChildren :: Maybe [Int],
+  -- | The reason of being not optimized. The function may be deoptimized or marked as don't
+  -- optimize.
+  profilerProfileNodeDeoptReason :: Maybe String,
+  -- | An array of source position ticks.
+  profilerProfileNodePositionTicks :: Maybe [ProfilerPositionTickInfo]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON ProfilerProfileNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -67,12 +73,17 @@ instance FromJSON  ProfilerProfileNode where
 
 -- | Profile.
 data ProfilerProfile = ProfilerProfile {
-   profilerProfileNodes :: ProfilerProfileNodes, -- ^ The list of profile nodes. First item is the root node.
-   profilerProfileStartTime :: ProfilerProfileStartTime, -- ^ Profiling start timestamp in microseconds.
-   profilerProfileEndTime :: ProfilerProfileEndTime, -- ^ Profiling end timestamp in microseconds.
-   profilerProfileSamples :: ProfilerProfileSamples, -- ^ Ids of samples top nodes.
-   profilerProfileTimeDeltas :: ProfilerProfileTimeDeltas -- ^ Time intervals between adjacent samples in microseconds. The first delta is relative to the
-profile startTime.
+  -- | The list of profile nodes. First item is the root node.
+  profilerProfileNodes :: [ProfilerProfileNode],
+  -- | Profiling start timestamp in microseconds.
+  profilerProfileStartTime :: Double,
+  -- | Profiling end timestamp in microseconds.
+  profilerProfileEndTime :: Double,
+  -- | Ids of samples top nodes.
+  profilerProfileSamples :: Maybe [Int],
+  -- | Time intervals between adjacent samples in microseconds. The first delta is relative to the
+  -- profile startTime.
+  profilerProfileTimeDeltas :: Maybe [Int]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON ProfilerProfile  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
@@ -84,8 +95,10 @@ instance FromJSON  ProfilerProfile where
 
 -- | Specifies a number of samples attributed to a certain source position.
 data ProfilerPositionTickInfo = ProfilerPositionTickInfo {
-   profilerPositionTickInfoLine :: ProfilerPositionTickInfoLine, -- ^ Source line number (1-based).
-   profilerPositionTickInfoTicks :: ProfilerPositionTickInfoTicks -- ^ Number of samples attributed to the source line.
+  -- | Source line number (1-based).
+  profilerPositionTickInfoLine :: Int,
+  -- | Number of samples attributed to the source line.
+  profilerPositionTickInfoTicks :: Int
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON ProfilerPositionTickInfo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -97,9 +110,12 @@ instance FromJSON  ProfilerPositionTickInfo where
 
 -- | Coverage data for a source range.
 data ProfilerCoverageRange = ProfilerCoverageRange {
-   profilerCoverageRangeStartOffset :: ProfilerCoverageRangeStartOffset, -- ^ JavaScript script source offset for the range start.
-   profilerCoverageRangeEndOffset :: ProfilerCoverageRangeEndOffset, -- ^ JavaScript script source offset for the range end.
-   profilerCoverageRangeCount :: ProfilerCoverageRangeCount -- ^ Collected execution count of the source range.
+  -- | JavaScript script source offset for the range start.
+  profilerCoverageRangeStartOffset :: Int,
+  -- | JavaScript script source offset for the range end.
+  profilerCoverageRangeEndOffset :: Int,
+  -- | Collected execution count of the source range.
+  profilerCoverageRangeCount :: Int
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON ProfilerCoverageRange  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -111,9 +127,12 @@ instance FromJSON  ProfilerCoverageRange where
 
 -- | Coverage data for a JavaScript function.
 data ProfilerFunctionCoverage = ProfilerFunctionCoverage {
-   profilerFunctionCoverageFunctionName :: ProfilerFunctionCoverageFunctionName, -- ^ JavaScript function name.
-   profilerFunctionCoverageRanges :: ProfilerFunctionCoverageRanges, -- ^ Source ranges inside the function with coverage data.
-   profilerFunctionCoverageIsBlockCoverage :: ProfilerFunctionCoverageIsBlockCoverage -- ^ Whether coverage data for this function has block granularity.
+  -- | JavaScript function name.
+  profilerFunctionCoverageFunctionName :: String,
+  -- | Source ranges inside the function with coverage data.
+  profilerFunctionCoverageRanges :: [ProfilerCoverageRange],
+  -- | Whether coverage data for this function has block granularity.
+  profilerFunctionCoverageIsBlockCoverage :: Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON ProfilerFunctionCoverage  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -125,9 +144,12 @@ instance FromJSON  ProfilerFunctionCoverage where
 
 -- | Coverage data for a JavaScript script.
 data ProfilerScriptCoverage = ProfilerScriptCoverage {
-   profilerScriptCoverageScriptId :: ProfilerScriptCoverageScriptId, -- ^ JavaScript script id.
-   profilerScriptCoverageUrl :: ProfilerScriptCoverageUrl, -- ^ JavaScript script name or url.
-   profilerScriptCoverageFunctions :: ProfilerScriptCoverageFunctions -- ^ Functions contained in the script that has coverage data.
+  -- | JavaScript script id.
+  profilerScriptCoverageScriptId :: Runtime.RuntimeScriptId,
+  -- | JavaScript script name or url.
+  profilerScriptCoverageUrl :: String,
+  -- | Functions contained in the script that has coverage data.
+  profilerScriptCoverageFunctions :: [ProfilerFunctionCoverage]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON ProfilerScriptCoverage  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -139,7 +161,8 @@ instance FromJSON  ProfilerScriptCoverage where
 
 -- | Describes a type collected during runtime.
 data ProfilerTypeObject = ProfilerTypeObject {
-   profilerTypeObjectName :: ProfilerTypeObjectName -- ^ Name of a type collected with type profiling.
+  -- | Name of a type collected with type profiling.
+  profilerTypeObjectName :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON ProfilerTypeObject  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -151,8 +174,10 @@ instance FromJSON  ProfilerTypeObject where
 
 -- | Source offset and types for a parameter or return value.
 data ProfilerTypeProfileEntry = ProfilerTypeProfileEntry {
-   profilerTypeProfileEntryOffset :: ProfilerTypeProfileEntryOffset, -- ^ Source offset of the parameter or end of function for return values.
-   profilerTypeProfileEntryTypes :: ProfilerTypeProfileEntryTypes -- ^ The types for this parameter or return value.
+  -- | Source offset of the parameter or end of function for return values.
+  profilerTypeProfileEntryOffset :: Int,
+  -- | The types for this parameter or return value.
+  profilerTypeProfileEntryTypes :: [ProfilerTypeObject]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON ProfilerTypeProfileEntry  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -164,9 +189,12 @@ instance FromJSON  ProfilerTypeProfileEntry where
 
 -- | Type profile data collected during runtime for a JavaScript script.
 data ProfilerScriptTypeProfile = ProfilerScriptTypeProfile {
-   profilerScriptTypeProfileScriptId :: ProfilerScriptTypeProfileScriptId, -- ^ JavaScript script id.
-   profilerScriptTypeProfileUrl :: ProfilerScriptTypeProfileUrl, -- ^ JavaScript script name or url.
-   profilerScriptTypeProfileEntries :: ProfilerScriptTypeProfileEntries -- ^ Type profile entries for parameters and return values of the functions in the script.
+  -- | JavaScript script id.
+  profilerScriptTypeProfileScriptId :: Runtime.RuntimeScriptId,
+  -- | JavaScript script name or url.
+  profilerScriptTypeProfileUrl :: String,
+  -- | Type profile entries for parameters and return values of the functions in the script.
+  profilerScriptTypeProfileEntries :: [ProfilerTypeProfileEntry]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON ProfilerScriptTypeProfile  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -180,10 +208,12 @@ instance FromJSON  ProfilerScriptTypeProfile where
 
 -- | Type of the 'Profiler.consoleProfileFinished' event.
 data ProfilerConsoleProfileFinished = ProfilerConsoleProfileFinished {
-
-   profilerConsoleProfileFinishedLocation :: ProfilerConsoleProfileFinishedLocation, -- ^ Location of console.profileEnd().
-
-   profilerConsoleProfileFinishedTitle :: ProfilerConsoleProfileFinishedTitle -- ^ Profile title passed as an argument to console.profile().
+  profilerConsoleProfileFinishedId :: String,
+  -- | Location of console.profileEnd().
+  profilerConsoleProfileFinishedLocation :: Debugger.DebuggerLocation,
+  profilerConsoleProfileFinishedProfile :: ProfilerProfile,
+  -- | Profile title passed as an argument to console.profile().
+  profilerConsoleProfileFinishedTitle :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON ProfilerConsoleProfileFinished  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -195,9 +225,11 @@ instance FromJSON  ProfilerConsoleProfileFinished where
 
 -- | Type of the 'Profiler.consoleProfileStarted' event.
 data ProfilerConsoleProfileStarted = ProfilerConsoleProfileStarted {
-
-   profilerConsoleProfileStartedLocation :: ProfilerConsoleProfileStartedLocation, -- ^ Location of console.profile().
-   profilerConsoleProfileStartedTitle :: ProfilerConsoleProfileStartedTitle -- ^ Profile title passed as an argument to console.profile().
+  profilerConsoleProfileStartedId :: String,
+  -- | Location of console.profile().
+  profilerConsoleProfileStartedLocation :: Debugger.DebuggerLocation,
+  -- | Profile title passed as an argument to console.profile().
+  profilerConsoleProfileStartedTitle :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON ProfilerConsoleProfileStarted  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -209,9 +241,12 @@ instance FromJSON  ProfilerConsoleProfileStarted where
 
 -- | Type of the 'Profiler.preciseCoverageDeltaUpdate' event.
 data ProfilerPreciseCoverageDeltaUpdate = ProfilerPreciseCoverageDeltaUpdate {
-   profilerPreciseCoverageDeltaUpdateTimestamp :: ProfilerPreciseCoverageDeltaUpdateTimestamp, -- ^ Monotonically increasing time (in seconds) when the coverage update was taken in the backend.
-   profilerPreciseCoverageDeltaUpdateOccasion :: ProfilerPreciseCoverageDeltaUpdateOccasion, -- ^ Identifier for distinguishing coverage events.
-   profilerPreciseCoverageDeltaUpdateResult :: ProfilerPreciseCoverageDeltaUpdateResult -- ^ Coverage data for the current isolate.
+  -- | Monotonically increasing time (in seconds) when the coverage update was taken in the backend.
+  profilerPreciseCoverageDeltaUpdateTimestamp :: Double,
+  -- | Identifier for distinguishing coverage events.
+  profilerPreciseCoverageDeltaUpdateOccasion :: String,
+  -- | Coverage data for the current isolate.
+  profilerPreciseCoverageDeltaUpdateResult :: [ProfilerScriptCoverage]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON ProfilerPreciseCoverageDeltaUpdate  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 , A.omitNothingFields = True}
@@ -223,17 +258,17 @@ instance FromJSON  ProfilerPreciseCoverageDeltaUpdate where
 
 
 
--- | Function for the command 'Profiler.disable'.
+-- | Function for the 'Profiler.disable' command.
 profilerDisable :: Handle ev -> IO (Maybe Error)
 profilerDisable handle = sendReceiveCommand handle "Profiler.disable" (Nothing :: Maybe ())
 
 
--- | Function for the command 'Profiler.enable'.
+-- | Function for the 'Profiler.enable' command.
 profilerEnable :: Handle ev -> IO (Maybe Error)
 profilerEnable handle = sendReceiveCommand handle "Profiler.enable" (Nothing :: Maybe ())
 
 
--- | Function for the command 'Profiler.getBestEffortCoverage'.
+-- | Function for the 'Profiler.getBestEffortCoverage' command.
 -- Collect coverage data for the current isolate. The coverage data may be incomplete due to
 -- garbage collection.
 -- Returns: 'ProfilerGetBestEffortCoverage'
@@ -242,7 +277,8 @@ profilerGetBestEffortCoverage handle = sendReceiveCommandResult handle "Profiler
 
 -- | Return type of the 'profilerGetBestEffortCoverage' command.
 data ProfilerGetBestEffortCoverage = ProfilerGetBestEffortCoverage {
-   profilerGetBestEffortCoverageResult :: [ProfilerScriptCoverage] -- ^ Coverage data for the current isolate.
+  -- | Coverage data for the current isolate.
+  profilerGetBestEffortCoverageResult :: [ProfilerScriptCoverage]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  ProfilerGetBestEffortCoverage where
@@ -255,7 +291,8 @@ instance Command ProfilerGetBestEffortCoverage where
 
 -- | Parameters of the 'profilerSetSamplingInterval' command.
 data PProfilerSetSamplingInterval = PProfilerSetSamplingInterval {
-   pProfilerSetSamplingIntervalInterval :: PProfilerSetSamplingIntervalInterval -- ^ New sampling interval in microseconds.
+  -- | New sampling interval in microseconds.
+  pProfilerSetSamplingIntervalInterval :: Int
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PProfilerSetSamplingInterval  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -264,23 +301,26 @@ instance FromJSON  PProfilerSetSamplingInterval where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
--- | Function for the command 'Profiler.setSamplingInterval'.
+-- | Function for the 'Profiler.setSamplingInterval' command.
 -- Changes CPU profiler sampling interval. Must be called before CPU profiles recording started.
 -- Parameters: 'PProfilerSetSamplingInterval'
 profilerSetSamplingInterval :: Handle ev -> PProfilerSetSamplingInterval -> IO (Maybe Error)
 profilerSetSamplingInterval handle params = sendReceiveCommand handle "Profiler.setSamplingInterval" (Just params)
 
 
--- | Function for the command 'Profiler.start'.
+-- | Function for the 'Profiler.start' command.
 profilerStart :: Handle ev -> IO (Maybe Error)
 profilerStart handle = sendReceiveCommand handle "Profiler.start" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'profilerStartPreciseCoverage' command.
 data PProfilerStartPreciseCoverage = PProfilerStartPreciseCoverage {
-   pProfilerStartPreciseCoverageCallCount :: PProfilerStartPreciseCoverageCallCount, -- ^ Collect accurate call counts beyond simple 'covered' or 'not covered'.
-   pProfilerStartPreciseCoverageDetailed :: PProfilerStartPreciseCoverageDetailed, -- ^ Collect block-based coverage.
-   pProfilerStartPreciseCoverageAllowTriggeredUpdates :: PProfilerStartPreciseCoverageAllowTriggeredUpdates -- ^ Allow the backend to send updates on its own initiative
+  -- | Collect accurate call counts beyond simple 'covered' or 'not covered'.
+  pProfilerStartPreciseCoverageCallCount :: Maybe Bool,
+  -- | Collect block-based coverage.
+  pProfilerStartPreciseCoverageDetailed :: Maybe Bool,
+  -- | Allow the backend to send updates on its own initiative
+  pProfilerStartPreciseCoverageAllowTriggeredUpdates :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PProfilerStartPreciseCoverage  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -289,7 +329,7 @@ instance FromJSON  PProfilerStartPreciseCoverage where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
--- | Function for the command 'Profiler.startPreciseCoverage'.
+-- | Function for the 'Profiler.startPreciseCoverage' command.
 -- Enable precise code coverage. Coverage data for JavaScript executed before enabling precise code
 -- coverage may be incomplete. Enabling prevents running optimized code and resets execution
 -- counters.
@@ -300,7 +340,8 @@ profilerStartPreciseCoverage handle params = sendReceiveCommandResult handle "Pr
 
 -- | Return type of the 'profilerStartPreciseCoverage' command.
 data ProfilerStartPreciseCoverage = ProfilerStartPreciseCoverage {
-   profilerStartPreciseCoverageTimestamp :: Double -- ^ Monotonically increasing time (in seconds) when the coverage update was taken in the backend.
+  -- | Monotonically increasing time (in seconds) when the coverage update was taken in the backend.
+  profilerStartPreciseCoverageTimestamp :: Double
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  ProfilerStartPreciseCoverage where
@@ -311,20 +352,21 @@ instance Command ProfilerStartPreciseCoverage where
 
 
 
--- | Function for the command 'Profiler.startTypeProfile'.
+-- | Function for the 'Profiler.startTypeProfile' command.
 -- Enable type profile.
 profilerStartTypeProfile :: Handle ev -> IO (Maybe Error)
 profilerStartTypeProfile handle = sendReceiveCommand handle "Profiler.startTypeProfile" (Nothing :: Maybe ())
 
 
--- | Function for the command 'Profiler.stop'.
+-- | Function for the 'Profiler.stop' command.
 -- Returns: 'ProfilerStop'
 profilerStop :: Handle ev -> IO (Either Error ProfilerStop)
 profilerStop handle = sendReceiveCommandResult handle "Profiler.stop" (Nothing :: Maybe ())
 
 -- | Return type of the 'profilerStop' command.
 data ProfilerStop = ProfilerStop {
-   profilerStopProfile :: ProfilerProfile -- ^ Recorded profile.
+  -- | Recorded profile.
+  profilerStopProfile :: ProfilerProfile
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  ProfilerStop where
@@ -335,20 +377,20 @@ instance Command ProfilerStop where
 
 
 
--- | Function for the command 'Profiler.stopPreciseCoverage'.
+-- | Function for the 'Profiler.stopPreciseCoverage' command.
 -- Disable precise code coverage. Disabling releases unnecessary execution count records and allows
 -- executing optimized code.
 profilerStopPreciseCoverage :: Handle ev -> IO (Maybe Error)
 profilerStopPreciseCoverage handle = sendReceiveCommand handle "Profiler.stopPreciseCoverage" (Nothing :: Maybe ())
 
 
--- | Function for the command 'Profiler.stopTypeProfile'.
+-- | Function for the 'Profiler.stopTypeProfile' command.
 -- Disable type profile. Disabling releases type profile data collected so far.
 profilerStopTypeProfile :: Handle ev -> IO (Maybe Error)
 profilerStopTypeProfile handle = sendReceiveCommand handle "Profiler.stopTypeProfile" (Nothing :: Maybe ())
 
 
--- | Function for the command 'Profiler.takePreciseCoverage'.
+-- | Function for the 'Profiler.takePreciseCoverage' command.
 -- Collect coverage data for the current isolate, and resets execution counters. Precise code
 -- coverage needs to have started.
 -- Returns: 'ProfilerTakePreciseCoverage'
@@ -357,8 +399,10 @@ profilerTakePreciseCoverage handle = sendReceiveCommandResult handle "Profiler.t
 
 -- | Return type of the 'profilerTakePreciseCoverage' command.
 data ProfilerTakePreciseCoverage = ProfilerTakePreciseCoverage {
-   profilerTakePreciseCoverageResult :: [ProfilerScriptCoverage], -- ^ Coverage data for the current isolate.
-   profilerTakePreciseCoverageTimestamp :: Double -- ^ Monotonically increasing time (in seconds) when the coverage update was taken in the backend.
+  -- | Coverage data for the current isolate.
+  profilerTakePreciseCoverageResult :: [ProfilerScriptCoverage],
+  -- | Monotonically increasing time (in seconds) when the coverage update was taken in the backend.
+  profilerTakePreciseCoverageTimestamp :: Double
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  ProfilerTakePreciseCoverage where
@@ -369,7 +413,7 @@ instance Command ProfilerTakePreciseCoverage where
 
 
 
--- | Function for the command 'Profiler.takeTypeProfile'.
+-- | Function for the 'Profiler.takeTypeProfile' command.
 -- Collect type profile.
 -- Returns: 'ProfilerTakeTypeProfile'
 profilerTakeTypeProfile :: Handle ev -> IO (Either Error ProfilerTakeTypeProfile)
@@ -377,7 +421,8 @@ profilerTakeTypeProfile handle = sendReceiveCommandResult handle "Profiler.takeT
 
 -- | Return type of the 'profilerTakeTypeProfile' command.
 data ProfilerTakeTypeProfile = ProfilerTakeTypeProfile {
-   profilerTakeTypeProfileResult :: [ProfilerScriptTypeProfile] -- ^ Type profile for all scripts since startTypeProfile() was turned on.
+  -- | Type profile for all scripts since startTypeProfile() was turned on.
+  profilerTakeTypeProfileResult :: [ProfilerScriptTypeProfile]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  ProfilerTakeTypeProfile where

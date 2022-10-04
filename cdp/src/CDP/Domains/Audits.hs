@@ -51,9 +51,10 @@ import CDP.Domains.Runtime as Runtime
 
 -- | Information about a cookie that is affected by an inspector issue.
 data AuditsAffectedCookie = AuditsAffectedCookie {
-   auditsAffectedCookieName :: AuditsAffectedCookieName, -- ^ The following three properties uniquely identify a cookie
-
-
+  -- | The following three properties uniquely identify a cookie
+  auditsAffectedCookieName :: String,
+  auditsAffectedCookiePath :: String,
+  auditsAffectedCookieDomain :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsAffectedCookie  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -65,8 +66,9 @@ instance FromJSON  AuditsAffectedCookie where
 
 -- | Information about a request that is affected by an inspector issue.
 data AuditsAffectedRequest = AuditsAffectedRequest {
-   auditsAffectedRequestRequestId :: AuditsAffectedRequestRequestId, -- ^ The unique request id.
-
+  -- | The unique request id.
+  auditsAffectedRequestRequestId :: DOMPageNetworkEmulationSecurity.NetworkRequestId,
+  auditsAffectedRequestUrl :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsAffectedRequest  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -78,6 +80,7 @@ instance FromJSON  AuditsAffectedRequest where
 
 -- | Information about the frame affected by an inspector issue.
 data AuditsAffectedFrame = AuditsAffectedFrame {
+  auditsAffectedFrameFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsAffectedFrame  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -167,18 +170,20 @@ instance ToJSON AuditsCookieOperation where
 -- time finding a specific cookie. With this, we can convey specific error
 -- information without the cookie.
 data AuditsCookieIssueDetails = AuditsCookieIssueDetails {
-   auditsCookieIssueDetailsCookie :: AuditsCookieIssueDetailsCookie, -- ^ If AffectedCookie is not set then rawCookieLine contains the raw
-Set-Cookie header string. This hints at a problem where the
-cookie line is syntactically or semantically malformed in a way
-that no valid cookie could be created.
-
-
-
-   auditsCookieIssueDetailsOperation :: AuditsCookieIssueDetailsOperation, -- ^ Optionally identifies the site-for-cookies and the cookie url, which
-may be used by the front-end as additional context.
-
-
-
+  -- | If AffectedCookie is not set then rawCookieLine contains the raw
+  -- Set-Cookie header string. This hints at a problem where the
+  -- cookie line is syntactically or semantically malformed in a way
+  -- that no valid cookie could be created.
+  auditsCookieIssueDetailsCookie :: Maybe AuditsAffectedCookie,
+  auditsCookieIssueDetailsRawCookieLine :: Maybe String,
+  auditsCookieIssueDetailsCookieWarningReasons :: [AuditsCookieWarningReason],
+  auditsCookieIssueDetailsCookieExclusionReasons :: [AuditsCookieExclusionReason],
+  -- | Optionally identifies the site-for-cookies and the cookie url, which
+  -- may be used by the front-end as additional context.
+  auditsCookieIssueDetailsOperation :: AuditsCookieOperation,
+  auditsCookieIssueDetailsSiteForCookies :: Maybe String,
+  auditsCookieIssueDetailsCookieUrl :: Maybe String,
+  auditsCookieIssueDetailsRequest :: Maybe AuditsAffectedRequest
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsCookieIssueDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -278,16 +283,22 @@ instance ToJSON AuditsMixedContentResourceType where
 
 -- | Type 'Audits.MixedContentIssueDetails' .
 data AuditsMixedContentIssueDetails = AuditsMixedContentIssueDetails {
-   auditsMixedContentIssueDetailsResourceType :: AuditsMixedContentIssueDetailsResourceType, -- ^ The type of resource causing the mixed content issue (css, js, iframe,
-form,...). Marked as optional because it is mapped to from
-blink::mojom::RequestContextType, which will be replaced
-by network::mojom::RequestDestination
-   auditsMixedContentIssueDetailsResolutionStatus :: AuditsMixedContentIssueDetailsResolutionStatus, -- ^ The way the mixed content issue is being resolved.
-   auditsMixedContentIssueDetailsInsecureUrl :: AuditsMixedContentIssueDetailsInsecureUrl, -- ^ The unsafe http url causing the mixed content issue.
-   auditsMixedContentIssueDetailsMainResourceUrl :: AuditsMixedContentIssueDetailsMainResourceUrl, -- ^ The url responsible for the call to an unsafe url.
-   auditsMixedContentIssueDetailsRequest :: AuditsMixedContentIssueDetailsRequest, -- ^ The mixed content request.
-Does not always exist (e.g. for unsafe form submission urls).
-   auditsMixedContentIssueDetailsFrame :: AuditsMixedContentIssueDetailsFrame -- ^ Optional because not every mixed content issue is necessarily linked to a frame.
+  -- | The type of resource causing the mixed content issue (css, js, iframe,
+  -- form,...). Marked as optional because it is mapped to from
+  -- blink::mojom::RequestContextType, which will be replaced
+  -- by network::mojom::RequestDestination
+  auditsMixedContentIssueDetailsResourceType :: Maybe AuditsMixedContentResourceType,
+  -- | The way the mixed content issue is being resolved.
+  auditsMixedContentIssueDetailsResolutionStatus :: AuditsMixedContentResolutionStatus,
+  -- | The unsafe http url causing the mixed content issue.
+  auditsMixedContentIssueDetailsInsecureUrl :: String,
+  -- | The url responsible for the call to an unsafe url.
+  auditsMixedContentIssueDetailsMainResourceUrl :: String,
+  -- | The mixed content request.
+  -- Does not always exist (e.g. for unsafe form submission urls).
+  auditsMixedContentIssueDetailsRequest :: Maybe AuditsAffectedRequest,
+  -- | Optional because not every mixed content issue is necessarily linked to a frame.
+  auditsMixedContentIssueDetailsFrame :: Maybe AuditsAffectedFrame
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsMixedContentIssueDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -326,10 +337,10 @@ instance ToJSON AuditsBlockedByResponseReason where
 -- code. Currently only used for COEP/COOP, but may be extended to include
 -- some CSP errors in the future.
 data AuditsBlockedByResponseIssueDetails = AuditsBlockedByResponseIssueDetails {
-
-
-
-
+  auditsBlockedByResponseIssueDetailsRequest :: AuditsAffectedRequest,
+  auditsBlockedByResponseIssueDetailsParentFrame :: Maybe AuditsAffectedFrame,
+  auditsBlockedByResponseIssueDetailsBlockedFrame :: Maybe AuditsAffectedFrame,
+  auditsBlockedByResponseIssueDetailsReason :: AuditsBlockedByResponseReason
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsBlockedByResponseIssueDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 , A.omitNothingFields = True}
@@ -379,9 +390,12 @@ instance ToJSON AuditsHeavyAdReason where
 
 -- | Type 'Audits.HeavyAdIssueDetails' .
 data AuditsHeavyAdIssueDetails = AuditsHeavyAdIssueDetails {
-   auditsHeavyAdIssueDetailsResolution :: AuditsHeavyAdIssueDetailsResolution, -- ^ The resolution status, either blocking the content or warning.
-   auditsHeavyAdIssueDetailsReason :: AuditsHeavyAdIssueDetailsReason, -- ^ The reason the ad was blocked, total network or cpu or peak cpu.
-   auditsHeavyAdIssueDetailsFrame :: AuditsHeavyAdIssueDetailsFrame -- ^ The frame that was blocked.
+  -- | The resolution status, either blocking the content or warning.
+  auditsHeavyAdIssueDetailsResolution :: AuditsHeavyAdResolutionStatus,
+  -- | The reason the ad was blocked, total network or cpu or peak cpu.
+  auditsHeavyAdIssueDetailsReason :: AuditsHeavyAdReason,
+  -- | The frame that was blocked.
+  auditsHeavyAdIssueDetailsFrame :: AuditsAffectedFrame
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsHeavyAdIssueDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -419,10 +433,10 @@ instance ToJSON AuditsContentSecurityPolicyViolationType where
 
 -- | Type 'Audits.SourceCodeLocation' .
 data AuditsSourceCodeLocation = AuditsSourceCodeLocation {
-
-
-
-
+  auditsSourceCodeLocationScriptId :: Maybe Runtime.RuntimeScriptId,
+  auditsSourceCodeLocationUrl :: String,
+  auditsSourceCodeLocationLineNumber :: Int,
+  auditsSourceCodeLocationColumnNumber :: Int
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsSourceCodeLocation  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -434,13 +448,15 @@ instance FromJSON  AuditsSourceCodeLocation where
 
 -- | Type 'Audits.ContentSecurityPolicyIssueDetails' .
 data AuditsContentSecurityPolicyIssueDetails = AuditsContentSecurityPolicyIssueDetails {
-   auditsContentSecurityPolicyIssueDetailsBlockedUrl :: AuditsContentSecurityPolicyIssueDetailsBlockedUrl, -- ^ The url not included in allowed sources.
-   auditsContentSecurityPolicyIssueDetailsViolatedDirective :: AuditsContentSecurityPolicyIssueDetailsViolatedDirective, -- ^ Specific directive that is violated, causing the CSP issue.
-
-
-
-
-
+  -- | The url not included in allowed sources.
+  auditsContentSecurityPolicyIssueDetailsBlockedUrl :: Maybe String,
+  -- | Specific directive that is violated, causing the CSP issue.
+  auditsContentSecurityPolicyIssueDetailsViolatedDirective :: String,
+  auditsContentSecurityPolicyIssueDetailsIsReportOnly :: Bool,
+  auditsContentSecurityPolicyIssueDetailsContentSecurityPolicyViolationType :: AuditsContentSecurityPolicyViolationType,
+  auditsContentSecurityPolicyIssueDetailsFrameAncestor :: Maybe AuditsAffectedFrame,
+  auditsContentSecurityPolicyIssueDetailsSourceCodeLocation :: Maybe AuditsSourceCodeLocation,
+  auditsContentSecurityPolicyIssueDetailsViolatingNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomBackendNodeId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsContentSecurityPolicyIssueDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 39 , A.omitNothingFields = True}
@@ -471,9 +487,9 @@ instance ToJSON AuditsSharedArrayBufferIssueType where
 -- | Details for a issue arising from an SAB being instantiated in, or
 -- transferred to a context that is not cross-origin isolated.
 data AuditsSharedArrayBufferIssueDetails = AuditsSharedArrayBufferIssueDetails {
-
-
-
+  auditsSharedArrayBufferIssueDetailsSourceCodeLocation :: AuditsSourceCodeLocation,
+  auditsSharedArrayBufferIssueDetailsIsWarning :: Bool,
+  auditsSharedArrayBufferIssueDetailsType :: AuditsSharedArrayBufferIssueType
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsSharedArrayBufferIssueDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 , A.omitNothingFields = True}
@@ -505,13 +521,16 @@ instance ToJSON AuditsTwaQualityEnforcementViolationType where
 
 -- | Type 'Audits.TrustedWebActivityIssueDetails' .
 data AuditsTrustedWebActivityIssueDetails = AuditsTrustedWebActivityIssueDetails {
-   auditsTrustedWebActivityIssueDetailsUrl :: AuditsTrustedWebActivityIssueDetailsUrl, -- ^ The url that triggers the violation.
-
-
-   auditsTrustedWebActivityIssueDetailsPackageName :: AuditsTrustedWebActivityIssueDetailsPackageName, -- ^ The package name of the Trusted Web Activity client app. This field is
-only used when violation type is kDigitalAssetLinks.
-   auditsTrustedWebActivityIssueDetailsSignature :: AuditsTrustedWebActivityIssueDetailsSignature -- ^ The signature of the Trusted Web Activity client app. This field is only
-used when violation type is kDigitalAssetLinks.
+  -- | The url that triggers the violation.
+  auditsTrustedWebActivityIssueDetailsUrl :: String,
+  auditsTrustedWebActivityIssueDetailsViolationType :: AuditsTwaQualityEnforcementViolationType,
+  auditsTrustedWebActivityIssueDetailsHttpStatusCode :: Maybe Int,
+  -- | The package name of the Trusted Web Activity client app. This field is
+  -- only used when violation type is kDigitalAssetLinks.
+  auditsTrustedWebActivityIssueDetailsPackageName :: Maybe String,
+  -- | The signature of the Trusted Web Activity client app. This field is only
+  -- used when violation type is kDigitalAssetLinks.
+  auditsTrustedWebActivityIssueDetailsSignature :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsTrustedWebActivityIssueDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
@@ -523,13 +542,13 @@ instance FromJSON  AuditsTrustedWebActivityIssueDetails where
 
 -- | Type 'Audits.LowTextContrastIssueDetails' .
 data AuditsLowTextContrastIssueDetails = AuditsLowTextContrastIssueDetails {
-
-
-
-
-
-
-
+  auditsLowTextContrastIssueDetailsViolatingNodeId :: DOMPageNetworkEmulationSecurity.DomBackendNodeId,
+  auditsLowTextContrastIssueDetailsViolatingNodeSelector :: String,
+  auditsLowTextContrastIssueDetailsContrastRatio :: Double,
+  auditsLowTextContrastIssueDetailsThresholdAa :: Double,
+  auditsLowTextContrastIssueDetailsThresholdAaa :: Double,
+  auditsLowTextContrastIssueDetailsFontSize :: String,
+  auditsLowTextContrastIssueDetailsFontWeight :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsLowTextContrastIssueDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
@@ -542,13 +561,13 @@ instance FromJSON  AuditsLowTextContrastIssueDetails where
 -- | Details for a CORS related issue, e.g. a warning or error related to
 -- CORS RFC1918 enforcement.
 data AuditsCorsIssueDetails = AuditsCorsIssueDetails {
-
-
-
-
-
-
-
+  auditsCorsIssueDetailsCorsErrorStatus :: DOMPageNetworkEmulationSecurity.NetworkCorsErrorStatus,
+  auditsCorsIssueDetailsIsWarning :: Bool,
+  auditsCorsIssueDetailsRequest :: AuditsAffectedRequest,
+  auditsCorsIssueDetailsLocation :: Maybe AuditsSourceCodeLocation,
+  auditsCorsIssueDetailsInitiatorOrigin :: Maybe String,
+  auditsCorsIssueDetailsResourceIpAddressSpace :: Maybe DOMPageNetworkEmulationSecurity.NetworkIpAddressSpace,
+  auditsCorsIssueDetailsClientSecurityState :: Maybe DOMPageNetworkEmulationSecurity.NetworkClientSecurityState
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsCorsIssueDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -583,11 +602,11 @@ instance ToJSON AuditsAttributionReportingIssueType where
 -- | Details for issues around "Attribution Reporting API" usage.
 -- Explainer: https://github.com/WICG/conversion-measurement-api
 data AuditsAttributionReportingIssueDetails = AuditsAttributionReportingIssueDetails {
-
-
-
-
-
+  auditsAttributionReportingIssueDetailsViolationType :: AuditsAttributionReportingIssueType,
+  auditsAttributionReportingIssueDetailsFrame :: Maybe AuditsAffectedFrame,
+  auditsAttributionReportingIssueDetailsRequest :: Maybe AuditsAffectedRequest,
+  auditsAttributionReportingIssueDetailsViolatingNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomBackendNodeId,
+  auditsAttributionReportingIssueDetailsInvalidParameter :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsAttributionReportingIssueDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 , A.omitNothingFields = True}
@@ -600,12 +619,13 @@ instance FromJSON  AuditsAttributionReportingIssueDetails where
 -- | Details for issues about documents in Quirks Mode
 -- or Limited Quirks Mode that affects page layouting.
 data AuditsQuirksModeIssueDetails = AuditsQuirksModeIssueDetails {
-   auditsQuirksModeIssueDetailsIsLimitedQuirksMode :: AuditsQuirksModeIssueDetailsIsLimitedQuirksMode, -- ^ If false, it means the document's mode is "quirks"
-instead of "limited-quirks".
-
-
-
-
+  -- | If false, it means the document's mode is "quirks"
+  -- instead of "limited-quirks".
+  auditsQuirksModeIssueDetailsIsLimitedQuirksMode :: Bool,
+  auditsQuirksModeIssueDetailsDocumentNodeId :: DOMPageNetworkEmulationSecurity.DomBackendNodeId,
+  auditsQuirksModeIssueDetailsUrl :: String,
+  auditsQuirksModeIssueDetailsFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId,
+  auditsQuirksModeIssueDetailsLoaderId :: DOMPageNetworkEmulationSecurity.NetworkLoaderId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsQuirksModeIssueDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -617,8 +637,8 @@ instance FromJSON  AuditsQuirksModeIssueDetails where
 
 -- | Type 'Audits.NavigatorUserAgentIssueDetails' .
 data AuditsNavigatorUserAgentIssueDetails = AuditsNavigatorUserAgentIssueDetails {
-
-
+  auditsNavigatorUserAgentIssueDetailsUrl :: String,
+  auditsNavigatorUserAgentIssueDetailsLocation :: Maybe AuditsSourceCodeLocation
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsNavigatorUserAgentIssueDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
@@ -646,8 +666,9 @@ instance ToJSON AuditsGenericIssueErrorType where
 
 -- | Depending on the concrete errorType, different properties are set.
 data AuditsGenericIssueDetails = AuditsGenericIssueDetails {
-   auditsGenericIssueDetailsErrorType :: AuditsGenericIssueDetailsErrorType, -- ^ Issues with the same errorType are aggregated in the frontend.
-
+  -- | Issues with the same errorType are aggregated in the frontend.
+  auditsGenericIssueDetailsErrorType :: AuditsGenericIssueErrorType,
+  auditsGenericIssueDetailsFrameId :: Maybe DOMPageNetworkEmulationSecurity.PageFrameId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsGenericIssueDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -774,9 +795,9 @@ instance ToJSON AuditsDeprecationIssueType where
 -- | This issue tracks information needed to print a deprecation message.
 -- https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/third_party/blink/renderer/core/frame/deprecation/README.md
 data AuditsDeprecationIssueDetails = AuditsDeprecationIssueDetails {
-
-
-
+  auditsDeprecationIssueDetailsAffectedFrame :: Maybe AuditsAffectedFrame,
+  auditsDeprecationIssueDetailsSourceCodeLocation :: AuditsSourceCodeLocation,
+  auditsDeprecationIssueDetailsType :: AuditsDeprecationIssueType
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsDeprecationIssueDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -806,6 +827,7 @@ instance ToJSON AuditsClientHintIssueReason where
 
 -- | Type 'Audits.FederatedAuthRequestIssueDetails' .
 data AuditsFederatedAuthRequestIssueDetails = AuditsFederatedAuthRequestIssueDetails {
+  auditsFederatedAuthRequestIssueDetailsFederatedAuthRequestIssueReason :: AuditsFederatedAuthRequestIssueReason
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsFederatedAuthRequestIssueDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 , A.omitNothingFields = True}
@@ -887,8 +909,8 @@ instance ToJSON AuditsFederatedAuthRequestIssueReason where
 -- | This issue tracks client hints related issues. It's used to deprecate old
 -- features, encourage the use of new ones, and provide general guidance.
 data AuditsClientHintIssueDetails = AuditsClientHintIssueDetails {
-
-
+  auditsClientHintIssueDetailsSourceCodeLocation :: AuditsSourceCodeLocation,
+  auditsClientHintIssueDetailsClientHintIssueReason :: AuditsClientHintIssueReason
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsClientHintIssueDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -950,22 +972,22 @@ instance ToJSON AuditsInspectorIssueCode where
 -- specific to the kind of issue. When adding a new issue code, please also
 -- add a new optional field to this type.
 data AuditsInspectorIssueDetails = AuditsInspectorIssueDetails {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  auditsInspectorIssueDetailsCookieIssueDetails :: Maybe AuditsCookieIssueDetails,
+  auditsInspectorIssueDetailsMixedContentIssueDetails :: Maybe AuditsMixedContentIssueDetails,
+  auditsInspectorIssueDetailsBlockedByResponseIssueDetails :: Maybe AuditsBlockedByResponseIssueDetails,
+  auditsInspectorIssueDetailsHeavyAdIssueDetails :: Maybe AuditsHeavyAdIssueDetails,
+  auditsInspectorIssueDetailsContentSecurityPolicyIssueDetails :: Maybe AuditsContentSecurityPolicyIssueDetails,
+  auditsInspectorIssueDetailsSharedArrayBufferIssueDetails :: Maybe AuditsSharedArrayBufferIssueDetails,
+  auditsInspectorIssueDetailsTwaQualityEnforcementDetails :: Maybe AuditsTrustedWebActivityIssueDetails,
+  auditsInspectorIssueDetailsLowTextContrastIssueDetails :: Maybe AuditsLowTextContrastIssueDetails,
+  auditsInspectorIssueDetailsCorsIssueDetails :: Maybe AuditsCorsIssueDetails,
+  auditsInspectorIssueDetailsAttributionReportingIssueDetails :: Maybe AuditsAttributionReportingIssueDetails,
+  auditsInspectorIssueDetailsQuirksModeIssueDetails :: Maybe AuditsQuirksModeIssueDetails,
+  auditsInspectorIssueDetailsNavigatorUserAgentIssueDetails :: Maybe AuditsNavigatorUserAgentIssueDetails,
+  auditsInspectorIssueDetailsGenericIssueDetails :: Maybe AuditsGenericIssueDetails,
+  auditsInspectorIssueDetailsDeprecationIssueDetails :: Maybe AuditsDeprecationIssueDetails,
+  auditsInspectorIssueDetailsClientHintIssueDetails :: Maybe AuditsClientHintIssueDetails,
+  auditsInspectorIssueDetailsFederatedAuthRequestIssueDetails :: Maybe AuditsFederatedAuthRequestIssueDetails
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsInspectorIssueDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -981,10 +1003,11 @@ type AuditsIssueId = String
 
 -- | An inspector issue reported from the back-end.
 data AuditsInspectorIssue = AuditsInspectorIssue {
-
-
-   auditsInspectorIssueIssueId :: AuditsInspectorIssueIssueId -- ^ A unique id for this issue. May be omitted if no other entity (e.g.
-exception, CDP message, etc.) is referencing this issue.
+  auditsInspectorIssueCode :: AuditsInspectorIssueCode,
+  auditsInspectorIssueDetails :: AuditsInspectorIssueDetails,
+  -- | A unique id for this issue. May be omitted if no other entity (e.g.
+  -- exception, CDP message, etc.) is referencing this issue.
+  auditsInspectorIssueIssueId :: Maybe AuditsIssueId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsInspectorIssue  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -998,6 +1021,7 @@ instance FromJSON  AuditsInspectorIssue where
 
 -- | Type of the 'Audits.issueAdded' event.
 data AuditsIssueAdded = AuditsIssueAdded {
+  auditsIssueAddedIssue :: AuditsInspectorIssue
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsIssueAdded  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -1030,10 +1054,14 @@ instance ToJSON PAuditsGetEncodedResponseEncoding where
 
 
 data PAuditsGetEncodedResponse = PAuditsGetEncodedResponse {
-   pAuditsGetEncodedResponseRequestId :: PAuditsGetEncodedResponseRequestId, -- ^ Identifier of the network request to get content for.
-   pAuditsGetEncodedResponseEncoding :: PAuditsGetEncodedResponseEncoding, -- ^ The encoding to use.
-   pAuditsGetEncodedResponseQuality :: PAuditsGetEncodedResponseQuality, -- ^ The quality of the encoding (0-1). (defaults to 1)
-   pAuditsGetEncodedResponseSizeOnly :: PAuditsGetEncodedResponseSizeOnly -- ^ Whether to only return the size information (defaults to false).
+  -- | Identifier of the network request to get content for.
+  pAuditsGetEncodedResponseRequestId :: DOMPageNetworkEmulationSecurity.NetworkRequestId,
+  -- | The encoding to use.
+  pAuditsGetEncodedResponseEncoding :: PAuditsGetEncodedResponseEncoding,
+  -- | The quality of the encoding (0-1). (defaults to 1)
+  pAuditsGetEncodedResponseQuality :: Maybe Double,
+  -- | Whether to only return the size information (defaults to false).
+  pAuditsGetEncodedResponseSizeOnly :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PAuditsGetEncodedResponse  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -1042,7 +1070,7 @@ instance FromJSON  PAuditsGetEncodedResponse where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the command 'Audits.getEncodedResponse'.
+-- | Function for the 'Audits.getEncodedResponse' command.
 -- Returns the response body and size if it were re-encoded with the specified settings. Only
 -- applies to images.
 -- Parameters: 'PAuditsGetEncodedResponse'
@@ -1052,9 +1080,12 @@ auditsGetEncodedResponse handle params = sendReceiveCommandResult handle "Audits
 
 -- | Return type of the 'auditsGetEncodedResponse' command.
 data AuditsGetEncodedResponse = AuditsGetEncodedResponse {
-   auditsGetEncodedResponseBody :: Maybe String, -- ^ The encoded body as a base64 string. Omitted if sizeOnly is true. (Encoded as a base64 string when passed over JSON)
-   auditsGetEncodedResponseOriginalSize :: Int, -- ^ Size before re-encoding.
-   auditsGetEncodedResponseEncodedSize :: Int -- ^ Size after re-encoding.
+  -- | The encoded body as a base64 string. Omitted if sizeOnly is true. (Encoded as a base64 string when passed over JSON)
+  auditsGetEncodedResponseBody :: Maybe String,
+  -- | Size before re-encoding.
+  auditsGetEncodedResponseOriginalSize :: Int,
+  -- | Size after re-encoding.
+  auditsGetEncodedResponseEncodedSize :: Int
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  AuditsGetEncodedResponse where
@@ -1065,13 +1096,13 @@ instance Command AuditsGetEncodedResponse where
 
 
 
--- | Function for the command 'Audits.disable'.
+-- | Function for the 'Audits.disable' command.
 -- Disables issues domain, prevents further issues from being reported to the client.
 auditsDisable :: Handle ev -> IO (Maybe Error)
 auditsDisable handle = sendReceiveCommand handle "Audits.disable" (Nothing :: Maybe ())
 
 
--- | Function for the command 'Audits.enable'.
+-- | Function for the 'Audits.enable' command.
 -- Enables issues domain, sends the issues collected so far to the client by means of the
 -- `issueAdded` event.
 auditsEnable :: Handle ev -> IO (Maybe Error)
@@ -1080,7 +1111,8 @@ auditsEnable handle = sendReceiveCommand handle "Audits.enable" (Nothing :: Mayb
 
 -- | Parameters of the 'auditsCheckContrast' command.
 data PAuditsCheckContrast = PAuditsCheckContrast {
-   pAuditsCheckContrastReportAaa :: PAuditsCheckContrastReportAaa -- ^ Whether to report WCAG AAA level issues. Default is false.
+  -- | Whether to report WCAG AAA level issues. Default is false.
+  pAuditsCheckContrastReportAaa :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PAuditsCheckContrast  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -1089,7 +1121,7 @@ instance FromJSON  PAuditsCheckContrast where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
--- | Function for the command 'Audits.checkContrast'.
+-- | Function for the 'Audits.checkContrast' command.
 -- Runs the contrast check for the target page. Found issues are reported
 -- using Audits.issueAdded event.
 -- Parameters: 'PAuditsCheckContrast'

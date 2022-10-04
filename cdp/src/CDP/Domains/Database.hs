@@ -50,10 +50,14 @@ type DatabaseDatabaseId = String
 
 -- | Database object.
 data DatabaseDatabase = DatabaseDatabase {
-   databaseDatabaseId :: DatabaseDatabaseId, -- ^ Database ID.
-   databaseDatabaseDomain :: DatabaseDatabaseDomain, -- ^ Database domain.
-   databaseDatabaseName :: DatabaseDatabaseName, -- ^ Database name.
-   databaseDatabaseVersion :: DatabaseDatabaseVersion -- ^ Database version.
+  -- | Database ID.
+  databaseDatabaseId :: DatabaseDatabaseId,
+  -- | Database domain.
+  databaseDatabaseDomain :: String,
+  -- | Database name.
+  databaseDatabaseName :: String,
+  -- | Database version.
+  databaseDatabaseVersion :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DatabaseDatabase  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -65,8 +69,10 @@ instance FromJSON  DatabaseDatabase where
 
 -- | Database error.
 data DatabaseError = DatabaseError {
-   databaseErrorMessage :: DatabaseErrorMessage, -- ^ Error message.
-   databaseErrorCode :: DatabaseErrorCode -- ^ Error code.
+  -- | Error message.
+  databaseErrorMessage :: String,
+  -- | Error code.
+  databaseErrorCode :: Int
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DatabaseError  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 , A.omitNothingFields = True}
@@ -80,6 +86,7 @@ instance FromJSON  DatabaseError where
 
 -- | Type of the 'Database.addDatabase' event.
 data DatabaseAddDatabase = DatabaseAddDatabase {
+  databaseAddDatabaseDatabase :: DatabaseDatabase
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DatabaseAddDatabase  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -91,13 +98,13 @@ instance FromJSON  DatabaseAddDatabase where
 
 
 
--- | Function for the command 'Database.disable'.
+-- | Function for the 'Database.disable' command.
 -- Disables database tracking, prevents database events from being sent to the client.
 databaseDisable :: Handle ev -> IO (Maybe Error)
 databaseDisable handle = sendReceiveCommand handle "Database.disable" (Nothing :: Maybe ())
 
 
--- | Function for the command 'Database.enable'.
+-- | Function for the 'Database.enable' command.
 -- Enables database tracking, database events will now be delivered to the client.
 databaseEnable :: Handle ev -> IO (Maybe Error)
 databaseEnable handle = sendReceiveCommand handle "Database.enable" (Nothing :: Maybe ())
@@ -105,8 +112,8 @@ databaseEnable handle = sendReceiveCommand handle "Database.enable" (Nothing :: 
 
 -- | Parameters of the 'databaseExecuteSql' command.
 data PDatabaseExecuteSql = PDatabaseExecuteSql {
-
-
+  pDatabaseExecuteSqlDatabaseId :: DatabaseDatabaseId,
+  pDatabaseExecuteSqlQuery :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDatabaseExecuteSql  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -115,7 +122,7 @@ instance FromJSON  PDatabaseExecuteSql where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
--- | Function for the command 'Database.executeSQL'.
+-- | Function for the 'Database.executeSQL' command.
 -- Parameters: 'PDatabaseExecuteSql'
 -- Returns: 'DatabaseExecuteSql'
 databaseExecuteSql :: Handle ev -> PDatabaseExecuteSql -> IO (Either Error DatabaseExecuteSql)
@@ -123,9 +130,9 @@ databaseExecuteSql handle params = sendReceiveCommandResult handle "Database.exe
 
 -- | Return type of the 'databaseExecuteSql' command.
 data DatabaseExecuteSql = DatabaseExecuteSql {
-
-
-
+  databaseExecuteSqlColumnNames :: Maybe [String],
+  databaseExecuteSqlValues :: Maybe [Int],
+  databaseExecuteSqlSqlError :: Maybe DatabaseError
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DatabaseExecuteSql where
@@ -138,6 +145,7 @@ instance Command DatabaseExecuteSql where
 
 -- | Parameters of the 'databaseGetDatabaseTableNames' command.
 data PDatabaseGetDatabaseTableNames = PDatabaseGetDatabaseTableNames {
+  pDatabaseGetDatabaseTableNamesDatabaseId :: DatabaseDatabaseId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDatabaseGetDatabaseTableNames  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -146,7 +154,7 @@ instance FromJSON  PDatabaseGetDatabaseTableNames where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
--- | Function for the command 'Database.getDatabaseTableNames'.
+-- | Function for the 'Database.getDatabaseTableNames' command.
 -- Parameters: 'PDatabaseGetDatabaseTableNames'
 -- Returns: 'DatabaseGetDatabaseTableNames'
 databaseGetDatabaseTableNames :: Handle ev -> PDatabaseGetDatabaseTableNames -> IO (Either Error DatabaseGetDatabaseTableNames)
@@ -154,7 +162,7 @@ databaseGetDatabaseTableNames handle params = sendReceiveCommandResult handle "D
 
 -- | Return type of the 'databaseGetDatabaseTableNames' command.
 data DatabaseGetDatabaseTableNames = DatabaseGetDatabaseTableNames {
-
+  databaseGetDatabaseTableNamesTableNames :: [String]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DatabaseGetDatabaseTableNames where

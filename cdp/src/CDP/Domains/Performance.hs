@@ -47,8 +47,10 @@ import CDP.Handle
 
 -- | Run-time execution metric.
 data PerformanceMetric = PerformanceMetric {
-   performanceMetricName :: PerformanceMetricName, -- ^ Metric name.
-   performanceMetricValue :: PerformanceMetricValue -- ^ Metric value.
+  -- | Metric name.
+  performanceMetricName :: String,
+  -- | Metric value.
+  performanceMetricValue :: Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PerformanceMetric  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -62,8 +64,10 @@ instance FromJSON  PerformanceMetric where
 
 -- | Type of the 'Performance.metrics' event.
 data PerformanceMetrics = PerformanceMetrics {
-   performanceMetricsMetrics :: PerformanceMetricsMetrics, -- ^ Current values of the metrics.
-   performanceMetricsTitle :: PerformanceMetricsTitle -- ^ Timestamp title.
+  -- | Current values of the metrics.
+  performanceMetricsMetrics :: [PerformanceMetric],
+  -- | Timestamp title.
+  performanceMetricsTitle :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PerformanceMetrics  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -75,7 +79,7 @@ instance FromJSON  PerformanceMetrics where
 
 
 
--- | Function for the command 'Performance.disable'.
+-- | Function for the 'Performance.disable' command.
 -- Disable collecting and reporting metrics.
 performanceDisable :: Handle ev -> IO (Maybe Error)
 performanceDisable handle = sendReceiveCommand handle "Performance.disable" (Nothing :: Maybe ())
@@ -100,7 +104,8 @@ instance ToJSON PPerformanceEnableTimeDomain where
 
 
 data PPerformanceEnable = PPerformanceEnable {
-   pPerformanceEnableTimeDomain :: PPerformanceEnableTimeDomain -- ^ Time domain to use for collecting and reporting duration metrics.
+  -- | Time domain to use for collecting and reporting duration metrics.
+  pPerformanceEnableTimeDomain :: PPerformanceEnableTimeDomain
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPerformanceEnable  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -109,14 +114,14 @@ instance FromJSON  PPerformanceEnable where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
--- | Function for the command 'Performance.enable'.
+-- | Function for the 'Performance.enable' command.
 -- Enable collecting and reporting metrics.
 -- Parameters: 'PPerformanceEnable'
 performanceEnable :: Handle ev -> PPerformanceEnable -> IO (Maybe Error)
 performanceEnable handle params = sendReceiveCommand handle "Performance.enable" (Just params)
 
 
--- | Function for the command 'Performance.getMetrics'.
+-- | Function for the 'Performance.getMetrics' command.
 -- Retrieve current values of run-time metrics.
 -- Returns: 'PerformanceGetMetrics'
 performanceGetMetrics :: Handle ev -> IO (Either Error PerformanceGetMetrics)
@@ -124,7 +129,8 @@ performanceGetMetrics handle = sendReceiveCommandResult handle "Performance.getM
 
 -- | Return type of the 'performanceGetMetrics' command.
 data PerformanceGetMetrics = PerformanceGetMetrics {
-   performanceGetMetricsMetrics :: [PerformanceMetric] -- ^ Current values for run-time metrics.
+  -- | Current values for run-time metrics.
+  performanceGetMetricsMetrics :: [PerformanceMetric]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PerformanceGetMetrics where

@@ -49,7 +49,7 @@ import CDP.Handle
 
 
 
--- | Function for the command 'DeviceOrientation.clearDeviceOrientationOverride'.
+-- | Function for the 'DeviceOrientation.clearDeviceOrientationOverride' command.
 -- Clears the overridden Device Orientation.
 deviceOrientationClearDeviceOrientationOverride :: Handle ev -> IO (Maybe Error)
 deviceOrientationClearDeviceOrientationOverride handle = sendReceiveCommand handle "DeviceOrientation.clearDeviceOrientationOverride" (Nothing :: Maybe ())
@@ -57,9 +57,12 @@ deviceOrientationClearDeviceOrientationOverride handle = sendReceiveCommand hand
 
 -- | Parameters of the 'deviceOrientationSetDeviceOrientationOverride' command.
 data PDeviceOrientationSetDeviceOrientationOverride = PDeviceOrientationSetDeviceOrientationOverride {
-   pDeviceOrientationSetDeviceOrientationOverrideAlpha :: PDeviceOrientationSetDeviceOrientationOverrideAlpha, -- ^ Mock alpha
-   pDeviceOrientationSetDeviceOrientationOverrideBeta :: PDeviceOrientationSetDeviceOrientationOverrideBeta, -- ^ Mock beta
-   pDeviceOrientationSetDeviceOrientationOverrideGamma :: PDeviceOrientationSetDeviceOrientationOverrideGamma -- ^ Mock gamma
+  -- | Mock alpha
+  pDeviceOrientationSetDeviceOrientationOverrideAlpha :: Double,
+  -- | Mock beta
+  pDeviceOrientationSetDeviceOrientationOverrideBeta :: Double,
+  -- | Mock gamma
+  pDeviceOrientationSetDeviceOrientationOverrideGamma :: Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDeviceOrientationSetDeviceOrientationOverride  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 46 , A.omitNothingFields = True}
@@ -68,7 +71,7 @@ instance FromJSON  PDeviceOrientationSetDeviceOrientationOverride where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 46 }
 
 
--- | Function for the command 'DeviceOrientation.setDeviceOrientationOverride'.
+-- | Function for the 'DeviceOrientation.setDeviceOrientationOverride' command.
 -- Overrides the Device Orientation.
 -- Parameters: 'PDeviceOrientationSetDeviceOrientationOverride'
 deviceOrientationSetDeviceOrientationOverride :: Handle ev -> PDeviceOrientationSetDeviceOrientationOverride -> IO (Maybe Error)

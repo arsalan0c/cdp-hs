@@ -174,14 +174,14 @@ genType ctx domainName telt = T.unlines . (desc :) . pure $ case D.typesEltEnum 
             ty       ->  T.unwords ["type", tn, "=", lty]                 
   where
     desc     = let td = "Type '" <> (domainName <> "." <> D.typesEltId telt) <> "' ." in 
-        formatDescription td . maybe td fromAltLeft $ D.typesEltDescription telt
+        formatDescription 0 td . maybe td fromAltLeft $ D.typesEltDescription telt
     lty      = leftType ctx domainName (Just . AltLeft $ tytelt) Nothing (D.typesEltItems telt)
     tytelt   = D.typesEltType telt
     tpeltsM  = guardEmptyList isValidParam $ D.typesEltProperties telt
     tn       = typeNameHS domainName telt 
 
 genTypeEnum :: Context -> T.Text -> [T.Text] -> T.Text
-genTypeEnum _ typeEnumName values = T.unlines
+genTypeEnum _ typeEnumName values = T.unlines . filter ((/= 0) . T.length) $
     [ T.unwords ["data", typeEnumName, "=", T.intercalate " | " constructors]
     , space 4 <> derivingOrd
     , genFromJSONInstanceEnum typeEnumName values constructors
@@ -194,7 +194,7 @@ genEventReturnType :: Context -> T.Text -> D.EventsElt -> T.Text
 genEventReturnType ctx domainName eventElt = T.unlines . (desc :) . pure $
     maybe emptyParams genNonEmptyParams eveltsM
   where
-    desc = formatDescription "" $ "Type of the '" <> 
+    desc = formatDescription 0 "" $ "Type of the '" <> 
         (eventName domainName eventElt) <> "' event."
     emptyParams = T.unlines 
         [ T.unwords ["data", evrn, "=", evrn]
@@ -213,10 +213,10 @@ genCommand ctx domainName commandElt = T.unlines . catMaybes $
     , returns
     ]
   where
-    pdesc = formatDescription "" $ "Parameters of the '" <> (commandFnName rtn) <> "' command."
-    desc = let td = "Function for the command '" <> cn <> "'.\n" in
+    pdesc = formatDescription 0 "" $ "Parameters of the '" <> (commandFnName rtn) <> "' command."
+    desc = let td = "Function for the '" <> cn <> "' command.\n" in
         T.intercalate "\n" . catMaybes $ 
-            [ Just $ formatDescription td . (td <>) . maybe "" fromAltLeft $ D.commandsEltDescription commandElt
+            [ Just $ formatDescription 0 td . (td <>) . maybe "" fromAltLeft $ D.commandsEltDescription commandElt
             , const ("-- Parameters: '" <> ptn <> "'") <$> peltsM
             , const ("-- Returns: '" <> rtn <> "'")    <$> reltsM
             ]
@@ -273,20 +273,17 @@ genParamsType ctx domainName paramsTypeName []        = genTypeSynonynm ctx doma
 genParamsType ctx domainName paramsTypeName paramElts = T.unlines . filter ((> 0) . T.length) $
     [ T.unlines enumDecls
     , T.unwords ["data", paramsTypeName, "=", paramsTypeName, "{"]
-    , T.intercalate "\n" fields
+    , T.intercalate ",\n" fields
     , "} " <> derivingGeneric
     , genToJSONInstance paramsTypeName
     , genFromJSONInstance paramsTypeName
     ]
   where
-    fields = formatFieldDescription . map toField $ paramElts
-    toField pelt = (T.unwords [space 3, fn, "::", ftn], fmap fromAltLeft $ D.parametersEltDescription pelt)
-      where
-        ftn = tyNameHS "" fn
-        fn = fieldNameHS paramsTypeName . D.parametersEltName $ pelt
+    fields = formatFieldDescription . map toField $ fieldSigDecls
+    toField ((fn,ftn,_),descM) = (T.unwords [fn, "::", ftn], fmap fromAltLeft descM)
 
-    enumDecls    = catMaybes . map (\(_,_,d) -> d) $ fieldSigDecls
-    fieldSigDecls = map peltToFieldSigDecl paramElts
+    enumDecls    = catMaybes . map (\((_,_,d),_) -> d) $ fieldSigDecls
+    fieldSigDecls = map (peltToFieldSigDecl &&& D.parametersEltDescription) paramElts
 
     peltToFieldSigDecl pelt = case D.parametersEltEnum pelt of
         Just enumValues -> (fn, ftn, ) . Just $ genTypeEnum ctx ftn enumValues
@@ -305,14 +302,14 @@ genReturnType :: Context -> T.Text -> T.Text -> [D.ReturnsElt] -> T.Text
 genReturnType ctx domainName returnTypeName returnElts = T.unlines
     [ desc
     , T.unwords ["data", returnTypeName, "=", returnTypeName, "{"]
-    , T.intercalate "\n" fields
+    , T.intercalate ",\n" fields
     , "} " <> derivingGeneric
     ]
   where
-    desc = formatDescription "" $ "Return type of the '" <> 
+    desc = formatDescription 0 "" $ "Return type of the '" <> 
         (commandFnName returnTypeName) <> "' command."
     fields = formatFieldDescription . 
-        map (((space 4 <>) . reltToField) &&& fmap fromAltLeft . D.returnsEltDescription) $ returnElts
+        map (reltToField &&& fmap fromAltLeft . D.returnsEltDescription) $ returnElts
     reltToField relt = T.unwords
         [ fieldNameHS returnTypeName . D.returnsEltName $ relt
         , "::"
@@ -343,20 +340,17 @@ formatComponentDescription component = T.unlines
         ]
     delts  = map fst . Map.elems . cDomDeps $ component
 
-formatDescription :: T.Text -> T.Text -> T.Text
-formatDescription alt desc = go $ T.lines desc 
+formatDescription :: Int -> T.Text -> T.Text -> T.Text
+formatDescription indent alt desc = go $ T.lines desc 
   where
-    go []      = alt
-    go (hd:tl) = T.intercalate "\n" $ ("-- | " <> hd) : map ("-- " <>) tl
+    go []      = f indent alt
+    go (hd:tl) = T.intercalate "\n" $ f indent ("-- | " <> hd) : map (f (indent + 2) . ("-- " <>)) tl
+    f i = (space i <>)
 
 formatFieldDescription :: [(T.Text, Maybe T.Text)] -> [T.Text]
-formatFieldDescription fieldDescs = go fieldDescs
+formatFieldDescription = map go
   where
-    go [] = error "formatFieldDescription: got 0 fields"
-    go xs = map (\(field, descM) -> f (field <> ",", descM)) (init xs) ++
-        [f $ last xs]
-    
-    f (field,descM) = maybe "" ((field <> " -- ^ ") <>) descM
+    go (field,descM) = maybe (space 3 <> field) ((<> (space 3 <> field)) . (<> "\n") . formatDescription 3 "") descM
 
 ----- Imports -----
 importDomain :: Bool -> T.Text -> T.Text 
@@ -654,7 +648,7 @@ derivingGeneric = "deriving (Generic, Eq, Show, Read)"
 -----------  Utilities ----------- 
 
 guardEmptyList :: (a -> Bool) -> Maybe [a] -> Maybe [a]
-guardEmptyList f v = filter f <$> v >>= go 
+guardEmptyList f v = go =<< (filter f <$> v)
   where
     go [] = Nothing
     go xs = Just xs 

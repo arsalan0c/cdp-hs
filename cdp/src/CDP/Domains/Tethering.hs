@@ -51,8 +51,10 @@ import CDP.Handle
 
 -- | Type of the 'Tethering.accepted' event.
 data TetheringAccepted = TetheringAccepted {
-   tetheringAcceptedPort :: TetheringAcceptedPort, -- ^ Port number that was successfully bound.
-   tetheringAcceptedConnectionId :: TetheringAcceptedConnectionId -- ^ Connection id to be used.
+  -- | Port number that was successfully bound.
+  tetheringAcceptedPort :: Int,
+  -- | Connection id to be used.
+  tetheringAcceptedConnectionId :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON TetheringAccepted  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -66,7 +68,8 @@ instance FromJSON  TetheringAccepted where
 
 -- | Parameters of the 'tetheringBind' command.
 data PTetheringBind = PTetheringBind {
-   pTetheringBindPort :: PTetheringBindPort -- ^ Port number to bind.
+  -- | Port number to bind.
+  pTetheringBindPort :: Int
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTetheringBind  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
@@ -75,7 +78,7 @@ instance FromJSON  PTetheringBind where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
--- | Function for the command 'Tethering.bind'.
+-- | Function for the 'Tethering.bind' command.
 -- Request browser port binding.
 -- Parameters: 'PTetheringBind'
 tetheringBind :: Handle ev -> PTetheringBind -> IO (Maybe Error)
@@ -84,7 +87,8 @@ tetheringBind handle params = sendReceiveCommand handle "Tethering.bind" (Just p
 
 -- | Parameters of the 'tetheringUnbind' command.
 data PTetheringUnbind = PTetheringUnbind {
-   pTetheringUnbindPort :: PTetheringUnbindPort -- ^ Port number to unbind.
+  -- | Port number to unbind.
+  pTetheringUnbindPort :: Int
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTetheringUnbind  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -93,7 +97,7 @@ instance FromJSON  PTetheringUnbind where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
--- | Function for the command 'Tethering.unbind'.
+-- | Function for the 'Tethering.unbind' command.
 -- Request browser port unbinding.
 -- Parameters: 'PTetheringUnbind'
 tetheringUnbind :: Handle ev -> PTetheringUnbind -> IO (Maybe Error)

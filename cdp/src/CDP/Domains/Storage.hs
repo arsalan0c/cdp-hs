@@ -90,8 +90,10 @@ instance ToJSON StorageStorageType where
 
 -- | Usage for a storage type.
 data StorageUsageForType = StorageUsageForType {
-   storageUsageForTypeStorageType :: StorageUsageForTypeStorageType, -- ^ Name of storage type.
-   storageUsageForTypeUsage :: StorageUsageForTypeUsage -- ^ Storage usage (bytes).
+  -- | Name of storage type.
+  storageUsageForTypeStorageType :: StorageStorageType,
+  -- | Storage usage (bytes).
+  storageUsageForTypeUsage :: Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON StorageUsageForType  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -104,8 +106,8 @@ instance FromJSON  StorageUsageForType where
 -- | Pair of issuer origin and number of available (signed, but not used) Trust
 -- Tokens from that issuer.
 data StorageTrustTokens = StorageTrustTokens {
-
-
+  storageTrustTokensIssuerOrigin :: String,
+  storageTrustTokensCount :: Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON StorageTrustTokens  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -141,8 +143,8 @@ instance ToJSON StorageInterestGroupAccessType where
 
 -- | Ad advertising element inside an interest group.
 data StorageInterestGroupAd = StorageInterestGroupAd {
-
-
+  storageInterestGroupAdRenderUrl :: String,
+  storageInterestGroupAdMetadata :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON StorageInterestGroupAd  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -154,18 +156,18 @@ instance FromJSON  StorageInterestGroupAd where
 
 -- | The full details of an interest group.
 data StorageInterestGroupDetails = StorageInterestGroupDetails {
-
-
-
-
-
-
-
-
-
-
-
-
+  storageInterestGroupDetailsOwnerOrigin :: String,
+  storageInterestGroupDetailsName :: String,
+  storageInterestGroupDetailsExpirationTime :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
+  storageInterestGroupDetailsJoiningOrigin :: String,
+  storageInterestGroupDetailsBiddingUrl :: Maybe String,
+  storageInterestGroupDetailsBiddingWasmHelperUrl :: Maybe String,
+  storageInterestGroupDetailsUpdateUrl :: Maybe String,
+  storageInterestGroupDetailsTrustedBiddingSignalsUrl :: Maybe String,
+  storageInterestGroupDetailsTrustedBiddingSignalsKeys :: [String],
+  storageInterestGroupDetailsUserBiddingSignals :: Maybe String,
+  storageInterestGroupDetailsAds :: [StorageInterestGroupAd],
+  storageInterestGroupDetailsAdComponents :: [StorageInterestGroupAd]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON StorageInterestGroupDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -179,8 +181,10 @@ instance FromJSON  StorageInterestGroupDetails where
 
 -- | Type of the 'Storage.cacheStorageContentUpdated' event.
 data StorageCacheStorageContentUpdated = StorageCacheStorageContentUpdated {
-   storageCacheStorageContentUpdatedOrigin :: StorageCacheStorageContentUpdatedOrigin, -- ^ Origin to update.
-   storageCacheStorageContentUpdatedCacheName :: StorageCacheStorageContentUpdatedCacheName -- ^ Name of cache in origin.
+  -- | Origin to update.
+  storageCacheStorageContentUpdatedOrigin :: String,
+  -- | Name of cache in origin.
+  storageCacheStorageContentUpdatedCacheName :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON StorageCacheStorageContentUpdated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
@@ -192,7 +196,8 @@ instance FromJSON  StorageCacheStorageContentUpdated where
 
 -- | Type of the 'Storage.cacheStorageListUpdated' event.
 data StorageCacheStorageListUpdated = StorageCacheStorageListUpdated {
-   storageCacheStorageListUpdatedOrigin :: StorageCacheStorageListUpdatedOrigin -- ^ Origin to update.
+  -- | Origin to update.
+  storageCacheStorageListUpdatedOrigin :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON StorageCacheStorageListUpdated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -204,9 +209,12 @@ instance FromJSON  StorageCacheStorageListUpdated where
 
 -- | Type of the 'Storage.indexedDBContentUpdated' event.
 data StorageIndexedDbContentUpdated = StorageIndexedDbContentUpdated {
-   storageIndexedDbContentUpdatedOrigin :: StorageIndexedDbContentUpdatedOrigin, -- ^ Origin to update.
-   storageIndexedDbContentUpdatedDatabaseName :: StorageIndexedDbContentUpdatedDatabaseName, -- ^ Database to update.
-   storageIndexedDbContentUpdatedObjectStoreName :: StorageIndexedDbContentUpdatedObjectStoreName -- ^ ObjectStore to update.
+  -- | Origin to update.
+  storageIndexedDbContentUpdatedOrigin :: String,
+  -- | Database to update.
+  storageIndexedDbContentUpdatedDatabaseName :: String,
+  -- | ObjectStore to update.
+  storageIndexedDbContentUpdatedObjectStoreName :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON StorageIndexedDbContentUpdated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -218,7 +226,8 @@ instance FromJSON  StorageIndexedDbContentUpdated where
 
 -- | Type of the 'Storage.indexedDBListUpdated' event.
 data StorageIndexedDbListUpdated = StorageIndexedDbListUpdated {
-   storageIndexedDbListUpdatedOrigin :: StorageIndexedDbListUpdatedOrigin -- ^ Origin to update.
+  -- | Origin to update.
+  storageIndexedDbListUpdatedOrigin :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON StorageIndexedDbListUpdated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -230,10 +239,10 @@ instance FromJSON  StorageIndexedDbListUpdated where
 
 -- | Type of the 'Storage.interestGroupAccessed' event.
 data StorageInterestGroupAccessed = StorageInterestGroupAccessed {
-
-
-
-
+  storageInterestGroupAccessedAccessTime :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
+  storageInterestGroupAccessedType :: StorageInterestGroupAccessType,
+  storageInterestGroupAccessedOwnerOrigin :: String,
+  storageInterestGroupAccessedName :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON StorageInterestGroupAccessed  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -247,6 +256,7 @@ instance FromJSON  StorageInterestGroupAccessed where
 
 -- | Parameters of the 'storageGetStorageKeyForFrame' command.
 data PStorageGetStorageKeyForFrame = PStorageGetStorageKeyForFrame {
+  pStorageGetStorageKeyForFrameFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PStorageGetStorageKeyForFrame  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -255,7 +265,7 @@ instance FromJSON  PStorageGetStorageKeyForFrame where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
--- | Function for the command 'Storage.getStorageKeyForFrame'.
+-- | Function for the 'Storage.getStorageKeyForFrame' command.
 -- Returns a storage key given a frame id.
 -- Parameters: 'PStorageGetStorageKeyForFrame'
 -- Returns: 'StorageGetStorageKeyForFrame'
@@ -264,7 +274,7 @@ storageGetStorageKeyForFrame handle params = sendReceiveCommandResult handle "St
 
 -- | Return type of the 'storageGetStorageKeyForFrame' command.
 data StorageGetStorageKeyForFrame = StorageGetStorageKeyForFrame {
-
+  storageGetStorageKeyForFrameStorageKey :: StorageSerializedStorageKey
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  StorageGetStorageKeyForFrame where
@@ -277,8 +287,10 @@ instance Command StorageGetStorageKeyForFrame where
 
 -- | Parameters of the 'storageClearDataForOrigin' command.
 data PStorageClearDataForOrigin = PStorageClearDataForOrigin {
-   pStorageClearDataForOriginOrigin :: PStorageClearDataForOriginOrigin, -- ^ Security origin.
-   pStorageClearDataForOriginStorageTypes :: PStorageClearDataForOriginStorageTypes -- ^ Comma separated list of StorageType to clear.
+  -- | Security origin.
+  pStorageClearDataForOriginOrigin :: String,
+  -- | Comma separated list of StorageType to clear.
+  pStorageClearDataForOriginStorageTypes :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PStorageClearDataForOrigin  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -287,7 +299,7 @@ instance FromJSON  PStorageClearDataForOrigin where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
--- | Function for the command 'Storage.clearDataForOrigin'.
+-- | Function for the 'Storage.clearDataForOrigin' command.
 -- Clears storage for origin.
 -- Parameters: 'PStorageClearDataForOrigin'
 storageClearDataForOrigin :: Handle ev -> PStorageClearDataForOrigin -> IO (Maybe Error)
@@ -296,7 +308,8 @@ storageClearDataForOrigin handle params = sendReceiveCommand handle "Storage.cle
 
 -- | Parameters of the 'storageGetCookies' command.
 data PStorageGetCookies = PStorageGetCookies {
-   pStorageGetCookiesBrowserContextId :: PStorageGetCookiesBrowserContextId -- ^ Browser context to use when called on the browser endpoint.
+  -- | Browser context to use when called on the browser endpoint.
+  pStorageGetCookiesBrowserContextId :: Maybe BrowserTarget.BrowserBrowserContextId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PStorageGetCookies  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -305,7 +318,7 @@ instance FromJSON  PStorageGetCookies where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
--- | Function for the command 'Storage.getCookies'.
+-- | Function for the 'Storage.getCookies' command.
 -- Returns all browser cookies.
 -- Parameters: 'PStorageGetCookies'
 -- Returns: 'StorageGetCookies'
@@ -314,7 +327,8 @@ storageGetCookies handle params = sendReceiveCommandResult handle "Storage.getCo
 
 -- | Return type of the 'storageGetCookies' command.
 data StorageGetCookies = StorageGetCookies {
-   storageGetCookiesCookies :: [DOMPageNetworkEmulationSecurity.NetworkCookie] -- ^ Array of cookie objects.
+  -- | Array of cookie objects.
+  storageGetCookiesCookies :: [DOMPageNetworkEmulationSecurity.NetworkCookie]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  StorageGetCookies where
@@ -327,8 +341,10 @@ instance Command StorageGetCookies where
 
 -- | Parameters of the 'storageSetCookies' command.
 data PStorageSetCookies = PStorageSetCookies {
-   pStorageSetCookiesCookies :: PStorageSetCookiesCookies, -- ^ Cookies to be set.
-   pStorageSetCookiesBrowserContextId :: PStorageSetCookiesBrowserContextId -- ^ Browser context to use when called on the browser endpoint.
+  -- | Cookies to be set.
+  pStorageSetCookiesCookies :: [DOMPageNetworkEmulationSecurity.NetworkCookieParam],
+  -- | Browser context to use when called on the browser endpoint.
+  pStorageSetCookiesBrowserContextId :: Maybe BrowserTarget.BrowserBrowserContextId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PStorageSetCookies  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -337,7 +353,7 @@ instance FromJSON  PStorageSetCookies where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
--- | Function for the command 'Storage.setCookies'.
+-- | Function for the 'Storage.setCookies' command.
 -- Sets given cookies.
 -- Parameters: 'PStorageSetCookies'
 storageSetCookies :: Handle ev -> PStorageSetCookies -> IO (Maybe Error)
@@ -346,7 +362,8 @@ storageSetCookies handle params = sendReceiveCommand handle "Storage.setCookies"
 
 -- | Parameters of the 'storageClearCookies' command.
 data PStorageClearCookies = PStorageClearCookies {
-   pStorageClearCookiesBrowserContextId :: PStorageClearCookiesBrowserContextId -- ^ Browser context to use when called on the browser endpoint.
+  -- | Browser context to use when called on the browser endpoint.
+  pStorageClearCookiesBrowserContextId :: Maybe BrowserTarget.BrowserBrowserContextId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PStorageClearCookies  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -355,7 +372,7 @@ instance FromJSON  PStorageClearCookies where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
--- | Function for the command 'Storage.clearCookies'.
+-- | Function for the 'Storage.clearCookies' command.
 -- Clears cookies.
 -- Parameters: 'PStorageClearCookies'
 storageClearCookies :: Handle ev -> PStorageClearCookies -> IO (Maybe Error)
@@ -364,7 +381,8 @@ storageClearCookies handle params = sendReceiveCommand handle "Storage.clearCook
 
 -- | Parameters of the 'storageGetUsageAndQuota' command.
 data PStorageGetUsageAndQuota = PStorageGetUsageAndQuota {
-   pStorageGetUsageAndQuotaOrigin :: PStorageGetUsageAndQuotaOrigin -- ^ Security origin.
+  -- | Security origin.
+  pStorageGetUsageAndQuotaOrigin :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PStorageGetUsageAndQuota  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -373,7 +391,7 @@ instance FromJSON  PStorageGetUsageAndQuota where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the command 'Storage.getUsageAndQuota'.
+-- | Function for the 'Storage.getUsageAndQuota' command.
 -- Returns usage and quota in bytes.
 -- Parameters: 'PStorageGetUsageAndQuota'
 -- Returns: 'StorageGetUsageAndQuota'
@@ -382,10 +400,14 @@ storageGetUsageAndQuota handle params = sendReceiveCommandResult handle "Storage
 
 -- | Return type of the 'storageGetUsageAndQuota' command.
 data StorageGetUsageAndQuota = StorageGetUsageAndQuota {
-   storageGetUsageAndQuotaUsage :: Double, -- ^ Storage usage (bytes).
-   storageGetUsageAndQuotaQuota :: Double, -- ^ Storage quota (bytes).
-   storageGetUsageAndQuotaOverrideActive :: Bool, -- ^ Whether or not the origin has an active storage quota override
-   storageGetUsageAndQuotaUsageBreakdown :: [StorageUsageForType] -- ^ Storage usage per type (bytes).
+  -- | Storage usage (bytes).
+  storageGetUsageAndQuotaUsage :: Double,
+  -- | Storage quota (bytes).
+  storageGetUsageAndQuotaQuota :: Double,
+  -- | Whether or not the origin has an active storage quota override
+  storageGetUsageAndQuotaOverrideActive :: Bool,
+  -- | Storage usage per type (bytes).
+  storageGetUsageAndQuotaUsageBreakdown :: [StorageUsageForType]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  StorageGetUsageAndQuota where
@@ -398,14 +420,16 @@ instance Command StorageGetUsageAndQuota where
 
 -- | Parameters of the 'storageOverrideQuotaForOrigin' command.
 data PStorageOverrideQuotaForOrigin = PStorageOverrideQuotaForOrigin {
-   pStorageOverrideQuotaForOriginOrigin :: PStorageOverrideQuotaForOriginOrigin, -- ^ Security origin.
-   pStorageOverrideQuotaForOriginQuotaSize :: PStorageOverrideQuotaForOriginQuotaSize -- ^ The quota size (in bytes) to override the original quota with.
-If this is called multiple times, the overridden quota will be equal to
-the quotaSize provided in the final call. If this is called without
-specifying a quotaSize, the quota will be reset to the default value for
-the specified origin. If this is called multiple times with different
-origins, the override will be maintained for each origin until it is
-disabled (called without a quotaSize).
+  -- | Security origin.
+  pStorageOverrideQuotaForOriginOrigin :: String,
+  -- | The quota size (in bytes) to override the original quota with.
+  -- If this is called multiple times, the overridden quota will be equal to
+  -- the quotaSize provided in the final call. If this is called without
+  -- specifying a quotaSize, the quota will be reset to the default value for
+  -- the specified origin. If this is called multiple times with different
+  -- origins, the override will be maintained for each origin until it is
+  -- disabled (called without a quotaSize).
+  pStorageOverrideQuotaForOriginQuotaSize :: Maybe Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PStorageOverrideQuotaForOrigin  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -414,7 +438,7 @@ instance FromJSON  PStorageOverrideQuotaForOrigin where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
--- | Function for the command 'Storage.overrideQuotaForOrigin'.
+-- | Function for the 'Storage.overrideQuotaForOrigin' command.
 -- Override quota for the specified origin
 -- Parameters: 'PStorageOverrideQuotaForOrigin'
 storageOverrideQuotaForOrigin :: Handle ev -> PStorageOverrideQuotaForOrigin -> IO (Maybe Error)
@@ -423,7 +447,8 @@ storageOverrideQuotaForOrigin handle params = sendReceiveCommand handle "Storage
 
 -- | Parameters of the 'storageTrackCacheStorageForOrigin' command.
 data PStorageTrackCacheStorageForOrigin = PStorageTrackCacheStorageForOrigin {
-   pStorageTrackCacheStorageForOriginOrigin :: PStorageTrackCacheStorageForOriginOrigin -- ^ Security origin.
+  -- | Security origin.
+  pStorageTrackCacheStorageForOriginOrigin :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PStorageTrackCacheStorageForOrigin  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 , A.omitNothingFields = True}
@@ -432,7 +457,7 @@ instance FromJSON  PStorageTrackCacheStorageForOrigin where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
 
 
--- | Function for the command 'Storage.trackCacheStorageForOrigin'.
+-- | Function for the 'Storage.trackCacheStorageForOrigin' command.
 -- Registers origin to be notified when an update occurs to its cache storage list.
 -- Parameters: 'PStorageTrackCacheStorageForOrigin'
 storageTrackCacheStorageForOrigin :: Handle ev -> PStorageTrackCacheStorageForOrigin -> IO (Maybe Error)
@@ -441,7 +466,8 @@ storageTrackCacheStorageForOrigin handle params = sendReceiveCommand handle "Sto
 
 -- | Parameters of the 'storageTrackIndexedDbForOrigin' command.
 data PStorageTrackIndexedDbForOrigin = PStorageTrackIndexedDbForOrigin {
-   pStorageTrackIndexedDbForOriginOrigin :: PStorageTrackIndexedDbForOriginOrigin -- ^ Security origin.
+  -- | Security origin.
+  pStorageTrackIndexedDbForOriginOrigin :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PStorageTrackIndexedDbForOrigin  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
@@ -450,7 +476,7 @@ instance FromJSON  PStorageTrackIndexedDbForOrigin where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
--- | Function for the command 'Storage.trackIndexedDBForOrigin'.
+-- | Function for the 'Storage.trackIndexedDBForOrigin' command.
 -- Registers origin to be notified when an update occurs to its IndexedDB.
 -- Parameters: 'PStorageTrackIndexedDbForOrigin'
 storageTrackIndexedDbForOrigin :: Handle ev -> PStorageTrackIndexedDbForOrigin -> IO (Maybe Error)
@@ -459,7 +485,8 @@ storageTrackIndexedDbForOrigin handle params = sendReceiveCommand handle "Storag
 
 -- | Parameters of the 'storageUntrackCacheStorageForOrigin' command.
 data PStorageUntrackCacheStorageForOrigin = PStorageUntrackCacheStorageForOrigin {
-   pStorageUntrackCacheStorageForOriginOrigin :: PStorageUntrackCacheStorageForOriginOrigin -- ^ Security origin.
+  -- | Security origin.
+  pStorageUntrackCacheStorageForOriginOrigin :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PStorageUntrackCacheStorageForOrigin  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
@@ -468,7 +495,7 @@ instance FromJSON  PStorageUntrackCacheStorageForOrigin where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 }
 
 
--- | Function for the command 'Storage.untrackCacheStorageForOrigin'.
+-- | Function for the 'Storage.untrackCacheStorageForOrigin' command.
 -- Unregisters origin from receiving notifications for cache storage.
 -- Parameters: 'PStorageUntrackCacheStorageForOrigin'
 storageUntrackCacheStorageForOrigin :: Handle ev -> PStorageUntrackCacheStorageForOrigin -> IO (Maybe Error)
@@ -477,7 +504,8 @@ storageUntrackCacheStorageForOrigin handle params = sendReceiveCommand handle "S
 
 -- | Parameters of the 'storageUntrackIndexedDbForOrigin' command.
 data PStorageUntrackIndexedDbForOrigin = PStorageUntrackIndexedDbForOrigin {
-   pStorageUntrackIndexedDbForOriginOrigin :: PStorageUntrackIndexedDbForOriginOrigin -- ^ Security origin.
+  -- | Security origin.
+  pStorageUntrackIndexedDbForOriginOrigin :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PStorageUntrackIndexedDbForOrigin  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
@@ -486,14 +514,14 @@ instance FromJSON  PStorageUntrackIndexedDbForOrigin where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 }
 
 
--- | Function for the command 'Storage.untrackIndexedDBForOrigin'.
+-- | Function for the 'Storage.untrackIndexedDBForOrigin' command.
 -- Unregisters origin from receiving notifications for IndexedDB.
 -- Parameters: 'PStorageUntrackIndexedDbForOrigin'
 storageUntrackIndexedDbForOrigin :: Handle ev -> PStorageUntrackIndexedDbForOrigin -> IO (Maybe Error)
 storageUntrackIndexedDbForOrigin handle params = sendReceiveCommand handle "Storage.untrackIndexedDBForOrigin" (Just params)
 
 
--- | Function for the command 'Storage.getTrustTokens'.
+-- | Function for the 'Storage.getTrustTokens' command.
 -- Returns the number of stored Trust Tokens per issuer for the
 -- current browsing context.
 -- Returns: 'StorageGetTrustTokens'
@@ -502,7 +530,7 @@ storageGetTrustTokens handle = sendReceiveCommandResult handle "Storage.getTrust
 
 -- | Return type of the 'storageGetTrustTokens' command.
 data StorageGetTrustTokens = StorageGetTrustTokens {
-
+  storageGetTrustTokensTokens :: [StorageTrustTokens]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  StorageGetTrustTokens where
@@ -515,6 +543,7 @@ instance Command StorageGetTrustTokens where
 
 -- | Parameters of the 'storageClearTrustTokens' command.
 data PStorageClearTrustTokens = PStorageClearTrustTokens {
+  pStorageClearTrustTokensIssuerOrigin :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PStorageClearTrustTokens  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -523,7 +552,7 @@ instance FromJSON  PStorageClearTrustTokens where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the command 'Storage.clearTrustTokens'.
+-- | Function for the 'Storage.clearTrustTokens' command.
 -- Removes all Trust Tokens issued by the provided issuerOrigin.
 -- Leaves other stored data, including the issuer's Redemption Records, intact.
 -- Parameters: 'PStorageClearTrustTokens'
@@ -533,7 +562,8 @@ storageClearTrustTokens handle params = sendReceiveCommandResult handle "Storage
 
 -- | Return type of the 'storageClearTrustTokens' command.
 data StorageClearTrustTokens = StorageClearTrustTokens {
-   storageClearTrustTokensDidDeleteTokens :: Bool -- ^ True if any tokens were deleted, false otherwise.
+  -- | True if any tokens were deleted, false otherwise.
+  storageClearTrustTokensDidDeleteTokens :: Bool
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  StorageClearTrustTokens where
@@ -546,8 +576,8 @@ instance Command StorageClearTrustTokens where
 
 -- | Parameters of the 'storageGetInterestGroupDetails' command.
 data PStorageGetInterestGroupDetails = PStorageGetInterestGroupDetails {
-
-
+  pStorageGetInterestGroupDetailsOwnerOrigin :: String,
+  pStorageGetInterestGroupDetailsName :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PStorageGetInterestGroupDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
@@ -556,7 +586,7 @@ instance FromJSON  PStorageGetInterestGroupDetails where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
--- | Function for the command 'Storage.getInterestGroupDetails'.
+-- | Function for the 'Storage.getInterestGroupDetails' command.
 -- Gets details for a named interest group.
 -- Parameters: 'PStorageGetInterestGroupDetails'
 -- Returns: 'StorageGetInterestGroupDetails'
@@ -565,7 +595,7 @@ storageGetInterestGroupDetails handle params = sendReceiveCommandResult handle "
 
 -- | Return type of the 'storageGetInterestGroupDetails' command.
 data StorageGetInterestGroupDetails = StorageGetInterestGroupDetails {
-
+  storageGetInterestGroupDetailsDetails :: StorageInterestGroupDetails
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  StorageGetInterestGroupDetails where
@@ -578,6 +608,7 @@ instance Command StorageGetInterestGroupDetails where
 
 -- | Parameters of the 'storageSetInterestGroupTracking' command.
 data PStorageSetInterestGroupTracking = PStorageSetInterestGroupTracking {
+  pStorageSetInterestGroupTrackingEnable :: Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PStorageSetInterestGroupTracking  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
@@ -586,7 +617,7 @@ instance FromJSON  PStorageSetInterestGroupTracking where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
--- | Function for the command 'Storage.setInterestGroupTracking'.
+-- | Function for the 'Storage.setInterestGroupTracking' command.
 -- Enables/Disables issuing of interestGroupAccessed events.
 -- Parameters: 'PStorageSetInterestGroupTracking'
 storageSetInterestGroupTracking :: Handle ev -> PStorageSetInterestGroupTracking -> IO (Maybe Error)

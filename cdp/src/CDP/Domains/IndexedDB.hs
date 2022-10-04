@@ -48,10 +48,13 @@ import CDP.Domains.Runtime as Runtime
 
 -- | Database with an array of object stores.
 data IndexedDbDatabaseWithObjectStores = IndexedDbDatabaseWithObjectStores {
-   indexedDbDatabaseWithObjectStoresName :: IndexedDbDatabaseWithObjectStoresName, -- ^ Database name.
-   indexedDbDatabaseWithObjectStoresVersion :: IndexedDbDatabaseWithObjectStoresVersion, -- ^ Database version (type is not 'integer', as the standard
-requires the version number to be 'unsigned long long')
-   indexedDbDatabaseWithObjectStoresObjectStores :: IndexedDbDatabaseWithObjectStoresObjectStores -- ^ Object stores in this database.
+  -- | Database name.
+  indexedDbDatabaseWithObjectStoresName :: String,
+  -- | Database version (type is not 'integer', as the standard
+  -- requires the version number to be 'unsigned long long')
+  indexedDbDatabaseWithObjectStoresVersion :: Double,
+  -- | Object stores in this database.
+  indexedDbDatabaseWithObjectStoresObjectStores :: [IndexedDbObjectStore]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON IndexedDbDatabaseWithObjectStores  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
@@ -63,10 +66,14 @@ instance FromJSON  IndexedDbDatabaseWithObjectStores where
 
 -- | Object store.
 data IndexedDbObjectStore = IndexedDbObjectStore {
-   indexedDbObjectStoreName :: IndexedDbObjectStoreName, -- ^ Object store name.
-   indexedDbObjectStoreKeyPath :: IndexedDbObjectStoreKeyPath, -- ^ Object store key path.
-   indexedDbObjectStoreAutoIncrement :: IndexedDbObjectStoreAutoIncrement, -- ^ If true, object store has auto increment flag set.
-   indexedDbObjectStoreIndexes :: IndexedDbObjectStoreIndexes -- ^ Indexes in this object store.
+  -- | Object store name.
+  indexedDbObjectStoreName :: String,
+  -- | Object store key path.
+  indexedDbObjectStoreKeyPath :: IndexedDbKeyPath,
+  -- | If true, object store has auto increment flag set.
+  indexedDbObjectStoreAutoIncrement :: Bool,
+  -- | Indexes in this object store.
+  indexedDbObjectStoreIndexes :: [IndexedDbObjectStoreIndex]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON IndexedDbObjectStore  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -78,10 +85,14 @@ instance FromJSON  IndexedDbObjectStore where
 
 -- | Object store index.
 data IndexedDbObjectStoreIndex = IndexedDbObjectStoreIndex {
-   indexedDbObjectStoreIndexName :: IndexedDbObjectStoreIndexName, -- ^ Index name.
-   indexedDbObjectStoreIndexKeyPath :: IndexedDbObjectStoreIndexKeyPath, -- ^ Index key path.
-   indexedDbObjectStoreIndexUnique :: IndexedDbObjectStoreIndexUnique, -- ^ If true, index is unique.
-   indexedDbObjectStoreIndexMultiEntry :: IndexedDbObjectStoreIndexMultiEntry -- ^ If true, index allows multiple entries for a key.
+  -- | Index name.
+  indexedDbObjectStoreIndexName :: String,
+  -- | Index key path.
+  indexedDbObjectStoreIndexKeyPath :: IndexedDbKeyPath,
+  -- | If true, index is unique.
+  indexedDbObjectStoreIndexUnique :: Bool,
+  -- | If true, index allows multiple entries for a key.
+  indexedDbObjectStoreIndexMultiEntry :: Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON IndexedDbObjectStoreIndex  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -114,11 +125,16 @@ instance ToJSON IndexedDbKeyType where
 
 
 data IndexedDbKey = IndexedDbKey {
-   indexedDbKeyType :: IndexedDbKeyType, -- ^ Key type.
-   indexedDbKeyNumber :: IndexedDbKeyNumber, -- ^ Number value.
-   indexedDbKeyString :: IndexedDbKeyString, -- ^ String value.
-   indexedDbKeyDate :: IndexedDbKeyDate, -- ^ Date value.
-   indexedDbKeyArray :: IndexedDbKeyArray -- ^ Array value.
+  -- | Key type.
+  indexedDbKeyType :: IndexedDbKeyType,
+  -- | Number value.
+  indexedDbKeyNumber :: Maybe Double,
+  -- | String value.
+  indexedDbKeyString :: Maybe String,
+  -- | Date value.
+  indexedDbKeyDate :: Maybe Double,
+  -- | Array value.
+  indexedDbKeyArray :: Maybe [IndexedDbKey]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON IndexedDbKey  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 , A.omitNothingFields = True}
@@ -130,10 +146,14 @@ instance FromJSON  IndexedDbKey where
 
 -- | Key range.
 data IndexedDbKeyRange = IndexedDbKeyRange {
-   indexedDbKeyRangeLower :: IndexedDbKeyRangeLower, -- ^ Lower bound.
-   indexedDbKeyRangeUpper :: IndexedDbKeyRangeUpper, -- ^ Upper bound.
-   indexedDbKeyRangeLowerOpen :: IndexedDbKeyRangeLowerOpen, -- ^ If true lower bound is open.
-   indexedDbKeyRangeUpperOpen :: IndexedDbKeyRangeUpperOpen -- ^ If true upper bound is open.
+  -- | Lower bound.
+  indexedDbKeyRangeLower :: Maybe IndexedDbKey,
+  -- | Upper bound.
+  indexedDbKeyRangeUpper :: Maybe IndexedDbKey,
+  -- | If true lower bound is open.
+  indexedDbKeyRangeLowerOpen :: Bool,
+  -- | If true upper bound is open.
+  indexedDbKeyRangeUpperOpen :: Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON IndexedDbKeyRange  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -145,9 +165,12 @@ instance FromJSON  IndexedDbKeyRange where
 
 -- | Data entry.
 data IndexedDbDataEntry = IndexedDbDataEntry {
-   indexedDbDataEntryKey :: IndexedDbDataEntryKey, -- ^ Key object.
-   indexedDbDataEntryPrimaryKey :: IndexedDbDataEntryPrimaryKey, -- ^ Primary key object.
-   indexedDbDataEntryValue :: IndexedDbDataEntryValue -- ^ Value object.
+  -- | Key object.
+  indexedDbDataEntryKey :: Runtime.RuntimeRemoteObject,
+  -- | Primary key object.
+  indexedDbDataEntryPrimaryKey :: Runtime.RuntimeRemoteObject,
+  -- | Value object.
+  indexedDbDataEntryValue :: Runtime.RuntimeRemoteObject
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON IndexedDbDataEntry  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -178,9 +201,12 @@ instance ToJSON IndexedDbKeyPathType where
 
 
 data IndexedDbKeyPath = IndexedDbKeyPath {
-   indexedDbKeyPathType :: IndexedDbKeyPathType, -- ^ Key path type.
-   indexedDbKeyPathString :: IndexedDbKeyPathString, -- ^ String value.
-   indexedDbKeyPathArray :: IndexedDbKeyPathArray -- ^ Array value.
+  -- | Key path type.
+  indexedDbKeyPathType :: IndexedDbKeyPathType,
+  -- | String value.
+  indexedDbKeyPathString :: Maybe String,
+  -- | Array value.
+  indexedDbKeyPathArray :: Maybe [String]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON IndexedDbKeyPath  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -196,9 +222,12 @@ instance FromJSON  IndexedDbKeyPath where
 
 -- | Parameters of the 'indexedDbClearObjectStore' command.
 data PIndexedDbClearObjectStore = PIndexedDbClearObjectStore {
-   pIndexedDbClearObjectStoreSecurityOrigin :: PIndexedDbClearObjectStoreSecurityOrigin, -- ^ Security origin.
-   pIndexedDbClearObjectStoreDatabaseName :: PIndexedDbClearObjectStoreDatabaseName, -- ^ Database name.
-   pIndexedDbClearObjectStoreObjectStoreName :: PIndexedDbClearObjectStoreObjectStoreName -- ^ Object store name.
+  -- | Security origin.
+  pIndexedDbClearObjectStoreSecurityOrigin :: String,
+  -- | Database name.
+  pIndexedDbClearObjectStoreDatabaseName :: String,
+  -- | Object store name.
+  pIndexedDbClearObjectStoreObjectStoreName :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PIndexedDbClearObjectStore  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -207,7 +236,7 @@ instance FromJSON  PIndexedDbClearObjectStore where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
--- | Function for the command 'IndexedDB.clearObjectStore'.
+-- | Function for the 'IndexedDB.clearObjectStore' command.
 -- Clears all entries from an object store.
 -- Parameters: 'PIndexedDbClearObjectStore'
 indexedDbClearObjectStore :: Handle ev -> PIndexedDbClearObjectStore -> IO (Maybe Error)
@@ -216,8 +245,10 @@ indexedDbClearObjectStore handle params = sendReceiveCommand handle "IndexedDB.c
 
 -- | Parameters of the 'indexedDbDeleteDatabase' command.
 data PIndexedDbDeleteDatabase = PIndexedDbDeleteDatabase {
-   pIndexedDbDeleteDatabaseSecurityOrigin :: PIndexedDbDeleteDatabaseSecurityOrigin, -- ^ Security origin.
-   pIndexedDbDeleteDatabaseDatabaseName :: PIndexedDbDeleteDatabaseDatabaseName -- ^ Database name.
+  -- | Security origin.
+  pIndexedDbDeleteDatabaseSecurityOrigin :: String,
+  -- | Database name.
+  pIndexedDbDeleteDatabaseDatabaseName :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PIndexedDbDeleteDatabase  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -226,7 +257,7 @@ instance FromJSON  PIndexedDbDeleteDatabase where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the command 'IndexedDB.deleteDatabase'.
+-- | Function for the 'IndexedDB.deleteDatabase' command.
 -- Deletes a database.
 -- Parameters: 'PIndexedDbDeleteDatabase'
 indexedDbDeleteDatabase :: Handle ev -> PIndexedDbDeleteDatabase -> IO (Maybe Error)
@@ -235,10 +266,11 @@ indexedDbDeleteDatabase handle params = sendReceiveCommand handle "IndexedDB.del
 
 -- | Parameters of the 'indexedDbDeleteObjectStoreEntries' command.
 data PIndexedDbDeleteObjectStoreEntries = PIndexedDbDeleteObjectStoreEntries {
-
-
-
-   pIndexedDbDeleteObjectStoreEntriesKeyRange :: PIndexedDbDeleteObjectStoreEntriesKeyRange -- ^ Range of entry keys to delete
+  pIndexedDbDeleteObjectStoreEntriesSecurityOrigin :: String,
+  pIndexedDbDeleteObjectStoreEntriesDatabaseName :: String,
+  pIndexedDbDeleteObjectStoreEntriesObjectStoreName :: String,
+  -- | Range of entry keys to delete
+  pIndexedDbDeleteObjectStoreEntriesKeyRange :: IndexedDbKeyRange
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PIndexedDbDeleteObjectStoreEntries  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 , A.omitNothingFields = True}
@@ -247,20 +279,20 @@ instance FromJSON  PIndexedDbDeleteObjectStoreEntries where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
 
 
--- | Function for the command 'IndexedDB.deleteObjectStoreEntries'.
+-- | Function for the 'IndexedDB.deleteObjectStoreEntries' command.
 -- Delete a range of entries from an object store
 -- Parameters: 'PIndexedDbDeleteObjectStoreEntries'
 indexedDbDeleteObjectStoreEntries :: Handle ev -> PIndexedDbDeleteObjectStoreEntries -> IO (Maybe Error)
 indexedDbDeleteObjectStoreEntries handle params = sendReceiveCommand handle "IndexedDB.deleteObjectStoreEntries" (Just params)
 
 
--- | Function for the command 'IndexedDB.disable'.
+-- | Function for the 'IndexedDB.disable' command.
 -- Disables events from backend.
 indexedDbDisable :: Handle ev -> IO (Maybe Error)
 indexedDbDisable handle = sendReceiveCommand handle "IndexedDB.disable" (Nothing :: Maybe ())
 
 
--- | Function for the command 'IndexedDB.enable'.
+-- | Function for the 'IndexedDB.enable' command.
 -- Enables events from backend.
 indexedDbEnable :: Handle ev -> IO (Maybe Error)
 indexedDbEnable handle = sendReceiveCommand handle "IndexedDB.enable" (Nothing :: Maybe ())
@@ -268,13 +300,20 @@ indexedDbEnable handle = sendReceiveCommand handle "IndexedDB.enable" (Nothing :
 
 -- | Parameters of the 'indexedDbRequestData' command.
 data PIndexedDbRequestData = PIndexedDbRequestData {
-   pIndexedDbRequestDataSecurityOrigin :: PIndexedDbRequestDataSecurityOrigin, -- ^ Security origin.
-   pIndexedDbRequestDataDatabaseName :: PIndexedDbRequestDataDatabaseName, -- ^ Database name.
-   pIndexedDbRequestDataObjectStoreName :: PIndexedDbRequestDataObjectStoreName, -- ^ Object store name.
-   pIndexedDbRequestDataIndexName :: PIndexedDbRequestDataIndexName, -- ^ Index name, empty string for object store data requests.
-   pIndexedDbRequestDataSkipCount :: PIndexedDbRequestDataSkipCount, -- ^ Number of records to skip.
-   pIndexedDbRequestDataPageSize :: PIndexedDbRequestDataPageSize, -- ^ Number of records to fetch.
-   pIndexedDbRequestDataKeyRange :: PIndexedDbRequestDataKeyRange -- ^ Key range.
+  -- | Security origin.
+  pIndexedDbRequestDataSecurityOrigin :: String,
+  -- | Database name.
+  pIndexedDbRequestDataDatabaseName :: String,
+  -- | Object store name.
+  pIndexedDbRequestDataObjectStoreName :: String,
+  -- | Index name, empty string for object store data requests.
+  pIndexedDbRequestDataIndexName :: String,
+  -- | Number of records to skip.
+  pIndexedDbRequestDataSkipCount :: Int,
+  -- | Number of records to fetch.
+  pIndexedDbRequestDataPageSize :: Int,
+  -- | Key range.
+  pIndexedDbRequestDataKeyRange :: Maybe IndexedDbKeyRange
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PIndexedDbRequestData  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -283,7 +322,7 @@ instance FromJSON  PIndexedDbRequestData where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
--- | Function for the command 'IndexedDB.requestData'.
+-- | Function for the 'IndexedDB.requestData' command.
 -- Requests data from object store or index.
 -- Parameters: 'PIndexedDbRequestData'
 -- Returns: 'IndexedDbRequestData'
@@ -292,8 +331,10 @@ indexedDbRequestData handle params = sendReceiveCommandResult handle "IndexedDB.
 
 -- | Return type of the 'indexedDbRequestData' command.
 data IndexedDbRequestData = IndexedDbRequestData {
-   indexedDbRequestDataObjectStoreDataEntries :: [IndexedDbDataEntry], -- ^ Array of object store data entries.
-   indexedDbRequestDataHasMore :: Bool -- ^ If true, there are more entries to fetch in the given range.
+  -- | Array of object store data entries.
+  indexedDbRequestDataObjectStoreDataEntries :: [IndexedDbDataEntry],
+  -- | If true, there are more entries to fetch in the given range.
+  indexedDbRequestDataHasMore :: Bool
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  IndexedDbRequestData where
@@ -306,9 +347,12 @@ instance Command IndexedDbRequestData where
 
 -- | Parameters of the 'indexedDbGetMetadata' command.
 data PIndexedDbGetMetadata = PIndexedDbGetMetadata {
-   pIndexedDbGetMetadataSecurityOrigin :: PIndexedDbGetMetadataSecurityOrigin, -- ^ Security origin.
-   pIndexedDbGetMetadataDatabaseName :: PIndexedDbGetMetadataDatabaseName, -- ^ Database name.
-   pIndexedDbGetMetadataObjectStoreName :: PIndexedDbGetMetadataObjectStoreName -- ^ Object store name.
+  -- | Security origin.
+  pIndexedDbGetMetadataSecurityOrigin :: String,
+  -- | Database name.
+  pIndexedDbGetMetadataDatabaseName :: String,
+  -- | Object store name.
+  pIndexedDbGetMetadataObjectStoreName :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PIndexedDbGetMetadata  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -317,7 +361,7 @@ instance FromJSON  PIndexedDbGetMetadata where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
--- | Function for the command 'IndexedDB.getMetadata'.
+-- | Function for the 'IndexedDB.getMetadata' command.
 -- Gets metadata of an object store
 -- Parameters: 'PIndexedDbGetMetadata'
 -- Returns: 'IndexedDbGetMetadata'
@@ -326,10 +370,12 @@ indexedDbGetMetadata handle params = sendReceiveCommandResult handle "IndexedDB.
 
 -- | Return type of the 'indexedDbGetMetadata' command.
 data IndexedDbGetMetadata = IndexedDbGetMetadata {
-   indexedDbGetMetadataEntriesCount :: Double, -- ^ the entries count
-   indexedDbGetMetadataKeyGeneratorValue :: Double -- ^ the current value of key generator, to become the next inserted
-key into the object store. Valid if objectStore.autoIncrement
-is true.
+  -- | the entries count
+  indexedDbGetMetadataEntriesCount :: Double,
+  -- | the current value of key generator, to become the next inserted
+  -- key into the object store. Valid if objectStore.autoIncrement
+  -- is true.
+  indexedDbGetMetadataKeyGeneratorValue :: Double
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  IndexedDbGetMetadata where
@@ -342,8 +388,10 @@ instance Command IndexedDbGetMetadata where
 
 -- | Parameters of the 'indexedDbRequestDatabase' command.
 data PIndexedDbRequestDatabase = PIndexedDbRequestDatabase {
-   pIndexedDbRequestDatabaseSecurityOrigin :: PIndexedDbRequestDatabaseSecurityOrigin, -- ^ Security origin.
-   pIndexedDbRequestDatabaseDatabaseName :: PIndexedDbRequestDatabaseDatabaseName -- ^ Database name.
+  -- | Security origin.
+  pIndexedDbRequestDatabaseSecurityOrigin :: String,
+  -- | Database name.
+  pIndexedDbRequestDatabaseDatabaseName :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PIndexedDbRequestDatabase  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -352,7 +400,7 @@ instance FromJSON  PIndexedDbRequestDatabase where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the command 'IndexedDB.requestDatabase'.
+-- | Function for the 'IndexedDB.requestDatabase' command.
 -- Requests database with given name in given frame.
 -- Parameters: 'PIndexedDbRequestDatabase'
 -- Returns: 'IndexedDbRequestDatabase'
@@ -361,7 +409,8 @@ indexedDbRequestDatabase handle params = sendReceiveCommandResult handle "Indexe
 
 -- | Return type of the 'indexedDbRequestDatabase' command.
 data IndexedDbRequestDatabase = IndexedDbRequestDatabase {
-   indexedDbRequestDatabaseDatabaseWithObjectStores :: IndexedDbDatabaseWithObjectStores -- ^ Database with an array of object stores.
+  -- | Database with an array of object stores.
+  indexedDbRequestDatabaseDatabaseWithObjectStores :: IndexedDbDatabaseWithObjectStores
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  IndexedDbRequestDatabase where
@@ -374,7 +423,8 @@ instance Command IndexedDbRequestDatabase where
 
 -- | Parameters of the 'indexedDbRequestDatabaseNames' command.
 data PIndexedDbRequestDatabaseNames = PIndexedDbRequestDatabaseNames {
-   pIndexedDbRequestDatabaseNamesSecurityOrigin :: PIndexedDbRequestDatabaseNamesSecurityOrigin -- ^ Security origin.
+  -- | Security origin.
+  pIndexedDbRequestDatabaseNamesSecurityOrigin :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PIndexedDbRequestDatabaseNames  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -383,7 +433,7 @@ instance FromJSON  PIndexedDbRequestDatabaseNames where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
--- | Function for the command 'IndexedDB.requestDatabaseNames'.
+-- | Function for the 'IndexedDB.requestDatabaseNames' command.
 -- Requests database names for given security origin.
 -- Parameters: 'PIndexedDbRequestDatabaseNames'
 -- Returns: 'IndexedDbRequestDatabaseNames'
@@ -392,7 +442,8 @@ indexedDbRequestDatabaseNames handle params = sendReceiveCommandResult handle "I
 
 -- | Return type of the 'indexedDbRequestDatabaseNames' command.
 data IndexedDbRequestDatabaseNames = IndexedDbRequestDatabaseNames {
-   indexedDbRequestDatabaseNamesDatabaseNames :: [String] -- ^ Database names for origin.
+  -- | Database names for origin.
+  indexedDbRequestDatabaseNamesDatabaseNames :: [String]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  IndexedDbRequestDatabaseNames where

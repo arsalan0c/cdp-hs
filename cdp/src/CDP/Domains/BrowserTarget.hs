@@ -81,11 +81,16 @@ instance ToJSON BrowserWindowState where
 
 -- | Browser window bounds information
 data BrowserBounds = BrowserBounds {
-   browserBoundsLeft :: BrowserBoundsLeft, -- ^ The offset from the left edge of the screen to the window in pixels.
-   browserBoundsTop :: BrowserBoundsTop, -- ^ The offset from the top edge of the screen to the window in pixels.
-   browserBoundsWidth :: BrowserBoundsWidth, -- ^ The window width in pixels.
-   browserBoundsHeight :: BrowserBoundsHeight, -- ^ The window height in pixels.
-   browserBoundsWindowState :: BrowserBoundsWindowState -- ^ The window state. Default to normal.
+  -- | The offset from the left edge of the screen to the window in pixels.
+  browserBoundsLeft :: Maybe Int,
+  -- | The offset from the top edge of the screen to the window in pixels.
+  browserBoundsTop :: Maybe Int,
+  -- | The window width in pixels.
+  browserBoundsWidth :: Maybe Int,
+  -- | The window height in pixels.
+  browserBoundsHeight :: Maybe Int,
+  -- | The window state. Default to normal.
+  browserBoundsWindowState :: Maybe BrowserWindowState
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON BrowserBounds  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 , A.omitNothingFields = True}
@@ -178,13 +183,18 @@ instance ToJSON BrowserPermissionSetting where
 -- | Definition of PermissionDescriptor defined in the Permissions API:
 -- https://w3c.github.io/permissions/#dictdef-permissiondescriptor.
 data BrowserPermissionDescriptor = BrowserPermissionDescriptor {
-   browserPermissionDescriptorName :: BrowserPermissionDescriptorName, -- ^ Name of permission.
-See https://cs.chromium.org/chromium/src/third_party/blink/renderer/modules/permissions/permission_descriptor.idl for valid permission names.
-   browserPermissionDescriptorSysex :: BrowserPermissionDescriptorSysex, -- ^ For "midi" permission, may also specify sysex control.
-   browserPermissionDescriptorUserVisibleOnly :: BrowserPermissionDescriptorUserVisibleOnly, -- ^ For "push" permission, may specify userVisibleOnly.
-Note that userVisibleOnly = true is the only currently supported type.
-   browserPermissionDescriptorAllowWithoutSanitization :: BrowserPermissionDescriptorAllowWithoutSanitization, -- ^ For "clipboard" permission, may specify allowWithoutSanitization.
-   browserPermissionDescriptorPanTiltZoom :: BrowserPermissionDescriptorPanTiltZoom -- ^ For "camera" permission, may specify panTiltZoom.
+  -- | Name of permission.
+  -- See https://cs.chromium.org/chromium/src/third_party/blink/renderer/modules/permissions/permission_descriptor.idl for valid permission names.
+  browserPermissionDescriptorName :: String,
+  -- | For "midi" permission, may also specify sysex control.
+  browserPermissionDescriptorSysex :: Maybe Bool,
+  -- | For "push" permission, may specify userVisibleOnly.
+  -- Note that userVisibleOnly = true is the only currently supported type.
+  browserPermissionDescriptorUserVisibleOnly :: Maybe Bool,
+  -- | For "clipboard" permission, may specify allowWithoutSanitization.
+  browserPermissionDescriptorAllowWithoutSanitization :: Maybe Bool,
+  -- | For "camera" permission, may specify panTiltZoom.
+  browserPermissionDescriptorPanTiltZoom :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON BrowserPermissionDescriptor  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -214,9 +224,12 @@ instance ToJSON BrowserBrowserCommandId where
 
 -- | Chrome histogram bucket.
 data BrowserBucket = BrowserBucket {
-   browserBucketLow :: BrowserBucketLow, -- ^ Minimum value (inclusive).
-   browserBucketHigh :: BrowserBucketHigh, -- ^ Maximum value (exclusive).
-   browserBucketCount :: BrowserBucketCount -- ^ Number of samples.
+  -- | Minimum value (inclusive).
+  browserBucketLow :: Int,
+  -- | Maximum value (exclusive).
+  browserBucketHigh :: Int,
+  -- | Number of samples.
+  browserBucketCount :: Int
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON BrowserBucket  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 , A.omitNothingFields = True}
@@ -228,10 +241,14 @@ instance FromJSON  BrowserBucket where
 
 -- | Chrome histogram.
 data BrowserHistogram = BrowserHistogram {
-   browserHistogramName :: BrowserHistogramName, -- ^ Name.
-   browserHistogramSum :: BrowserHistogramSum, -- ^ Sum of sample values.
-   browserHistogramCount :: BrowserHistogramCount, -- ^ Total number of samples.
-   browserHistogramBuckets :: BrowserHistogramBuckets -- ^ Buckets.
+  -- | Name.
+  browserHistogramName :: String,
+  -- | Sum of sample values.
+  browserHistogramSum :: Int,
+  -- | Total number of samples.
+  browserHistogramCount :: Int,
+  -- | Buckets.
+  browserHistogramBuckets :: [BrowserBucket]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON BrowserHistogram  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -245,10 +262,14 @@ instance FromJSON  BrowserHistogram where
 
 -- | Type of the 'Browser.downloadWillBegin' event.
 data BrowserDownloadWillBegin = BrowserDownloadWillBegin {
-   browserDownloadWillBeginFrameId :: BrowserDownloadWillBeginFrameId, -- ^ Id of the frame that caused the download to begin.
-   browserDownloadWillBeginGuid :: BrowserDownloadWillBeginGuid, -- ^ Global unique identifier of the download.
-   browserDownloadWillBeginUrl :: BrowserDownloadWillBeginUrl, -- ^ URL of the resource being downloaded.
-   browserDownloadWillBeginSuggestedFilename :: BrowserDownloadWillBeginSuggestedFilename -- ^ Suggested file name of the resource (the actual name of the file saved on disk may differ).
+  -- | Id of the frame that caused the download to begin.
+  browserDownloadWillBeginFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId,
+  -- | Global unique identifier of the download.
+  browserDownloadWillBeginGuid :: String,
+  -- | URL of the resource being downloaded.
+  browserDownloadWillBeginUrl :: String,
+  -- | Suggested file name of the resource (the actual name of the file saved on disk may differ).
+  browserDownloadWillBeginSuggestedFilename :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON BrowserDownloadWillBegin  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -279,10 +300,14 @@ instance ToJSON BrowserDownloadProgressState where
 
 
 data BrowserDownloadProgress = BrowserDownloadProgress {
-   browserDownloadProgressGuid :: BrowserDownloadProgressGuid, -- ^ Global unique identifier of the download.
-   browserDownloadProgressTotalBytes :: BrowserDownloadProgressTotalBytes, -- ^ Total expected bytes to download.
-   browserDownloadProgressReceivedBytes :: BrowserDownloadProgressReceivedBytes, -- ^ Total bytes received.
-   browserDownloadProgressState :: BrowserDownloadProgressState -- ^ Download status.
+  -- | Global unique identifier of the download.
+  browserDownloadProgressGuid :: String,
+  -- | Total expected bytes to download.
+  browserDownloadProgressTotalBytes :: Double,
+  -- | Total bytes received.
+  browserDownloadProgressReceivedBytes :: Double,
+  -- | Download status.
+  browserDownloadProgressState :: BrowserDownloadProgressState
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON BrowserDownloadProgress  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -296,10 +321,14 @@ instance FromJSON  BrowserDownloadProgress where
 
 -- | Parameters of the 'browserSetPermission' command.
 data PBrowserSetPermission = PBrowserSetPermission {
-   pBrowserSetPermissionPermission :: PBrowserSetPermissionPermission, -- ^ Descriptor of permission to override.
-   pBrowserSetPermissionSetting :: PBrowserSetPermissionSetting, -- ^ Setting of the permission.
-   pBrowserSetPermissionOrigin :: PBrowserSetPermissionOrigin, -- ^ Origin the permission applies to, all origins if not specified.
-   pBrowserSetPermissionBrowserContextId :: PBrowserSetPermissionBrowserContextId -- ^ Context to override. When omitted, default browser context is used.
+  -- | Descriptor of permission to override.
+  pBrowserSetPermissionPermission :: BrowserPermissionDescriptor,
+  -- | Setting of the permission.
+  pBrowserSetPermissionSetting :: BrowserPermissionSetting,
+  -- | Origin the permission applies to, all origins if not specified.
+  pBrowserSetPermissionOrigin :: Maybe String,
+  -- | Context to override. When omitted, default browser context is used.
+  pBrowserSetPermissionBrowserContextId :: Maybe BrowserBrowserContextId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PBrowserSetPermission  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -308,7 +337,7 @@ instance FromJSON  PBrowserSetPermission where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
--- | Function for the command 'Browser.setPermission'.
+-- | Function for the 'Browser.setPermission' command.
 -- Set permission settings for given origin.
 -- Parameters: 'PBrowserSetPermission'
 browserSetPermission :: Handle ev -> PBrowserSetPermission -> IO (Maybe Error)
@@ -317,9 +346,11 @@ browserSetPermission handle params = sendReceiveCommand handle "Browser.setPermi
 
 -- | Parameters of the 'browserGrantPermissions' command.
 data PBrowserGrantPermissions = PBrowserGrantPermissions {
-
-   pBrowserGrantPermissionsOrigin :: PBrowserGrantPermissionsOrigin, -- ^ Origin the permission applies to, all origins if not specified.
-   pBrowserGrantPermissionsBrowserContextId :: PBrowserGrantPermissionsBrowserContextId -- ^ BrowserContext to override permissions. When omitted, default browser context is used.
+  pBrowserGrantPermissionsPermissions :: [BrowserPermissionType],
+  -- | Origin the permission applies to, all origins if not specified.
+  pBrowserGrantPermissionsOrigin :: Maybe String,
+  -- | BrowserContext to override permissions. When omitted, default browser context is used.
+  pBrowserGrantPermissionsBrowserContextId :: Maybe BrowserBrowserContextId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PBrowserGrantPermissions  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -328,7 +359,7 @@ instance FromJSON  PBrowserGrantPermissions where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the command 'Browser.grantPermissions'.
+-- | Function for the 'Browser.grantPermissions' command.
 -- Grant specific permissions to the given origin and reject all others.
 -- Parameters: 'PBrowserGrantPermissions'
 browserGrantPermissions :: Handle ev -> PBrowserGrantPermissions -> IO (Maybe Error)
@@ -337,7 +368,8 @@ browserGrantPermissions handle params = sendReceiveCommand handle "Browser.grant
 
 -- | Parameters of the 'browserResetPermissions' command.
 data PBrowserResetPermissions = PBrowserResetPermissions {
-   pBrowserResetPermissionsBrowserContextId :: PBrowserResetPermissionsBrowserContextId -- ^ BrowserContext to reset permissions. When omitted, default browser context is used.
+  -- | BrowserContext to reset permissions. When omitted, default browser context is used.
+  pBrowserResetPermissionsBrowserContextId :: Maybe BrowserBrowserContextId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PBrowserResetPermissions  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -346,7 +378,7 @@ instance FromJSON  PBrowserResetPermissions where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the command 'Browser.resetPermissions'.
+-- | Function for the 'Browser.resetPermissions' command.
 -- Reset all permission management for all origins.
 -- Parameters: 'PBrowserResetPermissions'
 browserResetPermissions :: Handle ev -> PBrowserResetPermissions -> IO (Maybe Error)
@@ -376,13 +408,17 @@ instance ToJSON PBrowserSetDownloadBehaviorBehavior where
 
 
 data PBrowserSetDownloadBehavior = PBrowserSetDownloadBehavior {
-   pBrowserSetDownloadBehaviorBehavior :: PBrowserSetDownloadBehaviorBehavior, -- ^ Whether to allow all or deny all download requests, or use default Chrome behavior if
-available (otherwise deny). |allowAndName| allows download and names files according to
-their dowmload guids.
-   pBrowserSetDownloadBehaviorBrowserContextId :: PBrowserSetDownloadBehaviorBrowserContextId, -- ^ BrowserContext to set download behavior. When omitted, default browser context is used.
-   pBrowserSetDownloadBehaviorDownloadPath :: PBrowserSetDownloadBehaviorDownloadPath, -- ^ The default path to save downloaded files to. This is required if behavior is set to 'allow'
-or 'allowAndName'.
-   pBrowserSetDownloadBehaviorEventsEnabled :: PBrowserSetDownloadBehaviorEventsEnabled -- ^ Whether to emit download events (defaults to false).
+  -- | Whether to allow all or deny all download requests, or use default Chrome behavior if
+  -- available (otherwise deny). |allowAndName| allows download and names files according to
+  -- their dowmload guids.
+  pBrowserSetDownloadBehaviorBehavior :: PBrowserSetDownloadBehaviorBehavior,
+  -- | BrowserContext to set download behavior. When omitted, default browser context is used.
+  pBrowserSetDownloadBehaviorBrowserContextId :: Maybe BrowserBrowserContextId,
+  -- | The default path to save downloaded files to. This is required if behavior is set to 'allow'
+  -- or 'allowAndName'.
+  pBrowserSetDownloadBehaviorDownloadPath :: Maybe String,
+  -- | Whether to emit download events (defaults to false).
+  pBrowserSetDownloadBehaviorEventsEnabled :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PBrowserSetDownloadBehavior  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -391,7 +427,7 @@ instance FromJSON  PBrowserSetDownloadBehavior where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
--- | Function for the command 'Browser.setDownloadBehavior'.
+-- | Function for the 'Browser.setDownloadBehavior' command.
 -- Set the behavior when downloading a file.
 -- Parameters: 'PBrowserSetDownloadBehavior'
 browserSetDownloadBehavior :: Handle ev -> PBrowserSetDownloadBehavior -> IO (Maybe Error)
@@ -400,8 +436,10 @@ browserSetDownloadBehavior handle params = sendReceiveCommand handle "Browser.se
 
 -- | Parameters of the 'browserCancelDownload' command.
 data PBrowserCancelDownload = PBrowserCancelDownload {
-   pBrowserCancelDownloadGuid :: PBrowserCancelDownloadGuid, -- ^ Global unique identifier of the download.
-   pBrowserCancelDownloadBrowserContextId :: PBrowserCancelDownloadBrowserContextId -- ^ BrowserContext to perform the action in. When omitted, default browser context is used.
+  -- | Global unique identifier of the download.
+  pBrowserCancelDownloadGuid :: String,
+  -- | BrowserContext to perform the action in. When omitted, default browser context is used.
+  pBrowserCancelDownloadBrowserContextId :: Maybe BrowserBrowserContextId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PBrowserCancelDownload  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -410,32 +448,32 @@ instance FromJSON  PBrowserCancelDownload where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
--- | Function for the command 'Browser.cancelDownload'.
+-- | Function for the 'Browser.cancelDownload' command.
 -- Cancel a download if in progress
 -- Parameters: 'PBrowserCancelDownload'
 browserCancelDownload :: Handle ev -> PBrowserCancelDownload -> IO (Maybe Error)
 browserCancelDownload handle params = sendReceiveCommand handle "Browser.cancelDownload" (Just params)
 
 
--- | Function for the command 'Browser.close'.
+-- | Function for the 'Browser.close' command.
 -- Close browser gracefully.
 browserClose :: Handle ev -> IO (Maybe Error)
 browserClose handle = sendReceiveCommand handle "Browser.close" (Nothing :: Maybe ())
 
 
--- | Function for the command 'Browser.crash'.
+-- | Function for the 'Browser.crash' command.
 -- Crashes browser on the main thread.
 browserCrash :: Handle ev -> IO (Maybe Error)
 browserCrash handle = sendReceiveCommand handle "Browser.crash" (Nothing :: Maybe ())
 
 
--- | Function for the command 'Browser.crashGpuProcess'.
+-- | Function for the 'Browser.crashGpuProcess' command.
 -- Crashes GPU process.
 browserCrashGpuProcess :: Handle ev -> IO (Maybe Error)
 browserCrashGpuProcess handle = sendReceiveCommand handle "Browser.crashGpuProcess" (Nothing :: Maybe ())
 
 
--- | Function for the command 'Browser.getVersion'.
+-- | Function for the 'Browser.getVersion' command.
 -- Returns version information.
 -- Returns: 'BrowserGetVersion'
 browserGetVersion :: Handle ev -> IO (Either Error BrowserGetVersion)
@@ -443,11 +481,16 @@ browserGetVersion handle = sendReceiveCommandResult handle "Browser.getVersion" 
 
 -- | Return type of the 'browserGetVersion' command.
 data BrowserGetVersion = BrowserGetVersion {
-   browserGetVersionProtocolVersion :: String, -- ^ Protocol version.
-   browserGetVersionProduct :: String, -- ^ Product name.
-   browserGetVersionRevision :: String, -- ^ Product revision.
-   browserGetVersionUserAgent :: String, -- ^ User-Agent.
-   browserGetVersionJsVersion :: String -- ^ V8 version.
+  -- | Protocol version.
+  browserGetVersionProtocolVersion :: String,
+  -- | Product name.
+  browserGetVersionProduct :: String,
+  -- | Product revision.
+  browserGetVersionRevision :: String,
+  -- | User-Agent.
+  browserGetVersionUserAgent :: String,
+  -- | V8 version.
+  browserGetVersionJsVersion :: String
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  BrowserGetVersion where
@@ -458,7 +501,7 @@ instance Command BrowserGetVersion where
 
 
 
--- | Function for the command 'Browser.getBrowserCommandLine'.
+-- | Function for the 'Browser.getBrowserCommandLine' command.
 -- Returns the command line switches for the browser process if, and only if
 -- --enable-automation is on the commandline.
 -- Returns: 'BrowserGetBrowserCommandLine'
@@ -467,7 +510,8 @@ browserGetBrowserCommandLine handle = sendReceiveCommandResult handle "Browser.g
 
 -- | Return type of the 'browserGetBrowserCommandLine' command.
 data BrowserGetBrowserCommandLine = BrowserGetBrowserCommandLine {
-   browserGetBrowserCommandLineArguments :: [String] -- ^ Commandline parameters
+  -- | Commandline parameters
+  browserGetBrowserCommandLineArguments :: [String]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  BrowserGetBrowserCommandLine where
@@ -480,10 +524,12 @@ instance Command BrowserGetBrowserCommandLine where
 
 -- | Parameters of the 'browserGetHistograms' command.
 data PBrowserGetHistograms = PBrowserGetHistograms {
-   pBrowserGetHistogramsQuery :: PBrowserGetHistogramsQuery, -- ^ Requested substring in name. Only histograms which have query as a
-substring in their name are extracted. An empty or absent query returns
-all histograms.
-   pBrowserGetHistogramsDelta :: PBrowserGetHistogramsDelta -- ^ If true, retrieve delta since last call.
+  -- | Requested substring in name. Only histograms which have query as a
+  -- substring in their name are extracted. An empty or absent query returns
+  -- all histograms.
+  pBrowserGetHistogramsQuery :: Maybe String,
+  -- | If true, retrieve delta since last call.
+  pBrowserGetHistogramsDelta :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PBrowserGetHistograms  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -492,7 +538,7 @@ instance FromJSON  PBrowserGetHistograms where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
--- | Function for the command 'Browser.getHistograms'.
+-- | Function for the 'Browser.getHistograms' command.
 -- Get Chrome histograms.
 -- Parameters: 'PBrowserGetHistograms'
 -- Returns: 'BrowserGetHistograms'
@@ -501,7 +547,8 @@ browserGetHistograms handle params = sendReceiveCommandResult handle "Browser.ge
 
 -- | Return type of the 'browserGetHistograms' command.
 data BrowserGetHistograms = BrowserGetHistograms {
-   browserGetHistogramsHistograms :: [BrowserHistogram] -- ^ Histograms.
+  -- | Histograms.
+  browserGetHistogramsHistograms :: [BrowserHistogram]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  BrowserGetHistograms where
@@ -514,8 +561,10 @@ instance Command BrowserGetHistograms where
 
 -- | Parameters of the 'browserGetHistogram' command.
 data PBrowserGetHistogram = PBrowserGetHistogram {
-   pBrowserGetHistogramName :: PBrowserGetHistogramName, -- ^ Requested histogram name.
-   pBrowserGetHistogramDelta :: PBrowserGetHistogramDelta -- ^ If true, retrieve delta since last call.
+  -- | Requested histogram name.
+  pBrowserGetHistogramName :: String,
+  -- | If true, retrieve delta since last call.
+  pBrowserGetHistogramDelta :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PBrowserGetHistogram  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -524,7 +573,7 @@ instance FromJSON  PBrowserGetHistogram where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
--- | Function for the command 'Browser.getHistogram'.
+-- | Function for the 'Browser.getHistogram' command.
 -- Get a Chrome histogram by name.
 -- Parameters: 'PBrowserGetHistogram'
 -- Returns: 'BrowserGetHistogram'
@@ -533,7 +582,8 @@ browserGetHistogram handle params = sendReceiveCommandResult handle "Browser.get
 
 -- | Return type of the 'browserGetHistogram' command.
 data BrowserGetHistogram = BrowserGetHistogram {
-   browserGetHistogramHistogram :: BrowserHistogram -- ^ Histogram.
+  -- | Histogram.
+  browserGetHistogramHistogram :: BrowserHistogram
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  BrowserGetHistogram where
@@ -546,7 +596,8 @@ instance Command BrowserGetHistogram where
 
 -- | Parameters of the 'browserGetWindowBounds' command.
 data PBrowserGetWindowBounds = PBrowserGetWindowBounds {
-   pBrowserGetWindowBoundsWindowId :: PBrowserGetWindowBoundsWindowId -- ^ Browser window id.
+  -- | Browser window id.
+  pBrowserGetWindowBoundsWindowId :: BrowserWindowId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PBrowserGetWindowBounds  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -555,7 +606,7 @@ instance FromJSON  PBrowserGetWindowBounds where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
--- | Function for the command 'Browser.getWindowBounds'.
+-- | Function for the 'Browser.getWindowBounds' command.
 -- Get position and size of the browser window.
 -- Parameters: 'PBrowserGetWindowBounds'
 -- Returns: 'BrowserGetWindowBounds'
@@ -564,8 +615,9 @@ browserGetWindowBounds handle params = sendReceiveCommandResult handle "Browser.
 
 -- | Return type of the 'browserGetWindowBounds' command.
 data BrowserGetWindowBounds = BrowserGetWindowBounds {
-   browserGetWindowBoundsBounds :: BrowserBounds -- ^ Bounds information of the window. When window state is 'minimized', the restored window
-position and size are returned.
+  -- | Bounds information of the window. When window state is 'minimized', the restored window
+  -- position and size are returned.
+  browserGetWindowBoundsBounds :: BrowserBounds
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  BrowserGetWindowBounds where
@@ -578,7 +630,8 @@ instance Command BrowserGetWindowBounds where
 
 -- | Parameters of the 'browserGetWindowForTarget' command.
 data PBrowserGetWindowForTarget = PBrowserGetWindowForTarget {
-   pBrowserGetWindowForTargetTargetId :: PBrowserGetWindowForTargetTargetId -- ^ Devtools agent host id. If called as a part of the session, associated targetId is used.
+  -- | Devtools agent host id. If called as a part of the session, associated targetId is used.
+  pBrowserGetWindowForTargetTargetId :: Maybe TargetTargetId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PBrowserGetWindowForTarget  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -587,7 +640,7 @@ instance FromJSON  PBrowserGetWindowForTarget where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
--- | Function for the command 'Browser.getWindowForTarget'.
+-- | Function for the 'Browser.getWindowForTarget' command.
 -- Get the browser window that contains the devtools target.
 -- Parameters: 'PBrowserGetWindowForTarget'
 -- Returns: 'BrowserGetWindowForTarget'
@@ -596,9 +649,11 @@ browserGetWindowForTarget handle params = sendReceiveCommandResult handle "Brows
 
 -- | Return type of the 'browserGetWindowForTarget' command.
 data BrowserGetWindowForTarget = BrowserGetWindowForTarget {
-   browserGetWindowForTargetWindowId :: BrowserWindowId, -- ^ Browser window id.
-   browserGetWindowForTargetBounds :: BrowserBounds -- ^ Bounds information of the window. When window state is 'minimized', the restored window
-position and size are returned.
+  -- | Browser window id.
+  browserGetWindowForTargetWindowId :: BrowserWindowId,
+  -- | Bounds information of the window. When window state is 'minimized', the restored window
+  -- position and size are returned.
+  browserGetWindowForTargetBounds :: BrowserBounds
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  BrowserGetWindowForTarget where
@@ -611,9 +666,11 @@ instance Command BrowserGetWindowForTarget where
 
 -- | Parameters of the 'browserSetWindowBounds' command.
 data PBrowserSetWindowBounds = PBrowserSetWindowBounds {
-   pBrowserSetWindowBoundsWindowId :: PBrowserSetWindowBoundsWindowId, -- ^ Browser window id.
-   pBrowserSetWindowBoundsBounds :: PBrowserSetWindowBoundsBounds -- ^ New window bounds. The 'minimized', 'maximized' and 'fullscreen' states cannot be combined
-with 'left', 'top', 'width' or 'height'. Leaves unspecified fields unchanged.
+  -- | Browser window id.
+  pBrowserSetWindowBoundsWindowId :: BrowserWindowId,
+  -- | New window bounds. The 'minimized', 'maximized' and 'fullscreen' states cannot be combined
+  -- with 'left', 'top', 'width' or 'height'. Leaves unspecified fields unchanged.
+  pBrowserSetWindowBoundsBounds :: BrowserBounds
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PBrowserSetWindowBounds  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -622,7 +679,7 @@ instance FromJSON  PBrowserSetWindowBounds where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
--- | Function for the command 'Browser.setWindowBounds'.
+-- | Function for the 'Browser.setWindowBounds' command.
 -- Set position and/or size of the browser window.
 -- Parameters: 'PBrowserSetWindowBounds'
 browserSetWindowBounds :: Handle ev -> PBrowserSetWindowBounds -> IO (Maybe Error)
@@ -631,8 +688,9 @@ browserSetWindowBounds handle params = sendReceiveCommand handle "Browser.setWin
 
 -- | Parameters of the 'browserSetDockTile' command.
 data PBrowserSetDockTile = PBrowserSetDockTile {
-
-   pBrowserSetDockTileImage :: PBrowserSetDockTileImage -- ^ Png encoded image. (Encoded as a base64 string when passed over JSON)
+  pBrowserSetDockTileBadgeLabel :: Maybe String,
+  -- | Png encoded image. (Encoded as a base64 string when passed over JSON)
+  pBrowserSetDockTileImage :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PBrowserSetDockTile  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -641,7 +699,7 @@ instance FromJSON  PBrowserSetDockTile where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
--- | Function for the command 'Browser.setDockTile'.
+-- | Function for the 'Browser.setDockTile' command.
 -- Set dock tile details, platform-specific.
 -- Parameters: 'PBrowserSetDockTile'
 browserSetDockTile :: Handle ev -> PBrowserSetDockTile -> IO (Maybe Error)
@@ -650,6 +708,7 @@ browserSetDockTile handle params = sendReceiveCommand handle "Browser.setDockTil
 
 -- | Parameters of the 'browserExecuteBrowserCommand' command.
 data PBrowserExecuteBrowserCommand = PBrowserExecuteBrowserCommand {
+  pBrowserExecuteBrowserCommandCommandId :: BrowserBrowserCommandId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PBrowserExecuteBrowserCommand  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -658,7 +717,7 @@ instance FromJSON  PBrowserExecuteBrowserCommand where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
--- | Function for the command 'Browser.executeBrowserCommand'.
+-- | Function for the 'Browser.executeBrowserCommand' command.
 -- Invoke custom browser commands used by telemetry.
 -- Parameters: 'PBrowserExecuteBrowserCommand'
 browserExecuteBrowserCommand :: Handle ev -> PBrowserExecuteBrowserCommand -> IO (Maybe Error)
@@ -674,15 +733,19 @@ type TargetSessionId = String
 
 -- | Type 'Target.TargetInfo' .
 data TargetTargetInfo = TargetTargetInfo {
-
-
-
-
-   targetTargetInfoAttached :: TargetTargetInfoAttached, -- ^ Whether the target has an attached client.
-   targetTargetInfoOpenerId :: TargetTargetInfoOpenerId, -- ^ Opener target Id
-   targetTargetInfoCanAccessOpener :: TargetTargetInfoCanAccessOpener, -- ^ Whether the target has access to the originating window.
-   targetTargetInfoOpenerFrameId :: TargetTargetInfoOpenerFrameId, -- ^ Frame id of originating window (is only set if target has an opener).
-
+  targetTargetInfoTargetId :: TargetTargetId,
+  targetTargetInfoType :: String,
+  targetTargetInfoTitle :: String,
+  targetTargetInfoUrl :: String,
+  -- | Whether the target has an attached client.
+  targetTargetInfoAttached :: Bool,
+  -- | Opener target Id
+  targetTargetInfoOpenerId :: Maybe TargetTargetId,
+  -- | Whether the target has access to the originating window.
+  targetTargetInfoCanAccessOpener :: Bool,
+  -- | Frame id of originating window (is only set if target has an opener).
+  targetTargetInfoOpenerFrameId :: Maybe DOMPageNetworkEmulationSecurity.PageFrameId,
+  targetTargetInfoBrowserContextId :: Maybe BrowserBrowserContextId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON TargetTargetInfo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -694,8 +757,8 @@ instance FromJSON  TargetTargetInfo where
 
 -- | Type 'Target.RemoteLocation' .
 data TargetRemoteLocation = TargetRemoteLocation {
-
-
+  targetRemoteLocationHost :: String,
+  targetRemoteLocationPort :: Int
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON TargetRemoteLocation  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -709,9 +772,10 @@ instance FromJSON  TargetRemoteLocation where
 
 -- | Type of the 'Target.attachedToTarget' event.
 data TargetAttachedToTarget = TargetAttachedToTarget {
-   targetAttachedToTargetSessionId :: TargetAttachedToTargetSessionId, -- ^ Identifier assigned to the session used to send/receive messages.
-
-
+  -- | Identifier assigned to the session used to send/receive messages.
+  targetAttachedToTargetSessionId :: TargetSessionId,
+  targetAttachedToTargetTargetInfo :: TargetTargetInfo,
+  targetAttachedToTargetWaitingForDebugger :: Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON TargetAttachedToTarget  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -723,7 +787,8 @@ instance FromJSON  TargetAttachedToTarget where
 
 -- | Type of the 'Target.detachedFromTarget' event.
 data TargetDetachedFromTarget = TargetDetachedFromTarget {
-   targetDetachedFromTargetSessionId :: TargetDetachedFromTargetSessionId -- ^ Detached session identifier.
+  -- | Detached session identifier.
+  targetDetachedFromTargetSessionId :: TargetSessionId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON TargetDetachedFromTarget  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -735,8 +800,9 @@ instance FromJSON  TargetDetachedFromTarget where
 
 -- | Type of the 'Target.receivedMessageFromTarget' event.
 data TargetReceivedMessageFromTarget = TargetReceivedMessageFromTarget {
-   targetReceivedMessageFromTargetSessionId :: TargetReceivedMessageFromTargetSessionId, -- ^ Identifier of a session which sends a message.
-
+  -- | Identifier of a session which sends a message.
+  targetReceivedMessageFromTargetSessionId :: TargetSessionId,
+  targetReceivedMessageFromTargetMessage :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON TargetReceivedMessageFromTarget  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
@@ -748,6 +814,7 @@ instance FromJSON  TargetReceivedMessageFromTarget where
 
 -- | Type of the 'Target.targetCreated' event.
 data TargetTargetCreated = TargetTargetCreated {
+  targetTargetCreatedTargetInfo :: TargetTargetInfo
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON TargetTargetCreated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -759,6 +826,7 @@ instance FromJSON  TargetTargetCreated where
 
 -- | Type of the 'Target.targetDestroyed' event.
 data TargetTargetDestroyed = TargetTargetDestroyed {
+  targetTargetDestroyedTargetId :: TargetTargetId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON TargetTargetDestroyed  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -770,9 +838,11 @@ instance FromJSON  TargetTargetDestroyed where
 
 -- | Type of the 'Target.targetCrashed' event.
 data TargetTargetCrashed = TargetTargetCrashed {
-
-   targetTargetCrashedStatus :: TargetTargetCrashedStatus, -- ^ Termination status type.
-   targetTargetCrashedErrorCode :: TargetTargetCrashedErrorCode -- ^ Termination error code.
+  targetTargetCrashedTargetId :: TargetTargetId,
+  -- | Termination status type.
+  targetTargetCrashedStatus :: String,
+  -- | Termination error code.
+  targetTargetCrashedErrorCode :: Int
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON TargetTargetCrashed  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -784,6 +854,7 @@ instance FromJSON  TargetTargetCrashed where
 
 -- | Type of the 'Target.targetInfoChanged' event.
 data TargetTargetInfoChanged = TargetTargetInfoChanged {
+  targetTargetInfoChangedTargetInfo :: TargetTargetInfo
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON TargetTargetInfoChanged  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -797,6 +868,7 @@ instance FromJSON  TargetTargetInfoChanged where
 
 -- | Parameters of the 'targetActivateTarget' command.
 data PTargetActivateTarget = PTargetActivateTarget {
+  pTargetActivateTargetTargetId :: TargetTargetId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetActivateTarget  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -805,7 +877,7 @@ instance FromJSON  PTargetActivateTarget where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
--- | Function for the command 'Target.activateTarget'.
+-- | Function for the 'Target.activateTarget' command.
 -- Activates (focuses) the target.
 -- Parameters: 'PTargetActivateTarget'
 targetActivateTarget :: Handle ev -> PTargetActivateTarget -> IO (Maybe Error)
@@ -814,10 +886,11 @@ targetActivateTarget handle params = sendReceiveCommand handle "Target.activateT
 
 -- | Parameters of the 'targetAttachToTarget' command.
 data PTargetAttachToTarget = PTargetAttachToTarget {
-
-   pTargetAttachToTargetFlatten :: PTargetAttachToTargetFlatten -- ^ Enables "flat" access to the session via specifying sessionId attribute in the commands.
-We plan to make this the default, deprecate non-flattened mode,
-and eventually retire it. See crbug.com/991325.
+  pTargetAttachToTargetTargetId :: TargetTargetId,
+  -- | Enables "flat" access to the session via specifying sessionId attribute in the commands.
+  -- We plan to make this the default, deprecate non-flattened mode,
+  -- and eventually retire it. See crbug.com/991325.
+  pTargetAttachToTargetFlatten :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetAttachToTarget  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -826,7 +899,7 @@ instance FromJSON  PTargetAttachToTarget where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
--- | Function for the command 'Target.attachToTarget'.
+-- | Function for the 'Target.attachToTarget' command.
 -- Attaches to the target with given id.
 -- Parameters: 'PTargetAttachToTarget'
 -- Returns: 'TargetAttachToTarget'
@@ -835,7 +908,8 @@ targetAttachToTarget handle params = sendReceiveCommandResult handle "Target.att
 
 -- | Return type of the 'targetAttachToTarget' command.
 data TargetAttachToTarget = TargetAttachToTarget {
-   targetAttachToTargetSessionId :: TargetSessionId -- ^ Id assigned to the session.
+  -- | Id assigned to the session.
+  targetAttachToTargetSessionId :: TargetSessionId
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  TargetAttachToTarget where
@@ -846,7 +920,7 @@ instance Command TargetAttachToTarget where
 
 
 
--- | Function for the command 'Target.attachToBrowserTarget'.
+-- | Function for the 'Target.attachToBrowserTarget' command.
 -- Attaches to the browser target, only uses flat sessionId mode.
 -- Returns: 'TargetAttachToBrowserTarget'
 targetAttachToBrowserTarget :: Handle ev -> IO (Either Error TargetAttachToBrowserTarget)
@@ -854,7 +928,8 @@ targetAttachToBrowserTarget handle = sendReceiveCommandResult handle "Target.att
 
 -- | Return type of the 'targetAttachToBrowserTarget' command.
 data TargetAttachToBrowserTarget = TargetAttachToBrowserTarget {
-   targetAttachToBrowserTargetSessionId :: TargetSessionId -- ^ Id assigned to the session.
+  -- | Id assigned to the session.
+  targetAttachToBrowserTargetSessionId :: TargetSessionId
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  TargetAttachToBrowserTarget where
@@ -867,6 +942,7 @@ instance Command TargetAttachToBrowserTarget where
 
 -- | Parameters of the 'targetCloseTarget' command.
 data PTargetCloseTarget = PTargetCloseTarget {
+  pTargetCloseTargetTargetId :: TargetTargetId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetCloseTarget  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -875,7 +951,7 @@ instance FromJSON  PTargetCloseTarget where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
--- | Function for the command 'Target.closeTarget'.
+-- | Function for the 'Target.closeTarget' command.
 -- Closes the target. If the target is a page that gets closed too.
 -- Parameters: 'PTargetCloseTarget'
 targetCloseTarget :: Handle ev -> PTargetCloseTarget -> IO (Maybe Error)
@@ -884,8 +960,9 @@ targetCloseTarget handle params = sendReceiveCommand handle "Target.closeTarget"
 
 -- | Parameters of the 'targetExposeDevToolsProtocol' command.
 data PTargetExposeDevToolsProtocol = PTargetExposeDevToolsProtocol {
-
-   pTargetExposeDevToolsProtocolBindingName :: PTargetExposeDevToolsProtocolBindingName -- ^ Binding name, 'cdp' if not specified.
+  pTargetExposeDevToolsProtocolTargetId :: TargetTargetId,
+  -- | Binding name, 'cdp' if not specified.
+  pTargetExposeDevToolsProtocolBindingName :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetExposeDevToolsProtocol  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -894,7 +971,7 @@ instance FromJSON  PTargetExposeDevToolsProtocol where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
--- | Function for the command 'Target.exposeDevToolsProtocol'.
+-- | Function for the 'Target.exposeDevToolsProtocol' command.
 -- Inject object to the target's main frame that provides a communication
 -- channel with browser target.
 -- 
@@ -910,11 +987,15 @@ targetExposeDevToolsProtocol handle params = sendReceiveCommand handle "Target.e
 
 -- | Parameters of the 'targetCreateBrowserContext' command.
 data PTargetCreateBrowserContext = PTargetCreateBrowserContext {
-   pTargetCreateBrowserContextDisposeOnDetach :: PTargetCreateBrowserContextDisposeOnDetach, -- ^ If specified, disposes this context when debugging session disconnects.
-   pTargetCreateBrowserContextProxyServer :: PTargetCreateBrowserContextProxyServer, -- ^ Proxy server, similar to the one passed to --proxy-server
-   pTargetCreateBrowserContextProxyBypassList :: PTargetCreateBrowserContextProxyBypassList, -- ^ Proxy bypass list, similar to the one passed to --proxy-bypass-list
-   pTargetCreateBrowserContextOriginsWithUniversalNetworkAccess :: PTargetCreateBrowserContextOriginsWithUniversalNetworkAccess -- ^ An optional list of origins to grant unlimited cross-origin access to.
-Parts of the URL other than those constituting origin are ignored.
+  -- | If specified, disposes this context when debugging session disconnects.
+  pTargetCreateBrowserContextDisposeOnDetach :: Maybe Bool,
+  -- | Proxy server, similar to the one passed to --proxy-server
+  pTargetCreateBrowserContextProxyServer :: Maybe String,
+  -- | Proxy bypass list, similar to the one passed to --proxy-bypass-list
+  pTargetCreateBrowserContextProxyBypassList :: Maybe String,
+  -- | An optional list of origins to grant unlimited cross-origin access to.
+  -- Parts of the URL other than those constituting origin are ignored.
+  pTargetCreateBrowserContextOriginsWithUniversalNetworkAccess :: Maybe [String]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetCreateBrowserContext  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -923,7 +1004,7 @@ instance FromJSON  PTargetCreateBrowserContext where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
--- | Function for the command 'Target.createBrowserContext'.
+-- | Function for the 'Target.createBrowserContext' command.
 -- Creates a new empty BrowserContext. Similar to an incognito profile but you can have more than
 -- one.
 -- Parameters: 'PTargetCreateBrowserContext'
@@ -933,7 +1014,8 @@ targetCreateBrowserContext handle params = sendReceiveCommandResult handle "Targ
 
 -- | Return type of the 'targetCreateBrowserContext' command.
 data TargetCreateBrowserContext = TargetCreateBrowserContext {
-   targetCreateBrowserContextBrowserContextId :: BrowserBrowserContextId -- ^ The id of the context created.
+  -- | The id of the context created.
+  targetCreateBrowserContextBrowserContextId :: BrowserBrowserContextId
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  TargetCreateBrowserContext where
@@ -944,7 +1026,7 @@ instance Command TargetCreateBrowserContext where
 
 
 
--- | Function for the command 'Target.getBrowserContexts'.
+-- | Function for the 'Target.getBrowserContexts' command.
 -- Returns all browser contexts created with `Target.createBrowserContext` method.
 -- Returns: 'TargetGetBrowserContexts'
 targetGetBrowserContexts :: Handle ev -> IO (Either Error TargetGetBrowserContexts)
@@ -952,7 +1034,8 @@ targetGetBrowserContexts handle = sendReceiveCommandResult handle "Target.getBro
 
 -- | Return type of the 'targetGetBrowserContexts' command.
 data TargetGetBrowserContexts = TargetGetBrowserContexts {
-   targetGetBrowserContextsBrowserContextIds :: [BrowserBrowserContextId] -- ^ An array of browser context ids.
+  -- | An array of browser context ids.
+  targetGetBrowserContextsBrowserContextIds :: [BrowserBrowserContextId]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  TargetGetBrowserContexts where
@@ -965,15 +1048,22 @@ instance Command TargetGetBrowserContexts where
 
 -- | Parameters of the 'targetCreateTarget' command.
 data PTargetCreateTarget = PTargetCreateTarget {
-   pTargetCreateTargetUrl :: PTargetCreateTargetUrl, -- ^ The initial URL the page will be navigated to. An empty string indicates about:blank.
-   pTargetCreateTargetWidth :: PTargetCreateTargetWidth, -- ^ Frame width in DIP (headless chrome only).
-   pTargetCreateTargetHeight :: PTargetCreateTargetHeight, -- ^ Frame height in DIP (headless chrome only).
-   pTargetCreateTargetBrowserContextId :: PTargetCreateTargetBrowserContextId, -- ^ The browser context to create the page in.
-   pTargetCreateTargetEnableBeginFrameControl :: PTargetCreateTargetEnableBeginFrameControl, -- ^ Whether BeginFrames for this target will be controlled via DevTools (headless chrome only,
-not supported on MacOS yet, false by default).
-   pTargetCreateTargetNewWindow :: PTargetCreateTargetNewWindow, -- ^ Whether to create a new Window or Tab (chrome-only, false by default).
-   pTargetCreateTargetBackground :: PTargetCreateTargetBackground -- ^ Whether to create the target in background or foreground (chrome-only,
-false by default).
+  -- | The initial URL the page will be navigated to. An empty string indicates about:blank.
+  pTargetCreateTargetUrl :: String,
+  -- | Frame width in DIP (headless chrome only).
+  pTargetCreateTargetWidth :: Maybe Int,
+  -- | Frame height in DIP (headless chrome only).
+  pTargetCreateTargetHeight :: Maybe Int,
+  -- | The browser context to create the page in.
+  pTargetCreateTargetBrowserContextId :: Maybe BrowserBrowserContextId,
+  -- | Whether BeginFrames for this target will be controlled via DevTools (headless chrome only,
+  -- not supported on MacOS yet, false by default).
+  pTargetCreateTargetEnableBeginFrameControl :: Maybe Bool,
+  -- | Whether to create a new Window or Tab (chrome-only, false by default).
+  pTargetCreateTargetNewWindow :: Maybe Bool,
+  -- | Whether to create the target in background or foreground (chrome-only,
+  -- false by default).
+  pTargetCreateTargetBackground :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetCreateTarget  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -982,7 +1072,7 @@ instance FromJSON  PTargetCreateTarget where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
--- | Function for the command 'Target.createTarget'.
+-- | Function for the 'Target.createTarget' command.
 -- Creates a new page.
 -- Parameters: 'PTargetCreateTarget'
 -- Returns: 'TargetCreateTarget'
@@ -991,7 +1081,8 @@ targetCreateTarget handle params = sendReceiveCommandResult handle "Target.creat
 
 -- | Return type of the 'targetCreateTarget' command.
 data TargetCreateTarget = TargetCreateTarget {
-   targetCreateTargetTargetId :: TargetTargetId -- ^ The id of the page opened.
+  -- | The id of the page opened.
+  targetCreateTargetTargetId :: TargetTargetId
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  TargetCreateTarget where
@@ -1004,7 +1095,8 @@ instance Command TargetCreateTarget where
 
 -- | Parameters of the 'targetDetachFromTarget' command.
 data PTargetDetachFromTarget = PTargetDetachFromTarget {
-   pTargetDetachFromTargetSessionId :: PTargetDetachFromTargetSessionId -- ^ Session to detach.
+  -- | Session to detach.
+  pTargetDetachFromTargetSessionId :: Maybe TargetSessionId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetDetachFromTarget  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -1013,7 +1105,7 @@ instance FromJSON  PTargetDetachFromTarget where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
--- | Function for the command 'Target.detachFromTarget'.
+-- | Function for the 'Target.detachFromTarget' command.
 -- Detaches session with given id.
 -- Parameters: 'PTargetDetachFromTarget'
 targetDetachFromTarget :: Handle ev -> PTargetDetachFromTarget -> IO (Maybe Error)
@@ -1022,6 +1114,7 @@ targetDetachFromTarget handle params = sendReceiveCommand handle "Target.detachF
 
 -- | Parameters of the 'targetDisposeBrowserContext' command.
 data PTargetDisposeBrowserContext = PTargetDisposeBrowserContext {
+  pTargetDisposeBrowserContextBrowserContextId :: BrowserBrowserContextId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetDisposeBrowserContext  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -1030,7 +1123,7 @@ instance FromJSON  PTargetDisposeBrowserContext where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
--- | Function for the command 'Target.disposeBrowserContext'.
+-- | Function for the 'Target.disposeBrowserContext' command.
 -- Deletes a BrowserContext. All the belonging pages will be closed without calling their
 -- beforeunload hooks.
 -- Parameters: 'PTargetDisposeBrowserContext'
@@ -1040,6 +1133,7 @@ targetDisposeBrowserContext handle params = sendReceiveCommand handle "Target.di
 
 -- | Parameters of the 'targetGetTargetInfo' command.
 data PTargetGetTargetInfo = PTargetGetTargetInfo {
+  pTargetGetTargetInfoTargetId :: Maybe TargetTargetId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetGetTargetInfo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -1048,7 +1142,7 @@ instance FromJSON  PTargetGetTargetInfo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
--- | Function for the command 'Target.getTargetInfo'.
+-- | Function for the 'Target.getTargetInfo' command.
 -- Returns information about a target.
 -- Parameters: 'PTargetGetTargetInfo'
 -- Returns: 'TargetGetTargetInfo'
@@ -1057,7 +1151,7 @@ targetGetTargetInfo handle params = sendReceiveCommandResult handle "Target.getT
 
 -- | Return type of the 'targetGetTargetInfo' command.
 data TargetGetTargetInfo = TargetGetTargetInfo {
-
+  targetGetTargetInfoTargetInfo :: TargetTargetInfo
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  TargetGetTargetInfo where
@@ -1068,7 +1162,7 @@ instance Command TargetGetTargetInfo where
 
 
 
--- | Function for the command 'Target.getTargets'.
+-- | Function for the 'Target.getTargets' command.
 -- Retrieves a list of available targets.
 -- Returns: 'TargetGetTargets'
 targetGetTargets :: Handle ev -> IO (Either Error TargetGetTargets)
@@ -1076,7 +1170,8 @@ targetGetTargets handle = sendReceiveCommandResult handle "Target.getTargets" (N
 
 -- | Return type of the 'targetGetTargets' command.
 data TargetGetTargets = TargetGetTargets {
-   targetGetTargetsTargetInfos :: [TargetTargetInfo] -- ^ The list of targets.
+  -- | The list of targets.
+  targetGetTargetsTargetInfos :: [TargetTargetInfo]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  TargetGetTargets where
@@ -1089,12 +1184,15 @@ instance Command TargetGetTargets where
 
 -- | Parameters of the 'targetSetAutoAttach' command.
 data PTargetSetAutoAttach = PTargetSetAutoAttach {
-   pTargetSetAutoAttachAutoAttach :: PTargetSetAutoAttachAutoAttach, -- ^ Whether to auto-attach to related targets.
-   pTargetSetAutoAttachWaitForDebuggerOnStart :: PTargetSetAutoAttachWaitForDebuggerOnStart, -- ^ Whether to pause new targets when attaching to them. Use `Runtime.runIfWaitingForDebugger`
-to run paused targets.
-   pTargetSetAutoAttachFlatten :: PTargetSetAutoAttachFlatten -- ^ Enables "flat" access to the session via specifying sessionId attribute in the commands.
-We plan to make this the default, deprecate non-flattened mode,
-and eventually retire it. See crbug.com/991325.
+  -- | Whether to auto-attach to related targets.
+  pTargetSetAutoAttachAutoAttach :: Bool,
+  -- | Whether to pause new targets when attaching to them. Use `Runtime.runIfWaitingForDebugger`
+  -- to run paused targets.
+  pTargetSetAutoAttachWaitForDebuggerOnStart :: Bool,
+  -- | Enables "flat" access to the session via specifying sessionId attribute in the commands.
+  -- We plan to make this the default, deprecate non-flattened mode,
+  -- and eventually retire it. See crbug.com/991325.
+  pTargetSetAutoAttachFlatten :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetSetAutoAttach  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -1103,7 +1201,7 @@ instance FromJSON  PTargetSetAutoAttach where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
--- | Function for the command 'Target.setAutoAttach'.
+-- | Function for the 'Target.setAutoAttach' command.
 -- Controls whether to automatically attach to new targets which are considered to be related to
 -- this one. When turned on, attaches to all existing related targets as well. When turned off,
 -- automatically detaches from all currently attached targets.
@@ -1116,9 +1214,10 @@ targetSetAutoAttach handle params = sendReceiveCommand handle "Target.setAutoAtt
 
 -- | Parameters of the 'targetAutoAttachRelated' command.
 data PTargetAutoAttachRelated = PTargetAutoAttachRelated {
-
-   pTargetAutoAttachRelatedWaitForDebuggerOnStart :: PTargetAutoAttachRelatedWaitForDebuggerOnStart -- ^ Whether to pause new targets when attaching to them. Use `Runtime.runIfWaitingForDebugger`
-to run paused targets.
+  pTargetAutoAttachRelatedTargetId :: TargetTargetId,
+  -- | Whether to pause new targets when attaching to them. Use `Runtime.runIfWaitingForDebugger`
+  -- to run paused targets.
+  pTargetAutoAttachRelatedWaitForDebuggerOnStart :: Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetAutoAttachRelated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -1127,7 +1226,7 @@ instance FromJSON  PTargetAutoAttachRelated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the command 'Target.autoAttachRelated'.
+-- | Function for the 'Target.autoAttachRelated' command.
 -- Adds the specified target to the list of targets that will be monitored for any related target
 -- creation (such as child frames, child workers and new versions of service worker) and reported
 -- through `attachedToTarget`. The specified target is also auto-attached.
@@ -1140,7 +1239,8 @@ targetAutoAttachRelated handle params = sendReceiveCommand handle "Target.autoAt
 
 -- | Parameters of the 'targetSetDiscoverTargets' command.
 data PTargetSetDiscoverTargets = PTargetSetDiscoverTargets {
-   pTargetSetDiscoverTargetsDiscover :: PTargetSetDiscoverTargetsDiscover -- ^ Whether to discover available targets.
+  -- | Whether to discover available targets.
+  pTargetSetDiscoverTargetsDiscover :: Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetSetDiscoverTargets  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -1149,7 +1249,7 @@ instance FromJSON  PTargetSetDiscoverTargets where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the command 'Target.setDiscoverTargets'.
+-- | Function for the 'Target.setDiscoverTargets' command.
 -- Controls whether to discover available targets and notify via
 -- `targetCreated/targetInfoChanged/targetDestroyed` events.
 -- Parameters: 'PTargetSetDiscoverTargets'
@@ -1159,7 +1259,8 @@ targetSetDiscoverTargets handle params = sendReceiveCommand handle "Target.setDi
 
 -- | Parameters of the 'targetSetRemoteLocations' command.
 data PTargetSetRemoteLocations = PTargetSetRemoteLocations {
-   pTargetSetRemoteLocationsLocations :: PTargetSetRemoteLocationsLocations -- ^ List of remote locations.
+  -- | List of remote locations.
+  pTargetSetRemoteLocationsLocations :: [TargetRemoteLocation]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetSetRemoteLocations  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -1168,7 +1269,7 @@ instance FromJSON  PTargetSetRemoteLocations where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the command 'Target.setRemoteLocations'.
+-- | Function for the 'Target.setRemoteLocations' command.
 -- Enables target discovery for the specified locations, when `setDiscoverTargets` was set to
 -- `true`.
 -- Parameters: 'PTargetSetRemoteLocations'

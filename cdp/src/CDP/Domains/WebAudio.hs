@@ -153,12 +153,16 @@ instance ToJSON WebAudioAutomationRate where
 
 -- | Fields in AudioContext that change in real-time.
 data WebAudioContextRealtimeData = WebAudioContextRealtimeData {
-   webAudioContextRealtimeDataCurrentTime :: WebAudioContextRealtimeDataCurrentTime, -- ^ The current context time in second in BaseAudioContext.
-   webAudioContextRealtimeDataRenderCapacity :: WebAudioContextRealtimeDataRenderCapacity, -- ^ The time spent on rendering graph divided by render quantum duration,
-and multiplied by 100. 100 means the audio renderer reached the full
-capacity and glitch may occur.
-   webAudioContextRealtimeDataCallbackIntervalMean :: WebAudioContextRealtimeDataCallbackIntervalMean, -- ^ A running mean of callback interval.
-   webAudioContextRealtimeDataCallbackIntervalVariance :: WebAudioContextRealtimeDataCallbackIntervalVariance -- ^ A running variance of callback interval.
+  -- | The current context time in second in BaseAudioContext.
+  webAudioContextRealtimeDataCurrentTime :: Double,
+  -- | The time spent on rendering graph divided by render quantum duration,
+  -- and multiplied by 100. 100 means the audio renderer reached the full
+  -- capacity and glitch may occur.
+  webAudioContextRealtimeDataRenderCapacity :: Double,
+  -- | A running mean of callback interval.
+  webAudioContextRealtimeDataCallbackIntervalMean :: Double,
+  -- | A running variance of callback interval.
+  webAudioContextRealtimeDataCallbackIntervalVariance :: Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAudioContextRealtimeData  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -170,13 +174,16 @@ instance FromJSON  WebAudioContextRealtimeData where
 
 -- | Protocol object for BaseAudioContext
 data WebAudioBaseAudioContext = WebAudioBaseAudioContext {
-
-
-
-
-   webAudioBaseAudioContextCallbackBufferSize :: WebAudioBaseAudioContextCallbackBufferSize, -- ^ Platform-dependent callback buffer size.
-   webAudioBaseAudioContextMaxOutputChannelCount :: WebAudioBaseAudioContextMaxOutputChannelCount, -- ^ Number of output channels supported by audio hardware in use.
-   webAudioBaseAudioContextSampleRate :: WebAudioBaseAudioContextSampleRate -- ^ Context sample rate.
+  webAudioBaseAudioContextContextId :: WebAudioGraphObjectId,
+  webAudioBaseAudioContextContextType :: WebAudioContextType,
+  webAudioBaseAudioContextContextState :: WebAudioContextState,
+  webAudioBaseAudioContextRealtimeData :: Maybe WebAudioContextRealtimeData,
+  -- | Platform-dependent callback buffer size.
+  webAudioBaseAudioContextCallbackBufferSize :: Double,
+  -- | Number of output channels supported by audio hardware in use.
+  webAudioBaseAudioContextMaxOutputChannelCount :: Double,
+  -- | Context sample rate.
+  webAudioBaseAudioContextSampleRate :: Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAudioBaseAudioContext  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -188,8 +195,8 @@ instance FromJSON  WebAudioBaseAudioContext where
 
 -- | Protocol object for AudioListener
 data WebAudioAudioListener = WebAudioAudioListener {
-
-
+  webAudioAudioListenerListenerId :: WebAudioGraphObjectId,
+  webAudioAudioListenerContextId :: WebAudioGraphObjectId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAudioAudioListener  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -201,14 +208,14 @@ instance FromJSON  WebAudioAudioListener where
 
 -- | Protocol object for AudioNode
 data WebAudioAudioNode = WebAudioAudioNode {
-
-
-
-
-
-
-
-
+  webAudioAudioNodeNodeId :: WebAudioGraphObjectId,
+  webAudioAudioNodeContextId :: WebAudioGraphObjectId,
+  webAudioAudioNodeNodeType :: WebAudioNodeType,
+  webAudioAudioNodeNumberOfInputs :: Double,
+  webAudioAudioNodeNumberOfOutputs :: Double,
+  webAudioAudioNodeChannelCount :: Double,
+  webAudioAudioNodeChannelCountMode :: WebAudioChannelCountMode,
+  webAudioAudioNodeChannelInterpretation :: WebAudioChannelInterpretation
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAudioAudioNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -220,14 +227,14 @@ instance FromJSON  WebAudioAudioNode where
 
 -- | Protocol object for AudioParam
 data WebAudioAudioParam = WebAudioAudioParam {
-
-
-
-
-
-
-
-
+  webAudioAudioParamParamId :: WebAudioGraphObjectId,
+  webAudioAudioParamNodeId :: WebAudioGraphObjectId,
+  webAudioAudioParamContextId :: WebAudioGraphObjectId,
+  webAudioAudioParamParamType :: WebAudioParamType,
+  webAudioAudioParamRate :: WebAudioAutomationRate,
+  webAudioAudioParamDefaultValue :: Double,
+  webAudioAudioParamMinValue :: Double,
+  webAudioAudioParamMaxValue :: Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAudioAudioParam  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -241,6 +248,7 @@ instance FromJSON  WebAudioAudioParam where
 
 -- | Type of the 'WebAudio.contextCreated' event.
 data WebAudioContextCreated = WebAudioContextCreated {
+  webAudioContextCreatedContext :: WebAudioBaseAudioContext
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAudioContextCreated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -252,6 +260,7 @@ instance FromJSON  WebAudioContextCreated where
 
 -- | Type of the 'WebAudio.contextWillBeDestroyed' event.
 data WebAudioContextWillBeDestroyed = WebAudioContextWillBeDestroyed {
+  webAudioContextWillBeDestroyedContextId :: WebAudioGraphObjectId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAudioContextWillBeDestroyed  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -263,6 +272,7 @@ instance FromJSON  WebAudioContextWillBeDestroyed where
 
 -- | Type of the 'WebAudio.contextChanged' event.
 data WebAudioContextChanged = WebAudioContextChanged {
+  webAudioContextChangedContext :: WebAudioBaseAudioContext
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAudioContextChanged  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -274,6 +284,7 @@ instance FromJSON  WebAudioContextChanged where
 
 -- | Type of the 'WebAudio.audioListenerCreated' event.
 data WebAudioAudioListenerCreated = WebAudioAudioListenerCreated {
+  webAudioAudioListenerCreatedListener :: WebAudioAudioListener
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAudioAudioListenerCreated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -285,8 +296,8 @@ instance FromJSON  WebAudioAudioListenerCreated where
 
 -- | Type of the 'WebAudio.audioListenerWillBeDestroyed' event.
 data WebAudioAudioListenerWillBeDestroyed = WebAudioAudioListenerWillBeDestroyed {
-
-
+  webAudioAudioListenerWillBeDestroyedContextId :: WebAudioGraphObjectId,
+  webAudioAudioListenerWillBeDestroyedListenerId :: WebAudioGraphObjectId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAudioAudioListenerWillBeDestroyed  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
@@ -298,6 +309,7 @@ instance FromJSON  WebAudioAudioListenerWillBeDestroyed where
 
 -- | Type of the 'WebAudio.audioNodeCreated' event.
 data WebAudioAudioNodeCreated = WebAudioAudioNodeCreated {
+  webAudioAudioNodeCreatedNode :: WebAudioAudioNode
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAudioAudioNodeCreated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -309,8 +321,8 @@ instance FromJSON  WebAudioAudioNodeCreated where
 
 -- | Type of the 'WebAudio.audioNodeWillBeDestroyed' event.
 data WebAudioAudioNodeWillBeDestroyed = WebAudioAudioNodeWillBeDestroyed {
-
-
+  webAudioAudioNodeWillBeDestroyedContextId :: WebAudioGraphObjectId,
+  webAudioAudioNodeWillBeDestroyedNodeId :: WebAudioGraphObjectId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAudioAudioNodeWillBeDestroyed  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
@@ -322,6 +334,7 @@ instance FromJSON  WebAudioAudioNodeWillBeDestroyed where
 
 -- | Type of the 'WebAudio.audioParamCreated' event.
 data WebAudioAudioParamCreated = WebAudioAudioParamCreated {
+  webAudioAudioParamCreatedParam :: WebAudioAudioParam
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAudioAudioParamCreated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -333,9 +346,9 @@ instance FromJSON  WebAudioAudioParamCreated where
 
 -- | Type of the 'WebAudio.audioParamWillBeDestroyed' event.
 data WebAudioAudioParamWillBeDestroyed = WebAudioAudioParamWillBeDestroyed {
-
-
-
+  webAudioAudioParamWillBeDestroyedContextId :: WebAudioGraphObjectId,
+  webAudioAudioParamWillBeDestroyedNodeId :: WebAudioGraphObjectId,
+  webAudioAudioParamWillBeDestroyedParamId :: WebAudioGraphObjectId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAudioAudioParamWillBeDestroyed  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
@@ -347,11 +360,11 @@ instance FromJSON  WebAudioAudioParamWillBeDestroyed where
 
 -- | Type of the 'WebAudio.nodesConnected' event.
 data WebAudioNodesConnected = WebAudioNodesConnected {
-
-
-
-
-
+  webAudioNodesConnectedContextId :: WebAudioGraphObjectId,
+  webAudioNodesConnectedSourceId :: WebAudioGraphObjectId,
+  webAudioNodesConnectedDestinationId :: WebAudioGraphObjectId,
+  webAudioNodesConnectedSourceOutputIndex :: Maybe Double,
+  webAudioNodesConnectedDestinationInputIndex :: Maybe Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAudioNodesConnected  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -363,11 +376,11 @@ instance FromJSON  WebAudioNodesConnected where
 
 -- | Type of the 'WebAudio.nodesDisconnected' event.
 data WebAudioNodesDisconnected = WebAudioNodesDisconnected {
-
-
-
-
-
+  webAudioNodesDisconnectedContextId :: WebAudioGraphObjectId,
+  webAudioNodesDisconnectedSourceId :: WebAudioGraphObjectId,
+  webAudioNodesDisconnectedDestinationId :: WebAudioGraphObjectId,
+  webAudioNodesDisconnectedSourceOutputIndex :: Maybe Double,
+  webAudioNodesDisconnectedDestinationInputIndex :: Maybe Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAudioNodesDisconnected  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -379,10 +392,10 @@ instance FromJSON  WebAudioNodesDisconnected where
 
 -- | Type of the 'WebAudio.nodeParamConnected' event.
 data WebAudioNodeParamConnected = WebAudioNodeParamConnected {
-
-
-
-
+  webAudioNodeParamConnectedContextId :: WebAudioGraphObjectId,
+  webAudioNodeParamConnectedSourceId :: WebAudioGraphObjectId,
+  webAudioNodeParamConnectedDestinationId :: WebAudioGraphObjectId,
+  webAudioNodeParamConnectedSourceOutputIndex :: Maybe Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAudioNodeParamConnected  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -394,10 +407,10 @@ instance FromJSON  WebAudioNodeParamConnected where
 
 -- | Type of the 'WebAudio.nodeParamDisconnected' event.
 data WebAudioNodeParamDisconnected = WebAudioNodeParamDisconnected {
-
-
-
-
+  webAudioNodeParamDisconnectedContextId :: WebAudioGraphObjectId,
+  webAudioNodeParamDisconnectedSourceId :: WebAudioGraphObjectId,
+  webAudioNodeParamDisconnectedDestinationId :: WebAudioGraphObjectId,
+  webAudioNodeParamDisconnectedSourceOutputIndex :: Maybe Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAudioNodeParamDisconnected  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -409,13 +422,13 @@ instance FromJSON  WebAudioNodeParamDisconnected where
 
 
 
--- | Function for the command 'WebAudio.enable'.
+-- | Function for the 'WebAudio.enable' command.
 -- Enables the WebAudio domain and starts sending context lifetime events.
 webAudioEnable :: Handle ev -> IO (Maybe Error)
 webAudioEnable handle = sendReceiveCommand handle "WebAudio.enable" (Nothing :: Maybe ())
 
 
--- | Function for the command 'WebAudio.disable'.
+-- | Function for the 'WebAudio.disable' command.
 -- Disables the WebAudio domain.
 webAudioDisable :: Handle ev -> IO (Maybe Error)
 webAudioDisable handle = sendReceiveCommand handle "WebAudio.disable" (Nothing :: Maybe ())
@@ -423,6 +436,7 @@ webAudioDisable handle = sendReceiveCommand handle "WebAudio.disable" (Nothing :
 
 -- | Parameters of the 'webAudioGetRealtimeData' command.
 data PWebAudioGetRealtimeData = PWebAudioGetRealtimeData {
+  pWebAudioGetRealtimeDataContextId :: WebAudioGraphObjectId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PWebAudioGetRealtimeData  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -431,7 +445,7 @@ instance FromJSON  PWebAudioGetRealtimeData where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the command 'WebAudio.getRealtimeData'.
+-- | Function for the 'WebAudio.getRealtimeData' command.
 -- Fetch the realtime data from the registered contexts.
 -- Parameters: 'PWebAudioGetRealtimeData'
 -- Returns: 'WebAudioGetRealtimeData'
@@ -440,7 +454,7 @@ webAudioGetRealtimeData handle params = sendReceiveCommandResult handle "WebAudi
 
 -- | Return type of the 'webAudioGetRealtimeData' command.
 data WebAudioGetRealtimeData = WebAudioGetRealtimeData {
-
+  webAudioGetRealtimeDataRealtimeData :: WebAudioContextRealtimeData
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  WebAudioGetRealtimeData where

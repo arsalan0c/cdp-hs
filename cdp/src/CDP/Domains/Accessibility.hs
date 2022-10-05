@@ -160,15 +160,24 @@ instance ToJSON AccessibilityAxValueNativeSourceType where
 
 -- | A single source for a computed AX property.
 data AccessibilityAxValueSource = AccessibilityAxValueSource {
-   accessibilityAxValueSourceType :: AccessibilityAxValueSourceType, -- ^ What type of source this is.
-   accessibilityAxValueSourceValue :: AccessibilityAxValueSourceValue, -- ^ The value of this property source.
-   accessibilityAxValueSourceAttribute :: AccessibilityAxValueSourceAttribute, -- ^ The name of the relevant attribute, if any.
-   accessibilityAxValueSourceAttributeValue :: AccessibilityAxValueSourceAttributeValue, -- ^ The value of the relevant attribute, if any.
-   accessibilityAxValueSourceSuperseded :: AccessibilityAxValueSourceSuperseded, -- ^ Whether this source is superseded by a higher priority source.
-   accessibilityAxValueSourceNativeSource :: AccessibilityAxValueSourceNativeSource, -- ^ The native markup source for this value, e.g. a <label> element.
-   accessibilityAxValueSourceNativeSourceValue :: AccessibilityAxValueSourceNativeSourceValue, -- ^ The value, such as a node or node list, of the native source.
-   accessibilityAxValueSourceInvalid :: AccessibilityAxValueSourceInvalid, -- ^ Whether the value for this property is invalid.
-   accessibilityAxValueSourceInvalidReason :: AccessibilityAxValueSourceInvalidReason -- ^ Reason for the value being invalid, if it is.
+  -- | What type of source this is.
+  accessibilityAxValueSourceType :: AccessibilityAxValueSourceType,
+  -- | The value of this property source.
+  accessibilityAxValueSourceValue :: Maybe AccessibilityAxValue,
+  -- | The name of the relevant attribute, if any.
+  accessibilityAxValueSourceAttribute :: Maybe String,
+  -- | The value of the relevant attribute, if any.
+  accessibilityAxValueSourceAttributeValue :: Maybe AccessibilityAxValue,
+  -- | Whether this source is superseded by a higher priority source.
+  accessibilityAxValueSourceSuperseded :: Maybe Bool,
+  -- | The native markup source for this value, e.g. a <label> element.
+  accessibilityAxValueSourceNativeSource :: Maybe AccessibilityAxValueNativeSourceType,
+  -- | The value, such as a node or node list, of the native source.
+  accessibilityAxValueSourceNativeSourceValue :: Maybe AccessibilityAxValue,
+  -- | Whether the value for this property is invalid.
+  accessibilityAxValueSourceInvalid :: Maybe Bool,
+  -- | Reason for the value being invalid, if it is.
+  accessibilityAxValueSourceInvalidReason :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AccessibilityAxValueSource  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -180,9 +189,12 @@ instance FromJSON  AccessibilityAxValueSource where
 
 -- | Type 'Accessibility.AXRelatedNode' .
 data AccessibilityAxRelatedNode = AccessibilityAxRelatedNode {
-   accessibilityAxRelatedNodeBackendDomNodeId :: AccessibilityAxRelatedNodeBackendDomNodeId, -- ^ The BackendNodeId of the related DOM node.
-   accessibilityAxRelatedNodeIdref :: AccessibilityAxRelatedNodeIdref, -- ^ The IDRef value provided, if any.
-   accessibilityAxRelatedNodeText :: AccessibilityAxRelatedNodeText -- ^ The text alternative of this node in the current context.
+  -- | The BackendNodeId of the related DOM node.
+  accessibilityAxRelatedNodeBackendDomNodeId :: DOMPageNetworkEmulationSecurity.DomBackendNodeId,
+  -- | The IDRef value provided, if any.
+  accessibilityAxRelatedNodeIdref :: Maybe String,
+  -- | The text alternative of this node in the current context.
+  accessibilityAxRelatedNodeText :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AccessibilityAxRelatedNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -194,8 +206,10 @@ instance FromJSON  AccessibilityAxRelatedNode where
 
 -- | Type 'Accessibility.AXProperty' .
 data AccessibilityAxProperty = AccessibilityAxProperty {
-   accessibilityAxPropertyName :: AccessibilityAxPropertyName, -- ^ The name of this property.
-   accessibilityAxPropertyValue :: AccessibilityAxPropertyValue -- ^ The value of this property.
+  -- | The name of this property.
+  accessibilityAxPropertyName :: AccessibilityAxPropertyName,
+  -- | The value of this property.
+  accessibilityAxPropertyValue :: AccessibilityAxValue
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AccessibilityAxProperty  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -207,10 +221,14 @@ instance FromJSON  AccessibilityAxProperty where
 
 -- | A single computed AX property.
 data AccessibilityAxValue = AccessibilityAxValue {
-   accessibilityAxValueType :: AccessibilityAxValueType, -- ^ The type of this value.
-   accessibilityAxValueValue :: AccessibilityAxValueValue, -- ^ The computed value of this property.
-   accessibilityAxValueRelatedNodes :: AccessibilityAxValueRelatedNodes, -- ^ One or more related nodes, if applicable.
-   accessibilityAxValueSources :: AccessibilityAxValueSources -- ^ The sources which contributed to the computation of this property.
+  -- | The type of this value.
+  accessibilityAxValueType :: AccessibilityAxValueType,
+  -- | The computed value of this property.
+  accessibilityAxValueValue :: Maybe Int,
+  -- | One or more related nodes, if applicable.
+  accessibilityAxValueRelatedNodes :: Maybe [AccessibilityAxRelatedNode],
+  -- | The sources which contributed to the computation of this property.
+  accessibilityAxValueSources :: Maybe [AccessibilityAxValueSource]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AccessibilityAxValue  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -319,18 +337,30 @@ instance ToJSON AccessibilityAxPropertyName where
 
 -- | A node in the accessibility tree.
 data AccessibilityAxNode = AccessibilityAxNode {
-   accessibilityAxNodeNodeId :: AccessibilityAxNodeNodeId, -- ^ Unique identifier for this node.
-   accessibilityAxNodeIgnored :: AccessibilityAxNodeIgnored, -- ^ Whether this node is ignored for accessibility
-   accessibilityAxNodeIgnoredReasons :: AccessibilityAxNodeIgnoredReasons, -- ^ Collection of reasons why this node is hidden.
-   accessibilityAxNodeRole :: AccessibilityAxNodeRole, -- ^ This `Node`'s role, whether explicit or implicit.
-   accessibilityAxNodeName :: AccessibilityAxNodeName, -- ^ The accessible name for this `Node`.
-   accessibilityAxNodeDescription :: AccessibilityAxNodeDescription, -- ^ The accessible description for this `Node`.
-   accessibilityAxNodeValue :: AccessibilityAxNodeValue, -- ^ The value for this `Node`.
-   accessibilityAxNodeProperties :: AccessibilityAxNodeProperties, -- ^ All other properties
-   accessibilityAxNodeParentId :: AccessibilityAxNodeParentId, -- ^ ID for this node's parent.
-   accessibilityAxNodeChildIds :: AccessibilityAxNodeChildIds, -- ^ IDs for each of this node's child nodes.
-   accessibilityAxNodeBackendDomNodeId :: AccessibilityAxNodeBackendDomNodeId, -- ^ The backend ID for the associated DOM node, if any.
-   accessibilityAxNodeFrameId :: AccessibilityAxNodeFrameId -- ^ The frame ID for the frame associated with this nodes document.
+  -- | Unique identifier for this node.
+  accessibilityAxNodeNodeId :: AccessibilityAxNodeId,
+  -- | Whether this node is ignored for accessibility
+  accessibilityAxNodeIgnored :: Bool,
+  -- | Collection of reasons why this node is hidden.
+  accessibilityAxNodeIgnoredReasons :: Maybe [AccessibilityAxProperty],
+  -- | This `Node`'s role, whether explicit or implicit.
+  accessibilityAxNodeRole :: Maybe AccessibilityAxValue,
+  -- | The accessible name for this `Node`.
+  accessibilityAxNodeName :: Maybe AccessibilityAxValue,
+  -- | The accessible description for this `Node`.
+  accessibilityAxNodeDescription :: Maybe AccessibilityAxValue,
+  -- | The value for this `Node`.
+  accessibilityAxNodeValue :: Maybe AccessibilityAxValue,
+  -- | All other properties
+  accessibilityAxNodeProperties :: Maybe [AccessibilityAxProperty],
+  -- | ID for this node's parent.
+  accessibilityAxNodeParentId :: Maybe AccessibilityAxNodeId,
+  -- | IDs for each of this node's child nodes.
+  accessibilityAxNodeChildIds :: Maybe [AccessibilityAxNodeId],
+  -- | The backend ID for the associated DOM node, if any.
+  accessibilityAxNodeBackendDomNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomBackendNodeId,
+  -- | The frame ID for the frame associated with this nodes document.
+  accessibilityAxNodeFrameId :: Maybe DOMPageNetworkEmulationSecurity.PageFrameId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AccessibilityAxNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -344,7 +374,8 @@ instance FromJSON  AccessibilityAxNode where
 
 -- | Type of the 'Accessibility.loadComplete' event.
 data AccessibilityLoadComplete = AccessibilityLoadComplete {
-   accessibilityLoadCompleteRoot :: AccessibilityLoadCompleteRoot -- ^ New document root node.
+  -- | New document root node.
+  accessibilityLoadCompleteRoot :: AccessibilityAxNode
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AccessibilityLoadComplete  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -356,7 +387,8 @@ instance FromJSON  AccessibilityLoadComplete where
 
 -- | Type of the 'Accessibility.nodesUpdated' event.
 data AccessibilityNodesUpdated = AccessibilityNodesUpdated {
-   accessibilityNodesUpdatedNodes :: AccessibilityNodesUpdatedNodes -- ^ Updated node data.
+  -- | Updated node data.
+  accessibilityNodesUpdatedNodes :: [AccessibilityAxNode]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AccessibilityNodesUpdated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -368,13 +400,13 @@ instance FromJSON  AccessibilityNodesUpdated where
 
 
 
--- | Function for the command 'Accessibility.disable'.
+-- | Function for the 'Accessibility.disable' command.
 -- Disables the accessibility domain.
 accessibilityDisable :: Handle ev -> IO (Maybe Error)
 accessibilityDisable handle = sendReceiveCommand handle "Accessibility.disable" (Nothing :: Maybe ())
 
 
--- | Function for the command 'Accessibility.enable'.
+-- | Function for the 'Accessibility.enable' command.
 -- Enables the accessibility domain which causes `AXNodeId`s to remain consistent between method calls.
 -- This turns on accessibility for the page, which can impact performance until accessibility is disabled.
 accessibilityEnable :: Handle ev -> IO (Maybe Error)
@@ -383,10 +415,14 @@ accessibilityEnable handle = sendReceiveCommand handle "Accessibility.enable" (N
 
 -- | Parameters of the 'accessibilityGetPartialAxTree' command.
 data PAccessibilityGetPartialAxTree = PAccessibilityGetPartialAxTree {
-   pAccessibilityGetPartialAxTreeNodeId :: PAccessibilityGetPartialAxTreeNodeId, -- ^ Identifier of the node to get the partial accessibility tree for.
-   pAccessibilityGetPartialAxTreeBackendNodeId :: PAccessibilityGetPartialAxTreeBackendNodeId, -- ^ Identifier of the backend node to get the partial accessibility tree for.
-   pAccessibilityGetPartialAxTreeObjectId :: PAccessibilityGetPartialAxTreeObjectId, -- ^ JavaScript object id of the node wrapper to get the partial accessibility tree for.
-   pAccessibilityGetPartialAxTreeFetchRelatives :: PAccessibilityGetPartialAxTreeFetchRelatives -- ^ Whether to fetch this nodes ancestors, siblings and children. Defaults to true.
+  -- | Identifier of the node to get the partial accessibility tree for.
+  pAccessibilityGetPartialAxTreeNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomNodeId,
+  -- | Identifier of the backend node to get the partial accessibility tree for.
+  pAccessibilityGetPartialAxTreeBackendNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomBackendNodeId,
+  -- | JavaScript object id of the node wrapper to get the partial accessibility tree for.
+  pAccessibilityGetPartialAxTreeObjectId :: Maybe Runtime.RuntimeRemoteObjectId,
+  -- | Whether to fetch this nodes ancestors, siblings and children. Defaults to true.
+  pAccessibilityGetPartialAxTreeFetchRelatives :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PAccessibilityGetPartialAxTree  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -395,7 +431,7 @@ instance FromJSON  PAccessibilityGetPartialAxTree where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
--- | Function for the command 'Accessibility.getPartialAXTree'.
+-- | Function for the 'Accessibility.getPartialAXTree' command.
 -- Fetches the accessibility node and partial accessibility tree for this DOM node, if it exists.
 -- Parameters: 'PAccessibilityGetPartialAxTree'
 -- Returns: 'AccessibilityGetPartialAxTree'
@@ -404,8 +440,9 @@ accessibilityGetPartialAxTree handle params = sendReceiveCommandResult handle "A
 
 -- | Return type of the 'accessibilityGetPartialAxTree' command.
 data AccessibilityGetPartialAxTree = AccessibilityGetPartialAxTree {
-   accessibilityGetPartialAxTreeNodes :: [AccessibilityAxNode] -- ^ The `Accessibility.AXNode` for this DOM node, if it exists, plus its ancestors, siblings and
-children, if requested.
+  -- | The `Accessibility.AXNode` for this DOM node, if it exists, plus its ancestors, siblings and
+  -- children, if requested.
+  accessibilityGetPartialAxTreeNodes :: [AccessibilityAxNode]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  AccessibilityGetPartialAxTree where
@@ -418,10 +455,12 @@ instance Command AccessibilityGetPartialAxTree where
 
 -- | Parameters of the 'accessibilityGetFullAxTree' command.
 data PAccessibilityGetFullAxTree = PAccessibilityGetFullAxTree {
-   pAccessibilityGetFullAxTreeDepth :: PAccessibilityGetFullAxTreeDepth, -- ^ The maximum depth at which descendants of the root node should be retrieved.
-If omitted, the full tree is returned.
-   pAccessibilityGetFullAxTreeFrameId :: PAccessibilityGetFullAxTreeFrameId -- ^ The frame for whose document the AX tree should be retrieved.
-If omited, the root frame is used.
+  -- | The maximum depth at which descendants of the root node should be retrieved.
+  -- If omitted, the full tree is returned.
+  pAccessibilityGetFullAxTreeDepth :: Maybe Int,
+  -- | The frame for whose document the AX tree should be retrieved.
+  -- If omited, the root frame is used.
+  pAccessibilityGetFullAxTreeFrameId :: Maybe DOMPageNetworkEmulationSecurity.PageFrameId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PAccessibilityGetFullAxTree  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -430,7 +469,7 @@ instance FromJSON  PAccessibilityGetFullAxTree where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
--- | Function for the command 'Accessibility.getFullAXTree'.
+-- | Function for the 'Accessibility.getFullAXTree' command.
 -- Fetches the entire accessibility tree for the root Document
 -- Parameters: 'PAccessibilityGetFullAxTree'
 -- Returns: 'AccessibilityGetFullAxTree'
@@ -439,7 +478,7 @@ accessibilityGetFullAxTree handle params = sendReceiveCommandResult handle "Acce
 
 -- | Return type of the 'accessibilityGetFullAxTree' command.
 data AccessibilityGetFullAxTree = AccessibilityGetFullAxTree {
-
+  accessibilityGetFullAxTreeNodes :: [AccessibilityAxNode]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  AccessibilityGetFullAxTree where
@@ -452,8 +491,9 @@ instance Command AccessibilityGetFullAxTree where
 
 -- | Parameters of the 'accessibilityGetRootAxNode' command.
 data PAccessibilityGetRootAxNode = PAccessibilityGetRootAxNode {
-   pAccessibilityGetRootAxNodeFrameId :: PAccessibilityGetRootAxNodeFrameId -- ^ The frame in whose document the node resides.
-If omitted, the root frame is used.
+  -- | The frame in whose document the node resides.
+  -- If omitted, the root frame is used.
+  pAccessibilityGetRootAxNodeFrameId :: Maybe DOMPageNetworkEmulationSecurity.PageFrameId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PAccessibilityGetRootAxNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -462,7 +502,7 @@ instance FromJSON  PAccessibilityGetRootAxNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
--- | Function for the command 'Accessibility.getRootAXNode'.
+-- | Function for the 'Accessibility.getRootAXNode' command.
 -- Fetches the root node.
 -- Requires `enable()` to have been called previously.
 -- Parameters: 'PAccessibilityGetRootAxNode'
@@ -472,7 +512,7 @@ accessibilityGetRootAxNode handle params = sendReceiveCommandResult handle "Acce
 
 -- | Return type of the 'accessibilityGetRootAxNode' command.
 data AccessibilityGetRootAxNode = AccessibilityGetRootAxNode {
-
+  accessibilityGetRootAxNodeNode :: AccessibilityAxNode
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  AccessibilityGetRootAxNode where
@@ -485,9 +525,12 @@ instance Command AccessibilityGetRootAxNode where
 
 -- | Parameters of the 'accessibilityGetAxNodeAndAncestors' command.
 data PAccessibilityGetAxNodeAndAncestors = PAccessibilityGetAxNodeAndAncestors {
-   pAccessibilityGetAxNodeAndAncestorsNodeId :: PAccessibilityGetAxNodeAndAncestorsNodeId, -- ^ Identifier of the node to get.
-   pAccessibilityGetAxNodeAndAncestorsBackendNodeId :: PAccessibilityGetAxNodeAndAncestorsBackendNodeId, -- ^ Identifier of the backend node to get.
-   pAccessibilityGetAxNodeAndAncestorsObjectId :: PAccessibilityGetAxNodeAndAncestorsObjectId -- ^ JavaScript object id of the node wrapper to get.
+  -- | Identifier of the node to get.
+  pAccessibilityGetAxNodeAndAncestorsNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomNodeId,
+  -- | Identifier of the backend node to get.
+  pAccessibilityGetAxNodeAndAncestorsBackendNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomBackendNodeId,
+  -- | JavaScript object id of the node wrapper to get.
+  pAccessibilityGetAxNodeAndAncestorsObjectId :: Maybe Runtime.RuntimeRemoteObjectId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PAccessibilityGetAxNodeAndAncestors  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 , A.omitNothingFields = True}
@@ -496,7 +539,7 @@ instance FromJSON  PAccessibilityGetAxNodeAndAncestors where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 }
 
 
--- | Function for the command 'Accessibility.getAXNodeAndAncestors'.
+-- | Function for the 'Accessibility.getAXNodeAndAncestors' command.
 -- Fetches a node and all ancestors up to and including the root.
 -- Requires `enable()` to have been called previously.
 -- Parameters: 'PAccessibilityGetAxNodeAndAncestors'
@@ -506,7 +549,7 @@ accessibilityGetAxNodeAndAncestors handle params = sendReceiveCommandResult hand
 
 -- | Return type of the 'accessibilityGetAxNodeAndAncestors' command.
 data AccessibilityGetAxNodeAndAncestors = AccessibilityGetAxNodeAndAncestors {
-
+  accessibilityGetAxNodeAndAncestorsNodes :: [AccessibilityAxNode]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  AccessibilityGetAxNodeAndAncestors where
@@ -519,9 +562,10 @@ instance Command AccessibilityGetAxNodeAndAncestors where
 
 -- | Parameters of the 'accessibilityGetChildAxNodes' command.
 data PAccessibilityGetChildAxNodes = PAccessibilityGetChildAxNodes {
-
-   pAccessibilityGetChildAxNodesFrameId :: PAccessibilityGetChildAxNodesFrameId -- ^ The frame in whose document the node resides.
-If omitted, the root frame is used.
+  pAccessibilityGetChildAxNodesId :: AccessibilityAxNodeId,
+  -- | The frame in whose document the node resides.
+  -- If omitted, the root frame is used.
+  pAccessibilityGetChildAxNodesFrameId :: Maybe DOMPageNetworkEmulationSecurity.PageFrameId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PAccessibilityGetChildAxNodes  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -530,7 +574,7 @@ instance FromJSON  PAccessibilityGetChildAxNodes where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
--- | Function for the command 'Accessibility.getChildAXNodes'.
+-- | Function for the 'Accessibility.getChildAXNodes' command.
 -- Fetches a particular accessibility node by AXNodeId.
 -- Requires `enable()` to have been called previously.
 -- Parameters: 'PAccessibilityGetChildAxNodes'
@@ -540,7 +584,7 @@ accessibilityGetChildAxNodes handle params = sendReceiveCommandResult handle "Ac
 
 -- | Return type of the 'accessibilityGetChildAxNodes' command.
 data AccessibilityGetChildAxNodes = AccessibilityGetChildAxNodes {
-
+  accessibilityGetChildAxNodesNodes :: [AccessibilityAxNode]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  AccessibilityGetChildAxNodes where
@@ -553,11 +597,16 @@ instance Command AccessibilityGetChildAxNodes where
 
 -- | Parameters of the 'accessibilityQueryAxTree' command.
 data PAccessibilityQueryAxTree = PAccessibilityQueryAxTree {
-   pAccessibilityQueryAxTreeNodeId :: PAccessibilityQueryAxTreeNodeId, -- ^ Identifier of the node for the root to query.
-   pAccessibilityQueryAxTreeBackendNodeId :: PAccessibilityQueryAxTreeBackendNodeId, -- ^ Identifier of the backend node for the root to query.
-   pAccessibilityQueryAxTreeObjectId :: PAccessibilityQueryAxTreeObjectId, -- ^ JavaScript object id of the node wrapper for the root to query.
-   pAccessibilityQueryAxTreeAccessibleName :: PAccessibilityQueryAxTreeAccessibleName, -- ^ Find nodes with this computed name.
-   pAccessibilityQueryAxTreeRole :: PAccessibilityQueryAxTreeRole -- ^ Find nodes with this computed role.
+  -- | Identifier of the node for the root to query.
+  pAccessibilityQueryAxTreeNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomNodeId,
+  -- | Identifier of the backend node for the root to query.
+  pAccessibilityQueryAxTreeBackendNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomBackendNodeId,
+  -- | JavaScript object id of the node wrapper for the root to query.
+  pAccessibilityQueryAxTreeObjectId :: Maybe Runtime.RuntimeRemoteObjectId,
+  -- | Find nodes with this computed name.
+  pAccessibilityQueryAxTreeAccessibleName :: Maybe String,
+  -- | Find nodes with this computed role.
+  pAccessibilityQueryAxTreeRole :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PAccessibilityQueryAxTree  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -566,7 +615,7 @@ instance FromJSON  PAccessibilityQueryAxTree where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the command 'Accessibility.queryAXTree'.
+-- | Function for the 'Accessibility.queryAXTree' command.
 -- Query a DOM node's accessibility subtree for accessible name and role.
 -- This command computes the name and role for all nodes in the subtree, including those that are
 -- ignored for accessibility, and returns those that mactch the specified name and role. If no DOM
@@ -579,8 +628,9 @@ accessibilityQueryAxTree handle params = sendReceiveCommandResult handle "Access
 
 -- | Return type of the 'accessibilityQueryAxTree' command.
 data AccessibilityQueryAxTree = AccessibilityQueryAxTree {
-   accessibilityQueryAxTreeNodes :: [AccessibilityAxNode] -- ^ A list of `Accessibility.AXNode` matching the specified attributes,
-including nodes that are ignored for accessibility.
+  -- | A list of `Accessibility.AXNode` matching the specified attributes,
+  -- including nodes that are ignored for accessibility.
+  accessibilityQueryAxTreeNodes :: [AccessibilityAxNode]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  AccessibilityQueryAxTree where

@@ -72,14 +72,22 @@ instance ToJSON TracingTraceConfigRecordMode where
 
 
 data TracingTraceConfig = TracingTraceConfig {
-   tracingTraceConfigRecordMode :: TracingTraceConfigRecordMode, -- ^ Controls how the trace buffer stores data.
-   tracingTraceConfigEnableSampling :: TracingTraceConfigEnableSampling, -- ^ Turns on JavaScript stack sampling.
-   tracingTraceConfigEnableSystrace :: TracingTraceConfigEnableSystrace, -- ^ Turns on system tracing.
-   tracingTraceConfigEnableArgumentFilter :: TracingTraceConfigEnableArgumentFilter, -- ^ Turns on argument filter.
-   tracingTraceConfigIncludedCategories :: TracingTraceConfigIncludedCategories, -- ^ Included category filters.
-   tracingTraceConfigExcludedCategories :: TracingTraceConfigExcludedCategories, -- ^ Excluded category filters.
-   tracingTraceConfigSyntheticDelays :: TracingTraceConfigSyntheticDelays, -- ^ Configuration to synthesize the delays in tracing.
-   tracingTraceConfigMemoryDumpConfig :: TracingTraceConfigMemoryDumpConfig -- ^ Configuration for memory dump triggers. Used only when "memory-infra" category is enabled.
+  -- | Controls how the trace buffer stores data.
+  tracingTraceConfigRecordMode :: TracingTraceConfigRecordMode,
+  -- | Turns on JavaScript stack sampling.
+  tracingTraceConfigEnableSampling :: Maybe Bool,
+  -- | Turns on system tracing.
+  tracingTraceConfigEnableSystrace :: Maybe Bool,
+  -- | Turns on argument filter.
+  tracingTraceConfigEnableArgumentFilter :: Maybe Bool,
+  -- | Included category filters.
+  tracingTraceConfigIncludedCategories :: Maybe [String],
+  -- | Excluded category filters.
+  tracingTraceConfigExcludedCategories :: Maybe [String],
+  -- | Configuration to synthesize the delays in tracing.
+  tracingTraceConfigSyntheticDelays :: Maybe [String],
+  -- | Configuration for memory dump triggers. Used only when "memory-infra" category is enabled.
+  tracingTraceConfigMemoryDumpConfig :: Maybe TracingMemoryDumpConfig
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON TracingTraceConfig  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -176,11 +184,14 @@ instance ToJSON TracingTracingBackend where
 
 -- | Type of the 'Tracing.bufferUsage' event.
 data TracingBufferUsage = TracingBufferUsage {
-   tracingBufferUsagePercentFull :: TracingBufferUsagePercentFull, -- ^ A number in range [0..1] that indicates the used size of event buffer as a fraction of its
-total size.
-   tracingBufferUsageEventCount :: TracingBufferUsageEventCount, -- ^ An approximate number of events in the trace log.
-   tracingBufferUsageValue :: TracingBufferUsageValue -- ^ A number in range [0..1] that indicates the used size of event buffer as a fraction of its
-total size.
+  -- | A number in range [0..1] that indicates the used size of event buffer as a fraction of its
+  -- total size.
+  tracingBufferUsagePercentFull :: Maybe Double,
+  -- | An approximate number of events in the trace log.
+  tracingBufferUsageEventCount :: Maybe Double,
+  -- | A number in range [0..1] that indicates the used size of event buffer as a fraction of its
+  -- total size.
+  tracingBufferUsageValue :: Maybe Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON TracingBufferUsage  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -192,6 +203,7 @@ instance FromJSON  TracingBufferUsage where
 
 -- | Type of the 'Tracing.dataCollected' event.
 data TracingDataCollected = TracingDataCollected {
+  tracingDataCollectedValue :: [[(String, String)]]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON TracingDataCollected  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -203,11 +215,15 @@ instance FromJSON  TracingDataCollected where
 
 -- | Type of the 'Tracing.tracingComplete' event.
 data TracingTracingComplete = TracingTracingComplete {
-   tracingTracingCompleteDataLossOccurred :: TracingTracingCompleteDataLossOccurred, -- ^ Indicates whether some trace data is known to have been lost, e.g. because the trace ring
-buffer wrapped around.
-   tracingTracingCompleteStream :: TracingTracingCompleteStream, -- ^ A handle of the stream that holds resulting trace data.
-   tracingTracingCompleteTraceFormat :: TracingTracingCompleteTraceFormat, -- ^ Trace data format of returned stream.
-   tracingTracingCompleteStreamCompression :: TracingTracingCompleteStreamCompression -- ^ Compression format of returned stream.
+  -- | Indicates whether some trace data is known to have been lost, e.g. because the trace ring
+  -- buffer wrapped around.
+  tracingTracingCompleteDataLossOccurred :: Bool,
+  -- | A handle of the stream that holds resulting trace data.
+  tracingTracingCompleteStream :: Maybe IO.IoStreamHandle,
+  -- | Trace data format of returned stream.
+  tracingTracingCompleteTraceFormat :: Maybe TracingStreamFormat,
+  -- | Compression format of returned stream.
+  tracingTracingCompleteStreamCompression :: Maybe TracingStreamCompression
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON TracingTracingComplete  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -219,13 +235,13 @@ instance FromJSON  TracingTracingComplete where
 
 
 
--- | Function for the command 'Tracing.end'.
+-- | Function for the 'Tracing.end' command.
 -- Stop trace events collection.
 tracingEnd :: Handle ev -> IO (Maybe Error)
 tracingEnd handle = sendReceiveCommand handle "Tracing.end" (Nothing :: Maybe ())
 
 
--- | Function for the command 'Tracing.getCategories'.
+-- | Function for the 'Tracing.getCategories' command.
 -- Gets supported tracing categories.
 -- Returns: 'TracingGetCategories'
 tracingGetCategories :: Handle ev -> IO (Either Error TracingGetCategories)
@@ -233,7 +249,8 @@ tracingGetCategories handle = sendReceiveCommandResult handle "Tracing.getCatego
 
 -- | Return type of the 'tracingGetCategories' command.
 data TracingGetCategories = TracingGetCategories {
-   tracingGetCategoriesCategories :: [String] -- ^ A list of supported tracing categories.
+  -- | A list of supported tracing categories.
+  tracingGetCategoriesCategories :: [String]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  TracingGetCategories where
@@ -246,7 +263,8 @@ instance Command TracingGetCategories where
 
 -- | Parameters of the 'tracingRecordClockSyncMarker' command.
 data PTracingRecordClockSyncMarker = PTracingRecordClockSyncMarker {
-   pTracingRecordClockSyncMarkerSyncId :: PTracingRecordClockSyncMarkerSyncId -- ^ The ID of this clock sync marker
+  -- | The ID of this clock sync marker
+  pTracingRecordClockSyncMarkerSyncId :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTracingRecordClockSyncMarker  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -255,7 +273,7 @@ instance FromJSON  PTracingRecordClockSyncMarker where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
--- | Function for the command 'Tracing.recordClockSyncMarker'.
+-- | Function for the 'Tracing.recordClockSyncMarker' command.
 -- Record a clock sync marker in the trace.
 -- Parameters: 'PTracingRecordClockSyncMarker'
 tracingRecordClockSyncMarker :: Handle ev -> PTracingRecordClockSyncMarker -> IO (Maybe Error)
@@ -264,8 +282,10 @@ tracingRecordClockSyncMarker handle params = sendReceiveCommand handle "Tracing.
 
 -- | Parameters of the 'tracingRequestMemoryDump' command.
 data PTracingRequestMemoryDump = PTracingRequestMemoryDump {
-   pTracingRequestMemoryDumpDeterministic :: PTracingRequestMemoryDumpDeterministic, -- ^ Enables more deterministic results by forcing garbage collection
-   pTracingRequestMemoryDumpLevelOfDetail :: PTracingRequestMemoryDumpLevelOfDetail -- ^ Specifies level of details in memory dump. Defaults to "detailed".
+  -- | Enables more deterministic results by forcing garbage collection
+  pTracingRequestMemoryDumpDeterministic :: Maybe Bool,
+  -- | Specifies level of details in memory dump. Defaults to "detailed".
+  pTracingRequestMemoryDumpLevelOfDetail :: Maybe TracingMemoryDumpLevelOfDetail
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTracingRequestMemoryDump  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -274,7 +294,7 @@ instance FromJSON  PTracingRequestMemoryDump where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the command 'Tracing.requestMemoryDump'.
+-- | Function for the 'Tracing.requestMemoryDump' command.
 -- Request a global memory dump.
 -- Parameters: 'PTracingRequestMemoryDump'
 -- Returns: 'TracingRequestMemoryDump'
@@ -283,8 +303,10 @@ tracingRequestMemoryDump handle params = sendReceiveCommandResult handle "Tracin
 
 -- | Return type of the 'tracingRequestMemoryDump' command.
 data TracingRequestMemoryDump = TracingRequestMemoryDump {
-   tracingRequestMemoryDumpDumpGuid :: String, -- ^ GUID of the resulting global memory dump.
-   tracingRequestMemoryDumpSuccess :: Bool -- ^ True iff the global memory dump succeeded.
+  -- | GUID of the resulting global memory dump.
+  tracingRequestMemoryDumpDumpGuid :: String,
+  -- | True iff the global memory dump succeeded.
+  tracingRequestMemoryDumpSuccess :: Bool
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  TracingRequestMemoryDump where
@@ -314,18 +336,24 @@ instance ToJSON PTracingStartTransferMode where
 
 
 data PTracingStart = PTracingStart {
-   pTracingStartBufferUsageReportingInterval :: PTracingStartBufferUsageReportingInterval, -- ^ If set, the agent will issue bufferUsage events at this interval, specified in milliseconds
-   pTracingStartTransferMode :: PTracingStartTransferMode, -- ^ Whether to report trace events as series of dataCollected events or to save trace to a
-stream (defaults to `ReportEvents`).
-   pTracingStartStreamFormat :: PTracingStartStreamFormat, -- ^ Trace data format to use. This only applies when using `ReturnAsStream`
-transfer mode (defaults to `json`).
-   pTracingStartStreamCompression :: PTracingStartStreamCompression, -- ^ Compression format to use. This only applies when using `ReturnAsStream`
-transfer mode (defaults to `none`)
-
-   pTracingStartPerfettoConfig :: PTracingStartPerfettoConfig, -- ^ Base64-encoded serialized perfetto.protos.TraceConfig protobuf message
-When specified, the parameters `categories`, `options`, `traceConfig`
-are ignored. (Encoded as a base64 string when passed over JSON)
-   pTracingStartTracingBackend :: PTracingStartTracingBackend -- ^ Backend type (defaults to `auto`)
+  -- | If set, the agent will issue bufferUsage events at this interval, specified in milliseconds
+  pTracingStartBufferUsageReportingInterval :: Maybe Double,
+  -- | Whether to report trace events as series of dataCollected events or to save trace to a
+  -- stream (defaults to `ReportEvents`).
+  pTracingStartTransferMode :: PTracingStartTransferMode,
+  -- | Trace data format to use. This only applies when using `ReturnAsStream`
+  -- transfer mode (defaults to `json`).
+  pTracingStartStreamFormat :: Maybe TracingStreamFormat,
+  -- | Compression format to use. This only applies when using `ReturnAsStream`
+  -- transfer mode (defaults to `none`)
+  pTracingStartStreamCompression :: Maybe TracingStreamCompression,
+  pTracingStartTraceConfig :: Maybe TracingTraceConfig,
+  -- | Base64-encoded serialized perfetto.protos.TraceConfig protobuf message
+  -- When specified, the parameters `categories`, `options`, `traceConfig`
+  -- are ignored. (Encoded as a base64 string when passed over JSON)
+  pTracingStartPerfettoConfig :: Maybe String,
+  -- | Backend type (defaults to `auto`)
+  pTracingStartTracingBackend :: Maybe TracingTracingBackend
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTracingStart  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 , A.omitNothingFields = True}
@@ -334,7 +362,7 @@ instance FromJSON  PTracingStart where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 }
 
 
--- | Function for the command 'Tracing.start'.
+-- | Function for the 'Tracing.start' command.
 -- Start trace events collection.
 -- Parameters: 'PTracingStart'
 tracingStart :: Handle ev -> PTracingStart -> IO (Maybe Error)

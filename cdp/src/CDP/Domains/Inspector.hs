@@ -49,7 +49,8 @@ import CDP.Handle
 
 -- | Type of the 'Inspector.detached' event.
 data InspectorDetached = InspectorDetached {
-   inspectorDetachedReason :: InspectorDetachedReason -- ^ The reason why connection has been terminated.
+  -- | The reason why connection has been terminated.
+  inspectorDetachedReason :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON InspectorDetached  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -83,13 +84,13 @@ instance FromJSON InspectorTargetReloadedAfterCrash where
 
 
 
--- | Function for the command 'Inspector.disable'.
+-- | Function for the 'Inspector.disable' command.
 -- Disables inspector domain notifications.
 inspectorDisable :: Handle ev -> IO (Maybe Error)
 inspectorDisable handle = sendReceiveCommand handle "Inspector.disable" (Nothing :: Maybe ())
 
 
--- | Function for the command 'Inspector.enable'.
+-- | Function for the 'Inspector.enable' command.
 -- Enables inspector domain notifications.
 inspectorEnable :: Handle ev -> IO (Maybe Error)
 inspectorEnable handle = sendReceiveCommand handle "Inspector.enable" (Nothing :: Maybe ())

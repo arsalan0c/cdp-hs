@@ -65,9 +65,12 @@ instance ToJSON MemoryPressureLevel where
 
 -- | Heap profile sample.
 data MemorySamplingProfileNode = MemorySamplingProfileNode {
-   memorySamplingProfileNodeSize :: MemorySamplingProfileNodeSize, -- ^ Size of the sampled allocation.
-   memorySamplingProfileNodeTotal :: MemorySamplingProfileNodeTotal, -- ^ Total bytes attributed to this sample.
-   memorySamplingProfileNodeStack :: MemorySamplingProfileNodeStack -- ^ Execution stack at the point of allocation.
+  -- | Size of the sampled allocation.
+  memorySamplingProfileNodeSize :: Double,
+  -- | Total bytes attributed to this sample.
+  memorySamplingProfileNodeTotal :: Double,
+  -- | Execution stack at the point of allocation.
+  memorySamplingProfileNodeStack :: [String]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON MemorySamplingProfileNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -79,8 +82,8 @@ instance FromJSON  MemorySamplingProfileNode where
 
 -- | Array of heap profile samples.
 data MemorySamplingProfile = MemorySamplingProfile {
-
-
+  memorySamplingProfileSamples :: [MemorySamplingProfileNode],
+  memorySamplingProfileModules :: [MemoryModule]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON MemorySamplingProfile  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -92,11 +95,15 @@ instance FromJSON  MemorySamplingProfile where
 
 -- | Executable module information
 data MemoryModule = MemoryModule {
-   memoryModuleName :: MemoryModuleName, -- ^ Name of the module.
-   memoryModuleUuid :: MemoryModuleUuid, -- ^ UUID of the module.
-   memoryModuleBaseAddress :: MemoryModuleBaseAddress, -- ^ Base address where the module is loaded into memory. Encoded as a decimal
-or hexadecimal (0x prefixed) string.
-   memoryModuleSize :: MemoryModuleSize -- ^ Size of the module in bytes.
+  -- | Name of the module.
+  memoryModuleName :: String,
+  -- | UUID of the module.
+  memoryModuleUuid :: String,
+  -- | Base address where the module is loaded into memory. Encoded as a decimal
+  -- or hexadecimal (0x prefixed) string.
+  memoryModuleBaseAddress :: String,
+  -- | Size of the module in bytes.
+  memoryModuleSize :: Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON MemoryModule  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 , A.omitNothingFields = True}
@@ -110,16 +117,16 @@ instance FromJSON  MemoryModule where
 
 
 
--- | Function for the command 'Memory.getDOMCounters'.
+-- | Function for the 'Memory.getDOMCounters' command.
 -- Returns: 'MemoryGetDomCounters'
 memoryGetDomCounters :: Handle ev -> IO (Either Error MemoryGetDomCounters)
 memoryGetDomCounters handle = sendReceiveCommandResult handle "Memory.getDOMCounters" (Nothing :: Maybe ())
 
 -- | Return type of the 'memoryGetDomCounters' command.
 data MemoryGetDomCounters = MemoryGetDomCounters {
-
-
-
+  memoryGetDomCountersDocuments :: Int,
+  memoryGetDomCountersNodes :: Int,
+  memoryGetDomCountersJsEventListeners :: Int
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  MemoryGetDomCounters where
@@ -130,12 +137,12 @@ instance Command MemoryGetDomCounters where
 
 
 
--- | Function for the command 'Memory.prepareForLeakDetection'.
+-- | Function for the 'Memory.prepareForLeakDetection' command.
 memoryPrepareForLeakDetection :: Handle ev -> IO (Maybe Error)
 memoryPrepareForLeakDetection handle = sendReceiveCommand handle "Memory.prepareForLeakDetection" (Nothing :: Maybe ())
 
 
--- | Function for the command 'Memory.forciblyPurgeJavaScriptMemory'.
+-- | Function for the 'Memory.forciblyPurgeJavaScriptMemory' command.
 -- Simulate OomIntervention by purging V8 memory.
 memoryForciblyPurgeJavaScriptMemory :: Handle ev -> IO (Maybe Error)
 memoryForciblyPurgeJavaScriptMemory handle = sendReceiveCommand handle "Memory.forciblyPurgeJavaScriptMemory" (Nothing :: Maybe ())
@@ -143,7 +150,8 @@ memoryForciblyPurgeJavaScriptMemory handle = sendReceiveCommand handle "Memory.f
 
 -- | Parameters of the 'memorySetPressureNotificationsSuppressed' command.
 data PMemorySetPressureNotificationsSuppressed = PMemorySetPressureNotificationsSuppressed {
-   pMemorySetPressureNotificationsSuppressedSuppressed :: PMemorySetPressureNotificationsSuppressedSuppressed -- ^ If true, memory pressure notifications will be suppressed.
+  -- | If true, memory pressure notifications will be suppressed.
+  pMemorySetPressureNotificationsSuppressedSuppressed :: Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PMemorySetPressureNotificationsSuppressed  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 41 , A.omitNothingFields = True}
@@ -152,7 +160,7 @@ instance FromJSON  PMemorySetPressureNotificationsSuppressed where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 41 }
 
 
--- | Function for the command 'Memory.setPressureNotificationsSuppressed'.
+-- | Function for the 'Memory.setPressureNotificationsSuppressed' command.
 -- Enable/disable suppressing memory pressure notifications in all processes.
 -- Parameters: 'PMemorySetPressureNotificationsSuppressed'
 memorySetPressureNotificationsSuppressed :: Handle ev -> PMemorySetPressureNotificationsSuppressed -> IO (Maybe Error)
@@ -161,7 +169,8 @@ memorySetPressureNotificationsSuppressed handle params = sendReceiveCommand hand
 
 -- | Parameters of the 'memorySimulatePressureNotification' command.
 data PMemorySimulatePressureNotification = PMemorySimulatePressureNotification {
-   pMemorySimulatePressureNotificationLevel :: PMemorySimulatePressureNotificationLevel -- ^ Memory pressure level of the notification.
+  -- | Memory pressure level of the notification.
+  pMemorySimulatePressureNotificationLevel :: MemoryPressureLevel
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PMemorySimulatePressureNotification  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 , A.omitNothingFields = True}
@@ -170,7 +179,7 @@ instance FromJSON  PMemorySimulatePressureNotification where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 }
 
 
--- | Function for the command 'Memory.simulatePressureNotification'.
+-- | Function for the 'Memory.simulatePressureNotification' command.
 -- Simulate a memory pressure notification in all processes.
 -- Parameters: 'PMemorySimulatePressureNotification'
 memorySimulatePressureNotification :: Handle ev -> PMemorySimulatePressureNotification -> IO (Maybe Error)
@@ -179,8 +188,10 @@ memorySimulatePressureNotification handle params = sendReceiveCommand handle "Me
 
 -- | Parameters of the 'memoryStartSampling' command.
 data PMemoryStartSampling = PMemoryStartSampling {
-   pMemoryStartSamplingSamplingInterval :: PMemoryStartSamplingSamplingInterval, -- ^ Average number of bytes between samples.
-   pMemoryStartSamplingSuppressRandomness :: PMemoryStartSamplingSuppressRandomness -- ^ Do not randomize intervals between samples.
+  -- | Average number of bytes between samples.
+  pMemoryStartSamplingSamplingInterval :: Maybe Int,
+  -- | Do not randomize intervals between samples.
+  pMemoryStartSamplingSuppressRandomness :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PMemoryStartSampling  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -189,20 +200,20 @@ instance FromJSON  PMemoryStartSampling where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
--- | Function for the command 'Memory.startSampling'.
+-- | Function for the 'Memory.startSampling' command.
 -- Start collecting native memory profile.
 -- Parameters: 'PMemoryStartSampling'
 memoryStartSampling :: Handle ev -> PMemoryStartSampling -> IO (Maybe Error)
 memoryStartSampling handle params = sendReceiveCommand handle "Memory.startSampling" (Just params)
 
 
--- | Function for the command 'Memory.stopSampling'.
+-- | Function for the 'Memory.stopSampling' command.
 -- Stop collecting native memory profile.
 memoryStopSampling :: Handle ev -> IO (Maybe Error)
 memoryStopSampling handle = sendReceiveCommand handle "Memory.stopSampling" (Nothing :: Maybe ())
 
 
--- | Function for the command 'Memory.getAllTimeSamplingProfile'.
+-- | Function for the 'Memory.getAllTimeSamplingProfile' command.
 -- Retrieve native memory allocations profile
 -- collected since renderer process startup.
 -- Returns: 'MemoryGetAllTimeSamplingProfile'
@@ -211,7 +222,7 @@ memoryGetAllTimeSamplingProfile handle = sendReceiveCommandResult handle "Memory
 
 -- | Return type of the 'memoryGetAllTimeSamplingProfile' command.
 data MemoryGetAllTimeSamplingProfile = MemoryGetAllTimeSamplingProfile {
-
+  memoryGetAllTimeSamplingProfileProfile :: MemorySamplingProfile
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  MemoryGetAllTimeSamplingProfile where
@@ -222,7 +233,7 @@ instance Command MemoryGetAllTimeSamplingProfile where
 
 
 
--- | Function for the command 'Memory.getBrowserSamplingProfile'.
+-- | Function for the 'Memory.getBrowserSamplingProfile' command.
 -- Retrieve native memory allocations profile
 -- collected since browser process startup.
 -- Returns: 'MemoryGetBrowserSamplingProfile'
@@ -231,7 +242,7 @@ memoryGetBrowserSamplingProfile handle = sendReceiveCommandResult handle "Memory
 
 -- | Return type of the 'memoryGetBrowserSamplingProfile' command.
 data MemoryGetBrowserSamplingProfile = MemoryGetBrowserSamplingProfile {
-
+  memoryGetBrowserSamplingProfileProfile :: MemorySamplingProfile
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  MemoryGetBrowserSamplingProfile where
@@ -242,7 +253,7 @@ instance Command MemoryGetBrowserSamplingProfile where
 
 
 
--- | Function for the command 'Memory.getSamplingProfile'.
+-- | Function for the 'Memory.getSamplingProfile' command.
 -- Retrieve native memory allocations profile collected since last
 -- `startSampling` call.
 -- Returns: 'MemoryGetSamplingProfile'
@@ -251,7 +262,7 @@ memoryGetSamplingProfile handle = sendReceiveCommandResult handle "Memory.getSam
 
 -- | Return type of the 'memoryGetSamplingProfile' command.
 data MemoryGetSamplingProfile = MemoryGetSamplingProfile {
-
+  memoryGetSamplingProfileProfile :: MemorySamplingProfile
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  MemoryGetSamplingProfile where

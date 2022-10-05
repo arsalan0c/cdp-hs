@@ -73,8 +73,10 @@ instance ToJSON LayerTreeScrollRectType where
 
 
 data LayerTreeScrollRect = LayerTreeScrollRect {
-   layerTreeScrollRectRect :: LayerTreeScrollRectRect, -- ^ Rectangle itself.
-   layerTreeScrollRectType :: LayerTreeScrollRectType -- ^ Reason for rectangle to force scrolling on the main thread
+  -- | Rectangle itself.
+  layerTreeScrollRectRect :: DOMPageNetworkEmulationSecurity.DomRect,
+  -- | Reason for rectangle to force scrolling on the main thread
+  layerTreeScrollRectType :: LayerTreeScrollRectType
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON LayerTreeScrollRect  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -86,10 +88,14 @@ instance FromJSON  LayerTreeScrollRect where
 
 -- | Sticky position constraints.
 data LayerTreeStickyPositionConstraint = LayerTreeStickyPositionConstraint {
-   layerTreeStickyPositionConstraintStickyBoxRect :: LayerTreeStickyPositionConstraintStickyBoxRect, -- ^ Layout rectangle of the sticky element before being shifted
-   layerTreeStickyPositionConstraintContainingBlockRect :: LayerTreeStickyPositionConstraintContainingBlockRect, -- ^ Layout rectangle of the containing block of the sticky element
-   layerTreeStickyPositionConstraintNearestLayerShiftingStickyBox :: LayerTreeStickyPositionConstraintNearestLayerShiftingStickyBox, -- ^ The nearest sticky layer that shifts the sticky box
-   layerTreeStickyPositionConstraintNearestLayerShiftingContainingBlock :: LayerTreeStickyPositionConstraintNearestLayerShiftingContainingBlock -- ^ The nearest sticky layer that shifts the containing block
+  -- | Layout rectangle of the sticky element before being shifted
+  layerTreeStickyPositionConstraintStickyBoxRect :: DOMPageNetworkEmulationSecurity.DomRect,
+  -- | Layout rectangle of the containing block of the sticky element
+  layerTreeStickyPositionConstraintContainingBlockRect :: DOMPageNetworkEmulationSecurity.DomRect,
+  -- | The nearest sticky layer that shifts the sticky box
+  layerTreeStickyPositionConstraintNearestLayerShiftingStickyBox :: Maybe LayerTreeLayerId,
+  -- | The nearest sticky layer that shifts the containing block
+  layerTreeStickyPositionConstraintNearestLayerShiftingContainingBlock :: Maybe LayerTreeLayerId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON LayerTreeStickyPositionConstraint  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
@@ -101,9 +107,12 @@ instance FromJSON  LayerTreeStickyPositionConstraint where
 
 -- | Serialized fragment of layer picture along with its offset within the layer.
 data LayerTreePictureTile = LayerTreePictureTile {
-   layerTreePictureTileX :: LayerTreePictureTileX, -- ^ Offset from owning layer left boundary
-   layerTreePictureTileY :: LayerTreePictureTileY, -- ^ Offset from owning layer top boundary
-   layerTreePictureTilePicture :: LayerTreePictureTilePicture -- ^ Base64-encoded snapshot data. (Encoded as a base64 string when passed over JSON)
+  -- | Offset from owning layer left boundary
+  layerTreePictureTileX :: Double,
+  -- | Offset from owning layer top boundary
+  layerTreePictureTileY :: Double,
+  -- | Base64-encoded snapshot data. (Encoded as a base64 string when passed over JSON)
+  layerTreePictureTilePicture :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON LayerTreePictureTile  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -115,23 +124,39 @@ instance FromJSON  LayerTreePictureTile where
 
 -- | Information about a compositing layer.
 data LayerTreeLayer = LayerTreeLayer {
-   layerTreeLayerLayerId :: LayerTreeLayerLayerId, -- ^ The unique id for this layer.
-   layerTreeLayerParentLayerId :: LayerTreeLayerParentLayerId, -- ^ The id of parent (not present for root).
-   layerTreeLayerBackendNodeId :: LayerTreeLayerBackendNodeId, -- ^ The backend id for the node associated with this layer.
-   layerTreeLayerOffsetX :: LayerTreeLayerOffsetX, -- ^ Offset from parent layer, X coordinate.
-   layerTreeLayerOffsetY :: LayerTreeLayerOffsetY, -- ^ Offset from parent layer, Y coordinate.
-   layerTreeLayerWidth :: LayerTreeLayerWidth, -- ^ Layer width.
-   layerTreeLayerHeight :: LayerTreeLayerHeight, -- ^ Layer height.
-   layerTreeLayerTransform :: LayerTreeLayerTransform, -- ^ Transformation matrix for layer, default is identity matrix
-   layerTreeLayerAnchorX :: LayerTreeLayerAnchorX, -- ^ Transform anchor point X, absent if no transform specified
-   layerTreeLayerAnchorY :: LayerTreeLayerAnchorY, -- ^ Transform anchor point Y, absent if no transform specified
-   layerTreeLayerAnchorZ :: LayerTreeLayerAnchorZ, -- ^ Transform anchor point Z, absent if no transform specified
-   layerTreeLayerPaintCount :: LayerTreeLayerPaintCount, -- ^ Indicates how many time this layer has painted.
-   layerTreeLayerDrawsContent :: LayerTreeLayerDrawsContent, -- ^ Indicates whether this layer hosts any content, rather than being used for
-transform/scrolling purposes only.
-   layerTreeLayerInvisible :: LayerTreeLayerInvisible, -- ^ Set if layer is not visible.
-   layerTreeLayerScrollRects :: LayerTreeLayerScrollRects, -- ^ Rectangles scrolling on main thread only.
-   layerTreeLayerStickyPositionConstraint :: LayerTreeLayerStickyPositionConstraint -- ^ Sticky position constraint information
+  -- | The unique id for this layer.
+  layerTreeLayerLayerId :: LayerTreeLayerId,
+  -- | The id of parent (not present for root).
+  layerTreeLayerParentLayerId :: Maybe LayerTreeLayerId,
+  -- | The backend id for the node associated with this layer.
+  layerTreeLayerBackendNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomBackendNodeId,
+  -- | Offset from parent layer, X coordinate.
+  layerTreeLayerOffsetX :: Double,
+  -- | Offset from parent layer, Y coordinate.
+  layerTreeLayerOffsetY :: Double,
+  -- | Layer width.
+  layerTreeLayerWidth :: Double,
+  -- | Layer height.
+  layerTreeLayerHeight :: Double,
+  -- | Transformation matrix for layer, default is identity matrix
+  layerTreeLayerTransform :: Maybe [Double],
+  -- | Transform anchor point X, absent if no transform specified
+  layerTreeLayerAnchorX :: Maybe Double,
+  -- | Transform anchor point Y, absent if no transform specified
+  layerTreeLayerAnchorY :: Maybe Double,
+  -- | Transform anchor point Z, absent if no transform specified
+  layerTreeLayerAnchorZ :: Maybe Double,
+  -- | Indicates how many time this layer has painted.
+  layerTreeLayerPaintCount :: Int,
+  -- | Indicates whether this layer hosts any content, rather than being used for
+  -- transform/scrolling purposes only.
+  layerTreeLayerDrawsContent :: Bool,
+  -- | Set if layer is not visible.
+  layerTreeLayerInvisible :: Maybe Bool,
+  -- | Rectangles scrolling on main thread only.
+  layerTreeLayerScrollRects :: Maybe [LayerTreeScrollRect],
+  -- | Sticky position constraint information
+  layerTreeLayerStickyPositionConstraint :: Maybe LayerTreeStickyPositionConstraint
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON LayerTreeLayer  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
@@ -148,8 +173,10 @@ type LayerTreePaintProfile = [Double]
 
 -- | Type of the 'LayerTree.layerPainted' event.
 data LayerTreeLayerPainted = LayerTreeLayerPainted {
-   layerTreeLayerPaintedLayerId :: LayerTreeLayerPaintedLayerId, -- ^ The id of the painted layer.
-   layerTreeLayerPaintedClip :: LayerTreeLayerPaintedClip -- ^ Clip rectangle.
+  -- | The id of the painted layer.
+  layerTreeLayerPaintedLayerId :: LayerTreeLayerId,
+  -- | Clip rectangle.
+  layerTreeLayerPaintedClip :: DOMPageNetworkEmulationSecurity.DomRect
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON LayerTreeLayerPainted  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -161,7 +188,8 @@ instance FromJSON  LayerTreeLayerPainted where
 
 -- | Type of the 'LayerTree.layerTreeDidChange' event.
 data LayerTreeLayerTreeDidChange = LayerTreeLayerTreeDidChange {
-   layerTreeLayerTreeDidChangeLayers :: LayerTreeLayerTreeDidChangeLayers -- ^ Layer tree, absent if not in the comspositing mode.
+  -- | Layer tree, absent if not in the comspositing mode.
+  layerTreeLayerTreeDidChangeLayers :: Maybe [LayerTreeLayer]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON LayerTreeLayerTreeDidChange  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -175,7 +203,8 @@ instance FromJSON  LayerTreeLayerTreeDidChange where
 
 -- | Parameters of the 'layerTreeCompositingReasons' command.
 data PLayerTreeCompositingReasons = PLayerTreeCompositingReasons {
-   pLayerTreeCompositingReasonsLayerId :: PLayerTreeCompositingReasonsLayerId -- ^ The id of the layer for which we want to get the reasons it was composited.
+  -- | The id of the layer for which we want to get the reasons it was composited.
+  pLayerTreeCompositingReasonsLayerId :: LayerTreeLayerId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PLayerTreeCompositingReasons  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -184,7 +213,7 @@ instance FromJSON  PLayerTreeCompositingReasons where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
--- | Function for the command 'LayerTree.compositingReasons'.
+-- | Function for the 'LayerTree.compositingReasons' command.
 -- Provides the reasons why the given layer was composited.
 -- Parameters: 'PLayerTreeCompositingReasons'
 -- Returns: 'LayerTreeCompositingReasons'
@@ -193,7 +222,8 @@ layerTreeCompositingReasons handle params = sendReceiveCommandResult handle "Lay
 
 -- | Return type of the 'layerTreeCompositingReasons' command.
 data LayerTreeCompositingReasons = LayerTreeCompositingReasons {
-   layerTreeCompositingReasonsCompositingReasonIds :: [String] -- ^ A list of strings specifying reason IDs for the given layer to become composited.
+  -- | A list of strings specifying reason IDs for the given layer to become composited.
+  layerTreeCompositingReasonsCompositingReasonIds :: [String]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  LayerTreeCompositingReasons where
@@ -204,13 +234,13 @@ instance Command LayerTreeCompositingReasons where
 
 
 
--- | Function for the command 'LayerTree.disable'.
+-- | Function for the 'LayerTree.disable' command.
 -- Disables compositing tree inspection.
 layerTreeDisable :: Handle ev -> IO (Maybe Error)
 layerTreeDisable handle = sendReceiveCommand handle "LayerTree.disable" (Nothing :: Maybe ())
 
 
--- | Function for the command 'LayerTree.enable'.
+-- | Function for the 'LayerTree.enable' command.
 -- Enables compositing tree inspection.
 layerTreeEnable :: Handle ev -> IO (Maybe Error)
 layerTreeEnable handle = sendReceiveCommand handle "LayerTree.enable" (Nothing :: Maybe ())
@@ -218,7 +248,8 @@ layerTreeEnable handle = sendReceiveCommand handle "LayerTree.enable" (Nothing :
 
 -- | Parameters of the 'layerTreeLoadSnapshot' command.
 data PLayerTreeLoadSnapshot = PLayerTreeLoadSnapshot {
-   pLayerTreeLoadSnapshotTiles :: PLayerTreeLoadSnapshotTiles -- ^ An array of tiles composing the snapshot.
+  -- | An array of tiles composing the snapshot.
+  pLayerTreeLoadSnapshotTiles :: [LayerTreePictureTile]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PLayerTreeLoadSnapshot  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -227,7 +258,7 @@ instance FromJSON  PLayerTreeLoadSnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
--- | Function for the command 'LayerTree.loadSnapshot'.
+-- | Function for the 'LayerTree.loadSnapshot' command.
 -- Returns the snapshot identifier.
 -- Parameters: 'PLayerTreeLoadSnapshot'
 -- Returns: 'LayerTreeLoadSnapshot'
@@ -236,7 +267,8 @@ layerTreeLoadSnapshot handle params = sendReceiveCommandResult handle "LayerTree
 
 -- | Return type of the 'layerTreeLoadSnapshot' command.
 data LayerTreeLoadSnapshot = LayerTreeLoadSnapshot {
-   layerTreeLoadSnapshotSnapshotId :: LayerTreeSnapshotId -- ^ The id of the snapshot.
+  -- | The id of the snapshot.
+  layerTreeLoadSnapshotSnapshotId :: LayerTreeSnapshotId
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  LayerTreeLoadSnapshot where
@@ -249,7 +281,8 @@ instance Command LayerTreeLoadSnapshot where
 
 -- | Parameters of the 'layerTreeMakeSnapshot' command.
 data PLayerTreeMakeSnapshot = PLayerTreeMakeSnapshot {
-   pLayerTreeMakeSnapshotLayerId :: PLayerTreeMakeSnapshotLayerId -- ^ The id of the layer.
+  -- | The id of the layer.
+  pLayerTreeMakeSnapshotLayerId :: LayerTreeLayerId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PLayerTreeMakeSnapshot  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -258,7 +291,7 @@ instance FromJSON  PLayerTreeMakeSnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
--- | Function for the command 'LayerTree.makeSnapshot'.
+-- | Function for the 'LayerTree.makeSnapshot' command.
 -- Returns the layer snapshot identifier.
 -- Parameters: 'PLayerTreeMakeSnapshot'
 -- Returns: 'LayerTreeMakeSnapshot'
@@ -267,7 +300,8 @@ layerTreeMakeSnapshot handle params = sendReceiveCommandResult handle "LayerTree
 
 -- | Return type of the 'layerTreeMakeSnapshot' command.
 data LayerTreeMakeSnapshot = LayerTreeMakeSnapshot {
-   layerTreeMakeSnapshotSnapshotId :: LayerTreeSnapshotId -- ^ The id of the layer snapshot.
+  -- | The id of the layer snapshot.
+  layerTreeMakeSnapshotSnapshotId :: LayerTreeSnapshotId
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  LayerTreeMakeSnapshot where
@@ -280,10 +314,14 @@ instance Command LayerTreeMakeSnapshot where
 
 -- | Parameters of the 'layerTreeProfileSnapshot' command.
 data PLayerTreeProfileSnapshot = PLayerTreeProfileSnapshot {
-   pLayerTreeProfileSnapshotSnapshotId :: PLayerTreeProfileSnapshotSnapshotId, -- ^ The id of the layer snapshot.
-   pLayerTreeProfileSnapshotMinRepeatCount :: PLayerTreeProfileSnapshotMinRepeatCount, -- ^ The maximum number of times to replay the snapshot (1, if not specified).
-   pLayerTreeProfileSnapshotMinDuration :: PLayerTreeProfileSnapshotMinDuration, -- ^ The minimum duration (in seconds) to replay the snapshot.
-   pLayerTreeProfileSnapshotClipRect :: PLayerTreeProfileSnapshotClipRect -- ^ The clip rectangle to apply when replaying the snapshot.
+  -- | The id of the layer snapshot.
+  pLayerTreeProfileSnapshotSnapshotId :: LayerTreeSnapshotId,
+  -- | The maximum number of times to replay the snapshot (1, if not specified).
+  pLayerTreeProfileSnapshotMinRepeatCount :: Maybe Int,
+  -- | The minimum duration (in seconds) to replay the snapshot.
+  pLayerTreeProfileSnapshotMinDuration :: Maybe Double,
+  -- | The clip rectangle to apply when replaying the snapshot.
+  pLayerTreeProfileSnapshotClipRect :: Maybe DOMPageNetworkEmulationSecurity.DomRect
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PLayerTreeProfileSnapshot  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -292,7 +330,7 @@ instance FromJSON  PLayerTreeProfileSnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the command 'LayerTree.profileSnapshot'.
+-- | Function for the 'LayerTree.profileSnapshot' command.
 -- Parameters: 'PLayerTreeProfileSnapshot'
 -- Returns: 'LayerTreeProfileSnapshot'
 layerTreeProfileSnapshot :: Handle ev -> PLayerTreeProfileSnapshot -> IO (Either Error LayerTreeProfileSnapshot)
@@ -300,7 +338,8 @@ layerTreeProfileSnapshot handle params = sendReceiveCommandResult handle "LayerT
 
 -- | Return type of the 'layerTreeProfileSnapshot' command.
 data LayerTreeProfileSnapshot = LayerTreeProfileSnapshot {
-   layerTreeProfileSnapshotTimings :: [LayerTreePaintProfile] -- ^ The array of paint profiles, one per run.
+  -- | The array of paint profiles, one per run.
+  layerTreeProfileSnapshotTimings :: [LayerTreePaintProfile]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  LayerTreeProfileSnapshot where
@@ -313,7 +352,8 @@ instance Command LayerTreeProfileSnapshot where
 
 -- | Parameters of the 'layerTreeReleaseSnapshot' command.
 data PLayerTreeReleaseSnapshot = PLayerTreeReleaseSnapshot {
-   pLayerTreeReleaseSnapshotSnapshotId :: PLayerTreeReleaseSnapshotSnapshotId -- ^ The id of the layer snapshot.
+  -- | The id of the layer snapshot.
+  pLayerTreeReleaseSnapshotSnapshotId :: LayerTreeSnapshotId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PLayerTreeReleaseSnapshot  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -322,7 +362,7 @@ instance FromJSON  PLayerTreeReleaseSnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the command 'LayerTree.releaseSnapshot'.
+-- | Function for the 'LayerTree.releaseSnapshot' command.
 -- Releases layer snapshot captured by the back-end.
 -- Parameters: 'PLayerTreeReleaseSnapshot'
 layerTreeReleaseSnapshot :: Handle ev -> PLayerTreeReleaseSnapshot -> IO (Maybe Error)
@@ -331,10 +371,14 @@ layerTreeReleaseSnapshot handle params = sendReceiveCommand handle "LayerTree.re
 
 -- | Parameters of the 'layerTreeReplaySnapshot' command.
 data PLayerTreeReplaySnapshot = PLayerTreeReplaySnapshot {
-   pLayerTreeReplaySnapshotSnapshotId :: PLayerTreeReplaySnapshotSnapshotId, -- ^ The id of the layer snapshot.
-   pLayerTreeReplaySnapshotFromStep :: PLayerTreeReplaySnapshotFromStep, -- ^ The first step to replay from (replay from the very start if not specified).
-   pLayerTreeReplaySnapshotToStep :: PLayerTreeReplaySnapshotToStep, -- ^ The last step to replay to (replay till the end if not specified).
-   pLayerTreeReplaySnapshotScale :: PLayerTreeReplaySnapshotScale -- ^ The scale to apply while replaying (defaults to 1).
+  -- | The id of the layer snapshot.
+  pLayerTreeReplaySnapshotSnapshotId :: LayerTreeSnapshotId,
+  -- | The first step to replay from (replay from the very start if not specified).
+  pLayerTreeReplaySnapshotFromStep :: Maybe Int,
+  -- | The last step to replay to (replay till the end if not specified).
+  pLayerTreeReplaySnapshotToStep :: Maybe Int,
+  -- | The scale to apply while replaying (defaults to 1).
+  pLayerTreeReplaySnapshotScale :: Maybe Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PLayerTreeReplaySnapshot  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -343,7 +387,7 @@ instance FromJSON  PLayerTreeReplaySnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the command 'LayerTree.replaySnapshot'.
+-- | Function for the 'LayerTree.replaySnapshot' command.
 -- Replays the layer snapshot and returns the resulting bitmap.
 -- Parameters: 'PLayerTreeReplaySnapshot'
 -- Returns: 'LayerTreeReplaySnapshot'
@@ -352,7 +396,8 @@ layerTreeReplaySnapshot handle params = sendReceiveCommandResult handle "LayerTr
 
 -- | Return type of the 'layerTreeReplaySnapshot' command.
 data LayerTreeReplaySnapshot = LayerTreeReplaySnapshot {
-   layerTreeReplaySnapshotDataUrl :: String -- ^ A data: URL for resulting image.
+  -- | A data: URL for resulting image.
+  layerTreeReplaySnapshotDataUrl :: String
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  LayerTreeReplaySnapshot where
@@ -365,7 +410,8 @@ instance Command LayerTreeReplaySnapshot where
 
 -- | Parameters of the 'layerTreeSnapshotCommandLog' command.
 data PLayerTreeSnapshotCommandLog = PLayerTreeSnapshotCommandLog {
-   pLayerTreeSnapshotCommandLogSnapshotId :: PLayerTreeSnapshotCommandLogSnapshotId -- ^ The id of the layer snapshot.
+  -- | The id of the layer snapshot.
+  pLayerTreeSnapshotCommandLogSnapshotId :: LayerTreeSnapshotId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PLayerTreeSnapshotCommandLog  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -374,7 +420,7 @@ instance FromJSON  PLayerTreeSnapshotCommandLog where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
--- | Function for the command 'LayerTree.snapshotCommandLog'.
+-- | Function for the 'LayerTree.snapshotCommandLog' command.
 -- Replays the layer snapshot and returns canvas log.
 -- Parameters: 'PLayerTreeSnapshotCommandLog'
 -- Returns: 'LayerTreeSnapshotCommandLog'
@@ -383,7 +429,8 @@ layerTreeSnapshotCommandLog handle params = sendReceiveCommandResult handle "Lay
 
 -- | Return type of the 'layerTreeSnapshotCommandLog' command.
 data LayerTreeSnapshotCommandLog = LayerTreeSnapshotCommandLog {
-   layerTreeSnapshotCommandLogCommandLog :: [[(String, String)]] -- ^ The array of canvas function calls.
+  -- | The array of canvas function calls.
+  layerTreeSnapshotCommandLogCommandLog :: [[(String, String)]]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  LayerTreeSnapshotCommandLog where

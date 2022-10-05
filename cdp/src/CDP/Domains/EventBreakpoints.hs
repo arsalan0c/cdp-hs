@@ -56,7 +56,8 @@ import CDP.Handle
 
 -- | Parameters of the 'eventBreakpointsSetInstrumentationBreakpoint' command.
 data PEventBreakpointsSetInstrumentationBreakpoint = PEventBreakpointsSetInstrumentationBreakpoint {
-   pEventBreakpointsSetInstrumentationBreakpointEventName :: PEventBreakpointsSetInstrumentationBreakpointEventName -- ^ Instrumentation name to stop on.
+  -- | Instrumentation name to stop on.
+  pEventBreakpointsSetInstrumentationBreakpointEventName :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEventBreakpointsSetInstrumentationBreakpoint  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 45 , A.omitNothingFields = True}
@@ -65,7 +66,7 @@ instance FromJSON  PEventBreakpointsSetInstrumentationBreakpoint where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 45 }
 
 
--- | Function for the command 'EventBreakpoints.setInstrumentationBreakpoint'.
+-- | Function for the 'EventBreakpoints.setInstrumentationBreakpoint' command.
 -- Sets breakpoint on particular native event.
 -- Parameters: 'PEventBreakpointsSetInstrumentationBreakpoint'
 eventBreakpointsSetInstrumentationBreakpoint :: Handle ev -> PEventBreakpointsSetInstrumentationBreakpoint -> IO (Maybe Error)
@@ -74,7 +75,8 @@ eventBreakpointsSetInstrumentationBreakpoint handle params = sendReceiveCommand 
 
 -- | Parameters of the 'eventBreakpointsRemoveInstrumentationBreakpoint' command.
 data PEventBreakpointsRemoveInstrumentationBreakpoint = PEventBreakpointsRemoveInstrumentationBreakpoint {
-   pEventBreakpointsRemoveInstrumentationBreakpointEventName :: PEventBreakpointsRemoveInstrumentationBreakpointEventName -- ^ Instrumentation name to stop on.
+  -- | Instrumentation name to stop on.
+  pEventBreakpointsRemoveInstrumentationBreakpointEventName :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEventBreakpointsRemoveInstrumentationBreakpoint  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 48 , A.omitNothingFields = True}
@@ -83,7 +85,7 @@ instance FromJSON  PEventBreakpointsRemoveInstrumentationBreakpoint where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 48 }
 
 
--- | Function for the command 'EventBreakpoints.removeInstrumentationBreakpoint'.
+-- | Function for the 'EventBreakpoints.removeInstrumentationBreakpoint' command.
 -- Removes breakpoint on particular native event.
 -- Parameters: 'PEventBreakpointsRemoveInstrumentationBreakpoint'
 eventBreakpointsRemoveInstrumentationBreakpoint :: Handle ev -> PEventBreakpointsRemoveInstrumentationBreakpoint -> IO (Maybe Error)

@@ -239,11 +239,11 @@ instance FromJSON  AccessibilityAxValue where
 
 
 -- | Values of AXProperty name:
--- - from 'busy' to 'roledescription': states which apply to every AX node
--- - from 'live' to 'root': attributes which apply to nodes in live regions
--- - from 'autocomplete' to 'valuetext': attributes which apply to widgets
--- - from 'checked' to 'selected': states which apply to widgets
--- - from 'activedescendant' to 'owns' - relationships between elements other than parent/child/sibling.
+ -- - from 'busy' to 'roledescription': states which apply to every AX node
+ -- - from 'live' to 'root': attributes which apply to nodes in live regions
+ -- - from 'autocomplete' to 'valuetext': attributes which apply to widgets
+ -- - from 'checked' to 'selected': states which apply to widgets
+ -- - from 'activedescendant' to 'owns' - relationships between elements other than parent/child/sibling.
 data AccessibilityAxPropertyName = AccessibilityAxPropertyNameBusy | AccessibilityAxPropertyNameDisabled | AccessibilityAxPropertyNameEditable | AccessibilityAxPropertyNameFocusable | AccessibilityAxPropertyNameFocused | AccessibilityAxPropertyNameHidden | AccessibilityAxPropertyNameHiddenRoot | AccessibilityAxPropertyNameInvalid | AccessibilityAxPropertyNameKeyshortcuts | AccessibilityAxPropertyNameSettable | AccessibilityAxPropertyNameRoledescription | AccessibilityAxPropertyNameLive | AccessibilityAxPropertyNameAtomic | AccessibilityAxPropertyNameRelevant | AccessibilityAxPropertyNameRoot | AccessibilityAxPropertyNameAutocomplete | AccessibilityAxPropertyNameHasPopup | AccessibilityAxPropertyNameLevel | AccessibilityAxPropertyNameMultiselectable | AccessibilityAxPropertyNameOrientation | AccessibilityAxPropertyNameMultiline | AccessibilityAxPropertyNameReadonly | AccessibilityAxPropertyNameRequired | AccessibilityAxPropertyNameValuemin | AccessibilityAxPropertyNameValuemax | AccessibilityAxPropertyNameValuetext | AccessibilityAxPropertyNameChecked | AccessibilityAxPropertyNameExpanded | AccessibilityAxPropertyNameModal | AccessibilityAxPropertyNamePressed | AccessibilityAxPropertyNameSelected | AccessibilityAxPropertyNameActivedescendant | AccessibilityAxPropertyNameControls | AccessibilityAxPropertyNameDescribedby | AccessibilityAxPropertyNameDetails | AccessibilityAxPropertyNameErrormessage | AccessibilityAxPropertyNameFlowto | AccessibilityAxPropertyNameLabelledby | AccessibilityAxPropertyNameOwns
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AccessibilityAxPropertyName where
@@ -401,15 +401,15 @@ instance FromJSON  AccessibilityNodesUpdated where
 
 
 -- | Function for the 'Accessibility.disable' command.
--- Disables the accessibility domain.
-accessibilityDisable :: Handle ev -> IO (Maybe Error)
+ -- Disables the accessibility domain.
+accessibilityDisable :: Handle ev -> IO ()
 accessibilityDisable handle = sendReceiveCommand handle "Accessibility.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Accessibility.enable' command.
--- Enables the accessibility domain which causes `AXNodeId`s to remain consistent between method calls.
--- This turns on accessibility for the page, which can impact performance until accessibility is disabled.
-accessibilityEnable :: Handle ev -> IO (Maybe Error)
+ -- Enables the accessibility domain which causes `AXNodeId`s to remain consistent between method calls.
+ -- This turns on accessibility for the page, which can impact performance until accessibility is disabled.
+accessibilityEnable :: Handle ev -> IO ()
 accessibilityEnable handle = sendReceiveCommand handle "Accessibility.enable" (Nothing :: Maybe ())
 
 
@@ -432,16 +432,16 @@ instance FromJSON  PAccessibilityGetPartialAxTree where
 
 
 -- | Function for the 'Accessibility.getPartialAXTree' command.
--- Fetches the accessibility node and partial accessibility tree for this DOM node, if it exists.
+ -- Fetches the accessibility node and partial accessibility tree for this DOM node, if it exists.
 -- Parameters: 'PAccessibilityGetPartialAxTree'
 -- Returns: 'AccessibilityGetPartialAxTree'
-accessibilityGetPartialAxTree :: Handle ev -> PAccessibilityGetPartialAxTree -> IO (Either Error AccessibilityGetPartialAxTree)
+accessibilityGetPartialAxTree :: Handle ev -> PAccessibilityGetPartialAxTree -> IO AccessibilityGetPartialAxTree
 accessibilityGetPartialAxTree handle params = sendReceiveCommandResult handle "Accessibility.getPartialAXTree" (Just params)
 
 -- | Return type of the 'accessibilityGetPartialAxTree' command.
 data AccessibilityGetPartialAxTree = AccessibilityGetPartialAxTree {
   -- | The `Accessibility.AXNode` for this DOM node, if it exists, plus its ancestors, siblings and
-  -- children, if requested.
+    -- children, if requested.
   accessibilityGetPartialAxTreeNodes :: [AccessibilityAxNode]
 } deriving (Generic, Eq, Show, Read)
 
@@ -456,10 +456,10 @@ instance Command AccessibilityGetPartialAxTree where
 -- | Parameters of the 'accessibilityGetFullAxTree' command.
 data PAccessibilityGetFullAxTree = PAccessibilityGetFullAxTree {
   -- | The maximum depth at which descendants of the root node should be retrieved.
-  -- If omitted, the full tree is returned.
+    -- If omitted, the full tree is returned.
   pAccessibilityGetFullAxTreeDepth :: Maybe Int,
   -- | The frame for whose document the AX tree should be retrieved.
-  -- If omited, the root frame is used.
+    -- If omited, the root frame is used.
   pAccessibilityGetFullAxTreeFrameId :: Maybe DOMPageNetworkEmulationSecurity.PageFrameId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PAccessibilityGetFullAxTree  where
@@ -470,10 +470,10 @@ instance FromJSON  PAccessibilityGetFullAxTree where
 
 
 -- | Function for the 'Accessibility.getFullAXTree' command.
--- Fetches the entire accessibility tree for the root Document
+ -- Fetches the entire accessibility tree for the root Document
 -- Parameters: 'PAccessibilityGetFullAxTree'
 -- Returns: 'AccessibilityGetFullAxTree'
-accessibilityGetFullAxTree :: Handle ev -> PAccessibilityGetFullAxTree -> IO (Either Error AccessibilityGetFullAxTree)
+accessibilityGetFullAxTree :: Handle ev -> PAccessibilityGetFullAxTree -> IO AccessibilityGetFullAxTree
 accessibilityGetFullAxTree handle params = sendReceiveCommandResult handle "Accessibility.getFullAXTree" (Just params)
 
 -- | Return type of the 'accessibilityGetFullAxTree' command.
@@ -492,7 +492,7 @@ instance Command AccessibilityGetFullAxTree where
 -- | Parameters of the 'accessibilityGetRootAxNode' command.
 data PAccessibilityGetRootAxNode = PAccessibilityGetRootAxNode {
   -- | The frame in whose document the node resides.
-  -- If omitted, the root frame is used.
+    -- If omitted, the root frame is used.
   pAccessibilityGetRootAxNodeFrameId :: Maybe DOMPageNetworkEmulationSecurity.PageFrameId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PAccessibilityGetRootAxNode  where
@@ -503,11 +503,11 @@ instance FromJSON  PAccessibilityGetRootAxNode where
 
 
 -- | Function for the 'Accessibility.getRootAXNode' command.
--- Fetches the root node.
--- Requires `enable()` to have been called previously.
+ -- Fetches the root node.
+ -- Requires `enable()` to have been called previously.
 -- Parameters: 'PAccessibilityGetRootAxNode'
 -- Returns: 'AccessibilityGetRootAxNode'
-accessibilityGetRootAxNode :: Handle ev -> PAccessibilityGetRootAxNode -> IO (Either Error AccessibilityGetRootAxNode)
+accessibilityGetRootAxNode :: Handle ev -> PAccessibilityGetRootAxNode -> IO AccessibilityGetRootAxNode
 accessibilityGetRootAxNode handle params = sendReceiveCommandResult handle "Accessibility.getRootAXNode" (Just params)
 
 -- | Return type of the 'accessibilityGetRootAxNode' command.
@@ -540,11 +540,11 @@ instance FromJSON  PAccessibilityGetAxNodeAndAncestors where
 
 
 -- | Function for the 'Accessibility.getAXNodeAndAncestors' command.
--- Fetches a node and all ancestors up to and including the root.
--- Requires `enable()` to have been called previously.
+ -- Fetches a node and all ancestors up to and including the root.
+ -- Requires `enable()` to have been called previously.
 -- Parameters: 'PAccessibilityGetAxNodeAndAncestors'
 -- Returns: 'AccessibilityGetAxNodeAndAncestors'
-accessibilityGetAxNodeAndAncestors :: Handle ev -> PAccessibilityGetAxNodeAndAncestors -> IO (Either Error AccessibilityGetAxNodeAndAncestors)
+accessibilityGetAxNodeAndAncestors :: Handle ev -> PAccessibilityGetAxNodeAndAncestors -> IO AccessibilityGetAxNodeAndAncestors
 accessibilityGetAxNodeAndAncestors handle params = sendReceiveCommandResult handle "Accessibility.getAXNodeAndAncestors" (Just params)
 
 -- | Return type of the 'accessibilityGetAxNodeAndAncestors' command.
@@ -564,7 +564,7 @@ instance Command AccessibilityGetAxNodeAndAncestors where
 data PAccessibilityGetChildAxNodes = PAccessibilityGetChildAxNodes {
   pAccessibilityGetChildAxNodesId :: AccessibilityAxNodeId,
   -- | The frame in whose document the node resides.
-  -- If omitted, the root frame is used.
+    -- If omitted, the root frame is used.
   pAccessibilityGetChildAxNodesFrameId :: Maybe DOMPageNetworkEmulationSecurity.PageFrameId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PAccessibilityGetChildAxNodes  where
@@ -575,11 +575,11 @@ instance FromJSON  PAccessibilityGetChildAxNodes where
 
 
 -- | Function for the 'Accessibility.getChildAXNodes' command.
--- Fetches a particular accessibility node by AXNodeId.
--- Requires `enable()` to have been called previously.
+ -- Fetches a particular accessibility node by AXNodeId.
+ -- Requires `enable()` to have been called previously.
 -- Parameters: 'PAccessibilityGetChildAxNodes'
 -- Returns: 'AccessibilityGetChildAxNodes'
-accessibilityGetChildAxNodes :: Handle ev -> PAccessibilityGetChildAxNodes -> IO (Either Error AccessibilityGetChildAxNodes)
+accessibilityGetChildAxNodes :: Handle ev -> PAccessibilityGetChildAxNodes -> IO AccessibilityGetChildAxNodes
 accessibilityGetChildAxNodes handle params = sendReceiveCommandResult handle "Accessibility.getChildAXNodes" (Just params)
 
 -- | Return type of the 'accessibilityGetChildAxNodes' command.
@@ -616,20 +616,20 @@ instance FromJSON  PAccessibilityQueryAxTree where
 
 
 -- | Function for the 'Accessibility.queryAXTree' command.
--- Query a DOM node's accessibility subtree for accessible name and role.
--- This command computes the name and role for all nodes in the subtree, including those that are
--- ignored for accessibility, and returns those that mactch the specified name and role. If no DOM
--- node is specified, or the DOM node does not exist, the command returns an error. If neither
--- `accessibleName` or `role` is specified, it returns all the accessibility nodes in the subtree.
+ -- Query a DOM node's accessibility subtree for accessible name and role.
+ -- This command computes the name and role for all nodes in the subtree, including those that are
+ -- ignored for accessibility, and returns those that mactch the specified name and role. If no DOM
+ -- node is specified, or the DOM node does not exist, the command returns an error. If neither
+ -- `accessibleName` or `role` is specified, it returns all the accessibility nodes in the subtree.
 -- Parameters: 'PAccessibilityQueryAxTree'
 -- Returns: 'AccessibilityQueryAxTree'
-accessibilityQueryAxTree :: Handle ev -> PAccessibilityQueryAxTree -> IO (Either Error AccessibilityQueryAxTree)
+accessibilityQueryAxTree :: Handle ev -> PAccessibilityQueryAxTree -> IO AccessibilityQueryAxTree
 accessibilityQueryAxTree handle params = sendReceiveCommandResult handle "Accessibility.queryAXTree" (Just params)
 
 -- | Return type of the 'accessibilityQueryAxTree' command.
 data AccessibilityQueryAxTree = AccessibilityQueryAxTree {
   -- | A list of `Accessibility.AXNode` matching the specified attributes,
-  -- including nodes that are ignored for accessibility.
+    -- including nodes that are ignored for accessibility.
   accessibilityQueryAxTreeNodes :: [AccessibilityAxNode]
 } deriving (Generic, Eq, Show, Read)
 

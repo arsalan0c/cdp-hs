@@ -181,15 +181,15 @@ instance ToJSON BrowserPermissionSetting where
 
 
 -- | Definition of PermissionDescriptor defined in the Permissions API:
--- https://w3c.github.io/permissions/#dictdef-permissiondescriptor.
+ -- https://w3c.github.io/permissions/#dictdef-permissiondescriptor.
 data BrowserPermissionDescriptor = BrowserPermissionDescriptor {
   -- | Name of permission.
-  -- See https://cs.chromium.org/chromium/src/third_party/blink/renderer/modules/permissions/permission_descriptor.idl for valid permission names.
+    -- See https://cs.chromium.org/chromium/src/third_party/blink/renderer/modules/permissions/permission_descriptor.idl for valid permission names.
   browserPermissionDescriptorName :: String,
   -- | For "midi" permission, may also specify sysex control.
   browserPermissionDescriptorSysex :: Maybe Bool,
   -- | For "push" permission, may specify userVisibleOnly.
-  -- Note that userVisibleOnly = true is the only currently supported type.
+    -- Note that userVisibleOnly = true is the only currently supported type.
   browserPermissionDescriptorUserVisibleOnly :: Maybe Bool,
   -- | For "clipboard" permission, may specify allowWithoutSanitization.
   browserPermissionDescriptorAllowWithoutSanitization :: Maybe Bool,
@@ -338,9 +338,9 @@ instance FromJSON  PBrowserSetPermission where
 
 
 -- | Function for the 'Browser.setPermission' command.
--- Set permission settings for given origin.
+ -- Set permission settings for given origin.
 -- Parameters: 'PBrowserSetPermission'
-browserSetPermission :: Handle ev -> PBrowserSetPermission -> IO (Maybe Error)
+browserSetPermission :: Handle ev -> PBrowserSetPermission -> IO ()
 browserSetPermission handle params = sendReceiveCommand handle "Browser.setPermission" (Just params)
 
 
@@ -360,9 +360,9 @@ instance FromJSON  PBrowserGrantPermissions where
 
 
 -- | Function for the 'Browser.grantPermissions' command.
--- Grant specific permissions to the given origin and reject all others.
+ -- Grant specific permissions to the given origin and reject all others.
 -- Parameters: 'PBrowserGrantPermissions'
-browserGrantPermissions :: Handle ev -> PBrowserGrantPermissions -> IO (Maybe Error)
+browserGrantPermissions :: Handle ev -> PBrowserGrantPermissions -> IO ()
 browserGrantPermissions handle params = sendReceiveCommand handle "Browser.grantPermissions" (Just params)
 
 
@@ -379,9 +379,9 @@ instance FromJSON  PBrowserResetPermissions where
 
 
 -- | Function for the 'Browser.resetPermissions' command.
--- Reset all permission management for all origins.
+ -- Reset all permission management for all origins.
 -- Parameters: 'PBrowserResetPermissions'
-browserResetPermissions :: Handle ev -> PBrowserResetPermissions -> IO (Maybe Error)
+browserResetPermissions :: Handle ev -> PBrowserResetPermissions -> IO ()
 browserResetPermissions handle params = sendReceiveCommand handle "Browser.resetPermissions" (Just params)
 
 
@@ -409,13 +409,13 @@ instance ToJSON PBrowserSetDownloadBehaviorBehavior where
 
 data PBrowserSetDownloadBehavior = PBrowserSetDownloadBehavior {
   -- | Whether to allow all or deny all download requests, or use default Chrome behavior if
-  -- available (otherwise deny). |allowAndName| allows download and names files according to
-  -- their dowmload guids.
+    -- available (otherwise deny). |allowAndName| allows download and names files according to
+    -- their dowmload guids.
   pBrowserSetDownloadBehaviorBehavior :: PBrowserSetDownloadBehaviorBehavior,
   -- | BrowserContext to set download behavior. When omitted, default browser context is used.
   pBrowserSetDownloadBehaviorBrowserContextId :: Maybe BrowserBrowserContextId,
   -- | The default path to save downloaded files to. This is required if behavior is set to 'allow'
-  -- or 'allowAndName'.
+    -- or 'allowAndName'.
   pBrowserSetDownloadBehaviorDownloadPath :: Maybe String,
   -- | Whether to emit download events (defaults to false).
   pBrowserSetDownloadBehaviorEventsEnabled :: Maybe Bool
@@ -428,9 +428,9 @@ instance FromJSON  PBrowserSetDownloadBehavior where
 
 
 -- | Function for the 'Browser.setDownloadBehavior' command.
--- Set the behavior when downloading a file.
+ -- Set the behavior when downloading a file.
 -- Parameters: 'PBrowserSetDownloadBehavior'
-browserSetDownloadBehavior :: Handle ev -> PBrowserSetDownloadBehavior -> IO (Maybe Error)
+browserSetDownloadBehavior :: Handle ev -> PBrowserSetDownloadBehavior -> IO ()
 browserSetDownloadBehavior handle params = sendReceiveCommand handle "Browser.setDownloadBehavior" (Just params)
 
 
@@ -449,34 +449,34 @@ instance FromJSON  PBrowserCancelDownload where
 
 
 -- | Function for the 'Browser.cancelDownload' command.
--- Cancel a download if in progress
+ -- Cancel a download if in progress
 -- Parameters: 'PBrowserCancelDownload'
-browserCancelDownload :: Handle ev -> PBrowserCancelDownload -> IO (Maybe Error)
+browserCancelDownload :: Handle ev -> PBrowserCancelDownload -> IO ()
 browserCancelDownload handle params = sendReceiveCommand handle "Browser.cancelDownload" (Just params)
 
 
 -- | Function for the 'Browser.close' command.
--- Close browser gracefully.
-browserClose :: Handle ev -> IO (Maybe Error)
+ -- Close browser gracefully.
+browserClose :: Handle ev -> IO ()
 browserClose handle = sendReceiveCommand handle "Browser.close" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Browser.crash' command.
--- Crashes browser on the main thread.
-browserCrash :: Handle ev -> IO (Maybe Error)
+ -- Crashes browser on the main thread.
+browserCrash :: Handle ev -> IO ()
 browserCrash handle = sendReceiveCommand handle "Browser.crash" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Browser.crashGpuProcess' command.
--- Crashes GPU process.
-browserCrashGpuProcess :: Handle ev -> IO (Maybe Error)
+ -- Crashes GPU process.
+browserCrashGpuProcess :: Handle ev -> IO ()
 browserCrashGpuProcess handle = sendReceiveCommand handle "Browser.crashGpuProcess" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Browser.getVersion' command.
--- Returns version information.
+ -- Returns version information.
 -- Returns: 'BrowserGetVersion'
-browserGetVersion :: Handle ev -> IO (Either Error BrowserGetVersion)
+browserGetVersion :: Handle ev -> IO BrowserGetVersion
 browserGetVersion handle = sendReceiveCommandResult handle "Browser.getVersion" (Nothing :: Maybe ())
 
 -- | Return type of the 'browserGetVersion' command.
@@ -502,10 +502,10 @@ instance Command BrowserGetVersion where
 
 
 -- | Function for the 'Browser.getBrowserCommandLine' command.
--- Returns the command line switches for the browser process if, and only if
--- --enable-automation is on the commandline.
+ -- Returns the command line switches for the browser process if, and only if
+ -- --enable-automation is on the commandline.
 -- Returns: 'BrowserGetBrowserCommandLine'
-browserGetBrowserCommandLine :: Handle ev -> IO (Either Error BrowserGetBrowserCommandLine)
+browserGetBrowserCommandLine :: Handle ev -> IO BrowserGetBrowserCommandLine
 browserGetBrowserCommandLine handle = sendReceiveCommandResult handle "Browser.getBrowserCommandLine" (Nothing :: Maybe ())
 
 -- | Return type of the 'browserGetBrowserCommandLine' command.
@@ -525,8 +525,8 @@ instance Command BrowserGetBrowserCommandLine where
 -- | Parameters of the 'browserGetHistograms' command.
 data PBrowserGetHistograms = PBrowserGetHistograms {
   -- | Requested substring in name. Only histograms which have query as a
-  -- substring in their name are extracted. An empty or absent query returns
-  -- all histograms.
+    -- substring in their name are extracted. An empty or absent query returns
+    -- all histograms.
   pBrowserGetHistogramsQuery :: Maybe String,
   -- | If true, retrieve delta since last call.
   pBrowserGetHistogramsDelta :: Maybe Bool
@@ -539,10 +539,10 @@ instance FromJSON  PBrowserGetHistograms where
 
 
 -- | Function for the 'Browser.getHistograms' command.
--- Get Chrome histograms.
+ -- Get Chrome histograms.
 -- Parameters: 'PBrowserGetHistograms'
 -- Returns: 'BrowserGetHistograms'
-browserGetHistograms :: Handle ev -> PBrowserGetHistograms -> IO (Either Error BrowserGetHistograms)
+browserGetHistograms :: Handle ev -> PBrowserGetHistograms -> IO BrowserGetHistograms
 browserGetHistograms handle params = sendReceiveCommandResult handle "Browser.getHistograms" (Just params)
 
 -- | Return type of the 'browserGetHistograms' command.
@@ -574,10 +574,10 @@ instance FromJSON  PBrowserGetHistogram where
 
 
 -- | Function for the 'Browser.getHistogram' command.
--- Get a Chrome histogram by name.
+ -- Get a Chrome histogram by name.
 -- Parameters: 'PBrowserGetHistogram'
 -- Returns: 'BrowserGetHistogram'
-browserGetHistogram :: Handle ev -> PBrowserGetHistogram -> IO (Either Error BrowserGetHistogram)
+browserGetHistogram :: Handle ev -> PBrowserGetHistogram -> IO BrowserGetHistogram
 browserGetHistogram handle params = sendReceiveCommandResult handle "Browser.getHistogram" (Just params)
 
 -- | Return type of the 'browserGetHistogram' command.
@@ -607,16 +607,16 @@ instance FromJSON  PBrowserGetWindowBounds where
 
 
 -- | Function for the 'Browser.getWindowBounds' command.
--- Get position and size of the browser window.
+ -- Get position and size of the browser window.
 -- Parameters: 'PBrowserGetWindowBounds'
 -- Returns: 'BrowserGetWindowBounds'
-browserGetWindowBounds :: Handle ev -> PBrowserGetWindowBounds -> IO (Either Error BrowserGetWindowBounds)
+browserGetWindowBounds :: Handle ev -> PBrowserGetWindowBounds -> IO BrowserGetWindowBounds
 browserGetWindowBounds handle params = sendReceiveCommandResult handle "Browser.getWindowBounds" (Just params)
 
 -- | Return type of the 'browserGetWindowBounds' command.
 data BrowserGetWindowBounds = BrowserGetWindowBounds {
   -- | Bounds information of the window. When window state is 'minimized', the restored window
-  -- position and size are returned.
+    -- position and size are returned.
   browserGetWindowBoundsBounds :: BrowserBounds
 } deriving (Generic, Eq, Show, Read)
 
@@ -641,10 +641,10 @@ instance FromJSON  PBrowserGetWindowForTarget where
 
 
 -- | Function for the 'Browser.getWindowForTarget' command.
--- Get the browser window that contains the devtools target.
+ -- Get the browser window that contains the devtools target.
 -- Parameters: 'PBrowserGetWindowForTarget'
 -- Returns: 'BrowserGetWindowForTarget'
-browserGetWindowForTarget :: Handle ev -> PBrowserGetWindowForTarget -> IO (Either Error BrowserGetWindowForTarget)
+browserGetWindowForTarget :: Handle ev -> PBrowserGetWindowForTarget -> IO BrowserGetWindowForTarget
 browserGetWindowForTarget handle params = sendReceiveCommandResult handle "Browser.getWindowForTarget" (Just params)
 
 -- | Return type of the 'browserGetWindowForTarget' command.
@@ -652,7 +652,7 @@ data BrowserGetWindowForTarget = BrowserGetWindowForTarget {
   -- | Browser window id.
   browserGetWindowForTargetWindowId :: BrowserWindowId,
   -- | Bounds information of the window. When window state is 'minimized', the restored window
-  -- position and size are returned.
+    -- position and size are returned.
   browserGetWindowForTargetBounds :: BrowserBounds
 } deriving (Generic, Eq, Show, Read)
 
@@ -669,7 +669,7 @@ data PBrowserSetWindowBounds = PBrowserSetWindowBounds {
   -- | Browser window id.
   pBrowserSetWindowBoundsWindowId :: BrowserWindowId,
   -- | New window bounds. The 'minimized', 'maximized' and 'fullscreen' states cannot be combined
-  -- with 'left', 'top', 'width' or 'height'. Leaves unspecified fields unchanged.
+    -- with 'left', 'top', 'width' or 'height'. Leaves unspecified fields unchanged.
   pBrowserSetWindowBoundsBounds :: BrowserBounds
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PBrowserSetWindowBounds  where
@@ -680,9 +680,9 @@ instance FromJSON  PBrowserSetWindowBounds where
 
 
 -- | Function for the 'Browser.setWindowBounds' command.
--- Set position and/or size of the browser window.
+ -- Set position and/or size of the browser window.
 -- Parameters: 'PBrowserSetWindowBounds'
-browserSetWindowBounds :: Handle ev -> PBrowserSetWindowBounds -> IO (Maybe Error)
+browserSetWindowBounds :: Handle ev -> PBrowserSetWindowBounds -> IO ()
 browserSetWindowBounds handle params = sendReceiveCommand handle "Browser.setWindowBounds" (Just params)
 
 
@@ -700,9 +700,9 @@ instance FromJSON  PBrowserSetDockTile where
 
 
 -- | Function for the 'Browser.setDockTile' command.
--- Set dock tile details, platform-specific.
+ -- Set dock tile details, platform-specific.
 -- Parameters: 'PBrowserSetDockTile'
-browserSetDockTile :: Handle ev -> PBrowserSetDockTile -> IO (Maybe Error)
+browserSetDockTile :: Handle ev -> PBrowserSetDockTile -> IO ()
 browserSetDockTile handle params = sendReceiveCommand handle "Browser.setDockTile" (Just params)
 
 
@@ -718,9 +718,9 @@ instance FromJSON  PBrowserExecuteBrowserCommand where
 
 
 -- | Function for the 'Browser.executeBrowserCommand' command.
--- Invoke custom browser commands used by telemetry.
+ -- Invoke custom browser commands used by telemetry.
 -- Parameters: 'PBrowserExecuteBrowserCommand'
-browserExecuteBrowserCommand :: Handle ev -> PBrowserExecuteBrowserCommand -> IO (Maybe Error)
+browserExecuteBrowserCommand :: Handle ev -> PBrowserExecuteBrowserCommand -> IO ()
 browserExecuteBrowserCommand handle params = sendReceiveCommand handle "Browser.executeBrowserCommand" (Just params)
 
 
@@ -878,9 +878,9 @@ instance FromJSON  PTargetActivateTarget where
 
 
 -- | Function for the 'Target.activateTarget' command.
--- Activates (focuses) the target.
+ -- Activates (focuses) the target.
 -- Parameters: 'PTargetActivateTarget'
-targetActivateTarget :: Handle ev -> PTargetActivateTarget -> IO (Maybe Error)
+targetActivateTarget :: Handle ev -> PTargetActivateTarget -> IO ()
 targetActivateTarget handle params = sendReceiveCommand handle "Target.activateTarget" (Just params)
 
 
@@ -888,8 +888,8 @@ targetActivateTarget handle params = sendReceiveCommand handle "Target.activateT
 data PTargetAttachToTarget = PTargetAttachToTarget {
   pTargetAttachToTargetTargetId :: TargetTargetId,
   -- | Enables "flat" access to the session via specifying sessionId attribute in the commands.
-  -- We plan to make this the default, deprecate non-flattened mode,
-  -- and eventually retire it. See crbug.com/991325.
+    -- We plan to make this the default, deprecate non-flattened mode,
+    -- and eventually retire it. See crbug.com/991325.
   pTargetAttachToTargetFlatten :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetAttachToTarget  where
@@ -900,10 +900,10 @@ instance FromJSON  PTargetAttachToTarget where
 
 
 -- | Function for the 'Target.attachToTarget' command.
--- Attaches to the target with given id.
+ -- Attaches to the target with given id.
 -- Parameters: 'PTargetAttachToTarget'
 -- Returns: 'TargetAttachToTarget'
-targetAttachToTarget :: Handle ev -> PTargetAttachToTarget -> IO (Either Error TargetAttachToTarget)
+targetAttachToTarget :: Handle ev -> PTargetAttachToTarget -> IO TargetAttachToTarget
 targetAttachToTarget handle params = sendReceiveCommandResult handle "Target.attachToTarget" (Just params)
 
 -- | Return type of the 'targetAttachToTarget' command.
@@ -921,9 +921,9 @@ instance Command TargetAttachToTarget where
 
 
 -- | Function for the 'Target.attachToBrowserTarget' command.
--- Attaches to the browser target, only uses flat sessionId mode.
+ -- Attaches to the browser target, only uses flat sessionId mode.
 -- Returns: 'TargetAttachToBrowserTarget'
-targetAttachToBrowserTarget :: Handle ev -> IO (Either Error TargetAttachToBrowserTarget)
+targetAttachToBrowserTarget :: Handle ev -> IO TargetAttachToBrowserTarget
 targetAttachToBrowserTarget handle = sendReceiveCommandResult handle "Target.attachToBrowserTarget" (Nothing :: Maybe ())
 
 -- | Return type of the 'targetAttachToBrowserTarget' command.
@@ -952,9 +952,9 @@ instance FromJSON  PTargetCloseTarget where
 
 
 -- | Function for the 'Target.closeTarget' command.
--- Closes the target. If the target is a page that gets closed too.
+ -- Closes the target. If the target is a page that gets closed too.
 -- Parameters: 'PTargetCloseTarget'
-targetCloseTarget :: Handle ev -> PTargetCloseTarget -> IO (Maybe Error)
+targetCloseTarget :: Handle ev -> PTargetCloseTarget -> IO ()
 targetCloseTarget handle params = sendReceiveCommand handle "Target.closeTarget" (Just params)
 
 
@@ -972,16 +972,16 @@ instance FromJSON  PTargetExposeDevToolsProtocol where
 
 
 -- | Function for the 'Target.exposeDevToolsProtocol' command.
--- Inject object to the target's main frame that provides a communication
--- channel with browser target.
--- 
--- Injected object will be available as `window[bindingName]`.
--- 
--- The object has the follwing API:
--- - `binding.send(json)` - a method to send messages over the remote debugging protocol
--- - `binding.onmessage = json => handleMessage(json)` - a callback that will be called for the protocol notifications and command responses.
+ -- Inject object to the target's main frame that provides a communication
+ -- channel with browser target.
+ -- 
+ -- Injected object will be available as `window[bindingName]`.
+ -- 
+ -- The object has the follwing API:
+ -- - `binding.send(json)` - a method to send messages over the remote debugging protocol
+ -- - `binding.onmessage = json => handleMessage(json)` - a callback that will be called for the protocol notifications and command responses.
 -- Parameters: 'PTargetExposeDevToolsProtocol'
-targetExposeDevToolsProtocol :: Handle ev -> PTargetExposeDevToolsProtocol -> IO (Maybe Error)
+targetExposeDevToolsProtocol :: Handle ev -> PTargetExposeDevToolsProtocol -> IO ()
 targetExposeDevToolsProtocol handle params = sendReceiveCommand handle "Target.exposeDevToolsProtocol" (Just params)
 
 
@@ -994,7 +994,7 @@ data PTargetCreateBrowserContext = PTargetCreateBrowserContext {
   -- | Proxy bypass list, similar to the one passed to --proxy-bypass-list
   pTargetCreateBrowserContextProxyBypassList :: Maybe String,
   -- | An optional list of origins to grant unlimited cross-origin access to.
-  -- Parts of the URL other than those constituting origin are ignored.
+    -- Parts of the URL other than those constituting origin are ignored.
   pTargetCreateBrowserContextOriginsWithUniversalNetworkAccess :: Maybe [String]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetCreateBrowserContext  where
@@ -1005,11 +1005,11 @@ instance FromJSON  PTargetCreateBrowserContext where
 
 
 -- | Function for the 'Target.createBrowserContext' command.
--- Creates a new empty BrowserContext. Similar to an incognito profile but you can have more than
--- one.
+ -- Creates a new empty BrowserContext. Similar to an incognito profile but you can have more than
+ -- one.
 -- Parameters: 'PTargetCreateBrowserContext'
 -- Returns: 'TargetCreateBrowserContext'
-targetCreateBrowserContext :: Handle ev -> PTargetCreateBrowserContext -> IO (Either Error TargetCreateBrowserContext)
+targetCreateBrowserContext :: Handle ev -> PTargetCreateBrowserContext -> IO TargetCreateBrowserContext
 targetCreateBrowserContext handle params = sendReceiveCommandResult handle "Target.createBrowserContext" (Just params)
 
 -- | Return type of the 'targetCreateBrowserContext' command.
@@ -1027,9 +1027,9 @@ instance Command TargetCreateBrowserContext where
 
 
 -- | Function for the 'Target.getBrowserContexts' command.
--- Returns all browser contexts created with `Target.createBrowserContext` method.
+ -- Returns all browser contexts created with `Target.createBrowserContext` method.
 -- Returns: 'TargetGetBrowserContexts'
-targetGetBrowserContexts :: Handle ev -> IO (Either Error TargetGetBrowserContexts)
+targetGetBrowserContexts :: Handle ev -> IO TargetGetBrowserContexts
 targetGetBrowserContexts handle = sendReceiveCommandResult handle "Target.getBrowserContexts" (Nothing :: Maybe ())
 
 -- | Return type of the 'targetGetBrowserContexts' command.
@@ -1057,12 +1057,12 @@ data PTargetCreateTarget = PTargetCreateTarget {
   -- | The browser context to create the page in.
   pTargetCreateTargetBrowserContextId :: Maybe BrowserBrowserContextId,
   -- | Whether BeginFrames for this target will be controlled via DevTools (headless chrome only,
-  -- not supported on MacOS yet, false by default).
+    -- not supported on MacOS yet, false by default).
   pTargetCreateTargetEnableBeginFrameControl :: Maybe Bool,
   -- | Whether to create a new Window or Tab (chrome-only, false by default).
   pTargetCreateTargetNewWindow :: Maybe Bool,
   -- | Whether to create the target in background or foreground (chrome-only,
-  -- false by default).
+    -- false by default).
   pTargetCreateTargetBackground :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetCreateTarget  where
@@ -1073,10 +1073,10 @@ instance FromJSON  PTargetCreateTarget where
 
 
 -- | Function for the 'Target.createTarget' command.
--- Creates a new page.
+ -- Creates a new page.
 -- Parameters: 'PTargetCreateTarget'
 -- Returns: 'TargetCreateTarget'
-targetCreateTarget :: Handle ev -> PTargetCreateTarget -> IO (Either Error TargetCreateTarget)
+targetCreateTarget :: Handle ev -> PTargetCreateTarget -> IO TargetCreateTarget
 targetCreateTarget handle params = sendReceiveCommandResult handle "Target.createTarget" (Just params)
 
 -- | Return type of the 'targetCreateTarget' command.
@@ -1106,9 +1106,9 @@ instance FromJSON  PTargetDetachFromTarget where
 
 
 -- | Function for the 'Target.detachFromTarget' command.
--- Detaches session with given id.
+ -- Detaches session with given id.
 -- Parameters: 'PTargetDetachFromTarget'
-targetDetachFromTarget :: Handle ev -> PTargetDetachFromTarget -> IO (Maybe Error)
+targetDetachFromTarget :: Handle ev -> PTargetDetachFromTarget -> IO ()
 targetDetachFromTarget handle params = sendReceiveCommand handle "Target.detachFromTarget" (Just params)
 
 
@@ -1124,10 +1124,10 @@ instance FromJSON  PTargetDisposeBrowserContext where
 
 
 -- | Function for the 'Target.disposeBrowserContext' command.
--- Deletes a BrowserContext. All the belonging pages will be closed without calling their
--- beforeunload hooks.
+ -- Deletes a BrowserContext. All the belonging pages will be closed without calling their
+ -- beforeunload hooks.
 -- Parameters: 'PTargetDisposeBrowserContext'
-targetDisposeBrowserContext :: Handle ev -> PTargetDisposeBrowserContext -> IO (Maybe Error)
+targetDisposeBrowserContext :: Handle ev -> PTargetDisposeBrowserContext -> IO ()
 targetDisposeBrowserContext handle params = sendReceiveCommand handle "Target.disposeBrowserContext" (Just params)
 
 
@@ -1143,10 +1143,10 @@ instance FromJSON  PTargetGetTargetInfo where
 
 
 -- | Function for the 'Target.getTargetInfo' command.
--- Returns information about a target.
+ -- Returns information about a target.
 -- Parameters: 'PTargetGetTargetInfo'
 -- Returns: 'TargetGetTargetInfo'
-targetGetTargetInfo :: Handle ev -> PTargetGetTargetInfo -> IO (Either Error TargetGetTargetInfo)
+targetGetTargetInfo :: Handle ev -> PTargetGetTargetInfo -> IO TargetGetTargetInfo
 targetGetTargetInfo handle params = sendReceiveCommandResult handle "Target.getTargetInfo" (Just params)
 
 -- | Return type of the 'targetGetTargetInfo' command.
@@ -1163,9 +1163,9 @@ instance Command TargetGetTargetInfo where
 
 
 -- | Function for the 'Target.getTargets' command.
--- Retrieves a list of available targets.
+ -- Retrieves a list of available targets.
 -- Returns: 'TargetGetTargets'
-targetGetTargets :: Handle ev -> IO (Either Error TargetGetTargets)
+targetGetTargets :: Handle ev -> IO TargetGetTargets
 targetGetTargets handle = sendReceiveCommandResult handle "Target.getTargets" (Nothing :: Maybe ())
 
 -- | Return type of the 'targetGetTargets' command.
@@ -1187,11 +1187,11 @@ data PTargetSetAutoAttach = PTargetSetAutoAttach {
   -- | Whether to auto-attach to related targets.
   pTargetSetAutoAttachAutoAttach :: Bool,
   -- | Whether to pause new targets when attaching to them. Use `Runtime.runIfWaitingForDebugger`
-  -- to run paused targets.
+    -- to run paused targets.
   pTargetSetAutoAttachWaitForDebuggerOnStart :: Bool,
   -- | Enables "flat" access to the session via specifying sessionId attribute in the commands.
-  -- We plan to make this the default, deprecate non-flattened mode,
-  -- and eventually retire it. See crbug.com/991325.
+    -- We plan to make this the default, deprecate non-flattened mode,
+    -- and eventually retire it. See crbug.com/991325.
   pTargetSetAutoAttachFlatten :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetSetAutoAttach  where
@@ -1202,13 +1202,13 @@ instance FromJSON  PTargetSetAutoAttach where
 
 
 -- | Function for the 'Target.setAutoAttach' command.
--- Controls whether to automatically attach to new targets which are considered to be related to
--- this one. When turned on, attaches to all existing related targets as well. When turned off,
--- automatically detaches from all currently attached targets.
--- This also clears all targets added by `autoAttachRelated` from the list of targets to watch
--- for creation of related targets.
+ -- Controls whether to automatically attach to new targets which are considered to be related to
+ -- this one. When turned on, attaches to all existing related targets as well. When turned off,
+ -- automatically detaches from all currently attached targets.
+ -- This also clears all targets added by `autoAttachRelated` from the list of targets to watch
+ -- for creation of related targets.
 -- Parameters: 'PTargetSetAutoAttach'
-targetSetAutoAttach :: Handle ev -> PTargetSetAutoAttach -> IO (Maybe Error)
+targetSetAutoAttach :: Handle ev -> PTargetSetAutoAttach -> IO ()
 targetSetAutoAttach handle params = sendReceiveCommand handle "Target.setAutoAttach" (Just params)
 
 
@@ -1216,7 +1216,7 @@ targetSetAutoAttach handle params = sendReceiveCommand handle "Target.setAutoAtt
 data PTargetAutoAttachRelated = PTargetAutoAttachRelated {
   pTargetAutoAttachRelatedTargetId :: TargetTargetId,
   -- | Whether to pause new targets when attaching to them. Use `Runtime.runIfWaitingForDebugger`
-  -- to run paused targets.
+    -- to run paused targets.
   pTargetAutoAttachRelatedWaitForDebuggerOnStart :: Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetAutoAttachRelated  where
@@ -1227,13 +1227,13 @@ instance FromJSON  PTargetAutoAttachRelated where
 
 
 -- | Function for the 'Target.autoAttachRelated' command.
--- Adds the specified target to the list of targets that will be monitored for any related target
--- creation (such as child frames, child workers and new versions of service worker) and reported
--- through `attachedToTarget`. The specified target is also auto-attached.
--- This cancels the effect of any previous `setAutoAttach` and is also cancelled by subsequent
--- `setAutoAttach`. Only available at the Browser target.
+ -- Adds the specified target to the list of targets that will be monitored for any related target
+ -- creation (such as child frames, child workers and new versions of service worker) and reported
+ -- through `attachedToTarget`. The specified target is also auto-attached.
+ -- This cancels the effect of any previous `setAutoAttach` and is also cancelled by subsequent
+ -- `setAutoAttach`. Only available at the Browser target.
 -- Parameters: 'PTargetAutoAttachRelated'
-targetAutoAttachRelated :: Handle ev -> PTargetAutoAttachRelated -> IO (Maybe Error)
+targetAutoAttachRelated :: Handle ev -> PTargetAutoAttachRelated -> IO ()
 targetAutoAttachRelated handle params = sendReceiveCommand handle "Target.autoAttachRelated" (Just params)
 
 
@@ -1250,10 +1250,10 @@ instance FromJSON  PTargetSetDiscoverTargets where
 
 
 -- | Function for the 'Target.setDiscoverTargets' command.
--- Controls whether to discover available targets and notify via
--- `targetCreated/targetInfoChanged/targetDestroyed` events.
+ -- Controls whether to discover available targets and notify via
+ -- `targetCreated/targetInfoChanged/targetDestroyed` events.
 -- Parameters: 'PTargetSetDiscoverTargets'
-targetSetDiscoverTargets :: Handle ev -> PTargetSetDiscoverTargets -> IO (Maybe Error)
+targetSetDiscoverTargets :: Handle ev -> PTargetSetDiscoverTargets -> IO ()
 targetSetDiscoverTargets handle params = sendReceiveCommand handle "Target.setDiscoverTargets" (Just params)
 
 
@@ -1270,10 +1270,10 @@ instance FromJSON  PTargetSetRemoteLocations where
 
 
 -- | Function for the 'Target.setRemoteLocations' command.
--- Enables target discovery for the specified locations, when `setDiscoverTargets` was set to
--- `true`.
+ -- Enables target discovery for the specified locations, when `setDiscoverTargets` was set to
+ -- `true`.
 -- Parameters: 'PTargetSetRemoteLocations'
-targetSetRemoteLocations :: Handle ev -> PTargetSetRemoteLocations -> IO (Maybe Error)
+targetSetRemoteLocations :: Handle ev -> PTargetSetRemoteLocations -> IO ()
 targetSetRemoteLocations handle params = sendReceiveCommand handle "Target.setRemoteLocations" (Just params)
 
 

@@ -98,7 +98,7 @@ instance FromJSON  TracingTraceConfig where
 
 
 -- | Data format of a trace. Can be either the legacy JSON format or the
--- protocol buffer format. Note that the JSON format will be deprecated soon.
+ -- protocol buffer format. Note that the JSON format will be deprecated soon.
 data TracingStreamFormat = TracingStreamFormatJson | TracingStreamFormatProto
    deriving (Ord, Eq, Show, Read)
 instance FromJSON TracingStreamFormat where
@@ -135,8 +135,8 @@ instance ToJSON TracingStreamCompression where
 
 
 -- | Details exposed when memory request explicitly declared.
--- Keep consistent with memory_dump_request_args.h and
--- memory_instrumentation.mojom
+ -- Keep consistent with memory_dump_request_args.h and
+ -- memory_instrumentation.mojom
 data TracingMemoryDumpLevelOfDetail = TracingMemoryDumpLevelOfDetailBackground | TracingMemoryDumpLevelOfDetailLight | TracingMemoryDumpLevelOfDetailDetailed
    deriving (Ord, Eq, Show, Read)
 instance FromJSON TracingMemoryDumpLevelOfDetail where
@@ -157,10 +157,10 @@ instance ToJSON TracingMemoryDumpLevelOfDetail where
 
 
 -- | Backend type to use for tracing. `chrome` uses the Chrome-integrated
--- tracing service and is supported on all platforms. `system` is only
--- supported on Chrome OS and uses the Perfetto system tracing service.
--- `auto` chooses `system` when the perfettoConfig provided to Tracing.start
--- specifies at least one non-Chrome data source; otherwise uses `chrome`.
+ -- tracing service and is supported on all platforms. `system` is only
+ -- supported on Chrome OS and uses the Perfetto system tracing service.
+ -- `auto` chooses `system` when the perfettoConfig provided to Tracing.start
+ -- specifies at least one non-Chrome data source; otherwise uses `chrome`.
 data TracingTracingBackend = TracingTracingBackendAuto | TracingTracingBackendChrome | TracingTracingBackendSystem
    deriving (Ord, Eq, Show, Read)
 instance FromJSON TracingTracingBackend where
@@ -185,12 +185,12 @@ instance ToJSON TracingTracingBackend where
 -- | Type of the 'Tracing.bufferUsage' event.
 data TracingBufferUsage = TracingBufferUsage {
   -- | A number in range [0..1] that indicates the used size of event buffer as a fraction of its
-  -- total size.
+    -- total size.
   tracingBufferUsagePercentFull :: Maybe Double,
   -- | An approximate number of events in the trace log.
   tracingBufferUsageEventCount :: Maybe Double,
   -- | A number in range [0..1] that indicates the used size of event buffer as a fraction of its
-  -- total size.
+    -- total size.
   tracingBufferUsageValue :: Maybe Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON TracingBufferUsage  where
@@ -216,7 +216,7 @@ instance FromJSON  TracingDataCollected where
 -- | Type of the 'Tracing.tracingComplete' event.
 data TracingTracingComplete = TracingTracingComplete {
   -- | Indicates whether some trace data is known to have been lost, e.g. because the trace ring
-  -- buffer wrapped around.
+    -- buffer wrapped around.
   tracingTracingCompleteDataLossOccurred :: Bool,
   -- | A handle of the stream that holds resulting trace data.
   tracingTracingCompleteStream :: Maybe IO.IoStreamHandle,
@@ -236,15 +236,15 @@ instance FromJSON  TracingTracingComplete where
 
 
 -- | Function for the 'Tracing.end' command.
--- Stop trace events collection.
-tracingEnd :: Handle ev -> IO (Maybe Error)
+ -- Stop trace events collection.
+tracingEnd :: Handle ev -> IO ()
 tracingEnd handle = sendReceiveCommand handle "Tracing.end" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Tracing.getCategories' command.
--- Gets supported tracing categories.
+ -- Gets supported tracing categories.
 -- Returns: 'TracingGetCategories'
-tracingGetCategories :: Handle ev -> IO (Either Error TracingGetCategories)
+tracingGetCategories :: Handle ev -> IO TracingGetCategories
 tracingGetCategories handle = sendReceiveCommandResult handle "Tracing.getCategories" (Nothing :: Maybe ())
 
 -- | Return type of the 'tracingGetCategories' command.
@@ -274,9 +274,9 @@ instance FromJSON  PTracingRecordClockSyncMarker where
 
 
 -- | Function for the 'Tracing.recordClockSyncMarker' command.
--- Record a clock sync marker in the trace.
+ -- Record a clock sync marker in the trace.
 -- Parameters: 'PTracingRecordClockSyncMarker'
-tracingRecordClockSyncMarker :: Handle ev -> PTracingRecordClockSyncMarker -> IO (Maybe Error)
+tracingRecordClockSyncMarker :: Handle ev -> PTracingRecordClockSyncMarker -> IO ()
 tracingRecordClockSyncMarker handle params = sendReceiveCommand handle "Tracing.recordClockSyncMarker" (Just params)
 
 
@@ -295,10 +295,10 @@ instance FromJSON  PTracingRequestMemoryDump where
 
 
 -- | Function for the 'Tracing.requestMemoryDump' command.
--- Request a global memory dump.
+ -- Request a global memory dump.
 -- Parameters: 'PTracingRequestMemoryDump'
 -- Returns: 'TracingRequestMemoryDump'
-tracingRequestMemoryDump :: Handle ev -> PTracingRequestMemoryDump -> IO (Either Error TracingRequestMemoryDump)
+tracingRequestMemoryDump :: Handle ev -> PTracingRequestMemoryDump -> IO TracingRequestMemoryDump
 tracingRequestMemoryDump handle params = sendReceiveCommandResult handle "Tracing.requestMemoryDump" (Just params)
 
 -- | Return type of the 'tracingRequestMemoryDump' command.
@@ -339,18 +339,18 @@ data PTracingStart = PTracingStart {
   -- | If set, the agent will issue bufferUsage events at this interval, specified in milliseconds
   pTracingStartBufferUsageReportingInterval :: Maybe Double,
   -- | Whether to report trace events as series of dataCollected events or to save trace to a
-  -- stream (defaults to `ReportEvents`).
+    -- stream (defaults to `ReportEvents`).
   pTracingStartTransferMode :: PTracingStartTransferMode,
   -- | Trace data format to use. This only applies when using `ReturnAsStream`
-  -- transfer mode (defaults to `json`).
+    -- transfer mode (defaults to `json`).
   pTracingStartStreamFormat :: Maybe TracingStreamFormat,
   -- | Compression format to use. This only applies when using `ReturnAsStream`
-  -- transfer mode (defaults to `none`)
+    -- transfer mode (defaults to `none`)
   pTracingStartStreamCompression :: Maybe TracingStreamCompression,
   pTracingStartTraceConfig :: Maybe TracingTraceConfig,
   -- | Base64-encoded serialized perfetto.protos.TraceConfig protobuf message
-  -- When specified, the parameters `categories`, `options`, `traceConfig`
-  -- are ignored. (Encoded as a base64 string when passed over JSON)
+    -- When specified, the parameters `categories`, `options`, `traceConfig`
+    -- are ignored. (Encoded as a base64 string when passed over JSON)
   pTracingStartPerfettoConfig :: Maybe String,
   -- | Backend type (defaults to `auto`)
   pTracingStartTracingBackend :: Maybe TracingTracingBackend
@@ -363,9 +363,9 @@ instance FromJSON  PTracingStart where
 
 
 -- | Function for the 'Tracing.start' command.
--- Start trace events collection.
+ -- Start trace events collection.
 -- Parameters: 'PTracingStart'
-tracingStart :: Handle ev -> PTracingStart -> IO (Maybe Error)
+tracingStart :: Handle ev -> PTracingStart -> IO ()
 tracingStart handle params = sendReceiveCommand handle "Tracing.start" (Just params)
 
 

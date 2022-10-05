@@ -37,7 +37,7 @@ printPDF handle = do
         CDP.PPagePrintToPdf Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing $
             CDP.PPagePrintToPdfTransferModeReturnAsBase64
 
-    let dat  = either (error . show) CDP.pagePrintToPdfData r
+    let dat  = CDP.pagePrintToPdfData r
         path = "mypdf.pdf" 
      
     readProcess "base64" ["--decode", "-o", path] dat

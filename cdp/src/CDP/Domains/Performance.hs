@@ -80,8 +80,8 @@ instance FromJSON  PerformanceMetrics where
 
 
 -- | Function for the 'Performance.disable' command.
--- Disable collecting and reporting metrics.
-performanceDisable :: Handle ev -> IO (Maybe Error)
+ -- Disable collecting and reporting metrics.
+performanceDisable :: Handle ev -> IO ()
 performanceDisable handle = sendReceiveCommand handle "Performance.disable" (Nothing :: Maybe ())
 
 
@@ -115,16 +115,16 @@ instance FromJSON  PPerformanceEnable where
 
 
 -- | Function for the 'Performance.enable' command.
--- Enable collecting and reporting metrics.
+ -- Enable collecting and reporting metrics.
 -- Parameters: 'PPerformanceEnable'
-performanceEnable :: Handle ev -> PPerformanceEnable -> IO (Maybe Error)
+performanceEnable :: Handle ev -> PPerformanceEnable -> IO ()
 performanceEnable handle params = sendReceiveCommand handle "Performance.enable" (Just params)
 
 
 -- | Function for the 'Performance.getMetrics' command.
--- Retrieve current values of run-time metrics.
+ -- Retrieve current values of run-time metrics.
 -- Returns: 'PerformanceGetMetrics'
-performanceGetMetrics :: Handle ev -> IO (Either Error PerformanceGetMetrics)
+performanceGetMetrics :: Handle ev -> IO PerformanceGetMetrics
 performanceGetMetrics handle = sendReceiveCommandResult handle "Performance.getMetrics" (Nothing :: Maybe ())
 
 -- | Return type of the 'performanceGetMetrics' command.

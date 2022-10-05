@@ -161,9 +161,9 @@ instance FromJSON  PCacheStorageDeleteCache where
 
 
 -- | Function for the 'CacheStorage.deleteCache' command.
--- Deletes a cache.
+ -- Deletes a cache.
 -- Parameters: 'PCacheStorageDeleteCache'
-cacheStorageDeleteCache :: Handle ev -> PCacheStorageDeleteCache -> IO (Maybe Error)
+cacheStorageDeleteCache :: Handle ev -> PCacheStorageDeleteCache -> IO ()
 cacheStorageDeleteCache handle params = sendReceiveCommand handle "CacheStorage.deleteCache" (Just params)
 
 
@@ -182,9 +182,9 @@ instance FromJSON  PCacheStorageDeleteEntry where
 
 
 -- | Function for the 'CacheStorage.deleteEntry' command.
--- Deletes a cache entry.
+ -- Deletes a cache entry.
 -- Parameters: 'PCacheStorageDeleteEntry'
-cacheStorageDeleteEntry :: Handle ev -> PCacheStorageDeleteEntry -> IO (Maybe Error)
+cacheStorageDeleteEntry :: Handle ev -> PCacheStorageDeleteEntry -> IO ()
 cacheStorageDeleteEntry handle params = sendReceiveCommand handle "CacheStorage.deleteEntry" (Just params)
 
 
@@ -201,10 +201,10 @@ instance FromJSON  PCacheStorageRequestCacheNames where
 
 
 -- | Function for the 'CacheStorage.requestCacheNames' command.
--- Requests cache names.
+ -- Requests cache names.
 -- Parameters: 'PCacheStorageRequestCacheNames'
 -- Returns: 'CacheStorageRequestCacheNames'
-cacheStorageRequestCacheNames :: Handle ev -> PCacheStorageRequestCacheNames -> IO (Either Error CacheStorageRequestCacheNames)
+cacheStorageRequestCacheNames :: Handle ev -> PCacheStorageRequestCacheNames -> IO CacheStorageRequestCacheNames
 cacheStorageRequestCacheNames handle params = sendReceiveCommandResult handle "CacheStorage.requestCacheNames" (Just params)
 
 -- | Return type of the 'cacheStorageRequestCacheNames' command.
@@ -238,10 +238,10 @@ instance FromJSON  PCacheStorageRequestCachedResponse where
 
 
 -- | Function for the 'CacheStorage.requestCachedResponse' command.
--- Fetches cache entry.
+ -- Fetches cache entry.
 -- Parameters: 'PCacheStorageRequestCachedResponse'
 -- Returns: 'CacheStorageRequestCachedResponse'
-cacheStorageRequestCachedResponse :: Handle ev -> PCacheStorageRequestCachedResponse -> IO (Either Error CacheStorageRequestCachedResponse)
+cacheStorageRequestCachedResponse :: Handle ev -> PCacheStorageRequestCachedResponse -> IO CacheStorageRequestCachedResponse
 cacheStorageRequestCachedResponse handle params = sendReceiveCommandResult handle "CacheStorage.requestCachedResponse" (Just params)
 
 -- | Return type of the 'cacheStorageRequestCachedResponse' command.
@@ -277,10 +277,10 @@ instance FromJSON  PCacheStorageRequestEntries where
 
 
 -- | Function for the 'CacheStorage.requestEntries' command.
--- Requests data from cache.
+ -- Requests data from cache.
 -- Parameters: 'PCacheStorageRequestEntries'
 -- Returns: 'CacheStorageRequestEntries'
-cacheStorageRequestEntries :: Handle ev -> PCacheStorageRequestEntries -> IO (Either Error CacheStorageRequestEntries)
+cacheStorageRequestEntries :: Handle ev -> PCacheStorageRequestEntries -> IO CacheStorageRequestEntries
 cacheStorageRequestEntries handle params = sendReceiveCommandResult handle "CacheStorage.requestEntries" (Just params)
 
 -- | Return type of the 'cacheStorageRequestEntries' command.
@@ -288,7 +288,7 @@ data CacheStorageRequestEntries = CacheStorageRequestEntries {
   -- | Array of object store data entries.
   cacheStorageRequestEntriesCacheDataEntries :: [CacheStorageDataEntry],
   -- | Count of returned entries from this storage. If pathFilter is empty, it
-  -- is the count of all entries from this storage.
+    -- is the count of all entries from this storage.
   cacheStorageRequestEntriesReturnCount :: Double
 } deriving (Generic, Eq, Show, Read)
 

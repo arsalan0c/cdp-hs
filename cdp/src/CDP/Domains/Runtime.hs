@@ -55,7 +55,7 @@ import CDP.Handle
 type RuntimeScriptId = String
 
 -- | Represents the value serialiazed by the WebDriver BiDi specification
--- https://w3c.github.io/webdriver-bidi.
+ -- https://w3c.github.io/webdriver-bidi.
 data RuntimeWebDriverValueType = RuntimeWebDriverValueTypeUndefined | RuntimeWebDriverValueTypeNull | RuntimeWebDriverValueTypeString | RuntimeWebDriverValueTypeNumber | RuntimeWebDriverValueTypeBoolean | RuntimeWebDriverValueTypeBigint | RuntimeWebDriverValueTypeRegexp | RuntimeWebDriverValueTypeDate | RuntimeWebDriverValueTypeSymbol | RuntimeWebDriverValueTypeArray | RuntimeWebDriverValueTypeObject | RuntimeWebDriverValueTypeFunction | RuntimeWebDriverValueTypeMap | RuntimeWebDriverValueTypeSet | RuntimeWebDriverValueTypeWeakmap | RuntimeWebDriverValueTypeWeakset | RuntimeWebDriverValueTypeError | RuntimeWebDriverValueTypeProxy | RuntimeWebDriverValueTypePromise | RuntimeWebDriverValueTypeTypedarray | RuntimeWebDriverValueTypeArraybuffer | RuntimeWebDriverValueTypeNode | RuntimeWebDriverValueTypeWindow
    deriving (Ord, Eq, Show, Read)
 instance FromJSON RuntimeWebDriverValueType where
@@ -132,7 +132,7 @@ instance FromJSON  RuntimeWebDriverValue where
 type RuntimeRemoteObjectId = String
 
 -- | Primitive value which cannot be JSON-stringified. Includes values `-0`, `NaN`, `Infinity`,
--- `-Infinity`, and bigint literals.
+ -- `-Infinity`, and bigint literals.
 type RuntimeUnserializableValue = String
 
 -- | Mirror object referencing original JavaScript object.
@@ -219,15 +219,15 @@ data RuntimeRemoteObject = RuntimeRemoteObject {
   -- | Object type.
   runtimeRemoteObjectType :: RuntimeRemoteObjectType,
   -- | Object subtype hint. Specified for `object` type values only.
-  -- NOTE: If you change anything here, make sure to also update
-  -- `subtype` in `ObjectPreview` and `PropertyPreview` below.
+    -- NOTE: If you change anything here, make sure to also update
+    -- `subtype` in `ObjectPreview` and `PropertyPreview` below.
   runtimeRemoteObjectSubtype :: RuntimeRemoteObjectSubtype,
   -- | Object class (constructor) name. Specified for `object` type values only.
   runtimeRemoteObjectClassName :: Maybe String,
   -- | Remote object value in case of primitive values or JSON values (if it was requested).
   runtimeRemoteObjectValue :: Maybe Int,
   -- | Primitive value which can not be JSON-stringified does not have `value`, but gets this
-  -- property.
+    -- property.
   runtimeRemoteObjectUnserializableValue :: Maybe RuntimeUnserializableValue,
   -- | String representation of the object.
   runtimeRemoteObjectDescription :: Maybe String,
@@ -250,11 +250,11 @@ instance FromJSON  RuntimeRemoteObject where
 -- | Type 'Runtime.CustomPreview' .
 data RuntimeCustomPreview = RuntimeCustomPreview {
   -- | The JSON-stringified result of formatter.header(object, config) call.
-  -- It contains json ML array that represents RemoteObject.
+    -- It contains json ML array that represents RemoteObject.
   runtimeCustomPreviewHeader :: String,
   -- | If formatter returns true as a result of formatter.hasBody call then bodyGetterId will
-  -- contain RemoteObjectId for the function that returns result of formatter.body(object, config) call.
-  -- The result value is json ML array.
+    -- contain RemoteObjectId for the function that returns result of formatter.body(object, config) call.
+    -- The result value is json ML array.
   runtimeCustomPreviewBodyGetterId :: Maybe RuntimeRemoteObjectId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON RuntimeCustomPreview  where
@@ -493,16 +493,16 @@ data RuntimePropertyDescriptor = RuntimePropertyDescriptor {
   -- | True if the value associated with the property may be changed (data descriptors only).
   runtimePropertyDescriptorWritable :: Maybe Bool,
   -- | A function which serves as a getter for the property, or `undefined` if there is no getter
-  -- (accessor descriptors only).
+    -- (accessor descriptors only).
   runtimePropertyDescriptorGet :: Maybe RuntimeRemoteObject,
   -- | A function which serves as a setter for the property, or `undefined` if there is no setter
-  -- (accessor descriptors only).
+    -- (accessor descriptors only).
   runtimePropertyDescriptorSet :: Maybe RuntimeRemoteObject,
   -- | True if the type of this property descriptor may be changed and if the property may be
-  -- deleted from the corresponding object.
+    -- deleted from the corresponding object.
   runtimePropertyDescriptorConfigurable :: Bool,
   -- | True if this property shows up during enumeration of the properties on the corresponding
-  -- object.
+    -- object.
   runtimePropertyDescriptorEnumerable :: Bool,
   -- | True if the result was thrown during the evaluation.
   runtimePropertyDescriptorWasThrown :: Maybe Bool,
@@ -541,10 +541,10 @@ data RuntimePrivatePropertyDescriptor = RuntimePrivatePropertyDescriptor {
   -- | The value associated with the private property.
   runtimePrivatePropertyDescriptorValue :: Maybe RuntimeRemoteObject,
   -- | A function which serves as a getter for the private property,
-  -- or `undefined` if there is no getter (accessor descriptors only).
+    -- or `undefined` if there is no getter (accessor descriptors only).
   runtimePrivatePropertyDescriptorGet :: Maybe RuntimeRemoteObject,
   -- | A function which serves as a setter for the private property,
-  -- or `undefined` if there is no setter (accessor descriptors only).
+    -- or `undefined` if there is no setter (accessor descriptors only).
   runtimePrivatePropertyDescriptorSet :: Maybe RuntimeRemoteObject
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON RuntimePrivatePropertyDescriptor  where
@@ -556,7 +556,7 @@ instance FromJSON  RuntimePrivatePropertyDescriptor where
 
 
 -- | Represents function call argument. Either remote object id `objectId`, primitive `value`,
--- unserializable primitive value or neither of (for undefined) them should be specified.
+ -- unserializable primitive value or neither of (for undefined) them should be specified.
 data RuntimeCallArgument = RuntimeCallArgument {
   -- | Primitive value or serializable javascript object.
   runtimeCallArgumentValue :: Maybe Int,
@@ -579,15 +579,15 @@ type RuntimeExecutionContextId = Int
 -- | Description of an isolated world.
 data RuntimeExecutionContextDescription = RuntimeExecutionContextDescription {
   -- | Unique id of the execution context. It can be used to specify in which execution context
-  -- script evaluation should be performed.
+    -- script evaluation should be performed.
   runtimeExecutionContextDescriptionId :: RuntimeExecutionContextId,
   -- | Execution context origin.
   runtimeExecutionContextDescriptionOrigin :: String,
   -- | Human readable name describing given context.
   runtimeExecutionContextDescriptionName :: String,
   -- | A system-unique execution context identifier. Unlike the id, this is unique across
-  -- multiple processes, so can be reliably used to identify specific context while backend
-  -- performs a cross-process navigation.
+    -- multiple processes, so can be reliably used to identify specific context while backend
+    -- performs a cross-process navigation.
   runtimeExecutionContextDescriptionUniqueId :: String,
   -- | Embedder-specific auxiliary data.
   runtimeExecutionContextDescriptionAuxData :: Maybe [(String, String)]
@@ -601,7 +601,7 @@ instance FromJSON  RuntimeExecutionContextDescription where
 
 
 -- | Detailed information about exception (or error) that was thrown during script compilation or
--- execution.
+ -- execution.
 data RuntimeExceptionDetails = RuntimeExceptionDetails {
   -- | Exception id.
   runtimeExceptionDetailsExceptionId :: Int,
@@ -622,8 +622,8 @@ data RuntimeExceptionDetails = RuntimeExceptionDetails {
   -- | Identifier of the context where exception happened.
   runtimeExceptionDetailsExecutionContextId :: Maybe RuntimeExecutionContextId,
   -- | Dictionary with entries of meta data that the client associated
-  -- with this exception, such as information about associated network
-  -- requests, etc.
+    -- with this exception, such as information about associated network
+    -- requests, etc.
   runtimeExceptionDetailsExceptionMetaData :: Maybe [(String, String)]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON RuntimeExceptionDetails  where
@@ -664,7 +664,7 @@ instance FromJSON  RuntimeCallFrame where
 -- | Call frames for assertions or error messages.
 data RuntimeStackTrace = RuntimeStackTrace {
   -- | String label of this stack trace. For async traces this may be a name of the function that
-  -- initiated the async call.
+    -- initiated the async call.
   runtimeStackTraceDescription :: Maybe String,
   -- | JavaScript function name.
   runtimeStackTraceCallFrames :: [RuntimeCallFrame],
@@ -685,7 +685,7 @@ instance FromJSON  RuntimeStackTrace where
 type RuntimeUniqueDebuggerId = String
 
 -- | If `debuggerId` is set stack trace comes from another debugger and can be resolved there. This
--- allows to track cross-debugger calls. See `Runtime.StackTrace` and `Debugger.paused` for usages.
+ -- allows to track cross-debugger calls. See `Runtime.StackTrace` and `Debugger.paused` for usages.
 data RuntimeStackTraceId = RuntimeStackTraceId {
   runtimeStackTraceIdId :: String,
   runtimeStackTraceIdDebuggerId :: Maybe RuntimeUniqueDebuggerId
@@ -775,12 +775,12 @@ data RuntimeConsoleApiCalled = RuntimeConsoleApiCalled {
   -- | Call timestamp.
   runtimeConsoleApiCalledTimestamp :: RuntimeTimestamp,
   -- | Stack trace captured when the call was made. The async stack chain is automatically reported for
-  -- the following call types: `assert`, `error`, `trace`, `warning`. For other types the async call
-  -- chain can be retrieved using `Debugger.getStackTrace` and `stackTrace.parentId` field.
+    -- the following call types: `assert`, `error`, `trace`, `warning`. For other types the async call
+    -- chain can be retrieved using `Debugger.getStackTrace` and `stackTrace.parentId` field.
   runtimeConsoleApiCalledStackTrace :: Maybe RuntimeStackTrace,
   -- | Console context descriptor for calls on non-default console context (not console.*):
-  -- 'anonymous#unique-logger-id' for call on unnamed context, 'name#unique-logger-id' for call
-  -- on named context.
+    -- 'anonymous#unique-logger-id' for call on unnamed context, 'name#unique-logger-id' for call
+    -- on named context.
   runtimeConsoleApiCalledContext :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON RuntimeConsoleApiCalled  where
@@ -891,10 +891,10 @@ instance FromJSON  PRuntimeAwaitPromise where
 
 
 -- | Function for the 'Runtime.awaitPromise' command.
--- Add handler to promise with given promise object id.
+ -- Add handler to promise with given promise object id.
 -- Parameters: 'PRuntimeAwaitPromise'
 -- Returns: 'RuntimeAwaitPromise'
-runtimeAwaitPromise :: Handle ev -> PRuntimeAwaitPromise -> IO (Either Error RuntimeAwaitPromise)
+runtimeAwaitPromise :: Handle ev -> PRuntimeAwaitPromise -> IO RuntimeAwaitPromise
 runtimeAwaitPromise handle params = sendReceiveCommandResult handle "Runtime.awaitPromise" (Just params)
 
 -- | Return type of the 'runtimeAwaitPromise' command.
@@ -918,13 +918,13 @@ data PRuntimeCallFunctionOn = PRuntimeCallFunctionOn {
   -- | Declaration of the function to call.
   pRuntimeCallFunctionOnFunctionDeclaration :: String,
   -- | Identifier of the object to call function on. Either objectId or executionContextId should
-  -- be specified.
+    -- be specified.
   pRuntimeCallFunctionOnObjectId :: Maybe RuntimeRemoteObjectId,
   -- | Call arguments. All call arguments must belong to the same JavaScript world as the target
-  -- object.
+    -- object.
   pRuntimeCallFunctionOnArguments :: Maybe [RuntimeCallArgument],
   -- | In silent mode exceptions thrown during evaluation are not reported and do not pause
-  -- execution. Overrides `setPauseOnException` state.
+    -- execution. Overrides `setPauseOnException` state.
   pRuntimeCallFunctionOnSilent :: Maybe Bool,
   -- | Whether the result is expected to be a JSON object which should be sent by value.
   pRuntimeCallFunctionOnReturnByValue :: Maybe Bool,
@@ -933,19 +933,19 @@ data PRuntimeCallFunctionOn = PRuntimeCallFunctionOn {
   -- | Whether execution should be treated as initiated by user in the UI.
   pRuntimeCallFunctionOnUserGesture :: Maybe Bool,
   -- | Whether execution should `await` for resulting value and return once awaited promise is
-  -- resolved.
+    -- resolved.
   pRuntimeCallFunctionOnAwaitPromise :: Maybe Bool,
   -- | Specifies execution context which global object will be used to call function on. Either
-  -- executionContextId or objectId should be specified.
+    -- executionContextId or objectId should be specified.
   pRuntimeCallFunctionOnExecutionContextId :: Maybe RuntimeExecutionContextId,
   -- | Symbolic group name that can be used to release multiple objects. If objectGroup is not
-  -- specified and objectId is, objectGroup will be inherited from object.
+    -- specified and objectId is, objectGroup will be inherited from object.
   pRuntimeCallFunctionOnObjectGroup :: Maybe String,
   -- | Whether to throw an exception if side effect cannot be ruled out during evaluation.
   pRuntimeCallFunctionOnThrowOnSideEffect :: Maybe Bool,
   -- | Whether the result should contain `webDriverValue`, serialized according to
-  -- https://w3c.github.io/webdriver-bidi. This is mutually exclusive with `returnByValue`, but
-  -- resulting `objectId` is still provided.
+    -- https://w3c.github.io/webdriver-bidi. This is mutually exclusive with `returnByValue`, but
+    -- resulting `objectId` is still provided.
   pRuntimeCallFunctionOnGenerateWebDriverValue :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PRuntimeCallFunctionOn  where
@@ -956,11 +956,11 @@ instance FromJSON  PRuntimeCallFunctionOn where
 
 
 -- | Function for the 'Runtime.callFunctionOn' command.
--- Calls function with given declaration on the given object. Object group of the result is
--- inherited from the target object.
+ -- Calls function with given declaration on the given object. Object group of the result is
+ -- inherited from the target object.
 -- Parameters: 'PRuntimeCallFunctionOn'
 -- Returns: 'RuntimeCallFunctionOn'
-runtimeCallFunctionOn :: Handle ev -> PRuntimeCallFunctionOn -> IO (Either Error RuntimeCallFunctionOn)
+runtimeCallFunctionOn :: Handle ev -> PRuntimeCallFunctionOn -> IO RuntimeCallFunctionOn
 runtimeCallFunctionOn handle params = sendReceiveCommandResult handle "Runtime.callFunctionOn" (Just params)
 
 -- | Return type of the 'runtimeCallFunctionOn' command.
@@ -988,7 +988,7 @@ data PRuntimeCompileScript = PRuntimeCompileScript {
   -- | Specifies whether the compiled script should be persisted.
   pRuntimeCompileScriptPersistScript :: Bool,
   -- | Specifies in which execution context to perform script run. If the parameter is omitted the
-  -- evaluation will be performed in the context of the inspected page.
+    -- evaluation will be performed in the context of the inspected page.
   pRuntimeCompileScriptExecutionContextId :: Maybe RuntimeExecutionContextId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PRuntimeCompileScript  where
@@ -999,10 +999,10 @@ instance FromJSON  PRuntimeCompileScript where
 
 
 -- | Function for the 'Runtime.compileScript' command.
--- Compiles expression.
+ -- Compiles expression.
 -- Parameters: 'PRuntimeCompileScript'
 -- Returns: 'RuntimeCompileScript'
-runtimeCompileScript :: Handle ev -> PRuntimeCompileScript -> IO (Either Error RuntimeCompileScript)
+runtimeCompileScript :: Handle ev -> PRuntimeCompileScript -> IO RuntimeCompileScript
 runtimeCompileScript handle params = sendReceiveCommandResult handle "Runtime.compileScript" (Just params)
 
 -- | Return type of the 'runtimeCompileScript' command.
@@ -1022,22 +1022,22 @@ instance Command RuntimeCompileScript where
 
 
 -- | Function for the 'Runtime.disable' command.
--- Disables reporting of execution contexts creation.
-runtimeDisable :: Handle ev -> IO (Maybe Error)
+ -- Disables reporting of execution contexts creation.
+runtimeDisable :: Handle ev -> IO ()
 runtimeDisable handle = sendReceiveCommand handle "Runtime.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Runtime.discardConsoleEntries' command.
--- Discards collected exceptions and console API calls.
-runtimeDiscardConsoleEntries :: Handle ev -> IO (Maybe Error)
+ -- Discards collected exceptions and console API calls.
+runtimeDiscardConsoleEntries :: Handle ev -> IO ()
 runtimeDiscardConsoleEntries handle = sendReceiveCommand handle "Runtime.discardConsoleEntries" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Runtime.enable' command.
--- Enables reporting of execution contexts creation by means of `executionContextCreated` event.
--- When the reporting gets enabled the event will be sent immediately for each existing execution
--- context.
-runtimeEnable :: Handle ev -> IO (Maybe Error)
+ -- Enables reporting of execution contexts creation by means of `executionContextCreated` event.
+ -- When the reporting gets enabled the event will be sent immediately for each existing execution
+ -- context.
+runtimeEnable :: Handle ev -> IO ()
 runtimeEnable handle = sendReceiveCommand handle "Runtime.enable" (Nothing :: Maybe ())
 
 
@@ -1050,13 +1050,13 @@ data PRuntimeEvaluate = PRuntimeEvaluate {
   -- | Determines whether Command Line API should be available during the evaluation.
   pRuntimeEvaluateIncludeCommandLineApi :: Maybe Bool,
   -- | In silent mode exceptions thrown during evaluation are not reported and do not pause
-  -- execution. Overrides `setPauseOnException` state.
+    -- execution. Overrides `setPauseOnException` state.
   pRuntimeEvaluateSilent :: Maybe Bool,
   -- | Specifies in which execution context to perform evaluation. If the parameter is omitted the
-  -- evaluation will be performed in the context of the inspected page.
-  -- This is mutually exclusive with `uniqueContextId`, which offers an
-  -- alternative way to identify the execution context that is more reliable
-  -- in a multi-process environment.
+    -- evaluation will be performed in the context of the inspected page.
+    -- This is mutually exclusive with `uniqueContextId`, which offers an
+    -- alternative way to identify the execution context that is more reliable
+    -- in a multi-process environment.
   pRuntimeEvaluateContextId :: Maybe RuntimeExecutionContextId,
   -- | Whether the result is expected to be a JSON object that should be sent by value.
   pRuntimeEvaluateReturnByValue :: Maybe Bool,
@@ -1065,30 +1065,30 @@ data PRuntimeEvaluate = PRuntimeEvaluate {
   -- | Whether execution should be treated as initiated by user in the UI.
   pRuntimeEvaluateUserGesture :: Maybe Bool,
   -- | Whether execution should `await` for resulting value and return once awaited promise is
-  -- resolved.
+    -- resolved.
   pRuntimeEvaluateAwaitPromise :: Maybe Bool,
   -- | Whether to throw an exception if side effect cannot be ruled out during evaluation.
-  -- This implies `disableBreaks` below.
+    -- This implies `disableBreaks` below.
   pRuntimeEvaluateThrowOnSideEffect :: Maybe Bool,
   -- | Terminate execution after timing out (number of milliseconds).
   pRuntimeEvaluateTimeout :: Maybe RuntimeTimeDelta,
   -- | Disable breakpoints during execution.
   pRuntimeEvaluateDisableBreaks :: Maybe Bool,
   -- | Setting this flag to true enables `let` re-declaration and top-level `await`.
-  -- Note that `let` variables can only be re-declared if they originate from
-  -- `replMode` themselves.
+    -- Note that `let` variables can only be re-declared if they originate from
+    -- `replMode` themselves.
   pRuntimeEvaluateReplMode :: Maybe Bool,
   -- | The Content Security Policy (CSP) for the target might block 'unsafe-eval'
-  -- which includes eval(), Function(), setTimeout() and setInterval()
-  -- when called with non-callable arguments. This flag bypasses CSP for this
-  -- evaluation and allows unsafe-eval. Defaults to true.
+    -- which includes eval(), Function(), setTimeout() and setInterval()
+    -- when called with non-callable arguments. This flag bypasses CSP for this
+    -- evaluation and allows unsafe-eval. Defaults to true.
   pRuntimeEvaluateAllowUnsafeEvalBlockedByCsp :: Maybe Bool,
   -- | An alternative way to specify the execution context to evaluate in.
-  -- Compared to contextId that may be reused across processes, this is guaranteed to be
-  -- system-unique, so it can be used to prevent accidental evaluation of the expression
-  -- in context different than intended (e.g. as a result of navigation across process
-  -- boundaries).
-  -- This is mutually exclusive with `contextId`.
+    -- Compared to contextId that may be reused across processes, this is guaranteed to be
+    -- system-unique, so it can be used to prevent accidental evaluation of the expression
+    -- in context different than intended (e.g. as a result of navigation across process
+    -- boundaries).
+    -- This is mutually exclusive with `contextId`.
   pRuntimeEvaluateUniqueContextId :: Maybe String,
   -- | Whether the result should be serialized according to https://w3c.github.io/webdriver-bidi.
   pRuntimeEvaluateGenerateWebDriverValue :: Maybe Bool
@@ -1101,10 +1101,10 @@ instance FromJSON  PRuntimeEvaluate where
 
 
 -- | Function for the 'Runtime.evaluate' command.
--- Evaluates expression on global object.
+ -- Evaluates expression on global object.
 -- Parameters: 'PRuntimeEvaluate'
 -- Returns: 'RuntimeEvaluate'
-runtimeEvaluate :: Handle ev -> PRuntimeEvaluate -> IO (Either Error RuntimeEvaluate)
+runtimeEvaluate :: Handle ev -> PRuntimeEvaluate -> IO RuntimeEvaluate
 runtimeEvaluate handle params = sendReceiveCommandResult handle "Runtime.evaluate" (Just params)
 
 -- | Return type of the 'runtimeEvaluate' command.
@@ -1124,9 +1124,9 @@ instance Command RuntimeEvaluate where
 
 
 -- | Function for the 'Runtime.getIsolateId' command.
--- Returns the isolate id.
+ -- Returns the isolate id.
 -- Returns: 'RuntimeGetIsolateId'
-runtimeGetIsolateId :: Handle ev -> IO (Either Error RuntimeGetIsolateId)
+runtimeGetIsolateId :: Handle ev -> IO RuntimeGetIsolateId
 runtimeGetIsolateId handle = sendReceiveCommandResult handle "Runtime.getIsolateId" (Nothing :: Maybe ())
 
 -- | Return type of the 'runtimeGetIsolateId' command.
@@ -1144,10 +1144,10 @@ instance Command RuntimeGetIsolateId where
 
 
 -- | Function for the 'Runtime.getHeapUsage' command.
--- Returns the JavaScript heap usage.
--- It is the total usage of the corresponding isolate not scoped to a particular Runtime.
+ -- Returns the JavaScript heap usage.
+ -- It is the total usage of the corresponding isolate not scoped to a particular Runtime.
 -- Returns: 'RuntimeGetHeapUsage'
-runtimeGetHeapUsage :: Handle ev -> IO (Either Error RuntimeGetHeapUsage)
+runtimeGetHeapUsage :: Handle ev -> IO RuntimeGetHeapUsage
 runtimeGetHeapUsage handle = sendReceiveCommandResult handle "Runtime.getHeapUsage" (Nothing :: Maybe ())
 
 -- | Return type of the 'runtimeGetHeapUsage' command.
@@ -1171,10 +1171,10 @@ data PRuntimeGetProperties = PRuntimeGetProperties {
   -- | Identifier of the object to return properties for.
   pRuntimeGetPropertiesObjectId :: RuntimeRemoteObjectId,
   -- | If true, returns properties belonging only to the element itself, not to its prototype
-  -- chain.
+    -- chain.
   pRuntimeGetPropertiesOwnProperties :: Maybe Bool,
   -- | If true, returns accessor properties (with getter/setter) only; internal properties are not
-  -- returned either.
+    -- returned either.
   pRuntimeGetPropertiesAccessorPropertiesOnly :: Maybe Bool,
   -- | Whether preview should be generated for the results.
   pRuntimeGetPropertiesGeneratePreview :: Maybe Bool,
@@ -1189,11 +1189,11 @@ instance FromJSON  PRuntimeGetProperties where
 
 
 -- | Function for the 'Runtime.getProperties' command.
--- Returns properties of a given object. Object group of the result is inherited from the target
--- object.
+ -- Returns properties of a given object. Object group of the result is inherited from the target
+ -- object.
 -- Parameters: 'PRuntimeGetProperties'
 -- Returns: 'RuntimeGetProperties'
-runtimeGetProperties :: Handle ev -> PRuntimeGetProperties -> IO (Either Error RuntimeGetProperties)
+runtimeGetProperties :: Handle ev -> PRuntimeGetProperties -> IO RuntimeGetProperties
 runtimeGetProperties handle params = sendReceiveCommandResult handle "Runtime.getProperties" (Just params)
 
 -- | Return type of the 'runtimeGetProperties' command.
@@ -1229,10 +1229,10 @@ instance FromJSON  PRuntimeGlobalLexicalScopeNames where
 
 
 -- | Function for the 'Runtime.globalLexicalScopeNames' command.
--- Returns all let, const and class variables from global scope.
+ -- Returns all let, const and class variables from global scope.
 -- Parameters: 'PRuntimeGlobalLexicalScopeNames'
 -- Returns: 'RuntimeGlobalLexicalScopeNames'
-runtimeGlobalLexicalScopeNames :: Handle ev -> PRuntimeGlobalLexicalScopeNames -> IO (Either Error RuntimeGlobalLexicalScopeNames)
+runtimeGlobalLexicalScopeNames :: Handle ev -> PRuntimeGlobalLexicalScopeNames -> IO RuntimeGlobalLexicalScopeNames
 runtimeGlobalLexicalScopeNames handle params = sendReceiveCommandResult handle "Runtime.globalLexicalScopeNames" (Just params)
 
 -- | Return type of the 'runtimeGlobalLexicalScopeNames' command.
@@ -1265,7 +1265,7 @@ instance FromJSON  PRuntimeQueryObjects where
 -- | Function for the 'Runtime.queryObjects' command.
 -- Parameters: 'PRuntimeQueryObjects'
 -- Returns: 'RuntimeQueryObjects'
-runtimeQueryObjects :: Handle ev -> PRuntimeQueryObjects -> IO (Either Error RuntimeQueryObjects)
+runtimeQueryObjects :: Handle ev -> PRuntimeQueryObjects -> IO RuntimeQueryObjects
 runtimeQueryObjects handle params = sendReceiveCommandResult handle "Runtime.queryObjects" (Just params)
 
 -- | Return type of the 'runtimeQueryObjects' command.
@@ -1295,9 +1295,9 @@ instance FromJSON  PRuntimeReleaseObject where
 
 
 -- | Function for the 'Runtime.releaseObject' command.
--- Releases remote object with given id.
+ -- Releases remote object with given id.
 -- Parameters: 'PRuntimeReleaseObject'
-runtimeReleaseObject :: Handle ev -> PRuntimeReleaseObject -> IO (Maybe Error)
+runtimeReleaseObject :: Handle ev -> PRuntimeReleaseObject -> IO ()
 runtimeReleaseObject handle params = sendReceiveCommand handle "Runtime.releaseObject" (Just params)
 
 
@@ -1314,15 +1314,15 @@ instance FromJSON  PRuntimeReleaseObjectGroup where
 
 
 -- | Function for the 'Runtime.releaseObjectGroup' command.
--- Releases all remote objects that belong to a given group.
+ -- Releases all remote objects that belong to a given group.
 -- Parameters: 'PRuntimeReleaseObjectGroup'
-runtimeReleaseObjectGroup :: Handle ev -> PRuntimeReleaseObjectGroup -> IO (Maybe Error)
+runtimeReleaseObjectGroup :: Handle ev -> PRuntimeReleaseObjectGroup -> IO ()
 runtimeReleaseObjectGroup handle params = sendReceiveCommand handle "Runtime.releaseObjectGroup" (Just params)
 
 
 -- | Function for the 'Runtime.runIfWaitingForDebugger' command.
--- Tells inspected instance to run if it was waiting for debugger to attach.
-runtimeRunIfWaitingForDebugger :: Handle ev -> IO (Maybe Error)
+ -- Tells inspected instance to run if it was waiting for debugger to attach.
+runtimeRunIfWaitingForDebugger :: Handle ev -> IO ()
 runtimeRunIfWaitingForDebugger handle = sendReceiveCommand handle "Runtime.runIfWaitingForDebugger" (Nothing :: Maybe ())
 
 
@@ -1331,12 +1331,12 @@ data PRuntimeRunScript = PRuntimeRunScript {
   -- | Id of the script to run.
   pRuntimeRunScriptScriptId :: RuntimeScriptId,
   -- | Specifies in which execution context to perform script run. If the parameter is omitted the
-  -- evaluation will be performed in the context of the inspected page.
+    -- evaluation will be performed in the context of the inspected page.
   pRuntimeRunScriptExecutionContextId :: Maybe RuntimeExecutionContextId,
   -- | Symbolic group name that can be used to release multiple objects.
   pRuntimeRunScriptObjectGroup :: Maybe String,
   -- | In silent mode exceptions thrown during evaluation are not reported and do not pause
-  -- execution. Overrides `setPauseOnException` state.
+    -- execution. Overrides `setPauseOnException` state.
   pRuntimeRunScriptSilent :: Maybe Bool,
   -- | Determines whether Command Line API should be available during the evaluation.
   pRuntimeRunScriptIncludeCommandLineApi :: Maybe Bool,
@@ -1345,7 +1345,7 @@ data PRuntimeRunScript = PRuntimeRunScript {
   -- | Whether preview should be generated for the result.
   pRuntimeRunScriptGeneratePreview :: Maybe Bool,
   -- | Whether execution should `await` for resulting value and return once awaited promise is
-  -- resolved.
+    -- resolved.
   pRuntimeRunScriptAwaitPromise :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PRuntimeRunScript  where
@@ -1356,10 +1356,10 @@ instance FromJSON  PRuntimeRunScript where
 
 
 -- | Function for the 'Runtime.runScript' command.
--- Runs script with given id in a given context.
+ -- Runs script with given id in a given context.
 -- Parameters: 'PRuntimeRunScript'
 -- Returns: 'RuntimeRunScript'
-runtimeRunScript :: Handle ev -> PRuntimeRunScript -> IO (Either Error RuntimeRunScript)
+runtimeRunScript :: Handle ev -> PRuntimeRunScript -> IO RuntimeRunScript
 runtimeRunScript handle params = sendReceiveCommandResult handle "Runtime.runScript" (Just params)
 
 -- | Return type of the 'runtimeRunScript' command.
@@ -1381,7 +1381,7 @@ instance Command RuntimeRunScript where
 -- | Parameters of the 'runtimeSetAsyncCallStackDepth' command.
 data PRuntimeSetAsyncCallStackDepth = PRuntimeSetAsyncCallStackDepth {
   -- | Maximum depth of async call stacks. Setting to `0` will effectively disable collecting async
-  -- call stacks (default).
+    -- call stacks (default).
   pRuntimeSetAsyncCallStackDepthMaxDepth :: Int
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PRuntimeSetAsyncCallStackDepth  where
@@ -1392,9 +1392,9 @@ instance FromJSON  PRuntimeSetAsyncCallStackDepth where
 
 
 -- | Function for the 'Runtime.setAsyncCallStackDepth' command.
--- Enables or disables async call stacks tracking.
+ -- Enables or disables async call stacks tracking.
 -- Parameters: 'PRuntimeSetAsyncCallStackDepth'
-runtimeSetAsyncCallStackDepth :: Handle ev -> PRuntimeSetAsyncCallStackDepth -> IO (Maybe Error)
+runtimeSetAsyncCallStackDepth :: Handle ev -> PRuntimeSetAsyncCallStackDepth -> IO ()
 runtimeSetAsyncCallStackDepth handle params = sendReceiveCommand handle "Runtime.setAsyncCallStackDepth" (Just params)
 
 
@@ -1411,7 +1411,7 @@ instance FromJSON  PRuntimeSetCustomObjectFormatterEnabled where
 
 -- | Function for the 'Runtime.setCustomObjectFormatterEnabled' command.
 -- Parameters: 'PRuntimeSetCustomObjectFormatterEnabled'
-runtimeSetCustomObjectFormatterEnabled :: Handle ev -> PRuntimeSetCustomObjectFormatterEnabled -> IO (Maybe Error)
+runtimeSetCustomObjectFormatterEnabled :: Handle ev -> PRuntimeSetCustomObjectFormatterEnabled -> IO ()
 runtimeSetCustomObjectFormatterEnabled handle params = sendReceiveCommand handle "Runtime.setCustomObjectFormatterEnabled" (Just params)
 
 
@@ -1428,14 +1428,14 @@ instance FromJSON  PRuntimeSetMaxCallStackSizeToCapture where
 
 -- | Function for the 'Runtime.setMaxCallStackSizeToCapture' command.
 -- Parameters: 'PRuntimeSetMaxCallStackSizeToCapture'
-runtimeSetMaxCallStackSizeToCapture :: Handle ev -> PRuntimeSetMaxCallStackSizeToCapture -> IO (Maybe Error)
+runtimeSetMaxCallStackSizeToCapture :: Handle ev -> PRuntimeSetMaxCallStackSizeToCapture -> IO ()
 runtimeSetMaxCallStackSizeToCapture handle params = sendReceiveCommand handle "Runtime.setMaxCallStackSizeToCapture" (Just params)
 
 
 -- | Function for the 'Runtime.terminateExecution' command.
--- Terminate current or next JavaScript execution.
--- Will cancel the termination when the outer-most script execution ends.
-runtimeTerminateExecution :: Handle ev -> IO (Maybe Error)
+ -- Terminate current or next JavaScript execution.
+ -- Will cancel the termination when the outer-most script execution ends.
+runtimeTerminateExecution :: Handle ev -> IO ()
 runtimeTerminateExecution handle = sendReceiveCommand handle "Runtime.terminateExecution" (Nothing :: Maybe ())
 
 
@@ -1443,10 +1443,10 @@ runtimeTerminateExecution handle = sendReceiveCommand handle "Runtime.terminateE
 data PRuntimeAddBinding = PRuntimeAddBinding {
   pRuntimeAddBindingName :: String,
   -- | If specified, the binding is exposed to the executionContext with
-  -- matching name, even for contexts created after the binding is added.
-  -- See also `ExecutionContext.name` and `worldName` parameter to
-  -- `Page.addScriptToEvaluateOnNewDocument`.
-  -- This parameter is mutually exclusive with `executionContextId`.
+    -- matching name, even for contexts created after the binding is added.
+    -- See also `ExecutionContext.name` and `worldName` parameter to
+    -- `Page.addScriptToEvaluateOnNewDocument`.
+    -- This parameter is mutually exclusive with `executionContextId`.
   pRuntimeAddBindingExecutionContextName :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PRuntimeAddBinding  where
@@ -1457,14 +1457,14 @@ instance FromJSON  PRuntimeAddBinding where
 
 
 -- | Function for the 'Runtime.addBinding' command.
--- If executionContextId is empty, adds binding with the given name on the
--- global objects of all inspected contexts, including those created later,
--- bindings survive reloads.
--- Binding function takes exactly one argument, this argument should be string,
--- in case of any other input, function throws an exception.
--- Each binding function call produces Runtime.bindingCalled notification.
+ -- If executionContextId is empty, adds binding with the given name on the
+ -- global objects of all inspected contexts, including those created later,
+ -- bindings survive reloads.
+ -- Binding function takes exactly one argument, this argument should be string,
+ -- in case of any other input, function throws an exception.
+ -- Each binding function call produces Runtime.bindingCalled notification.
 -- Parameters: 'PRuntimeAddBinding'
-runtimeAddBinding :: Handle ev -> PRuntimeAddBinding -> IO (Maybe Error)
+runtimeAddBinding :: Handle ev -> PRuntimeAddBinding -> IO ()
 runtimeAddBinding handle params = sendReceiveCommand handle "Runtime.addBinding" (Just params)
 
 
@@ -1480,10 +1480,10 @@ instance FromJSON  PRuntimeRemoveBinding where
 
 
 -- | Function for the 'Runtime.removeBinding' command.
--- This method does not remove binding function from global object but
--- unsubscribes current runtime agent from Runtime.bindingCalled notifications.
+ -- This method does not remove binding function from global object but
+ -- unsubscribes current runtime agent from Runtime.bindingCalled notifications.
 -- Parameters: 'PRuntimeRemoveBinding'
-runtimeRemoveBinding :: Handle ev -> PRuntimeRemoveBinding -> IO (Maybe Error)
+runtimeRemoveBinding :: Handle ev -> PRuntimeRemoveBinding -> IO ()
 runtimeRemoveBinding handle params = sendReceiveCommand handle "Runtime.removeBinding" (Just params)
 
 
@@ -1500,14 +1500,14 @@ instance FromJSON  PRuntimeGetExceptionDetails where
 
 
 -- | Function for the 'Runtime.getExceptionDetails' command.
--- This method tries to lookup and populate exception details for a
--- JavaScript Error object.
--- Note that the stackTrace portion of the resulting exceptionDetails will
--- only be populated if the Runtime domain was enabled at the time when the
--- Error was thrown.
+ -- This method tries to lookup and populate exception details for a
+ -- JavaScript Error object.
+ -- Note that the stackTrace portion of the resulting exceptionDetails will
+ -- only be populated if the Runtime domain was enabled at the time when the
+ -- Error was thrown.
 -- Parameters: 'PRuntimeGetExceptionDetails'
 -- Returns: 'RuntimeGetExceptionDetails'
-runtimeGetExceptionDetails :: Handle ev -> PRuntimeGetExceptionDetails -> IO (Either Error RuntimeGetExceptionDetails)
+runtimeGetExceptionDetails :: Handle ev -> PRuntimeGetExceptionDetails -> IO RuntimeGetExceptionDetails
 runtimeGetExceptionDetails handle params = sendReceiveCommandResult handle "Runtime.getExceptionDetails" (Just params)
 
 -- | Return type of the 'runtimeGetExceptionDetails' command.

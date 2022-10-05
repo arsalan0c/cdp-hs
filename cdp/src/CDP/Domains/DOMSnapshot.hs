@@ -68,15 +68,15 @@ data DomSnapshotDomNode = DomSnapshotDomNode {
   -- | `Node`'s id, corresponds to DOM.Node.backendNodeId.
   domSnapshotDomNodeBackendNodeId :: DOMPageNetworkEmulationSecurity.DomBackendNodeId,
   -- | The indexes of the node's child nodes in the `domNodes` array returned by `getSnapshot`, if
-  -- any.
+    -- any.
   domSnapshotDomNodeChildNodeIndexes :: Maybe [Int],
   -- | Attributes of an `Element` node.
   domSnapshotDomNodeAttributes :: Maybe [DomSnapshotNameValue],
   -- | Indexes of pseudo elements associated with this node in the `domNodes` array returned by
-  -- `getSnapshot`, if any.
+    -- `getSnapshot`, if any.
   domSnapshotDomNodePseudoElementIndexes :: Maybe [Int],
   -- | The index of the node's related layout tree node in the `layoutTreeNodes` array returned by
-  -- `getSnapshot`, if any.
+    -- `getSnapshot`, if any.
   domSnapshotDomNodeLayoutNodeIndex :: Maybe Int,
   -- | Document URL that `Document` or `FrameOwner` node points to.
   domSnapshotDomNodeDocumentUrl :: Maybe String,
@@ -93,15 +93,15 @@ data DomSnapshotDomNode = DomSnapshotDomNode {
   -- | Frame ID for frame owner elements and also for the document node.
   domSnapshotDomNodeFrameId :: Maybe DOMPageNetworkEmulationSecurity.PageFrameId,
   -- | The index of a frame owner element's content document in the `domNodes` array returned by
-  -- `getSnapshot`, if any.
+    -- `getSnapshot`, if any.
   domSnapshotDomNodeContentDocumentIndex :: Maybe Int,
   -- | Type of a pseudo element node.
   domSnapshotDomNodePseudoType :: Maybe DOMPageNetworkEmulationSecurity.DomPseudoType,
   -- | Shadow root type.
   domSnapshotDomNodeShadowRootType :: Maybe DOMPageNetworkEmulationSecurity.DomShadowRootType,
   -- | Whether this DOM node responds to mouse clicks. This includes nodes that have had click
-  -- event listeners attached via JavaScript as well as anchor tags that naturally navigate when
-  -- clicked.
+    -- event listeners attached via JavaScript as well as anchor tags that naturally navigate when
+    -- clicked.
   domSnapshotDomNodeIsClickable :: Maybe Bool,
   -- | Details of the node's event listeners, if any.
   domSnapshotDomNodeEventListeners :: Maybe [DOMDebugger.DomDebuggerEventListener],
@@ -122,15 +122,15 @@ instance FromJSON  DomSnapshotDomNode where
 
 
 -- | Details of post layout rendered text positions. The exact layout should not be regarded as
--- stable and may change between versions.
+ -- stable and may change between versions.
 data DomSnapshotInlineTextBox = DomSnapshotInlineTextBox {
   -- | The bounding box in document coordinates. Note that scroll offset of the document is ignored.
   domSnapshotInlineTextBoxBoundingBox :: DOMPageNetworkEmulationSecurity.DomRect,
   -- | The starting index in characters, for this post layout textbox substring. Characters that
-  -- would be represented as a surrogate pair in UTF-16 have length 2.
+    -- would be represented as a surrogate pair in UTF-16 have length 2.
   domSnapshotInlineTextBoxStartCharacterIndex :: Int,
   -- | The number of characters in this post layout textbox substring. Characters that would be
-  -- represented as a surrogate pair in UTF-16 have length 2.
+    -- represented as a surrogate pair in UTF-16 have length 2.
   domSnapshotInlineTextBoxNumCharacters :: Int
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomSnapshotInlineTextBox  where
@@ -154,8 +154,8 @@ data DomSnapshotLayoutTreeNode = DomSnapshotLayoutTreeNode {
   -- | Index into the `computedStyles` array returned by `getSnapshot`.
   domSnapshotLayoutTreeNodeStyleIndex :: Maybe Int,
   -- | Global paint order index, which is determined by the stacking order of the nodes. Nodes
-  -- that are painted together will have the same index. Only provided if includePaintOrder in
-  -- getSnapshot was true.
+    -- that are painted together will have the same index. Only provided if includePaintOrder in
+    -- getSnapshot was true.
   domSnapshotLayoutTreeNodePaintOrder :: Maybe Int,
   -- | Set to true to indicate the element begins a new stacking context.
   domSnapshotLayoutTreeNodeIsStackingContext :: Maybe Bool
@@ -313,8 +313,8 @@ data DomSnapshotNodeTreeSnapshot = DomSnapshotNodeTreeSnapshot {
   -- | Type of a pseudo element node.
   domSnapshotNodeTreeSnapshotPseudoType :: Maybe DomSnapshotRareStringData,
   -- | Whether this DOM node responds to mouse clicks. This includes nodes that have had click
-  -- event listeners attached via JavaScript as well as anchor tags that naturally navigate when
-  -- clicked.
+    -- event listeners attached via JavaScript as well as anchor tags that naturally navigate when
+    -- clicked.
   domSnapshotNodeTreeSnapshotIsClickable :: Maybe DomSnapshotRareBooleanData,
   -- | The selected url for nodes with a srcset attribute.
   domSnapshotNodeTreeSnapshotCurrentSourceUrl :: Maybe DomSnapshotRareStringData,
@@ -342,8 +342,8 @@ data DomSnapshotLayoutTreeSnapshot = DomSnapshotLayoutTreeSnapshot {
   -- | Stacking context information.
   domSnapshotLayoutTreeSnapshotStackingContexts :: DomSnapshotRareBooleanData,
   -- | Global paint order index, which is determined by the stacking order of the nodes. Nodes
-  -- that are painted together will have the same index. Only provided if includePaintOrder in
-  -- captureSnapshot was true.
+    -- that are painted together will have the same index. Only provided if includePaintOrder in
+    -- captureSnapshot was true.
   domSnapshotLayoutTreeSnapshotPaintOrders :: Maybe [Int],
   -- | The offset rect of nodes. Only available when includeDOMRects is set to true
   domSnapshotLayoutTreeSnapshotOffsetRects :: Maybe [DomSnapshotRectangle],
@@ -365,17 +365,17 @@ instance FromJSON  DomSnapshotLayoutTreeSnapshot where
 
 
 -- | Table of details of the post layout rendered text positions. The exact layout should not be regarded as
--- stable and may change between versions.
+ -- stable and may change between versions.
 data DomSnapshotTextBoxSnapshot = DomSnapshotTextBoxSnapshot {
   -- | Index of the layout tree node that owns this box collection.
   domSnapshotTextBoxSnapshotLayoutIndex :: [Int],
   -- | The absolute position bounding box.
   domSnapshotTextBoxSnapshotBounds :: [DomSnapshotRectangle],
   -- | The starting index in characters, for this post layout textbox substring. Characters that
-  -- would be represented as a surrogate pair in UTF-16 have length 2.
+    -- would be represented as a surrogate pair in UTF-16 have length 2.
   domSnapshotTextBoxSnapshotStart :: [Int],
   -- | The number of characters in this post layout textbox substring. Characters that would be
-  -- represented as a surrogate pair in UTF-16 have length 2.
+    -- represented as a surrogate pair in UTF-16 have length 2.
   domSnapshotTextBoxSnapshotLength :: [Int]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomSnapshotTextBoxSnapshot  where
@@ -391,14 +391,14 @@ instance FromJSON  DomSnapshotTextBoxSnapshot where
 
 
 -- | Function for the 'DOMSnapshot.disable' command.
--- Disables DOM snapshot agent for the given page.
-domSnapshotDisable :: Handle ev -> IO (Maybe Error)
+ -- Disables DOM snapshot agent for the given page.
+domSnapshotDisable :: Handle ev -> IO ()
 domSnapshotDisable handle = sendReceiveCommand handle "DOMSnapshot.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'DOMSnapshot.enable' command.
--- Enables DOM snapshot agent for the given page.
-domSnapshotEnable :: Handle ev -> IO (Maybe Error)
+ -- Enables DOM snapshot agent for the given page.
+domSnapshotEnable :: Handle ev -> IO ()
 domSnapshotEnable handle = sendReceiveCommand handle "DOMSnapshot.enable" (Nothing :: Maybe ())
 
 
@@ -411,12 +411,12 @@ data PDomSnapshotCaptureSnapshot = PDomSnapshotCaptureSnapshot {
   -- | Whether to include DOM rectangles (offsetRects, clientRects, scrollRects) into the snapshot
   pDomSnapshotCaptureSnapshotIncludeDomRects :: Maybe Bool,
   -- | Whether to include blended background colors in the snapshot (default: false).
-  -- Blended background color is achieved by blending background colors of all elements
-  -- that overlap with the current element.
+    -- Blended background color is achieved by blending background colors of all elements
+    -- that overlap with the current element.
   pDomSnapshotCaptureSnapshotIncludeBlendedBackgroundColors :: Maybe Bool,
   -- | Whether to include text color opacity in the snapshot (default: false).
-  -- An element might have the opacity property set that affects the text color of the element.
-  -- The final text color opacity is computed based on the opacity of all overlapping elements.
+    -- An element might have the opacity property set that affects the text color of the element.
+    -- The final text color opacity is computed based on the opacity of all overlapping elements.
   pDomSnapshotCaptureSnapshotIncludeTextColorOpacities :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomSnapshotCaptureSnapshot  where
@@ -427,13 +427,13 @@ instance FromJSON  PDomSnapshotCaptureSnapshot where
 
 
 -- | Function for the 'DOMSnapshot.captureSnapshot' command.
--- Returns a document snapshot, including the full DOM tree of the root node (including iframes,
--- template contents, and imported documents) in a flattened array, as well as layout and
--- white-listed computed style information for the nodes. Shadow DOM in the returned DOM tree is
--- flattened.
+ -- Returns a document snapshot, including the full DOM tree of the root node (including iframes,
+ -- template contents, and imported documents) in a flattened array, as well as layout and
+ -- white-listed computed style information for the nodes. Shadow DOM in the returned DOM tree is
+ -- flattened.
 -- Parameters: 'PDomSnapshotCaptureSnapshot'
 -- Returns: 'DomSnapshotCaptureSnapshot'
-domSnapshotCaptureSnapshot :: Handle ev -> PDomSnapshotCaptureSnapshot -> IO (Either Error DomSnapshotCaptureSnapshot)
+domSnapshotCaptureSnapshot :: Handle ev -> PDomSnapshotCaptureSnapshot -> IO DomSnapshotCaptureSnapshot
 domSnapshotCaptureSnapshot handle params = sendReceiveCommandResult handle "DOMSnapshot.captureSnapshot" (Just params)
 
 -- | Return type of the 'domSnapshotCaptureSnapshot' command.

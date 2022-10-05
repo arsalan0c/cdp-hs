@@ -207,6 +207,9 @@ data ProtocolError =
   | PEServerError    String      -- ^ Server error
   | PEOther          String      -- ^ An uncategorized error
   deriving Eq
+
+instance Exception ProtocolError
+
 instance Show ProtocolError where
     show (PEParse msg)            = msg 
     show (PEInvalidRequest msg)   = msg
@@ -234,6 +237,8 @@ data Error =
     | ERRProtocol ProtocolError
     deriving Eq
 
+instance Exception Error
+
 instance Show Error where
     show ERRNoResponse      = "no response received from the protocol"
     show (ERRParse msg)     = unlines ["error in parsing a message received from the protocol:", msg]
@@ -245,14 +250,6 @@ sendCommand conn id name params = do
     WS.sendTextData conn . A.encode $ co
   where
     paramsProxy = Proxy :: Proxy a
- 
-untilJustLimit :: (Monad m) => Int -> m (Maybe a) -> m (Maybe a)  
-untilJustLimit n act = do
-    if n <= 0
-        then pure Nothing
-        else do
-            vM <- act
-            maybe (untilJustLimit (n - 1) act) (pure . Just) vM
 
 receiveCommandResponse :: forall ev b. Command b => Handle' ev -> CommandId -> IO (Either Error (CommandResponse b))
 receiveCommandResponse handle id = do
@@ -269,23 +266,23 @@ receiveCommandResponse handle id = do
   where
     p = Proxy :: Proxy b
 
-sendReceiveCommandResult' :: forall a b ev. (Show a, ToJSON a, Command b) => Handle' ev -> String -> Maybe a -> IO (Either Error b)
+sendReceiveCommandResult' :: forall a b ev. (Show a, ToJSON a, Command b) => Handle' ev -> String -> Maybe a -> IO b
 sendReceiveCommandResult' handle name params = do
     cid <- randomCommandId handle
     sendCommand (conn handle) cid name params
     response <- receiveCommandResponse handle cid
-    pure $ case response of
+    either throwIO pure $ case response of
         Left err -> Left err
         Right CommandResponse{..} -> either (Left . ERRProtocol) Right crResult
   where
     resultProxy = Proxy :: Proxy b
     
-sendReceiveCommand' :: (Show a, ToJSON a) => Handle' ev -> String -> Maybe a -> IO (Maybe Error)
+sendReceiveCommand' :: (Show a, ToJSON a) => Handle' ev -> String -> Maybe a -> IO ()
 sendReceiveCommand' handle name params = do
     cid <- randomCommandId handle
     sendCommand (conn handle) cid name params
     response <- receiveCommandResponse handle cid :: IO (Either Error (CommandResponse NoResponse))
-    pure $ case response of
+    maybe (pure ()) throwIO $ case response of
         Left err                  -> Just err
         Right CommandResponse{..} -> either (Just . ERRProtocol) (const Nothing) crResult
 

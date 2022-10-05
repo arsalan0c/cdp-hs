@@ -214,21 +214,21 @@ instance FromJSON  LogEntryAdded where
 
 
 -- | Function for the 'Log.clear' command.
--- Clears the log.
-logClear :: Handle ev -> IO (Maybe Error)
+ -- Clears the log.
+logClear :: Handle ev -> IO ()
 logClear handle = sendReceiveCommand handle "Log.clear" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Log.disable' command.
--- Disables log domain, prevents further log entries from being reported to the client.
-logDisable :: Handle ev -> IO (Maybe Error)
+ -- Disables log domain, prevents further log entries from being reported to the client.
+logDisable :: Handle ev -> IO ()
 logDisable handle = sendReceiveCommand handle "Log.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Log.enable' command.
--- Enables log domain, sends the entries collected so far to the client by means of the
--- `entryAdded` notification.
-logEnable :: Handle ev -> IO (Maybe Error)
+ -- Enables log domain, sends the entries collected so far to the client by means of the
+ -- `entryAdded` notification.
+logEnable :: Handle ev -> IO ()
 logEnable handle = sendReceiveCommand handle "Log.enable" (Nothing :: Maybe ())
 
 
@@ -245,15 +245,15 @@ instance FromJSON  PLogStartViolationsReport where
 
 
 -- | Function for the 'Log.startViolationsReport' command.
--- start violation reporting.
+ -- start violation reporting.
 -- Parameters: 'PLogStartViolationsReport'
-logStartViolationsReport :: Handle ev -> PLogStartViolationsReport -> IO (Maybe Error)
+logStartViolationsReport :: Handle ev -> PLogStartViolationsReport -> IO ()
 logStartViolationsReport handle params = sendReceiveCommand handle "Log.startViolationsReport" (Just params)
 
 
 -- | Function for the 'Log.stopViolationsReport' command.
--- Stop violation reporting.
-logStopViolationsReport :: Handle ev -> IO (Maybe Error)
+ -- Stop violation reporting.
+logStopViolationsReport :: Handle ev -> IO ()
 logStopViolationsReport handle = sendReceiveCommand handle "Log.stopViolationsReport" (Nothing :: Maybe ())
 
 

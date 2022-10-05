@@ -99,14 +99,14 @@ instance FromJSON  DatabaseAddDatabase where
 
 
 -- | Function for the 'Database.disable' command.
--- Disables database tracking, prevents database events from being sent to the client.
-databaseDisable :: Handle ev -> IO (Maybe Error)
+ -- Disables database tracking, prevents database events from being sent to the client.
+databaseDisable :: Handle ev -> IO ()
 databaseDisable handle = sendReceiveCommand handle "Database.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Database.enable' command.
--- Enables database tracking, database events will now be delivered to the client.
-databaseEnable :: Handle ev -> IO (Maybe Error)
+ -- Enables database tracking, database events will now be delivered to the client.
+databaseEnable :: Handle ev -> IO ()
 databaseEnable handle = sendReceiveCommand handle "Database.enable" (Nothing :: Maybe ())
 
 
@@ -125,7 +125,7 @@ instance FromJSON  PDatabaseExecuteSql where
 -- | Function for the 'Database.executeSQL' command.
 -- Parameters: 'PDatabaseExecuteSql'
 -- Returns: 'DatabaseExecuteSql'
-databaseExecuteSql :: Handle ev -> PDatabaseExecuteSql -> IO (Either Error DatabaseExecuteSql)
+databaseExecuteSql :: Handle ev -> PDatabaseExecuteSql -> IO DatabaseExecuteSql
 databaseExecuteSql handle params = sendReceiveCommandResult handle "Database.executeSQL" (Just params)
 
 -- | Return type of the 'databaseExecuteSql' command.
@@ -157,7 +157,7 @@ instance FromJSON  PDatabaseGetDatabaseTableNames where
 -- | Function for the 'Database.getDatabaseTableNames' command.
 -- Parameters: 'PDatabaseGetDatabaseTableNames'
 -- Returns: 'DatabaseGetDatabaseTableNames'
-databaseGetDatabaseTableNames :: Handle ev -> PDatabaseGetDatabaseTableNames -> IO (Either Error DatabaseGetDatabaseTableNames)
+databaseGetDatabaseTableNames :: Handle ev -> PDatabaseGetDatabaseTableNames -> IO DatabaseGetDatabaseTableNames
 databaseGetDatabaseTableNames handle params = sendReceiveCommandResult handle "Database.getDatabaseTableNames" (Just params)
 
 -- | Return type of the 'databaseGetDatabaseTableNames' command.

@@ -53,7 +53,7 @@ data CastSink = CastSink {
   castSinkName :: String,
   castSinkId :: String,
   -- | Text describing the current session. Present only if there is an active
-  -- session on the sink.
+    -- session on the sink.
   castSinkSession :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON CastSink  where
@@ -104,19 +104,19 @@ instance FromJSON  PCastEnable where
 
 
 -- | Function for the 'Cast.enable' command.
--- Starts observing for sinks that can be used for tab mirroring, and if set,
--- sinks compatible with |presentationUrl| as well. When sinks are found, a
--- |sinksUpdated| event is fired.
--- Also starts observing for issue messages. When an issue is added or removed,
--- an |issueUpdated| event is fired.
+ -- Starts observing for sinks that can be used for tab mirroring, and if set,
+ -- sinks compatible with |presentationUrl| as well. When sinks are found, a
+ -- |sinksUpdated| event is fired.
+ -- Also starts observing for issue messages. When an issue is added or removed,
+ -- an |issueUpdated| event is fired.
 -- Parameters: 'PCastEnable'
-castEnable :: Handle ev -> PCastEnable -> IO (Maybe Error)
+castEnable :: Handle ev -> PCastEnable -> IO ()
 castEnable handle params = sendReceiveCommand handle "Cast.enable" (Just params)
 
 
 -- | Function for the 'Cast.disable' command.
--- Stops observing for sinks and issues.
-castDisable :: Handle ev -> IO (Maybe Error)
+ -- Stops observing for sinks and issues.
+castDisable :: Handle ev -> IO ()
 castDisable handle = sendReceiveCommand handle "Cast.disable" (Nothing :: Maybe ())
 
 
@@ -132,10 +132,10 @@ instance FromJSON  PCastSetSinkToUse where
 
 
 -- | Function for the 'Cast.setSinkToUse' command.
--- Sets a sink to be used when the web page requests the browser to choose a
--- sink via Presentation API, Remote Playback API, or Cast SDK.
+ -- Sets a sink to be used when the web page requests the browser to choose a
+ -- sink via Presentation API, Remote Playback API, or Cast SDK.
 -- Parameters: 'PCastSetSinkToUse'
-castSetSinkToUse :: Handle ev -> PCastSetSinkToUse -> IO (Maybe Error)
+castSetSinkToUse :: Handle ev -> PCastSetSinkToUse -> IO ()
 castSetSinkToUse handle params = sendReceiveCommand handle "Cast.setSinkToUse" (Just params)
 
 
@@ -151,9 +151,9 @@ instance FromJSON  PCastStartDesktopMirroring where
 
 
 -- | Function for the 'Cast.startDesktopMirroring' command.
--- Starts mirroring the desktop to the sink.
+ -- Starts mirroring the desktop to the sink.
 -- Parameters: 'PCastStartDesktopMirroring'
-castStartDesktopMirroring :: Handle ev -> PCastStartDesktopMirroring -> IO (Maybe Error)
+castStartDesktopMirroring :: Handle ev -> PCastStartDesktopMirroring -> IO ()
 castStartDesktopMirroring handle params = sendReceiveCommand handle "Cast.startDesktopMirroring" (Just params)
 
 
@@ -169,9 +169,9 @@ instance FromJSON  PCastStartTabMirroring where
 
 
 -- | Function for the 'Cast.startTabMirroring' command.
--- Starts mirroring the tab to the sink.
+ -- Starts mirroring the tab to the sink.
 -- Parameters: 'PCastStartTabMirroring'
-castStartTabMirroring :: Handle ev -> PCastStartTabMirroring -> IO (Maybe Error)
+castStartTabMirroring :: Handle ev -> PCastStartTabMirroring -> IO ()
 castStartTabMirroring handle params = sendReceiveCommand handle "Cast.startTabMirroring" (Just params)
 
 
@@ -187,9 +187,9 @@ instance FromJSON  PCastStopCasting where
 
 
 -- | Function for the 'Cast.stopCasting' command.
--- Stops the active Cast session on the sink.
+ -- Stops the active Cast session on the sink.
 -- Parameters: 'PCastStopCasting'
-castStopCasting :: Handle ev -> PCastStopCasting -> IO (Maybe Error)
+castStopCasting :: Handle ev -> PCastStopCasting -> IO ()
 castStopCasting handle params = sendReceiveCommand handle "Cast.stopCasting" (Just params)
 
 

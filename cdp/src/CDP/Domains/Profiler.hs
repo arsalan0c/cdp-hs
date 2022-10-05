@@ -58,7 +58,7 @@ data ProfilerProfileNode = ProfilerProfileNode {
   -- | Child node ids.
   profilerProfileNodeChildren :: Maybe [Int],
   -- | The reason of being not optimized. The function may be deoptimized or marked as don't
-  -- optimize.
+    -- optimize.
   profilerProfileNodeDeoptReason :: Maybe String,
   -- | An array of source position ticks.
   profilerProfileNodePositionTicks :: Maybe [ProfilerPositionTickInfo]
@@ -82,7 +82,7 @@ data ProfilerProfile = ProfilerProfile {
   -- | Ids of samples top nodes.
   profilerProfileSamples :: Maybe [Int],
   -- | Time intervals between adjacent samples in microseconds. The first delta is relative to the
-  -- profile startTime.
+    -- profile startTime.
   profilerProfileTimeDeltas :: Maybe [Int]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON ProfilerProfile  where
@@ -259,20 +259,20 @@ instance FromJSON  ProfilerPreciseCoverageDeltaUpdate where
 
 
 -- | Function for the 'Profiler.disable' command.
-profilerDisable :: Handle ev -> IO (Maybe Error)
+profilerDisable :: Handle ev -> IO ()
 profilerDisable handle = sendReceiveCommand handle "Profiler.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Profiler.enable' command.
-profilerEnable :: Handle ev -> IO (Maybe Error)
+profilerEnable :: Handle ev -> IO ()
 profilerEnable handle = sendReceiveCommand handle "Profiler.enable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Profiler.getBestEffortCoverage' command.
--- Collect coverage data for the current isolate. The coverage data may be incomplete due to
--- garbage collection.
+ -- Collect coverage data for the current isolate. The coverage data may be incomplete due to
+ -- garbage collection.
 -- Returns: 'ProfilerGetBestEffortCoverage'
-profilerGetBestEffortCoverage :: Handle ev -> IO (Either Error ProfilerGetBestEffortCoverage)
+profilerGetBestEffortCoverage :: Handle ev -> IO ProfilerGetBestEffortCoverage
 profilerGetBestEffortCoverage handle = sendReceiveCommandResult handle "Profiler.getBestEffortCoverage" (Nothing :: Maybe ())
 
 -- | Return type of the 'profilerGetBestEffortCoverage' command.
@@ -302,14 +302,14 @@ instance FromJSON  PProfilerSetSamplingInterval where
 
 
 -- | Function for the 'Profiler.setSamplingInterval' command.
--- Changes CPU profiler sampling interval. Must be called before CPU profiles recording started.
+ -- Changes CPU profiler sampling interval. Must be called before CPU profiles recording started.
 -- Parameters: 'PProfilerSetSamplingInterval'
-profilerSetSamplingInterval :: Handle ev -> PProfilerSetSamplingInterval -> IO (Maybe Error)
+profilerSetSamplingInterval :: Handle ev -> PProfilerSetSamplingInterval -> IO ()
 profilerSetSamplingInterval handle params = sendReceiveCommand handle "Profiler.setSamplingInterval" (Just params)
 
 
 -- | Function for the 'Profiler.start' command.
-profilerStart :: Handle ev -> IO (Maybe Error)
+profilerStart :: Handle ev -> IO ()
 profilerStart handle = sendReceiveCommand handle "Profiler.start" (Nothing :: Maybe ())
 
 
@@ -330,12 +330,12 @@ instance FromJSON  PProfilerStartPreciseCoverage where
 
 
 -- | Function for the 'Profiler.startPreciseCoverage' command.
--- Enable precise code coverage. Coverage data for JavaScript executed before enabling precise code
--- coverage may be incomplete. Enabling prevents running optimized code and resets execution
--- counters.
+ -- Enable precise code coverage. Coverage data for JavaScript executed before enabling precise code
+ -- coverage may be incomplete. Enabling prevents running optimized code and resets execution
+ -- counters.
 -- Parameters: 'PProfilerStartPreciseCoverage'
 -- Returns: 'ProfilerStartPreciseCoverage'
-profilerStartPreciseCoverage :: Handle ev -> PProfilerStartPreciseCoverage -> IO (Either Error ProfilerStartPreciseCoverage)
+profilerStartPreciseCoverage :: Handle ev -> PProfilerStartPreciseCoverage -> IO ProfilerStartPreciseCoverage
 profilerStartPreciseCoverage handle params = sendReceiveCommandResult handle "Profiler.startPreciseCoverage" (Just params)
 
 -- | Return type of the 'profilerStartPreciseCoverage' command.
@@ -353,14 +353,14 @@ instance Command ProfilerStartPreciseCoverage where
 
 
 -- | Function for the 'Profiler.startTypeProfile' command.
--- Enable type profile.
-profilerStartTypeProfile :: Handle ev -> IO (Maybe Error)
+ -- Enable type profile.
+profilerStartTypeProfile :: Handle ev -> IO ()
 profilerStartTypeProfile handle = sendReceiveCommand handle "Profiler.startTypeProfile" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Profiler.stop' command.
 -- Returns: 'ProfilerStop'
-profilerStop :: Handle ev -> IO (Either Error ProfilerStop)
+profilerStop :: Handle ev -> IO ProfilerStop
 profilerStop handle = sendReceiveCommandResult handle "Profiler.stop" (Nothing :: Maybe ())
 
 -- | Return type of the 'profilerStop' command.
@@ -378,23 +378,23 @@ instance Command ProfilerStop where
 
 
 -- | Function for the 'Profiler.stopPreciseCoverage' command.
--- Disable precise code coverage. Disabling releases unnecessary execution count records and allows
--- executing optimized code.
-profilerStopPreciseCoverage :: Handle ev -> IO (Maybe Error)
+ -- Disable precise code coverage. Disabling releases unnecessary execution count records and allows
+ -- executing optimized code.
+profilerStopPreciseCoverage :: Handle ev -> IO ()
 profilerStopPreciseCoverage handle = sendReceiveCommand handle "Profiler.stopPreciseCoverage" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Profiler.stopTypeProfile' command.
--- Disable type profile. Disabling releases type profile data collected so far.
-profilerStopTypeProfile :: Handle ev -> IO (Maybe Error)
+ -- Disable type profile. Disabling releases type profile data collected so far.
+profilerStopTypeProfile :: Handle ev -> IO ()
 profilerStopTypeProfile handle = sendReceiveCommand handle "Profiler.stopTypeProfile" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Profiler.takePreciseCoverage' command.
--- Collect coverage data for the current isolate, and resets execution counters. Precise code
--- coverage needs to have started.
+ -- Collect coverage data for the current isolate, and resets execution counters. Precise code
+ -- coverage needs to have started.
 -- Returns: 'ProfilerTakePreciseCoverage'
-profilerTakePreciseCoverage :: Handle ev -> IO (Either Error ProfilerTakePreciseCoverage)
+profilerTakePreciseCoverage :: Handle ev -> IO ProfilerTakePreciseCoverage
 profilerTakePreciseCoverage handle = sendReceiveCommandResult handle "Profiler.takePreciseCoverage" (Nothing :: Maybe ())
 
 -- | Return type of the 'profilerTakePreciseCoverage' command.
@@ -414,9 +414,9 @@ instance Command ProfilerTakePreciseCoverage where
 
 
 -- | Function for the 'Profiler.takeTypeProfile' command.
--- Collect type profile.
+ -- Collect type profile.
 -- Returns: 'ProfilerTakeTypeProfile'
-profilerTakeTypeProfile :: Handle ev -> IO (Either Error ProfilerTakeTypeProfile)
+profilerTakeTypeProfile :: Handle ev -> IO ProfilerTakeTypeProfile
 profilerTakeTypeProfile handle = sendReceiveCommandResult handle "Profiler.takeTypeProfile" (Nothing :: Maybe ())
 
 -- | Return type of the 'profilerTakeTypeProfile' command.

@@ -27,11 +27,11 @@ handleTypeName         = "Handle"
 commandClassName       = "Command"
 sendCommandName        = "sendReceiveCommand"
 sendCommandResultName  = "sendReceiveCommandResult"
-emptyReturnSig         = "IO (Maybe Error)"
+emptyReturnSig         = "IO ()"
 configType              = "Config(..)"
 
 resultReturnSig :: T.Text -> T.Text
-resultReturnSig resultTy = "IO (Either Error " <> resultTy <> ")" 
+resultReturnSig resultTy = "IO " <> resultTy 
 
 ----------- Start of program generation ----------- 
 

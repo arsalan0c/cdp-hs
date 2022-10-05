@@ -50,8 +50,8 @@ import CDP.Domains.ServiceWorker as ServiceWorker
 
 
 -- | The Background Service that will be associated with the commands/events.
--- Every Background Service operates independently, but they share the same
--- API.
+ -- Every Background Service operates independently, but they share the same
+ -- API.
 data BackgroundServiceServiceName = BackgroundServiceServiceNameBackgroundFetch | BackgroundServiceServiceNameBackgroundSync | BackgroundServiceServiceNamePushMessaging | BackgroundServiceServiceNameNotifications | BackgroundServiceServiceNamePaymentHandler | BackgroundServiceServiceNamePeriodicBackgroundSync
    deriving (Ord, Eq, Show, Read)
 instance FromJSON BackgroundServiceServiceName where
@@ -156,9 +156,9 @@ instance FromJSON  PBackgroundServiceStartObserving where
 
 
 -- | Function for the 'BackgroundService.startObserving' command.
--- Enables event updates for the service.
+ -- Enables event updates for the service.
 -- Parameters: 'PBackgroundServiceStartObserving'
-backgroundServiceStartObserving :: Handle ev -> PBackgroundServiceStartObserving -> IO (Maybe Error)
+backgroundServiceStartObserving :: Handle ev -> PBackgroundServiceStartObserving -> IO ()
 backgroundServiceStartObserving handle params = sendReceiveCommand handle "BackgroundService.startObserving" (Just params)
 
 
@@ -174,9 +174,9 @@ instance FromJSON  PBackgroundServiceStopObserving where
 
 
 -- | Function for the 'BackgroundService.stopObserving' command.
--- Disables event updates for the service.
+ -- Disables event updates for the service.
 -- Parameters: 'PBackgroundServiceStopObserving'
-backgroundServiceStopObserving :: Handle ev -> PBackgroundServiceStopObserving -> IO (Maybe Error)
+backgroundServiceStopObserving :: Handle ev -> PBackgroundServiceStopObserving -> IO ()
 backgroundServiceStopObserving handle params = sendReceiveCommand handle "BackgroundService.stopObserving" (Just params)
 
 
@@ -193,9 +193,9 @@ instance FromJSON  PBackgroundServiceSetRecording where
 
 
 -- | Function for the 'BackgroundService.setRecording' command.
--- Set the recording state for the service.
+ -- Set the recording state for the service.
 -- Parameters: 'PBackgroundServiceSetRecording'
-backgroundServiceSetRecording :: Handle ev -> PBackgroundServiceSetRecording -> IO (Maybe Error)
+backgroundServiceSetRecording :: Handle ev -> PBackgroundServiceSetRecording -> IO ()
 backgroundServiceSetRecording handle params = sendReceiveCommand handle "BackgroundService.setRecording" (Just params)
 
 
@@ -211,9 +211,9 @@ instance FromJSON  PBackgroundServiceClearEvents where
 
 
 -- | Function for the 'BackgroundService.clearEvents' command.
--- Clears all stored data for the service.
+ -- Clears all stored data for the service.
 -- Parameters: 'PBackgroundServiceClearEvents'
-backgroundServiceClearEvents :: Handle ev -> PBackgroundServiceClearEvents -> IO (Maybe Error)
+backgroundServiceClearEvents :: Handle ev -> PBackgroundServiceClearEvents -> IO ()
 backgroundServiceClearEvents handle params = sendReceiveCommand handle "BackgroundService.clearEvents" (Just params)
 
 

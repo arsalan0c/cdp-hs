@@ -90,7 +90,7 @@ instance FromJSON  SystemInfoSize where
 
 
 -- | Describes a supported video decoding profile with its associated minimum and
--- maximum resolutions.
+ -- maximum resolutions.
 data SystemInfoVideoDecodeAcceleratorCapability = SystemInfoVideoDecodeAcceleratorCapability {
   -- | Video codec profile that is supported, e.g. VP9 Profile 2.
   systemInfoVideoDecodeAcceleratorCapabilityProfile :: String,
@@ -108,15 +108,15 @@ instance FromJSON  SystemInfoVideoDecodeAcceleratorCapability where
 
 
 -- | Describes a supported video encoding profile with its associated maximum
--- resolution and maximum framerate.
+ -- resolution and maximum framerate.
 data SystemInfoVideoEncodeAcceleratorCapability = SystemInfoVideoEncodeAcceleratorCapability {
   -- | Video codec profile that is supported, e.g H264 Main.
   systemInfoVideoEncodeAcceleratorCapabilityProfile :: String,
   -- | Maximum video dimensions in pixels supported for this |profile|.
   systemInfoVideoEncodeAcceleratorCapabilityMaxResolution :: SystemInfoSize,
   -- | Maximum encoding framerate in frames per second supported for this
-  -- |profile|, as fraction's numerator and denominator, e.g. 24/1 fps,
-  -- 24000/1001 fps, etc.
+    -- |profile|, as fraction's numerator and denominator, e.g. 24/1 fps,
+    -- 24000/1001 fps, etc.
   systemInfoVideoEncodeAcceleratorCapabilityMaxFramerateNumerator :: Int,
   systemInfoVideoEncodeAcceleratorCapabilityMaxFramerateDenominator :: Int
 } deriving (Generic, Eq, Show, Read)
@@ -169,7 +169,7 @@ instance ToJSON SystemInfoImageType where
 
 
 -- | Describes a supported image decoding profile with its associated minimum and
--- maximum resolutions and subsampling.
+ -- maximum resolutions and subsampling.
 data SystemInfoImageDecodeAcceleratorCapability = SystemInfoImageDecodeAcceleratorCapability {
   -- | Image coded, e.g. Jpeg.
   systemInfoImageDecodeAcceleratorCapabilityImageType :: SystemInfoImageType,
@@ -220,7 +220,7 @@ data SystemInfoProcessInfo = SystemInfoProcessInfo {
   -- | Specifies process id.
   systemInfoProcessInfoId :: Int,
   -- | Specifies cumulative CPU usage in seconds across all threads of the
-  -- process since the process start.
+    -- process since the process start.
   systemInfoProcessInfoCpuTime :: Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON SystemInfoProcessInfo  where
@@ -236,9 +236,9 @@ instance FromJSON  SystemInfoProcessInfo where
 
 
 -- | Function for the 'SystemInfo.getInfo' command.
--- Returns information about the system.
+ -- Returns information about the system.
 -- Returns: 'SystemInfoGetInfo'
-systemInfoGetInfo :: Handle ev -> IO (Either Error SystemInfoGetInfo)
+systemInfoGetInfo :: Handle ev -> IO SystemInfoGetInfo
 systemInfoGetInfo handle = sendReceiveCommandResult handle "SystemInfo.getInfo" (Nothing :: Maybe ())
 
 -- | Return type of the 'systemInfoGetInfo' command.
@@ -246,13 +246,13 @@ data SystemInfoGetInfo = SystemInfoGetInfo {
   -- | Information about the GPUs on the system.
   systemInfoGetInfoGpu :: SystemInfoGpuInfo,
   -- | A platform-dependent description of the model of the machine. On Mac OS, this is, for
-  -- example, 'MacBookPro'. Will be the empty string if not supported.
+    -- example, 'MacBookPro'. Will be the empty string if not supported.
   systemInfoGetInfoModelName :: String,
   -- | A platform-dependent description of the version of the machine. On Mac OS, this is, for
-  -- example, '10.1'. Will be the empty string if not supported.
+    -- example, '10.1'. Will be the empty string if not supported.
   systemInfoGetInfoModelVersion :: String,
   -- | The command line string used to launch the browser. Will be the empty string if not
-  -- supported.
+    -- supported.
   systemInfoGetInfoCommandLine :: String
 } deriving (Generic, Eq, Show, Read)
 
@@ -265,9 +265,9 @@ instance Command SystemInfoGetInfo where
 
 
 -- | Function for the 'SystemInfo.getProcessInfo' command.
--- Returns information about all running processes.
+ -- Returns information about all running processes.
 -- Returns: 'SystemInfoGetProcessInfo'
-systemInfoGetProcessInfo :: Handle ev -> IO (Either Error SystemInfoGetProcessInfo)
+systemInfoGetProcessInfo :: Handle ev -> IO SystemInfoGetProcessInfo
 systemInfoGetProcessInfo handle = sendReceiveCommandResult handle "SystemInfo.getProcessInfo" (Nothing :: Maybe ())
 
 -- | Return type of the 'systemInfoGetProcessInfo' command.

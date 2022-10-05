@@ -156,8 +156,8 @@ data WebAudioContextRealtimeData = WebAudioContextRealtimeData {
   -- | The current context time in second in BaseAudioContext.
   webAudioContextRealtimeDataCurrentTime :: Double,
   -- | The time spent on rendering graph divided by render quantum duration,
-  -- and multiplied by 100. 100 means the audio renderer reached the full
-  -- capacity and glitch may occur.
+    -- and multiplied by 100. 100 means the audio renderer reached the full
+    -- capacity and glitch may occur.
   webAudioContextRealtimeDataRenderCapacity :: Double,
   -- | A running mean of callback interval.
   webAudioContextRealtimeDataCallbackIntervalMean :: Double,
@@ -423,14 +423,14 @@ instance FromJSON  WebAudioNodeParamDisconnected where
 
 
 -- | Function for the 'WebAudio.enable' command.
--- Enables the WebAudio domain and starts sending context lifetime events.
-webAudioEnable :: Handle ev -> IO (Maybe Error)
+ -- Enables the WebAudio domain and starts sending context lifetime events.
+webAudioEnable :: Handle ev -> IO ()
 webAudioEnable handle = sendReceiveCommand handle "WebAudio.enable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'WebAudio.disable' command.
--- Disables the WebAudio domain.
-webAudioDisable :: Handle ev -> IO (Maybe Error)
+ -- Disables the WebAudio domain.
+webAudioDisable :: Handle ev -> IO ()
 webAudioDisable handle = sendReceiveCommand handle "WebAudio.disable" (Nothing :: Maybe ())
 
 
@@ -446,10 +446,10 @@ instance FromJSON  PWebAudioGetRealtimeData where
 
 
 -- | Function for the 'WebAudio.getRealtimeData' command.
--- Fetch the realtime data from the registered contexts.
+ -- Fetch the realtime data from the registered contexts.
 -- Parameters: 'PWebAudioGetRealtimeData'
 -- Returns: 'WebAudioGetRealtimeData'
-webAudioGetRealtimeData :: Handle ev -> PWebAudioGetRealtimeData -> IO (Either Error WebAudioGetRealtimeData)
+webAudioGetRealtimeData :: Handle ev -> PWebAudioGetRealtimeData -> IO WebAudioGetRealtimeData
 webAudioGetRealtimeData handle params = sendReceiveCommandResult handle "WebAudio.getRealtimeData" (Just params)
 
 -- | Return type of the 'webAudioGetRealtimeData' command.

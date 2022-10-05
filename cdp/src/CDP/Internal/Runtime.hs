@@ -250,14 +250,6 @@ sendCommand conn id name params = do
     WS.sendTextData conn . A.encode $ co
   where
     paramsProxy = Proxy :: Proxy a
- 
-untilJustLimit :: (Monad m) => Int -> m (Maybe a) -> m (Maybe a)  
-untilJustLimit n act = do
-    if n <= 0
-        then pure Nothing
-        else do
-            vM <- act
-            maybe (untilJustLimit (n - 1) act) (pure . Just) vM
 
 receiveCommandResponse :: forall ev b. Command b => Handle' ev -> CommandId -> IO (Either Error (CommandResponse b))
 receiveCommandResponse handle id = do

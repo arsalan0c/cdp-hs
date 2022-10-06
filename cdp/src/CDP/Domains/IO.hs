@@ -48,7 +48,8 @@ import CDP.Handle
 import CDP.Domains.Runtime as Runtime
 
 
--- | Type 'IO.StreamHandle' .This is either obtained from another method or specified as `blob:&lt;uuid&gt;` where
+-- | Type 'IO.StreamHandle'.
+--   This is either obtained from another method or specified as `blob:&lt;uuid&gt;` where
 --   `&lt;uuid&gt` is an UUID of a Blob.
 type IoStreamHandle = String
 

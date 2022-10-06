@@ -69,14 +69,17 @@ import CDP.Domains.IO as IO
 import CDP.Domains.Runtime as Runtime
 
 
--- | Type 'DOM.NodeId' .Unique DOM node identifier.
+-- | Type 'DOM.NodeId'.
+--   Unique DOM node identifier.
 type DomNodeId = Int
 
--- | Type 'DOM.BackendNodeId' .Unique DOM node identifier used to reference a node that may not have been pushed to the
+-- | Type 'DOM.BackendNodeId'.
+--   Unique DOM node identifier used to reference a node that may not have been pushed to the
 --   front-end.
 type DomBackendNodeId = Int
 
--- | Type 'DOM.BackendNode' .Backend node with a friendly name.
+-- | Type 'DOM.BackendNode'.
+--   Backend node with a friendly name.
 data DomBackendNode = DomBackendNode {
   -- | `Node`'s nodeType.
   domBackendNodeNodeType :: Int,
@@ -92,7 +95,8 @@ instance FromJSON  DomBackendNode where
 
 
 
--- | Type 'DOM.PseudoType' .Pseudo element type.
+-- | Type 'DOM.PseudoType'.
+--   Pseudo element type.
 data DomPseudoType = DomPseudoTypeFirstLine | DomPseudoTypeFirstLetter | DomPseudoTypeBefore | DomPseudoTypeAfter | DomPseudoTypeMarker | DomPseudoTypeBackdrop | DomPseudoTypeSelection | DomPseudoTypeTargetText | DomPseudoTypeSpellingError | DomPseudoTypeGrammarError | DomPseudoTypeHighlight | DomPseudoTypeFirstLineInherited | DomPseudoTypeScrollbar | DomPseudoTypeScrollbarThumb | DomPseudoTypeScrollbarButton | DomPseudoTypeScrollbarTrack | DomPseudoTypeScrollbarTrackPiece | DomPseudoTypeScrollbarCorner | DomPseudoTypeResizer | DomPseudoTypeInputListButton | DomPseudoTypePageTransition | DomPseudoTypePageTransitionContainer | DomPseudoTypePageTransitionImageWrapper | DomPseudoTypePageTransitionOutgoingImage | DomPseudoTypePageTransitionIncomingImage
    deriving (Ord, Eq, Show, Read)
 instance FromJSON DomPseudoType where
@@ -156,7 +160,8 @@ instance ToJSON DomPseudoType where
 
 
 
--- | Type 'DOM.ShadowRootType' .Shadow root type.
+-- | Type 'DOM.ShadowRootType'.
+--   Shadow root type.
 data DomShadowRootType = DomShadowRootTypeUserAgent | DomShadowRootTypeOpen | DomShadowRootTypeClosed
    deriving (Ord, Eq, Show, Read)
 instance FromJSON DomShadowRootType where
@@ -176,7 +181,8 @@ instance ToJSON DomShadowRootType where
 
 
 
--- | Type 'DOM.CompatibilityMode' .Document compatibility mode.
+-- | Type 'DOM.CompatibilityMode'.
+--   Document compatibility mode.
 data DomCompatibilityMode = DomCompatibilityModeQuirksMode | DomCompatibilityModeLimitedQuirksMode | DomCompatibilityModeNoQuirksMode
    deriving (Ord, Eq, Show, Read)
 instance FromJSON DomCompatibilityMode where
@@ -196,7 +202,8 @@ instance ToJSON DomCompatibilityMode where
 
 
 
--- | Type 'DOM.Node' .DOM interaction is implemented in terms of mirror objects that represent the actual DOM nodes.
+-- | Type 'DOM.Node'.
+--   DOM interaction is implemented in terms of mirror objects that represent the actual DOM nodes.
 --   DOMNode is a base node mirror type.
 data DomNode = DomNode {
   -- | Node identifier that is passed into the rest of the DOM messages as the `nodeId`. Backend
@@ -266,7 +273,8 @@ instance FromJSON  DomNode where
 
 
 
--- | Type 'DOM.RGBA' .A structure holding an RGBA color.
+-- | Type 'DOM.RGBA'.
+--   A structure holding an RGBA color.
 data DomRgba = DomRgba {
   -- | The red component, in the [0-255] range.
   domRgbaR :: Int,
@@ -285,10 +293,12 @@ instance FromJSON  DomRgba where
 
 
 
--- | Type 'DOM.Quad' .An array of quad vertices, x immediately followed by y for each point, points clock-wise.
+-- | Type 'DOM.Quad'.
+--   An array of quad vertices, x immediately followed by y for each point, points clock-wise.
 type DomQuad = [Double]
 
--- | Type 'DOM.BoxModel' .Box model.
+-- | Type 'DOM.BoxModel'.
+--   Box model.
 data DomBoxModel = DomBoxModel {
   -- | Content box
   domBoxModelContent :: DomQuad,
@@ -313,7 +323,8 @@ instance FromJSON  DomBoxModel where
 
 
 
--- | Type 'DOM.ShapeOutsideInfo' .CSS Shape Outside details.
+-- | Type 'DOM.ShapeOutsideInfo'.
+--   CSS Shape Outside details.
 data DomShapeOutsideInfo = DomShapeOutsideInfo {
   -- | Shape bounds
   domShapeOutsideInfoBounds :: DomQuad,
@@ -330,7 +341,8 @@ instance FromJSON  DomShapeOutsideInfo where
 
 
 
--- | Type 'DOM.Rect' .Rectangle.
+-- | Type 'DOM.Rect'.
+--   Rectangle.
 data DomRect = DomRect {
   -- | X coordinate
   domRectX :: Double,
@@ -349,7 +361,7 @@ instance FromJSON  DomRect where
 
 
 
--- | Type 'DOM.CSSComputedStyleProperty' .
+-- | Type 'DOM.CSSComputedStyleProperty'.
 data DomCssComputedStyleProperty = DomCssComputedStyleProperty {
   -- | Computed style property name.
   domCssComputedStylePropertyName :: String,
@@ -1889,7 +1901,8 @@ instance Command DomGetQueryingDescendantsForContainer where
 
 
 
--- | Type 'Emulation.ScreenOrientation' .Screen orientation.
+-- | Type 'Emulation.ScreenOrientation'.
+--   Screen orientation.
 data EmulationScreenOrientationType = EmulationScreenOrientationTypePortraitPrimary | EmulationScreenOrientationTypePortraitSecondary | EmulationScreenOrientationTypeLandscapePrimary | EmulationScreenOrientationTypeLandscapeSecondary
    deriving (Ord, Eq, Show, Read)
 instance FromJSON EmulationScreenOrientationType where
@@ -1925,7 +1938,7 @@ instance FromJSON  EmulationScreenOrientation where
 
 
 
--- | Type 'Emulation.DisplayFeature' .
+-- | Type 'Emulation.DisplayFeature'.
 data EmulationDisplayFeatureOrientation = EmulationDisplayFeatureOrientationVertical | EmulationDisplayFeatureOrientationHorizontal
    deriving (Ord, Eq, Show, Read)
 instance FromJSON EmulationDisplayFeatureOrientation where
@@ -1962,7 +1975,7 @@ instance FromJSON  EmulationDisplayFeature where
 
 
 
--- | Type 'Emulation.MediaFeature' .
+-- | Type 'Emulation.MediaFeature'.
 data EmulationMediaFeature = EmulationMediaFeature {
   emulationMediaFeatureName :: String,
   emulationMediaFeatureValue :: String
@@ -1975,7 +1988,8 @@ instance FromJSON  EmulationMediaFeature where
 
 
 
--- | Type 'Emulation.VirtualTimePolicy' .advance: If the scheduler runs out of immediate work, the virtual time base may fast forward to
+-- | Type 'Emulation.VirtualTimePolicy'.
+--   advance: If the scheduler runs out of immediate work, the virtual time base may fast forward to
 --   allow the next delayed task (if any) to run; pause: The virtual time base may not advance;
 --   pauseIfNetworkFetchesPending: The virtual time base may not advance if there are any pending
 --   resource fetches.
@@ -1998,7 +2012,8 @@ instance ToJSON EmulationVirtualTimePolicy where
 
 
 
--- | Type 'Emulation.UserAgentBrandVersion' .Used to specify User Agent Cient Hints to emulate. See https://wicg.github.io/ua-client-hints
+-- | Type 'Emulation.UserAgentBrandVersion'.
+--   Used to specify User Agent Cient Hints to emulate. See https://wicg.github.io/ua-client-hints
 data EmulationUserAgentBrandVersion = EmulationUserAgentBrandVersion {
   emulationUserAgentBrandVersionBrand :: String,
   emulationUserAgentBrandVersionVersion :: String
@@ -2011,7 +2026,8 @@ instance FromJSON  EmulationUserAgentBrandVersion where
 
 
 
--- | Type 'Emulation.UserAgentMetadata' .Used to specify User Agent Cient Hints to emulate. See https://wicg.github.io/ua-client-hints
+-- | Type 'Emulation.UserAgentMetadata'.
+--   Used to specify User Agent Cient Hints to emulate. See https://wicg.github.io/ua-client-hints
 --   Missing optional values will be filled in by the target with what it would normally use.
 data EmulationUserAgentMetadata = EmulationUserAgentMetadata {
   emulationUserAgentMetadataBrands :: Maybe [EmulationUserAgentBrandVersion],
@@ -2032,7 +2048,8 @@ instance FromJSON  EmulationUserAgentMetadata where
 
 
 
--- | Type 'Emulation.DisabledImageType' .Enum of image types that can be disabled.
+-- | Type 'Emulation.DisabledImageType'.
+--   Enum of image types that can be disabled.
 data EmulationDisabledImageType = EmulationDisabledImageTypeAvif | EmulationDisabledImageTypeJxl | EmulationDisabledImageTypeWebp
    deriving (Ord, Eq, Show, Read)
 instance FromJSON EmulationDisabledImageType where
@@ -2647,7 +2664,8 @@ emulationSetAutomationOverride handle params = sendReceiveCommand handle "Emulat
 
 
 
--- | Type 'Network.ResourceType' .Resource type as it was perceived by the rendering engine.
+-- | Type 'Network.ResourceType'.
+--   Resource type as it was perceived by the rendering engine.
 data NetworkResourceType = NetworkResourceTypeDocument | NetworkResourceTypeStylesheet | NetworkResourceTypeImage | NetworkResourceTypeMedia | NetworkResourceTypeFont | NetworkResourceTypeScript | NetworkResourceTypeTextTrack | NetworkResourceTypeXhr | NetworkResourceTypeFetch | NetworkResourceTypeEventSource | NetworkResourceTypeWebSocket | NetworkResourceTypeManifest | NetworkResourceTypeSignedExchange | NetworkResourceTypePing | NetworkResourceTypeCspViolationReport | NetworkResourceTypePreflight | NetworkResourceTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkResourceType where
@@ -2695,16 +2713,20 @@ instance ToJSON NetworkResourceType where
 
 
 
--- | Type 'Network.LoaderId' .Unique loader identifier.
+-- | Type 'Network.LoaderId'.
+--   Unique loader identifier.
 type NetworkLoaderId = String
 
--- | Type 'Network.RequestId' .Unique request identifier.
+-- | Type 'Network.RequestId'.
+--   Unique request identifier.
 type NetworkRequestId = String
 
--- | Type 'Network.InterceptionId' .Unique intercepted request identifier.
+-- | Type 'Network.InterceptionId'.
+--   Unique intercepted request identifier.
 type NetworkInterceptionId = String
 
--- | Type 'Network.ErrorReason' .Network level fetch failure reason.
+-- | Type 'Network.ErrorReason'.
+--   Network level fetch failure reason.
 data NetworkErrorReason = NetworkErrorReasonFailed | NetworkErrorReasonAborted | NetworkErrorReasonTimedOut | NetworkErrorReasonAccessDenied | NetworkErrorReasonConnectionClosed | NetworkErrorReasonConnectionReset | NetworkErrorReasonConnectionRefused | NetworkErrorReasonConnectionAborted | NetworkErrorReasonConnectionFailed | NetworkErrorReasonNameNotResolved | NetworkErrorReasonInternetDisconnected | NetworkErrorReasonAddressUnreachable | NetworkErrorReasonBlockedByClient | NetworkErrorReasonBlockedByResponse
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkErrorReason where
@@ -2746,16 +2768,20 @@ instance ToJSON NetworkErrorReason where
 
 
 
--- | Type 'Network.TimeSinceEpoch' .UTC time in seconds, counted from January 1, 1970.
+-- | Type 'Network.TimeSinceEpoch'.
+--   UTC time in seconds, counted from January 1, 1970.
 type NetworkTimeSinceEpoch = Double
 
--- | Type 'Network.MonotonicTime' .Monotonically increasing time in seconds since an arbitrary point in the past.
+-- | Type 'Network.MonotonicTime'.
+--   Monotonically increasing time in seconds since an arbitrary point in the past.
 type NetworkMonotonicTime = Double
 
--- | Type 'Network.Headers' .Request / response headers as keys / values of JSON object.
+-- | Type 'Network.Headers'.
+--   Request / response headers as keys / values of JSON object.
 type NetworkHeaders = [(String, String)]
 
--- | Type 'Network.ConnectionType' .The underlying connection technology that the browser is supposedly using.
+-- | Type 'Network.ConnectionType'.
+--   The underlying connection technology that the browser is supposedly using.
 data NetworkConnectionType = NetworkConnectionTypeNone | NetworkConnectionTypeCellular2g | NetworkConnectionTypeCellular3g | NetworkConnectionTypeCellular4g | NetworkConnectionTypeBluetooth | NetworkConnectionTypeEthernet | NetworkConnectionTypeWifi | NetworkConnectionTypeWimax | NetworkConnectionTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkConnectionType where
@@ -2787,7 +2813,8 @@ instance ToJSON NetworkConnectionType where
 
 
 
--- | Type 'Network.CookieSameSite' .Represents the cookie's 'SameSite' status:
+-- | Type 'Network.CookieSameSite'.
+--   Represents the cookie's 'SameSite' status:
 --   https://tools.ietf.org/html/draft-west-first-party-cookies
 data NetworkCookieSameSite = NetworkCookieSameSiteStrict | NetworkCookieSameSiteLax | NetworkCookieSameSiteNone
    deriving (Ord, Eq, Show, Read)
@@ -2808,7 +2835,8 @@ instance ToJSON NetworkCookieSameSite where
 
 
 
--- | Type 'Network.CookiePriority' .Represents the cookie's 'Priority' status:
+-- | Type 'Network.CookiePriority'.
+--   Represents the cookie's 'Priority' status:
 --   https://tools.ietf.org/html/draft-west-cookie-priority-00
 data NetworkCookiePriority = NetworkCookiePriorityLow | NetworkCookiePriorityMedium | NetworkCookiePriorityHigh
    deriving (Ord, Eq, Show, Read)
@@ -2829,7 +2857,8 @@ instance ToJSON NetworkCookiePriority where
 
 
 
--- | Type 'Network.CookieSourceScheme' .Represents the source scheme of the origin that originally set the cookie.
+-- | Type 'Network.CookieSourceScheme'.
+--   Represents the source scheme of the origin that originally set the cookie.
 --   A value of "Unset" allows protocol clients to emulate legacy cookie scope for the scheme.
 --   This is a temporary ability and it will be removed in the future.
 data NetworkCookieSourceScheme = NetworkCookieSourceSchemeUnset | NetworkCookieSourceSchemeNonSecure | NetworkCookieSourceSchemeSecure
@@ -2851,7 +2880,8 @@ instance ToJSON NetworkCookieSourceScheme where
 
 
 
--- | Type 'Network.ResourceTiming' .Timing information for the request.
+-- | Type 'Network.ResourceTiming'.
+--   Timing information for the request.
 data NetworkResourceTiming = NetworkResourceTiming {
   -- | Timing's requestTime is a baseline in seconds, while the other numbers are ticks in
   --   milliseconds relatively to this requestTime.
@@ -2899,7 +2929,8 @@ instance FromJSON  NetworkResourceTiming where
 
 
 
--- | Type 'Network.ResourcePriority' .Loading priority of a resource request.
+-- | Type 'Network.ResourcePriority'.
+--   Loading priority of a resource request.
 data NetworkResourcePriority = NetworkResourcePriorityVeryLow | NetworkResourcePriorityLow | NetworkResourcePriorityMedium | NetworkResourcePriorityHigh | NetworkResourcePriorityVeryHigh
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkResourcePriority where
@@ -2923,7 +2954,8 @@ instance ToJSON NetworkResourcePriority where
 
 
 
--- | Type 'Network.PostDataEntry' .Post data entry for HTTP request
+-- | Type 'Network.PostDataEntry'.
+--   Post data entry for HTTP request
 data NetworkPostDataEntry = NetworkPostDataEntry {
   networkPostDataEntryBytes :: Maybe String
 } deriving (Generic, Eq, Show, Read)
@@ -2935,7 +2967,8 @@ instance FromJSON  NetworkPostDataEntry where
 
 
 
--- | Type 'Network.Request' .HTTP request data.
+-- | Type 'Network.Request'.
+--   HTTP request data.
 data NetworkRequestReferrerPolicy = NetworkRequestReferrerPolicyUnsafeUrl | NetworkRequestReferrerPolicyNoReferrerWhenDowngrade | NetworkRequestReferrerPolicyNoReferrer | NetworkRequestReferrerPolicyOrigin | NetworkRequestReferrerPolicyOriginWhenCrossOrigin | NetworkRequestReferrerPolicySameOrigin | NetworkRequestReferrerPolicyStrictOrigin | NetworkRequestReferrerPolicyStrictOriginWhenCrossOrigin
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkRequestReferrerPolicy where
@@ -3003,7 +3036,8 @@ instance FromJSON  NetworkRequest where
 
 
 
--- | Type 'Network.SignedCertificateTimestamp' .Details of a signed certificate timestamp (SCT).
+-- | Type 'Network.SignedCertificateTimestamp'.
+--   Details of a signed certificate timestamp (SCT).
 data NetworkSignedCertificateTimestamp = NetworkSignedCertificateTimestamp {
   -- | Validation status.
   networkSignedCertificateTimestampStatus :: String,
@@ -3031,7 +3065,8 @@ instance FromJSON  NetworkSignedCertificateTimestamp where
 
 
 
--- | Type 'Network.SecurityDetails' .Security details about a request.
+-- | Type 'Network.SecurityDetails'.
+--   Security details about a request.
 data NetworkSecurityDetails = NetworkSecurityDetails {
   -- | Protocol name (e.g. "TLS 1.2" or "QUIC").
   networkSecurityDetailsProtocol :: String,
@@ -3068,7 +3103,8 @@ instance FromJSON  NetworkSecurityDetails where
 
 
 
--- | Type 'Network.CertificateTransparencyCompliance' .Whether the request complied with Certificate Transparency policy.
+-- | Type 'Network.CertificateTransparencyCompliance'.
+--   Whether the request complied with Certificate Transparency policy.
 data NetworkCertificateTransparencyCompliance = NetworkCertificateTransparencyComplianceUnknown | NetworkCertificateTransparencyComplianceNotCompliant | NetworkCertificateTransparencyComplianceCompliant
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCertificateTransparencyCompliance where
@@ -3088,7 +3124,8 @@ instance ToJSON NetworkCertificateTransparencyCompliance where
 
 
 
--- | Type 'Network.BlockedReason' .The reason why request was blocked.
+-- | Type 'Network.BlockedReason'.
+--   The reason why request was blocked.
 data NetworkBlockedReason = NetworkBlockedReasonOther | NetworkBlockedReasonCsp | NetworkBlockedReasonMixedContent | NetworkBlockedReasonOrigin | NetworkBlockedReasonInspector | NetworkBlockedReasonSubresourceFilter | NetworkBlockedReasonContentType | NetworkBlockedReasonCoepFrameResourceNeedsCoepHeader | NetworkBlockedReasonCoopSandboxedIframeCannotNavigateToCoopPage | NetworkBlockedReasonCorpNotSameOrigin | NetworkBlockedReasonCorpNotSameOriginAfterDefaultedToSameOriginByCoep | NetworkBlockedReasonCorpNotSameSite
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkBlockedReason where
@@ -3126,7 +3163,8 @@ instance ToJSON NetworkBlockedReason where
 
 
 
--- | Type 'Network.CorsError' .The reason why request was blocked.
+-- | Type 'Network.CorsError'.
+--   The reason why request was blocked.
 data NetworkCorsError = NetworkCorsErrorDisallowedByMode | NetworkCorsErrorInvalidResponse | NetworkCorsErrorWildcardOriginNotAllowed | NetworkCorsErrorMissingAllowOriginHeader | NetworkCorsErrorMultipleAllowOriginValues | NetworkCorsErrorInvalidAllowOriginValue | NetworkCorsErrorAllowOriginMismatch | NetworkCorsErrorInvalidAllowCredentials | NetworkCorsErrorCorsDisabledScheme | NetworkCorsErrorPreflightInvalidStatus | NetworkCorsErrorPreflightDisallowedRedirect | NetworkCorsErrorPreflightWildcardOriginNotAllowed | NetworkCorsErrorPreflightMissingAllowOriginHeader | NetworkCorsErrorPreflightMultipleAllowOriginValues | NetworkCorsErrorPreflightInvalidAllowOriginValue | NetworkCorsErrorPreflightAllowOriginMismatch | NetworkCorsErrorPreflightInvalidAllowCredentials | NetworkCorsErrorPreflightMissingAllowExternal | NetworkCorsErrorPreflightInvalidAllowExternal | NetworkCorsErrorPreflightMissingAllowPrivateNetwork | NetworkCorsErrorPreflightInvalidAllowPrivateNetwork | NetworkCorsErrorInvalidAllowMethodsPreflightResponse | NetworkCorsErrorInvalidAllowHeadersPreflightResponse | NetworkCorsErrorMethodDisallowedByPreflightResponse | NetworkCorsErrorHeaderDisallowedByPreflightResponse | NetworkCorsErrorRedirectContainsCredentials | NetworkCorsErrorInsecurePrivateNetwork | NetworkCorsErrorInvalidPrivateNetworkAccess | NetworkCorsErrorUnexpectedPrivateNetworkAccess | NetworkCorsErrorNoCorsRedirectModeNotFollow
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCorsError where
@@ -3200,7 +3238,7 @@ instance ToJSON NetworkCorsError where
 
 
 
--- | Type 'Network.CorsErrorStatus' .
+-- | Type 'Network.CorsErrorStatus'.
 data NetworkCorsErrorStatus = NetworkCorsErrorStatus {
   networkCorsErrorStatusCorsError :: NetworkCorsError,
   networkCorsErrorStatusFailedParameter :: String
@@ -3213,7 +3251,8 @@ instance FromJSON  NetworkCorsErrorStatus where
 
 
 
--- | Type 'Network.ServiceWorkerResponseSource' .Source of serviceworker response.
+-- | Type 'Network.ServiceWorkerResponseSource'.
+--   Source of serviceworker response.
 data NetworkServiceWorkerResponseSource = NetworkServiceWorkerResponseSourceCacheStorage | NetworkServiceWorkerResponseSourceHttpCache | NetworkServiceWorkerResponseSourceFallbackCode | NetworkServiceWorkerResponseSourceNetwork
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkServiceWorkerResponseSource where
@@ -3235,7 +3274,8 @@ instance ToJSON NetworkServiceWorkerResponseSource where
 
 
 
--- | Type 'Network.TrustTokenParams' .Determines what type of Trust Token operation is executed and
+-- | Type 'Network.TrustTokenParams'.
+--   Determines what type of Trust Token operation is executed and
 --   depending on the type, some additional parameters. The values
 --   are specified in third_party/blink/renderer/core/fetch/trust_token.idl.
 data NetworkTrustTokenParamsRefreshPolicy = NetworkTrustTokenParamsRefreshPolicyUseCached | NetworkTrustTokenParamsRefreshPolicyRefresh
@@ -3272,7 +3312,7 @@ instance FromJSON  NetworkTrustTokenParams where
 
 
 
--- | Type 'Network.TrustTokenOperationType' .
+-- | Type 'Network.TrustTokenOperationType'.
 data NetworkTrustTokenOperationType = NetworkTrustTokenOperationTypeIssuance | NetworkTrustTokenOperationTypeRedemption | NetworkTrustTokenOperationTypeSigning
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkTrustTokenOperationType where
@@ -3292,7 +3332,8 @@ instance ToJSON NetworkTrustTokenOperationType where
 
 
 
--- | Type 'Network.Response' .HTTP response data.
+-- | Type 'Network.Response'.
+--   HTTP response data.
 data NetworkResponse = NetworkResponse {
   -- | Response URL. This URL can be different from CachedResource.url in case of redirect.
   networkResponseUrl :: String,
@@ -3345,7 +3386,8 @@ instance FromJSON  NetworkResponse where
 
 
 
--- | Type 'Network.WebSocketRequest' .WebSocket request data.
+-- | Type 'Network.WebSocketRequest'.
+--   WebSocket request data.
 data NetworkWebSocketRequest = NetworkWebSocketRequest {
   -- | HTTP request headers.
   networkWebSocketRequestHeaders :: NetworkHeaders
@@ -3358,7 +3400,8 @@ instance FromJSON  NetworkWebSocketRequest where
 
 
 
--- | Type 'Network.WebSocketResponse' .WebSocket response data.
+-- | Type 'Network.WebSocketResponse'.
+--   WebSocket response data.
 data NetworkWebSocketResponse = NetworkWebSocketResponse {
   -- | HTTP response status code.
   networkWebSocketResponseStatus :: Int,
@@ -3381,7 +3424,8 @@ instance FromJSON  NetworkWebSocketResponse where
 
 
 
--- | Type 'Network.WebSocketFrame' .WebSocket message data. This represents an entire WebSocket message, not just a fragmented frame as the name suggests.
+-- | Type 'Network.WebSocketFrame'.
+--   WebSocket message data. This represents an entire WebSocket message, not just a fragmented frame as the name suggests.
 data NetworkWebSocketFrame = NetworkWebSocketFrame {
   -- | WebSocket message opcode.
   networkWebSocketFrameOpcode :: Double,
@@ -3400,7 +3444,8 @@ instance FromJSON  NetworkWebSocketFrame where
 
 
 
--- | Type 'Network.CachedResource' .Information about the cached resource.
+-- | Type 'Network.CachedResource'.
+--   Information about the cached resource.
 data NetworkCachedResource = NetworkCachedResource {
   -- | Resource URL. This is the url of the original network request.
   networkCachedResourceUrl :: String,
@@ -3419,7 +3464,8 @@ instance FromJSON  NetworkCachedResource where
 
 
 
--- | Type 'Network.Initiator' .Information about the request initiator.
+-- | Type 'Network.Initiator'.
+--   Information about the request initiator.
 data NetworkInitiatorType = NetworkInitiatorTypeParser | NetworkInitiatorTypeScript | NetworkInitiatorTypePreload | NetworkInitiatorTypeSignedExchange | NetworkInitiatorTypePreflight | NetworkInitiatorTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkInitiatorType where
@@ -3469,7 +3515,8 @@ instance FromJSON  NetworkInitiator where
 
 
 
--- | Type 'Network.Cookie' .Cookie object
+-- | Type 'Network.Cookie'.
+--   Cookie object
 data NetworkCookie = NetworkCookie {
   -- | Cookie name.
   networkCookieName :: String,
@@ -3515,7 +3562,8 @@ instance FromJSON  NetworkCookie where
 
 
 
--- | Type 'Network.SetCookieBlockedReason' .Types of reasons why a cookie may not be stored from a response.
+-- | Type 'Network.SetCookieBlockedReason'.
+--   Types of reasons why a cookie may not be stored from a response.
 data NetworkSetCookieBlockedReason = NetworkSetCookieBlockedReasonSecureOnly | NetworkSetCookieBlockedReasonSameSiteStrict | NetworkSetCookieBlockedReasonSameSiteLax | NetworkSetCookieBlockedReasonSameSiteUnspecifiedTreatedAsLax | NetworkSetCookieBlockedReasonSameSiteNoneInsecure | NetworkSetCookieBlockedReasonUserPreferences | NetworkSetCookieBlockedReasonSyntaxError | NetworkSetCookieBlockedReasonSchemeNotSupported | NetworkSetCookieBlockedReasonOverwriteSecure | NetworkSetCookieBlockedReasonInvalidDomain | NetworkSetCookieBlockedReasonInvalidPrefix | NetworkSetCookieBlockedReasonUnknownError | NetworkSetCookieBlockedReasonSchemefulSameSiteStrict | NetworkSetCookieBlockedReasonSchemefulSameSiteLax | NetworkSetCookieBlockedReasonSchemefulSameSiteUnspecifiedTreatedAsLax | NetworkSetCookieBlockedReasonSamePartyFromCrossPartyContext | NetworkSetCookieBlockedReasonSamePartyConflictsWithOtherAttributes | NetworkSetCookieBlockedReasonNameValuePairExceedsMaxSize
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkSetCookieBlockedReason where
@@ -3565,7 +3613,8 @@ instance ToJSON NetworkSetCookieBlockedReason where
 
 
 
--- | Type 'Network.CookieBlockedReason' .Types of reasons why a cookie may not be sent with a request.
+-- | Type 'Network.CookieBlockedReason'.
+--   Types of reasons why a cookie may not be sent with a request.
 data NetworkCookieBlockedReason = NetworkCookieBlockedReasonSecureOnly | NetworkCookieBlockedReasonNotOnPath | NetworkCookieBlockedReasonDomainMismatch | NetworkCookieBlockedReasonSameSiteStrict | NetworkCookieBlockedReasonSameSiteLax | NetworkCookieBlockedReasonSameSiteUnspecifiedTreatedAsLax | NetworkCookieBlockedReasonSameSiteNoneInsecure | NetworkCookieBlockedReasonUserPreferences | NetworkCookieBlockedReasonUnknownError | NetworkCookieBlockedReasonSchemefulSameSiteStrict | NetworkCookieBlockedReasonSchemefulSameSiteLax | NetworkCookieBlockedReasonSchemefulSameSiteUnspecifiedTreatedAsLax | NetworkCookieBlockedReasonSamePartyFromCrossPartyContext | NetworkCookieBlockedReasonNameValuePairExceedsMaxSize
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCookieBlockedReason where
@@ -3607,7 +3656,8 @@ instance ToJSON NetworkCookieBlockedReason where
 
 
 
--- | Type 'Network.BlockedSetCookieWithReason' .A cookie which was not stored from a response with the corresponding reason.
+-- | Type 'Network.BlockedSetCookieWithReason'.
+--   A cookie which was not stored from a response with the corresponding reason.
 data NetworkBlockedSetCookieWithReason = NetworkBlockedSetCookieWithReason {
   -- | The reason(s) this cookie was blocked.
   networkBlockedSetCookieWithReasonBlockedReasons :: [NetworkSetCookieBlockedReason],
@@ -3627,7 +3677,8 @@ instance FromJSON  NetworkBlockedSetCookieWithReason where
 
 
 
--- | Type 'Network.BlockedCookieWithReason' .A cookie with was not sent with a request with the corresponding reason.
+-- | Type 'Network.BlockedCookieWithReason'.
+--   A cookie with was not sent with a request with the corresponding reason.
 data NetworkBlockedCookieWithReason = NetworkBlockedCookieWithReason {
   -- | The reason(s) the cookie was blocked.
   networkBlockedCookieWithReasonBlockedReasons :: [NetworkCookieBlockedReason],
@@ -3642,7 +3693,8 @@ instance FromJSON  NetworkBlockedCookieWithReason where
 
 
 
--- | Type 'Network.CookieParam' .Cookie parameter object
+-- | Type 'Network.CookieParam'.
+--   Cookie parameter object
 data NetworkCookieParam = NetworkCookieParam {
   -- | Cookie name.
   networkCookieParamName :: String,
@@ -3686,7 +3738,8 @@ instance FromJSON  NetworkCookieParam where
 
 
 
--- | Type 'Network.AuthChallenge' .Authorization challenge for HTTP status code 401 or 407.
+-- | Type 'Network.AuthChallenge'.
+--   Authorization challenge for HTTP status code 401 or 407.
 data NetworkAuthChallengeSource = NetworkAuthChallengeSourceServer | NetworkAuthChallengeSourceProxy
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkAuthChallengeSource where
@@ -3722,7 +3775,8 @@ instance FromJSON  NetworkAuthChallenge where
 
 
 
--- | Type 'Network.AuthChallengeResponse' .Response to an AuthChallenge.
+-- | Type 'Network.AuthChallengeResponse'.
+--   Response to an AuthChallenge.
 data NetworkAuthChallengeResponseResponse = NetworkAuthChallengeResponseResponseDefault | NetworkAuthChallengeResponseResponseCancelAuth | NetworkAuthChallengeResponseResponseProvideCredentials
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkAuthChallengeResponseResponse where
@@ -3762,7 +3816,8 @@ instance FromJSON  NetworkAuthChallengeResponse where
 
 
 
--- | Type 'Network.InterceptionStage' .Stages of the interception to begin intercepting. Request will intercept before the request is
+-- | Type 'Network.InterceptionStage'.
+--   Stages of the interception to begin intercepting. Request will intercept before the request is
 --   sent. Response will intercept after the response is received.
 data NetworkInterceptionStage = NetworkInterceptionStageRequest | NetworkInterceptionStageHeadersReceived
    deriving (Ord, Eq, Show, Read)
@@ -3781,7 +3836,8 @@ instance ToJSON NetworkInterceptionStage where
 
 
 
--- | Type 'Network.RequestPattern' .Request pattern for interception.
+-- | Type 'Network.RequestPattern'.
+--   Request pattern for interception.
 data NetworkRequestPattern = NetworkRequestPattern {
   -- | Wildcards (`'*'` -> zero or more, `'?'` -> exactly one) are allowed. Escape character is
   --   backslash. Omitting is equivalent to `"*"`.
@@ -3799,7 +3855,8 @@ instance FromJSON  NetworkRequestPattern where
 
 
 
--- | Type 'Network.SignedExchangeSignature' .Information about a signed exchange signature.
+-- | Type 'Network.SignedExchangeSignature'.
+--   Information about a signed exchange signature.
 --   https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-impl.html#rfc.section.3.1
 data NetworkSignedExchangeSignature = NetworkSignedExchangeSignature {
   -- | Signed exchange signature label.
@@ -3829,7 +3886,8 @@ instance FromJSON  NetworkSignedExchangeSignature where
 
 
 
--- | Type 'Network.SignedExchangeHeader' .Information about a signed exchange header.
+-- | Type 'Network.SignedExchangeHeader'.
+--   Information about a signed exchange header.
 --   https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-impl.html#cbor-representation
 data NetworkSignedExchangeHeader = NetworkSignedExchangeHeader {
   -- | Signed exchange request URL.
@@ -3851,7 +3909,8 @@ instance FromJSON  NetworkSignedExchangeHeader where
 
 
 
--- | Type 'Network.SignedExchangeErrorField' .Field type for a signed exchange related error.
+-- | Type 'Network.SignedExchangeErrorField'.
+--   Field type for a signed exchange related error.
 data NetworkSignedExchangeErrorField = NetworkSignedExchangeErrorFieldSignatureSig | NetworkSignedExchangeErrorFieldSignatureIntegrity | NetworkSignedExchangeErrorFieldSignatureCertUrl | NetworkSignedExchangeErrorFieldSignatureCertSha256 | NetworkSignedExchangeErrorFieldSignatureValidityUrl | NetworkSignedExchangeErrorFieldSignatureTimestamps
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkSignedExchangeErrorField where
@@ -3877,7 +3936,8 @@ instance ToJSON NetworkSignedExchangeErrorField where
 
 
 
--- | Type 'Network.SignedExchangeError' .Information about a signed exchange response.
+-- | Type 'Network.SignedExchangeError'.
+--   Information about a signed exchange response.
 data NetworkSignedExchangeError = NetworkSignedExchangeError {
   -- | Error message.
   networkSignedExchangeErrorMessage :: String,
@@ -3894,7 +3954,8 @@ instance FromJSON  NetworkSignedExchangeError where
 
 
 
--- | Type 'Network.SignedExchangeInfo' .Information about a signed exchange response.
+-- | Type 'Network.SignedExchangeInfo'.
+--   Information about a signed exchange response.
 data NetworkSignedExchangeInfo = NetworkSignedExchangeInfo {
   -- | The outer response of signed HTTP exchange which was received from network.
   networkSignedExchangeInfoOuterResponse :: NetworkResponse,
@@ -3913,7 +3974,8 @@ instance FromJSON  NetworkSignedExchangeInfo where
 
 
 
--- | Type 'Network.ContentEncoding' .List of content encodings supported by the backend.
+-- | Type 'Network.ContentEncoding'.
+--   List of content encodings supported by the backend.
 data NetworkContentEncoding = NetworkContentEncodingDeflate | NetworkContentEncodingGzip | NetworkContentEncodingBr
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkContentEncoding where
@@ -3933,7 +3995,7 @@ instance ToJSON NetworkContentEncoding where
 
 
 
--- | Type 'Network.PrivateNetworkRequestPolicy' .
+-- | Type 'Network.PrivateNetworkRequestPolicy'.
 data NetworkPrivateNetworkRequestPolicy = NetworkPrivateNetworkRequestPolicyAllow | NetworkPrivateNetworkRequestPolicyBlockFromInsecureToMorePrivate | NetworkPrivateNetworkRequestPolicyWarnFromInsecureToMorePrivate | NetworkPrivateNetworkRequestPolicyPreflightBlock | NetworkPrivateNetworkRequestPolicyPreflightWarn
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkPrivateNetworkRequestPolicy where
@@ -3957,7 +4019,7 @@ instance ToJSON NetworkPrivateNetworkRequestPolicy where
 
 
 
--- | Type 'Network.IPAddressSpace' .
+-- | Type 'Network.IPAddressSpace'.
 data NetworkIpAddressSpace = NetworkIpAddressSpaceLocal | NetworkIpAddressSpacePrivate | NetworkIpAddressSpacePublic | NetworkIpAddressSpaceUnknown
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkIpAddressSpace where
@@ -3979,7 +4041,7 @@ instance ToJSON NetworkIpAddressSpace where
 
 
 
--- | Type 'Network.ConnectTiming' .
+-- | Type 'Network.ConnectTiming'.
 data NetworkConnectTiming = NetworkConnectTiming {
   -- | Timing's requestTime is a baseline in seconds, while the other numbers are ticks in
   --   milliseconds relatively to this requestTime. Matches ResourceTiming's requestTime for
@@ -3994,7 +4056,7 @@ instance FromJSON  NetworkConnectTiming where
 
 
 
--- | Type 'Network.ClientSecurityState' .
+-- | Type 'Network.ClientSecurityState'.
 data NetworkClientSecurityState = NetworkClientSecurityState {
   networkClientSecurityStateInitiatorIsSecureContext :: Bool,
   networkClientSecurityStateInitiatorIpAddressSpace :: NetworkIpAddressSpace,
@@ -4008,7 +4070,7 @@ instance FromJSON  NetworkClientSecurityState where
 
 
 
--- | Type 'Network.CrossOriginOpenerPolicyValue' .
+-- | Type 'Network.CrossOriginOpenerPolicyValue'.
 data NetworkCrossOriginOpenerPolicyValue = NetworkCrossOriginOpenerPolicyValueSameOrigin | NetworkCrossOriginOpenerPolicyValueSameOriginAllowPopups | NetworkCrossOriginOpenerPolicyValueUnsafeNone | NetworkCrossOriginOpenerPolicyValueSameOriginPlusCoep | NetworkCrossOriginOpenerPolicyValueSameOriginAllowPopupsPlusCoep
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCrossOriginOpenerPolicyValue where
@@ -4032,7 +4094,7 @@ instance ToJSON NetworkCrossOriginOpenerPolicyValue where
 
 
 
--- | Type 'Network.CrossOriginOpenerPolicyStatus' .
+-- | Type 'Network.CrossOriginOpenerPolicyStatus'.
 data NetworkCrossOriginOpenerPolicyStatus = NetworkCrossOriginOpenerPolicyStatus {
   networkCrossOriginOpenerPolicyStatusValue :: NetworkCrossOriginOpenerPolicyValue,
   networkCrossOriginOpenerPolicyStatusReportOnlyValue :: NetworkCrossOriginOpenerPolicyValue,
@@ -4047,7 +4109,7 @@ instance FromJSON  NetworkCrossOriginOpenerPolicyStatus where
 
 
 
--- | Type 'Network.CrossOriginEmbedderPolicyValue' .
+-- | Type 'Network.CrossOriginEmbedderPolicyValue'.
 data NetworkCrossOriginEmbedderPolicyValue = NetworkCrossOriginEmbedderPolicyValueNone | NetworkCrossOriginEmbedderPolicyValueCredentialless | NetworkCrossOriginEmbedderPolicyValueRequireCorp
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCrossOriginEmbedderPolicyValue where
@@ -4067,7 +4129,7 @@ instance ToJSON NetworkCrossOriginEmbedderPolicyValue where
 
 
 
--- | Type 'Network.CrossOriginEmbedderPolicyStatus' .
+-- | Type 'Network.CrossOriginEmbedderPolicyStatus'.
 data NetworkCrossOriginEmbedderPolicyStatus = NetworkCrossOriginEmbedderPolicyStatus {
   networkCrossOriginEmbedderPolicyStatusValue :: NetworkCrossOriginEmbedderPolicyValue,
   networkCrossOriginEmbedderPolicyStatusReportOnlyValue :: NetworkCrossOriginEmbedderPolicyValue,
@@ -4082,7 +4144,7 @@ instance FromJSON  NetworkCrossOriginEmbedderPolicyStatus where
 
 
 
--- | Type 'Network.SecurityIsolationStatus' .
+-- | Type 'Network.SecurityIsolationStatus'.
 data NetworkSecurityIsolationStatus = NetworkSecurityIsolationStatus {
   networkSecurityIsolationStatusCoop :: Maybe NetworkCrossOriginOpenerPolicyStatus,
   networkSecurityIsolationStatusCoep :: Maybe NetworkCrossOriginEmbedderPolicyStatus
@@ -4095,7 +4157,8 @@ instance FromJSON  NetworkSecurityIsolationStatus where
 
 
 
--- | Type 'Network.ReportStatus' .The status of a Reporting API report.
+-- | Type 'Network.ReportStatus'.
+--   The status of a Reporting API report.
 data NetworkReportStatus = NetworkReportStatusQueued | NetworkReportStatusPending | NetworkReportStatusMarkedForRemoval | NetworkReportStatusSuccess
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkReportStatus where
@@ -4117,10 +4180,11 @@ instance ToJSON NetworkReportStatus where
 
 
 
--- | Type 'Network.ReportId' .
+-- | Type 'Network.ReportId'.
 type NetworkReportId = String
 
--- | Type 'Network.ReportingApiReport' .An object representing a report generated by the Reporting API.
+-- | Type 'Network.ReportingApiReport'.
+--   An object representing a report generated by the Reporting API.
 data NetworkReportingApiReport = NetworkReportingApiReport {
   networkReportingApiReportId :: NetworkReportId,
   -- | The URL of the document that triggered the report.
@@ -4146,7 +4210,7 @@ instance FromJSON  NetworkReportingApiReport where
 
 
 
--- | Type 'Network.ReportingApiEndpoint' .
+-- | Type 'Network.ReportingApiEndpoint'.
 data NetworkReportingApiEndpoint = NetworkReportingApiEndpoint {
   -- | The URL of the endpoint to which reports may be delivered.
   networkReportingApiEndpointUrl :: String,
@@ -4161,7 +4225,8 @@ instance FromJSON  NetworkReportingApiEndpoint where
 
 
 
--- | Type 'Network.LoadNetworkResourcePageResult' .An object providing the result of a network resource load.
+-- | Type 'Network.LoadNetworkResourcePageResult'.
+--   An object providing the result of a network resource load.
 data NetworkLoadNetworkResourcePageResult = NetworkLoadNetworkResourcePageResult {
   networkLoadNetworkResourcePageResultSuccess :: Bool,
   -- | Optional values used for error reporting.
@@ -4181,7 +4246,8 @@ instance FromJSON  NetworkLoadNetworkResourcePageResult where
 
 
 
--- | Type 'Network.LoadNetworkResourceOptions' .An options object that may be extended later to better support CORS,
+-- | Type 'Network.LoadNetworkResourceOptions'.
+--   An options object that may be extended later to better support CORS,
 --   CORB and streaming.
 data NetworkLoadNetworkResourceOptions = NetworkLoadNetworkResourceOptions {
   networkLoadNetworkResourceOptionsDisableCache :: Bool,
@@ -5460,10 +5526,12 @@ instance Command NetworkLoadNetworkResource where
 
 
 
--- | Type 'Page.FrameId' .Unique frame identifier.
+-- | Type 'Page.FrameId'.
+--   Unique frame identifier.
 type PageFrameId = String
 
--- | Type 'Page.AdFrameType' .Indicates whether a frame has been identified as an ad.
+-- | Type 'Page.AdFrameType'.
+--   Indicates whether a frame has been identified as an ad.
 data PageAdFrameType = PageAdFrameTypeNone | PageAdFrameTypeChild | PageAdFrameTypeRoot
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageAdFrameType where
@@ -5483,7 +5551,7 @@ instance ToJSON PageAdFrameType where
 
 
 
--- | Type 'Page.AdFrameExplanation' .
+-- | Type 'Page.AdFrameExplanation'.
 data PageAdFrameExplanation = PageAdFrameExplanationParentIsAd | PageAdFrameExplanationCreatedByAdScript | PageAdFrameExplanationMatchedBlockingRule
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageAdFrameExplanation where
@@ -5503,7 +5571,8 @@ instance ToJSON PageAdFrameExplanation where
 
 
 
--- | Type 'Page.AdFrameStatus' .Indicates whether a frame has been identified as an ad and why.
+-- | Type 'Page.AdFrameStatus'.
+--   Indicates whether a frame has been identified as an ad and why.
 data PageAdFrameStatus = PageAdFrameStatus {
   pageAdFrameStatusAdFrameType :: PageAdFrameType,
   pageAdFrameStatusExplanations :: Maybe [PageAdFrameExplanation]
@@ -5516,7 +5585,8 @@ instance FromJSON  PageAdFrameStatus where
 
 
 
--- | Type 'Page.SecureContextType' .Indicates whether the frame is a secure context and why it is the case.
+-- | Type 'Page.SecureContextType'.
+--   Indicates whether the frame is a secure context and why it is the case.
 data PageSecureContextType = PageSecureContextTypeSecure | PageSecureContextTypeSecureLocalhost | PageSecureContextTypeInsecureScheme | PageSecureContextTypeInsecureAncestor
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageSecureContextType where
@@ -5538,7 +5608,8 @@ instance ToJSON PageSecureContextType where
 
 
 
--- | Type 'Page.CrossOriginIsolatedContextType' .Indicates whether the frame is cross-origin isolated and why it is the case.
+-- | Type 'Page.CrossOriginIsolatedContextType'.
+--   Indicates whether the frame is cross-origin isolated and why it is the case.
 data PageCrossOriginIsolatedContextType = PageCrossOriginIsolatedContextTypeIsolated | PageCrossOriginIsolatedContextTypeNotIsolated | PageCrossOriginIsolatedContextTypeNotIsolatedFeatureDisabled
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageCrossOriginIsolatedContextType where
@@ -5558,7 +5629,7 @@ instance ToJSON PageCrossOriginIsolatedContextType where
 
 
 
--- | Type 'Page.GatedAPIFeatures' .
+-- | Type 'Page.GatedAPIFeatures'.
 data PageGatedApiFeatures = PageGatedApiFeaturesSharedArrayBuffers | PageGatedApiFeaturesSharedArrayBuffersTransferAllowed | PageGatedApiFeaturesPerformanceMeasureMemory | PageGatedApiFeaturesPerformanceProfile
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageGatedApiFeatures where
@@ -5580,7 +5651,8 @@ instance ToJSON PageGatedApiFeatures where
 
 
 
--- | Type 'Page.PermissionsPolicyFeature' .All Permissions Policy features. This enum should match the one defined
+-- | Type 'Page.PermissionsPolicyFeature'.
+--   All Permissions Policy features. This enum should match the one defined
 --   in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
 data PagePermissionsPolicyFeature = PagePermissionsPolicyFeatureAccelerometer | PagePermissionsPolicyFeatureAmbientLightSensor | PagePermissionsPolicyFeatureAttributionReporting | PagePermissionsPolicyFeatureAutoplay | PagePermissionsPolicyFeatureBluetooth | PagePermissionsPolicyFeatureBrowsingTopics | PagePermissionsPolicyFeatureCamera | PagePermissionsPolicyFeatureChDpr | PagePermissionsPolicyFeatureChDeviceMemory | PagePermissionsPolicyFeatureChDownlink | PagePermissionsPolicyFeatureChEct | PagePermissionsPolicyFeatureChPrefersColorScheme | PagePermissionsPolicyFeatureChRtt | PagePermissionsPolicyFeatureChSaveData | PagePermissionsPolicyFeatureChUa | PagePermissionsPolicyFeatureChUaArch | PagePermissionsPolicyFeatureChUaBitness | PagePermissionsPolicyFeatureChUaPlatform | PagePermissionsPolicyFeatureChUaModel | PagePermissionsPolicyFeatureChUaMobile | PagePermissionsPolicyFeatureChUaFull | PagePermissionsPolicyFeatureChUaFullVersion | PagePermissionsPolicyFeatureChUaFullVersionList | PagePermissionsPolicyFeatureChUaPlatformVersion | PagePermissionsPolicyFeatureChUaReduced | PagePermissionsPolicyFeatureChUaWow64 | PagePermissionsPolicyFeatureChViewportHeight | PagePermissionsPolicyFeatureChViewportWidth | PagePermissionsPolicyFeatureChWidth | PagePermissionsPolicyFeatureClipboardRead | PagePermissionsPolicyFeatureClipboardWrite | PagePermissionsPolicyFeatureCrossOriginIsolated | PagePermissionsPolicyFeatureDirectSockets | PagePermissionsPolicyFeatureDisplayCapture | PagePermissionsPolicyFeatureDocumentDomain | PagePermissionsPolicyFeatureEncryptedMedia | PagePermissionsPolicyFeatureExecutionWhileOutOfViewport | PagePermissionsPolicyFeatureExecutionWhileNotRendered | PagePermissionsPolicyFeatureFocusWithoutUserActivation | PagePermissionsPolicyFeatureFullscreen | PagePermissionsPolicyFeatureFrobulate | PagePermissionsPolicyFeatureGamepad | PagePermissionsPolicyFeatureGeolocation | PagePermissionsPolicyFeatureGyroscope | PagePermissionsPolicyFeatureHid | PagePermissionsPolicyFeatureIdleDetection | PagePermissionsPolicyFeatureInterestCohort | PagePermissionsPolicyFeatureJoinAdInterestGroup | PagePermissionsPolicyFeatureKeyboardMap | PagePermissionsPolicyFeatureLocalFonts | PagePermissionsPolicyFeatureMagnetometer | PagePermissionsPolicyFeatureMicrophone | PagePermissionsPolicyFeatureMidi | PagePermissionsPolicyFeatureOtpCredentials | PagePermissionsPolicyFeaturePayment | PagePermissionsPolicyFeaturePictureInPicture | PagePermissionsPolicyFeaturePublickeyCredentialsGet | PagePermissionsPolicyFeatureRunAdAuction | PagePermissionsPolicyFeatureScreenWakeLock | PagePermissionsPolicyFeatureSerial | PagePermissionsPolicyFeatureSharedAutofill | PagePermissionsPolicyFeatureStorageAccessApi | PagePermissionsPolicyFeatureSyncXhr | PagePermissionsPolicyFeatureTrustTokenRedemption | PagePermissionsPolicyFeatureUsb | PagePermissionsPolicyFeatureVerticalScroll | PagePermissionsPolicyFeatureWebShare | PagePermissionsPolicyFeatureWindowPlacement | PagePermissionsPolicyFeatureXrSpatialTracking
    deriving (Ord, Eq, Show, Read)
@@ -5733,7 +5805,8 @@ instance ToJSON PagePermissionsPolicyFeature where
 
 
 
--- | Type 'Page.PermissionsPolicyBlockReason' .Reason for a permissions policy feature to be disabled.
+-- | Type 'Page.PermissionsPolicyBlockReason'.
+--   Reason for a permissions policy feature to be disabled.
 data PagePermissionsPolicyBlockReason = PagePermissionsPolicyBlockReasonHeader | PagePermissionsPolicyBlockReasonIframeAttribute | PagePermissionsPolicyBlockReasonInFencedFrameTree
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PagePermissionsPolicyBlockReason where
@@ -5753,7 +5826,7 @@ instance ToJSON PagePermissionsPolicyBlockReason where
 
 
 
--- | Type 'Page.PermissionsPolicyBlockLocator' .
+-- | Type 'Page.PermissionsPolicyBlockLocator'.
 data PagePermissionsPolicyBlockLocator = PagePermissionsPolicyBlockLocator {
   pagePermissionsPolicyBlockLocatorFrameId :: PageFrameId,
   pagePermissionsPolicyBlockLocatorBlockReason :: PagePermissionsPolicyBlockReason
@@ -5766,7 +5839,7 @@ instance FromJSON  PagePermissionsPolicyBlockLocator where
 
 
 
--- | Type 'Page.PermissionsPolicyFeatureState' .
+-- | Type 'Page.PermissionsPolicyFeatureState'.
 data PagePermissionsPolicyFeatureState = PagePermissionsPolicyFeatureState {
   pagePermissionsPolicyFeatureStateFeature :: PagePermissionsPolicyFeature,
   pagePermissionsPolicyFeatureStateAllowed :: Bool,
@@ -5780,7 +5853,8 @@ instance FromJSON  PagePermissionsPolicyFeatureState where
 
 
 
--- | Type 'Page.OriginTrialTokenStatus' .Origin Trial(https://www.chromium.org/blink/origin-trials) support.
+-- | Type 'Page.OriginTrialTokenStatus'.
+--   Origin Trial(https://www.chromium.org/blink/origin-trials) support.
 --   Status for an Origin Trial token.
 data PageOriginTrialTokenStatus = PageOriginTrialTokenStatusSuccess | PageOriginTrialTokenStatusNotSupported | PageOriginTrialTokenStatusInsecure | PageOriginTrialTokenStatusExpired | PageOriginTrialTokenStatusWrongOrigin | PageOriginTrialTokenStatusInvalidSignature | PageOriginTrialTokenStatusMalformed | PageOriginTrialTokenStatusWrongVersion | PageOriginTrialTokenStatusFeatureDisabled | PageOriginTrialTokenStatusTokenDisabled | PageOriginTrialTokenStatusFeatureDisabledForUser | PageOriginTrialTokenStatusUnknownTrial
    deriving (Ord, Eq, Show, Read)
@@ -5819,7 +5893,8 @@ instance ToJSON PageOriginTrialTokenStatus where
 
 
 
--- | Type 'Page.OriginTrialStatus' .Status for an Origin Trial.
+-- | Type 'Page.OriginTrialStatus'.
+--   Status for an Origin Trial.
 data PageOriginTrialStatus = PageOriginTrialStatusEnabled | PageOriginTrialStatusValidTokenNotProvided | PageOriginTrialStatusOsNotSupported | PageOriginTrialStatusTrialNotAllowed
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageOriginTrialStatus where
@@ -5841,7 +5916,7 @@ instance ToJSON PageOriginTrialStatus where
 
 
 
--- | Type 'Page.OriginTrialUsageRestriction' .
+-- | Type 'Page.OriginTrialUsageRestriction'.
 data PageOriginTrialUsageRestriction = PageOriginTrialUsageRestrictionNone | PageOriginTrialUsageRestrictionSubset
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageOriginTrialUsageRestriction where
@@ -5859,7 +5934,7 @@ instance ToJSON PageOriginTrialUsageRestriction where
 
 
 
--- | Type 'Page.OriginTrialToken' .
+-- | Type 'Page.OriginTrialToken'.
 data PageOriginTrialToken = PageOriginTrialToken {
   pageOriginTrialTokenOrigin :: String,
   pageOriginTrialTokenMatchSubDomains :: Bool,
@@ -5876,7 +5951,7 @@ instance FromJSON  PageOriginTrialToken where
 
 
 
--- | Type 'Page.OriginTrialTokenWithStatus' .
+-- | Type 'Page.OriginTrialTokenWithStatus'.
 data PageOriginTrialTokenWithStatus = PageOriginTrialTokenWithStatus {
   pageOriginTrialTokenWithStatusRawTokenText :: String,
   -- | `parsedToken` is present only when the token is extractable and
@@ -5892,7 +5967,7 @@ instance FromJSON  PageOriginTrialTokenWithStatus where
 
 
 
--- | Type 'Page.OriginTrial' .
+-- | Type 'Page.OriginTrial'.
 data PageOriginTrial = PageOriginTrial {
   pageOriginTrialTrialName :: String,
   pageOriginTrialStatus :: PageOriginTrialStatus,
@@ -5906,7 +5981,8 @@ instance FromJSON  PageOriginTrial where
 
 
 
--- | Type 'Page.Frame' .Information about the Frame on the page.
+-- | Type 'Page.Frame'.
+--   Information about the Frame on the page.
 data PageFrame = PageFrame {
   -- | Frame unique identifier.
   pageFrameId :: PageFrameId,
@@ -5948,7 +6024,8 @@ instance FromJSON  PageFrame where
 
 
 
--- | Type 'Page.FrameResource' .Information about the Resource on the page.
+-- | Type 'Page.FrameResource'.
+--   Information about the Resource on the page.
 data PageFrameResource = PageFrameResource {
   -- | Resource URL.
   pageFrameResourceUrl :: String,
@@ -5973,7 +6050,8 @@ instance FromJSON  PageFrameResource where
 
 
 
--- | Type 'Page.FrameResourceTree' .Information about the Frame hierarchy along with their cached resources.
+-- | Type 'Page.FrameResourceTree'.
+--   Information about the Frame hierarchy along with their cached resources.
 data PageFrameResourceTree = PageFrameResourceTree {
   -- | Frame information for this tree item.
   pageFrameResourceTreeFrame :: PageFrame,
@@ -5990,7 +6068,8 @@ instance FromJSON  PageFrameResourceTree where
 
 
 
--- | Type 'Page.FrameTree' .Information about the Frame hierarchy.
+-- | Type 'Page.FrameTree'.
+--   Information about the Frame hierarchy.
 data PageFrameTree = PageFrameTree {
   -- | Frame information for this tree item.
   pageFrameTreeFrame :: PageFrame,
@@ -6005,10 +6084,12 @@ instance FromJSON  PageFrameTree where
 
 
 
--- | Type 'Page.ScriptIdentifier' .Unique script identifier.
+-- | Type 'Page.ScriptIdentifier'.
+--   Unique script identifier.
 type PageScriptIdentifier = String
 
--- | Type 'Page.TransitionType' .Transition type.
+-- | Type 'Page.TransitionType'.
+--   Transition type.
 data PageTransitionType = PageTransitionTypeLink | PageTransitionTypeTyped | PageTransitionTypeAddressBar | PageTransitionTypeAutoBookmark | PageTransitionTypeAutoSubframe | PageTransitionTypeManualSubframe | PageTransitionTypeGenerated | PageTransitionTypeAutoToplevel | PageTransitionTypeFormSubmit | PageTransitionTypeReload | PageTransitionTypeKeyword | PageTransitionTypeKeywordGenerated | PageTransitionTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageTransitionType where
@@ -6048,7 +6129,8 @@ instance ToJSON PageTransitionType where
 
 
 
--- | Type 'Page.NavigationEntry' .Navigation history entry.
+-- | Type 'Page.NavigationEntry'.
+--   Navigation history entry.
 data PageNavigationEntry = PageNavigationEntry {
   -- | Unique id of the navigation history entry.
   pageNavigationEntryId :: Int,
@@ -6069,7 +6151,8 @@ instance FromJSON  PageNavigationEntry where
 
 
 
--- | Type 'Page.ScreencastFrameMetadata' .Screencast frame metadata.
+-- | Type 'Page.ScreencastFrameMetadata'.
+--   Screencast frame metadata.
 data PageScreencastFrameMetadata = PageScreencastFrameMetadata {
   -- | Top offset in DIP.
   pageScreencastFrameMetadataOffsetTop :: Double,
@@ -6094,7 +6177,8 @@ instance FromJSON  PageScreencastFrameMetadata where
 
 
 
--- | Type 'Page.DialogType' .Javascript dialog type.
+-- | Type 'Page.DialogType'.
+--   Javascript dialog type.
 data PageDialogType = PageDialogTypeAlert | PageDialogTypeConfirm | PageDialogTypePrompt | PageDialogTypeBeforeunload
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageDialogType where
@@ -6116,7 +6200,8 @@ instance ToJSON PageDialogType where
 
 
 
--- | Type 'Page.AppManifestError' .Error while paring app manifest.
+-- | Type 'Page.AppManifestError'.
+--   Error while paring app manifest.
 data PageAppManifestError = PageAppManifestError {
   -- | Error message.
   pageAppManifestErrorMessage :: String,
@@ -6135,7 +6220,8 @@ instance FromJSON  PageAppManifestError where
 
 
 
--- | Type 'Page.AppManifestParsedProperties' .Parsed app manifest properties.
+-- | Type 'Page.AppManifestParsedProperties'.
+--   Parsed app manifest properties.
 data PageAppManifestParsedProperties = PageAppManifestParsedProperties {
   -- | Computed scope value
   pageAppManifestParsedPropertiesScope :: String
@@ -6148,7 +6234,8 @@ instance FromJSON  PageAppManifestParsedProperties where
 
 
 
--- | Type 'Page.LayoutViewport' .Layout viewport position and dimensions.
+-- | Type 'Page.LayoutViewport'.
+--   Layout viewport position and dimensions.
 data PageLayoutViewport = PageLayoutViewport {
   -- | Horizontal offset relative to the document (CSS pixels).
   pageLayoutViewportPageX :: Int,
@@ -6167,7 +6254,8 @@ instance FromJSON  PageLayoutViewport where
 
 
 
--- | Type 'Page.VisualViewport' .Visual viewport position, dimensions, and scale.
+-- | Type 'Page.VisualViewport'.
+--   Visual viewport position, dimensions, and scale.
 data PageVisualViewport = PageVisualViewport {
   -- | Horizontal offset relative to the layout viewport (CSS pixels).
   pageVisualViewportOffsetX :: Double,
@@ -6194,7 +6282,8 @@ instance FromJSON  PageVisualViewport where
 
 
 
--- | Type 'Page.Viewport' .Viewport for capturing screenshot.
+-- | Type 'Page.Viewport'.
+--   Viewport for capturing screenshot.
 data PageViewport = PageViewport {
   -- | X offset in device independent pixels (dip).
   pageViewportX :: Double,
@@ -6215,7 +6304,8 @@ instance FromJSON  PageViewport where
 
 
 
--- | Type 'Page.FontFamilies' .Generic font families collection.
+-- | Type 'Page.FontFamilies'.
+--   Generic font families collection.
 data PageFontFamilies = PageFontFamilies {
   -- | The standard font-family.
   pageFontFamiliesStandard :: Maybe String,
@@ -6240,7 +6330,8 @@ instance FromJSON  PageFontFamilies where
 
 
 
--- | Type 'Page.ScriptFontFamilies' .Font families collection for a script.
+-- | Type 'Page.ScriptFontFamilies'.
+--   Font families collection for a script.
 data PageScriptFontFamilies = PageScriptFontFamilies {
   -- | Name of the script which these font families are defined for.
   pageScriptFontFamiliesScript :: String,
@@ -6255,7 +6346,8 @@ instance FromJSON  PageScriptFontFamilies where
 
 
 
--- | Type 'Page.FontSizes' .Default font sizes.
+-- | Type 'Page.FontSizes'.
+--   Default font sizes.
 data PageFontSizes = PageFontSizes {
   -- | Default standard font size.
   pageFontSizesStandard :: Maybe Int,
@@ -6270,7 +6362,7 @@ instance FromJSON  PageFontSizes where
 
 
 
--- | Type 'Page.ClientNavigationReason' .
+-- | Type 'Page.ClientNavigationReason'.
 data PageClientNavigationReason = PageClientNavigationReasonFormSubmissionGet | PageClientNavigationReasonFormSubmissionPost | PageClientNavigationReasonHttpHeaderRefresh | PageClientNavigationReasonScriptInitiated | PageClientNavigationReasonMetaTagRefresh | PageClientNavigationReasonPageBlockInterstitial | PageClientNavigationReasonReload | PageClientNavigationReasonAnchorClick
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageClientNavigationReason where
@@ -6300,7 +6392,7 @@ instance ToJSON PageClientNavigationReason where
 
 
 
--- | Type 'Page.ClientNavigationDisposition' .
+-- | Type 'Page.ClientNavigationDisposition'.
 data PageClientNavigationDisposition = PageClientNavigationDispositionCurrentTab | PageClientNavigationDispositionNewTab | PageClientNavigationDispositionNewWindow | PageClientNavigationDispositionDownload
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageClientNavigationDisposition where
@@ -6322,7 +6414,7 @@ instance ToJSON PageClientNavigationDisposition where
 
 
 
--- | Type 'Page.InstallabilityErrorArgument' .
+-- | Type 'Page.InstallabilityErrorArgument'.
 data PageInstallabilityErrorArgument = PageInstallabilityErrorArgument {
   -- | Argument name (e.g. name:'minimum-icon-size-in-pixels').
   pageInstallabilityErrorArgumentName :: String,
@@ -6337,7 +6429,8 @@ instance FromJSON  PageInstallabilityErrorArgument where
 
 
 
--- | Type 'Page.InstallabilityError' .The installability error
+-- | Type 'Page.InstallabilityError'.
+--   The installability error
 data PageInstallabilityError = PageInstallabilityError {
   -- | The error id (e.g. 'manifest-missing-suitable-icon').
   pageInstallabilityErrorErrorId :: String,
@@ -6352,7 +6445,8 @@ instance FromJSON  PageInstallabilityError where
 
 
 
--- | Type 'Page.ReferrerPolicy' .The referring-policy used for the navigation.
+-- | Type 'Page.ReferrerPolicy'.
+--   The referring-policy used for the navigation.
 data PageReferrerPolicy = PageReferrerPolicyNoReferrer | PageReferrerPolicyNoReferrerWhenDowngrade | PageReferrerPolicyOrigin | PageReferrerPolicyOriginWhenCrossOrigin | PageReferrerPolicySameOrigin | PageReferrerPolicyStrictOrigin | PageReferrerPolicyStrictOriginWhenCrossOrigin | PageReferrerPolicyUnsafeUrl
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageReferrerPolicy where
@@ -6382,7 +6476,8 @@ instance ToJSON PageReferrerPolicy where
 
 
 
--- | Type 'Page.CompilationCacheParams' .Per-script compilation cache parameters for `Page.produceCompilationCache`
+-- | Type 'Page.CompilationCacheParams'.
+--   Per-script compilation cache parameters for `Page.produceCompilationCache`
 data PageCompilationCacheParams = PageCompilationCacheParams {
   -- | The URL of the script to produce a compilation cache entry for.
   pageCompilationCacheParamsUrl :: String,
@@ -6398,7 +6493,8 @@ instance FromJSON  PageCompilationCacheParams where
 
 
 
--- | Type 'Page.NavigationType' .The type of a frameNavigated event.
+-- | Type 'Page.NavigationType'.
+--   The type of a frameNavigated event.
 data PageNavigationType = PageNavigationTypeNavigation | PageNavigationTypeBackForwardCacheRestore
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageNavigationType where
@@ -6416,7 +6512,8 @@ instance ToJSON PageNavigationType where
 
 
 
--- | Type 'Page.BackForwardCacheNotRestoredReason' .List of not restored reasons for back-forward cache.
+-- | Type 'Page.BackForwardCacheNotRestoredReason'.
+--   List of not restored reasons for back-forward cache.
 data PageBackForwardCacheNotRestoredReason = PageBackForwardCacheNotRestoredReasonNotPrimaryMainFrame | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabled | PageBackForwardCacheNotRestoredReasonRelatedActiveContentsExist | PageBackForwardCacheNotRestoredReasonHttpStatusNotOk | PageBackForwardCacheNotRestoredReasonSchemeNotHttpOrHttps | PageBackForwardCacheNotRestoredReasonLoading | PageBackForwardCacheNotRestoredReasonWasGrantedMediaAccess | PageBackForwardCacheNotRestoredReasonDisableForRenderFrameHostCalled | PageBackForwardCacheNotRestoredReasonDomainNotAllowed | PageBackForwardCacheNotRestoredReasonHttpMethodNotGet | PageBackForwardCacheNotRestoredReasonSubframeIsNavigating | PageBackForwardCacheNotRestoredReasonTimeout | PageBackForwardCacheNotRestoredReasonCacheLimit | PageBackForwardCacheNotRestoredReasonJavaScriptExecution | PageBackForwardCacheNotRestoredReasonRendererProcessKilled | PageBackForwardCacheNotRestoredReasonRendererProcessCrashed | PageBackForwardCacheNotRestoredReasonSchedulerTrackedFeatureUsed | PageBackForwardCacheNotRestoredReasonConflictingBrowsingInstance | PageBackForwardCacheNotRestoredReasonCacheFlushed | PageBackForwardCacheNotRestoredReasonServiceWorkerVersionActivation | PageBackForwardCacheNotRestoredReasonSessionRestored | PageBackForwardCacheNotRestoredReasonServiceWorkerPostMessage | PageBackForwardCacheNotRestoredReasonEnteredBackForwardCacheBeforeServiceWorkerHostAdded | PageBackForwardCacheNotRestoredReasonRenderFrameHostReusedSameSite | PageBackForwardCacheNotRestoredReasonRenderFrameHostReusedCrossSite | PageBackForwardCacheNotRestoredReasonServiceWorkerClaim | PageBackForwardCacheNotRestoredReasonIgnoreEventAndEvict | PageBackForwardCacheNotRestoredReasonHaveInnerContents | PageBackForwardCacheNotRestoredReasonTimeoutPuttingInCache | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledByLowMemory | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledByCommandLine | PageBackForwardCacheNotRestoredReasonNetworkRequestDatapipeDrainedAsBytesConsumer | PageBackForwardCacheNotRestoredReasonNetworkRequestRedirected | PageBackForwardCacheNotRestoredReasonNetworkRequestTimeout | PageBackForwardCacheNotRestoredReasonNetworkExceedsBufferLimit | PageBackForwardCacheNotRestoredReasonNavigationCancelledWhileRestoring | PageBackForwardCacheNotRestoredReasonNotMostRecentNavigationEntry | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledForPrerender | PageBackForwardCacheNotRestoredReasonUserAgentOverrideDiffers | PageBackForwardCacheNotRestoredReasonForegroundCacheLimit | PageBackForwardCacheNotRestoredReasonBrowsingInstanceNotSwapped | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledForDelegate | PageBackForwardCacheNotRestoredReasonUnloadHandlerExistsInMainFrame | PageBackForwardCacheNotRestoredReasonUnloadHandlerExistsInSubFrame | PageBackForwardCacheNotRestoredReasonServiceWorkerUnregistration | PageBackForwardCacheNotRestoredReasonCacheControlNoStore | PageBackForwardCacheNotRestoredReasonCacheControlNoStoreCookieModified | PageBackForwardCacheNotRestoredReasonCacheControlNoStoreHttpOnlyCookieModified | PageBackForwardCacheNotRestoredReasonNoResponseHead | PageBackForwardCacheNotRestoredReasonUnknown | PageBackForwardCacheNotRestoredReasonActivationNavigationsDisallowedForBug1234857 | PageBackForwardCacheNotRestoredReasonErrorDocument | PageBackForwardCacheNotRestoredReasonFencedFramesEmbedder | PageBackForwardCacheNotRestoredReasonWebSocket | PageBackForwardCacheNotRestoredReasonWebTransport | PageBackForwardCacheNotRestoredReasonWebRtc | PageBackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoStore | PageBackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoCache | PageBackForwardCacheNotRestoredReasonSubresourceHasCacheControlNoStore | PageBackForwardCacheNotRestoredReasonSubresourceHasCacheControlNoCache | PageBackForwardCacheNotRestoredReasonContainsPlugins | PageBackForwardCacheNotRestoredReasonDocumentLoaded | PageBackForwardCacheNotRestoredReasonDedicatedWorkerOrWorklet | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestOthers | PageBackForwardCacheNotRestoredReasonOutstandingIndexedDbTransaction | PageBackForwardCacheNotRestoredReasonRequestedNotificationsPermission | PageBackForwardCacheNotRestoredReasonRequestedMidiPermission | PageBackForwardCacheNotRestoredReasonRequestedAudioCapturePermission | PageBackForwardCacheNotRestoredReasonRequestedVideoCapturePermission | PageBackForwardCacheNotRestoredReasonRequestedBackForwardCacheBlockedSensors | PageBackForwardCacheNotRestoredReasonRequestedBackgroundWorkPermission | PageBackForwardCacheNotRestoredReasonBroadcastChannel | PageBackForwardCacheNotRestoredReasonIndexedDbConnection | PageBackForwardCacheNotRestoredReasonWebXr | PageBackForwardCacheNotRestoredReasonSharedWorker | PageBackForwardCacheNotRestoredReasonWebLocks | PageBackForwardCacheNotRestoredReasonWebHid | PageBackForwardCacheNotRestoredReasonWebShare | PageBackForwardCacheNotRestoredReasonRequestedStorageAccessGrant | PageBackForwardCacheNotRestoredReasonWebNfc | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestFetch | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestXhr | PageBackForwardCacheNotRestoredReasonAppBanner | PageBackForwardCacheNotRestoredReasonPrinting | PageBackForwardCacheNotRestoredReasonWebDatabase | PageBackForwardCacheNotRestoredReasonPictureInPicture | PageBackForwardCacheNotRestoredReasonPortal | PageBackForwardCacheNotRestoredReasonSpeechRecognizer | PageBackForwardCacheNotRestoredReasonIdleManager | PageBackForwardCacheNotRestoredReasonPaymentManager | PageBackForwardCacheNotRestoredReasonSpeechSynthesis | PageBackForwardCacheNotRestoredReasonKeyboardLock | PageBackForwardCacheNotRestoredReasonWebOtpService | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestDirectSocket | PageBackForwardCacheNotRestoredReasonInjectedJavascript | PageBackForwardCacheNotRestoredReasonInjectedStyleSheet | PageBackForwardCacheNotRestoredReasonDummy | PageBackForwardCacheNotRestoredReasonContentSecurityHandler | PageBackForwardCacheNotRestoredReasonContentWebAuthenticationApi | PageBackForwardCacheNotRestoredReasonContentFileChooser | PageBackForwardCacheNotRestoredReasonContentSerial | PageBackForwardCacheNotRestoredReasonContentFileSystemAccess | PageBackForwardCacheNotRestoredReasonContentMediaDevicesDispatcherHost | PageBackForwardCacheNotRestoredReasonContentWebBluetooth | PageBackForwardCacheNotRestoredReasonContentWebUsb | PageBackForwardCacheNotRestoredReasonContentMediaSessionService | PageBackForwardCacheNotRestoredReasonContentScreenReader | PageBackForwardCacheNotRestoredReasonEmbedderPopupBlockerTabHelper | PageBackForwardCacheNotRestoredReasonEmbedderSafeBrowsingTriggeredPopupBlocker | PageBackForwardCacheNotRestoredReasonEmbedderSafeBrowsingThreatDetails | PageBackForwardCacheNotRestoredReasonEmbedderAppBannerManager | PageBackForwardCacheNotRestoredReasonEmbedderDomDistillerViewerSource | PageBackForwardCacheNotRestoredReasonEmbedderDomDistillerSelfDeletingRequestDelegate | PageBackForwardCacheNotRestoredReasonEmbedderOomInterventionTabHelper | PageBackForwardCacheNotRestoredReasonEmbedderOfflinePage | PageBackForwardCacheNotRestoredReasonEmbedderChromePasswordManagerClientBindCredentialManager | PageBackForwardCacheNotRestoredReasonEmbedderPermissionRequestManager | PageBackForwardCacheNotRestoredReasonEmbedderModalDialog | PageBackForwardCacheNotRestoredReasonEmbedderExtensions | PageBackForwardCacheNotRestoredReasonEmbedderExtensionMessaging | PageBackForwardCacheNotRestoredReasonEmbedderExtensionMessagingForOpenPort | PageBackForwardCacheNotRestoredReasonEmbedderExtensionSentMessageToCachedFrame
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageBackForwardCacheNotRestoredReason where
@@ -6674,7 +6771,8 @@ instance ToJSON PageBackForwardCacheNotRestoredReason where
 
 
 
--- | Type 'Page.BackForwardCacheNotRestoredReasonType' .Types of not restored reasons for back-forward cache.
+-- | Type 'Page.BackForwardCacheNotRestoredReasonType'.
+--   Types of not restored reasons for back-forward cache.
 data PageBackForwardCacheNotRestoredReasonType = PageBackForwardCacheNotRestoredReasonTypeSupportPending | PageBackForwardCacheNotRestoredReasonTypePageSupportNeeded | PageBackForwardCacheNotRestoredReasonTypeCircumstantial
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageBackForwardCacheNotRestoredReasonType where
@@ -6694,7 +6792,7 @@ instance ToJSON PageBackForwardCacheNotRestoredReasonType where
 
 
 
--- | Type 'Page.BackForwardCacheNotRestoredExplanation' .
+-- | Type 'Page.BackForwardCacheNotRestoredExplanation'.
 data PageBackForwardCacheNotRestoredExplanation = PageBackForwardCacheNotRestoredExplanation {
   -- | Type of the reason
   pageBackForwardCacheNotRestoredExplanationType :: PageBackForwardCacheNotRestoredReasonType,
@@ -6713,7 +6811,7 @@ instance FromJSON  PageBackForwardCacheNotRestoredExplanation where
 
 
 
--- | Type 'Page.BackForwardCacheNotRestoredExplanationTree' .
+-- | Type 'Page.BackForwardCacheNotRestoredExplanationTree'.
 data PageBackForwardCacheNotRestoredExplanationTree = PageBackForwardCacheNotRestoredExplanationTree {
   -- | URL of each frame
   pageBackForwardCacheNotRestoredExplanationTreeUrl :: String,
@@ -6730,7 +6828,8 @@ instance FromJSON  PageBackForwardCacheNotRestoredExplanationTree where
 
 
 
--- | Type 'Page.PrerenderFinalStatus' .List of FinalStatus reasons for Prerender2.
+-- | Type 'Page.PrerenderFinalStatus'.
+--   List of FinalStatus reasons for Prerender2.
 data PagePrerenderFinalStatus = PagePrerenderFinalStatusActivated | PagePrerenderFinalStatusDestroyed | PagePrerenderFinalStatusLowEndDevice | PagePrerenderFinalStatusCrossOriginRedirect | PagePrerenderFinalStatusCrossOriginNavigation | PagePrerenderFinalStatusInvalidSchemeRedirect | PagePrerenderFinalStatusInvalidSchemeNavigation | PagePrerenderFinalStatusInProgressNavigation | PagePrerenderFinalStatusNavigationRequestBlockedByCsp | PagePrerenderFinalStatusMainFrameNavigation | PagePrerenderFinalStatusMojoBinderPolicy | PagePrerenderFinalStatusRendererProcessCrashed | PagePrerenderFinalStatusRendererProcessKilled | PagePrerenderFinalStatusDownload | PagePrerenderFinalStatusTriggerDestroyed | PagePrerenderFinalStatusNavigationNotCommitted | PagePrerenderFinalStatusNavigationBadHttpStatus | PagePrerenderFinalStatusClientCertRequested | PagePrerenderFinalStatusNavigationRequestNetworkError | PagePrerenderFinalStatusMaxNumOfRunningPrerendersExceeded | PagePrerenderFinalStatusCancelAllHostsForTesting | PagePrerenderFinalStatusDidFailLoad | PagePrerenderFinalStatusStop | PagePrerenderFinalStatusSslCertificateError | PagePrerenderFinalStatusLoginAuthRequested | PagePrerenderFinalStatusUaChangeRequiresReload | PagePrerenderFinalStatusBlockedByClient | PagePrerenderFinalStatusAudioOutputDeviceRequested | PagePrerenderFinalStatusMixedContent | PagePrerenderFinalStatusTriggerBackgrounded | PagePrerenderFinalStatusEmbedderTriggeredAndSameOriginRedirected | PagePrerenderFinalStatusEmbedderTriggeredAndCrossOriginRedirected | PagePrerenderFinalStatusEmbedderTriggeredAndDestroyed
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PagePrerenderFinalStatus where
@@ -8316,10 +8415,12 @@ pageSetInterceptFileChooserDialog handle params = sendReceiveCommand handle "Pag
 
 
 
--- | Type 'Security.CertificateId' .An internal certificate ID value.
+-- | Type 'Security.CertificateId'.
+--   An internal certificate ID value.
 type SecurityCertificateId = Int
 
--- | Type 'Security.MixedContentType' .A description of mixed content (HTTP resources on HTTPS pages), as defined by
+-- | Type 'Security.MixedContentType'.
+--   A description of mixed content (HTTP resources on HTTPS pages), as defined by
 --   https://www.w3.org/TR/mixed-content/#categories
 data SecurityMixedContentType = SecurityMixedContentTypeBlockable | SecurityMixedContentTypeOptionallyBlockable | SecurityMixedContentTypeNone
    deriving (Ord, Eq, Show, Read)
@@ -8340,7 +8441,8 @@ instance ToJSON SecurityMixedContentType where
 
 
 
--- | Type 'Security.SecurityState' .The security level of a page or resource.
+-- | Type 'Security.SecurityState'.
+--   The security level of a page or resource.
 data SecuritySecurityState = SecuritySecurityStateUnknown | SecuritySecurityStateNeutral | SecuritySecurityStateInsecure | SecuritySecurityStateSecure | SecuritySecurityStateInfo | SecuritySecurityStateInsecureBroken
    deriving (Ord, Eq, Show, Read)
 instance FromJSON SecuritySecurityState where
@@ -8366,7 +8468,8 @@ instance ToJSON SecuritySecurityState where
 
 
 
--- | Type 'Security.CertificateSecurityState' .Details about the security state of the page certificate.
+-- | Type 'Security.CertificateSecurityState'.
+--   Details about the security state of the page certificate.
 data SecurityCertificateSecurityState = SecurityCertificateSecurityState {
   -- | Protocol name (e.g. "TLS 1.2" or "QUIC").
   securityCertificateSecurityStateProtocol :: String,
@@ -8413,7 +8516,7 @@ instance FromJSON  SecurityCertificateSecurityState where
 
 
 
--- | Type 'Security.SafetyTipStatus' .
+-- | Type 'Security.SafetyTipStatus'.
 data SecuritySafetyTipStatus = SecuritySafetyTipStatusBadReputation | SecuritySafetyTipStatusLookalike
    deriving (Ord, Eq, Show, Read)
 instance FromJSON SecuritySafetyTipStatus where
@@ -8431,7 +8534,7 @@ instance ToJSON SecuritySafetyTipStatus where
 
 
 
--- | Type 'Security.SafetyTipInfo' .
+-- | Type 'Security.SafetyTipInfo'.
 data SecuritySafetyTipInfo = SecuritySafetyTipInfo {
   -- | Describes whether the page triggers any safety tips or reputation warnings. Default is unknown.
   securitySafetyTipInfoSafetyTipStatus :: SecuritySafetyTipStatus,
@@ -8446,7 +8549,8 @@ instance FromJSON  SecuritySafetyTipInfo where
 
 
 
--- | Type 'Security.VisibleSecurityState' .Security state information about the page.
+-- | Type 'Security.VisibleSecurityState'.
+--   Security state information about the page.
 data SecurityVisibleSecurityState = SecurityVisibleSecurityState {
   -- | The security level of the page.
   securityVisibleSecurityStateSecurityState :: SecuritySecurityState,
@@ -8465,7 +8569,8 @@ instance FromJSON  SecurityVisibleSecurityState where
 
 
 
--- | Type 'Security.SecurityStateExplanation' .An explanation of an factor contributing to the security state.
+-- | Type 'Security.SecurityStateExplanation'.
+--   An explanation of an factor contributing to the security state.
 data SecuritySecurityStateExplanation = SecuritySecurityStateExplanation {
   -- | Security state representing the severity of the factor being explained.
   securitySecurityStateExplanationSecurityState :: SecuritySecurityState,
@@ -8490,7 +8595,8 @@ instance FromJSON  SecuritySecurityStateExplanation where
 
 
 
--- | Type 'Security.CertificateErrorAction' .The action to take when a certificate error occurs. continue will continue processing the
+-- | Type 'Security.CertificateErrorAction'.
+--   The action to take when a certificate error occurs. continue will continue processing the
 --   request and cancel will cancel the request.
 data SecurityCertificateErrorAction = SecurityCertificateErrorActionContinue | SecurityCertificateErrorActionCancel
    deriving (Ord, Eq, Show, Read)

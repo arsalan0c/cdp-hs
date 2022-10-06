@@ -49,7 +49,8 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 import CDP.Domains.ServiceWorker as ServiceWorker
 
 
--- | Type 'BackgroundService.ServiceName' .The Background Service that will be associated with the commands/events.
+-- | Type 'BackgroundService.ServiceName'.
+--   The Background Service that will be associated with the commands/events.
 --   Every Background Service operates independently, but they share the same
 --   API.
 data BackgroundServiceServiceName = BackgroundServiceServiceNameBackgroundFetch | BackgroundServiceServiceNameBackgroundSync | BackgroundServiceServiceNamePushMessaging | BackgroundServiceServiceNameNotifications | BackgroundServiceServiceNamePaymentHandler | BackgroundServiceServiceNamePeriodicBackgroundSync
@@ -77,7 +78,8 @@ instance ToJSON BackgroundServiceServiceName where
 
 
 
--- | Type 'BackgroundService.EventMetadata' .A key-value pair for additional event information to pass along.
+-- | Type 'BackgroundService.EventMetadata'.
+--   A key-value pair for additional event information to pass along.
 data BackgroundServiceEventMetadata = BackgroundServiceEventMetadata {
   backgroundServiceEventMetadataKey :: String,
   backgroundServiceEventMetadataValue :: String
@@ -90,7 +92,7 @@ instance FromJSON  BackgroundServiceEventMetadata where
 
 
 
--- | Type 'BackgroundService.BackgroundServiceEvent' .
+-- | Type 'BackgroundService.BackgroundServiceEvent'.
 data BackgroundServiceBackgroundServiceEvent = BackgroundServiceBackgroundServiceEvent {
   -- | Timestamp of the event (in seconds).
   backgroundServiceBackgroundServiceEventTimestamp :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,

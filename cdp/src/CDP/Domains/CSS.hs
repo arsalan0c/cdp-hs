@@ -53,10 +53,11 @@ import CDP.Handle
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
 
 
--- | Type 'CSS.StyleSheetId' .
+-- | Type 'CSS.StyleSheetId'.
 type CssStyleSheetId = String
 
--- | Type 'CSS.StyleSheetOrigin' .Stylesheet type: "injected" for stylesheets injected via extension, "user-agent" for user-agent
+-- | Type 'CSS.StyleSheetOrigin'.
+--   Stylesheet type: "injected" for stylesheets injected via extension, "user-agent" for user-agent
 --   stylesheets, "inspector" for stylesheets created by the inspector (i.e. those holding the "via
 --   inspector" rules), "regular" for regular stylesheets.
 data CssStyleSheetOrigin = CssStyleSheetOriginInjected | CssStyleSheetOriginUserAgent | CssStyleSheetOriginInspector | CssStyleSheetOriginRegular
@@ -80,7 +81,8 @@ instance ToJSON CssStyleSheetOrigin where
 
 
 
--- | Type 'CSS.PseudoElementMatches' .CSS rule collection for a single pseudo style.
+-- | Type 'CSS.PseudoElementMatches'.
+--   CSS rule collection for a single pseudo style.
 data CssPseudoElementMatches = CssPseudoElementMatches {
   -- | Pseudo element type.
   cssPseudoElementMatchesPseudoType :: DOMPageNetworkEmulationSecurity.DomPseudoType,
@@ -95,7 +97,8 @@ instance FromJSON  CssPseudoElementMatches where
 
 
 
--- | Type 'CSS.InheritedStyleEntry' .Inherited CSS rule collection from ancestor node.
+-- | Type 'CSS.InheritedStyleEntry'.
+--   Inherited CSS rule collection from ancestor node.
 data CssInheritedStyleEntry = CssInheritedStyleEntry {
   -- | The ancestor node's inline style, if any, in the style inheritance chain.
   cssInheritedStyleEntryInlineStyle :: Maybe CssCssStyle,
@@ -110,7 +113,8 @@ instance FromJSON  CssInheritedStyleEntry where
 
 
 
--- | Type 'CSS.InheritedPseudoElementMatches' .Inherited pseudo element matches from pseudos of an ancestor node.
+-- | Type 'CSS.InheritedPseudoElementMatches'.
+--   Inherited pseudo element matches from pseudos of an ancestor node.
 data CssInheritedPseudoElementMatches = CssInheritedPseudoElementMatches {
   -- | Matches of pseudo styles from the pseudos of an ancestor node.
   cssInheritedPseudoElementMatchesPseudoElements :: [CssPseudoElementMatches]
@@ -123,7 +127,8 @@ instance FromJSON  CssInheritedPseudoElementMatches where
 
 
 
--- | Type 'CSS.RuleMatch' .Match data for a CSS rule.
+-- | Type 'CSS.RuleMatch'.
+--   Match data for a CSS rule.
 data CssRuleMatch = CssRuleMatch {
   -- | CSS rule in the match.
   cssRuleMatchRule :: CssCssRule,
@@ -138,7 +143,8 @@ instance FromJSON  CssRuleMatch where
 
 
 
--- | Type 'CSS.Value' .Data for a simple selector (these are delimited by commas in a selector list).
+-- | Type 'CSS.Value'.
+--   Data for a simple selector (these are delimited by commas in a selector list).
 data CssValue = CssValue {
   -- | Value text.
   cssValueText :: String,
@@ -153,7 +159,8 @@ instance FromJSON  CssValue where
 
 
 
--- | Type 'CSS.SelectorList' .Selector list data.
+-- | Type 'CSS.SelectorList'.
+--   Selector list data.
 data CssSelectorList = CssSelectorList {
   -- | Selectors in the list.
   cssSelectorListSelectors :: [CssValue],
@@ -168,7 +175,8 @@ instance FromJSON  CssSelectorList where
 
 
 
--- | Type 'CSS.CSSStyleSheetHeader' .CSS stylesheet metainformation.
+-- | Type 'CSS.CSSStyleSheetHeader'.
+--   CSS stylesheet metainformation.
 data CssCssStyleSheetHeader = CssCssStyleSheetHeader {
   -- | The stylesheet identifier.
   cssCssStyleSheetHeaderStyleSheetId :: CssStyleSheetId,
@@ -220,7 +228,8 @@ instance FromJSON  CssCssStyleSheetHeader where
 
 
 
--- | Type 'CSS.CSSRule' .CSS rule representation.
+-- | Type 'CSS.CSSRule'.
+--   CSS rule representation.
 data CssCssRule = CssCssRule {
   -- | The css style sheet identifier (absent for user agent stylesheet and user-specified
   --   stylesheet rules) this rule came from.
@@ -252,7 +261,8 @@ instance FromJSON  CssCssRule where
 
 
 
--- | Type 'CSS.RuleUsage' .CSS coverage information.
+-- | Type 'CSS.RuleUsage'.
+--   CSS coverage information.
 data CssRuleUsage = CssRuleUsage {
   -- | The css style sheet identifier (absent for user agent stylesheet and user-specified
   --   stylesheet rules) this rule came from.
@@ -272,7 +282,8 @@ instance FromJSON  CssRuleUsage where
 
 
 
--- | Type 'CSS.SourceRange' .Text range within a resource. All numbers are zero-based.
+-- | Type 'CSS.SourceRange'.
+--   Text range within a resource. All numbers are zero-based.
 data CssSourceRange = CssSourceRange {
   -- | Start line of range.
   cssSourceRangeStartLine :: Int,
@@ -291,7 +302,7 @@ instance FromJSON  CssSourceRange where
 
 
 
--- | Type 'CSS.ShorthandEntry' .
+-- | Type 'CSS.ShorthandEntry'.
 data CssShorthandEntry = CssShorthandEntry {
   -- | Shorthand name.
   cssShorthandEntryName :: String,
@@ -308,7 +319,7 @@ instance FromJSON  CssShorthandEntry where
 
 
 
--- | Type 'CSS.CSSComputedStyleProperty' .
+-- | Type 'CSS.CSSComputedStyleProperty'.
 data CssCssComputedStyleProperty = CssCssComputedStyleProperty {
   -- | Computed style property name.
   cssCssComputedStylePropertyName :: String,
@@ -323,7 +334,8 @@ instance FromJSON  CssCssComputedStyleProperty where
 
 
 
--- | Type 'CSS.CSSStyle' .CSS style representation.
+-- | Type 'CSS.CSSStyle'.
+--   CSS style representation.
 data CssCssStyle = CssCssStyle {
   -- | The css style sheet identifier (absent for user agent stylesheet and user-specified
   --   stylesheet rules) this rule came from.
@@ -345,7 +357,8 @@ instance FromJSON  CssCssStyle where
 
 
 
--- | Type 'CSS.CSSProperty' .CSS property declaration data.
+-- | Type 'CSS.CSSProperty'.
+--   CSS property declaration data.
 data CssCssProperty = CssCssProperty {
   -- | The property name.
   cssCssPropertyName :: String,
@@ -372,7 +385,8 @@ instance FromJSON  CssCssProperty where
 
 
 
--- | Type 'CSS.CSSMedia' .CSS media rule descriptor.
+-- | Type 'CSS.CSSMedia'.
+--   CSS media rule descriptor.
 data CssCssMediaSource = CssCssMediaSourceMediaRule | CssCssMediaSourceImportRule | CssCssMediaSourceLinkedSheet | CssCssMediaSourceInlineSheet
    deriving (Ord, Eq, Show, Read)
 instance FromJSON CssCssMediaSource where
@@ -420,7 +434,8 @@ instance FromJSON  CssCssMedia where
 
 
 
--- | Type 'CSS.MediaQuery' .Media query descriptor.
+-- | Type 'CSS.MediaQuery'.
+--   Media query descriptor.
 data CssMediaQuery = CssMediaQuery {
   -- | Array of media query expressions.
   cssMediaQueryExpressions :: [CssMediaQueryExpression],
@@ -435,7 +450,8 @@ instance FromJSON  CssMediaQuery where
 
 
 
--- | Type 'CSS.MediaQueryExpression' .Media query expression descriptor.
+-- | Type 'CSS.MediaQueryExpression'.
+--   Media query expression descriptor.
 data CssMediaQueryExpression = CssMediaQueryExpression {
   -- | Media query expression value.
   cssMediaQueryExpressionValue :: Double,
@@ -456,7 +472,8 @@ instance FromJSON  CssMediaQueryExpression where
 
 
 
--- | Type 'CSS.CSSContainerQuery' .CSS container query rule descriptor.
+-- | Type 'CSS.CSSContainerQuery'.
+--   CSS container query rule descriptor.
 data CssCssContainerQuery = CssCssContainerQuery {
   -- | Container query text.
   cssCssContainerQueryText :: String,
@@ -476,7 +493,8 @@ instance FromJSON  CssCssContainerQuery where
 
 
 
--- | Type 'CSS.CSSSupports' .CSS Supports at-rule descriptor.
+-- | Type 'CSS.CSSSupports'.
+--   CSS Supports at-rule descriptor.
 data CssCssSupports = CssCssSupports {
   -- | Supports rule text.
   cssCssSupportsText :: String,
@@ -496,7 +514,8 @@ instance FromJSON  CssCssSupports where
 
 
 
--- | Type 'CSS.CSSLayer' .CSS Layer at-rule descriptor.
+-- | Type 'CSS.CSSLayer'.
+--   CSS Layer at-rule descriptor.
 data CssCssLayer = CssCssLayer {
   -- | Layer name.
   cssCssLayerText :: String,
@@ -514,7 +533,8 @@ instance FromJSON  CssCssLayer where
 
 
 
--- | Type 'CSS.CSSLayerData' .CSS Layer data.
+-- | Type 'CSS.CSSLayerData'.
+--   CSS Layer data.
 data CssCssLayerData = CssCssLayerData {
   -- | Layer name.
   cssCssLayerDataName :: String,
@@ -532,7 +552,8 @@ instance FromJSON  CssCssLayerData where
 
 
 
--- | Type 'CSS.PlatformFontUsage' .Information about amount of glyphs that were rendered with given font.
+-- | Type 'CSS.PlatformFontUsage'.
+--   Information about amount of glyphs that were rendered with given font.
 data CssPlatformFontUsage = CssPlatformFontUsage {
   -- | Font's family name reported by platform.
   cssPlatformFontUsageFamilyName :: String,
@@ -549,7 +570,8 @@ instance FromJSON  CssPlatformFontUsage where
 
 
 
--- | Type 'CSS.FontVariationAxis' .Information about font variation axes for variable fonts
+-- | Type 'CSS.FontVariationAxis'.
+--   Information about font variation axes for variable fonts
 data CssFontVariationAxis = CssFontVariationAxis {
   -- | The font-variation-setting tag (a.k.a. "axis tag").
   cssFontVariationAxisTag :: String,
@@ -570,7 +592,8 @@ instance FromJSON  CssFontVariationAxis where
 
 
 
--- | Type 'CSS.FontFace' .Properties of a web font: https://www.w3.org/TR/2008/REC-CSS2-20080411/fonts.html#font-descriptions
+-- | Type 'CSS.FontFace'.
+--   Properties of a web font: https://www.w3.org/TR/2008/REC-CSS2-20080411/fonts.html#font-descriptions
 --   and additional information such as platformFontFamily and fontVariationAxes.
 data CssFontFace = CssFontFace {
   -- | The font-family.
@@ -600,7 +623,8 @@ instance FromJSON  CssFontFace where
 
 
 
--- | Type 'CSS.CSSKeyframesRule' .CSS keyframes rule representation.
+-- | Type 'CSS.CSSKeyframesRule'.
+--   CSS keyframes rule representation.
 data CssCssKeyframesRule = CssCssKeyframesRule {
   -- | Animation name.
   cssCssKeyframesRuleAnimationName :: CssValue,
@@ -615,7 +639,8 @@ instance FromJSON  CssCssKeyframesRule where
 
 
 
--- | Type 'CSS.CSSKeyframeRule' .CSS keyframe rule representation.
+-- | Type 'CSS.CSSKeyframeRule'.
+--   CSS keyframe rule representation.
 data CssCssKeyframeRule = CssCssKeyframeRule {
   -- | The css style sheet identifier (absent for user agent stylesheet and user-specified
   --   stylesheet rules) this rule came from.
@@ -635,7 +660,8 @@ instance FromJSON  CssCssKeyframeRule where
 
 
 
--- | Type 'CSS.StyleDeclarationEdit' .A descriptor of operation to mutate style declaration text.
+-- | Type 'CSS.StyleDeclarationEdit'.
+--   A descriptor of operation to mutate style declaration text.
 data CssStyleDeclarationEdit = CssStyleDeclarationEdit {
   -- | The css style sheet identifier.
   cssStyleDeclarationEditStyleSheetId :: CssStyleSheetId,

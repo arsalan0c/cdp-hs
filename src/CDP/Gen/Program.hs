@@ -174,7 +174,7 @@ genType ctx domainName telt = T.unlines . (desc :) . pure $ case D.typesEltEnum 
             ty       ->  T.unwords ["type", tn, "=", lty]                 
   where
     desc     = let td = "Type '" <> (domainName <> "." <> D.typesEltId telt) <> "'." in 
-        formatDescription 0 . (td <> "\n" <>) . maybe "" fromAltLeft $ D.typesEltDescription telt
+        formatDescription 0 . ((td <> "\n") <>) . maybe "" fromAltLeft $ D.typesEltDescription telt
     lty      = leftType ctx domainName (Just . AltLeft $ tytelt) Nothing (D.typesEltItems telt)
     tytelt   = D.typesEltType telt
     tpeltsM  = guardEmptyList isValidParam $ D.typesEltProperties telt
@@ -216,7 +216,7 @@ genCommand ctx domainName commandElt = T.unlines . catMaybes $
     pdesc = formatDescription 0 $ "Parameters of the '" <> (commandFnName rtn) <> "' command."
     desc = let td = "Function for the '" <> cn <> "' command." in
         formatDescription 0 . T.intercalate "\n" . catMaybes $ 
-            [ Just $ (td <> "\n" <>) . maybe "" fromAltLeft $ D.commandsEltDescription commandElt
+            [ Just $ ((td <> "\n") <>) . maybe "" fromAltLeft $ D.commandsEltDescription commandElt
             , const ("Parameters: '" <> ptn <> "'") <$> peltsM
             , const ("Returns: '" <> rtn <> "'") <$> reltsM
             ]

@@ -49,7 +49,8 @@ import CDP.Domains.DOMDebugger as DOMDebugger
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
 
 
--- | Type 'DOMSnapshot.DOMNode' .A Node in the DOM tree.
+-- | Type 'DOMSnapshot.DOMNode'.
+--   A Node in the DOM tree.
 data DomSnapshotDomNode = DomSnapshotDomNode {
   -- | `Node`'s nodeType.
   domSnapshotDomNodeNodeType :: Int,
@@ -121,7 +122,8 @@ instance FromJSON  DomSnapshotDomNode where
 
 
 
--- | Type 'DOMSnapshot.InlineTextBox' .Details of post layout rendered text positions. The exact layout should not be regarded as
+-- | Type 'DOMSnapshot.InlineTextBox'.
+--   Details of post layout rendered text positions. The exact layout should not be regarded as
 --   stable and may change between versions.
 data DomSnapshotInlineTextBox = DomSnapshotInlineTextBox {
   -- | The bounding box in document coordinates. Note that scroll offset of the document is ignored.
@@ -141,7 +143,8 @@ instance FromJSON  DomSnapshotInlineTextBox where
 
 
 
--- | Type 'DOMSnapshot.LayoutTreeNode' .Details of an element in the DOM tree with a LayoutObject.
+-- | Type 'DOMSnapshot.LayoutTreeNode'.
+--   Details of an element in the DOM tree with a LayoutObject.
 data DomSnapshotLayoutTreeNode = DomSnapshotLayoutTreeNode {
   -- | The index of the related DOM node in the `domNodes` array returned by `getSnapshot`.
   domSnapshotLayoutTreeNodeDomNodeIndex :: Int,
@@ -168,7 +171,8 @@ instance FromJSON  DomSnapshotLayoutTreeNode where
 
 
 
--- | Type 'DOMSnapshot.ComputedStyle' .A subset of the full ComputedStyle as defined by the request whitelist.
+-- | Type 'DOMSnapshot.ComputedStyle'.
+--   A subset of the full ComputedStyle as defined by the request whitelist.
 data DomSnapshotComputedStyle = DomSnapshotComputedStyle {
   -- | Name/value pairs of computed style properties.
   domSnapshotComputedStyleProperties :: [DomSnapshotNameValue]
@@ -181,7 +185,8 @@ instance FromJSON  DomSnapshotComputedStyle where
 
 
 
--- | Type 'DOMSnapshot.NameValue' .A name/value pair.
+-- | Type 'DOMSnapshot.NameValue'.
+--   A name/value pair.
 data DomSnapshotNameValue = DomSnapshotNameValue {
   -- | Attribute/property name.
   domSnapshotNameValueName :: String,
@@ -196,13 +201,16 @@ instance FromJSON  DomSnapshotNameValue where
 
 
 
--- | Type 'DOMSnapshot.StringIndex' .Index of the string in the strings table.
+-- | Type 'DOMSnapshot.StringIndex'.
+--   Index of the string in the strings table.
 type DomSnapshotStringIndex = Int
 
--- | Type 'DOMSnapshot.ArrayOfStrings' .Index of the string in the strings table.
+-- | Type 'DOMSnapshot.ArrayOfStrings'.
+--   Index of the string in the strings table.
 type DomSnapshotArrayOfStrings = [DomSnapshotStringIndex]
 
--- | Type 'DOMSnapshot.RareStringData' .Data that is only present on rare nodes.
+-- | Type 'DOMSnapshot.RareStringData'.
+--   Data that is only present on rare nodes.
 data DomSnapshotRareStringData = DomSnapshotRareStringData {
   domSnapshotRareStringDataIndex :: [Int],
   domSnapshotRareStringDataValue :: [DomSnapshotStringIndex]
@@ -215,7 +223,7 @@ instance FromJSON  DomSnapshotRareStringData where
 
 
 
--- | Type 'DOMSnapshot.RareBooleanData' .
+-- | Type 'DOMSnapshot.RareBooleanData'.
 data DomSnapshotRareBooleanData = DomSnapshotRareBooleanData {
   domSnapshotRareBooleanDataIndex :: [Int]
 } deriving (Generic, Eq, Show, Read)
@@ -227,7 +235,7 @@ instance FromJSON  DomSnapshotRareBooleanData where
 
 
 
--- | Type 'DOMSnapshot.RareIntegerData' .
+-- | Type 'DOMSnapshot.RareIntegerData'.
 data DomSnapshotRareIntegerData = DomSnapshotRareIntegerData {
   domSnapshotRareIntegerDataIndex :: [Int],
   domSnapshotRareIntegerDataValue :: [Int]
@@ -240,10 +248,11 @@ instance FromJSON  DomSnapshotRareIntegerData where
 
 
 
--- | Type 'DOMSnapshot.Rectangle' .
+-- | Type 'DOMSnapshot.Rectangle'.
 type DomSnapshotRectangle = [Double]
 
--- | Type 'DOMSnapshot.DocumentSnapshot' .Document snapshot.
+-- | Type 'DOMSnapshot.DocumentSnapshot'.
+--   Document snapshot.
 data DomSnapshotDocumentSnapshot = DomSnapshotDocumentSnapshot {
   -- | Document URL that `Document` or `FrameOwner` node points to.
   domSnapshotDocumentSnapshotDocumentUrl :: DomSnapshotStringIndex,
@@ -284,7 +293,8 @@ instance FromJSON  DomSnapshotDocumentSnapshot where
 
 
 
--- | Type 'DOMSnapshot.NodeTreeSnapshot' .Table containing nodes.
+-- | Type 'DOMSnapshot.NodeTreeSnapshot'.
+--   Table containing nodes.
 data DomSnapshotNodeTreeSnapshot = DomSnapshotNodeTreeSnapshot {
   -- | Parent node index.
   domSnapshotNodeTreeSnapshotParentIndex :: Maybe [Int],
@@ -329,7 +339,8 @@ instance FromJSON  DomSnapshotNodeTreeSnapshot where
 
 
 
--- | Type 'DOMSnapshot.LayoutTreeSnapshot' .Table of details of an element in the DOM tree with a LayoutObject.
+-- | Type 'DOMSnapshot.LayoutTreeSnapshot'.
+--   Table of details of an element in the DOM tree with a LayoutObject.
 data DomSnapshotLayoutTreeSnapshot = DomSnapshotLayoutTreeSnapshot {
   -- | Index of the corresponding node in the `NodeTreeSnapshot` array returned by `captureSnapshot`.
   domSnapshotLayoutTreeSnapshotNodeIndex :: [Int],
@@ -364,7 +375,8 @@ instance FromJSON  DomSnapshotLayoutTreeSnapshot where
 
 
 
--- | Type 'DOMSnapshot.TextBoxSnapshot' .Table of details of the post layout rendered text positions. The exact layout should not be regarded as
+-- | Type 'DOMSnapshot.TextBoxSnapshot'.
+--   Table of details of the post layout rendered text positions. The exact layout should not be regarded as
 --   stable and may change between versions.
 data DomSnapshotTextBoxSnapshot = DomSnapshotTextBoxSnapshot {
   -- | Index of the layout tree node that owns this box collection.

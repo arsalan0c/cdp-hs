@@ -48,10 +48,12 @@ import CDP.Handle
 
 
 
--- | Type 'WebAudio.GraphObjectId' .An unique ID for a graph object (AudioContext, AudioNode, AudioParam) in Web Audio API
+-- | Type 'WebAudio.GraphObjectId'.
+--   An unique ID for a graph object (AudioContext, AudioNode, AudioParam) in Web Audio API
 type WebAudioGraphObjectId = String
 
--- | Type 'WebAudio.ContextType' .Enum of BaseAudioContext types
+-- | Type 'WebAudio.ContextType'.
+--   Enum of BaseAudioContext types
 data WebAudioContextType = WebAudioContextTypeRealtime | WebAudioContextTypeOffline
    deriving (Ord, Eq, Show, Read)
 instance FromJSON WebAudioContextType where
@@ -69,7 +71,8 @@ instance ToJSON WebAudioContextType where
 
 
 
--- | Type 'WebAudio.ContextState' .Enum of AudioContextState from the spec
+-- | Type 'WebAudio.ContextState'.
+--   Enum of AudioContextState from the spec
 data WebAudioContextState = WebAudioContextStateSuspended | WebAudioContextStateRunning | WebAudioContextStateClosed
    deriving (Ord, Eq, Show, Read)
 instance FromJSON WebAudioContextState where
@@ -89,10 +92,12 @@ instance ToJSON WebAudioContextState where
 
 
 
--- | Type 'WebAudio.NodeType' .Enum of AudioNode types
+-- | Type 'WebAudio.NodeType'.
+--   Enum of AudioNode types
 type WebAudioNodeType = String
 
--- | Type 'WebAudio.ChannelCountMode' .Enum of AudioNode::ChannelCountMode from the spec
+-- | Type 'WebAudio.ChannelCountMode'.
+--   Enum of AudioNode::ChannelCountMode from the spec
 data WebAudioChannelCountMode = WebAudioChannelCountModeClampedMax | WebAudioChannelCountModeExplicit | WebAudioChannelCountModeMax
    deriving (Ord, Eq, Show, Read)
 instance FromJSON WebAudioChannelCountMode where
@@ -112,7 +117,8 @@ instance ToJSON WebAudioChannelCountMode where
 
 
 
--- | Type 'WebAudio.ChannelInterpretation' .Enum of AudioNode::ChannelInterpretation from the spec
+-- | Type 'WebAudio.ChannelInterpretation'.
+--   Enum of AudioNode::ChannelInterpretation from the spec
 data WebAudioChannelInterpretation = WebAudioChannelInterpretationDiscrete | WebAudioChannelInterpretationSpeakers
    deriving (Ord, Eq, Show, Read)
 instance FromJSON WebAudioChannelInterpretation where
@@ -130,10 +136,12 @@ instance ToJSON WebAudioChannelInterpretation where
 
 
 
--- | Type 'WebAudio.ParamType' .Enum of AudioParam types
+-- | Type 'WebAudio.ParamType'.
+--   Enum of AudioParam types
 type WebAudioParamType = String
 
--- | Type 'WebAudio.AutomationRate' .Enum of AudioParam::AutomationRate from the spec
+-- | Type 'WebAudio.AutomationRate'.
+--   Enum of AudioParam::AutomationRate from the spec
 data WebAudioAutomationRate = WebAudioAutomationRateARate | WebAudioAutomationRateKRate
    deriving (Ord, Eq, Show, Read)
 instance FromJSON WebAudioAutomationRate where
@@ -151,7 +159,8 @@ instance ToJSON WebAudioAutomationRate where
 
 
 
--- | Type 'WebAudio.ContextRealtimeData' .Fields in AudioContext that change in real-time.
+-- | Type 'WebAudio.ContextRealtimeData'.
+--   Fields in AudioContext that change in real-time.
 data WebAudioContextRealtimeData = WebAudioContextRealtimeData {
   -- | The current context time in second in BaseAudioContext.
   webAudioContextRealtimeDataCurrentTime :: Double,
@@ -172,7 +181,8 @@ instance FromJSON  WebAudioContextRealtimeData where
 
 
 
--- | Type 'WebAudio.BaseAudioContext' .Protocol object for BaseAudioContext
+-- | Type 'WebAudio.BaseAudioContext'.
+--   Protocol object for BaseAudioContext
 data WebAudioBaseAudioContext = WebAudioBaseAudioContext {
   webAudioBaseAudioContextContextId :: WebAudioGraphObjectId,
   webAudioBaseAudioContextContextType :: WebAudioContextType,
@@ -193,7 +203,8 @@ instance FromJSON  WebAudioBaseAudioContext where
 
 
 
--- | Type 'WebAudio.AudioListener' .Protocol object for AudioListener
+-- | Type 'WebAudio.AudioListener'.
+--   Protocol object for AudioListener
 data WebAudioAudioListener = WebAudioAudioListener {
   webAudioAudioListenerListenerId :: WebAudioGraphObjectId,
   webAudioAudioListenerContextId :: WebAudioGraphObjectId
@@ -206,7 +217,8 @@ instance FromJSON  WebAudioAudioListener where
 
 
 
--- | Type 'WebAudio.AudioNode' .Protocol object for AudioNode
+-- | Type 'WebAudio.AudioNode'.
+--   Protocol object for AudioNode
 data WebAudioAudioNode = WebAudioAudioNode {
   webAudioAudioNodeNodeId :: WebAudioGraphObjectId,
   webAudioAudioNodeContextId :: WebAudioGraphObjectId,
@@ -225,7 +237,8 @@ instance FromJSON  WebAudioAudioNode where
 
 
 
--- | Type 'WebAudio.AudioParam' .Protocol object for AudioParam
+-- | Type 'WebAudio.AudioParam'.
+--   Protocol object for AudioParam
 data WebAudioAudioParam = WebAudioAudioParam {
   webAudioAudioParamParamId :: WebAudioGraphObjectId,
   webAudioAudioParamNodeId :: WebAudioGraphObjectId,

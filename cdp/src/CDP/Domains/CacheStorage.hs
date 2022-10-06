@@ -45,10 +45,12 @@ import CDP.Handle
 
 
 
--- | Type 'CacheStorage.CacheId' .Unique identifier of the Cache object.
+-- | Type 'CacheStorage.CacheId'.
+--   Unique identifier of the Cache object.
 type CacheStorageCacheId = String
 
--- | Type 'CacheStorage.CachedResponseType' .type of HTTP response cached
+-- | Type 'CacheStorage.CachedResponseType'.
+--   type of HTTP response cached
 data CacheStorageCachedResponseType = CacheStorageCachedResponseTypeBasic | CacheStorageCachedResponseTypeCors | CacheStorageCachedResponseTypeDefault | CacheStorageCachedResponseTypeError | CacheStorageCachedResponseTypeOpaqueResponse | CacheStorageCachedResponseTypeOpaqueRedirect
    deriving (Ord, Eq, Show, Read)
 instance FromJSON CacheStorageCachedResponseType where
@@ -74,7 +76,8 @@ instance ToJSON CacheStorageCachedResponseType where
 
 
 
--- | Type 'CacheStorage.DataEntry' .Data entry.
+-- | Type 'CacheStorage.DataEntry'.
+--   Data entry.
 data CacheStorageDataEntry = CacheStorageDataEntry {
   -- | Request URL.
   cacheStorageDataEntryRequestUrl :: String,
@@ -101,7 +104,8 @@ instance FromJSON  CacheStorageDataEntry where
 
 
 
--- | Type 'CacheStorage.Cache' .Cache identifier.
+-- | Type 'CacheStorage.Cache'.
+--   Cache identifier.
 data CacheStorageCache = CacheStorageCache {
   -- | An opaque unique id of the cache.
   cacheStorageCacheCacheId :: CacheStorageCacheId,
@@ -118,7 +122,7 @@ instance FromJSON  CacheStorageCache where
 
 
 
--- | Type 'CacheStorage.Header' .
+-- | Type 'CacheStorage.Header'.
 data CacheStorageHeader = CacheStorageHeader {
   cacheStorageHeaderName :: String,
   cacheStorageHeaderValue :: String
@@ -131,7 +135,8 @@ instance FromJSON  CacheStorageHeader where
 
 
 
--- | Type 'CacheStorage.CachedResponse' .Cached response
+-- | Type 'CacheStorage.CachedResponse'.
+--   Cached response
 data CacheStorageCachedResponse = CacheStorageCachedResponse {
   -- | Entry content, base64-encoded. (Encoded as a base64 string when passed over JSON)
   cacheStorageCachedResponseBody :: String

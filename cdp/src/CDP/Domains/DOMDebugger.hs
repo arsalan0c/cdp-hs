@@ -50,7 +50,8 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 import CDP.Domains.Runtime as Runtime
 
 
--- | Type 'DOMDebugger.DOMBreakpointType' .DOM breakpoint type.
+-- | Type 'DOMDebugger.DOMBreakpointType'.
+--   DOM breakpoint type.
 data DomDebuggerDomBreakpointType = DomDebuggerDomBreakpointTypeSubtreeModified | DomDebuggerDomBreakpointTypeAttributeModified | DomDebuggerDomBreakpointTypeNodeRemoved
    deriving (Ord, Eq, Show, Read)
 instance FromJSON DomDebuggerDomBreakpointType where
@@ -70,7 +71,8 @@ instance ToJSON DomDebuggerDomBreakpointType where
 
 
 
--- | Type 'DOMDebugger.CSPViolationType' .CSP Violation type.
+-- | Type 'DOMDebugger.CSPViolationType'.
+--   CSP Violation type.
 data DomDebuggerCspViolationType = DomDebuggerCspViolationTypeTrustedtypeSinkViolation | DomDebuggerCspViolationTypeTrustedtypePolicyViolation
    deriving (Ord, Eq, Show, Read)
 instance FromJSON DomDebuggerCspViolationType where
@@ -88,7 +90,8 @@ instance ToJSON DomDebuggerCspViolationType where
 
 
 
--- | Type 'DOMDebugger.EventListener' .Object event listener.
+-- | Type 'DOMDebugger.EventListener'.
+--   Object event listener.
 data DomDebuggerEventListener = DomDebuggerEventListener {
   -- | `EventListener`'s type.
   domDebuggerEventListenerType :: String,

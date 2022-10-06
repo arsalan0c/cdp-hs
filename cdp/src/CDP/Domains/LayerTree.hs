@@ -46,13 +46,16 @@ import CDP.Handle
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
 
 
--- | Type 'LayerTree.LayerId' .Unique Layer identifier.
+-- | Type 'LayerTree.LayerId'.
+--   Unique Layer identifier.
 type LayerTreeLayerId = String
 
--- | Type 'LayerTree.SnapshotId' .Unique snapshot identifier.
+-- | Type 'LayerTree.SnapshotId'.
+--   Unique snapshot identifier.
 type LayerTreeSnapshotId = String
 
--- | Type 'LayerTree.ScrollRect' .Rectangle where scrolling happens on the main thread.
+-- | Type 'LayerTree.ScrollRect'.
+--   Rectangle where scrolling happens on the main thread.
 data LayerTreeScrollRectType = LayerTreeScrollRectTypeRepaintsOnScroll | LayerTreeScrollRectTypeTouchEventHandler | LayerTreeScrollRectTypeWheelEventHandler
    deriving (Ord, Eq, Show, Read)
 instance FromJSON LayerTreeScrollRectType where
@@ -86,7 +89,8 @@ instance FromJSON  LayerTreeScrollRect where
 
 
 
--- | Type 'LayerTree.StickyPositionConstraint' .Sticky position constraints.
+-- | Type 'LayerTree.StickyPositionConstraint'.
+--   Sticky position constraints.
 data LayerTreeStickyPositionConstraint = LayerTreeStickyPositionConstraint {
   -- | Layout rectangle of the sticky element before being shifted
   layerTreeStickyPositionConstraintStickyBoxRect :: DOMPageNetworkEmulationSecurity.DomRect,
@@ -105,7 +109,8 @@ instance FromJSON  LayerTreeStickyPositionConstraint where
 
 
 
--- | Type 'LayerTree.PictureTile' .Serialized fragment of layer picture along with its offset within the layer.
+-- | Type 'LayerTree.PictureTile'.
+--   Serialized fragment of layer picture along with its offset within the layer.
 data LayerTreePictureTile = LayerTreePictureTile {
   -- | Offset from owning layer left boundary
   layerTreePictureTileX :: Double,
@@ -122,7 +127,8 @@ instance FromJSON  LayerTreePictureTile where
 
 
 
--- | Type 'LayerTree.Layer' .Information about a compositing layer.
+-- | Type 'LayerTree.Layer'.
+--   Information about a compositing layer.
 data LayerTreeLayer = LayerTreeLayer {
   -- | The unique id for this layer.
   layerTreeLayerLayerId :: LayerTreeLayerId,
@@ -166,7 +172,8 @@ instance FromJSON  LayerTreeLayer where
 
 
 
--- | Type 'LayerTree.PaintProfile' .Array of timings, one per paint step.
+-- | Type 'LayerTree.PaintProfile'.
+--   Array of timings, one per paint step.
 type LayerTreePaintProfile = [Double]
 
 

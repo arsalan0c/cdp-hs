@@ -51,13 +51,14 @@ import CDP.Handle
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
 
 
--- | Type 'Browser.BrowserContextID' .
+-- | Type 'Browser.BrowserContextID'.
 type BrowserBrowserContextId = String
 
--- | Type 'Browser.WindowID' .
+-- | Type 'Browser.WindowID'.
 type BrowserWindowId = Int
 
--- | Type 'Browser.WindowState' .The state of the browser window.
+-- | Type 'Browser.WindowState'.
+--   The state of the browser window.
 data BrowserWindowState = BrowserWindowStateNormal | BrowserWindowStateMinimized | BrowserWindowStateMaximized | BrowserWindowStateFullscreen
    deriving (Ord, Eq, Show, Read)
 instance FromJSON BrowserWindowState where
@@ -79,7 +80,8 @@ instance ToJSON BrowserWindowState where
 
 
 
--- | Type 'Browser.Bounds' .Browser window bounds information
+-- | Type 'Browser.Bounds'.
+--   Browser window bounds information
 data BrowserBounds = BrowserBounds {
   -- | The offset from the left edge of the screen to the window in pixels.
   browserBoundsLeft :: Maybe Int,
@@ -100,7 +102,7 @@ instance FromJSON  BrowserBounds where
 
 
 
--- | Type 'Browser.PermissionType' .
+-- | Type 'Browser.PermissionType'.
 data BrowserPermissionType = BrowserPermissionTypeAccessibilityEvents | BrowserPermissionTypeAudioCapture | BrowserPermissionTypeBackgroundSync | BrowserPermissionTypeBackgroundFetch | BrowserPermissionTypeClipboardReadWrite | BrowserPermissionTypeClipboardSanitizedWrite | BrowserPermissionTypeDisplayCapture | BrowserPermissionTypeDurableStorage | BrowserPermissionTypeFlash | BrowserPermissionTypeGeolocation | BrowserPermissionTypeMidi | BrowserPermissionTypeMidiSysex | BrowserPermissionTypeNfc | BrowserPermissionTypeNotifications | BrowserPermissionTypePaymentHandler | BrowserPermissionTypePeriodicBackgroundSync | BrowserPermissionTypeProtectedMediaIdentifier | BrowserPermissionTypeSensors | BrowserPermissionTypeVideoCapture | BrowserPermissionTypeVideoCapturePanTiltZoom | BrowserPermissionTypeIdleDetection | BrowserPermissionTypeWakeLockScreen | BrowserPermissionTypeWakeLockSystem
    deriving (Ord, Eq, Show, Read)
 instance FromJSON BrowserPermissionType where
@@ -160,7 +162,7 @@ instance ToJSON BrowserPermissionType where
 
 
 
--- | Type 'Browser.PermissionSetting' .
+-- | Type 'Browser.PermissionSetting'.
 data BrowserPermissionSetting = BrowserPermissionSettingGranted | BrowserPermissionSettingDenied | BrowserPermissionSettingPrompt
    deriving (Ord, Eq, Show, Read)
 instance FromJSON BrowserPermissionSetting where
@@ -180,7 +182,8 @@ instance ToJSON BrowserPermissionSetting where
 
 
 
--- | Type 'Browser.PermissionDescriptor' .Definition of PermissionDescriptor defined in the Permissions API:
+-- | Type 'Browser.PermissionDescriptor'.
+--   Definition of PermissionDescriptor defined in the Permissions API:
 --   https://w3c.github.io/permissions/#dictdef-permissiondescriptor.
 data BrowserPermissionDescriptor = BrowserPermissionDescriptor {
   -- | Name of permission.
@@ -204,7 +207,8 @@ instance FromJSON  BrowserPermissionDescriptor where
 
 
 
--- | Type 'Browser.BrowserCommandId' .Browser command ids used by executeBrowserCommand.
+-- | Type 'Browser.BrowserCommandId'.
+--   Browser command ids used by executeBrowserCommand.
 data BrowserBrowserCommandId = BrowserBrowserCommandIdOpenTabSearch | BrowserBrowserCommandIdCloseTabSearch
    deriving (Ord, Eq, Show, Read)
 instance FromJSON BrowserBrowserCommandId where
@@ -222,7 +226,8 @@ instance ToJSON BrowserBrowserCommandId where
 
 
 
--- | Type 'Browser.Bucket' .Chrome histogram bucket.
+-- | Type 'Browser.Bucket'.
+--   Chrome histogram bucket.
 data BrowserBucket = BrowserBucket {
   -- | Minimum value (inclusive).
   browserBucketLow :: Int,
@@ -239,7 +244,8 @@ instance FromJSON  BrowserBucket where
 
 
 
--- | Type 'Browser.Histogram' .Chrome histogram.
+-- | Type 'Browser.Histogram'.
+--   Chrome histogram.
 data BrowserHistogram = BrowserHistogram {
   -- | Name.
   browserHistogramName :: String,
@@ -725,13 +731,14 @@ browserExecuteBrowserCommand handle params = sendReceiveCommand handle "Browser.
 
 
 
--- | Type 'Target.TargetID' .
+-- | Type 'Target.TargetID'.
 type TargetTargetId = String
 
--- | Type 'Target.SessionID' .Unique identifier of attached debugging session.
+-- | Type 'Target.SessionID'.
+--   Unique identifier of attached debugging session.
 type TargetSessionId = String
 
--- | Type 'Target.TargetInfo' .
+-- | Type 'Target.TargetInfo'.
 data TargetTargetInfo = TargetTargetInfo {
   targetTargetInfoTargetId :: TargetTargetId,
   targetTargetInfoType :: String,
@@ -755,7 +762,7 @@ instance FromJSON  TargetTargetInfo where
 
 
 
--- | Type 'Target.RemoteLocation' .
+-- | Type 'Target.RemoteLocation'.
 data TargetRemoteLocation = TargetRemoteLocation {
   targetRemoteLocationHost :: String,
   targetRemoteLocationPort :: Int

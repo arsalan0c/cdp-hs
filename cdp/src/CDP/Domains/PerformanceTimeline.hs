@@ -49,7 +49,8 @@ import CDP.Handle
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
 
 
--- | Type 'PerformanceTimeline.LargestContentfulPaint' .See https://github.com/WICG/LargestContentfulPaint and largest_contentful_paint.idl
+-- | Type 'PerformanceTimeline.LargestContentfulPaint'.
+--   See https://github.com/WICG/LargestContentfulPaint and largest_contentful_paint.idl
 data PerformanceTimelineLargestContentfulPaint = PerformanceTimelineLargestContentfulPaint {
   performanceTimelineLargestContentfulPaintRenderTime :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
   performanceTimelineLargestContentfulPaintLoadTime :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
@@ -69,7 +70,7 @@ instance FromJSON  PerformanceTimelineLargestContentfulPaint where
 
 
 
--- | Type 'PerformanceTimeline.LayoutShiftAttribution' .
+-- | Type 'PerformanceTimeline.LayoutShiftAttribution'.
 data PerformanceTimelineLayoutShiftAttribution = PerformanceTimelineLayoutShiftAttribution {
   performanceTimelineLayoutShiftAttributionPreviousRect :: DOMPageNetworkEmulationSecurity.DomRect,
   performanceTimelineLayoutShiftAttributionCurrentRect :: DOMPageNetworkEmulationSecurity.DomRect,
@@ -83,7 +84,8 @@ instance FromJSON  PerformanceTimelineLayoutShiftAttribution where
 
 
 
--- | Type 'PerformanceTimeline.LayoutShift' .See https://wicg.github.io/layout-instability/#sec-layout-shift and layout_shift.idl
+-- | Type 'PerformanceTimeline.LayoutShift'.
+--   See https://wicg.github.io/layout-instability/#sec-layout-shift and layout_shift.idl
 data PerformanceTimelineLayoutShift = PerformanceTimelineLayoutShift {
   -- | Score increment produced by this event.
   performanceTimelineLayoutShiftValue :: Double,
@@ -99,7 +101,7 @@ instance FromJSON  PerformanceTimelineLayoutShift where
 
 
 
--- | Type 'PerformanceTimeline.TimelineEvent' .
+-- | Type 'PerformanceTimeline.TimelineEvent'.
 data PerformanceTimelineTimelineEvent = PerformanceTimelineTimelineEvent {
   -- | Identifies the frame that this event is related to. Empty for non-frame targets.
   performanceTimelineTimelineEventFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId,

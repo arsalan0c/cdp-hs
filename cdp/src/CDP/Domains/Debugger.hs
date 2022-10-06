@@ -49,13 +49,16 @@ import CDP.Handle
 import CDP.Domains.Runtime as Runtime
 
 
--- | Type 'Debugger.BreakpointId' .Breakpoint identifier.
+-- | Type 'Debugger.BreakpointId'.
+--   Breakpoint identifier.
 type DebuggerBreakpointId = String
 
--- | Type 'Debugger.CallFrameId' .Call frame identifier.
+-- | Type 'Debugger.CallFrameId'.
+--   Call frame identifier.
 type DebuggerCallFrameId = String
 
--- | Type 'Debugger.Location' .Location in the source code.
+-- | Type 'Debugger.Location'.
+--   Location in the source code.
 data DebuggerLocation = DebuggerLocation {
   -- | Script identifier as reported in the `Debugger.scriptParsed`.
   debuggerLocationScriptId :: Runtime.RuntimeScriptId,
@@ -72,7 +75,8 @@ instance FromJSON  DebuggerLocation where
 
 
 
--- | Type 'Debugger.ScriptPosition' .Location in the source code.
+-- | Type 'Debugger.ScriptPosition'.
+--   Location in the source code.
 data DebuggerScriptPosition = DebuggerScriptPosition {
   debuggerScriptPositionLineNumber :: Int,
   debuggerScriptPositionColumnNumber :: Int
@@ -85,7 +89,8 @@ instance FromJSON  DebuggerScriptPosition where
 
 
 
--- | Type 'Debugger.LocationRange' .Location range within one script.
+-- | Type 'Debugger.LocationRange'.
+--   Location range within one script.
 data DebuggerLocationRange = DebuggerLocationRange {
   debuggerLocationRangeScriptId :: Runtime.RuntimeScriptId,
   debuggerLocationRangeStart :: DebuggerScriptPosition,
@@ -99,7 +104,8 @@ instance FromJSON  DebuggerLocationRange where
 
 
 
--- | Type 'Debugger.CallFrame' .JavaScript call frame. Array of call frames form the call stack.
+-- | Type 'Debugger.CallFrame'.
+--   JavaScript call frame. Array of call frames form the call stack.
 data DebuggerCallFrame = DebuggerCallFrame {
   -- | Call frame identifier. This identifier is only valid while the virtual machine is paused.
   debuggerCallFrameCallFrameId :: DebuggerCallFrameId,
@@ -129,7 +135,8 @@ instance FromJSON  DebuggerCallFrame where
 
 
 
--- | Type 'Debugger.Scope' .Scope description.
+-- | Type 'Debugger.Scope'.
+--   Scope description.
 data DebuggerScopeType = DebuggerScopeTypeGlobal | DebuggerScopeTypeLocal | DebuggerScopeTypeWith | DebuggerScopeTypeClosure | DebuggerScopeTypeCatch | DebuggerScopeTypeBlock | DebuggerScopeTypeScript | DebuggerScopeTypeEval | DebuggerScopeTypeModule | DebuggerScopeTypeWasmExpressionStack
    deriving (Ord, Eq, Show, Read)
 instance FromJSON DebuggerScopeType where
@@ -184,7 +191,8 @@ instance FromJSON  DebuggerScope where
 
 
 
--- | Type 'Debugger.SearchMatch' .Search match for resource.
+-- | Type 'Debugger.SearchMatch'.
+--   Search match for resource.
 data DebuggerSearchMatch = DebuggerSearchMatch {
   -- | Line number in resource content.
   debuggerSearchMatchLineNumber :: Double,
@@ -199,7 +207,7 @@ instance FromJSON  DebuggerSearchMatch where
 
 
 
--- | Type 'Debugger.BreakLocation' .
+-- | Type 'Debugger.BreakLocation'.
 data DebuggerBreakLocationType = DebuggerBreakLocationTypeDebuggerStatement | DebuggerBreakLocationTypeCall | DebuggerBreakLocationTypeReturn
    deriving (Ord, Eq, Show, Read)
 instance FromJSON DebuggerBreakLocationType where
@@ -236,7 +244,8 @@ instance FromJSON  DebuggerBreakLocation where
 
 
 
--- | Type 'Debugger.ScriptLanguage' .Enum of possible script languages.
+-- | Type 'Debugger.ScriptLanguage'.
+--   Enum of possible script languages.
 data DebuggerScriptLanguage = DebuggerScriptLanguageJavaScript | DebuggerScriptLanguageWebAssembly
    deriving (Ord, Eq, Show, Read)
 instance FromJSON DebuggerScriptLanguage where
@@ -254,7 +263,8 @@ instance ToJSON DebuggerScriptLanguage where
 
 
 
--- | Type 'Debugger.DebugSymbols' .Debug symbols available for a wasm script.
+-- | Type 'Debugger.DebugSymbols'.
+--   Debug symbols available for a wasm script.
 data DebuggerDebugSymbolsType = DebuggerDebugSymbolsTypeNone | DebuggerDebugSymbolsTypeSourceMap | DebuggerDebugSymbolsTypeEmbeddedDwarf | DebuggerDebugSymbolsTypeExternalDwarf
    deriving (Ord, Eq, Show, Read)
 instance FromJSON DebuggerDebugSymbolsType where

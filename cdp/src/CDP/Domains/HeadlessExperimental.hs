@@ -47,7 +47,8 @@ import CDP.Handle
 
 
 
--- | Type 'HeadlessExperimental.ScreenshotParams' .Encoding options for a screenshot.
+-- | Type 'HeadlessExperimental.ScreenshotParams'.
+--   Encoding options for a screenshot.
 data HeadlessExperimentalScreenshotParamsFormat = HeadlessExperimentalScreenshotParamsFormatJpeg | HeadlessExperimentalScreenshotParamsFormatPng
    deriving (Ord, Eq, Show, Read)
 instance FromJSON HeadlessExperimentalScreenshotParamsFormat where

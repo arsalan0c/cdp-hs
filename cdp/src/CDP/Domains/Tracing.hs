@@ -46,10 +46,11 @@ import CDP.Handle
 import CDP.Domains.IO as IO
 
 
--- | Type 'Tracing.MemoryDumpConfig' .Configuration for memory dump. Used only when "memory-infra" category is enabled.
+-- | Type 'Tracing.MemoryDumpConfig'.
+--   Configuration for memory dump. Used only when "memory-infra" category is enabled.
 type TracingMemoryDumpConfig = [(String, String)]
 
--- | Type 'Tracing.TraceConfig' .
+-- | Type 'Tracing.TraceConfig'.
 data TracingTraceConfigRecordMode = TracingTraceConfigRecordModeRecordUntilFull | TracingTraceConfigRecordModeRecordContinuously | TracingTraceConfigRecordModeRecordAsMuchAsPossible | TracingTraceConfigRecordModeEchoToConsole
    deriving (Ord, Eq, Show, Read)
 instance FromJSON TracingTraceConfigRecordMode where
@@ -97,7 +98,8 @@ instance FromJSON  TracingTraceConfig where
 
 
 
--- | Type 'Tracing.StreamFormat' .Data format of a trace. Can be either the legacy JSON format or the
+-- | Type 'Tracing.StreamFormat'.
+--   Data format of a trace. Can be either the legacy JSON format or the
 --   protocol buffer format. Note that the JSON format will be deprecated soon.
 data TracingStreamFormat = TracingStreamFormatJson | TracingStreamFormatProto
    deriving (Ord, Eq, Show, Read)
@@ -116,7 +118,8 @@ instance ToJSON TracingStreamFormat where
 
 
 
--- | Type 'Tracing.StreamCompression' .Compression type to use for traces returned via streams.
+-- | Type 'Tracing.StreamCompression'.
+--   Compression type to use for traces returned via streams.
 data TracingStreamCompression = TracingStreamCompressionNone | TracingStreamCompressionGzip
    deriving (Ord, Eq, Show, Read)
 instance FromJSON TracingStreamCompression where
@@ -134,7 +137,8 @@ instance ToJSON TracingStreamCompression where
 
 
 
--- | Type 'Tracing.MemoryDumpLevelOfDetail' .Details exposed when memory request explicitly declared.
+-- | Type 'Tracing.MemoryDumpLevelOfDetail'.
+--   Details exposed when memory request explicitly declared.
 --   Keep consistent with memory_dump_request_args.h and
 --   memory_instrumentation.mojom
 data TracingMemoryDumpLevelOfDetail = TracingMemoryDumpLevelOfDetailBackground | TracingMemoryDumpLevelOfDetailLight | TracingMemoryDumpLevelOfDetailDetailed
@@ -156,7 +160,8 @@ instance ToJSON TracingMemoryDumpLevelOfDetail where
 
 
 
--- | Type 'Tracing.TracingBackend' .Backend type to use for tracing. `chrome` uses the Chrome-integrated
+-- | Type 'Tracing.TracingBackend'.
+--   Backend type to use for tracing. `chrome` uses the Chrome-integrated
 --   tracing service and is supported on all platforms. `system` is only
 --   supported on Chrome OS and uses the Perfetto system tracing service.
 --   `auto` chooses `system` when the perfettoConfig provided to Tracing.start

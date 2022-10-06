@@ -45,10 +45,12 @@ import CDP.Handle
 
 
 
--- | Type 'Database.DatabaseId' .Unique identifier of Database object.
+-- | Type 'Database.DatabaseId'.
+--   Unique identifier of Database object.
 type DatabaseDatabaseId = String
 
--- | Type 'Database.Database' .Database object.
+-- | Type 'Database.Database'.
+--   Database object.
 data DatabaseDatabase = DatabaseDatabase {
   -- | Database ID.
   databaseDatabaseId :: DatabaseDatabaseId,
@@ -67,7 +69,8 @@ instance FromJSON  DatabaseDatabase where
 
 
 
--- | Type 'Database.Error' .Database error.
+-- | Type 'Database.Error'.
+--   Database error.
 data DatabaseError = DatabaseError {
   -- | Error message.
   databaseErrorMessage :: String,

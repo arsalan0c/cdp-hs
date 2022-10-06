@@ -46,13 +46,13 @@ import CDP.Handle
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
 
 
--- | Unique Layer identifier.
+-- | Type 'LayerTree.LayerId' .Unique Layer identifier.
 type LayerTreeLayerId = String
 
--- | Unique snapshot identifier.
+-- | Type 'LayerTree.SnapshotId' .Unique snapshot identifier.
 type LayerTreeSnapshotId = String
 
--- | Rectangle where scrolling happens on the main thread.
+-- | Type 'LayerTree.ScrollRect' .Rectangle where scrolling happens on the main thread.
 data LayerTreeScrollRectType = LayerTreeScrollRectTypeRepaintsOnScroll | LayerTreeScrollRectTypeTouchEventHandler | LayerTreeScrollRectTypeWheelEventHandler
    deriving (Ord, Eq, Show, Read)
 instance FromJSON LayerTreeScrollRectType where
@@ -86,7 +86,7 @@ instance FromJSON  LayerTreeScrollRect where
 
 
 
--- | Sticky position constraints.
+-- | Type 'LayerTree.StickyPositionConstraint' .Sticky position constraints.
 data LayerTreeStickyPositionConstraint = LayerTreeStickyPositionConstraint {
   -- | Layout rectangle of the sticky element before being shifted
   layerTreeStickyPositionConstraintStickyBoxRect :: DOMPageNetworkEmulationSecurity.DomRect,
@@ -105,7 +105,7 @@ instance FromJSON  LayerTreeStickyPositionConstraint where
 
 
 
--- | Serialized fragment of layer picture along with its offset within the layer.
+-- | Type 'LayerTree.PictureTile' .Serialized fragment of layer picture along with its offset within the layer.
 data LayerTreePictureTile = LayerTreePictureTile {
   -- | Offset from owning layer left boundary
   layerTreePictureTileX :: Double,
@@ -122,7 +122,7 @@ instance FromJSON  LayerTreePictureTile where
 
 
 
--- | Information about a compositing layer.
+-- | Type 'LayerTree.Layer' .Information about a compositing layer.
 data LayerTreeLayer = LayerTreeLayer {
   -- | The unique id for this layer.
   layerTreeLayerLayerId :: LayerTreeLayerId,
@@ -149,7 +149,7 @@ data LayerTreeLayer = LayerTreeLayer {
   -- | Indicates how many time this layer has painted.
   layerTreeLayerPaintCount :: Int,
   -- | Indicates whether this layer hosts any content, rather than being used for
-    -- transform/scrolling purposes only.
+  --   transform/scrolling purposes only.
   layerTreeLayerDrawsContent :: Bool,
   -- | Set if layer is not visible.
   layerTreeLayerInvisible :: Maybe Bool,
@@ -166,7 +166,7 @@ instance FromJSON  LayerTreeLayer where
 
 
 
--- | Array of timings, one per paint step.
+-- | Type 'LayerTree.PaintProfile' .Array of timings, one per paint step.
 type LayerTreePaintProfile = [Double]
 
 
@@ -214,9 +214,9 @@ instance FromJSON  PLayerTreeCompositingReasons where
 
 
 -- | Function for the 'LayerTree.compositingReasons' command.
- -- Provides the reasons why the given layer was composited.
--- Parameters: 'PLayerTreeCompositingReasons'
--- Returns: 'LayerTreeCompositingReasons'
+--   Provides the reasons why the given layer was composited.
+--   Parameters: 'PLayerTreeCompositingReasons'
+--   Returns: 'LayerTreeCompositingReasons'
 layerTreeCompositingReasons :: Handle ev -> PLayerTreeCompositingReasons -> IO LayerTreeCompositingReasons
 layerTreeCompositingReasons handle params = sendReceiveCommandResult handle "LayerTree.compositingReasons" (Just params)
 
@@ -235,13 +235,13 @@ instance Command LayerTreeCompositingReasons where
 
 
 -- | Function for the 'LayerTree.disable' command.
- -- Disables compositing tree inspection.
+--   Disables compositing tree inspection.
 layerTreeDisable :: Handle ev -> IO ()
 layerTreeDisable handle = sendReceiveCommand handle "LayerTree.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'LayerTree.enable' command.
- -- Enables compositing tree inspection.
+--   Enables compositing tree inspection.
 layerTreeEnable :: Handle ev -> IO ()
 layerTreeEnable handle = sendReceiveCommand handle "LayerTree.enable" (Nothing :: Maybe ())
 
@@ -259,9 +259,9 @@ instance FromJSON  PLayerTreeLoadSnapshot where
 
 
 -- | Function for the 'LayerTree.loadSnapshot' command.
- -- Returns the snapshot identifier.
--- Parameters: 'PLayerTreeLoadSnapshot'
--- Returns: 'LayerTreeLoadSnapshot'
+--   Returns the snapshot identifier.
+--   Parameters: 'PLayerTreeLoadSnapshot'
+--   Returns: 'LayerTreeLoadSnapshot'
 layerTreeLoadSnapshot :: Handle ev -> PLayerTreeLoadSnapshot -> IO LayerTreeLoadSnapshot
 layerTreeLoadSnapshot handle params = sendReceiveCommandResult handle "LayerTree.loadSnapshot" (Just params)
 
@@ -292,9 +292,9 @@ instance FromJSON  PLayerTreeMakeSnapshot where
 
 
 -- | Function for the 'LayerTree.makeSnapshot' command.
- -- Returns the layer snapshot identifier.
--- Parameters: 'PLayerTreeMakeSnapshot'
--- Returns: 'LayerTreeMakeSnapshot'
+--   Returns the layer snapshot identifier.
+--   Parameters: 'PLayerTreeMakeSnapshot'
+--   Returns: 'LayerTreeMakeSnapshot'
 layerTreeMakeSnapshot :: Handle ev -> PLayerTreeMakeSnapshot -> IO LayerTreeMakeSnapshot
 layerTreeMakeSnapshot handle params = sendReceiveCommandResult handle "LayerTree.makeSnapshot" (Just params)
 
@@ -331,8 +331,9 @@ instance FromJSON  PLayerTreeProfileSnapshot where
 
 
 -- | Function for the 'LayerTree.profileSnapshot' command.
--- Parameters: 'PLayerTreeProfileSnapshot'
--- Returns: 'LayerTreeProfileSnapshot'
+--   
+--   Parameters: 'PLayerTreeProfileSnapshot'
+--   Returns: 'LayerTreeProfileSnapshot'
 layerTreeProfileSnapshot :: Handle ev -> PLayerTreeProfileSnapshot -> IO LayerTreeProfileSnapshot
 layerTreeProfileSnapshot handle params = sendReceiveCommandResult handle "LayerTree.profileSnapshot" (Just params)
 
@@ -363,8 +364,8 @@ instance FromJSON  PLayerTreeReleaseSnapshot where
 
 
 -- | Function for the 'LayerTree.releaseSnapshot' command.
- -- Releases layer snapshot captured by the back-end.
--- Parameters: 'PLayerTreeReleaseSnapshot'
+--   Releases layer snapshot captured by the back-end.
+--   Parameters: 'PLayerTreeReleaseSnapshot'
 layerTreeReleaseSnapshot :: Handle ev -> PLayerTreeReleaseSnapshot -> IO ()
 layerTreeReleaseSnapshot handle params = sendReceiveCommand handle "LayerTree.releaseSnapshot" (Just params)
 
@@ -388,9 +389,9 @@ instance FromJSON  PLayerTreeReplaySnapshot where
 
 
 -- | Function for the 'LayerTree.replaySnapshot' command.
- -- Replays the layer snapshot and returns the resulting bitmap.
--- Parameters: 'PLayerTreeReplaySnapshot'
--- Returns: 'LayerTreeReplaySnapshot'
+--   Replays the layer snapshot and returns the resulting bitmap.
+--   Parameters: 'PLayerTreeReplaySnapshot'
+--   Returns: 'LayerTreeReplaySnapshot'
 layerTreeReplaySnapshot :: Handle ev -> PLayerTreeReplaySnapshot -> IO LayerTreeReplaySnapshot
 layerTreeReplaySnapshot handle params = sendReceiveCommandResult handle "LayerTree.replaySnapshot" (Just params)
 
@@ -421,9 +422,9 @@ instance FromJSON  PLayerTreeSnapshotCommandLog where
 
 
 -- | Function for the 'LayerTree.snapshotCommandLog' command.
- -- Replays the layer snapshot and returns canvas log.
--- Parameters: 'PLayerTreeSnapshotCommandLog'
--- Returns: 'LayerTreeSnapshotCommandLog'
+--   Replays the layer snapshot and returns canvas log.
+--   Parameters: 'PLayerTreeSnapshotCommandLog'
+--   Returns: 'LayerTreeSnapshotCommandLog'
 layerTreeSnapshotCommandLog :: Handle ev -> PLayerTreeSnapshotCommandLog -> IO LayerTreeSnapshotCommandLog
 layerTreeSnapshotCommandLog handle params = sendReceiveCommandResult handle "LayerTree.snapshotCommandLog" (Just params)
 

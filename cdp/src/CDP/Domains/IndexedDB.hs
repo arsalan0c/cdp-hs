@@ -46,12 +46,12 @@ import CDP.Handle
 import CDP.Domains.Runtime as Runtime
 
 
--- | Database with an array of object stores.
+-- | Type 'IndexedDB.DatabaseWithObjectStores' .Database with an array of object stores.
 data IndexedDbDatabaseWithObjectStores = IndexedDbDatabaseWithObjectStores {
   -- | Database name.
   indexedDbDatabaseWithObjectStoresName :: String,
   -- | Database version (type is not 'integer', as the standard
-    -- requires the version number to be 'unsigned long long')
+  --   requires the version number to be 'unsigned long long')
   indexedDbDatabaseWithObjectStoresVersion :: Double,
   -- | Object stores in this database.
   indexedDbDatabaseWithObjectStoresObjectStores :: [IndexedDbObjectStore]
@@ -64,7 +64,7 @@ instance FromJSON  IndexedDbDatabaseWithObjectStores where
 
 
 
--- | Object store.
+-- | Type 'IndexedDB.ObjectStore' .Object store.
 data IndexedDbObjectStore = IndexedDbObjectStore {
   -- | Object store name.
   indexedDbObjectStoreName :: String,
@@ -83,7 +83,7 @@ instance FromJSON  IndexedDbObjectStore where
 
 
 
--- | Object store index.
+-- | Type 'IndexedDB.ObjectStoreIndex' .Object store index.
 data IndexedDbObjectStoreIndex = IndexedDbObjectStoreIndex {
   -- | Index name.
   indexedDbObjectStoreIndexName :: String,
@@ -102,7 +102,7 @@ instance FromJSON  IndexedDbObjectStoreIndex where
 
 
 
--- | Key.
+-- | Type 'IndexedDB.Key' .Key.
 data IndexedDbKeyType = IndexedDbKeyTypeNumber | IndexedDbKeyTypeString | IndexedDbKeyTypeDate | IndexedDbKeyTypeArray
    deriving (Ord, Eq, Show, Read)
 instance FromJSON IndexedDbKeyType where
@@ -144,7 +144,7 @@ instance FromJSON  IndexedDbKey where
 
 
 
--- | Key range.
+-- | Type 'IndexedDB.KeyRange' .Key range.
 data IndexedDbKeyRange = IndexedDbKeyRange {
   -- | Lower bound.
   indexedDbKeyRangeLower :: Maybe IndexedDbKey,
@@ -163,7 +163,7 @@ instance FromJSON  IndexedDbKeyRange where
 
 
 
--- | Data entry.
+-- | Type 'IndexedDB.DataEntry' .Data entry.
 data IndexedDbDataEntry = IndexedDbDataEntry {
   -- | Key object.
   indexedDbDataEntryKey :: Runtime.RuntimeRemoteObject,
@@ -180,7 +180,7 @@ instance FromJSON  IndexedDbDataEntry where
 
 
 
--- | Key path.
+-- | Type 'IndexedDB.KeyPath' .Key path.
 data IndexedDbKeyPathType = IndexedDbKeyPathTypeNull | IndexedDbKeyPathTypeString | IndexedDbKeyPathTypeArray
    deriving (Ord, Eq, Show, Read)
 instance FromJSON IndexedDbKeyPathType where
@@ -237,8 +237,8 @@ instance FromJSON  PIndexedDbClearObjectStore where
 
 
 -- | Function for the 'IndexedDB.clearObjectStore' command.
- -- Clears all entries from an object store.
--- Parameters: 'PIndexedDbClearObjectStore'
+--   Clears all entries from an object store.
+--   Parameters: 'PIndexedDbClearObjectStore'
 indexedDbClearObjectStore :: Handle ev -> PIndexedDbClearObjectStore -> IO ()
 indexedDbClearObjectStore handle params = sendReceiveCommand handle "IndexedDB.clearObjectStore" (Just params)
 
@@ -258,8 +258,8 @@ instance FromJSON  PIndexedDbDeleteDatabase where
 
 
 -- | Function for the 'IndexedDB.deleteDatabase' command.
- -- Deletes a database.
--- Parameters: 'PIndexedDbDeleteDatabase'
+--   Deletes a database.
+--   Parameters: 'PIndexedDbDeleteDatabase'
 indexedDbDeleteDatabase :: Handle ev -> PIndexedDbDeleteDatabase -> IO ()
 indexedDbDeleteDatabase handle params = sendReceiveCommand handle "IndexedDB.deleteDatabase" (Just params)
 
@@ -280,20 +280,20 @@ instance FromJSON  PIndexedDbDeleteObjectStoreEntries where
 
 
 -- | Function for the 'IndexedDB.deleteObjectStoreEntries' command.
- -- Delete a range of entries from an object store
--- Parameters: 'PIndexedDbDeleteObjectStoreEntries'
+--   Delete a range of entries from an object store
+--   Parameters: 'PIndexedDbDeleteObjectStoreEntries'
 indexedDbDeleteObjectStoreEntries :: Handle ev -> PIndexedDbDeleteObjectStoreEntries -> IO ()
 indexedDbDeleteObjectStoreEntries handle params = sendReceiveCommand handle "IndexedDB.deleteObjectStoreEntries" (Just params)
 
 
 -- | Function for the 'IndexedDB.disable' command.
- -- Disables events from backend.
+--   Disables events from backend.
 indexedDbDisable :: Handle ev -> IO ()
 indexedDbDisable handle = sendReceiveCommand handle "IndexedDB.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'IndexedDB.enable' command.
- -- Enables events from backend.
+--   Enables events from backend.
 indexedDbEnable :: Handle ev -> IO ()
 indexedDbEnable handle = sendReceiveCommand handle "IndexedDB.enable" (Nothing :: Maybe ())
 
@@ -323,9 +323,9 @@ instance FromJSON  PIndexedDbRequestData where
 
 
 -- | Function for the 'IndexedDB.requestData' command.
- -- Requests data from object store or index.
--- Parameters: 'PIndexedDbRequestData'
--- Returns: 'IndexedDbRequestData'
+--   Requests data from object store or index.
+--   Parameters: 'PIndexedDbRequestData'
+--   Returns: 'IndexedDbRequestData'
 indexedDbRequestData :: Handle ev -> PIndexedDbRequestData -> IO IndexedDbRequestData
 indexedDbRequestData handle params = sendReceiveCommandResult handle "IndexedDB.requestData" (Just params)
 
@@ -362,9 +362,9 @@ instance FromJSON  PIndexedDbGetMetadata where
 
 
 -- | Function for the 'IndexedDB.getMetadata' command.
- -- Gets metadata of an object store
--- Parameters: 'PIndexedDbGetMetadata'
--- Returns: 'IndexedDbGetMetadata'
+--   Gets metadata of an object store
+--   Parameters: 'PIndexedDbGetMetadata'
+--   Returns: 'IndexedDbGetMetadata'
 indexedDbGetMetadata :: Handle ev -> PIndexedDbGetMetadata -> IO IndexedDbGetMetadata
 indexedDbGetMetadata handle params = sendReceiveCommandResult handle "IndexedDB.getMetadata" (Just params)
 
@@ -373,8 +373,8 @@ data IndexedDbGetMetadata = IndexedDbGetMetadata {
   -- | the entries count
   indexedDbGetMetadataEntriesCount :: Double,
   -- | the current value of key generator, to become the next inserted
-    -- key into the object store. Valid if objectStore.autoIncrement
-    -- is true.
+  --   key into the object store. Valid if objectStore.autoIncrement
+  --   is true.
   indexedDbGetMetadataKeyGeneratorValue :: Double
 } deriving (Generic, Eq, Show, Read)
 
@@ -401,9 +401,9 @@ instance FromJSON  PIndexedDbRequestDatabase where
 
 
 -- | Function for the 'IndexedDB.requestDatabase' command.
- -- Requests database with given name in given frame.
--- Parameters: 'PIndexedDbRequestDatabase'
--- Returns: 'IndexedDbRequestDatabase'
+--   Requests database with given name in given frame.
+--   Parameters: 'PIndexedDbRequestDatabase'
+--   Returns: 'IndexedDbRequestDatabase'
 indexedDbRequestDatabase :: Handle ev -> PIndexedDbRequestDatabase -> IO IndexedDbRequestDatabase
 indexedDbRequestDatabase handle params = sendReceiveCommandResult handle "IndexedDB.requestDatabase" (Just params)
 
@@ -434,9 +434,9 @@ instance FromJSON  PIndexedDbRequestDatabaseNames where
 
 
 -- | Function for the 'IndexedDB.requestDatabaseNames' command.
- -- Requests database names for given security origin.
--- Parameters: 'PIndexedDbRequestDatabaseNames'
--- Returns: 'IndexedDbRequestDatabaseNames'
+--   Requests database names for given security origin.
+--   Parameters: 'PIndexedDbRequestDatabaseNames'
+--   Returns: 'IndexedDbRequestDatabaseNames'
 indexedDbRequestDatabaseNames :: Handle ev -> PIndexedDbRequestDatabaseNames -> IO IndexedDbRequestDatabaseNames
 indexedDbRequestDatabaseNames handle params = sendReceiveCommandResult handle "IndexedDB.requestDatabaseNames" (Just params)
 

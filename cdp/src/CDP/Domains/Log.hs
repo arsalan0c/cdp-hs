@@ -49,7 +49,7 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 import CDP.Domains.Runtime as Runtime
 
 
--- | Log entry.
+-- | Type 'Log.LogEntry' .Log entry.
 data LogLogEntrySource = LogLogEntrySourceXml | LogLogEntrySourceJavascript | LogLogEntrySourceNetwork | LogLogEntrySourceStorage | LogLogEntrySourceAppcache | LogLogEntrySourceRendering | LogLogEntrySourceSecurity | LogLogEntrySourceDeprecation | LogLogEntrySourceWorker | LogLogEntrySourceViolation | LogLogEntrySourceIntervention | LogLogEntrySourceRecommendation | LogLogEntrySourceOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON LogLogEntrySource where
@@ -154,7 +154,7 @@ instance FromJSON  LogLogEntry where
 
 
 
--- | Violation configuration setting.
+-- | Type 'Log.ViolationSetting' .Violation configuration setting.
 data LogViolationSettingName = LogViolationSettingNameLongTask | LogViolationSettingNameLongLayout | LogViolationSettingNameBlockedEvent | LogViolationSettingNameBlockedParser | LogViolationSettingNameDiscouragedApiUse | LogViolationSettingNameHandler | LogViolationSettingNameRecurringHandler
    deriving (Ord, Eq, Show, Read)
 instance FromJSON LogViolationSettingName where
@@ -214,20 +214,20 @@ instance FromJSON  LogEntryAdded where
 
 
 -- | Function for the 'Log.clear' command.
- -- Clears the log.
+--   Clears the log.
 logClear :: Handle ev -> IO ()
 logClear handle = sendReceiveCommand handle "Log.clear" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Log.disable' command.
- -- Disables log domain, prevents further log entries from being reported to the client.
+--   Disables log domain, prevents further log entries from being reported to the client.
 logDisable :: Handle ev -> IO ()
 logDisable handle = sendReceiveCommand handle "Log.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Log.enable' command.
- -- Enables log domain, sends the entries collected so far to the client by means of the
- -- `entryAdded` notification.
+--   Enables log domain, sends the entries collected so far to the client by means of the
+--   `entryAdded` notification.
 logEnable :: Handle ev -> IO ()
 logEnable handle = sendReceiveCommand handle "Log.enable" (Nothing :: Maybe ())
 
@@ -245,14 +245,14 @@ instance FromJSON  PLogStartViolationsReport where
 
 
 -- | Function for the 'Log.startViolationsReport' command.
- -- start violation reporting.
--- Parameters: 'PLogStartViolationsReport'
+--   start violation reporting.
+--   Parameters: 'PLogStartViolationsReport'
 logStartViolationsReport :: Handle ev -> PLogStartViolationsReport -> IO ()
 logStartViolationsReport handle params = sendReceiveCommand handle "Log.startViolationsReport" (Just params)
 
 
 -- | Function for the 'Log.stopViolationsReport' command.
- -- Stop violation reporting.
+--   Stop violation reporting.
 logStopViolationsReport :: Handle ev -> IO ()
 logStopViolationsReport handle = sendReceiveCommand handle "Log.stopViolationsReport" (Nothing :: Maybe ())
 

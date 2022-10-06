@@ -45,10 +45,10 @@ import CDP.Handle
 
 
 
--- | Unique identifier of Database object.
+-- | Type 'Database.DatabaseId' .Unique identifier of Database object.
 type DatabaseDatabaseId = String
 
--- | Database object.
+-- | Type 'Database.Database' .Database object.
 data DatabaseDatabase = DatabaseDatabase {
   -- | Database ID.
   databaseDatabaseId :: DatabaseDatabaseId,
@@ -67,7 +67,7 @@ instance FromJSON  DatabaseDatabase where
 
 
 
--- | Database error.
+-- | Type 'Database.Error' .Database error.
 data DatabaseError = DatabaseError {
   -- | Error message.
   databaseErrorMessage :: String,
@@ -99,13 +99,13 @@ instance FromJSON  DatabaseAddDatabase where
 
 
 -- | Function for the 'Database.disable' command.
- -- Disables database tracking, prevents database events from being sent to the client.
+--   Disables database tracking, prevents database events from being sent to the client.
 databaseDisable :: Handle ev -> IO ()
 databaseDisable handle = sendReceiveCommand handle "Database.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Database.enable' command.
- -- Enables database tracking, database events will now be delivered to the client.
+--   Enables database tracking, database events will now be delivered to the client.
 databaseEnable :: Handle ev -> IO ()
 databaseEnable handle = sendReceiveCommand handle "Database.enable" (Nothing :: Maybe ())
 
@@ -123,8 +123,9 @@ instance FromJSON  PDatabaseExecuteSql where
 
 
 -- | Function for the 'Database.executeSQL' command.
--- Parameters: 'PDatabaseExecuteSql'
--- Returns: 'DatabaseExecuteSql'
+--   
+--   Parameters: 'PDatabaseExecuteSql'
+--   Returns: 'DatabaseExecuteSql'
 databaseExecuteSql :: Handle ev -> PDatabaseExecuteSql -> IO DatabaseExecuteSql
 databaseExecuteSql handle params = sendReceiveCommandResult handle "Database.executeSQL" (Just params)
 
@@ -155,8 +156,9 @@ instance FromJSON  PDatabaseGetDatabaseTableNames where
 
 
 -- | Function for the 'Database.getDatabaseTableNames' command.
--- Parameters: 'PDatabaseGetDatabaseTableNames'
--- Returns: 'DatabaseGetDatabaseTableNames'
+--   
+--   Parameters: 'PDatabaseGetDatabaseTableNames'
+--   Returns: 'DatabaseGetDatabaseTableNames'
 databaseGetDatabaseTableNames :: Handle ev -> PDatabaseGetDatabaseTableNames -> IO DatabaseGetDatabaseTableNames
 databaseGetDatabaseTableNames handle params = sendReceiveCommandResult handle "Database.getDatabaseTableNames" (Just params)
 

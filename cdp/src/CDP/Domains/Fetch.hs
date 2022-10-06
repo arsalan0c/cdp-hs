@@ -49,12 +49,12 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 import CDP.Domains.IO as IO
 
 
--- | Unique request identifier.
+-- | Type 'Fetch.RequestId' .Unique request identifier.
 type FetchRequestId = String
 
--- | Stages of the request to handle. Request will intercept before the request is
- -- sent. Response will intercept after the response is received (but before response
- -- body is received).
+-- | Type 'Fetch.RequestStage' .Stages of the request to handle. Request will intercept before the request is
+--   sent. Response will intercept after the response is received (but before response
+--   body is received).
 data FetchRequestStage = FetchRequestStageRequest | FetchRequestStageResponse
    deriving (Ord, Eq, Show, Read)
 instance FromJSON FetchRequestStage where
@@ -75,7 +75,7 @@ instance ToJSON FetchRequestStage where
 -- | Type 'Fetch.RequestPattern' .
 data FetchRequestPattern = FetchRequestPattern {
   -- | Wildcards (`'*'` -> zero or more, `'?'` -> exactly one) are allowed. Escape character is
-    -- backslash. Omitting is equivalent to `"*"`.
+  --   backslash. Omitting is equivalent to `"*"`.
   fetchRequestPatternUrlPattern :: Maybe String,
   -- | If set, only requests for matching resource types will be intercepted.
   fetchRequestPatternResourceType :: Maybe DOMPageNetworkEmulationSecurity.NetworkResourceType,
@@ -90,7 +90,7 @@ instance FromJSON  FetchRequestPattern where
 
 
 
--- | Response HTTP header entry
+-- | Type 'Fetch.HeaderEntry' .Response HTTP header entry
 data FetchHeaderEntry = FetchHeaderEntry {
   fetchHeaderEntryName :: String,
   fetchHeaderEntryValue :: String
@@ -103,7 +103,7 @@ instance FromJSON  FetchHeaderEntry where
 
 
 
--- | Authorization challenge for HTTP status code 401 or 407.
+-- | Type 'Fetch.AuthChallenge' .Authorization challenge for HTTP status code 401 or 407.
 data FetchAuthChallengeSource = FetchAuthChallengeSourceServer | FetchAuthChallengeSourceProxy
    deriving (Ord, Eq, Show, Read)
 instance FromJSON FetchAuthChallengeSource where
@@ -139,7 +139,7 @@ instance FromJSON  FetchAuthChallenge where
 
 
 
--- | Response to an AuthChallenge.
+-- | Type 'Fetch.AuthChallengeResponse' .Response to an AuthChallenge.
 data FetchAuthChallengeResponseResponse = FetchAuthChallengeResponseResponseDefault | FetchAuthChallengeResponseResponseCancelAuth | FetchAuthChallengeResponseResponseProvideCredentials
    deriving (Ord, Eq, Show, Read)
 instance FromJSON FetchAuthChallengeResponseResponse where
@@ -161,14 +161,14 @@ instance ToJSON FetchAuthChallengeResponseResponse where
 
 data FetchAuthChallengeResponse = FetchAuthChallengeResponse {
   -- | The decision on what to do in response to the authorization challenge.  Default means
-    -- deferring to the default behavior of the net stack, which will likely either the Cancel
-    -- authentication or display a popup dialog box.
+  --   deferring to the default behavior of the net stack, which will likely either the Cancel
+  --   authentication or display a popup dialog box.
   fetchAuthChallengeResponseResponse :: FetchAuthChallengeResponseResponse,
   -- | The username to provide, possibly empty. Should only be set if response is
-    -- ProvideCredentials.
+  --   ProvideCredentials.
   fetchAuthChallengeResponseUsername :: Maybe String,
   -- | The password to provide, possibly empty. Should only be set if response is
-    -- ProvideCredentials.
+  --   ProvideCredentials.
   fetchAuthChallengeResponsePassword :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON FetchAuthChallengeResponse  where
@@ -200,7 +200,7 @@ data FetchRequestPaused = FetchRequestPaused {
   -- | Response headers if intercepted at the response stage.
   fetchRequestPausedResponseHeaders :: Maybe [FetchHeaderEntry],
   -- | If the intercepted request had a corresponding Network.requestWillBeSent event fired for it,
-    -- then this networkId will be the same as the requestId present in the requestWillBeSent event.
+  --   then this networkId will be the same as the requestId present in the requestWillBeSent event.
   fetchRequestPausedNetworkId :: Maybe FetchRequestId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON FetchRequestPaused  where
@@ -222,8 +222,8 @@ data FetchAuthRequired = FetchAuthRequired {
   -- | How the requested resource will be used.
   fetchAuthRequiredResourceType :: DOMPageNetworkEmulationSecurity.NetworkResourceType,
   -- | Details of the Authorization Challenge encountered.
-    -- If this is set, client should respond with continueRequest that
-    -- contains AuthChallengeResponse.
+  --   If this is set, client should respond with continueRequest that
+  --   contains AuthChallengeResponse.
   fetchAuthRequiredAuthChallenge :: FetchAuthChallenge
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON FetchAuthRequired  where
@@ -237,7 +237,7 @@ instance FromJSON  FetchAuthRequired where
 
 
 -- | Function for the 'Fetch.disable' command.
- -- Disables the fetch domain.
+--   Disables the fetch domain.
 fetchDisable :: Handle ev -> IO ()
 fetchDisable handle = sendReceiveCommand handle "Fetch.disable" (Nothing :: Maybe ())
 
@@ -245,11 +245,11 @@ fetchDisable handle = sendReceiveCommand handle "Fetch.disable" (Nothing :: Mayb
 -- | Parameters of the 'fetchEnable' command.
 data PFetchEnable = PFetchEnable {
   -- | If specified, only requests matching any of these patterns will produce
-    -- fetchRequested event and will be paused until clients response. If not set,
-    -- all requests will be affected.
+  --   fetchRequested event and will be paused until clients response. If not set,
+  --   all requests will be affected.
   pFetchEnablePatterns :: Maybe [FetchRequestPattern],
   -- | If true, authRequired events will be issued and requests will be paused
-    -- expecting a call to continueWithAuth.
+  --   expecting a call to continueWithAuth.
   pFetchEnableHandleAuthRequests :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PFetchEnable  where
@@ -260,9 +260,9 @@ instance FromJSON  PFetchEnable where
 
 
 -- | Function for the 'Fetch.enable' command.
- -- Enables issuing of requestPaused events. A request will be paused until client
- -- calls one of failRequest, fulfillRequest or continueRequest/continueWithAuth.
--- Parameters: 'PFetchEnable'
+--   Enables issuing of requestPaused events. A request will be paused until client
+--   calls one of failRequest, fulfillRequest or continueRequest/continueWithAuth.
+--   Parameters: 'PFetchEnable'
 fetchEnable :: Handle ev -> PFetchEnable -> IO ()
 fetchEnable handle params = sendReceiveCommand handle "Fetch.enable" (Just params)
 
@@ -282,8 +282,8 @@ instance FromJSON  PFetchFailRequest where
 
 
 -- | Function for the 'Fetch.failRequest' command.
- -- Causes the request to fail with specified reason.
--- Parameters: 'PFetchFailRequest'
+--   Causes the request to fail with specified reason.
+--   Parameters: 'PFetchFailRequest'
 fetchFailRequest :: Handle ev -> PFetchFailRequest -> IO ()
 fetchFailRequest handle params = sendReceiveCommand handle "Fetch.failRequest" (Just params)
 
@@ -297,16 +297,16 @@ data PFetchFulfillRequest = PFetchFulfillRequest {
   -- | Response headers.
   pFetchFulfillRequestResponseHeaders :: Maybe [FetchHeaderEntry],
   -- | Alternative way of specifying response headers as a \0-separated
-    -- series of name: value pairs. Prefer the above method unless you
-    -- need to represent some non-UTF8 values that can't be transmitted
-    -- over the protocol as text. (Encoded as a base64 string when passed over JSON)
+  --   series of name: value pairs. Prefer the above method unless you
+  --   need to represent some non-UTF8 values that can't be transmitted
+  --   over the protocol as text. (Encoded as a base64 string when passed over JSON)
   pFetchFulfillRequestBinaryResponseHeaders :: Maybe String,
   -- | A response body. If absent, original response body will be used if
-    -- the request is intercepted at the response stage and empty body
-    -- will be used if the request is intercepted at the request stage. (Encoded as a base64 string when passed over JSON)
+  --   the request is intercepted at the response stage and empty body
+  --   will be used if the request is intercepted at the request stage. (Encoded as a base64 string when passed over JSON)
   pFetchFulfillRequestBody :: Maybe String,
   -- | A textual representation of responseCode.
-    -- If absent, a standard phrase matching responseCode is used.
+  --   If absent, a standard phrase matching responseCode is used.
   pFetchFulfillRequestResponsePhrase :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PFetchFulfillRequest  where
@@ -317,8 +317,8 @@ instance FromJSON  PFetchFulfillRequest where
 
 
 -- | Function for the 'Fetch.fulfillRequest' command.
- -- Provides response to the request.
--- Parameters: 'PFetchFulfillRequest'
+--   Provides response to the request.
+--   Parameters: 'PFetchFulfillRequest'
 fetchFulfillRequest :: Handle ev -> PFetchFulfillRequest -> IO ()
 fetchFulfillRequest handle params = sendReceiveCommand handle "Fetch.fulfillRequest" (Just params)
 
@@ -346,8 +346,8 @@ instance FromJSON  PFetchContinueRequest where
 
 
 -- | Function for the 'Fetch.continueRequest' command.
- -- Continues the request, optionally modifying some of its parameters.
--- Parameters: 'PFetchContinueRequest'
+--   Continues the request, optionally modifying some of its parameters.
+--   Parameters: 'PFetchContinueRequest'
 fetchContinueRequest :: Handle ev -> PFetchContinueRequest -> IO ()
 fetchContinueRequest handle params = sendReceiveCommand handle "Fetch.continueRequest" (Just params)
 
@@ -367,8 +367,8 @@ instance FromJSON  PFetchContinueWithAuth where
 
 
 -- | Function for the 'Fetch.continueWithAuth' command.
- -- Continues a request supplying authChallengeResponse following authRequired event.
--- Parameters: 'PFetchContinueWithAuth'
+--   Continues a request supplying authChallengeResponse following authRequired event.
+--   Parameters: 'PFetchContinueWithAuth'
 fetchContinueWithAuth :: Handle ev -> PFetchContinueWithAuth -> IO ()
 fetchContinueWithAuth handle params = sendReceiveCommand handle "Fetch.continueWithAuth" (Just params)
 
@@ -380,14 +380,14 @@ data PFetchContinueResponse = PFetchContinueResponse {
   -- | An HTTP response code. If absent, original response code will be used.
   pFetchContinueResponseResponseCode :: Maybe Int,
   -- | A textual representation of responseCode.
-    -- If absent, a standard phrase matching responseCode is used.
+  --   If absent, a standard phrase matching responseCode is used.
   pFetchContinueResponseResponsePhrase :: Maybe String,
   -- | Response headers. If absent, original response headers will be used.
   pFetchContinueResponseResponseHeaders :: Maybe [FetchHeaderEntry],
   -- | Alternative way of specifying response headers as a \0-separated
-    -- series of name: value pairs. Prefer the above method unless you
-    -- need to represent some non-UTF8 values that can't be transmitted
-    -- over the protocol as text. (Encoded as a base64 string when passed over JSON)
+  --   series of name: value pairs. Prefer the above method unless you
+  --   need to represent some non-UTF8 values that can't be transmitted
+  --   over the protocol as text. (Encoded as a base64 string when passed over JSON)
   pFetchContinueResponseBinaryResponseHeaders :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PFetchContinueResponse  where
@@ -398,10 +398,10 @@ instance FromJSON  PFetchContinueResponse where
 
 
 -- | Function for the 'Fetch.continueResponse' command.
- -- Continues loading of the paused response, optionally modifying the
- -- response headers. If either responseCode or headers are modified, all of them
- -- must be present.
--- Parameters: 'PFetchContinueResponse'
+--   Continues loading of the paused response, optionally modifying the
+--   response headers. If either responseCode or headers are modified, all of them
+--   must be present.
+--   Parameters: 'PFetchContinueResponse'
 fetchContinueResponse :: Handle ev -> PFetchContinueResponse -> IO ()
 fetchContinueResponse handle params = sendReceiveCommand handle "Fetch.continueResponse" (Just params)
 
@@ -419,14 +419,14 @@ instance FromJSON  PFetchGetResponseBody where
 
 
 -- | Function for the 'Fetch.getResponseBody' command.
- -- Causes the body of the response to be received from the server and
- -- returned as a single string. May only be issued for a request that
- -- is paused in the Response stage and is mutually exclusive with
- -- takeResponseBodyForInterceptionAsStream. Calling other methods that
- -- affect the request or disabling fetch domain before body is received
- -- results in an undefined behavior.
--- Parameters: 'PFetchGetResponseBody'
--- Returns: 'FetchGetResponseBody'
+--   Causes the body of the response to be received from the server and
+--   returned as a single string. May only be issued for a request that
+--   is paused in the Response stage and is mutually exclusive with
+--   takeResponseBodyForInterceptionAsStream. Calling other methods that
+--   affect the request or disabling fetch domain before body is received
+--   results in an undefined behavior.
+--   Parameters: 'PFetchGetResponseBody'
+--   Returns: 'FetchGetResponseBody'
 fetchGetResponseBody :: Handle ev -> PFetchGetResponseBody -> IO FetchGetResponseBody
 fetchGetResponseBody handle params = sendReceiveCommandResult handle "Fetch.getResponseBody" (Just params)
 
@@ -458,18 +458,18 @@ instance FromJSON  PFetchTakeResponseBodyAsStream where
 
 
 -- | Function for the 'Fetch.takeResponseBodyAsStream' command.
- -- Returns a handle to the stream representing the response body.
- -- The request must be paused in the HeadersReceived stage.
- -- Note that after this command the request can't be continued
- -- as is -- client either needs to cancel it or to provide the
- -- response body.
- -- The stream only supports sequential read, IO.read will fail if the position
- -- is specified.
- -- This method is mutually exclusive with getResponseBody.
- -- Calling other methods that affect the request or disabling fetch
- -- domain before body is received results in an undefined behavior.
--- Parameters: 'PFetchTakeResponseBodyAsStream'
--- Returns: 'FetchTakeResponseBodyAsStream'
+--   Returns a handle to the stream representing the response body.
+--   The request must be paused in the HeadersReceived stage.
+--   Note that after this command the request can't be continued
+--   as is -- client either needs to cancel it or to provide the
+--   response body.
+--   The stream only supports sequential read, IO.read will fail if the position
+--   is specified.
+--   This method is mutually exclusive with getResponseBody.
+--   Calling other methods that affect the request or disabling fetch
+--   domain before body is received results in an undefined behavior.
+--   Parameters: 'PFetchTakeResponseBodyAsStream'
+--   Returns: 'FetchTakeResponseBodyAsStream'
 fetchTakeResponseBodyAsStream :: Handle ev -> PFetchTakeResponseBodyAsStream -> IO FetchTakeResponseBodyAsStream
 fetchTakeResponseBodyAsStream handle params = sendReceiveCommandResult handle "Fetch.takeResponseBodyAsStream" (Just params)
 

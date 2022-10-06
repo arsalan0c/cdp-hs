@@ -49,7 +49,7 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 import CDP.Domains.Runtime as Runtime
 
 
--- | Information about a cookie that is affected by an inspector issue.
+-- | Type 'Audits.AffectedCookie' .Information about a cookie that is affected by an inspector issue.
 data AuditsAffectedCookie = AuditsAffectedCookie {
   -- | The following three properties uniquely identify a cookie
   auditsAffectedCookieName :: String,
@@ -64,7 +64,7 @@ instance FromJSON  AuditsAffectedCookie where
 
 
 
--- | Information about a request that is affected by an inspector issue.
+-- | Type 'Audits.AffectedRequest' .Information about a request that is affected by an inspector issue.
 data AuditsAffectedRequest = AuditsAffectedRequest {
   -- | The unique request id.
   auditsAffectedRequestRequestId :: DOMPageNetworkEmulationSecurity.NetworkRequestId,
@@ -78,7 +78,7 @@ instance FromJSON  AuditsAffectedRequest where
 
 
 
--- | Information about the frame affected by an inspector issue.
+-- | Type 'Audits.AffectedFrame' .Information about the frame affected by an inspector issue.
 data AuditsAffectedFrame = AuditsAffectedFrame {
   auditsAffectedFrameFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId
 } deriving (Generic, Eq, Show, Read)
@@ -166,20 +166,20 @@ instance ToJSON AuditsCookieOperation where
 
 
 
--- | This information is currently necessary, as the front-end has a difficult
- -- time finding a specific cookie. With this, we can convey specific error
- -- information without the cookie.
+-- | Type 'Audits.CookieIssueDetails' .This information is currently necessary, as the front-end has a difficult
+--   time finding a specific cookie. With this, we can convey specific error
+--   information without the cookie.
 data AuditsCookieIssueDetails = AuditsCookieIssueDetails {
   -- | If AffectedCookie is not set then rawCookieLine contains the raw
-    -- Set-Cookie header string. This hints at a problem where the
-    -- cookie line is syntactically or semantically malformed in a way
-    -- that no valid cookie could be created.
+  --   Set-Cookie header string. This hints at a problem where the
+  --   cookie line is syntactically or semantically malformed in a way
+  --   that no valid cookie could be created.
   auditsCookieIssueDetailsCookie :: Maybe AuditsAffectedCookie,
   auditsCookieIssueDetailsRawCookieLine :: Maybe String,
   auditsCookieIssueDetailsCookieWarningReasons :: [AuditsCookieWarningReason],
   auditsCookieIssueDetailsCookieExclusionReasons :: [AuditsCookieExclusionReason],
   -- | Optionally identifies the site-for-cookies and the cookie url, which
-    -- may be used by the front-end as additional context.
+  --   may be used by the front-end as additional context.
   auditsCookieIssueDetailsOperation :: AuditsCookieOperation,
   auditsCookieIssueDetailsSiteForCookies :: Maybe String,
   auditsCookieIssueDetailsCookieUrl :: Maybe String,
@@ -284,9 +284,9 @@ instance ToJSON AuditsMixedContentResourceType where
 -- | Type 'Audits.MixedContentIssueDetails' .
 data AuditsMixedContentIssueDetails = AuditsMixedContentIssueDetails {
   -- | The type of resource causing the mixed content issue (css, js, iframe,
-    -- form,...). Marked as optional because it is mapped to from
-    -- blink::mojom::RequestContextType, which will be replaced
-    -- by network::mojom::RequestDestination
+  --   form,...). Marked as optional because it is mapped to from
+  --   blink::mojom::RequestContextType, which will be replaced
+  --   by network::mojom::RequestDestination
   auditsMixedContentIssueDetailsResourceType :: Maybe AuditsMixedContentResourceType,
   -- | The way the mixed content issue is being resolved.
   auditsMixedContentIssueDetailsResolutionStatus :: AuditsMixedContentResolutionStatus,
@@ -295,7 +295,7 @@ data AuditsMixedContentIssueDetails = AuditsMixedContentIssueDetails {
   -- | The url responsible for the call to an unsafe url.
   auditsMixedContentIssueDetailsMainResourceUrl :: String,
   -- | The mixed content request.
-    -- Does not always exist (e.g. for unsafe form submission urls).
+  --   Does not always exist (e.g. for unsafe form submission urls).
   auditsMixedContentIssueDetailsRequest :: Maybe AuditsAffectedRequest,
   -- | Optional because not every mixed content issue is necessarily linked to a frame.
   auditsMixedContentIssueDetailsFrame :: Maybe AuditsAffectedFrame
@@ -308,8 +308,8 @@ instance FromJSON  AuditsMixedContentIssueDetails where
 
 
 
--- | Enum indicating the reason a response has been blocked. These reasons are
- -- refinements of the net error BLOCKED_BY_RESPONSE.
+-- | Type 'Audits.BlockedByResponseReason' .Enum indicating the reason a response has been blocked. These reasons are
+--   refinements of the net error BLOCKED_BY_RESPONSE.
 data AuditsBlockedByResponseReason = AuditsBlockedByResponseReasonCoepFrameResourceNeedsCoepHeader | AuditsBlockedByResponseReasonCoopSandboxedIFrameCannotNavigateToCoopPage | AuditsBlockedByResponseReasonCorpNotSameOrigin | AuditsBlockedByResponseReasonCorpNotSameOriginAfterDefaultedToSameOriginByCoep | AuditsBlockedByResponseReasonCorpNotSameSite
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsBlockedByResponseReason where
@@ -333,9 +333,9 @@ instance ToJSON AuditsBlockedByResponseReason where
 
 
 
--- | Details for a request that has been blocked with the BLOCKED_BY_RESPONSE
- -- code. Currently only used for COEP/COOP, but may be extended to include
- -- some CSP errors in the future.
+-- | Type 'Audits.BlockedByResponseIssueDetails' .Details for a request that has been blocked with the BLOCKED_BY_RESPONSE
+--   code. Currently only used for COEP/COOP, but may be extended to include
+--   some CSP errors in the future.
 data AuditsBlockedByResponseIssueDetails = AuditsBlockedByResponseIssueDetails {
   auditsBlockedByResponseIssueDetailsRequest :: AuditsAffectedRequest,
   auditsBlockedByResponseIssueDetailsParentFrame :: Maybe AuditsAffectedFrame,
@@ -484,8 +484,8 @@ instance ToJSON AuditsSharedArrayBufferIssueType where
 
 
 
--- | Details for a issue arising from an SAB being instantiated in, or
- -- transferred to a context that is not cross-origin isolated.
+-- | Type 'Audits.SharedArrayBufferIssueDetails' .Details for a issue arising from an SAB being instantiated in, or
+--   transferred to a context that is not cross-origin isolated.
 data AuditsSharedArrayBufferIssueDetails = AuditsSharedArrayBufferIssueDetails {
   auditsSharedArrayBufferIssueDetailsSourceCodeLocation :: AuditsSourceCodeLocation,
   auditsSharedArrayBufferIssueDetailsIsWarning :: Bool,
@@ -526,10 +526,10 @@ data AuditsTrustedWebActivityIssueDetails = AuditsTrustedWebActivityIssueDetails
   auditsTrustedWebActivityIssueDetailsViolationType :: AuditsTwaQualityEnforcementViolationType,
   auditsTrustedWebActivityIssueDetailsHttpStatusCode :: Maybe Int,
   -- | The package name of the Trusted Web Activity client app. This field is
-    -- only used when violation type is kDigitalAssetLinks.
+  --   only used when violation type is kDigitalAssetLinks.
   auditsTrustedWebActivityIssueDetailsPackageName :: Maybe String,
   -- | The signature of the Trusted Web Activity client app. This field is only
-    -- used when violation type is kDigitalAssetLinks.
+  --   used when violation type is kDigitalAssetLinks.
   auditsTrustedWebActivityIssueDetailsSignature :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsTrustedWebActivityIssueDetails  where
@@ -558,8 +558,8 @@ instance FromJSON  AuditsLowTextContrastIssueDetails where
 
 
 
--- | Details for a CORS related issue, e.g. a warning or error related to
- -- CORS RFC1918 enforcement.
+-- | Type 'Audits.CorsIssueDetails' .Details for a CORS related issue, e.g. a warning or error related to
+--   CORS RFC1918 enforcement.
 data AuditsCorsIssueDetails = AuditsCorsIssueDetails {
   auditsCorsIssueDetailsCorsErrorStatus :: DOMPageNetworkEmulationSecurity.NetworkCorsErrorStatus,
   auditsCorsIssueDetailsIsWarning :: Bool,
@@ -599,8 +599,8 @@ instance ToJSON AuditsAttributionReportingIssueType where
 
 
 
--- | Details for issues around "Attribution Reporting API" usage.
- -- Explainer: https://github.com/WICG/conversion-measurement-api
+-- | Type 'Audits.AttributionReportingIssueDetails' .Details for issues around "Attribution Reporting API" usage.
+--   Explainer: https://github.com/WICG/conversion-measurement-api
 data AuditsAttributionReportingIssueDetails = AuditsAttributionReportingIssueDetails {
   auditsAttributionReportingIssueDetailsViolationType :: AuditsAttributionReportingIssueType,
   auditsAttributionReportingIssueDetailsFrame :: Maybe AuditsAffectedFrame,
@@ -616,11 +616,11 @@ instance FromJSON  AuditsAttributionReportingIssueDetails where
 
 
 
--- | Details for issues about documents in Quirks Mode
- -- or Limited Quirks Mode that affects page layouting.
+-- | Type 'Audits.QuirksModeIssueDetails' .Details for issues about documents in Quirks Mode
+--   or Limited Quirks Mode that affects page layouting.
 data AuditsQuirksModeIssueDetails = AuditsQuirksModeIssueDetails {
   -- | If false, it means the document's mode is "quirks"
-    -- instead of "limited-quirks".
+  --   instead of "limited-quirks".
   auditsQuirksModeIssueDetailsIsLimitedQuirksMode :: Bool,
   auditsQuirksModeIssueDetailsDocumentNodeId :: DOMPageNetworkEmulationSecurity.DomBackendNodeId,
   auditsQuirksModeIssueDetailsUrl :: String,
@@ -664,7 +664,7 @@ instance ToJSON AuditsGenericIssueErrorType where
 
 
 
--- | Depending on the concrete errorType, different properties are set.
+-- | Type 'Audits.GenericIssueDetails' .Depending on the concrete errorType, different properties are set.
 data AuditsGenericIssueDetails = AuditsGenericIssueDetails {
   -- | Issues with the same errorType are aggregated in the frontend.
   auditsGenericIssueDetailsErrorType :: AuditsGenericIssueErrorType,
@@ -792,8 +792,8 @@ instance ToJSON AuditsDeprecationIssueType where
 
 
 
--- | This issue tracks information needed to print a deprecation message.
- -- https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/third_party/blink/renderer/core/frame/deprecation/README.md
+-- | Type 'Audits.DeprecationIssueDetails' .This issue tracks information needed to print a deprecation message.
+--   https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/third_party/blink/renderer/core/frame/deprecation/README.md
 data AuditsDeprecationIssueDetails = AuditsDeprecationIssueDetails {
   auditsDeprecationIssueDetailsAffectedFrame :: Maybe AuditsAffectedFrame,
   auditsDeprecationIssueDetailsSourceCodeLocation :: AuditsSourceCodeLocation,
@@ -837,10 +837,10 @@ instance FromJSON  AuditsFederatedAuthRequestIssueDetails where
 
 
 
--- | Represents the failure reason when a federated authentication reason fails.
- -- Should be updated alongside RequestIdTokenStatus in
- -- third_party/blink/public/mojom/devtools/inspector_issue.mojom to include
- -- all cases except for success.
+-- | Type 'Audits.FederatedAuthRequestIssueReason' .Represents the failure reason when a federated authentication reason fails.
+--   Should be updated alongside RequestIdTokenStatus in
+--   third_party/blink/public/mojom/devtools/inspector_issue.mojom to include
+--   all cases except for success.
 data AuditsFederatedAuthRequestIssueReason = AuditsFederatedAuthRequestIssueReasonApprovalDeclined | AuditsFederatedAuthRequestIssueReasonTooManyRequests | AuditsFederatedAuthRequestIssueReasonManifestListHttpNotFound | AuditsFederatedAuthRequestIssueReasonManifestListNoResponse | AuditsFederatedAuthRequestIssueReasonManifestListInvalidResponse | AuditsFederatedAuthRequestIssueReasonManifestNotInManifestList | AuditsFederatedAuthRequestIssueReasonManifestListTooBig | AuditsFederatedAuthRequestIssueReasonManifestHttpNotFound | AuditsFederatedAuthRequestIssueReasonManifestNoResponse | AuditsFederatedAuthRequestIssueReasonManifestInvalidResponse | AuditsFederatedAuthRequestIssueReasonClientMetadataHttpNotFound | AuditsFederatedAuthRequestIssueReasonClientMetadataNoResponse | AuditsFederatedAuthRequestIssueReasonClientMetadataInvalidResponse | AuditsFederatedAuthRequestIssueReasonClientMetadataMissingPrivacyPolicyUrl | AuditsFederatedAuthRequestIssueReasonDisabledInSettings | AuditsFederatedAuthRequestIssueReasonErrorFetchingSignin | AuditsFederatedAuthRequestIssueReasonInvalidSigninResponse | AuditsFederatedAuthRequestIssueReasonAccountsHttpNotFound | AuditsFederatedAuthRequestIssueReasonAccountsNoResponse | AuditsFederatedAuthRequestIssueReasonAccountsInvalidResponse | AuditsFederatedAuthRequestIssueReasonIdTokenHttpNotFound | AuditsFederatedAuthRequestIssueReasonIdTokenNoResponse | AuditsFederatedAuthRequestIssueReasonIdTokenInvalidResponse | AuditsFederatedAuthRequestIssueReasonIdTokenInvalidRequest | AuditsFederatedAuthRequestIssueReasonErrorIdToken | AuditsFederatedAuthRequestIssueReasonCanceled
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsFederatedAuthRequestIssueReason where
@@ -906,8 +906,8 @@ instance ToJSON AuditsFederatedAuthRequestIssueReason where
 
 
 
--- | This issue tracks client hints related issues. It's used to deprecate old
- -- features, encourage the use of new ones, and provide general guidance.
+-- | Type 'Audits.ClientHintIssueDetails' .This issue tracks client hints related issues. It's used to deprecate old
+--   features, encourage the use of new ones, and provide general guidance.
 data AuditsClientHintIssueDetails = AuditsClientHintIssueDetails {
   auditsClientHintIssueDetailsSourceCodeLocation :: AuditsSourceCodeLocation,
   auditsClientHintIssueDetailsClientHintIssueReason :: AuditsClientHintIssueReason
@@ -920,9 +920,9 @@ instance FromJSON  AuditsClientHintIssueDetails where
 
 
 
--- | A unique identifier for the type of issue. Each type may use one of the
- -- optional fields in InspectorIssueDetails to convey more specific
- -- information about the kind of issue.
+-- | Type 'Audits.InspectorIssueCode' .A unique identifier for the type of issue. Each type may use one of the
+--   optional fields in InspectorIssueDetails to convey more specific
+--   information about the kind of issue.
 data AuditsInspectorIssueCode = AuditsInspectorIssueCodeCookieIssue | AuditsInspectorIssueCodeMixedContentIssue | AuditsInspectorIssueCodeBlockedByResponseIssue | AuditsInspectorIssueCodeHeavyAdIssue | AuditsInspectorIssueCodeContentSecurityPolicyIssue | AuditsInspectorIssueCodeSharedArrayBufferIssue | AuditsInspectorIssueCodeTrustedWebActivityIssue | AuditsInspectorIssueCodeLowTextContrastIssue | AuditsInspectorIssueCodeCorsIssue | AuditsInspectorIssueCodeAttributionReportingIssue | AuditsInspectorIssueCodeQuirksModeIssue | AuditsInspectorIssueCodeNavigatorUserAgentIssue | AuditsInspectorIssueCodeGenericIssue | AuditsInspectorIssueCodeDeprecationIssue | AuditsInspectorIssueCodeClientHintIssue | AuditsInspectorIssueCodeFederatedAuthRequestIssue
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsInspectorIssueCode where
@@ -968,9 +968,9 @@ instance ToJSON AuditsInspectorIssueCode where
 
 
 
--- | This struct holds a list of optional fields with additional information
- -- specific to the kind of issue. When adding a new issue code, please also
- -- add a new optional field to this type.
+-- | Type 'Audits.InspectorIssueDetails' .This struct holds a list of optional fields with additional information
+--   specific to the kind of issue. When adding a new issue code, please also
+--   add a new optional field to this type.
 data AuditsInspectorIssueDetails = AuditsInspectorIssueDetails {
   auditsInspectorIssueDetailsCookieIssueDetails :: Maybe AuditsCookieIssueDetails,
   auditsInspectorIssueDetailsMixedContentIssueDetails :: Maybe AuditsMixedContentIssueDetails,
@@ -997,16 +997,16 @@ instance FromJSON  AuditsInspectorIssueDetails where
 
 
 
--- | A unique id for a DevTools inspector issue. Allows other entities (e.g.
- -- exceptions, CDP message, console messages, etc.) to reference an issue.
+-- | Type 'Audits.IssueId' .A unique id for a DevTools inspector issue. Allows other entities (e.g.
+--   exceptions, CDP message, console messages, etc.) to reference an issue.
 type AuditsIssueId = String
 
--- | An inspector issue reported from the back-end.
+-- | Type 'Audits.InspectorIssue' .An inspector issue reported from the back-end.
 data AuditsInspectorIssue = AuditsInspectorIssue {
   auditsInspectorIssueCode :: AuditsInspectorIssueCode,
   auditsInspectorIssueDetails :: AuditsInspectorIssueDetails,
   -- | A unique id for this issue. May be omitted if no other entity (e.g.
-    -- exception, CDP message, etc.) is referencing this issue.
+  --   exception, CDP message, etc.) is referencing this issue.
   auditsInspectorIssueIssueId :: Maybe AuditsIssueId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsInspectorIssue  where
@@ -1071,10 +1071,10 @@ instance FromJSON  PAuditsGetEncodedResponse where
 
 
 -- | Function for the 'Audits.getEncodedResponse' command.
- -- Returns the response body and size if it were re-encoded with the specified settings. Only
- -- applies to images.
--- Parameters: 'PAuditsGetEncodedResponse'
--- Returns: 'AuditsGetEncodedResponse'
+--   Returns the response body and size if it were re-encoded with the specified settings. Only
+--   applies to images.
+--   Parameters: 'PAuditsGetEncodedResponse'
+--   Returns: 'AuditsGetEncodedResponse'
 auditsGetEncodedResponse :: Handle ev -> PAuditsGetEncodedResponse -> IO AuditsGetEncodedResponse
 auditsGetEncodedResponse handle params = sendReceiveCommandResult handle "Audits.getEncodedResponse" (Just params)
 
@@ -1097,14 +1097,14 @@ instance Command AuditsGetEncodedResponse where
 
 
 -- | Function for the 'Audits.disable' command.
- -- Disables issues domain, prevents further issues from being reported to the client.
+--   Disables issues domain, prevents further issues from being reported to the client.
 auditsDisable :: Handle ev -> IO ()
 auditsDisable handle = sendReceiveCommand handle "Audits.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Audits.enable' command.
- -- Enables issues domain, sends the issues collected so far to the client by means of the
- -- `issueAdded` event.
+--   Enables issues domain, sends the issues collected so far to the client by means of the
+--   `issueAdded` event.
 auditsEnable :: Handle ev -> IO ()
 auditsEnable handle = sendReceiveCommand handle "Audits.enable" (Nothing :: Maybe ())
 
@@ -1122,9 +1122,9 @@ instance FromJSON  PAuditsCheckContrast where
 
 
 -- | Function for the 'Audits.checkContrast' command.
- -- Runs the contrast check for the target page. Found issues are reported
- -- using Audits.issueAdded event.
--- Parameters: 'PAuditsCheckContrast'
+--   Runs the contrast check for the target page. Found issues are reported
+--   using Audits.issueAdded event.
+--   Parameters: 'PAuditsCheckContrast'
 auditsCheckContrast :: Handle ev -> PAuditsCheckContrast -> IO ()
 auditsCheckContrast handle params = sendReceiveCommand handle "Audits.checkContrast" (Just params)
 

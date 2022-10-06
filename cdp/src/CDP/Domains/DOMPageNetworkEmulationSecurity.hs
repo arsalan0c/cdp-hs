@@ -69,14 +69,14 @@ import CDP.Domains.IO as IO
 import CDP.Domains.Runtime as Runtime
 
 
--- | Unique DOM node identifier.
+-- | Type 'DOM.NodeId' .Unique DOM node identifier.
 type DomNodeId = Int
 
--- | Unique DOM node identifier used to reference a node that may not have been pushed to the
- -- front-end.
+-- | Type 'DOM.BackendNodeId' .Unique DOM node identifier used to reference a node that may not have been pushed to the
+--   front-end.
 type DomBackendNodeId = Int
 
--- | Backend node with a friendly name.
+-- | Type 'DOM.BackendNode' .Backend node with a friendly name.
 data DomBackendNode = DomBackendNode {
   -- | `Node`'s nodeType.
   domBackendNodeNodeType :: Int,
@@ -92,7 +92,7 @@ instance FromJSON  DomBackendNode where
 
 
 
--- | Pseudo element type.
+-- | Type 'DOM.PseudoType' .Pseudo element type.
 data DomPseudoType = DomPseudoTypeFirstLine | DomPseudoTypeFirstLetter | DomPseudoTypeBefore | DomPseudoTypeAfter | DomPseudoTypeMarker | DomPseudoTypeBackdrop | DomPseudoTypeSelection | DomPseudoTypeTargetText | DomPseudoTypeSpellingError | DomPseudoTypeGrammarError | DomPseudoTypeHighlight | DomPseudoTypeFirstLineInherited | DomPseudoTypeScrollbar | DomPseudoTypeScrollbarThumb | DomPseudoTypeScrollbarButton | DomPseudoTypeScrollbarTrack | DomPseudoTypeScrollbarTrackPiece | DomPseudoTypeScrollbarCorner | DomPseudoTypeResizer | DomPseudoTypeInputListButton | DomPseudoTypePageTransition | DomPseudoTypePageTransitionContainer | DomPseudoTypePageTransitionImageWrapper | DomPseudoTypePageTransitionOutgoingImage | DomPseudoTypePageTransitionIncomingImage
    deriving (Ord, Eq, Show, Read)
 instance FromJSON DomPseudoType where
@@ -156,7 +156,7 @@ instance ToJSON DomPseudoType where
 
 
 
--- | Shadow root type.
+-- | Type 'DOM.ShadowRootType' .Shadow root type.
 data DomShadowRootType = DomShadowRootTypeUserAgent | DomShadowRootTypeOpen | DomShadowRootTypeClosed
    deriving (Ord, Eq, Show, Read)
 instance FromJSON DomShadowRootType where
@@ -176,7 +176,7 @@ instance ToJSON DomShadowRootType where
 
 
 
--- | Document compatibility mode.
+-- | Type 'DOM.CompatibilityMode' .Document compatibility mode.
 data DomCompatibilityMode = DomCompatibilityModeQuirksMode | DomCompatibilityModeLimitedQuirksMode | DomCompatibilityModeNoQuirksMode
    deriving (Ord, Eq, Show, Read)
 instance FromJSON DomCompatibilityMode where
@@ -196,12 +196,12 @@ instance ToJSON DomCompatibilityMode where
 
 
 
--- | DOM interaction is implemented in terms of mirror objects that represent the actual DOM nodes.
- -- DOMNode is a base node mirror type.
+-- | Type 'DOM.Node' .DOM interaction is implemented in terms of mirror objects that represent the actual DOM nodes.
+--   DOMNode is a base node mirror type.
 data DomNode = DomNode {
   -- | Node identifier that is passed into the rest of the DOM messages as the `nodeId`. Backend
-    -- will only push node with given `id` once. It is aware of all requested nodes and will only
-    -- fire DOM events for nodes known to the client.
+  --   will only push node with given `id` once. It is aware of all requested nodes and will only
+  --   fire DOM events for nodes known to the client.
   domNodeNodeId :: DomNodeId,
   -- | The id of the parent node if any.
   domNodeParentId :: Maybe DomNodeId,
@@ -266,7 +266,7 @@ instance FromJSON  DomNode where
 
 
 
--- | A structure holding an RGBA color.
+-- | Type 'DOM.RGBA' .A structure holding an RGBA color.
 data DomRgba = DomRgba {
   -- | The red component, in the [0-255] range.
   domRgbaR :: Int,
@@ -285,10 +285,10 @@ instance FromJSON  DomRgba where
 
 
 
--- | An array of quad vertices, x immediately followed by y for each point, points clock-wise.
+-- | Type 'DOM.Quad' .An array of quad vertices, x immediately followed by y for each point, points clock-wise.
 type DomQuad = [Double]
 
--- | Box model.
+-- | Type 'DOM.BoxModel' .Box model.
 data DomBoxModel = DomBoxModel {
   -- | Content box
   domBoxModelContent :: DomQuad,
@@ -313,7 +313,7 @@ instance FromJSON  DomBoxModel where
 
 
 
--- | CSS Shape Outside details.
+-- | Type 'DOM.ShapeOutsideInfo' .CSS Shape Outside details.
 data DomShapeOutsideInfo = DomShapeOutsideInfo {
   -- | Shape bounds
   domShapeOutsideInfoBounds :: DomQuad,
@@ -330,7 +330,7 @@ instance FromJSON  DomShapeOutsideInfo where
 
 
 
--- | Rectangle.
+-- | Type 'DOM.Rect' .Rectangle.
 data DomRect = DomRect {
   -- | X coordinate
   domRectX :: Double,
@@ -589,9 +589,9 @@ instance FromJSON  PDomCollectClassNamesFromSubtree where
 
 
 -- | Function for the 'DOM.collectClassNamesFromSubtree' command.
- -- Collects class names for the node with given id and all of it's child nodes.
--- Parameters: 'PDomCollectClassNamesFromSubtree'
--- Returns: 'DomCollectClassNamesFromSubtree'
+--   Collects class names for the node with given id and all of it's child nodes.
+--   Parameters: 'PDomCollectClassNamesFromSubtree'
+--   Returns: 'DomCollectClassNamesFromSubtree'
 domCollectClassNamesFromSubtree :: Handle ev -> PDomCollectClassNamesFromSubtree -> IO DomCollectClassNamesFromSubtree
 domCollectClassNamesFromSubtree handle params = sendReceiveCommandResult handle "DOM.collectClassNamesFromSubtree" (Just params)
 
@@ -616,7 +616,7 @@ data PDomCopyTo = PDomCopyTo {
   -- | Id of the element to drop the copy into.
   pDomCopyToTargetNodeId :: DomNodeId,
   -- | Drop the copy before this node (if absent, the copy becomes the last child of
-    -- `targetNodeId`).
+  --   `targetNodeId`).
   pDomCopyToInsertBeforeNodeId :: Maybe DomNodeId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomCopyTo  where
@@ -627,10 +627,10 @@ instance FromJSON  PDomCopyTo where
 
 
 -- | Function for the 'DOM.copyTo' command.
- -- Creates a deep copy of the specified node and places it into the target container before the
- -- given anchor.
--- Parameters: 'PDomCopyTo'
--- Returns: 'DomCopyTo'
+--   Creates a deep copy of the specified node and places it into the target container before the
+--   given anchor.
+--   Parameters: 'PDomCopyTo'
+--   Returns: 'DomCopyTo'
 domCopyTo :: Handle ev -> PDomCopyTo -> IO DomCopyTo
 domCopyTo handle params = sendReceiveCommandResult handle "DOM.copyTo" (Just params)
 
@@ -657,10 +657,10 @@ data PDomDescribeNode = PDomDescribeNode {
   -- | JavaScript object id of the node wrapper.
   pDomDescribeNodeObjectId :: Maybe Runtime.RuntimeRemoteObjectId,
   -- | The maximum depth at which children should be retrieved, defaults to 1. Use -1 for the
-    -- entire subtree or provide an integer larger than 0.
+  --   entire subtree or provide an integer larger than 0.
   pDomDescribeNodeDepth :: Maybe Int,
   -- | Whether or not iframes and shadow roots should be traversed when returning the subtree
-    -- (default is false).
+  --   (default is false).
   pDomDescribeNodePierce :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomDescribeNode  where
@@ -671,10 +671,10 @@ instance FromJSON  PDomDescribeNode where
 
 
 -- | Function for the 'DOM.describeNode' command.
- -- Describes node given its id, does not require domain to be enabled. Does not start tracking any
- -- objects, can be used for automation.
--- Parameters: 'PDomDescribeNode'
--- Returns: 'DomDescribeNode'
+--   Describes node given its id, does not require domain to be enabled. Does not start tracking any
+--   objects, can be used for automation.
+--   Parameters: 'PDomDescribeNode'
+--   Returns: 'DomDescribeNode'
 domDescribeNode :: Handle ev -> PDomDescribeNode -> IO DomDescribeNode
 domDescribeNode handle params = sendReceiveCommandResult handle "DOM.describeNode" (Just params)
 
@@ -701,7 +701,7 @@ data PDomScrollIntoViewIfNeeded = PDomScrollIntoViewIfNeeded {
   -- | JavaScript object id of the node wrapper.
   pDomScrollIntoViewIfNeededObjectId :: Maybe Runtime.RuntimeRemoteObjectId,
   -- | The rect to be scrolled into view, relative to the node's border box, in CSS pixels.
-    -- When omitted, center of the node will be used, similar to Element.scrollIntoView.
+  --   When omitted, center of the node will be used, similar to Element.scrollIntoView.
   pDomScrollIntoViewIfNeededRect :: Maybe DomRect
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomScrollIntoViewIfNeeded  where
@@ -712,16 +712,16 @@ instance FromJSON  PDomScrollIntoViewIfNeeded where
 
 
 -- | Function for the 'DOM.scrollIntoViewIfNeeded' command.
- -- Scrolls the specified rect of the given node into view if not already visible.
- -- Note: exactly one between nodeId, backendNodeId and objectId should be passed
- -- to identify the node.
--- Parameters: 'PDomScrollIntoViewIfNeeded'
+--   Scrolls the specified rect of the given node into view if not already visible.
+--   Note: exactly one between nodeId, backendNodeId and objectId should be passed
+--   to identify the node.
+--   Parameters: 'PDomScrollIntoViewIfNeeded'
 domScrollIntoViewIfNeeded :: Handle ev -> PDomScrollIntoViewIfNeeded -> IO ()
 domScrollIntoViewIfNeeded handle params = sendReceiveCommand handle "DOM.scrollIntoViewIfNeeded" (Just params)
 
 
 -- | Function for the 'DOM.disable' command.
- -- Disables DOM agent for the given page.
+--   Disables DOM agent for the given page.
 domDisable :: Handle ev -> IO ()
 domDisable handle = sendReceiveCommand handle "DOM.disable" (Nothing :: Maybe ())
 
@@ -739,9 +739,9 @@ instance FromJSON  PDomDiscardSearchResults where
 
 
 -- | Function for the 'DOM.discardSearchResults' command.
- -- Discards search results from the session with the given id. `getSearchResults` should no longer
- -- be called for that search.
--- Parameters: 'PDomDiscardSearchResults'
+--   Discards search results from the session with the given id. `getSearchResults` should no longer
+--   be called for that search.
+--   Parameters: 'PDomDiscardSearchResults'
 domDiscardSearchResults :: Handle ev -> PDomDiscardSearchResults -> IO ()
 domDiscardSearchResults handle params = sendReceiveCommand handle "DOM.discardSearchResults" (Just params)
 
@@ -776,8 +776,8 @@ instance FromJSON  PDomEnable where
 
 
 -- | Function for the 'DOM.enable' command.
- -- Enables DOM agent for the given page.
--- Parameters: 'PDomEnable'
+--   Enables DOM agent for the given page.
+--   Parameters: 'PDomEnable'
 domEnable :: Handle ev -> PDomEnable -> IO ()
 domEnable handle params = sendReceiveCommand handle "DOM.enable" (Just params)
 
@@ -799,8 +799,8 @@ instance FromJSON  PDomFocus where
 
 
 -- | Function for the 'DOM.focus' command.
- -- Focuses the given element.
--- Parameters: 'PDomFocus'
+--   Focuses the given element.
+--   Parameters: 'PDomFocus'
 domFocus :: Handle ev -> PDomFocus -> IO ()
 domFocus handle params = sendReceiveCommand handle "DOM.focus" (Just params)
 
@@ -818,9 +818,9 @@ instance FromJSON  PDomGetAttributes where
 
 
 -- | Function for the 'DOM.getAttributes' command.
- -- Returns attributes for the specified node.
--- Parameters: 'PDomGetAttributes'
--- Returns: 'DomGetAttributes'
+--   Returns attributes for the specified node.
+--   Parameters: 'PDomGetAttributes'
+--   Returns: 'DomGetAttributes'
 domGetAttributes :: Handle ev -> PDomGetAttributes -> IO DomGetAttributes
 domGetAttributes handle params = sendReceiveCommandResult handle "DOM.getAttributes" (Just params)
 
@@ -855,9 +855,9 @@ instance FromJSON  PDomGetBoxModel where
 
 
 -- | Function for the 'DOM.getBoxModel' command.
- -- Returns boxes for the given node.
--- Parameters: 'PDomGetBoxModel'
--- Returns: 'DomGetBoxModel'
+--   Returns boxes for the given node.
+--   Parameters: 'PDomGetBoxModel'
+--   Returns: 'DomGetBoxModel'
 domGetBoxModel :: Handle ev -> PDomGetBoxModel -> IO DomGetBoxModel
 domGetBoxModel handle params = sendReceiveCommandResult handle "DOM.getBoxModel" (Just params)
 
@@ -892,10 +892,10 @@ instance FromJSON  PDomGetContentQuads where
 
 
 -- | Function for the 'DOM.getContentQuads' command.
- -- Returns quads that describe node position on the page. This method
- -- might return multiple quads for inline nodes.
--- Parameters: 'PDomGetContentQuads'
--- Returns: 'DomGetContentQuads'
+--   Returns quads that describe node position on the page. This method
+--   might return multiple quads for inline nodes.
+--   Parameters: 'PDomGetContentQuads'
+--   Returns: 'DomGetContentQuads'
 domGetContentQuads :: Handle ev -> PDomGetContentQuads -> IO DomGetContentQuads
 domGetContentQuads handle params = sendReceiveCommandResult handle "DOM.getContentQuads" (Just params)
 
@@ -916,10 +916,10 @@ instance Command DomGetContentQuads where
 -- | Parameters of the 'domGetDocument' command.
 data PDomGetDocument = PDomGetDocument {
   -- | The maximum depth at which children should be retrieved, defaults to 1. Use -1 for the
-    -- entire subtree or provide an integer larger than 0.
+  --   entire subtree or provide an integer larger than 0.
   pDomGetDocumentDepth :: Maybe Int,
   -- | Whether or not iframes and shadow roots should be traversed when returning the subtree
-    -- (default is false).
+  --   (default is false).
   pDomGetDocumentPierce :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomGetDocument  where
@@ -930,9 +930,9 @@ instance FromJSON  PDomGetDocument where
 
 
 -- | Function for the 'DOM.getDocument' command.
- -- Returns the root DOM node (and optionally the subtree) to the caller.
--- Parameters: 'PDomGetDocument'
--- Returns: 'DomGetDocument'
+--   Returns the root DOM node (and optionally the subtree) to the caller.
+--   Parameters: 'PDomGetDocument'
+--   Returns: 'DomGetDocument'
 domGetDocument :: Handle ev -> PDomGetDocument -> IO DomGetDocument
 domGetDocument handle params = sendReceiveCommandResult handle "DOM.getDocument" (Just params)
 
@@ -957,7 +957,7 @@ data PDomGetNodesForSubtreeByStyle = PDomGetNodesForSubtreeByStyle {
   -- | The style to filter nodes by (includes nodes if any of properties matches).
   pDomGetNodesForSubtreeByStyleComputedStyles :: [DomCssComputedStyleProperty],
   -- | Whether or not iframes and shadow roots in the same target should be traversed when returning the
-    -- results (default is false).
+  --   results (default is false).
   pDomGetNodesForSubtreeByStylePierce :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomGetNodesForSubtreeByStyle  where
@@ -968,9 +968,9 @@ instance FromJSON  PDomGetNodesForSubtreeByStyle where
 
 
 -- | Function for the 'DOM.getNodesForSubtreeByStyle' command.
- -- Finds nodes with a given computed style in a subtree.
--- Parameters: 'PDomGetNodesForSubtreeByStyle'
--- Returns: 'DomGetNodesForSubtreeByStyle'
+--   Finds nodes with a given computed style in a subtree.
+--   Parameters: 'PDomGetNodesForSubtreeByStyle'
+--   Returns: 'DomGetNodesForSubtreeByStyle'
 domGetNodesForSubtreeByStyle :: Handle ev -> PDomGetNodesForSubtreeByStyle -> IO DomGetNodesForSubtreeByStyle
 domGetNodesForSubtreeByStyle handle params = sendReceiveCommandResult handle "DOM.getNodesForSubtreeByStyle" (Just params)
 
@@ -1007,10 +1007,10 @@ instance FromJSON  PDomGetNodeForLocation where
 
 
 -- | Function for the 'DOM.getNodeForLocation' command.
- -- Returns node id at given location. Depending on whether DOM domain is enabled, nodeId is
- -- either returned or not.
--- Parameters: 'PDomGetNodeForLocation'
--- Returns: 'DomGetNodeForLocation'
+--   Returns node id at given location. Depending on whether DOM domain is enabled, nodeId is
+--   either returned or not.
+--   Parameters: 'PDomGetNodeForLocation'
+--   Returns: 'DomGetNodeForLocation'
 domGetNodeForLocation :: Handle ev -> PDomGetNodeForLocation -> IO DomGetNodeForLocation
 domGetNodeForLocation handle params = sendReceiveCommandResult handle "DOM.getNodeForLocation" (Just params)
 
@@ -1049,9 +1049,9 @@ instance FromJSON  PDomGetOuterHtml where
 
 
 -- | Function for the 'DOM.getOuterHTML' command.
- -- Returns node's HTML markup.
--- Parameters: 'PDomGetOuterHtml'
--- Returns: 'DomGetOuterHtml'
+--   Returns node's HTML markup.
+--   Parameters: 'PDomGetOuterHtml'
+--   Returns: 'DomGetOuterHtml'
 domGetOuterHtml :: Handle ev -> PDomGetOuterHtml -> IO DomGetOuterHtml
 domGetOuterHtml handle params = sendReceiveCommandResult handle "DOM.getOuterHTML" (Just params)
 
@@ -1082,9 +1082,9 @@ instance FromJSON  PDomGetRelayoutBoundary where
 
 
 -- | Function for the 'DOM.getRelayoutBoundary' command.
- -- Returns the id of the nearest ancestor that is a relayout boundary.
--- Parameters: 'PDomGetRelayoutBoundary'
--- Returns: 'DomGetRelayoutBoundary'
+--   Returns the id of the nearest ancestor that is a relayout boundary.
+--   Parameters: 'PDomGetRelayoutBoundary'
+--   Returns: 'DomGetRelayoutBoundary'
 domGetRelayoutBoundary :: Handle ev -> PDomGetRelayoutBoundary -> IO DomGetRelayoutBoundary
 domGetRelayoutBoundary handle params = sendReceiveCommandResult handle "DOM.getRelayoutBoundary" (Just params)
 
@@ -1119,10 +1119,10 @@ instance FromJSON  PDomGetSearchResults where
 
 
 -- | Function for the 'DOM.getSearchResults' command.
- -- Returns search results from given `fromIndex` to given `toIndex` from the search with the given
- -- identifier.
--- Parameters: 'PDomGetSearchResults'
--- Returns: 'DomGetSearchResults'
+--   Returns search results from given `fromIndex` to given `toIndex` from the search with the given
+--   identifier.
+--   Parameters: 'PDomGetSearchResults'
+--   Returns: 'DomGetSearchResults'
 domGetSearchResults :: Handle ev -> PDomGetSearchResults -> IO DomGetSearchResults
 domGetSearchResults handle params = sendReceiveCommandResult handle "DOM.getSearchResults" (Just params)
 
@@ -1141,25 +1141,25 @@ instance Command DomGetSearchResults where
 
 
 -- | Function for the 'DOM.hideHighlight' command.
- -- Hides any highlight.
+--   Hides any highlight.
 domHideHighlight :: Handle ev -> IO ()
 domHideHighlight handle = sendReceiveCommand handle "DOM.hideHighlight" (Nothing :: Maybe ())
 
 
 -- | Function for the 'DOM.highlightNode' command.
- -- Highlights DOM node.
+--   Highlights DOM node.
 domHighlightNode :: Handle ev -> IO ()
 domHighlightNode handle = sendReceiveCommand handle "DOM.highlightNode" (Nothing :: Maybe ())
 
 
 -- | Function for the 'DOM.highlightRect' command.
- -- Highlights given rectangle.
+--   Highlights given rectangle.
 domHighlightRect :: Handle ev -> IO ()
 domHighlightRect handle = sendReceiveCommand handle "DOM.highlightRect" (Nothing :: Maybe ())
 
 
 -- | Function for the 'DOM.markUndoableState' command.
- -- Marks last undoable state.
+--   Marks last undoable state.
 domMarkUndoableState :: Handle ev -> IO ()
 domMarkUndoableState handle = sendReceiveCommand handle "DOM.markUndoableState" (Nothing :: Maybe ())
 
@@ -1171,7 +1171,7 @@ data PDomMoveTo = PDomMoveTo {
   -- | Id of the element to drop the moved node into.
   pDomMoveToTargetNodeId :: DomNodeId,
   -- | Drop node before this one (if absent, the moved node becomes the last child of
-    -- `targetNodeId`).
+  --   `targetNodeId`).
   pDomMoveToInsertBeforeNodeId :: Maybe DomNodeId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomMoveTo  where
@@ -1182,9 +1182,9 @@ instance FromJSON  PDomMoveTo where
 
 
 -- | Function for the 'DOM.moveTo' command.
- -- Moves node into the new container, places it before the given anchor.
--- Parameters: 'PDomMoveTo'
--- Returns: 'DomMoveTo'
+--   Moves node into the new container, places it before the given anchor.
+--   Parameters: 'PDomMoveTo'
+--   Returns: 'DomMoveTo'
 domMoveTo :: Handle ev -> PDomMoveTo -> IO DomMoveTo
 domMoveTo handle params = sendReceiveCommandResult handle "DOM.moveTo" (Just params)
 
@@ -1217,10 +1217,10 @@ instance FromJSON  PDomPerformSearch where
 
 
 -- | Function for the 'DOM.performSearch' command.
- -- Searches for a given string in the DOM tree. Use `getSearchResults` to access search results or
- -- `cancelSearch` to end this search session.
--- Parameters: 'PDomPerformSearch'
--- Returns: 'DomPerformSearch'
+--   Searches for a given string in the DOM tree. Use `getSearchResults` to access search results or
+--   `cancelSearch` to end this search session.
+--   Parameters: 'PDomPerformSearch'
+--   Returns: 'DomPerformSearch'
 domPerformSearch :: Handle ev -> PDomPerformSearch -> IO DomPerformSearch
 domPerformSearch handle params = sendReceiveCommandResult handle "DOM.performSearch" (Just params)
 
@@ -1253,9 +1253,9 @@ instance FromJSON  PDomPushNodeByPathToFrontend where
 
 
 -- | Function for the 'DOM.pushNodeByPathToFrontend' command.
- -- Requests that the node is sent to the caller given its path. // FIXME, use XPath
--- Parameters: 'PDomPushNodeByPathToFrontend'
--- Returns: 'DomPushNodeByPathToFrontend'
+--   Requests that the node is sent to the caller given its path. // FIXME, use XPath
+--   Parameters: 'PDomPushNodeByPathToFrontend'
+--   Returns: 'DomPushNodeByPathToFrontend'
 domPushNodeByPathToFrontend :: Handle ev -> PDomPushNodeByPathToFrontend -> IO DomPushNodeByPathToFrontend
 domPushNodeByPathToFrontend handle params = sendReceiveCommandResult handle "DOM.pushNodeByPathToFrontend" (Just params)
 
@@ -1286,16 +1286,16 @@ instance FromJSON  PDomPushNodesByBackendIdsToFrontend where
 
 
 -- | Function for the 'DOM.pushNodesByBackendIdsToFrontend' command.
- -- Requests that a batch of nodes is sent to the caller given their backend node ids.
--- Parameters: 'PDomPushNodesByBackendIdsToFrontend'
--- Returns: 'DomPushNodesByBackendIdsToFrontend'
+--   Requests that a batch of nodes is sent to the caller given their backend node ids.
+--   Parameters: 'PDomPushNodesByBackendIdsToFrontend'
+--   Returns: 'DomPushNodesByBackendIdsToFrontend'
 domPushNodesByBackendIdsToFrontend :: Handle ev -> PDomPushNodesByBackendIdsToFrontend -> IO DomPushNodesByBackendIdsToFrontend
 domPushNodesByBackendIdsToFrontend handle params = sendReceiveCommandResult handle "DOM.pushNodesByBackendIdsToFrontend" (Just params)
 
 -- | Return type of the 'domPushNodesByBackendIdsToFrontend' command.
 data DomPushNodesByBackendIdsToFrontend = DomPushNodesByBackendIdsToFrontend {
   -- | The array of ids of pushed nodes that correspond to the backend ids specified in
-    -- backendNodeIds.
+  --   backendNodeIds.
   domPushNodesByBackendIdsToFrontendNodeIds :: [DomNodeId]
 } deriving (Generic, Eq, Show, Read)
 
@@ -1322,9 +1322,9 @@ instance FromJSON  PDomQuerySelector where
 
 
 -- | Function for the 'DOM.querySelector' command.
- -- Executes `querySelector` on a given node.
--- Parameters: 'PDomQuerySelector'
--- Returns: 'DomQuerySelector'
+--   Executes `querySelector` on a given node.
+--   Parameters: 'PDomQuerySelector'
+--   Returns: 'DomQuerySelector'
 domQuerySelector :: Handle ev -> PDomQuerySelector -> IO DomQuerySelector
 domQuerySelector handle params = sendReceiveCommandResult handle "DOM.querySelector" (Just params)
 
@@ -1357,9 +1357,9 @@ instance FromJSON  PDomQuerySelectorAll where
 
 
 -- | Function for the 'DOM.querySelectorAll' command.
- -- Executes `querySelectorAll` on a given node.
--- Parameters: 'PDomQuerySelectorAll'
--- Returns: 'DomQuerySelectorAll'
+--   Executes `querySelectorAll` on a given node.
+--   Parameters: 'PDomQuerySelectorAll'
+--   Returns: 'DomQuerySelectorAll'
 domQuerySelectorAll :: Handle ev -> PDomQuerySelectorAll -> IO DomQuerySelectorAll
 domQuerySelectorAll handle params = sendReceiveCommandResult handle "DOM.querySelectorAll" (Just params)
 
@@ -1378,7 +1378,7 @@ instance Command DomQuerySelectorAll where
 
 
 -- | Function for the 'DOM.redo' command.
- -- Re-does the last undone action.
+--   Re-does the last undone action.
 domRedo :: Handle ev -> IO ()
 domRedo handle = sendReceiveCommand handle "DOM.redo" (Nothing :: Maybe ())
 
@@ -1398,8 +1398,8 @@ instance FromJSON  PDomRemoveAttribute where
 
 
 -- | Function for the 'DOM.removeAttribute' command.
- -- Removes attribute with given name from an element with given id.
--- Parameters: 'PDomRemoveAttribute'
+--   Removes attribute with given name from an element with given id.
+--   Parameters: 'PDomRemoveAttribute'
 domRemoveAttribute :: Handle ev -> PDomRemoveAttribute -> IO ()
 domRemoveAttribute handle params = sendReceiveCommand handle "DOM.removeAttribute" (Just params)
 
@@ -1417,8 +1417,8 @@ instance FromJSON  PDomRemoveNode where
 
 
 -- | Function for the 'DOM.removeNode' command.
- -- Removes node with given id.
--- Parameters: 'PDomRemoveNode'
+--   Removes node with given id.
+--   Parameters: 'PDomRemoveNode'
 domRemoveNode :: Handle ev -> PDomRemoveNode -> IO ()
 domRemoveNode handle params = sendReceiveCommand handle "DOM.removeNode" (Just params)
 
@@ -1428,10 +1428,10 @@ data PDomRequestChildNodes = PDomRequestChildNodes {
   -- | Id of the node to get children for.
   pDomRequestChildNodesNodeId :: DomNodeId,
   -- | The maximum depth at which children should be retrieved, defaults to 1. Use -1 for the
-    -- entire subtree or provide an integer larger than 0.
+  --   entire subtree or provide an integer larger than 0.
   pDomRequestChildNodesDepth :: Maybe Int,
   -- | Whether or not iframes and shadow roots should be traversed when returning the sub-tree
-    -- (default is false).
+  --   (default is false).
   pDomRequestChildNodesPierce :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomRequestChildNodes  where
@@ -1442,10 +1442,10 @@ instance FromJSON  PDomRequestChildNodes where
 
 
 -- | Function for the 'DOM.requestChildNodes' command.
- -- Requests that children of the node with given id are returned to the caller in form of
- -- `setChildNodes` events where not only immediate children are retrieved, but all children down to
- -- the specified depth.
--- Parameters: 'PDomRequestChildNodes'
+--   Requests that children of the node with given id are returned to the caller in form of
+--   `setChildNodes` events where not only immediate children are retrieved, but all children down to
+--   the specified depth.
+--   Parameters: 'PDomRequestChildNodes'
 domRequestChildNodes :: Handle ev -> PDomRequestChildNodes -> IO ()
 domRequestChildNodes handle params = sendReceiveCommand handle "DOM.requestChildNodes" (Just params)
 
@@ -1463,11 +1463,11 @@ instance FromJSON  PDomRequestNode where
 
 
 -- | Function for the 'DOM.requestNode' command.
- -- Requests that the node is sent to the caller given the JavaScript node object reference. All
- -- nodes that form the path from the node to the root are also sent to the client as a series of
- -- `setChildNodes` notifications.
--- Parameters: 'PDomRequestNode'
--- Returns: 'DomRequestNode'
+--   Requests that the node is sent to the caller given the JavaScript node object reference. All
+--   nodes that form the path from the node to the root are also sent to the client as a series of
+--   `setChildNodes` notifications.
+--   Parameters: 'PDomRequestNode'
+--   Returns: 'DomRequestNode'
 domRequestNode :: Handle ev -> PDomRequestNode -> IO DomRequestNode
 domRequestNode handle params = sendReceiveCommandResult handle "DOM.requestNode" (Just params)
 
@@ -1504,9 +1504,9 @@ instance FromJSON  PDomResolveNode where
 
 
 -- | Function for the 'DOM.resolveNode' command.
- -- Resolves the JavaScript node object for a given NodeId or BackendNodeId.
--- Parameters: 'PDomResolveNode'
--- Returns: 'DomResolveNode'
+--   Resolves the JavaScript node object for a given NodeId or BackendNodeId.
+--   Parameters: 'PDomResolveNode'
+--   Returns: 'DomResolveNode'
 domResolveNode :: Handle ev -> PDomResolveNode -> IO DomResolveNode
 domResolveNode handle params = sendReceiveCommandResult handle "DOM.resolveNode" (Just params)
 
@@ -1541,8 +1541,8 @@ instance FromJSON  PDomSetAttributeValue where
 
 
 -- | Function for the 'DOM.setAttributeValue' command.
- -- Sets attribute for an element with given id.
--- Parameters: 'PDomSetAttributeValue'
+--   Sets attribute for an element with given id.
+--   Parameters: 'PDomSetAttributeValue'
 domSetAttributeValue :: Handle ev -> PDomSetAttributeValue -> IO ()
 domSetAttributeValue handle params = sendReceiveCommand handle "DOM.setAttributeValue" (Just params)
 
@@ -1554,7 +1554,7 @@ data PDomSetAttributesAsText = PDomSetAttributesAsText {
   -- | Text with a number of attributes. Will parse this text using HTML parser.
   pDomSetAttributesAsTextText :: String,
   -- | Attribute name to replace with new attributes derived from text in case text parsed
-    -- successfully.
+  --   successfully.
   pDomSetAttributesAsTextName :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomSetAttributesAsText  where
@@ -1565,9 +1565,9 @@ instance FromJSON  PDomSetAttributesAsText where
 
 
 -- | Function for the 'DOM.setAttributesAsText' command.
- -- Sets attributes on element with given id. This method is useful when user edits some existing
- -- attribute value and types in several attribute name/value pairs.
--- Parameters: 'PDomSetAttributesAsText'
+--   Sets attributes on element with given id. This method is useful when user edits some existing
+--   attribute value and types in several attribute name/value pairs.
+--   Parameters: 'PDomSetAttributesAsText'
 domSetAttributesAsText :: Handle ev -> PDomSetAttributesAsText -> IO ()
 domSetAttributesAsText handle params = sendReceiveCommand handle "DOM.setAttributesAsText" (Just params)
 
@@ -1591,8 +1591,8 @@ instance FromJSON  PDomSetFileInputFiles where
 
 
 -- | Function for the 'DOM.setFileInputFiles' command.
- -- Sets files for the given file input element.
--- Parameters: 'PDomSetFileInputFiles'
+--   Sets files for the given file input element.
+--   Parameters: 'PDomSetFileInputFiles'
 domSetFileInputFiles :: Handle ev -> PDomSetFileInputFiles -> IO ()
 domSetFileInputFiles handle params = sendReceiveCommand handle "DOM.setFileInputFiles" (Just params)
 
@@ -1610,8 +1610,8 @@ instance FromJSON  PDomSetNodeStackTracesEnabled where
 
 
 -- | Function for the 'DOM.setNodeStackTracesEnabled' command.
- -- Sets if stack traces should be captured for Nodes. See `Node.getNodeStackTraces`. Default is disabled.
--- Parameters: 'PDomSetNodeStackTracesEnabled'
+--   Sets if stack traces should be captured for Nodes. See `Node.getNodeStackTraces`. Default is disabled.
+--   Parameters: 'PDomSetNodeStackTracesEnabled'
 domSetNodeStackTracesEnabled :: Handle ev -> PDomSetNodeStackTracesEnabled -> IO ()
 domSetNodeStackTracesEnabled handle params = sendReceiveCommand handle "DOM.setNodeStackTracesEnabled" (Just params)
 
@@ -1629,9 +1629,9 @@ instance FromJSON  PDomGetNodeStackTraces where
 
 
 -- | Function for the 'DOM.getNodeStackTraces' command.
- -- Gets stack traces associated with a Node. As of now, only provides stack trace for Node creation.
--- Parameters: 'PDomGetNodeStackTraces'
--- Returns: 'DomGetNodeStackTraces'
+--   Gets stack traces associated with a Node. As of now, only provides stack trace for Node creation.
+--   Parameters: 'PDomGetNodeStackTraces'
+--   Returns: 'DomGetNodeStackTraces'
 domGetNodeStackTraces :: Handle ev -> PDomGetNodeStackTraces -> IO DomGetNodeStackTraces
 domGetNodeStackTraces handle params = sendReceiveCommandResult handle "DOM.getNodeStackTraces" (Just params)
 
@@ -1662,10 +1662,10 @@ instance FromJSON  PDomGetFileInfo where
 
 
 -- | Function for the 'DOM.getFileInfo' command.
- -- Returns file information for the given
- -- File wrapper.
--- Parameters: 'PDomGetFileInfo'
--- Returns: 'DomGetFileInfo'
+--   Returns file information for the given
+--   File wrapper.
+--   Parameters: 'PDomGetFileInfo'
+--   Returns: 'DomGetFileInfo'
 domGetFileInfo :: Handle ev -> PDomGetFileInfo -> IO DomGetFileInfo
 domGetFileInfo handle params = sendReceiveCommandResult handle "DOM.getFileInfo" (Just params)
 
@@ -1695,9 +1695,9 @@ instance FromJSON  PDomSetInspectedNode where
 
 
 -- | Function for the 'DOM.setInspectedNode' command.
- -- Enables console to refer to the node with given id via $x (see Command Line API for more details
- -- $x functions).
--- Parameters: 'PDomSetInspectedNode'
+--   Enables console to refer to the node with given id via $x (see Command Line API for more details
+--   $x functions).
+--   Parameters: 'PDomSetInspectedNode'
 domSetInspectedNode :: Handle ev -> PDomSetInspectedNode -> IO ()
 domSetInspectedNode handle params = sendReceiveCommand handle "DOM.setInspectedNode" (Just params)
 
@@ -1717,9 +1717,9 @@ instance FromJSON  PDomSetNodeName where
 
 
 -- | Function for the 'DOM.setNodeName' command.
- -- Sets node name for a node with given id.
--- Parameters: 'PDomSetNodeName'
--- Returns: 'DomSetNodeName'
+--   Sets node name for a node with given id.
+--   Parameters: 'PDomSetNodeName'
+--   Returns: 'DomSetNodeName'
 domSetNodeName :: Handle ev -> PDomSetNodeName -> IO DomSetNodeName
 domSetNodeName handle params = sendReceiveCommandResult handle "DOM.setNodeName" (Just params)
 
@@ -1752,8 +1752,8 @@ instance FromJSON  PDomSetNodeValue where
 
 
 -- | Function for the 'DOM.setNodeValue' command.
- -- Sets node value for a node with given id.
--- Parameters: 'PDomSetNodeValue'
+--   Sets node value for a node with given id.
+--   Parameters: 'PDomSetNodeValue'
 domSetNodeValue :: Handle ev -> PDomSetNodeValue -> IO ()
 domSetNodeValue handle params = sendReceiveCommand handle "DOM.setNodeValue" (Just params)
 
@@ -1773,14 +1773,14 @@ instance FromJSON  PDomSetOuterHtml where
 
 
 -- | Function for the 'DOM.setOuterHTML' command.
- -- Sets node HTML markup, returns new node id.
--- Parameters: 'PDomSetOuterHtml'
+--   Sets node HTML markup, returns new node id.
+--   Parameters: 'PDomSetOuterHtml'
 domSetOuterHtml :: Handle ev -> PDomSetOuterHtml -> IO ()
 domSetOuterHtml handle params = sendReceiveCommand handle "DOM.setOuterHTML" (Just params)
 
 
 -- | Function for the 'DOM.undo' command.
- -- Undoes the last performed action.
+--   Undoes the last performed action.
 domUndo :: Handle ev -> IO ()
 domUndo handle = sendReceiveCommand handle "DOM.undo" (Nothing :: Maybe ())
 
@@ -1797,9 +1797,9 @@ instance FromJSON  PDomGetFrameOwner where
 
 
 -- | Function for the 'DOM.getFrameOwner' command.
- -- Returns iframe node that owns iframe with the given domain.
--- Parameters: 'PDomGetFrameOwner'
--- Returns: 'DomGetFrameOwner'
+--   Returns iframe node that owns iframe with the given domain.
+--   Parameters: 'PDomGetFrameOwner'
+--   Returns: 'DomGetFrameOwner'
 domGetFrameOwner :: Handle ev -> PDomGetFrameOwner -> IO DomGetFrameOwner
 domGetFrameOwner handle params = sendReceiveCommandResult handle "DOM.getFrameOwner" (Just params)
 
@@ -1832,11 +1832,11 @@ instance FromJSON  PDomGetContainerForNode where
 
 
 -- | Function for the 'DOM.getContainerForNode' command.
- -- Returns the container of the given node based on container query conditions.
- -- If containerName is given, it will find the nearest container with a matching name;
- -- otherwise it will find the nearest container regardless of its container name.
--- Parameters: 'PDomGetContainerForNode'
--- Returns: 'DomGetContainerForNode'
+--   Returns the container of the given node based on container query conditions.
+--   If containerName is given, it will find the nearest container with a matching name;
+--   otherwise it will find the nearest container regardless of its container name.
+--   Parameters: 'PDomGetContainerForNode'
+--   Returns: 'DomGetContainerForNode'
 domGetContainerForNode :: Handle ev -> PDomGetContainerForNode -> IO DomGetContainerForNode
 domGetContainerForNode handle params = sendReceiveCommandResult handle "DOM.getContainerForNode" (Just params)
 
@@ -1867,10 +1867,10 @@ instance FromJSON  PDomGetQueryingDescendantsForContainer where
 
 
 -- | Function for the 'DOM.getQueryingDescendantsForContainer' command.
- -- Returns the descendants of a container query container that have
- -- container queries against this container.
--- Parameters: 'PDomGetQueryingDescendantsForContainer'
--- Returns: 'DomGetQueryingDescendantsForContainer'
+--   Returns the descendants of a container query container that have
+--   container queries against this container.
+--   Parameters: 'PDomGetQueryingDescendantsForContainer'
+--   Returns: 'DomGetQueryingDescendantsForContainer'
 domGetQueryingDescendantsForContainer :: Handle ev -> PDomGetQueryingDescendantsForContainer -> IO DomGetQueryingDescendantsForContainer
 domGetQueryingDescendantsForContainer handle params = sendReceiveCommandResult handle "DOM.getQueryingDescendantsForContainer" (Just params)
 
@@ -1889,7 +1889,7 @@ instance Command DomGetQueryingDescendantsForContainer where
 
 
 
--- | Screen orientation.
+-- | Type 'Emulation.ScreenOrientation' .Screen orientation.
 data EmulationScreenOrientationType = EmulationScreenOrientationTypePortraitPrimary | EmulationScreenOrientationTypePortraitSecondary | EmulationScreenOrientationTypeLandscapePrimary | EmulationScreenOrientationTypeLandscapeSecondary
    deriving (Ord, Eq, Show, Read)
 instance FromJSON EmulationScreenOrientationType where
@@ -1947,11 +1947,11 @@ data EmulationDisplayFeature = EmulationDisplayFeature {
   -- | Orientation of a display feature in relation to screen
   emulationDisplayFeatureOrientation :: EmulationDisplayFeatureOrientation,
   -- | The offset from the screen origin in either the x (for vertical
-    -- orientation) or y (for horizontal orientation) direction.
+  --   orientation) or y (for horizontal orientation) direction.
   emulationDisplayFeatureOffset :: Int,
   -- | A display feature may mask content such that it is not physically
-    -- displayed - this length along with the offset describes this area.
-    -- A display feature that only splits content will have a 0 mask_length.
+  --   displayed - this length along with the offset describes this area.
+  --   A display feature that only splits content will have a 0 mask_length.
   emulationDisplayFeatureMaskLength :: Int
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON EmulationDisplayFeature  where
@@ -1975,10 +1975,10 @@ instance FromJSON  EmulationMediaFeature where
 
 
 
--- | advance: If the scheduler runs out of immediate work, the virtual time base may fast forward to
- -- allow the next delayed task (if any) to run; pause: The virtual time base may not advance;
- -- pauseIfNetworkFetchesPending: The virtual time base may not advance if there are any pending
- -- resource fetches.
+-- | Type 'Emulation.VirtualTimePolicy' .advance: If the scheduler runs out of immediate work, the virtual time base may fast forward to
+--   allow the next delayed task (if any) to run; pause: The virtual time base may not advance;
+--   pauseIfNetworkFetchesPending: The virtual time base may not advance if there are any pending
+--   resource fetches.
 data EmulationVirtualTimePolicy = EmulationVirtualTimePolicyAdvance | EmulationVirtualTimePolicyPause | EmulationVirtualTimePolicyPauseIfNetworkFetchesPending
    deriving (Ord, Eq, Show, Read)
 instance FromJSON EmulationVirtualTimePolicy where
@@ -1998,7 +1998,7 @@ instance ToJSON EmulationVirtualTimePolicy where
 
 
 
--- | Used to specify User Agent Cient Hints to emulate. See https://wicg.github.io/ua-client-hints
+-- | Type 'Emulation.UserAgentBrandVersion' .Used to specify User Agent Cient Hints to emulate. See https://wicg.github.io/ua-client-hints
 data EmulationUserAgentBrandVersion = EmulationUserAgentBrandVersion {
   emulationUserAgentBrandVersionBrand :: String,
   emulationUserAgentBrandVersionVersion :: String
@@ -2011,8 +2011,8 @@ instance FromJSON  EmulationUserAgentBrandVersion where
 
 
 
--- | Used to specify User Agent Cient Hints to emulate. See https://wicg.github.io/ua-client-hints
- -- Missing optional values will be filled in by the target with what it would normally use.
+-- | Type 'Emulation.UserAgentMetadata' .Used to specify User Agent Cient Hints to emulate. See https://wicg.github.io/ua-client-hints
+--   Missing optional values will be filled in by the target with what it would normally use.
 data EmulationUserAgentMetadata = EmulationUserAgentMetadata {
   emulationUserAgentMetadataBrands :: Maybe [EmulationUserAgentBrandVersion],
   emulationUserAgentMetadataFullVersionList :: Maybe [EmulationUserAgentBrandVersion],
@@ -2032,7 +2032,7 @@ instance FromJSON  EmulationUserAgentMetadata where
 
 
 
--- | Enum of image types that can be disabled.
+-- | Type 'Emulation.DisabledImageType' .Enum of image types that can be disabled.
 data EmulationDisabledImageType = EmulationDisabledImageTypeAvif | EmulationDisabledImageTypeJxl | EmulationDisabledImageTypeWebp
    deriving (Ord, Eq, Show, Read)
 instance FromJSON EmulationDisabledImageType where
@@ -2068,8 +2068,8 @@ instance FromJSON EmulationVirtualTimeBudgetExpired where
 
 
 -- | Function for the 'Emulation.canEmulate' command.
- -- Tells whether emulation is supported.
--- Returns: 'EmulationCanEmulate'
+--   Tells whether emulation is supported.
+--   Returns: 'EmulationCanEmulate'
 emulationCanEmulate :: Handle ev -> IO EmulationCanEmulate
 emulationCanEmulate handle = sendReceiveCommandResult handle "Emulation.canEmulate" (Nothing :: Maybe ())
 
@@ -2088,19 +2088,19 @@ instance Command EmulationCanEmulate where
 
 
 -- | Function for the 'Emulation.clearDeviceMetricsOverride' command.
- -- Clears the overridden device metrics.
+--   Clears the overridden device metrics.
 emulationClearDeviceMetricsOverride :: Handle ev -> IO ()
 emulationClearDeviceMetricsOverride handle = sendReceiveCommand handle "Emulation.clearDeviceMetricsOverride" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Emulation.clearGeolocationOverride' command.
- -- Clears the overridden Geolocation Position and Error.
+--   Clears the overridden Geolocation Position and Error.
 emulationClearGeolocationOverride :: Handle ev -> IO ()
 emulationClearGeolocationOverride handle = sendReceiveCommand handle "Emulation.clearGeolocationOverride" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Emulation.resetPageScaleFactor' command.
- -- Requests that page scale factor is reset to initial values.
+--   Requests that page scale factor is reset to initial values.
 emulationResetPageScaleFactor :: Handle ev -> IO ()
 emulationResetPageScaleFactor handle = sendReceiveCommand handle "Emulation.resetPageScaleFactor" (Nothing :: Maybe ())
 
@@ -2118,8 +2118,8 @@ instance FromJSON  PEmulationSetFocusEmulationEnabled where
 
 
 -- | Function for the 'Emulation.setFocusEmulationEnabled' command.
- -- Enables or disables simulating a focused and active page.
--- Parameters: 'PEmulationSetFocusEmulationEnabled'
+--   Enables or disables simulating a focused and active page.
+--   Parameters: 'PEmulationSetFocusEmulationEnabled'
 emulationSetFocusEmulationEnabled :: Handle ev -> PEmulationSetFocusEmulationEnabled -> IO ()
 emulationSetFocusEmulationEnabled handle params = sendReceiveCommand handle "Emulation.setFocusEmulationEnabled" (Just params)
 
@@ -2127,7 +2127,7 @@ emulationSetFocusEmulationEnabled handle params = sendReceiveCommand handle "Emu
 -- | Parameters of the 'emulationSetAutoDarkModeOverride' command.
 data PEmulationSetAutoDarkModeOverride = PEmulationSetAutoDarkModeOverride {
   -- | Whether to enable or disable automatic dark mode.
-    -- If not specified, any existing override will be cleared.
+  --   If not specified, any existing override will be cleared.
   pEmulationSetAutoDarkModeOverrideEnabled :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetAutoDarkModeOverride  where
@@ -2138,8 +2138,8 @@ instance FromJSON  PEmulationSetAutoDarkModeOverride where
 
 
 -- | Function for the 'Emulation.setAutoDarkModeOverride' command.
- -- Automatically render all web contents using a dark theme.
--- Parameters: 'PEmulationSetAutoDarkModeOverride'
+--   Automatically render all web contents using a dark theme.
+--   Parameters: 'PEmulationSetAutoDarkModeOverride'
 emulationSetAutoDarkModeOverride :: Handle ev -> PEmulationSetAutoDarkModeOverride -> IO ()
 emulationSetAutoDarkModeOverride handle params = sendReceiveCommand handle "Emulation.setAutoDarkModeOverride" (Just params)
 
@@ -2157,8 +2157,8 @@ instance FromJSON  PEmulationSetCpuThrottlingRate where
 
 
 -- | Function for the 'Emulation.setCPUThrottlingRate' command.
- -- Enables CPU throttling to emulate slow CPUs.
--- Parameters: 'PEmulationSetCpuThrottlingRate'
+--   Enables CPU throttling to emulate slow CPUs.
+--   Parameters: 'PEmulationSetCpuThrottlingRate'
 emulationSetCpuThrottlingRate :: Handle ev -> PEmulationSetCpuThrottlingRate -> IO ()
 emulationSetCpuThrottlingRate handle params = sendReceiveCommand handle "Emulation.setCPUThrottlingRate" (Just params)
 
@@ -2166,7 +2166,7 @@ emulationSetCpuThrottlingRate handle params = sendReceiveCommand handle "Emulati
 -- | Parameters of the 'emulationSetDefaultBackgroundColorOverride' command.
 data PEmulationSetDefaultBackgroundColorOverride = PEmulationSetDefaultBackgroundColorOverride {
   -- | RGBA of the default background color. If not specified, any existing override will be
-    -- cleared.
+  --   cleared.
   pEmulationSetDefaultBackgroundColorOverrideColor :: Maybe DomRgba
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetDefaultBackgroundColorOverride  where
@@ -2177,9 +2177,9 @@ instance FromJSON  PEmulationSetDefaultBackgroundColorOverride where
 
 
 -- | Function for the 'Emulation.setDefaultBackgroundColorOverride' command.
- -- Sets or clears an override of the default background color of the frame. This override is used
- -- if the content does not specify one.
--- Parameters: 'PEmulationSetDefaultBackgroundColorOverride'
+--   Sets or clears an override of the default background color of the frame. This override is used
+--   if the content does not specify one.
+--   Parameters: 'PEmulationSetDefaultBackgroundColorOverride'
 emulationSetDefaultBackgroundColorOverride :: Handle ev -> PEmulationSetDefaultBackgroundColorOverride -> IO ()
 emulationSetDefaultBackgroundColorOverride handle params = sendReceiveCommand handle "Emulation.setDefaultBackgroundColorOverride" (Just params)
 
@@ -2193,7 +2193,7 @@ data PEmulationSetDeviceMetricsOverride = PEmulationSetDeviceMetricsOverride {
   -- | Overriding device scale factor value. 0 disables the override.
   pEmulationSetDeviceMetricsOverrideDeviceScaleFactor :: Double,
   -- | Whether to emulate mobile device. This includes viewport meta tag, overlay scrollbars, text
-    -- autosizing and more.
+  --   autosizing and more.
   pEmulationSetDeviceMetricsOverrideMobile :: Bool,
   -- | Scale to apply to resulting view image.
   pEmulationSetDeviceMetricsOverrideScale :: Maybe Double,
@@ -2210,10 +2210,10 @@ data PEmulationSetDeviceMetricsOverride = PEmulationSetDeviceMetricsOverride {
   -- | Screen orientation override.
   pEmulationSetDeviceMetricsOverrideScreenOrientation :: Maybe EmulationScreenOrientation,
   -- | If set, the visible area of the page will be overridden to this viewport. This viewport
-    -- change is not observed by the page, e.g. viewport-relative elements do not change positions.
+  --   change is not observed by the page, e.g. viewport-relative elements do not change positions.
   pEmulationSetDeviceMetricsOverrideViewport :: Maybe PageViewport,
   -- | If set, the display feature of a multi-segment screen. If not set, multi-segment support
-    -- is turned-off.
+  --   is turned-off.
   pEmulationSetDeviceMetricsOverrideDisplayFeature :: Maybe EmulationDisplayFeature
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetDeviceMetricsOverride  where
@@ -2224,10 +2224,10 @@ instance FromJSON  PEmulationSetDeviceMetricsOverride where
 
 
 -- | Function for the 'Emulation.setDeviceMetricsOverride' command.
- -- Overrides the values of device screen dimensions (window.screen.width, window.screen.height,
- -- window.innerWidth, window.innerHeight, and "device-width"/"device-height"-related CSS media
- -- query results).
--- Parameters: 'PEmulationSetDeviceMetricsOverride'
+--   Overrides the values of device screen dimensions (window.screen.width, window.screen.height,
+--   window.innerWidth, window.innerHeight, and "device-width"/"device-height"-related CSS media
+--   query results).
+--   Parameters: 'PEmulationSetDeviceMetricsOverride'
 emulationSetDeviceMetricsOverride :: Handle ev -> PEmulationSetDeviceMetricsOverride -> IO ()
 emulationSetDeviceMetricsOverride handle params = sendReceiveCommand handle "Emulation.setDeviceMetricsOverride" (Just params)
 
@@ -2245,7 +2245,8 @@ instance FromJSON  PEmulationSetScrollbarsHidden where
 
 
 -- | Function for the 'Emulation.setScrollbarsHidden' command.
--- Parameters: 'PEmulationSetScrollbarsHidden'
+--   
+--   Parameters: 'PEmulationSetScrollbarsHidden'
 emulationSetScrollbarsHidden :: Handle ev -> PEmulationSetScrollbarsHidden -> IO ()
 emulationSetScrollbarsHidden handle params = sendReceiveCommand handle "Emulation.setScrollbarsHidden" (Just params)
 
@@ -2263,7 +2264,8 @@ instance FromJSON  PEmulationSetDocumentCookieDisabled where
 
 
 -- | Function for the 'Emulation.setDocumentCookieDisabled' command.
--- Parameters: 'PEmulationSetDocumentCookieDisabled'
+--   
+--   Parameters: 'PEmulationSetDocumentCookieDisabled'
 emulationSetDocumentCookieDisabled :: Handle ev -> PEmulationSetDocumentCookieDisabled -> IO ()
 emulationSetDocumentCookieDisabled handle params = sendReceiveCommand handle "Emulation.setDocumentCookieDisabled" (Just params)
 
@@ -2300,7 +2302,8 @@ instance FromJSON  PEmulationSetEmitTouchEventsForMouse where
 
 
 -- | Function for the 'Emulation.setEmitTouchEventsForMouse' command.
--- Parameters: 'PEmulationSetEmitTouchEventsForMouse'
+--   
+--   Parameters: 'PEmulationSetEmitTouchEventsForMouse'
 emulationSetEmitTouchEventsForMouse :: Handle ev -> PEmulationSetEmitTouchEventsForMouse -> IO ()
 emulationSetEmitTouchEventsForMouse handle params = sendReceiveCommand handle "Emulation.setEmitTouchEventsForMouse" (Just params)
 
@@ -2320,8 +2323,8 @@ instance FromJSON  PEmulationSetEmulatedMedia where
 
 
 -- | Function for the 'Emulation.setEmulatedMedia' command.
- -- Emulates the given media type or media feature for CSS media queries.
--- Parameters: 'PEmulationSetEmulatedMedia'
+--   Emulates the given media type or media feature for CSS media queries.
+--   Parameters: 'PEmulationSetEmulatedMedia'
 emulationSetEmulatedMedia :: Handle ev -> PEmulationSetEmulatedMedia -> IO ()
 emulationSetEmulatedMedia handle params = sendReceiveCommand handle "Emulation.setEmulatedMedia" (Just params)
 
@@ -2364,8 +2367,8 @@ instance FromJSON  PEmulationSetEmulatedVisionDeficiency where
 
 
 -- | Function for the 'Emulation.setEmulatedVisionDeficiency' command.
- -- Emulates the given vision deficiency.
--- Parameters: 'PEmulationSetEmulatedVisionDeficiency'
+--   Emulates the given vision deficiency.
+--   Parameters: 'PEmulationSetEmulatedVisionDeficiency'
 emulationSetEmulatedVisionDeficiency :: Handle ev -> PEmulationSetEmulatedVisionDeficiency -> IO ()
 emulationSetEmulatedVisionDeficiency handle params = sendReceiveCommand handle "Emulation.setEmulatedVisionDeficiency" (Just params)
 
@@ -2387,9 +2390,9 @@ instance FromJSON  PEmulationSetGeolocationOverride where
 
 
 -- | Function for the 'Emulation.setGeolocationOverride' command.
- -- Overrides the Geolocation Position or Error. Omitting any of the parameters emulates position
- -- unavailable.
--- Parameters: 'PEmulationSetGeolocationOverride'
+--   Overrides the Geolocation Position or Error. Omitting any of the parameters emulates position
+--   unavailable.
+--   Parameters: 'PEmulationSetGeolocationOverride'
 emulationSetGeolocationOverride :: Handle ev -> PEmulationSetGeolocationOverride -> IO ()
 emulationSetGeolocationOverride handle params = sendReceiveCommand handle "Emulation.setGeolocationOverride" (Just params)
 
@@ -2409,14 +2412,14 @@ instance FromJSON  PEmulationSetIdleOverride where
 
 
 -- | Function for the 'Emulation.setIdleOverride' command.
- -- Overrides the Idle state.
--- Parameters: 'PEmulationSetIdleOverride'
+--   Overrides the Idle state.
+--   Parameters: 'PEmulationSetIdleOverride'
 emulationSetIdleOverride :: Handle ev -> PEmulationSetIdleOverride -> IO ()
 emulationSetIdleOverride handle params = sendReceiveCommand handle "Emulation.setIdleOverride" (Just params)
 
 
 -- | Function for the 'Emulation.clearIdleOverride' command.
- -- Clears Idle state overrides.
+--   Clears Idle state overrides.
 emulationClearIdleOverride :: Handle ev -> IO ()
 emulationClearIdleOverride handle = sendReceiveCommand handle "Emulation.clearIdleOverride" (Nothing :: Maybe ())
 
@@ -2434,8 +2437,8 @@ instance FromJSON  PEmulationSetPageScaleFactor where
 
 
 -- | Function for the 'Emulation.setPageScaleFactor' command.
- -- Sets a specified page scale factor.
--- Parameters: 'PEmulationSetPageScaleFactor'
+--   Sets a specified page scale factor.
+--   Parameters: 'PEmulationSetPageScaleFactor'
 emulationSetPageScaleFactor :: Handle ev -> PEmulationSetPageScaleFactor -> IO ()
 emulationSetPageScaleFactor handle params = sendReceiveCommand handle "Emulation.setPageScaleFactor" (Just params)
 
@@ -2453,8 +2456,8 @@ instance FromJSON  PEmulationSetScriptExecutionDisabled where
 
 
 -- | Function for the 'Emulation.setScriptExecutionDisabled' command.
- -- Switches script execution in the page.
--- Parameters: 'PEmulationSetScriptExecutionDisabled'
+--   Switches script execution in the page.
+--   Parameters: 'PEmulationSetScriptExecutionDisabled'
 emulationSetScriptExecutionDisabled :: Handle ev -> PEmulationSetScriptExecutionDisabled -> IO ()
 emulationSetScriptExecutionDisabled handle params = sendReceiveCommand handle "Emulation.setScriptExecutionDisabled" (Just params)
 
@@ -2474,8 +2477,8 @@ instance FromJSON  PEmulationSetTouchEmulationEnabled where
 
 
 -- | Function for the 'Emulation.setTouchEmulationEnabled' command.
- -- Enables touch on platforms which do not support them.
--- Parameters: 'PEmulationSetTouchEmulationEnabled'
+--   Enables touch on platforms which do not support them.
+--   Parameters: 'PEmulationSetTouchEmulationEnabled'
 emulationSetTouchEmulationEnabled :: Handle ev -> PEmulationSetTouchEmulationEnabled -> IO ()
 emulationSetTouchEmulationEnabled handle params = sendReceiveCommand handle "Emulation.setTouchEmulationEnabled" (Just params)
 
@@ -2484,10 +2487,10 @@ emulationSetTouchEmulationEnabled handle params = sendReceiveCommand handle "Emu
 data PEmulationSetVirtualTimePolicy = PEmulationSetVirtualTimePolicy {
   pEmulationSetVirtualTimePolicyPolicy :: EmulationVirtualTimePolicy,
   -- | If set, after this many virtual milliseconds have elapsed virtual time will be paused and a
-    -- virtualTimeBudgetExpired event is sent.
+  --   virtualTimeBudgetExpired event is sent.
   pEmulationSetVirtualTimePolicyBudget :: Maybe Double,
   -- | If set this specifies the maximum number of tasks that can be run before virtual is forced
-    -- forwards to prevent deadlock.
+  --   forwards to prevent deadlock.
   pEmulationSetVirtualTimePolicyMaxVirtualTimeTaskStarvationCount :: Maybe Int,
   -- | If set, base::Time::Now will be overridden to initially return this value.
   pEmulationSetVirtualTimePolicyInitialVirtualTime :: Maybe NetworkTimeSinceEpoch
@@ -2500,10 +2503,10 @@ instance FromJSON  PEmulationSetVirtualTimePolicy where
 
 
 -- | Function for the 'Emulation.setVirtualTimePolicy' command.
- -- Turns on virtual time for all frames (replacing real-time with a synthetic time source) and sets
- -- the current virtual time policy.  Note this supersedes any previous time budget.
--- Parameters: 'PEmulationSetVirtualTimePolicy'
--- Returns: 'EmulationSetVirtualTimePolicy'
+--   Turns on virtual time for all frames (replacing real-time with a synthetic time source) and sets
+--   the current virtual time policy.  Note this supersedes any previous time budget.
+--   Parameters: 'PEmulationSetVirtualTimePolicy'
+--   Returns: 'EmulationSetVirtualTimePolicy'
 emulationSetVirtualTimePolicy :: Handle ev -> PEmulationSetVirtualTimePolicy -> IO EmulationSetVirtualTimePolicy
 emulationSetVirtualTimePolicy handle params = sendReceiveCommandResult handle "Emulation.setVirtualTimePolicy" (Just params)
 
@@ -2524,7 +2527,7 @@ instance Command EmulationSetVirtualTimePolicy where
 -- | Parameters of the 'emulationSetLocaleOverride' command.
 data PEmulationSetLocaleOverride = PEmulationSetLocaleOverride {
   -- | ICU style C locale (e.g. "en_US"). If not specified or empty, disables the override and
-    -- restores default host system locale.
+  --   restores default host system locale.
   pEmulationSetLocaleOverrideLocale :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetLocaleOverride  where
@@ -2535,8 +2538,8 @@ instance FromJSON  PEmulationSetLocaleOverride where
 
 
 -- | Function for the 'Emulation.setLocaleOverride' command.
- -- Overrides default host system locale with the specified one.
--- Parameters: 'PEmulationSetLocaleOverride'
+--   Overrides default host system locale with the specified one.
+--   Parameters: 'PEmulationSetLocaleOverride'
 emulationSetLocaleOverride :: Handle ev -> PEmulationSetLocaleOverride -> IO ()
 emulationSetLocaleOverride handle params = sendReceiveCommand handle "Emulation.setLocaleOverride" (Just params)
 
@@ -2544,7 +2547,7 @@ emulationSetLocaleOverride handle params = sendReceiveCommand handle "Emulation.
 -- | Parameters of the 'emulationSetTimezoneOverride' command.
 data PEmulationSetTimezoneOverride = PEmulationSetTimezoneOverride {
   -- | The timezone identifier. If empty, disables the override and
-    -- restores default host system timezone.
+  --   restores default host system timezone.
   pEmulationSetTimezoneOverrideTimezoneId :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetTimezoneOverride  where
@@ -2555,8 +2558,8 @@ instance FromJSON  PEmulationSetTimezoneOverride where
 
 
 -- | Function for the 'Emulation.setTimezoneOverride' command.
- -- Overrides default host system timezone with the specified one.
--- Parameters: 'PEmulationSetTimezoneOverride'
+--   Overrides default host system timezone with the specified one.
+--   Parameters: 'PEmulationSetTimezoneOverride'
 emulationSetTimezoneOverride :: Handle ev -> PEmulationSetTimezoneOverride -> IO ()
 emulationSetTimezoneOverride handle params = sendReceiveCommand handle "Emulation.setTimezoneOverride" (Just params)
 
@@ -2574,7 +2577,8 @@ instance FromJSON  PEmulationSetDisabledImageTypes where
 
 
 -- | Function for the 'Emulation.setDisabledImageTypes' command.
--- Parameters: 'PEmulationSetDisabledImageTypes'
+--   
+--   Parameters: 'PEmulationSetDisabledImageTypes'
 emulationSetDisabledImageTypes :: Handle ev -> PEmulationSetDisabledImageTypes -> IO ()
 emulationSetDisabledImageTypes handle params = sendReceiveCommand handle "Emulation.setDisabledImageTypes" (Just params)
 
@@ -2592,7 +2596,8 @@ instance FromJSON  PEmulationSetHardwareConcurrencyOverride where
 
 
 -- | Function for the 'Emulation.setHardwareConcurrencyOverride' command.
--- Parameters: 'PEmulationSetHardwareConcurrencyOverride'
+--   
+--   Parameters: 'PEmulationSetHardwareConcurrencyOverride'
 emulationSetHardwareConcurrencyOverride :: Handle ev -> PEmulationSetHardwareConcurrencyOverride -> IO ()
 emulationSetHardwareConcurrencyOverride handle params = sendReceiveCommand handle "Emulation.setHardwareConcurrencyOverride" (Just params)
 
@@ -2616,8 +2621,8 @@ instance FromJSON  PEmulationSetUserAgentOverride where
 
 
 -- | Function for the 'Emulation.setUserAgentOverride' command.
- -- Allows overriding user agent with the given string.
--- Parameters: 'PEmulationSetUserAgentOverride'
+--   Allows overriding user agent with the given string.
+--   Parameters: 'PEmulationSetUserAgentOverride'
 emulationSetUserAgentOverride :: Handle ev -> PEmulationSetUserAgentOverride -> IO ()
 emulationSetUserAgentOverride handle params = sendReceiveCommand handle "Emulation.setUserAgentOverride" (Just params)
 
@@ -2635,14 +2640,14 @@ instance FromJSON  PEmulationSetAutomationOverride where
 
 
 -- | Function for the 'Emulation.setAutomationOverride' command.
- -- Allows overriding the automation flag.
--- Parameters: 'PEmulationSetAutomationOverride'
+--   Allows overriding the automation flag.
+--   Parameters: 'PEmulationSetAutomationOverride'
 emulationSetAutomationOverride :: Handle ev -> PEmulationSetAutomationOverride -> IO ()
 emulationSetAutomationOverride handle params = sendReceiveCommand handle "Emulation.setAutomationOverride" (Just params)
 
 
 
--- | Resource type as it was perceived by the rendering engine.
+-- | Type 'Network.ResourceType' .Resource type as it was perceived by the rendering engine.
 data NetworkResourceType = NetworkResourceTypeDocument | NetworkResourceTypeStylesheet | NetworkResourceTypeImage | NetworkResourceTypeMedia | NetworkResourceTypeFont | NetworkResourceTypeScript | NetworkResourceTypeTextTrack | NetworkResourceTypeXhr | NetworkResourceTypeFetch | NetworkResourceTypeEventSource | NetworkResourceTypeWebSocket | NetworkResourceTypeManifest | NetworkResourceTypeSignedExchange | NetworkResourceTypePing | NetworkResourceTypeCspViolationReport | NetworkResourceTypePreflight | NetworkResourceTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkResourceType where
@@ -2690,16 +2695,16 @@ instance ToJSON NetworkResourceType where
 
 
 
--- | Unique loader identifier.
+-- | Type 'Network.LoaderId' .Unique loader identifier.
 type NetworkLoaderId = String
 
--- | Unique request identifier.
+-- | Type 'Network.RequestId' .Unique request identifier.
 type NetworkRequestId = String
 
--- | Unique intercepted request identifier.
+-- | Type 'Network.InterceptionId' .Unique intercepted request identifier.
 type NetworkInterceptionId = String
 
--- | Network level fetch failure reason.
+-- | Type 'Network.ErrorReason' .Network level fetch failure reason.
 data NetworkErrorReason = NetworkErrorReasonFailed | NetworkErrorReasonAborted | NetworkErrorReasonTimedOut | NetworkErrorReasonAccessDenied | NetworkErrorReasonConnectionClosed | NetworkErrorReasonConnectionReset | NetworkErrorReasonConnectionRefused | NetworkErrorReasonConnectionAborted | NetworkErrorReasonConnectionFailed | NetworkErrorReasonNameNotResolved | NetworkErrorReasonInternetDisconnected | NetworkErrorReasonAddressUnreachable | NetworkErrorReasonBlockedByClient | NetworkErrorReasonBlockedByResponse
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkErrorReason where
@@ -2741,16 +2746,16 @@ instance ToJSON NetworkErrorReason where
 
 
 
--- | UTC time in seconds, counted from January 1, 1970.
+-- | Type 'Network.TimeSinceEpoch' .UTC time in seconds, counted from January 1, 1970.
 type NetworkTimeSinceEpoch = Double
 
--- | Monotonically increasing time in seconds since an arbitrary point in the past.
+-- | Type 'Network.MonotonicTime' .Monotonically increasing time in seconds since an arbitrary point in the past.
 type NetworkMonotonicTime = Double
 
--- | Request / response headers as keys / values of JSON object.
+-- | Type 'Network.Headers' .Request / response headers as keys / values of JSON object.
 type NetworkHeaders = [(String, String)]
 
--- | The underlying connection technology that the browser is supposedly using.
+-- | Type 'Network.ConnectionType' .The underlying connection technology that the browser is supposedly using.
 data NetworkConnectionType = NetworkConnectionTypeNone | NetworkConnectionTypeCellular2g | NetworkConnectionTypeCellular3g | NetworkConnectionTypeCellular4g | NetworkConnectionTypeBluetooth | NetworkConnectionTypeEthernet | NetworkConnectionTypeWifi | NetworkConnectionTypeWimax | NetworkConnectionTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkConnectionType where
@@ -2782,8 +2787,8 @@ instance ToJSON NetworkConnectionType where
 
 
 
--- | Represents the cookie's 'SameSite' status:
- -- https://tools.ietf.org/html/draft-west-first-party-cookies
+-- | Type 'Network.CookieSameSite' .Represents the cookie's 'SameSite' status:
+--   https://tools.ietf.org/html/draft-west-first-party-cookies
 data NetworkCookieSameSite = NetworkCookieSameSiteStrict | NetworkCookieSameSiteLax | NetworkCookieSameSiteNone
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCookieSameSite where
@@ -2803,8 +2808,8 @@ instance ToJSON NetworkCookieSameSite where
 
 
 
--- | Represents the cookie's 'Priority' status:
- -- https://tools.ietf.org/html/draft-west-cookie-priority-00
+-- | Type 'Network.CookiePriority' .Represents the cookie's 'Priority' status:
+--   https://tools.ietf.org/html/draft-west-cookie-priority-00
 data NetworkCookiePriority = NetworkCookiePriorityLow | NetworkCookiePriorityMedium | NetworkCookiePriorityHigh
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCookiePriority where
@@ -2824,9 +2829,9 @@ instance ToJSON NetworkCookiePriority where
 
 
 
--- | Represents the source scheme of the origin that originally set the cookie.
- -- A value of "Unset" allows protocol clients to emulate legacy cookie scope for the scheme.
- -- This is a temporary ability and it will be removed in the future.
+-- | Type 'Network.CookieSourceScheme' .Represents the source scheme of the origin that originally set the cookie.
+--   A value of "Unset" allows protocol clients to emulate legacy cookie scope for the scheme.
+--   This is a temporary ability and it will be removed in the future.
 data NetworkCookieSourceScheme = NetworkCookieSourceSchemeUnset | NetworkCookieSourceSchemeNonSecure | NetworkCookieSourceSchemeSecure
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCookieSourceScheme where
@@ -2846,10 +2851,10 @@ instance ToJSON NetworkCookieSourceScheme where
 
 
 
--- | Timing information for the request.
+-- | Type 'Network.ResourceTiming' .Timing information for the request.
 data NetworkResourceTiming = NetworkResourceTiming {
   -- | Timing's requestTime is a baseline in seconds, while the other numbers are ticks in
-    -- milliseconds relatively to this requestTime.
+  --   milliseconds relatively to this requestTime.
   networkResourceTimingRequestTime :: Double,
   -- | Started resolving proxy.
   networkResourceTimingProxyStart :: Double,
@@ -2894,7 +2899,7 @@ instance FromJSON  NetworkResourceTiming where
 
 
 
--- | Loading priority of a resource request.
+-- | Type 'Network.ResourcePriority' .Loading priority of a resource request.
 data NetworkResourcePriority = NetworkResourcePriorityVeryLow | NetworkResourcePriorityLow | NetworkResourcePriorityMedium | NetworkResourcePriorityHigh | NetworkResourcePriorityVeryHigh
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkResourcePriority where
@@ -2918,7 +2923,7 @@ instance ToJSON NetworkResourcePriority where
 
 
 
--- | Post data entry for HTTP request
+-- | Type 'Network.PostDataEntry' .Post data entry for HTTP request
 data NetworkPostDataEntry = NetworkPostDataEntry {
   networkPostDataEntryBytes :: Maybe String
 } deriving (Generic, Eq, Show, Read)
@@ -2930,7 +2935,7 @@ instance FromJSON  NetworkPostDataEntry where
 
 
 
--- | HTTP request data.
+-- | Type 'Network.Request' .HTTP request data.
 data NetworkRequestReferrerPolicy = NetworkRequestReferrerPolicyUnsafeUrl | NetworkRequestReferrerPolicyNoReferrerWhenDowngrade | NetworkRequestReferrerPolicyNoReferrer | NetworkRequestReferrerPolicyOrigin | NetworkRequestReferrerPolicyOriginWhenCrossOrigin | NetworkRequestReferrerPolicySameOrigin | NetworkRequestReferrerPolicyStrictOrigin | NetworkRequestReferrerPolicyStrictOriginWhenCrossOrigin
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkRequestReferrerPolicy where
@@ -2984,10 +2989,10 @@ data NetworkRequest = NetworkRequest {
   -- | Whether is loaded via link preload.
   networkRequestIsLinkPreload :: Maybe Bool,
   -- | Set for requests when the TrustToken API is used. Contains the parameters
-    -- passed by the developer (e.g. via "fetch") as understood by the backend.
+  --   passed by the developer (e.g. via "fetch") as understood by the backend.
   networkRequestTrustTokenParams :: Maybe NetworkTrustTokenParams,
   -- | True if this resource request is considered to be the 'same site' as the
-    -- request correspondinfg to the main frame.
+  --   request correspondinfg to the main frame.
   networkRequestIsSameSite :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkRequest  where
@@ -2998,7 +3003,7 @@ instance FromJSON  NetworkRequest where
 
 
 
--- | Details of a signed certificate timestamp (SCT).
+-- | Type 'Network.SignedCertificateTimestamp' .Details of a signed certificate timestamp (SCT).
 data NetworkSignedCertificateTimestamp = NetworkSignedCertificateTimestamp {
   -- | Validation status.
   networkSignedCertificateTimestampStatus :: String,
@@ -3009,7 +3014,7 @@ data NetworkSignedCertificateTimestamp = NetworkSignedCertificateTimestamp {
   -- | Log ID.
   networkSignedCertificateTimestampLogId :: String,
   -- | Issuance date. Unlike TimeSinceEpoch, this contains the number of
-    -- milliseconds since January 1, 1970, UTC, not the number of seconds.
+  --   milliseconds since January 1, 1970, UTC, not the number of seconds.
   networkSignedCertificateTimestampTimestamp :: Double,
   -- | Hash algorithm.
   networkSignedCertificateTimestampHashAlgorithm :: String,
@@ -3026,7 +3031,7 @@ instance FromJSON  NetworkSignedCertificateTimestamp where
 
 
 
--- | Security details about a request.
+-- | Type 'Network.SecurityDetails' .Security details about a request.
 data NetworkSecurityDetails = NetworkSecurityDetails {
   -- | Protocol name (e.g. "TLS 1.2" or "QUIC").
   networkSecurityDetailsProtocol :: String,
@@ -3063,7 +3068,7 @@ instance FromJSON  NetworkSecurityDetails where
 
 
 
--- | Whether the request complied with Certificate Transparency policy.
+-- | Type 'Network.CertificateTransparencyCompliance' .Whether the request complied with Certificate Transparency policy.
 data NetworkCertificateTransparencyCompliance = NetworkCertificateTransparencyComplianceUnknown | NetworkCertificateTransparencyComplianceNotCompliant | NetworkCertificateTransparencyComplianceCompliant
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCertificateTransparencyCompliance where
@@ -3083,7 +3088,7 @@ instance ToJSON NetworkCertificateTransparencyCompliance where
 
 
 
--- | The reason why request was blocked.
+-- | Type 'Network.BlockedReason' .The reason why request was blocked.
 data NetworkBlockedReason = NetworkBlockedReasonOther | NetworkBlockedReasonCsp | NetworkBlockedReasonMixedContent | NetworkBlockedReasonOrigin | NetworkBlockedReasonInspector | NetworkBlockedReasonSubresourceFilter | NetworkBlockedReasonContentType | NetworkBlockedReasonCoepFrameResourceNeedsCoepHeader | NetworkBlockedReasonCoopSandboxedIframeCannotNavigateToCoopPage | NetworkBlockedReasonCorpNotSameOrigin | NetworkBlockedReasonCorpNotSameOriginAfterDefaultedToSameOriginByCoep | NetworkBlockedReasonCorpNotSameSite
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkBlockedReason where
@@ -3121,7 +3126,7 @@ instance ToJSON NetworkBlockedReason where
 
 
 
--- | The reason why request was blocked.
+-- | Type 'Network.CorsError' .The reason why request was blocked.
 data NetworkCorsError = NetworkCorsErrorDisallowedByMode | NetworkCorsErrorInvalidResponse | NetworkCorsErrorWildcardOriginNotAllowed | NetworkCorsErrorMissingAllowOriginHeader | NetworkCorsErrorMultipleAllowOriginValues | NetworkCorsErrorInvalidAllowOriginValue | NetworkCorsErrorAllowOriginMismatch | NetworkCorsErrorInvalidAllowCredentials | NetworkCorsErrorCorsDisabledScheme | NetworkCorsErrorPreflightInvalidStatus | NetworkCorsErrorPreflightDisallowedRedirect | NetworkCorsErrorPreflightWildcardOriginNotAllowed | NetworkCorsErrorPreflightMissingAllowOriginHeader | NetworkCorsErrorPreflightMultipleAllowOriginValues | NetworkCorsErrorPreflightInvalidAllowOriginValue | NetworkCorsErrorPreflightAllowOriginMismatch | NetworkCorsErrorPreflightInvalidAllowCredentials | NetworkCorsErrorPreflightMissingAllowExternal | NetworkCorsErrorPreflightInvalidAllowExternal | NetworkCorsErrorPreflightMissingAllowPrivateNetwork | NetworkCorsErrorPreflightInvalidAllowPrivateNetwork | NetworkCorsErrorInvalidAllowMethodsPreflightResponse | NetworkCorsErrorInvalidAllowHeadersPreflightResponse | NetworkCorsErrorMethodDisallowedByPreflightResponse | NetworkCorsErrorHeaderDisallowedByPreflightResponse | NetworkCorsErrorRedirectContainsCredentials | NetworkCorsErrorInsecurePrivateNetwork | NetworkCorsErrorInvalidPrivateNetworkAccess | NetworkCorsErrorUnexpectedPrivateNetworkAccess | NetworkCorsErrorNoCorsRedirectModeNotFollow
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCorsError where
@@ -3208,7 +3213,7 @@ instance FromJSON  NetworkCorsErrorStatus where
 
 
 
--- | Source of serviceworker response.
+-- | Type 'Network.ServiceWorkerResponseSource' .Source of serviceworker response.
 data NetworkServiceWorkerResponseSource = NetworkServiceWorkerResponseSourceCacheStorage | NetworkServiceWorkerResponseSourceHttpCache | NetworkServiceWorkerResponseSourceFallbackCode | NetworkServiceWorkerResponseSourceNetwork
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkServiceWorkerResponseSource where
@@ -3230,9 +3235,9 @@ instance ToJSON NetworkServiceWorkerResponseSource where
 
 
 
--- | Determines what type of Trust Token operation is executed and
- -- depending on the type, some additional parameters. The values
- -- are specified in third_party/blink/renderer/core/fetch/trust_token.idl.
+-- | Type 'Network.TrustTokenParams' .Determines what type of Trust Token operation is executed and
+--   depending on the type, some additional parameters. The values
+--   are specified in third_party/blink/renderer/core/fetch/trust_token.idl.
 data NetworkTrustTokenParamsRefreshPolicy = NetworkTrustTokenParamsRefreshPolicyUseCached | NetworkTrustTokenParamsRefreshPolicyRefresh
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkTrustTokenParamsRefreshPolicy where
@@ -3253,10 +3258,10 @@ instance ToJSON NetworkTrustTokenParamsRefreshPolicy where
 data NetworkTrustTokenParams = NetworkTrustTokenParams {
   networkTrustTokenParamsType :: NetworkTrustTokenOperationType,
   -- | Only set for "token-redemption" type and determine whether
-    -- to request a fresh SRR or use a still valid cached SRR.
+  --   to request a fresh SRR or use a still valid cached SRR.
   networkTrustTokenParamsRefreshPolicy :: NetworkTrustTokenParamsRefreshPolicy,
   -- | Origins of issuers from whom to request tokens or redemption
-    -- records.
+  --   records.
   networkTrustTokenParamsIssuers :: Maybe [String]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkTrustTokenParams  where
@@ -3287,7 +3292,7 @@ instance ToJSON NetworkTrustTokenOperationType where
 
 
 
--- | HTTP response data.
+-- | Type 'Network.Response' .HTTP response data.
 data NetworkResponse = NetworkResponse {
   -- | Response URL. This URL can be different from CachedResource.url in case of redirect.
   networkResponseUrl :: String,
@@ -3340,7 +3345,7 @@ instance FromJSON  NetworkResponse where
 
 
 
--- | WebSocket request data.
+-- | Type 'Network.WebSocketRequest' .WebSocket request data.
 data NetworkWebSocketRequest = NetworkWebSocketRequest {
   -- | HTTP request headers.
   networkWebSocketRequestHeaders :: NetworkHeaders
@@ -3353,7 +3358,7 @@ instance FromJSON  NetworkWebSocketRequest where
 
 
 
--- | WebSocket response data.
+-- | Type 'Network.WebSocketResponse' .WebSocket response data.
 data NetworkWebSocketResponse = NetworkWebSocketResponse {
   -- | HTTP response status code.
   networkWebSocketResponseStatus :: Int,
@@ -3376,15 +3381,15 @@ instance FromJSON  NetworkWebSocketResponse where
 
 
 
--- | WebSocket message data. This represents an entire WebSocket message, not just a fragmented frame as the name suggests.
+-- | Type 'Network.WebSocketFrame' .WebSocket message data. This represents an entire WebSocket message, not just a fragmented frame as the name suggests.
 data NetworkWebSocketFrame = NetworkWebSocketFrame {
   -- | WebSocket message opcode.
   networkWebSocketFrameOpcode :: Double,
   -- | WebSocket message mask.
   networkWebSocketFrameMask :: Bool,
   -- | WebSocket message payload data.
-    -- If the opcode is 1, this is a text message and payloadData is a UTF-8 string.
-    -- If the opcode isn't 1, then payloadData is a base64 encoded string representing binary data.
+  --   If the opcode is 1, this is a text message and payloadData is a UTF-8 string.
+  --   If the opcode isn't 1, then payloadData is a base64 encoded string representing binary data.
   networkWebSocketFramePayloadData :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkWebSocketFrame  where
@@ -3395,7 +3400,7 @@ instance FromJSON  NetworkWebSocketFrame where
 
 
 
--- | Information about the cached resource.
+-- | Type 'Network.CachedResource' .Information about the cached resource.
 data NetworkCachedResource = NetworkCachedResource {
   -- | Resource URL. This is the url of the original network request.
   networkCachedResourceUrl :: String,
@@ -3414,7 +3419,7 @@ instance FromJSON  NetworkCachedResource where
 
 
 
--- | Information about the request initiator.
+-- | Type 'Network.Initiator' .Information about the request initiator.
 data NetworkInitiatorType = NetworkInitiatorTypeParser | NetworkInitiatorTypeScript | NetworkInitiatorTypePreload | NetworkInitiatorTypeSignedExchange | NetworkInitiatorTypePreflight | NetworkInitiatorTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkInitiatorType where
@@ -3448,10 +3453,10 @@ data NetworkInitiator = NetworkInitiator {
   -- | Initiator URL, set for Parser type or for Script type (when script is importing module) or for SignedExchange type.
   networkInitiatorUrl :: Maybe String,
   -- | Initiator line number, set for Parser type or for Script type (when script is importing
-    -- module) (0-based).
+  --   module) (0-based).
   networkInitiatorLineNumber :: Maybe Double,
   -- | Initiator column number, set for Parser type or for Script type (when script is importing
-    -- module) (0-based).
+  --   module) (0-based).
   networkInitiatorColumnNumber :: Maybe Double,
   -- | Set if another request triggered this request (e.g. preflight).
   networkInitiatorRequestId :: Maybe NetworkRequestId
@@ -3464,7 +3469,7 @@ instance FromJSON  NetworkInitiator where
 
 
 
--- | Cookie object
+-- | Type 'Network.Cookie' .Cookie object
 data NetworkCookie = NetworkCookie {
   -- | Cookie name.
   networkCookieName :: String,
@@ -3493,11 +3498,11 @@ data NetworkCookie = NetworkCookie {
   -- | Cookie source scheme type.
   networkCookieSourceScheme :: NetworkCookieSourceScheme,
   -- | Cookie source port. Valid values are {-1, [1, 65535]}, -1 indicates an unspecified port.
-    -- An unspecified port value allows protocol clients to emulate legacy cookie scope for the port.
-    -- This is a temporary ability and it will be removed in the future.
+  --   An unspecified port value allows protocol clients to emulate legacy cookie scope for the port.
+  --   This is a temporary ability and it will be removed in the future.
   networkCookieSourcePort :: Int,
   -- | Cookie partition key. The site of the top-level URL the browser was visiting at the start
-    -- of the request to the endpoint that set the cookie.
+  --   of the request to the endpoint that set the cookie.
   networkCookiePartitionKey :: Maybe String,
   -- | True if cookie partition key is opaque.
   networkCookiePartitionKeyOpaque :: Maybe Bool
@@ -3510,7 +3515,7 @@ instance FromJSON  NetworkCookie where
 
 
 
--- | Types of reasons why a cookie may not be stored from a response.
+-- | Type 'Network.SetCookieBlockedReason' .Types of reasons why a cookie may not be stored from a response.
 data NetworkSetCookieBlockedReason = NetworkSetCookieBlockedReasonSecureOnly | NetworkSetCookieBlockedReasonSameSiteStrict | NetworkSetCookieBlockedReasonSameSiteLax | NetworkSetCookieBlockedReasonSameSiteUnspecifiedTreatedAsLax | NetworkSetCookieBlockedReasonSameSiteNoneInsecure | NetworkSetCookieBlockedReasonUserPreferences | NetworkSetCookieBlockedReasonSyntaxError | NetworkSetCookieBlockedReasonSchemeNotSupported | NetworkSetCookieBlockedReasonOverwriteSecure | NetworkSetCookieBlockedReasonInvalidDomain | NetworkSetCookieBlockedReasonInvalidPrefix | NetworkSetCookieBlockedReasonUnknownError | NetworkSetCookieBlockedReasonSchemefulSameSiteStrict | NetworkSetCookieBlockedReasonSchemefulSameSiteLax | NetworkSetCookieBlockedReasonSchemefulSameSiteUnspecifiedTreatedAsLax | NetworkSetCookieBlockedReasonSamePartyFromCrossPartyContext | NetworkSetCookieBlockedReasonSamePartyConflictsWithOtherAttributes | NetworkSetCookieBlockedReasonNameValuePairExceedsMaxSize
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkSetCookieBlockedReason where
@@ -3560,7 +3565,7 @@ instance ToJSON NetworkSetCookieBlockedReason where
 
 
 
--- | Types of reasons why a cookie may not be sent with a request.
+-- | Type 'Network.CookieBlockedReason' .Types of reasons why a cookie may not be sent with a request.
 data NetworkCookieBlockedReason = NetworkCookieBlockedReasonSecureOnly | NetworkCookieBlockedReasonNotOnPath | NetworkCookieBlockedReasonDomainMismatch | NetworkCookieBlockedReasonSameSiteStrict | NetworkCookieBlockedReasonSameSiteLax | NetworkCookieBlockedReasonSameSiteUnspecifiedTreatedAsLax | NetworkCookieBlockedReasonSameSiteNoneInsecure | NetworkCookieBlockedReasonUserPreferences | NetworkCookieBlockedReasonUnknownError | NetworkCookieBlockedReasonSchemefulSameSiteStrict | NetworkCookieBlockedReasonSchemefulSameSiteLax | NetworkCookieBlockedReasonSchemefulSameSiteUnspecifiedTreatedAsLax | NetworkCookieBlockedReasonSamePartyFromCrossPartyContext | NetworkCookieBlockedReasonNameValuePairExceedsMaxSize
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCookieBlockedReason where
@@ -3602,16 +3607,16 @@ instance ToJSON NetworkCookieBlockedReason where
 
 
 
--- | A cookie which was not stored from a response with the corresponding reason.
+-- | Type 'Network.BlockedSetCookieWithReason' .A cookie which was not stored from a response with the corresponding reason.
 data NetworkBlockedSetCookieWithReason = NetworkBlockedSetCookieWithReason {
   -- | The reason(s) this cookie was blocked.
   networkBlockedSetCookieWithReasonBlockedReasons :: [NetworkSetCookieBlockedReason],
   -- | The string representing this individual cookie as it would appear in the header.
-    -- This is not the entire "cookie" or "set-cookie" header which could have multiple cookies.
+  --   This is not the entire "cookie" or "set-cookie" header which could have multiple cookies.
   networkBlockedSetCookieWithReasonCookieLine :: String,
   -- | The cookie object which represents the cookie which was not stored. It is optional because
-    -- sometimes complete cookie information is not available, such as in the case of parsing
-    -- errors.
+  --   sometimes complete cookie information is not available, such as in the case of parsing
+  --   errors.
   networkBlockedSetCookieWithReasonCookie :: Maybe NetworkCookie
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkBlockedSetCookieWithReason  where
@@ -3622,7 +3627,7 @@ instance FromJSON  NetworkBlockedSetCookieWithReason where
 
 
 
--- | A cookie with was not sent with a request with the corresponding reason.
+-- | Type 'Network.BlockedCookieWithReason' .A cookie with was not sent with a request with the corresponding reason.
 data NetworkBlockedCookieWithReason = NetworkBlockedCookieWithReason {
   -- | The reason(s) the cookie was blocked.
   networkBlockedCookieWithReasonBlockedReasons :: [NetworkCookieBlockedReason],
@@ -3637,14 +3642,14 @@ instance FromJSON  NetworkBlockedCookieWithReason where
 
 
 
--- | Cookie parameter object
+-- | Type 'Network.CookieParam' .Cookie parameter object
 data NetworkCookieParam = NetworkCookieParam {
   -- | Cookie name.
   networkCookieParamName :: String,
   -- | Cookie value.
   networkCookieParamValue :: String,
   -- | The request-URI to associate with the setting of the cookie. This value can affect the
-    -- default domain, path, source port, and source scheme values of the created cookie.
+  --   default domain, path, source port, and source scheme values of the created cookie.
   networkCookieParamUrl :: Maybe String,
   -- | Cookie domain.
   networkCookieParamDomain :: Maybe String,
@@ -3665,12 +3670,12 @@ data NetworkCookieParam = NetworkCookieParam {
   -- | Cookie source scheme type.
   networkCookieParamSourceScheme :: Maybe NetworkCookieSourceScheme,
   -- | Cookie source port. Valid values are {-1, [1, 65535]}, -1 indicates an unspecified port.
-    -- An unspecified port value allows protocol clients to emulate legacy cookie scope for the port.
-    -- This is a temporary ability and it will be removed in the future.
+  --   An unspecified port value allows protocol clients to emulate legacy cookie scope for the port.
+  --   This is a temporary ability and it will be removed in the future.
   networkCookieParamSourcePort :: Maybe Int,
   -- | Cookie partition key. The site of the top-level URL the browser was visiting at the start
-    -- of the request to the endpoint that set the cookie.
-    -- If not set, the cookie will be set as not partitioned.
+  --   of the request to the endpoint that set the cookie.
+  --   If not set, the cookie will be set as not partitioned.
   networkCookieParamPartitionKey :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkCookieParam  where
@@ -3681,7 +3686,7 @@ instance FromJSON  NetworkCookieParam where
 
 
 
--- | Authorization challenge for HTTP status code 401 or 407.
+-- | Type 'Network.AuthChallenge' .Authorization challenge for HTTP status code 401 or 407.
 data NetworkAuthChallengeSource = NetworkAuthChallengeSourceServer | NetworkAuthChallengeSourceProxy
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkAuthChallengeSource where
@@ -3717,7 +3722,7 @@ instance FromJSON  NetworkAuthChallenge where
 
 
 
--- | Response to an AuthChallenge.
+-- | Type 'Network.AuthChallengeResponse' .Response to an AuthChallenge.
 data NetworkAuthChallengeResponseResponse = NetworkAuthChallengeResponseResponseDefault | NetworkAuthChallengeResponseResponseCancelAuth | NetworkAuthChallengeResponseResponseProvideCredentials
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkAuthChallengeResponseResponse where
@@ -3739,14 +3744,14 @@ instance ToJSON NetworkAuthChallengeResponseResponse where
 
 data NetworkAuthChallengeResponse = NetworkAuthChallengeResponse {
   -- | The decision on what to do in response to the authorization challenge.  Default means
-    -- deferring to the default behavior of the net stack, which will likely either the Cancel
-    -- authentication or display a popup dialog box.
+  --   deferring to the default behavior of the net stack, which will likely either the Cancel
+  --   authentication or display a popup dialog box.
   networkAuthChallengeResponseResponse :: NetworkAuthChallengeResponseResponse,
   -- | The username to provide, possibly empty. Should only be set if response is
-    -- ProvideCredentials.
+  --   ProvideCredentials.
   networkAuthChallengeResponseUsername :: Maybe String,
   -- | The password to provide, possibly empty. Should only be set if response is
-    -- ProvideCredentials.
+  --   ProvideCredentials.
   networkAuthChallengeResponsePassword :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkAuthChallengeResponse  where
@@ -3757,8 +3762,8 @@ instance FromJSON  NetworkAuthChallengeResponse where
 
 
 
--- | Stages of the interception to begin intercepting. Request will intercept before the request is
- -- sent. Response will intercept after the response is received.
+-- | Type 'Network.InterceptionStage' .Stages of the interception to begin intercepting. Request will intercept before the request is
+--   sent. Response will intercept after the response is received.
 data NetworkInterceptionStage = NetworkInterceptionStageRequest | NetworkInterceptionStageHeadersReceived
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkInterceptionStage where
@@ -3776,10 +3781,10 @@ instance ToJSON NetworkInterceptionStage where
 
 
 
--- | Request pattern for interception.
+-- | Type 'Network.RequestPattern' .Request pattern for interception.
 data NetworkRequestPattern = NetworkRequestPattern {
   -- | Wildcards (`'*'` -> zero or more, `'?'` -> exactly one) are allowed. Escape character is
-    -- backslash. Omitting is equivalent to `"*"`.
+  --   backslash. Omitting is equivalent to `"*"`.
   networkRequestPatternUrlPattern :: Maybe String,
   -- | If set, only requests for matching resource types will be intercepted.
   networkRequestPatternResourceType :: Maybe NetworkResourceType,
@@ -3794,8 +3799,8 @@ instance FromJSON  NetworkRequestPattern where
 
 
 
--- | Information about a signed exchange signature.
- -- https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-impl.html#rfc.section.3.1
+-- | Type 'Network.SignedExchangeSignature' .Information about a signed exchange signature.
+--   https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-impl.html#rfc.section.3.1
 data NetworkSignedExchangeSignature = NetworkSignedExchangeSignature {
   -- | Signed exchange signature label.
   networkSignedExchangeSignatureLabel :: String,
@@ -3824,8 +3829,8 @@ instance FromJSON  NetworkSignedExchangeSignature where
 
 
 
--- | Information about a signed exchange header.
- -- https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-impl.html#cbor-representation
+-- | Type 'Network.SignedExchangeHeader' .Information about a signed exchange header.
+--   https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-impl.html#cbor-representation
 data NetworkSignedExchangeHeader = NetworkSignedExchangeHeader {
   -- | Signed exchange request URL.
   networkSignedExchangeHeaderRequestUrl :: String,
@@ -3846,7 +3851,7 @@ instance FromJSON  NetworkSignedExchangeHeader where
 
 
 
--- | Field type for a signed exchange related error.
+-- | Type 'Network.SignedExchangeErrorField' .Field type for a signed exchange related error.
 data NetworkSignedExchangeErrorField = NetworkSignedExchangeErrorFieldSignatureSig | NetworkSignedExchangeErrorFieldSignatureIntegrity | NetworkSignedExchangeErrorFieldSignatureCertUrl | NetworkSignedExchangeErrorFieldSignatureCertSha256 | NetworkSignedExchangeErrorFieldSignatureValidityUrl | NetworkSignedExchangeErrorFieldSignatureTimestamps
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkSignedExchangeErrorField where
@@ -3872,7 +3877,7 @@ instance ToJSON NetworkSignedExchangeErrorField where
 
 
 
--- | Information about a signed exchange response.
+-- | Type 'Network.SignedExchangeError' .Information about a signed exchange response.
 data NetworkSignedExchangeError = NetworkSignedExchangeError {
   -- | Error message.
   networkSignedExchangeErrorMessage :: String,
@@ -3889,7 +3894,7 @@ instance FromJSON  NetworkSignedExchangeError where
 
 
 
--- | Information about a signed exchange response.
+-- | Type 'Network.SignedExchangeInfo' .Information about a signed exchange response.
 data NetworkSignedExchangeInfo = NetworkSignedExchangeInfo {
   -- | The outer response of signed HTTP exchange which was received from network.
   networkSignedExchangeInfoOuterResponse :: NetworkResponse,
@@ -3908,7 +3913,7 @@ instance FromJSON  NetworkSignedExchangeInfo where
 
 
 
--- | List of content encodings supported by the backend.
+-- | Type 'Network.ContentEncoding' .List of content encodings supported by the backend.
 data NetworkContentEncoding = NetworkContentEncodingDeflate | NetworkContentEncodingGzip | NetworkContentEncodingBr
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkContentEncoding where
@@ -3977,8 +3982,8 @@ instance ToJSON NetworkIpAddressSpace where
 -- | Type 'Network.ConnectTiming' .
 data NetworkConnectTiming = NetworkConnectTiming {
   -- | Timing's requestTime is a baseline in seconds, while the other numbers are ticks in
-    -- milliseconds relatively to this requestTime. Matches ResourceTiming's requestTime for
-    -- the same request (but not for redirected requests).
+  --   milliseconds relatively to this requestTime. Matches ResourceTiming's requestTime for
+  --   the same request (but not for redirected requests).
   networkConnectTimingRequestTime :: Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkConnectTiming  where
@@ -4090,7 +4095,7 @@ instance FromJSON  NetworkSecurityIsolationStatus where
 
 
 
--- | The status of a Reporting API report.
+-- | Type 'Network.ReportStatus' .The status of a Reporting API report.
 data NetworkReportStatus = NetworkReportStatusQueued | NetworkReportStatusPending | NetworkReportStatusMarkedForRemoval | NetworkReportStatusSuccess
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkReportStatus where
@@ -4115,7 +4120,7 @@ instance ToJSON NetworkReportStatus where
 -- | Type 'Network.ReportId' .
 type NetworkReportId = String
 
--- | An object representing a report generated by the Reporting API.
+-- | Type 'Network.ReportingApiReport' .An object representing a report generated by the Reporting API.
 data NetworkReportingApiReport = NetworkReportingApiReport {
   networkReportingApiReportId :: NetworkReportId,
   -- | The URL of the document that triggered the report.
@@ -4156,7 +4161,7 @@ instance FromJSON  NetworkReportingApiEndpoint where
 
 
 
--- | An object providing the result of a network resource load.
+-- | Type 'Network.LoadNetworkResourcePageResult' .An object providing the result of a network resource load.
 data NetworkLoadNetworkResourcePageResult = NetworkLoadNetworkResourcePageResult {
   networkLoadNetworkResourcePageResultSuccess :: Bool,
   -- | Optional values used for error reporting.
@@ -4176,8 +4181,8 @@ instance FromJSON  NetworkLoadNetworkResourcePageResult where
 
 
 
--- | An options object that may be extended later to better support CORS,
- -- CORB and streaming.
+-- | Type 'Network.LoadNetworkResourceOptions' .An options object that may be extended later to better support CORS,
+--   CORB and streaming.
 data NetworkLoadNetworkResourceOptions = NetworkLoadNetworkResourceOptions {
   networkLoadNetworkResourceOptionsDisableCache :: Bool,
   networkLoadNetworkResourceOptionsIncludeCredentials :: Bool
@@ -4266,7 +4271,7 @@ data NetworkLoadingFinished = NetworkLoadingFinished {
   -- | Total number of bytes received for this request.
   networkLoadingFinishedEncodedDataLength :: Double,
   -- | Set when 1) response was blocked by Cross-Origin Read Blocking and also
-    -- 2) this needs to be reported to the DevTools console.
+  --   2) this needs to be reported to the DevTools console.
   networkLoadingFinishedShouldReportCorbBlocking :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkLoadingFinished  where
@@ -4307,8 +4312,8 @@ data NetworkRequestWillBeSent = NetworkRequestWillBeSent {
   -- | Request initiator.
   networkRequestWillBeSentInitiator :: NetworkInitiator,
   -- | In the case that redirectResponse is populated, this flag indicates whether
-    -- requestWillBeSentExtraInfo and responseReceivedExtraInfo events will be or were emitted
-    -- for the request which was just redirected.
+  --   requestWillBeSentExtraInfo and responseReceivedExtraInfo events will be or were emitted
+  --   for the request which was just redirected.
   networkRequestWillBeSentRedirectHasExtraInfo :: Bool,
   -- | Redirect response data.
   networkRequestWillBeSentRedirectResponse :: Maybe NetworkResponse,
@@ -4372,7 +4377,7 @@ data NetworkResponseReceived = NetworkResponseReceived {
   -- | Response data.
   networkResponseReceivedResponse :: NetworkResponse,
   -- | Indicates whether requestWillBeSentExtraInfo and responseReceivedExtraInfo events will be
-    -- or were emitted for this request.
+  --   or were emitted for this request.
   networkResponseReceivedHasExtraInfo :: Bool,
   -- | Frame identifier.
   networkResponseReceivedFrameId :: Maybe PageFrameId
@@ -4558,7 +4563,7 @@ data NetworkRequestWillBeSentExtraInfo = NetworkRequestWillBeSentExtraInfo {
   -- | Request identifier. Used to match this information to an existing requestWillBeSent event.
   networkRequestWillBeSentExtraInfoRequestId :: NetworkRequestId,
   -- | A list of cookies potentially associated to the requested URL. This includes both cookies sent with
-    -- the request and the ones not sent; the latter are distinguished by having blockedReason field set.
+  --   the request and the ones not sent; the latter are distinguished by having blockedReason field set.
   networkRequestWillBeSentExtraInfoAssociatedCookies :: [NetworkBlockedCookieWithReason],
   -- | Raw request headers as they will be sent over the wire.
   networkRequestWillBeSentExtraInfoHeaders :: NetworkHeaders,
@@ -4580,20 +4585,20 @@ data NetworkResponseReceivedExtraInfo = NetworkResponseReceivedExtraInfo {
   -- | Request identifier. Used to match this information to another responseReceived event.
   networkResponseReceivedExtraInfoRequestId :: NetworkRequestId,
   -- | A list of cookies which were not stored from the response along with the corresponding
-    -- reasons for blocking. The cookies here may not be valid due to syntax errors, which
-    -- are represented by the invalid cookie line string instead of a proper cookie.
+  --   reasons for blocking. The cookies here may not be valid due to syntax errors, which
+  --   are represented by the invalid cookie line string instead of a proper cookie.
   networkResponseReceivedExtraInfoBlockedCookies :: [NetworkBlockedSetCookieWithReason],
   -- | Raw response headers as they were received over the wire.
   networkResponseReceivedExtraInfoHeaders :: NetworkHeaders,
   -- | The IP address space of the resource. The address space can only be determined once the transport
-    -- established the connection, so we can't send it in `requestWillBeSentExtraInfo`.
+  --   established the connection, so we can't send it in `requestWillBeSentExtraInfo`.
   networkResponseReceivedExtraInfoResourceIpAddressSpace :: NetworkIpAddressSpace,
   -- | The status code of the response. This is useful in cases the request failed and no responseReceived
-    -- event is triggered, which is the case for, e.g., CORS errors. This is also the correct status code
-    -- for cached requests, where the status in responseReceived is a 200 and this will be 304.
+  --   event is triggered, which is the case for, e.g., CORS errors. This is also the correct status code
+  --   for cached requests, where the status in responseReceived is a 200 and this will be 304.
   networkResponseReceivedExtraInfoStatusCode :: Int,
   -- | Raw response header text as it was received over the wire. The raw text may not always be
-    -- available, such as in the case of HTTP/2 or QUIC.
+  --   available, such as in the case of HTTP/2 or QUIC.
   networkResponseReceivedExtraInfoHeadersText :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkResponseReceivedExtraInfo  where
@@ -4640,9 +4645,9 @@ instance ToJSON NetworkTrustTokenOperationDoneStatus where
 
 data NetworkTrustTokenOperationDone = NetworkTrustTokenOperationDone {
   -- | Detailed success or error status of the operation.
-    -- 'AlreadyExists' also signifies a successful operation, as the result
-    -- of the operation already exists und thus, the operation was abort
-    -- preemptively (e.g. a cache hit).
+  --   'AlreadyExists' also signifies a successful operation, as the result
+  --   of the operation already exists und thus, the operation was abort
+  --   preemptively (e.g. a cache hit).
   networkTrustTokenOperationDoneStatus :: NetworkTrustTokenOperationDoneStatus,
   networkTrustTokenOperationDoneType :: NetworkTrustTokenOperationType,
   networkTrustTokenOperationDoneRequestId :: NetworkRequestId,
@@ -4698,8 +4703,8 @@ data NetworkSubresourceWebBundleInnerResponseParsed = NetworkSubresourceWebBundl
   -- | URL of the subresource resource.
   networkSubresourceWebBundleInnerResponseParsedInnerRequestUrl :: String,
   -- | Bundle request identifier. Used to match this information to another event.
-    -- This made be absent in case when the instrumentation was enabled only
-    -- after webbundle was parsed.
+  --   This made be absent in case when the instrumentation was enabled only
+  --   after webbundle was parsed.
   networkSubresourceWebBundleInnerResponseParsedBundleRequestId :: Maybe NetworkRequestId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkSubresourceWebBundleInnerResponseParsed  where
@@ -4719,8 +4724,8 @@ data NetworkSubresourceWebBundleInnerResponseError = NetworkSubresourceWebBundle
   -- | Error message
   networkSubresourceWebBundleInnerResponseErrorErrorMessage :: String,
   -- | Bundle request identifier. Used to match this information to another event.
-    -- This made be absent in case when the instrumentation was enabled only
-    -- after webbundle was parsed.
+  --   This made be absent in case when the instrumentation was enabled only
+  --   after webbundle was parsed.
   networkSubresourceWebBundleInnerResponseErrorBundleRequestId :: Maybe NetworkRequestId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkSubresourceWebBundleInnerResponseError  where
@@ -4784,26 +4789,26 @@ instance FromJSON  PNetworkSetAcceptedEncodings where
 
 
 -- | Function for the 'Network.setAcceptedEncodings' command.
- -- Sets a list of content encodings that will be accepted. Empty list means no encoding is accepted.
--- Parameters: 'PNetworkSetAcceptedEncodings'
+--   Sets a list of content encodings that will be accepted. Empty list means no encoding is accepted.
+--   Parameters: 'PNetworkSetAcceptedEncodings'
 networkSetAcceptedEncodings :: Handle ev -> PNetworkSetAcceptedEncodings -> IO ()
 networkSetAcceptedEncodings handle params = sendReceiveCommand handle "Network.setAcceptedEncodings" (Just params)
 
 
 -- | Function for the 'Network.clearAcceptedEncodingsOverride' command.
- -- Clears accepted encodings set by setAcceptedEncodings
+--   Clears accepted encodings set by setAcceptedEncodings
 networkClearAcceptedEncodingsOverride :: Handle ev -> IO ()
 networkClearAcceptedEncodingsOverride handle = sendReceiveCommand handle "Network.clearAcceptedEncodingsOverride" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Network.clearBrowserCache' command.
- -- Clears browser cache.
+--   Clears browser cache.
 networkClearBrowserCache :: Handle ev -> IO ()
 networkClearBrowserCache handle = sendReceiveCommand handle "Network.clearBrowserCache" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Network.clearBrowserCookies' command.
- -- Clears browser cookies.
+--   Clears browser cookies.
 networkClearBrowserCookies :: Handle ev -> IO ()
 networkClearBrowserCookies handle = sendReceiveCommand handle "Network.clearBrowserCookies" (Nothing :: Maybe ())
 
@@ -4813,7 +4818,7 @@ data PNetworkDeleteCookies = PNetworkDeleteCookies {
   -- | Name of the cookies to remove.
   pNetworkDeleteCookiesName :: String,
   -- | If specified, deletes all the cookies with the given name where domain and path match
-    -- provided URL.
+  --   provided URL.
   pNetworkDeleteCookiesUrl :: Maybe String,
   -- | If specified, deletes only cookies with the exact domain.
   pNetworkDeleteCookiesDomain :: Maybe String,
@@ -4828,14 +4833,14 @@ instance FromJSON  PNetworkDeleteCookies where
 
 
 -- | Function for the 'Network.deleteCookies' command.
- -- Deletes browser cookies with matching name and url or domain/path pair.
--- Parameters: 'PNetworkDeleteCookies'
+--   Deletes browser cookies with matching name and url or domain/path pair.
+--   Parameters: 'PNetworkDeleteCookies'
 networkDeleteCookies :: Handle ev -> PNetworkDeleteCookies -> IO ()
 networkDeleteCookies handle params = sendReceiveCommand handle "Network.deleteCookies" (Just params)
 
 
 -- | Function for the 'Network.disable' command.
- -- Disables network tracking, prevents network events from being sent to the client.
+--   Disables network tracking, prevents network events from being sent to the client.
 networkDisable :: Handle ev -> IO ()
 networkDisable handle = sendReceiveCommand handle "Network.disable" (Nothing :: Maybe ())
 
@@ -4861,8 +4866,8 @@ instance FromJSON  PNetworkEmulateNetworkConditions where
 
 
 -- | Function for the 'Network.emulateNetworkConditions' command.
- -- Activates emulation of network conditions.
--- Parameters: 'PNetworkEmulateNetworkConditions'
+--   Activates emulation of network conditions.
+--   Parameters: 'PNetworkEmulateNetworkConditions'
 networkEmulateNetworkConditions :: Handle ev -> PNetworkEmulateNetworkConditions -> IO ()
 networkEmulateNetworkConditions handle params = sendReceiveCommand handle "Network.emulateNetworkConditions" (Just params)
 
@@ -4884,16 +4889,16 @@ instance FromJSON  PNetworkEnable where
 
 
 -- | Function for the 'Network.enable' command.
- -- Enables network tracking, network events will now be delivered to the client.
--- Parameters: 'PNetworkEnable'
+--   Enables network tracking, network events will now be delivered to the client.
+--   Parameters: 'PNetworkEnable'
 networkEnable :: Handle ev -> PNetworkEnable -> IO ()
 networkEnable handle params = sendReceiveCommand handle "Network.enable" (Just params)
 
 
 -- | Function for the 'Network.getAllCookies' command.
- -- Returns all browser cookies. Depending on the backend support, will return detailed cookie
- -- information in the `cookies` field.
--- Returns: 'NetworkGetAllCookies'
+--   Returns all browser cookies. Depending on the backend support, will return detailed cookie
+--   information in the `cookies` field.
+--   Returns: 'NetworkGetAllCookies'
 networkGetAllCookies :: Handle ev -> IO NetworkGetAllCookies
 networkGetAllCookies handle = sendReceiveCommandResult handle "Network.getAllCookies" (Nothing :: Maybe ())
 
@@ -4924,9 +4929,9 @@ instance FromJSON  PNetworkGetCertificate where
 
 
 -- | Function for the 'Network.getCertificate' command.
- -- Returns the DER-encoded certificate.
--- Parameters: 'PNetworkGetCertificate'
--- Returns: 'NetworkGetCertificate'
+--   Returns the DER-encoded certificate.
+--   Parameters: 'PNetworkGetCertificate'
+--   Returns: 'NetworkGetCertificate'
 networkGetCertificate :: Handle ev -> PNetworkGetCertificate -> IO NetworkGetCertificate
 networkGetCertificate handle params = sendReceiveCommandResult handle "Network.getCertificate" (Just params)
 
@@ -4946,8 +4951,8 @@ instance Command NetworkGetCertificate where
 -- | Parameters of the 'networkGetCookies' command.
 data PNetworkGetCookies = PNetworkGetCookies {
   -- | The list of URLs for which applicable cookies will be fetched.
-    -- If not specified, it's assumed to be set to the list containing
-    -- the URLs of the page and all of its subframes.
+  --   If not specified, it's assumed to be set to the list containing
+  --   the URLs of the page and all of its subframes.
   pNetworkGetCookiesUrls :: Maybe [String]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkGetCookies  where
@@ -4958,10 +4963,10 @@ instance FromJSON  PNetworkGetCookies where
 
 
 -- | Function for the 'Network.getCookies' command.
- -- Returns all browser cookies for the current URL. Depending on the backend support, will return
- -- detailed cookie information in the `cookies` field.
--- Parameters: 'PNetworkGetCookies'
--- Returns: 'NetworkGetCookies'
+--   Returns all browser cookies for the current URL. Depending on the backend support, will return
+--   detailed cookie information in the `cookies` field.
+--   Parameters: 'PNetworkGetCookies'
+--   Returns: 'NetworkGetCookies'
 networkGetCookies :: Handle ev -> PNetworkGetCookies -> IO NetworkGetCookies
 networkGetCookies handle params = sendReceiveCommandResult handle "Network.getCookies" (Just params)
 
@@ -4992,9 +4997,9 @@ instance FromJSON  PNetworkGetResponseBody where
 
 
 -- | Function for the 'Network.getResponseBody' command.
- -- Returns content served for the given request.
--- Parameters: 'PNetworkGetResponseBody'
--- Returns: 'NetworkGetResponseBody'
+--   Returns content served for the given request.
+--   Parameters: 'PNetworkGetResponseBody'
+--   Returns: 'NetworkGetResponseBody'
 networkGetResponseBody :: Handle ev -> PNetworkGetResponseBody -> IO NetworkGetResponseBody
 networkGetResponseBody handle params = sendReceiveCommandResult handle "Network.getResponseBody" (Just params)
 
@@ -5027,9 +5032,9 @@ instance FromJSON  PNetworkGetRequestPostData where
 
 
 -- | Function for the 'Network.getRequestPostData' command.
- -- Returns post data sent with the request. Returns an error when no data was sent with the request.
--- Parameters: 'PNetworkGetRequestPostData'
--- Returns: 'NetworkGetRequestPostData'
+--   Returns post data sent with the request. Returns an error when no data was sent with the request.
+--   Parameters: 'PNetworkGetRequestPostData'
+--   Returns: 'NetworkGetRequestPostData'
 networkGetRequestPostData :: Handle ev -> PNetworkGetRequestPostData -> IO NetworkGetRequestPostData
 networkGetRequestPostData handle params = sendReceiveCommandResult handle "Network.getRequestPostData" (Just params)
 
@@ -5060,9 +5065,9 @@ instance FromJSON  PNetworkGetResponseBodyForInterception where
 
 
 -- | Function for the 'Network.getResponseBodyForInterception' command.
- -- Returns content served for the given currently intercepted request.
--- Parameters: 'PNetworkGetResponseBodyForInterception'
--- Returns: 'NetworkGetResponseBodyForInterception'
+--   Returns content served for the given currently intercepted request.
+--   Parameters: 'PNetworkGetResponseBodyForInterception'
+--   Returns: 'NetworkGetResponseBodyForInterception'
 networkGetResponseBodyForInterception :: Handle ev -> PNetworkGetResponseBodyForInterception -> IO NetworkGetResponseBodyForInterception
 networkGetResponseBodyForInterception handle params = sendReceiveCommandResult handle "Network.getResponseBodyForInterception" (Just params)
 
@@ -5094,12 +5099,12 @@ instance FromJSON  PNetworkTakeResponseBodyForInterceptionAsStream where
 
 
 -- | Function for the 'Network.takeResponseBodyForInterceptionAsStream' command.
- -- Returns a handle to the stream representing the response body. Note that after this command,
- -- the intercepted request can't be continued as is -- you either need to cancel it or to provide
- -- the response body. The stream only supports sequential read, IO.read will fail if the position
- -- is specified.
--- Parameters: 'PNetworkTakeResponseBodyForInterceptionAsStream'
--- Returns: 'NetworkTakeResponseBodyForInterceptionAsStream'
+--   Returns a handle to the stream representing the response body. Note that after this command,
+--   the intercepted request can't be continued as is -- you either need to cancel it or to provide
+--   the response body. The stream only supports sequential read, IO.read will fail if the position
+--   is specified.
+--   Parameters: 'PNetworkTakeResponseBodyForInterceptionAsStream'
+--   Returns: 'NetworkTakeResponseBodyForInterceptionAsStream'
 networkTakeResponseBodyForInterceptionAsStream :: Handle ev -> PNetworkTakeResponseBodyForInterceptionAsStream -> IO NetworkTakeResponseBodyForInterceptionAsStream
 networkTakeResponseBodyForInterceptionAsStream handle params = sendReceiveCommandResult handle "Network.takeResponseBodyForInterceptionAsStream" (Just params)
 
@@ -5129,10 +5134,10 @@ instance FromJSON  PNetworkReplayXhr where
 
 
 -- | Function for the 'Network.replayXHR' command.
- -- This method sends a new XMLHttpRequest which is identical to the original one. The following
- -- parameters should be identical: method, url, async, request body, extra headers, withCredentials
- -- attribute, user, password.
--- Parameters: 'PNetworkReplayXhr'
+--   This method sends a new XMLHttpRequest which is identical to the original one. The following
+--   parameters should be identical: method, url, async, request body, extra headers, withCredentials
+--   attribute, user, password.
+--   Parameters: 'PNetworkReplayXhr'
 networkReplayXhr :: Handle ev -> PNetworkReplayXhr -> IO ()
 networkReplayXhr handle params = sendReceiveCommand handle "Network.replayXHR" (Just params)
 
@@ -5156,9 +5161,9 @@ instance FromJSON  PNetworkSearchInResponseBody where
 
 
 -- | Function for the 'Network.searchInResponseBody' command.
- -- Searches for given string in response content.
--- Parameters: 'PNetworkSearchInResponseBody'
--- Returns: 'NetworkSearchInResponseBody'
+--   Searches for given string in response content.
+--   Parameters: 'PNetworkSearchInResponseBody'
+--   Returns: 'NetworkSearchInResponseBody'
 networkSearchInResponseBody :: Handle ev -> PNetworkSearchInResponseBody -> IO NetworkSearchInResponseBody
 networkSearchInResponseBody handle params = sendReceiveCommandResult handle "Network.searchInResponseBody" (Just params)
 
@@ -5189,8 +5194,8 @@ instance FromJSON  PNetworkSetBlockedUrLs where
 
 
 -- | Function for the 'Network.setBlockedURLs' command.
- -- Blocks URLs from loading.
--- Parameters: 'PNetworkSetBlockedUrLs'
+--   Blocks URLs from loading.
+--   Parameters: 'PNetworkSetBlockedUrLs'
 networkSetBlockedUrLs :: Handle ev -> PNetworkSetBlockedUrLs -> IO ()
 networkSetBlockedUrLs handle params = sendReceiveCommand handle "Network.setBlockedURLs" (Just params)
 
@@ -5208,8 +5213,8 @@ instance FromJSON  PNetworkSetBypassServiceWorker where
 
 
 -- | Function for the 'Network.setBypassServiceWorker' command.
- -- Toggles ignoring of service worker for each request.
--- Parameters: 'PNetworkSetBypassServiceWorker'
+--   Toggles ignoring of service worker for each request.
+--   Parameters: 'PNetworkSetBypassServiceWorker'
 networkSetBypassServiceWorker :: Handle ev -> PNetworkSetBypassServiceWorker -> IO ()
 networkSetBypassServiceWorker handle params = sendReceiveCommand handle "Network.setBypassServiceWorker" (Just params)
 
@@ -5227,8 +5232,8 @@ instance FromJSON  PNetworkSetCacheDisabled where
 
 
 -- | Function for the 'Network.setCacheDisabled' command.
- -- Toggles ignoring cache for each request. If `true`, cache will not be used.
--- Parameters: 'PNetworkSetCacheDisabled'
+--   Toggles ignoring cache for each request. If `true`, cache will not be used.
+--   Parameters: 'PNetworkSetCacheDisabled'
 networkSetCacheDisabled :: Handle ev -> PNetworkSetCacheDisabled -> IO ()
 networkSetCacheDisabled handle params = sendReceiveCommand handle "Network.setCacheDisabled" (Just params)
 
@@ -5240,7 +5245,7 @@ data PNetworkSetCookie = PNetworkSetCookie {
   -- | Cookie value.
   pNetworkSetCookieValue :: String,
   -- | The request-URI to associate with the setting of the cookie. This value can affect the
-    -- default domain, path, source port, and source scheme values of the created cookie.
+  --   default domain, path, source port, and source scheme values of the created cookie.
   pNetworkSetCookieUrl :: Maybe String,
   -- | Cookie domain.
   pNetworkSetCookieDomain :: Maybe String,
@@ -5261,12 +5266,12 @@ data PNetworkSetCookie = PNetworkSetCookie {
   -- | Cookie source scheme type.
   pNetworkSetCookieSourceScheme :: Maybe NetworkCookieSourceScheme,
   -- | Cookie source port. Valid values are {-1, [1, 65535]}, -1 indicates an unspecified port.
-    -- An unspecified port value allows protocol clients to emulate legacy cookie scope for the port.
-    -- This is a temporary ability and it will be removed in the future.
+  --   An unspecified port value allows protocol clients to emulate legacy cookie scope for the port.
+  --   This is a temporary ability and it will be removed in the future.
   pNetworkSetCookieSourcePort :: Maybe Int,
   -- | Cookie partition key. The site of the top-level URL the browser was visiting at the start
-    -- of the request to the endpoint that set the cookie.
-    -- If not set, the cookie will be set as not partitioned.
+  --   of the request to the endpoint that set the cookie.
+  --   If not set, the cookie will be set as not partitioned.
   pNetworkSetCookiePartitionKey :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PNetworkSetCookie  where
@@ -5277,8 +5282,8 @@ instance FromJSON  PNetworkSetCookie where
 
 
 -- | Function for the 'Network.setCookie' command.
- -- Sets a cookie with the given cookie data; may overwrite equivalent cookies if they exist.
--- Parameters: 'PNetworkSetCookie'
+--   Sets a cookie with the given cookie data; may overwrite equivalent cookies if they exist.
+--   Parameters: 'PNetworkSetCookie'
 networkSetCookie :: Handle ev -> PNetworkSetCookie -> IO ()
 networkSetCookie handle params = sendReceiveCommand handle "Network.setCookie" (Just params)
 
@@ -5296,8 +5301,8 @@ instance FromJSON  PNetworkSetCookies where
 
 
 -- | Function for the 'Network.setCookies' command.
- -- Sets given cookies.
--- Parameters: 'PNetworkSetCookies'
+--   Sets given cookies.
+--   Parameters: 'PNetworkSetCookies'
 networkSetCookies :: Handle ev -> PNetworkSetCookies -> IO ()
 networkSetCookies handle params = sendReceiveCommand handle "Network.setCookies" (Just params)
 
@@ -5315,8 +5320,8 @@ instance FromJSON  PNetworkSetExtraHttpHeaders where
 
 
 -- | Function for the 'Network.setExtraHTTPHeaders' command.
- -- Specifies whether to always send extra HTTP headers with the requests from this page.
--- Parameters: 'PNetworkSetExtraHttpHeaders'
+--   Specifies whether to always send extra HTTP headers with the requests from this page.
+--   Parameters: 'PNetworkSetExtraHttpHeaders'
 networkSetExtraHttpHeaders :: Handle ev -> PNetworkSetExtraHttpHeaders -> IO ()
 networkSetExtraHttpHeaders handle params = sendReceiveCommand handle "Network.setExtraHTTPHeaders" (Just params)
 
@@ -5334,8 +5339,8 @@ instance FromJSON  PNetworkSetAttachDebugStack where
 
 
 -- | Function for the 'Network.setAttachDebugStack' command.
- -- Specifies whether to attach a page script stack id in requests
--- Parameters: 'PNetworkSetAttachDebugStack'
+--   Specifies whether to attach a page script stack id in requests
+--   Parameters: 'PNetworkSetAttachDebugStack'
 networkSetAttachDebugStack :: Handle ev -> PNetworkSetAttachDebugStack -> IO ()
 networkSetAttachDebugStack handle params = sendReceiveCommand handle "Network.setAttachDebugStack" (Just params)
 
@@ -5359,8 +5364,8 @@ instance FromJSON  PNetworkSetUserAgentOverride where
 
 
 -- | Function for the 'Network.setUserAgentOverride' command.
- -- Allows overriding user agent with the given string.
--- Parameters: 'PNetworkSetUserAgentOverride'
+--   Allows overriding user agent with the given string.
+--   Parameters: 'PNetworkSetUserAgentOverride'
 networkSetUserAgentOverride :: Handle ev -> PNetworkSetUserAgentOverride -> IO ()
 networkSetUserAgentOverride handle params = sendReceiveCommand handle "Network.setUserAgentOverride" (Just params)
 
@@ -5378,9 +5383,9 @@ instance FromJSON  PNetworkGetSecurityIsolationStatus where
 
 
 -- | Function for the 'Network.getSecurityIsolationStatus' command.
- -- Returns information about the COEP/COOP isolation status.
--- Parameters: 'PNetworkGetSecurityIsolationStatus'
--- Returns: 'NetworkGetSecurityIsolationStatus'
+--   Returns information about the COEP/COOP isolation status.
+--   Parameters: 'PNetworkGetSecurityIsolationStatus'
+--   Returns: 'NetworkGetSecurityIsolationStatus'
 networkGetSecurityIsolationStatus :: Handle ev -> PNetworkGetSecurityIsolationStatus -> IO NetworkGetSecurityIsolationStatus
 networkGetSecurityIsolationStatus handle params = sendReceiveCommandResult handle "Network.getSecurityIsolationStatus" (Just params)
 
@@ -5410,9 +5415,9 @@ instance FromJSON  PNetworkEnableReportingApi where
 
 
 -- | Function for the 'Network.enableReportingApi' command.
- -- Enables tracking for the Reporting API, events generated by the Reporting API will now be delivered to the client.
- -- Enabling triggers 'reportingApiReportAdded' for all existing reports.
--- Parameters: 'PNetworkEnableReportingApi'
+--   Enables tracking for the Reporting API, events generated by the Reporting API will now be delivered to the client.
+--   Enabling triggers 'reportingApiReportAdded' for all existing reports.
+--   Parameters: 'PNetworkEnableReportingApi'
 networkEnableReportingApi :: Handle ev -> PNetworkEnableReportingApi -> IO ()
 networkEnableReportingApi handle params = sendReceiveCommand handle "Network.enableReportingApi" (Just params)
 
@@ -5420,7 +5425,7 @@ networkEnableReportingApi handle params = sendReceiveCommand handle "Network.ena
 -- | Parameters of the 'networkLoadNetworkResource' command.
 data PNetworkLoadNetworkResource = PNetworkLoadNetworkResource {
   -- | Frame id to get the resource for. Mandatory for frame targets, and
-    -- should be omitted for worker targets.
+  --   should be omitted for worker targets.
   pNetworkLoadNetworkResourceFrameId :: Maybe PageFrameId,
   -- | URL of the resource to get content for.
   pNetworkLoadNetworkResourceUrl :: String,
@@ -5435,9 +5440,9 @@ instance FromJSON  PNetworkLoadNetworkResource where
 
 
 -- | Function for the 'Network.loadNetworkResource' command.
- -- Fetches the resource and returns the content.
--- Parameters: 'PNetworkLoadNetworkResource'
--- Returns: 'NetworkLoadNetworkResource'
+--   Fetches the resource and returns the content.
+--   Parameters: 'PNetworkLoadNetworkResource'
+--   Returns: 'NetworkLoadNetworkResource'
 networkLoadNetworkResource :: Handle ev -> PNetworkLoadNetworkResource -> IO NetworkLoadNetworkResource
 networkLoadNetworkResource handle params = sendReceiveCommandResult handle "Network.loadNetworkResource" (Just params)
 
@@ -5455,10 +5460,10 @@ instance Command NetworkLoadNetworkResource where
 
 
 
--- | Unique frame identifier.
+-- | Type 'Page.FrameId' .Unique frame identifier.
 type PageFrameId = String
 
--- | Indicates whether a frame has been identified as an ad.
+-- | Type 'Page.AdFrameType' .Indicates whether a frame has been identified as an ad.
 data PageAdFrameType = PageAdFrameTypeNone | PageAdFrameTypeChild | PageAdFrameTypeRoot
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageAdFrameType where
@@ -5498,7 +5503,7 @@ instance ToJSON PageAdFrameExplanation where
 
 
 
--- | Indicates whether a frame has been identified as an ad and why.
+-- | Type 'Page.AdFrameStatus' .Indicates whether a frame has been identified as an ad and why.
 data PageAdFrameStatus = PageAdFrameStatus {
   pageAdFrameStatusAdFrameType :: PageAdFrameType,
   pageAdFrameStatusExplanations :: Maybe [PageAdFrameExplanation]
@@ -5511,7 +5516,7 @@ instance FromJSON  PageAdFrameStatus where
 
 
 
--- | Indicates whether the frame is a secure context and why it is the case.
+-- | Type 'Page.SecureContextType' .Indicates whether the frame is a secure context and why it is the case.
 data PageSecureContextType = PageSecureContextTypeSecure | PageSecureContextTypeSecureLocalhost | PageSecureContextTypeInsecureScheme | PageSecureContextTypeInsecureAncestor
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageSecureContextType where
@@ -5533,7 +5538,7 @@ instance ToJSON PageSecureContextType where
 
 
 
--- | Indicates whether the frame is cross-origin isolated and why it is the case.
+-- | Type 'Page.CrossOriginIsolatedContextType' .Indicates whether the frame is cross-origin isolated and why it is the case.
 data PageCrossOriginIsolatedContextType = PageCrossOriginIsolatedContextTypeIsolated | PageCrossOriginIsolatedContextTypeNotIsolated | PageCrossOriginIsolatedContextTypeNotIsolatedFeatureDisabled
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageCrossOriginIsolatedContextType where
@@ -5575,8 +5580,8 @@ instance ToJSON PageGatedApiFeatures where
 
 
 
--- | All Permissions Policy features. This enum should match the one defined
- -- in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
+-- | Type 'Page.PermissionsPolicyFeature' .All Permissions Policy features. This enum should match the one defined
+--   in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
 data PagePermissionsPolicyFeature = PagePermissionsPolicyFeatureAccelerometer | PagePermissionsPolicyFeatureAmbientLightSensor | PagePermissionsPolicyFeatureAttributionReporting | PagePermissionsPolicyFeatureAutoplay | PagePermissionsPolicyFeatureBluetooth | PagePermissionsPolicyFeatureBrowsingTopics | PagePermissionsPolicyFeatureCamera | PagePermissionsPolicyFeatureChDpr | PagePermissionsPolicyFeatureChDeviceMemory | PagePermissionsPolicyFeatureChDownlink | PagePermissionsPolicyFeatureChEct | PagePermissionsPolicyFeatureChPrefersColorScheme | PagePermissionsPolicyFeatureChRtt | PagePermissionsPolicyFeatureChSaveData | PagePermissionsPolicyFeatureChUa | PagePermissionsPolicyFeatureChUaArch | PagePermissionsPolicyFeatureChUaBitness | PagePermissionsPolicyFeatureChUaPlatform | PagePermissionsPolicyFeatureChUaModel | PagePermissionsPolicyFeatureChUaMobile | PagePermissionsPolicyFeatureChUaFull | PagePermissionsPolicyFeatureChUaFullVersion | PagePermissionsPolicyFeatureChUaFullVersionList | PagePermissionsPolicyFeatureChUaPlatformVersion | PagePermissionsPolicyFeatureChUaReduced | PagePermissionsPolicyFeatureChUaWow64 | PagePermissionsPolicyFeatureChViewportHeight | PagePermissionsPolicyFeatureChViewportWidth | PagePermissionsPolicyFeatureChWidth | PagePermissionsPolicyFeatureClipboardRead | PagePermissionsPolicyFeatureClipboardWrite | PagePermissionsPolicyFeatureCrossOriginIsolated | PagePermissionsPolicyFeatureDirectSockets | PagePermissionsPolicyFeatureDisplayCapture | PagePermissionsPolicyFeatureDocumentDomain | PagePermissionsPolicyFeatureEncryptedMedia | PagePermissionsPolicyFeatureExecutionWhileOutOfViewport | PagePermissionsPolicyFeatureExecutionWhileNotRendered | PagePermissionsPolicyFeatureFocusWithoutUserActivation | PagePermissionsPolicyFeatureFullscreen | PagePermissionsPolicyFeatureFrobulate | PagePermissionsPolicyFeatureGamepad | PagePermissionsPolicyFeatureGeolocation | PagePermissionsPolicyFeatureGyroscope | PagePermissionsPolicyFeatureHid | PagePermissionsPolicyFeatureIdleDetection | PagePermissionsPolicyFeatureInterestCohort | PagePermissionsPolicyFeatureJoinAdInterestGroup | PagePermissionsPolicyFeatureKeyboardMap | PagePermissionsPolicyFeatureLocalFonts | PagePermissionsPolicyFeatureMagnetometer | PagePermissionsPolicyFeatureMicrophone | PagePermissionsPolicyFeatureMidi | PagePermissionsPolicyFeatureOtpCredentials | PagePermissionsPolicyFeaturePayment | PagePermissionsPolicyFeaturePictureInPicture | PagePermissionsPolicyFeaturePublickeyCredentialsGet | PagePermissionsPolicyFeatureRunAdAuction | PagePermissionsPolicyFeatureScreenWakeLock | PagePermissionsPolicyFeatureSerial | PagePermissionsPolicyFeatureSharedAutofill | PagePermissionsPolicyFeatureStorageAccessApi | PagePermissionsPolicyFeatureSyncXhr | PagePermissionsPolicyFeatureTrustTokenRedemption | PagePermissionsPolicyFeatureUsb | PagePermissionsPolicyFeatureVerticalScroll | PagePermissionsPolicyFeatureWebShare | PagePermissionsPolicyFeatureWindowPlacement | PagePermissionsPolicyFeatureXrSpatialTracking
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PagePermissionsPolicyFeature where
@@ -5728,7 +5733,7 @@ instance ToJSON PagePermissionsPolicyFeature where
 
 
 
--- | Reason for a permissions policy feature to be disabled.
+-- | Type 'Page.PermissionsPolicyBlockReason' .Reason for a permissions policy feature to be disabled.
 data PagePermissionsPolicyBlockReason = PagePermissionsPolicyBlockReasonHeader | PagePermissionsPolicyBlockReasonIframeAttribute | PagePermissionsPolicyBlockReasonInFencedFrameTree
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PagePermissionsPolicyBlockReason where
@@ -5775,8 +5780,8 @@ instance FromJSON  PagePermissionsPolicyFeatureState where
 
 
 
--- | Origin Trial(https://www.chromium.org/blink/origin-trials) support.
- -- Status for an Origin Trial token.
+-- | Type 'Page.OriginTrialTokenStatus' .Origin Trial(https://www.chromium.org/blink/origin-trials) support.
+--   Status for an Origin Trial token.
 data PageOriginTrialTokenStatus = PageOriginTrialTokenStatusSuccess | PageOriginTrialTokenStatusNotSupported | PageOriginTrialTokenStatusInsecure | PageOriginTrialTokenStatusExpired | PageOriginTrialTokenStatusWrongOrigin | PageOriginTrialTokenStatusInvalidSignature | PageOriginTrialTokenStatusMalformed | PageOriginTrialTokenStatusWrongVersion | PageOriginTrialTokenStatusFeatureDisabled | PageOriginTrialTokenStatusTokenDisabled | PageOriginTrialTokenStatusFeatureDisabledForUser | PageOriginTrialTokenStatusUnknownTrial
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageOriginTrialTokenStatus where
@@ -5814,7 +5819,7 @@ instance ToJSON PageOriginTrialTokenStatus where
 
 
 
--- | Status for an Origin Trial.
+-- | Type 'Page.OriginTrialStatus' .Status for an Origin Trial.
 data PageOriginTrialStatus = PageOriginTrialStatusEnabled | PageOriginTrialStatusValidTokenNotProvided | PageOriginTrialStatusOsNotSupported | PageOriginTrialStatusTrialNotAllowed
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageOriginTrialStatus where
@@ -5875,7 +5880,7 @@ instance FromJSON  PageOriginTrialToken where
 data PageOriginTrialTokenWithStatus = PageOriginTrialTokenWithStatus {
   pageOriginTrialTokenWithStatusRawTokenText :: String,
   -- | `parsedToken` is present only when the token is extractable and
-    -- parsable.
+  --   parsable.
   pageOriginTrialTokenWithStatusParsedToken :: Maybe PageOriginTrialToken,
   pageOriginTrialTokenWithStatusStatus :: PageOriginTrialTokenStatus
 } deriving (Generic, Eq, Show, Read)
@@ -5901,7 +5906,7 @@ instance FromJSON  PageOriginTrial where
 
 
 
--- | Information about the Frame on the page.
+-- | Type 'Page.Frame' .Information about the Frame on the page.
 data PageFrame = PageFrame {
   -- | Frame unique identifier.
   pageFrameId :: PageFrameId,
@@ -5916,9 +5921,9 @@ data PageFrame = PageFrame {
   -- | Frame document's URL fragment including the '#'.
   pageFrameUrlFragment :: Maybe String,
   -- | Frame document's registered domain, taking the public suffixes list into account.
-    -- Extracted from the Frame's url.
-    -- Example URLs: http://www.google.com/file.html -> "google.com"
-    --               http://a.b.co.uk/file.html      -> "b.co.uk"
+  --   Extracted from the Frame's url.
+  --   Example URLs: http://www.google.com/file.html -> "google.com"
+  --                 http://a.b.co.uk/file.html      -> "b.co.uk"
   pageFrameDomainAndRegistry :: String,
   -- | Frame document's security origin.
   pageFrameSecurityOrigin :: String,
@@ -5943,7 +5948,7 @@ instance FromJSON  PageFrame where
 
 
 
--- | Information about the Resource on the page.
+-- | Type 'Page.FrameResource' .Information about the Resource on the page.
 data PageFrameResource = PageFrameResource {
   -- | Resource URL.
   pageFrameResourceUrl :: String,
@@ -5968,7 +5973,7 @@ instance FromJSON  PageFrameResource where
 
 
 
--- | Information about the Frame hierarchy along with their cached resources.
+-- | Type 'Page.FrameResourceTree' .Information about the Frame hierarchy along with their cached resources.
 data PageFrameResourceTree = PageFrameResourceTree {
   -- | Frame information for this tree item.
   pageFrameResourceTreeFrame :: PageFrame,
@@ -5985,7 +5990,7 @@ instance FromJSON  PageFrameResourceTree where
 
 
 
--- | Information about the Frame hierarchy.
+-- | Type 'Page.FrameTree' .Information about the Frame hierarchy.
 data PageFrameTree = PageFrameTree {
   -- | Frame information for this tree item.
   pageFrameTreeFrame :: PageFrame,
@@ -6000,10 +6005,10 @@ instance FromJSON  PageFrameTree where
 
 
 
--- | Unique script identifier.
+-- | Type 'Page.ScriptIdentifier' .Unique script identifier.
 type PageScriptIdentifier = String
 
--- | Transition type.
+-- | Type 'Page.TransitionType' .Transition type.
 data PageTransitionType = PageTransitionTypeLink | PageTransitionTypeTyped | PageTransitionTypeAddressBar | PageTransitionTypeAutoBookmark | PageTransitionTypeAutoSubframe | PageTransitionTypeManualSubframe | PageTransitionTypeGenerated | PageTransitionTypeAutoToplevel | PageTransitionTypeFormSubmit | PageTransitionTypeReload | PageTransitionTypeKeyword | PageTransitionTypeKeywordGenerated | PageTransitionTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageTransitionType where
@@ -6043,7 +6048,7 @@ instance ToJSON PageTransitionType where
 
 
 
--- | Navigation history entry.
+-- | Type 'Page.NavigationEntry' .Navigation history entry.
 data PageNavigationEntry = PageNavigationEntry {
   -- | Unique id of the navigation history entry.
   pageNavigationEntryId :: Int,
@@ -6064,7 +6069,7 @@ instance FromJSON  PageNavigationEntry where
 
 
 
--- | Screencast frame metadata.
+-- | Type 'Page.ScreencastFrameMetadata' .Screencast frame metadata.
 data PageScreencastFrameMetadata = PageScreencastFrameMetadata {
   -- | Top offset in DIP.
   pageScreencastFrameMetadataOffsetTop :: Double,
@@ -6089,7 +6094,7 @@ instance FromJSON  PageScreencastFrameMetadata where
 
 
 
--- | Javascript dialog type.
+-- | Type 'Page.DialogType' .Javascript dialog type.
 data PageDialogType = PageDialogTypeAlert | PageDialogTypeConfirm | PageDialogTypePrompt | PageDialogTypeBeforeunload
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageDialogType where
@@ -6111,7 +6116,7 @@ instance ToJSON PageDialogType where
 
 
 
--- | Error while paring app manifest.
+-- | Type 'Page.AppManifestError' .Error while paring app manifest.
 data PageAppManifestError = PageAppManifestError {
   -- | Error message.
   pageAppManifestErrorMessage :: String,
@@ -6130,7 +6135,7 @@ instance FromJSON  PageAppManifestError where
 
 
 
--- | Parsed app manifest properties.
+-- | Type 'Page.AppManifestParsedProperties' .Parsed app manifest properties.
 data PageAppManifestParsedProperties = PageAppManifestParsedProperties {
   -- | Computed scope value
   pageAppManifestParsedPropertiesScope :: String
@@ -6143,7 +6148,7 @@ instance FromJSON  PageAppManifestParsedProperties where
 
 
 
--- | Layout viewport position and dimensions.
+-- | Type 'Page.LayoutViewport' .Layout viewport position and dimensions.
 data PageLayoutViewport = PageLayoutViewport {
   -- | Horizontal offset relative to the document (CSS pixels).
   pageLayoutViewportPageX :: Int,
@@ -6162,7 +6167,7 @@ instance FromJSON  PageLayoutViewport where
 
 
 
--- | Visual viewport position, dimensions, and scale.
+-- | Type 'Page.VisualViewport' .Visual viewport position, dimensions, and scale.
 data PageVisualViewport = PageVisualViewport {
   -- | Horizontal offset relative to the layout viewport (CSS pixels).
   pageVisualViewportOffsetX :: Double,
@@ -6189,7 +6194,7 @@ instance FromJSON  PageVisualViewport where
 
 
 
--- | Viewport for capturing screenshot.
+-- | Type 'Page.Viewport' .Viewport for capturing screenshot.
 data PageViewport = PageViewport {
   -- | X offset in device independent pixels (dip).
   pageViewportX :: Double,
@@ -6210,7 +6215,7 @@ instance FromJSON  PageViewport where
 
 
 
--- | Generic font families collection.
+-- | Type 'Page.FontFamilies' .Generic font families collection.
 data PageFontFamilies = PageFontFamilies {
   -- | The standard font-family.
   pageFontFamiliesStandard :: Maybe String,
@@ -6235,7 +6240,7 @@ instance FromJSON  PageFontFamilies where
 
 
 
--- | Font families collection for a script.
+-- | Type 'Page.ScriptFontFamilies' .Font families collection for a script.
 data PageScriptFontFamilies = PageScriptFontFamilies {
   -- | Name of the script which these font families are defined for.
   pageScriptFontFamiliesScript :: String,
@@ -6250,7 +6255,7 @@ instance FromJSON  PageScriptFontFamilies where
 
 
 
--- | Default font sizes.
+-- | Type 'Page.FontSizes' .Default font sizes.
 data PageFontSizes = PageFontSizes {
   -- | Default standard font size.
   pageFontSizesStandard :: Maybe Int,
@@ -6332,7 +6337,7 @@ instance FromJSON  PageInstallabilityErrorArgument where
 
 
 
--- | The installability error
+-- | Type 'Page.InstallabilityError' .The installability error
 data PageInstallabilityError = PageInstallabilityError {
   -- | The error id (e.g. 'manifest-missing-suitable-icon').
   pageInstallabilityErrorErrorId :: String,
@@ -6347,7 +6352,7 @@ instance FromJSON  PageInstallabilityError where
 
 
 
--- | The referring-policy used for the navigation.
+-- | Type 'Page.ReferrerPolicy' .The referring-policy used for the navigation.
 data PageReferrerPolicy = PageReferrerPolicyNoReferrer | PageReferrerPolicyNoReferrerWhenDowngrade | PageReferrerPolicyOrigin | PageReferrerPolicyOriginWhenCrossOrigin | PageReferrerPolicySameOrigin | PageReferrerPolicyStrictOrigin | PageReferrerPolicyStrictOriginWhenCrossOrigin | PageReferrerPolicyUnsafeUrl
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageReferrerPolicy where
@@ -6377,12 +6382,12 @@ instance ToJSON PageReferrerPolicy where
 
 
 
--- | Per-script compilation cache parameters for `Page.produceCompilationCache`
+-- | Type 'Page.CompilationCacheParams' .Per-script compilation cache parameters for `Page.produceCompilationCache`
 data PageCompilationCacheParams = PageCompilationCacheParams {
   -- | The URL of the script to produce a compilation cache entry for.
   pageCompilationCacheParamsUrl :: String,
   -- | A hint to the backend whether eager compilation is recommended.
-    -- (the actual compilation mode used is upon backend discretion).
+  --   (the actual compilation mode used is upon backend discretion).
   pageCompilationCacheParamsEager :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageCompilationCacheParams  where
@@ -6393,7 +6398,7 @@ instance FromJSON  PageCompilationCacheParams where
 
 
 
--- | The type of a frameNavigated event.
+-- | Type 'Page.NavigationType' .The type of a frameNavigated event.
 data PageNavigationType = PageNavigationTypeNavigation | PageNavigationTypeBackForwardCacheRestore
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageNavigationType where
@@ -6411,7 +6416,7 @@ instance ToJSON PageNavigationType where
 
 
 
--- | List of not restored reasons for back-forward cache.
+-- | Type 'Page.BackForwardCacheNotRestoredReason' .List of not restored reasons for back-forward cache.
 data PageBackForwardCacheNotRestoredReason = PageBackForwardCacheNotRestoredReasonNotPrimaryMainFrame | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabled | PageBackForwardCacheNotRestoredReasonRelatedActiveContentsExist | PageBackForwardCacheNotRestoredReasonHttpStatusNotOk | PageBackForwardCacheNotRestoredReasonSchemeNotHttpOrHttps | PageBackForwardCacheNotRestoredReasonLoading | PageBackForwardCacheNotRestoredReasonWasGrantedMediaAccess | PageBackForwardCacheNotRestoredReasonDisableForRenderFrameHostCalled | PageBackForwardCacheNotRestoredReasonDomainNotAllowed | PageBackForwardCacheNotRestoredReasonHttpMethodNotGet | PageBackForwardCacheNotRestoredReasonSubframeIsNavigating | PageBackForwardCacheNotRestoredReasonTimeout | PageBackForwardCacheNotRestoredReasonCacheLimit | PageBackForwardCacheNotRestoredReasonJavaScriptExecution | PageBackForwardCacheNotRestoredReasonRendererProcessKilled | PageBackForwardCacheNotRestoredReasonRendererProcessCrashed | PageBackForwardCacheNotRestoredReasonSchedulerTrackedFeatureUsed | PageBackForwardCacheNotRestoredReasonConflictingBrowsingInstance | PageBackForwardCacheNotRestoredReasonCacheFlushed | PageBackForwardCacheNotRestoredReasonServiceWorkerVersionActivation | PageBackForwardCacheNotRestoredReasonSessionRestored | PageBackForwardCacheNotRestoredReasonServiceWorkerPostMessage | PageBackForwardCacheNotRestoredReasonEnteredBackForwardCacheBeforeServiceWorkerHostAdded | PageBackForwardCacheNotRestoredReasonRenderFrameHostReusedSameSite | PageBackForwardCacheNotRestoredReasonRenderFrameHostReusedCrossSite | PageBackForwardCacheNotRestoredReasonServiceWorkerClaim | PageBackForwardCacheNotRestoredReasonIgnoreEventAndEvict | PageBackForwardCacheNotRestoredReasonHaveInnerContents | PageBackForwardCacheNotRestoredReasonTimeoutPuttingInCache | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledByLowMemory | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledByCommandLine | PageBackForwardCacheNotRestoredReasonNetworkRequestDatapipeDrainedAsBytesConsumer | PageBackForwardCacheNotRestoredReasonNetworkRequestRedirected | PageBackForwardCacheNotRestoredReasonNetworkRequestTimeout | PageBackForwardCacheNotRestoredReasonNetworkExceedsBufferLimit | PageBackForwardCacheNotRestoredReasonNavigationCancelledWhileRestoring | PageBackForwardCacheNotRestoredReasonNotMostRecentNavigationEntry | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledForPrerender | PageBackForwardCacheNotRestoredReasonUserAgentOverrideDiffers | PageBackForwardCacheNotRestoredReasonForegroundCacheLimit | PageBackForwardCacheNotRestoredReasonBrowsingInstanceNotSwapped | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledForDelegate | PageBackForwardCacheNotRestoredReasonUnloadHandlerExistsInMainFrame | PageBackForwardCacheNotRestoredReasonUnloadHandlerExistsInSubFrame | PageBackForwardCacheNotRestoredReasonServiceWorkerUnregistration | PageBackForwardCacheNotRestoredReasonCacheControlNoStore | PageBackForwardCacheNotRestoredReasonCacheControlNoStoreCookieModified | PageBackForwardCacheNotRestoredReasonCacheControlNoStoreHttpOnlyCookieModified | PageBackForwardCacheNotRestoredReasonNoResponseHead | PageBackForwardCacheNotRestoredReasonUnknown | PageBackForwardCacheNotRestoredReasonActivationNavigationsDisallowedForBug1234857 | PageBackForwardCacheNotRestoredReasonErrorDocument | PageBackForwardCacheNotRestoredReasonFencedFramesEmbedder | PageBackForwardCacheNotRestoredReasonWebSocket | PageBackForwardCacheNotRestoredReasonWebTransport | PageBackForwardCacheNotRestoredReasonWebRtc | PageBackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoStore | PageBackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoCache | PageBackForwardCacheNotRestoredReasonSubresourceHasCacheControlNoStore | PageBackForwardCacheNotRestoredReasonSubresourceHasCacheControlNoCache | PageBackForwardCacheNotRestoredReasonContainsPlugins | PageBackForwardCacheNotRestoredReasonDocumentLoaded | PageBackForwardCacheNotRestoredReasonDedicatedWorkerOrWorklet | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestOthers | PageBackForwardCacheNotRestoredReasonOutstandingIndexedDbTransaction | PageBackForwardCacheNotRestoredReasonRequestedNotificationsPermission | PageBackForwardCacheNotRestoredReasonRequestedMidiPermission | PageBackForwardCacheNotRestoredReasonRequestedAudioCapturePermission | PageBackForwardCacheNotRestoredReasonRequestedVideoCapturePermission | PageBackForwardCacheNotRestoredReasonRequestedBackForwardCacheBlockedSensors | PageBackForwardCacheNotRestoredReasonRequestedBackgroundWorkPermission | PageBackForwardCacheNotRestoredReasonBroadcastChannel | PageBackForwardCacheNotRestoredReasonIndexedDbConnection | PageBackForwardCacheNotRestoredReasonWebXr | PageBackForwardCacheNotRestoredReasonSharedWorker | PageBackForwardCacheNotRestoredReasonWebLocks | PageBackForwardCacheNotRestoredReasonWebHid | PageBackForwardCacheNotRestoredReasonWebShare | PageBackForwardCacheNotRestoredReasonRequestedStorageAccessGrant | PageBackForwardCacheNotRestoredReasonWebNfc | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestFetch | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestXhr | PageBackForwardCacheNotRestoredReasonAppBanner | PageBackForwardCacheNotRestoredReasonPrinting | PageBackForwardCacheNotRestoredReasonWebDatabase | PageBackForwardCacheNotRestoredReasonPictureInPicture | PageBackForwardCacheNotRestoredReasonPortal | PageBackForwardCacheNotRestoredReasonSpeechRecognizer | PageBackForwardCacheNotRestoredReasonIdleManager | PageBackForwardCacheNotRestoredReasonPaymentManager | PageBackForwardCacheNotRestoredReasonSpeechSynthesis | PageBackForwardCacheNotRestoredReasonKeyboardLock | PageBackForwardCacheNotRestoredReasonWebOtpService | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestDirectSocket | PageBackForwardCacheNotRestoredReasonInjectedJavascript | PageBackForwardCacheNotRestoredReasonInjectedStyleSheet | PageBackForwardCacheNotRestoredReasonDummy | PageBackForwardCacheNotRestoredReasonContentSecurityHandler | PageBackForwardCacheNotRestoredReasonContentWebAuthenticationApi | PageBackForwardCacheNotRestoredReasonContentFileChooser | PageBackForwardCacheNotRestoredReasonContentSerial | PageBackForwardCacheNotRestoredReasonContentFileSystemAccess | PageBackForwardCacheNotRestoredReasonContentMediaDevicesDispatcherHost | PageBackForwardCacheNotRestoredReasonContentWebBluetooth | PageBackForwardCacheNotRestoredReasonContentWebUsb | PageBackForwardCacheNotRestoredReasonContentMediaSessionService | PageBackForwardCacheNotRestoredReasonContentScreenReader | PageBackForwardCacheNotRestoredReasonEmbedderPopupBlockerTabHelper | PageBackForwardCacheNotRestoredReasonEmbedderSafeBrowsingTriggeredPopupBlocker | PageBackForwardCacheNotRestoredReasonEmbedderSafeBrowsingThreatDetails | PageBackForwardCacheNotRestoredReasonEmbedderAppBannerManager | PageBackForwardCacheNotRestoredReasonEmbedderDomDistillerViewerSource | PageBackForwardCacheNotRestoredReasonEmbedderDomDistillerSelfDeletingRequestDelegate | PageBackForwardCacheNotRestoredReasonEmbedderOomInterventionTabHelper | PageBackForwardCacheNotRestoredReasonEmbedderOfflinePage | PageBackForwardCacheNotRestoredReasonEmbedderChromePasswordManagerClientBindCredentialManager | PageBackForwardCacheNotRestoredReasonEmbedderPermissionRequestManager | PageBackForwardCacheNotRestoredReasonEmbedderModalDialog | PageBackForwardCacheNotRestoredReasonEmbedderExtensions | PageBackForwardCacheNotRestoredReasonEmbedderExtensionMessaging | PageBackForwardCacheNotRestoredReasonEmbedderExtensionMessagingForOpenPort | PageBackForwardCacheNotRestoredReasonEmbedderExtensionSentMessageToCachedFrame
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageBackForwardCacheNotRestoredReason where
@@ -6669,7 +6674,7 @@ instance ToJSON PageBackForwardCacheNotRestoredReason where
 
 
 
--- | Types of not restored reasons for back-forward cache.
+-- | Type 'Page.BackForwardCacheNotRestoredReasonType' .Types of not restored reasons for back-forward cache.
 data PageBackForwardCacheNotRestoredReasonType = PageBackForwardCacheNotRestoredReasonTypeSupportPending | PageBackForwardCacheNotRestoredReasonTypePageSupportNeeded | PageBackForwardCacheNotRestoredReasonTypeCircumstantial
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageBackForwardCacheNotRestoredReasonType where
@@ -6696,8 +6701,8 @@ data PageBackForwardCacheNotRestoredExplanation = PageBackForwardCacheNotRestore
   -- | Not restored reason
   pageBackForwardCacheNotRestoredExplanationReason :: PageBackForwardCacheNotRestoredReason,
   -- | Context associated with the reason. The meaning of this context is
-    -- dependent on the reason:
-    -- - EmbedderExtensionSentMessageToCachedFrame: the extension ID.
+  --   dependent on the reason:
+  --   - EmbedderExtensionSentMessageToCachedFrame: the extension ID.
   pageBackForwardCacheNotRestoredExplanationContext :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageBackForwardCacheNotRestoredExplanation  where
@@ -6725,7 +6730,7 @@ instance FromJSON  PageBackForwardCacheNotRestoredExplanationTree where
 
 
 
--- | List of FinalStatus reasons for Prerender2.
+-- | Type 'Page.PrerenderFinalStatus' .List of FinalStatus reasons for Prerender2.
 data PagePrerenderFinalStatus = PagePrerenderFinalStatusActivated | PagePrerenderFinalStatusDestroyed | PagePrerenderFinalStatusLowEndDevice | PagePrerenderFinalStatusCrossOriginRedirect | PagePrerenderFinalStatusCrossOriginNavigation | PagePrerenderFinalStatusInvalidSchemeRedirect | PagePrerenderFinalStatusInvalidSchemeNavigation | PagePrerenderFinalStatusInProgressNavigation | PagePrerenderFinalStatusNavigationRequestBlockedByCsp | PagePrerenderFinalStatusMainFrameNavigation | PagePrerenderFinalStatusMojoBinderPolicy | PagePrerenderFinalStatusRendererProcessCrashed | PagePrerenderFinalStatusRendererProcessKilled | PagePrerenderFinalStatusDownload | PagePrerenderFinalStatusTriggerDestroyed | PagePrerenderFinalStatusNavigationNotCommitted | PagePrerenderFinalStatusNavigationBadHttpStatus | PagePrerenderFinalStatusClientCertRequested | PagePrerenderFinalStatusNavigationRequestNetworkError | PagePrerenderFinalStatusMaxNumOfRunningPrerendersExceeded | PagePrerenderFinalStatusCancelAllHostsForTesting | PagePrerenderFinalStatusDidFailLoad | PagePrerenderFinalStatusStop | PagePrerenderFinalStatusSslCertificateError | PagePrerenderFinalStatusLoginAuthRequested | PagePrerenderFinalStatusUaChangeRequiresReload | PagePrerenderFinalStatusBlockedByClient | PagePrerenderFinalStatusAudioOutputDeviceRequested | PagePrerenderFinalStatusMixedContent | PagePrerenderFinalStatusTriggerBackgrounded | PagePrerenderFinalStatusEmbedderTriggeredAndSameOriginRedirected | PagePrerenderFinalStatusEmbedderTriggeredAndCrossOriginRedirected | PagePrerenderFinalStatusEmbedderTriggeredAndDestroyed
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PagePrerenderFinalStatus where
@@ -7030,8 +7035,8 @@ data PageJavascriptDialogOpening = PageJavascriptDialogOpening {
   -- | Dialog type.
   pageJavascriptDialogOpeningType :: PageDialogType,
   -- | True iff browser is capable showing or acting on the given dialog. When browser has no
-    -- dialog handler for given target, calling alert while Page domain is engaged will stall
-    -- the page execution. Execution can be resumed via calling Page.handleJavaScriptDialog.
+  --   dialog handler for given target, calling alert while Page domain is engaged will stall
+  --   the page execution. Execution can be resumed via calling Page.handleJavaScriptDialog.
   pageJavascriptDialogOpeningHasBrowserHandler :: Bool,
   -- | Default dialog prompt.
   pageJavascriptDialogOpeningDefaultPrompt :: Maybe String
@@ -7191,11 +7196,11 @@ instance FromJSON  PageCompilationCacheProduced where
 data PPageAddScriptToEvaluateOnNewDocument = PPageAddScriptToEvaluateOnNewDocument {
   pPageAddScriptToEvaluateOnNewDocumentSource :: String,
   -- | If specified, creates an isolated world with the given name and evaluates given script in it.
-    -- This world name will be used as the ExecutionContextDescription::name when the corresponding
-    -- event is emitted.
+  --   This world name will be used as the ExecutionContextDescription::name when the corresponding
+  --   event is emitted.
   pPageAddScriptToEvaluateOnNewDocumentWorldName :: Maybe String,
   -- | Specifies whether command line API should be available to the script, defaults
-    -- to false.
+  --   to false.
   pPageAddScriptToEvaluateOnNewDocumentIncludeCommandLineApi :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageAddScriptToEvaluateOnNewDocument  where
@@ -7206,9 +7211,9 @@ instance FromJSON  PPageAddScriptToEvaluateOnNewDocument where
 
 
 -- | Function for the 'Page.addScriptToEvaluateOnNewDocument' command.
- -- Evaluates given script in every frame upon creation (before loading frame's scripts).
--- Parameters: 'PPageAddScriptToEvaluateOnNewDocument'
--- Returns: 'PageAddScriptToEvaluateOnNewDocument'
+--   Evaluates given script in every frame upon creation (before loading frame's scripts).
+--   Parameters: 'PPageAddScriptToEvaluateOnNewDocument'
+--   Returns: 'PageAddScriptToEvaluateOnNewDocument'
 pageAddScriptToEvaluateOnNewDocument :: Handle ev -> PPageAddScriptToEvaluateOnNewDocument -> IO PageAddScriptToEvaluateOnNewDocument
 pageAddScriptToEvaluateOnNewDocument handle params = sendReceiveCommandResult handle "Page.addScriptToEvaluateOnNewDocument" (Just params)
 
@@ -7227,7 +7232,7 @@ instance Command PageAddScriptToEvaluateOnNewDocument where
 
 
 -- | Function for the 'Page.bringToFront' command.
- -- Brings page to front (activates tab).
+--   Brings page to front (activates tab).
 pageBringToFront :: Handle ev -> IO ()
 pageBringToFront handle = sendReceiveCommand handle "Page.bringToFront" (Nothing :: Maybe ())
 
@@ -7272,9 +7277,9 @@ instance FromJSON  PPageCaptureScreenshot where
 
 
 -- | Function for the 'Page.captureScreenshot' command.
- -- Capture page screenshot.
--- Parameters: 'PPageCaptureScreenshot'
--- Returns: 'PageCaptureScreenshot'
+--   Capture page screenshot.
+--   Parameters: 'PPageCaptureScreenshot'
+--   Returns: 'PageCaptureScreenshot'
 pageCaptureScreenshot :: Handle ev -> PPageCaptureScreenshot -> IO PageCaptureScreenshot
 pageCaptureScreenshot handle params = sendReceiveCommandResult handle "Page.captureScreenshot" (Just params)
 
@@ -7320,10 +7325,10 @@ instance FromJSON  PPageCaptureSnapshot where
 
 
 -- | Function for the 'Page.captureSnapshot' command.
- -- Returns a snapshot of the page as a string. For MHTML format, the serialization includes
- -- iframes, shadow DOM, external resources, and element-inline styles.
--- Parameters: 'PPageCaptureSnapshot'
--- Returns: 'PageCaptureSnapshot'
+--   Returns a snapshot of the page as a string. For MHTML format, the serialization includes
+--   iframes, shadow DOM, external resources, and element-inline styles.
+--   Parameters: 'PPageCaptureSnapshot'
+--   Returns: 'PageCaptureSnapshot'
 pageCaptureSnapshot :: Handle ev -> PPageCaptureSnapshot -> IO PageCaptureSnapshot
 pageCaptureSnapshot handle params = sendReceiveCommandResult handle "Page.captureSnapshot" (Just params)
 
@@ -7348,7 +7353,7 @@ data PPageCreateIsolatedWorld = PPageCreateIsolatedWorld {
   -- | An optional name which is reported in the Execution Context.
   pPageCreateIsolatedWorldWorldName :: Maybe String,
   -- | Whether or not universal access should be granted to the isolated world. This is a powerful
-    -- option, use with caution.
+  --   option, use with caution.
   pPageCreateIsolatedWorldGrantUniveralAccess :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageCreateIsolatedWorld  where
@@ -7359,9 +7364,9 @@ instance FromJSON  PPageCreateIsolatedWorld where
 
 
 -- | Function for the 'Page.createIsolatedWorld' command.
- -- Creates an isolated world for the given frame.
--- Parameters: 'PPageCreateIsolatedWorld'
--- Returns: 'PageCreateIsolatedWorld'
+--   Creates an isolated world for the given frame.
+--   Parameters: 'PPageCreateIsolatedWorld'
+--   Returns: 'PageCreateIsolatedWorld'
 pageCreateIsolatedWorld :: Handle ev -> PPageCreateIsolatedWorld -> IO PageCreateIsolatedWorld
 pageCreateIsolatedWorld handle params = sendReceiveCommandResult handle "Page.createIsolatedWorld" (Just params)
 
@@ -7380,19 +7385,20 @@ instance Command PageCreateIsolatedWorld where
 
 
 -- | Function for the 'Page.disable' command.
- -- Disables page domain notifications.
+--   Disables page domain notifications.
 pageDisable :: Handle ev -> IO ()
 pageDisable handle = sendReceiveCommand handle "Page.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Page.enable' command.
- -- Enables page domain notifications.
+--   Enables page domain notifications.
 pageEnable :: Handle ev -> IO ()
 pageEnable handle = sendReceiveCommand handle "Page.enable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Page.getAppManifest' command.
--- Returns: 'PageGetAppManifest'
+--   
+--   Returns: 'PageGetAppManifest'
 pageGetAppManifest :: Handle ev -> IO PageGetAppManifest
 pageGetAppManifest handle = sendReceiveCommandResult handle "Page.getAppManifest" (Nothing :: Maybe ())
 
@@ -7416,7 +7422,8 @@ instance Command PageGetAppManifest where
 
 
 -- | Function for the 'Page.getInstallabilityErrors' command.
--- Returns: 'PageGetInstallabilityErrors'
+--   
+--   Returns: 'PageGetInstallabilityErrors'
 pageGetInstallabilityErrors :: Handle ev -> IO PageGetInstallabilityErrors
 pageGetInstallabilityErrors handle = sendReceiveCommandResult handle "Page.getInstallabilityErrors" (Nothing :: Maybe ())
 
@@ -7434,7 +7441,8 @@ instance Command PageGetInstallabilityErrors where
 
 
 -- | Function for the 'Page.getManifestIcons' command.
--- Returns: 'PageGetManifestIcons'
+--   
+--   Returns: 'PageGetManifestIcons'
 pageGetManifestIcons :: Handle ev -> IO PageGetManifestIcons
 pageGetManifestIcons handle = sendReceiveCommandResult handle "Page.getManifestIcons" (Nothing :: Maybe ())
 
@@ -7452,9 +7460,9 @@ instance Command PageGetManifestIcons where
 
 
 -- | Function for the 'Page.getAppId' command.
- -- Returns the unique (PWA) app id.
- -- Only returns values if the feature flag 'WebAppEnableManifestId' is enabled
--- Returns: 'PageGetAppId'
+--   Returns the unique (PWA) app id.
+--   Only returns values if the feature flag 'WebAppEnableManifestId' is enabled
+--   Returns: 'PageGetAppId'
 pageGetAppId :: Handle ev -> IO PageGetAppId
 pageGetAppId handle = sendReceiveCommandResult handle "Page.getAppId" (Nothing :: Maybe ())
 
@@ -7475,8 +7483,8 @@ instance Command PageGetAppId where
 
 
 -- | Function for the 'Page.getFrameTree' command.
- -- Returns present frame tree structure.
--- Returns: 'PageGetFrameTree'
+--   Returns present frame tree structure.
+--   Returns: 'PageGetFrameTree'
 pageGetFrameTree :: Handle ev -> IO PageGetFrameTree
 pageGetFrameTree handle = sendReceiveCommandResult handle "Page.getFrameTree" (Nothing :: Maybe ())
 
@@ -7495,8 +7503,8 @@ instance Command PageGetFrameTree where
 
 
 -- | Function for the 'Page.getLayoutMetrics' command.
- -- Returns metrics relating to the layouting of the page, such as viewport bounds/scale.
--- Returns: 'PageGetLayoutMetrics'
+--   Returns metrics relating to the layouting of the page, such as viewport bounds/scale.
+--   Returns: 'PageGetLayoutMetrics'
 pageGetLayoutMetrics :: Handle ev -> IO PageGetLayoutMetrics
 pageGetLayoutMetrics handle = sendReceiveCommandResult handle "Page.getLayoutMetrics" (Nothing :: Maybe ())
 
@@ -7519,8 +7527,8 @@ instance Command PageGetLayoutMetrics where
 
 
 -- | Function for the 'Page.getNavigationHistory' command.
- -- Returns navigation history for the current page.
--- Returns: 'PageGetNavigationHistory'
+--   Returns navigation history for the current page.
+--   Returns: 'PageGetNavigationHistory'
 pageGetNavigationHistory :: Handle ev -> IO PageGetNavigationHistory
 pageGetNavigationHistory handle = sendReceiveCommandResult handle "Page.getNavigationHistory" (Nothing :: Maybe ())
 
@@ -7541,7 +7549,7 @@ instance Command PageGetNavigationHistory where
 
 
 -- | Function for the 'Page.resetNavigationHistory' command.
- -- Resets navigation history for the current page.
+--   Resets navigation history for the current page.
 pageResetNavigationHistory :: Handle ev -> IO ()
 pageResetNavigationHistory handle = sendReceiveCommand handle "Page.resetNavigationHistory" (Nothing :: Maybe ())
 
@@ -7561,9 +7569,9 @@ instance FromJSON  PPageGetResourceContent where
 
 
 -- | Function for the 'Page.getResourceContent' command.
- -- Returns content of the given resource.
--- Parameters: 'PPageGetResourceContent'
--- Returns: 'PageGetResourceContent'
+--   Returns content of the given resource.
+--   Parameters: 'PPageGetResourceContent'
+--   Returns: 'PageGetResourceContent'
 pageGetResourceContent :: Handle ev -> PPageGetResourceContent -> IO PageGetResourceContent
 pageGetResourceContent handle params = sendReceiveCommandResult handle "Page.getResourceContent" (Just params)
 
@@ -7584,8 +7592,8 @@ instance Command PageGetResourceContent where
 
 
 -- | Function for the 'Page.getResourceTree' command.
- -- Returns present frame / resource tree structure.
--- Returns: 'PageGetResourceTree'
+--   Returns present frame / resource tree structure.
+--   Returns: 'PageGetResourceTree'
 pageGetResourceTree :: Handle ev -> IO PageGetResourceTree
 pageGetResourceTree handle = sendReceiveCommandResult handle "Page.getResourceTree" (Nothing :: Maybe ())
 
@@ -7608,7 +7616,7 @@ data PPageHandleJavaScriptDialog = PPageHandleJavaScriptDialog {
   -- | Whether to accept or dismiss the dialog.
   pPageHandleJavaScriptDialogAccept :: Bool,
   -- | The text to enter into the dialog prompt before accepting. Used only if this is a prompt
-    -- dialog.
+  --   dialog.
   pPageHandleJavaScriptDialogPromptText :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageHandleJavaScriptDialog  where
@@ -7619,8 +7627,8 @@ instance FromJSON  PPageHandleJavaScriptDialog where
 
 
 -- | Function for the 'Page.handleJavaScriptDialog' command.
- -- Accepts or dismisses a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload).
--- Parameters: 'PPageHandleJavaScriptDialog'
+--   Accepts or dismisses a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload).
+--   Parameters: 'PPageHandleJavaScriptDialog'
 pageHandleJavaScriptDialog :: Handle ev -> PPageHandleJavaScriptDialog -> IO ()
 pageHandleJavaScriptDialog handle params = sendReceiveCommand handle "Page.handleJavaScriptDialog" (Just params)
 
@@ -7646,9 +7654,9 @@ instance FromJSON  PPageNavigate where
 
 
 -- | Function for the 'Page.navigate' command.
- -- Navigates current page to the given URL.
--- Parameters: 'PPageNavigate'
--- Returns: 'PageNavigate'
+--   Navigates current page to the given URL.
+--   Parameters: 'PPageNavigate'
+--   Returns: 'PageNavigate'
 pageNavigate :: Handle ev -> PPageNavigate -> IO PageNavigate
 pageNavigate handle params = sendReceiveCommandResult handle "Page.navigate" (Just params)
 
@@ -7657,7 +7665,7 @@ data PageNavigate = PageNavigate {
   -- | Frame id that has navigated (or failed to navigate)
   pageNavigateFrameId :: PageFrameId,
   -- | Loader identifier. This is omitted in case of same-document navigation,
-    -- as the previously committed loaderId would not change.
+  --   as the previously committed loaderId would not change.
   pageNavigateLoaderId :: Maybe NetworkLoaderId,
   -- | User friendly error message, present if and only if navigation has failed.
   pageNavigateErrorText :: Maybe String
@@ -7684,8 +7692,8 @@ instance FromJSON  PPageNavigateToHistoryEntry where
 
 
 -- | Function for the 'Page.navigateToHistoryEntry' command.
- -- Navigates current page to the given history entry.
--- Parameters: 'PPageNavigateToHistoryEntry'
+--   Navigates current page to the given history entry.
+--   Parameters: 'PPageNavigateToHistoryEntry'
 pageNavigateToHistoryEntry :: Handle ev -> PPageNavigateToHistoryEntry -> IO ()
 pageNavigateToHistoryEntry handle params = sendReceiveCommand handle "Page.navigateToHistoryEntry" (Just params)
 
@@ -7730,28 +7738,28 @@ data PPagePrintToPdf = PPagePrintToPdf {
   -- | Right margin in inches. Defaults to 1cm (~0.4 inches).
   pPagePrintToPdfMarginRight :: Maybe Double,
   -- | Paper ranges to print, one based, e.g., '1-5, 8, 11-13'. Pages are
-    -- printed in the document order, not in the order specified, and no
-    -- more than once.
-    -- Defaults to empty string, which implies the entire document is printed.
-    -- The page numbers are quietly capped to actual page count of the
-    -- document, and ranges beyond the end of the document are ignored.
-    -- If this results in no pages to print, an error is reported.
-    -- It is an error to specify a range with start greater than end.
+  --   printed in the document order, not in the order specified, and no
+  --   more than once.
+  --   Defaults to empty string, which implies the entire document is printed.
+  --   The page numbers are quietly capped to actual page count of the
+  --   document, and ranges beyond the end of the document are ignored.
+  --   If this results in no pages to print, an error is reported.
+  --   It is an error to specify a range with start greater than end.
   pPagePrintToPdfPageRanges :: Maybe String,
   -- | HTML template for the print header. Should be valid HTML markup with following
-    -- classes used to inject printing values into them:
-    -- - `date`: formatted print date
-    -- - `title`: document title
-    -- - `url`: document location
-    -- - `pageNumber`: current page number
-    -- - `totalPages`: total pages in the document
-    -- 
-    -- For example, `<span class=title></span>` would generate span containing the title.
+  --   classes used to inject printing values into them:
+  --   - `date`: formatted print date
+  --   - `title`: document title
+  --   - `url`: document location
+  --   - `pageNumber`: current page number
+  --   - `totalPages`: total pages in the document
+  --   
+  --   For example, `<span class=title></span>` would generate span containing the title.
   pPagePrintToPdfHeaderTemplate :: Maybe String,
   -- | HTML template for the print footer. Should use the same format as the `headerTemplate`.
   pPagePrintToPdfFooterTemplate :: Maybe String,
   -- | Whether or not to prefer page size as defined by css. Defaults to false,
-    -- in which case the content will be scaled to fit the paper size.
+  --   in which case the content will be scaled to fit the paper size.
   pPagePrintToPdfPreferCssPageSize :: Maybe Bool,
   -- | return as stream
   pPagePrintToPdfTransferMode :: PPagePrintToPdfTransferMode
@@ -7764,9 +7772,9 @@ instance FromJSON  PPagePrintToPdf where
 
 
 -- | Function for the 'Page.printToPDF' command.
- -- Print page as PDF.
--- Parameters: 'PPagePrintToPdf'
--- Returns: 'PagePrintToPdf'
+--   Print page as PDF.
+--   Parameters: 'PPagePrintToPdf'
+--   Returns: 'PagePrintToPdf'
 pagePrintToPdf :: Handle ev -> PPagePrintToPdf -> IO PagePrintToPdf
 pagePrintToPdf handle params = sendReceiveCommandResult handle "Page.printToPDF" (Just params)
 
@@ -7791,7 +7799,7 @@ data PPageReload = PPageReload {
   -- | If true, browser cache is ignored (as if the user pressed Shift+refresh).
   pPageReloadIgnoreCache :: Maybe Bool,
   -- | If set, the script will be injected into all frames of the inspected page after reload.
-    -- Argument will be ignored if reloading dataURL origin.
+  --   Argument will be ignored if reloading dataURL origin.
   pPageReloadScriptToEvaluateOnLoad :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageReload  where
@@ -7802,8 +7810,8 @@ instance FromJSON  PPageReload where
 
 
 -- | Function for the 'Page.reload' command.
- -- Reloads given page optionally ignoring the cache.
--- Parameters: 'PPageReload'
+--   Reloads given page optionally ignoring the cache.
+--   Parameters: 'PPageReload'
 pageReload :: Handle ev -> PPageReload -> IO ()
 pageReload handle params = sendReceiveCommand handle "Page.reload" (Just params)
 
@@ -7820,8 +7828,8 @@ instance FromJSON  PPageRemoveScriptToEvaluateOnNewDocument where
 
 
 -- | Function for the 'Page.removeScriptToEvaluateOnNewDocument' command.
- -- Removes given script from the list.
--- Parameters: 'PPageRemoveScriptToEvaluateOnNewDocument'
+--   Removes given script from the list.
+--   Parameters: 'PPageRemoveScriptToEvaluateOnNewDocument'
 pageRemoveScriptToEvaluateOnNewDocument :: Handle ev -> PPageRemoveScriptToEvaluateOnNewDocument -> IO ()
 pageRemoveScriptToEvaluateOnNewDocument handle params = sendReceiveCommand handle "Page.removeScriptToEvaluateOnNewDocument" (Just params)
 
@@ -7839,8 +7847,8 @@ instance FromJSON  PPageScreencastFrameAck where
 
 
 -- | Function for the 'Page.screencastFrameAck' command.
- -- Acknowledges that a screencast frame has been received by the frontend.
--- Parameters: 'PPageScreencastFrameAck'
+--   Acknowledges that a screencast frame has been received by the frontend.
+--   Parameters: 'PPageScreencastFrameAck'
 pageScreencastFrameAck :: Handle ev -> PPageScreencastFrameAck -> IO ()
 pageScreencastFrameAck handle params = sendReceiveCommand handle "Page.screencastFrameAck" (Just params)
 
@@ -7866,9 +7874,9 @@ instance FromJSON  PPageSearchInResource where
 
 
 -- | Function for the 'Page.searchInResource' command.
- -- Searches for given string in resource content.
--- Parameters: 'PPageSearchInResource'
--- Returns: 'PageSearchInResource'
+--   Searches for given string in resource content.
+--   Parameters: 'PPageSearchInResource'
+--   Returns: 'PageSearchInResource'
 pageSearchInResource :: Handle ev -> PPageSearchInResource -> IO PageSearchInResource
 pageSearchInResource handle params = sendReceiveCommandResult handle "Page.searchInResource" (Just params)
 
@@ -7899,8 +7907,8 @@ instance FromJSON  PPageSetAdBlockingEnabled where
 
 
 -- | Function for the 'Page.setAdBlockingEnabled' command.
- -- Enable Chrome's experimental ad filter on all sites.
--- Parameters: 'PPageSetAdBlockingEnabled'
+--   Enable Chrome's experimental ad filter on all sites.
+--   Parameters: 'PPageSetAdBlockingEnabled'
 pageSetAdBlockingEnabled :: Handle ev -> PPageSetAdBlockingEnabled -> IO ()
 pageSetAdBlockingEnabled handle params = sendReceiveCommand handle "Page.setAdBlockingEnabled" (Just params)
 
@@ -7918,8 +7926,8 @@ instance FromJSON  PPageSetBypassCsp where
 
 
 -- | Function for the 'Page.setBypassCSP' command.
- -- Enable page Content Security Policy by-passing.
--- Parameters: 'PPageSetBypassCsp'
+--   Enable page Content Security Policy by-passing.
+--   Parameters: 'PPageSetBypassCsp'
 pageSetBypassCsp :: Handle ev -> PPageSetBypassCsp -> IO ()
 pageSetBypassCsp handle params = sendReceiveCommand handle "Page.setBypassCSP" (Just params)
 
@@ -7936,9 +7944,9 @@ instance FromJSON  PPageGetPermissionsPolicyState where
 
 
 -- | Function for the 'Page.getPermissionsPolicyState' command.
- -- Get Permissions Policy state on given frame.
--- Parameters: 'PPageGetPermissionsPolicyState'
--- Returns: 'PageGetPermissionsPolicyState'
+--   Get Permissions Policy state on given frame.
+--   Parameters: 'PPageGetPermissionsPolicyState'
+--   Returns: 'PageGetPermissionsPolicyState'
 pageGetPermissionsPolicyState :: Handle ev -> PPageGetPermissionsPolicyState -> IO PageGetPermissionsPolicyState
 pageGetPermissionsPolicyState handle params = sendReceiveCommandResult handle "Page.getPermissionsPolicyState" (Just params)
 
@@ -7967,9 +7975,9 @@ instance FromJSON  PPageGetOriginTrials where
 
 
 -- | Function for the 'Page.getOriginTrials' command.
- -- Get Origin Trials on given frame.
--- Parameters: 'PPageGetOriginTrials'
--- Returns: 'PageGetOriginTrials'
+--   Get Origin Trials on given frame.
+--   Parameters: 'PPageGetOriginTrials'
+--   Returns: 'PageGetOriginTrials'
 pageGetOriginTrials :: Handle ev -> PPageGetOriginTrials -> IO PageGetOriginTrials
 pageGetOriginTrials handle params = sendReceiveCommandResult handle "Page.getOriginTrials" (Just params)
 
@@ -8001,8 +8009,8 @@ instance FromJSON  PPageSetFontFamilies where
 
 
 -- | Function for the 'Page.setFontFamilies' command.
- -- Set generic font families.
--- Parameters: 'PPageSetFontFamilies'
+--   Set generic font families.
+--   Parameters: 'PPageSetFontFamilies'
 pageSetFontFamilies :: Handle ev -> PPageSetFontFamilies -> IO ()
 pageSetFontFamilies handle params = sendReceiveCommand handle "Page.setFontFamilies" (Just params)
 
@@ -8020,8 +8028,8 @@ instance FromJSON  PPageSetFontSizes where
 
 
 -- | Function for the 'Page.setFontSizes' command.
- -- Set default font sizes.
--- Parameters: 'PPageSetFontSizes'
+--   Set default font sizes.
+--   Parameters: 'PPageSetFontSizes'
 pageSetFontSizes :: Handle ev -> PPageSetFontSizes -> IO ()
 pageSetFontSizes handle params = sendReceiveCommand handle "Page.setFontSizes" (Just params)
 
@@ -8041,8 +8049,8 @@ instance FromJSON  PPageSetDocumentContent where
 
 
 -- | Function for the 'Page.setDocumentContent' command.
- -- Sets given markup as the document's HTML.
--- Parameters: 'PPageSetDocumentContent'
+--   Sets given markup as the document's HTML.
+--   Parameters: 'PPageSetDocumentContent'
 pageSetDocumentContent :: Handle ev -> PPageSetDocumentContent -> IO ()
 pageSetDocumentContent handle params = sendReceiveCommand handle "Page.setDocumentContent" (Just params)
 
@@ -8060,8 +8068,8 @@ instance FromJSON  PPageSetLifecycleEventsEnabled where
 
 
 -- | Function for the 'Page.setLifecycleEventsEnabled' command.
- -- Controls whether page will emit lifecycle events.
--- Parameters: 'PPageSetLifecycleEventsEnabled'
+--   Controls whether page will emit lifecycle events.
+--   Parameters: 'PPageSetLifecycleEventsEnabled'
 pageSetLifecycleEventsEnabled :: Handle ev -> PPageSetLifecycleEventsEnabled -> IO ()
 pageSetLifecycleEventsEnabled handle params = sendReceiveCommand handle "Page.setLifecycleEventsEnabled" (Just params)
 
@@ -8104,26 +8112,26 @@ instance FromJSON  PPageStartScreencast where
 
 
 -- | Function for the 'Page.startScreencast' command.
- -- Starts sending each frame using the `screencastFrame` event.
--- Parameters: 'PPageStartScreencast'
+--   Starts sending each frame using the `screencastFrame` event.
+--   Parameters: 'PPageStartScreencast'
 pageStartScreencast :: Handle ev -> PPageStartScreencast -> IO ()
 pageStartScreencast handle params = sendReceiveCommand handle "Page.startScreencast" (Just params)
 
 
 -- | Function for the 'Page.stopLoading' command.
- -- Force the page stop all navigations and pending resource fetches.
+--   Force the page stop all navigations and pending resource fetches.
 pageStopLoading :: Handle ev -> IO ()
 pageStopLoading handle = sendReceiveCommand handle "Page.stopLoading" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Page.crash' command.
- -- Crashes renderer on the IO thread, generates minidumps.
+--   Crashes renderer on the IO thread, generates minidumps.
 pageCrash :: Handle ev -> IO ()
 pageCrash handle = sendReceiveCommand handle "Page.crash" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Page.close' command.
- -- Tries to close page, running its beforeunload hooks, if any.
+--   Tries to close page, running its beforeunload hooks, if any.
 pageClose :: Handle ev -> IO ()
 pageClose handle = sendReceiveCommand handle "Page.close" (Nothing :: Maybe ())
 
@@ -8158,16 +8166,16 @@ instance FromJSON  PPageSetWebLifecycleState where
 
 
 -- | Function for the 'Page.setWebLifecycleState' command.
- -- Tries to update the web lifecycle state of the page.
- -- It will transition the page to the given state according to:
- -- https://github.com/WICG/web-lifecycle/
--- Parameters: 'PPageSetWebLifecycleState'
+--   Tries to update the web lifecycle state of the page.
+--   It will transition the page to the given state according to:
+--   https://github.com/WICG/web-lifecycle/
+--   Parameters: 'PPageSetWebLifecycleState'
 pageSetWebLifecycleState :: Handle ev -> PPageSetWebLifecycleState -> IO ()
 pageSetWebLifecycleState handle params = sendReceiveCommand handle "Page.setWebLifecycleState" (Just params)
 
 
 -- | Function for the 'Page.stopScreencast' command.
- -- Stops sending each frame in the `screencastFrame`.
+--   Stops sending each frame in the `screencastFrame`.
 pageStopScreencast :: Handle ev -> IO ()
 pageStopScreencast handle = sendReceiveCommand handle "Page.stopScreencast" (Nothing :: Maybe ())
 
@@ -8184,13 +8192,13 @@ instance FromJSON  PPageProduceCompilationCache where
 
 
 -- | Function for the 'Page.produceCompilationCache' command.
- -- Requests backend to produce compilation cache for the specified scripts.
- -- `scripts` are appeneded to the list of scripts for which the cache
- -- would be produced. The list may be reset during page navigation.
- -- When script with a matching URL is encountered, the cache is optionally
- -- produced upon backend discretion, based on internal heuristics.
- -- See also: `Page.compilationCacheProduced`.
--- Parameters: 'PPageProduceCompilationCache'
+--   Requests backend to produce compilation cache for the specified scripts.
+--   `scripts` are appeneded to the list of scripts for which the cache
+--   would be produced. The list may be reset during page navigation.
+--   When script with a matching URL is encountered, the cache is optionally
+--   produced upon backend discretion, based on internal heuristics.
+--   See also: `Page.compilationCacheProduced`.
+--   Parameters: 'PPageProduceCompilationCache'
 pageProduceCompilationCache :: Handle ev -> PPageProduceCompilationCache -> IO ()
 pageProduceCompilationCache handle params = sendReceiveCommand handle "Page.produceCompilationCache" (Just params)
 
@@ -8209,15 +8217,15 @@ instance FromJSON  PPageAddCompilationCache where
 
 
 -- | Function for the 'Page.addCompilationCache' command.
- -- Seeds compilation cache for given url. Compilation cache does not survive
- -- cross-process navigation.
--- Parameters: 'PPageAddCompilationCache'
+--   Seeds compilation cache for given url. Compilation cache does not survive
+--   cross-process navigation.
+--   Parameters: 'PPageAddCompilationCache'
 pageAddCompilationCache :: Handle ev -> PPageAddCompilationCache -> IO ()
 pageAddCompilationCache handle params = sendReceiveCommand handle "Page.addCompilationCache" (Just params)
 
 
 -- | Function for the 'Page.clearCompilationCache' command.
- -- Clears seeded compilation cache.
+--   Clears seeded compilation cache.
 pageClearCompilationCache :: Handle ev -> IO ()
 pageClearCompilationCache handle = sendReceiveCommand handle "Page.clearCompilationCache" (Nothing :: Maybe ())
 
@@ -8253,9 +8261,9 @@ instance FromJSON  PPageSetSpcTransactionMode where
 
 
 -- | Function for the 'Page.setSPCTransactionMode' command.
- -- Sets the Secure Payment Confirmation transaction mode.
- -- https://w3c.github.io/secure-payment-confirmation/#sctn-automation-set-spc-transaction-mode
--- Parameters: 'PPageSetSpcTransactionMode'
+--   Sets the Secure Payment Confirmation transaction mode.
+--   https://w3c.github.io/secure-payment-confirmation/#sctn-automation-set-spc-transaction-mode
+--   Parameters: 'PPageSetSpcTransactionMode'
 pageSetSpcTransactionMode :: Handle ev -> PPageSetSpcTransactionMode -> IO ()
 pageSetSpcTransactionMode handle params = sendReceiveCommand handle "Page.setSPCTransactionMode" (Just params)
 
@@ -8275,14 +8283,14 @@ instance FromJSON  PPageGenerateTestReport where
 
 
 -- | Function for the 'Page.generateTestReport' command.
- -- Generates a report for testing.
--- Parameters: 'PPageGenerateTestReport'
+--   Generates a report for testing.
+--   Parameters: 'PPageGenerateTestReport'
 pageGenerateTestReport :: Handle ev -> PPageGenerateTestReport -> IO ()
 pageGenerateTestReport handle params = sendReceiveCommand handle "Page.generateTestReport" (Just params)
 
 
 -- | Function for the 'Page.waitForDebugger' command.
- -- Pauses page execution. Can be resumed using generic Runtime.runIfWaitingForDebugger.
+--   Pauses page execution. Can be resumed using generic Runtime.runIfWaitingForDebugger.
 pageWaitForDebugger :: Handle ev -> IO ()
 pageWaitForDebugger handle = sendReceiveCommand handle "Page.waitForDebugger" (Nothing :: Maybe ())
 
@@ -8299,20 +8307,20 @@ instance FromJSON  PPageSetInterceptFileChooserDialog where
 
 
 -- | Function for the 'Page.setInterceptFileChooserDialog' command.
- -- Intercept file chooser requests and transfer control to protocol clients.
- -- When file chooser interception is enabled, native file chooser dialog is not shown.
- -- Instead, a protocol event `Page.fileChooserOpened` is emitted.
--- Parameters: 'PPageSetInterceptFileChooserDialog'
+--   Intercept file chooser requests and transfer control to protocol clients.
+--   When file chooser interception is enabled, native file chooser dialog is not shown.
+--   Instead, a protocol event `Page.fileChooserOpened` is emitted.
+--   Parameters: 'PPageSetInterceptFileChooserDialog'
 pageSetInterceptFileChooserDialog :: Handle ev -> PPageSetInterceptFileChooserDialog -> IO ()
 pageSetInterceptFileChooserDialog handle params = sendReceiveCommand handle "Page.setInterceptFileChooserDialog" (Just params)
 
 
 
--- | An internal certificate ID value.
+-- | Type 'Security.CertificateId' .An internal certificate ID value.
 type SecurityCertificateId = Int
 
--- | A description of mixed content (HTTP resources on HTTPS pages), as defined by
- -- https://www.w3.org/TR/mixed-content/#categories
+-- | Type 'Security.MixedContentType' .A description of mixed content (HTTP resources on HTTPS pages), as defined by
+--   https://www.w3.org/TR/mixed-content/#categories
 data SecurityMixedContentType = SecurityMixedContentTypeBlockable | SecurityMixedContentTypeOptionallyBlockable | SecurityMixedContentTypeNone
    deriving (Ord, Eq, Show, Read)
 instance FromJSON SecurityMixedContentType where
@@ -8332,7 +8340,7 @@ instance ToJSON SecurityMixedContentType where
 
 
 
--- | The security level of a page or resource.
+-- | Type 'Security.SecurityState' .The security level of a page or resource.
 data SecuritySecurityState = SecuritySecurityStateUnknown | SecuritySecurityStateNeutral | SecuritySecurityStateInsecure | SecuritySecurityStateSecure | SecuritySecurityStateInfo | SecuritySecurityStateInsecureBroken
    deriving (Ord, Eq, Show, Read)
 instance FromJSON SecuritySecurityState where
@@ -8358,7 +8366,7 @@ instance ToJSON SecuritySecurityState where
 
 
 
--- | Details about the security state of the page certificate.
+-- | Type 'Security.CertificateSecurityState' .Details about the security state of the page certificate.
 data SecurityCertificateSecurityState = SecurityCertificateSecurityState {
   -- | Protocol name (e.g. "TLS 1.2" or "QUIC").
   securityCertificateSecurityStateProtocol :: String,
@@ -8438,7 +8446,7 @@ instance FromJSON  SecuritySafetyTipInfo where
 
 
 
--- | Security state information about the page.
+-- | Type 'Security.VisibleSecurityState' .Security state information about the page.
 data SecurityVisibleSecurityState = SecurityVisibleSecurityState {
   -- | The security level of the page.
   securityVisibleSecurityStateSecurityState :: SecuritySecurityState,
@@ -8457,7 +8465,7 @@ instance FromJSON  SecurityVisibleSecurityState where
 
 
 
--- | An explanation of an factor contributing to the security state.
+-- | Type 'Security.SecurityStateExplanation' .An explanation of an factor contributing to the security state.
 data SecuritySecurityStateExplanation = SecuritySecurityStateExplanation {
   -- | Security state representing the severity of the factor being explained.
   securitySecurityStateExplanationSecurityState :: SecuritySecurityState,
@@ -8482,8 +8490,8 @@ instance FromJSON  SecuritySecurityStateExplanation where
 
 
 
--- | The action to take when a certificate error occurs. continue will continue processing the
- -- request and cancel will cancel the request.
+-- | Type 'Security.CertificateErrorAction' .The action to take when a certificate error occurs. continue will continue processing the
+--   request and cancel will cancel the request.
 data SecurityCertificateErrorAction = SecurityCertificateErrorActionContinue | SecurityCertificateErrorActionCancel
    deriving (Ord, Eq, Show, Read)
 instance FromJSON SecurityCertificateErrorAction where
@@ -8519,13 +8527,13 @@ instance FromJSON  SecurityVisibleSecurityStateChanged where
 
 
 -- | Function for the 'Security.disable' command.
- -- Disables tracking security state changes.
+--   Disables tracking security state changes.
 securityDisable :: Handle ev -> IO ()
 securityDisable handle = sendReceiveCommand handle "Security.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Security.enable' command.
- -- Enables tracking security state changes.
+--   Enables tracking security state changes.
 securityEnable :: Handle ev -> IO ()
 securityEnable handle = sendReceiveCommand handle "Security.enable" (Nothing :: Maybe ())
 
@@ -8543,8 +8551,8 @@ instance FromJSON  PSecuritySetIgnoreCertificateErrors where
 
 
 -- | Function for the 'Security.setIgnoreCertificateErrors' command.
- -- Enable/disable whether all certificate errors should be ignored.
--- Parameters: 'PSecuritySetIgnoreCertificateErrors'
+--   Enable/disable whether all certificate errors should be ignored.
+--   Parameters: 'PSecuritySetIgnoreCertificateErrors'
 securitySetIgnoreCertificateErrors :: Handle ev -> PSecuritySetIgnoreCertificateErrors -> IO ()
 securitySetIgnoreCertificateErrors handle params = sendReceiveCommand handle "Security.setIgnoreCertificateErrors" (Just params)
 

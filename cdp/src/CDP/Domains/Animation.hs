@@ -47,7 +47,7 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 import CDP.Domains.Runtime as Runtime
 
 
--- | Animation instance.
+-- | Type 'Animation.Animation' .Animation instance.
 data AnimationAnimationType = AnimationAnimationTypeCssTransition | AnimationAnimationTypeCssAnimation | AnimationAnimationTypeWebAnimation
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AnimationAnimationType where
@@ -87,7 +87,7 @@ data AnimationAnimation = AnimationAnimation {
   -- | `Animation`'s source animation node.
   animationAnimationSource :: Maybe AnimationAnimationEffect,
   -- | A unique ID for `Animation` representing the sources that triggered this CSS
-    -- animation/transition.
+  --   animation/transition.
   animationAnimationCssId :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AnimationAnimation  where
@@ -98,7 +98,7 @@ instance FromJSON  AnimationAnimation where
 
 
 
--- | AnimationEffect instance
+-- | Type 'Animation.AnimationEffect' .AnimationEffect instance
 data AnimationAnimationEffect = AnimationAnimationEffect {
   -- | `AnimationEffect`'s delay.
   animationAnimationEffectDelay :: Double,
@@ -129,7 +129,7 @@ instance FromJSON  AnimationAnimationEffect where
 
 
 
--- | Keyframes Rule
+-- | Type 'Animation.KeyframesRule' .Keyframes Rule
 data AnimationKeyframesRule = AnimationKeyframesRule {
   -- | CSS keyframed animation's name.
   animationKeyframesRuleName :: Maybe String,
@@ -144,7 +144,7 @@ instance FromJSON  AnimationKeyframesRule where
 
 
 
--- | Keyframe Style
+-- | Type 'Animation.KeyframeStyle' .Keyframe Style
 data AnimationKeyframeStyle = AnimationKeyframeStyle {
   -- | Keyframe's time offset.
   animationKeyframeStyleOffset :: String,
@@ -203,13 +203,13 @@ instance FromJSON  AnimationAnimationStarted where
 
 
 -- | Function for the 'Animation.disable' command.
- -- Disables animation domain notifications.
+--   Disables animation domain notifications.
 animationDisable :: Handle ev -> IO ()
 animationDisable handle = sendReceiveCommand handle "Animation.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Animation.enable' command.
- -- Enables animation domain notifications.
+--   Enables animation domain notifications.
 animationEnable :: Handle ev -> IO ()
 animationEnable handle = sendReceiveCommand handle "Animation.enable" (Nothing :: Maybe ())
 
@@ -227,9 +227,9 @@ instance FromJSON  PAnimationGetCurrentTime where
 
 
 -- | Function for the 'Animation.getCurrentTime' command.
- -- Returns the current time of the an animation.
--- Parameters: 'PAnimationGetCurrentTime'
--- Returns: 'AnimationGetCurrentTime'
+--   Returns the current time of the an animation.
+--   Parameters: 'PAnimationGetCurrentTime'
+--   Returns: 'AnimationGetCurrentTime'
 animationGetCurrentTime :: Handle ev -> PAnimationGetCurrentTime -> IO AnimationGetCurrentTime
 animationGetCurrentTime handle params = sendReceiveCommandResult handle "Animation.getCurrentTime" (Just params)
 
@@ -248,8 +248,8 @@ instance Command AnimationGetCurrentTime where
 
 
 -- | Function for the 'Animation.getPlaybackRate' command.
- -- Gets the playback rate of the document timeline.
--- Returns: 'AnimationGetPlaybackRate'
+--   Gets the playback rate of the document timeline.
+--   Returns: 'AnimationGetPlaybackRate'
 animationGetPlaybackRate :: Handle ev -> IO AnimationGetPlaybackRate
 animationGetPlaybackRate handle = sendReceiveCommandResult handle "Animation.getPlaybackRate" (Nothing :: Maybe ())
 
@@ -280,8 +280,8 @@ instance FromJSON  PAnimationReleaseAnimations where
 
 
 -- | Function for the 'Animation.releaseAnimations' command.
- -- Releases a set of animations to no longer be manipulated.
--- Parameters: 'PAnimationReleaseAnimations'
+--   Releases a set of animations to no longer be manipulated.
+--   Parameters: 'PAnimationReleaseAnimations'
 animationReleaseAnimations :: Handle ev -> PAnimationReleaseAnimations -> IO ()
 animationReleaseAnimations handle params = sendReceiveCommand handle "Animation.releaseAnimations" (Just params)
 
@@ -299,9 +299,9 @@ instance FromJSON  PAnimationResolveAnimation where
 
 
 -- | Function for the 'Animation.resolveAnimation' command.
- -- Gets the remote object of the Animation.
--- Parameters: 'PAnimationResolveAnimation'
--- Returns: 'AnimationResolveAnimation'
+--   Gets the remote object of the Animation.
+--   Parameters: 'PAnimationResolveAnimation'
+--   Returns: 'AnimationResolveAnimation'
 animationResolveAnimation :: Handle ev -> PAnimationResolveAnimation -> IO AnimationResolveAnimation
 animationResolveAnimation handle params = sendReceiveCommandResult handle "Animation.resolveAnimation" (Just params)
 
@@ -334,8 +334,8 @@ instance FromJSON  PAnimationSeekAnimations where
 
 
 -- | Function for the 'Animation.seekAnimations' command.
- -- Seek a set of animations to a particular time within each animation.
--- Parameters: 'PAnimationSeekAnimations'
+--   Seek a set of animations to a particular time within each animation.
+--   Parameters: 'PAnimationSeekAnimations'
 animationSeekAnimations :: Handle ev -> PAnimationSeekAnimations -> IO ()
 animationSeekAnimations handle params = sendReceiveCommand handle "Animation.seekAnimations" (Just params)
 
@@ -355,8 +355,8 @@ instance FromJSON  PAnimationSetPaused where
 
 
 -- | Function for the 'Animation.setPaused' command.
- -- Sets the paused state of a set of animations.
--- Parameters: 'PAnimationSetPaused'
+--   Sets the paused state of a set of animations.
+--   Parameters: 'PAnimationSetPaused'
 animationSetPaused :: Handle ev -> PAnimationSetPaused -> IO ()
 animationSetPaused handle params = sendReceiveCommand handle "Animation.setPaused" (Just params)
 
@@ -374,8 +374,8 @@ instance FromJSON  PAnimationSetPlaybackRate where
 
 
 -- | Function for the 'Animation.setPlaybackRate' command.
- -- Sets the playback rate of the document timeline.
--- Parameters: 'PAnimationSetPlaybackRate'
+--   Sets the playback rate of the document timeline.
+--   Parameters: 'PAnimationSetPlaybackRate'
 animationSetPlaybackRate :: Handle ev -> PAnimationSetPlaybackRate -> IO ()
 animationSetPlaybackRate handle params = sendReceiveCommand handle "Animation.setPlaybackRate" (Just params)
 
@@ -397,8 +397,8 @@ instance FromJSON  PAnimationSetTiming where
 
 
 -- | Function for the 'Animation.setTiming' command.
- -- Sets the timing of an animation node.
--- Parameters: 'PAnimationSetTiming'
+--   Sets the timing of an animation node.
+--   Parameters: 'PAnimationSetTiming'
 animationSetTiming :: Handle ev -> PAnimationSetTiming -> IO ()
 animationSetTiming handle params = sendReceiveCommand handle "Animation.setTiming" (Just params)
 

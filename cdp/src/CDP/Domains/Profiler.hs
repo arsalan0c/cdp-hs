@@ -47,7 +47,7 @@ import CDP.Domains.Debugger as Debugger
 import CDP.Domains.Runtime as Runtime
 
 
--- | Profile node. Holds callsite information, execution statistics and child nodes.
+-- | Type 'Profiler.ProfileNode' .Profile node. Holds callsite information, execution statistics and child nodes.
 data ProfilerProfileNode = ProfilerProfileNode {
   -- | Unique id of the node.
   profilerProfileNodeId :: Int,
@@ -58,7 +58,7 @@ data ProfilerProfileNode = ProfilerProfileNode {
   -- | Child node ids.
   profilerProfileNodeChildren :: Maybe [Int],
   -- | The reason of being not optimized. The function may be deoptimized or marked as don't
-    -- optimize.
+  --   optimize.
   profilerProfileNodeDeoptReason :: Maybe String,
   -- | An array of source position ticks.
   profilerProfileNodePositionTicks :: Maybe [ProfilerPositionTickInfo]
@@ -71,7 +71,7 @@ instance FromJSON  ProfilerProfileNode where
 
 
 
--- | Profile.
+-- | Type 'Profiler.Profile' .Profile.
 data ProfilerProfile = ProfilerProfile {
   -- | The list of profile nodes. First item is the root node.
   profilerProfileNodes :: [ProfilerProfileNode],
@@ -82,7 +82,7 @@ data ProfilerProfile = ProfilerProfile {
   -- | Ids of samples top nodes.
   profilerProfileSamples :: Maybe [Int],
   -- | Time intervals between adjacent samples in microseconds. The first delta is relative to the
-    -- profile startTime.
+  --   profile startTime.
   profilerProfileTimeDeltas :: Maybe [Int]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON ProfilerProfile  where
@@ -93,7 +93,7 @@ instance FromJSON  ProfilerProfile where
 
 
 
--- | Specifies a number of samples attributed to a certain source position.
+-- | Type 'Profiler.PositionTickInfo' .Specifies a number of samples attributed to a certain source position.
 data ProfilerPositionTickInfo = ProfilerPositionTickInfo {
   -- | Source line number (1-based).
   profilerPositionTickInfoLine :: Int,
@@ -108,7 +108,7 @@ instance FromJSON  ProfilerPositionTickInfo where
 
 
 
--- | Coverage data for a source range.
+-- | Type 'Profiler.CoverageRange' .Coverage data for a source range.
 data ProfilerCoverageRange = ProfilerCoverageRange {
   -- | JavaScript script source offset for the range start.
   profilerCoverageRangeStartOffset :: Int,
@@ -125,7 +125,7 @@ instance FromJSON  ProfilerCoverageRange where
 
 
 
--- | Coverage data for a JavaScript function.
+-- | Type 'Profiler.FunctionCoverage' .Coverage data for a JavaScript function.
 data ProfilerFunctionCoverage = ProfilerFunctionCoverage {
   -- | JavaScript function name.
   profilerFunctionCoverageFunctionName :: String,
@@ -142,7 +142,7 @@ instance FromJSON  ProfilerFunctionCoverage where
 
 
 
--- | Coverage data for a JavaScript script.
+-- | Type 'Profiler.ScriptCoverage' .Coverage data for a JavaScript script.
 data ProfilerScriptCoverage = ProfilerScriptCoverage {
   -- | JavaScript script id.
   profilerScriptCoverageScriptId :: Runtime.RuntimeScriptId,
@@ -159,7 +159,7 @@ instance FromJSON  ProfilerScriptCoverage where
 
 
 
--- | Describes a type collected during runtime.
+-- | Type 'Profiler.TypeObject' .Describes a type collected during runtime.
 data ProfilerTypeObject = ProfilerTypeObject {
   -- | Name of a type collected with type profiling.
   profilerTypeObjectName :: String
@@ -172,7 +172,7 @@ instance FromJSON  ProfilerTypeObject where
 
 
 
--- | Source offset and types for a parameter or return value.
+-- | Type 'Profiler.TypeProfileEntry' .Source offset and types for a parameter or return value.
 data ProfilerTypeProfileEntry = ProfilerTypeProfileEntry {
   -- | Source offset of the parameter or end of function for return values.
   profilerTypeProfileEntryOffset :: Int,
@@ -187,7 +187,7 @@ instance FromJSON  ProfilerTypeProfileEntry where
 
 
 
--- | Type profile data collected during runtime for a JavaScript script.
+-- | Type 'Profiler.ScriptTypeProfile' .Type profile data collected during runtime for a JavaScript script.
 data ProfilerScriptTypeProfile = ProfilerScriptTypeProfile {
   -- | JavaScript script id.
   profilerScriptTypeProfileScriptId :: Runtime.RuntimeScriptId,
@@ -269,9 +269,9 @@ profilerEnable handle = sendReceiveCommand handle "Profiler.enable" (Nothing :: 
 
 
 -- | Function for the 'Profiler.getBestEffortCoverage' command.
- -- Collect coverage data for the current isolate. The coverage data may be incomplete due to
- -- garbage collection.
--- Returns: 'ProfilerGetBestEffortCoverage'
+--   Collect coverage data for the current isolate. The coverage data may be incomplete due to
+--   garbage collection.
+--   Returns: 'ProfilerGetBestEffortCoverage'
 profilerGetBestEffortCoverage :: Handle ev -> IO ProfilerGetBestEffortCoverage
 profilerGetBestEffortCoverage handle = sendReceiveCommandResult handle "Profiler.getBestEffortCoverage" (Nothing :: Maybe ())
 
@@ -302,8 +302,8 @@ instance FromJSON  PProfilerSetSamplingInterval where
 
 
 -- | Function for the 'Profiler.setSamplingInterval' command.
- -- Changes CPU profiler sampling interval. Must be called before CPU profiles recording started.
--- Parameters: 'PProfilerSetSamplingInterval'
+--   Changes CPU profiler sampling interval. Must be called before CPU profiles recording started.
+--   Parameters: 'PProfilerSetSamplingInterval'
 profilerSetSamplingInterval :: Handle ev -> PProfilerSetSamplingInterval -> IO ()
 profilerSetSamplingInterval handle params = sendReceiveCommand handle "Profiler.setSamplingInterval" (Just params)
 
@@ -330,11 +330,11 @@ instance FromJSON  PProfilerStartPreciseCoverage where
 
 
 -- | Function for the 'Profiler.startPreciseCoverage' command.
- -- Enable precise code coverage. Coverage data for JavaScript executed before enabling precise code
- -- coverage may be incomplete. Enabling prevents running optimized code and resets execution
- -- counters.
--- Parameters: 'PProfilerStartPreciseCoverage'
--- Returns: 'ProfilerStartPreciseCoverage'
+--   Enable precise code coverage. Coverage data for JavaScript executed before enabling precise code
+--   coverage may be incomplete. Enabling prevents running optimized code and resets execution
+--   counters.
+--   Parameters: 'PProfilerStartPreciseCoverage'
+--   Returns: 'ProfilerStartPreciseCoverage'
 profilerStartPreciseCoverage :: Handle ev -> PProfilerStartPreciseCoverage -> IO ProfilerStartPreciseCoverage
 profilerStartPreciseCoverage handle params = sendReceiveCommandResult handle "Profiler.startPreciseCoverage" (Just params)
 
@@ -353,13 +353,14 @@ instance Command ProfilerStartPreciseCoverage where
 
 
 -- | Function for the 'Profiler.startTypeProfile' command.
- -- Enable type profile.
+--   Enable type profile.
 profilerStartTypeProfile :: Handle ev -> IO ()
 profilerStartTypeProfile handle = sendReceiveCommand handle "Profiler.startTypeProfile" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Profiler.stop' command.
--- Returns: 'ProfilerStop'
+--   
+--   Returns: 'ProfilerStop'
 profilerStop :: Handle ev -> IO ProfilerStop
 profilerStop handle = sendReceiveCommandResult handle "Profiler.stop" (Nothing :: Maybe ())
 
@@ -378,22 +379,22 @@ instance Command ProfilerStop where
 
 
 -- | Function for the 'Profiler.stopPreciseCoverage' command.
- -- Disable precise code coverage. Disabling releases unnecessary execution count records and allows
- -- executing optimized code.
+--   Disable precise code coverage. Disabling releases unnecessary execution count records and allows
+--   executing optimized code.
 profilerStopPreciseCoverage :: Handle ev -> IO ()
 profilerStopPreciseCoverage handle = sendReceiveCommand handle "Profiler.stopPreciseCoverage" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Profiler.stopTypeProfile' command.
- -- Disable type profile. Disabling releases type profile data collected so far.
+--   Disable type profile. Disabling releases type profile data collected so far.
 profilerStopTypeProfile :: Handle ev -> IO ()
 profilerStopTypeProfile handle = sendReceiveCommand handle "Profiler.stopTypeProfile" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Profiler.takePreciseCoverage' command.
- -- Collect coverage data for the current isolate, and resets execution counters. Precise code
- -- coverage needs to have started.
--- Returns: 'ProfilerTakePreciseCoverage'
+--   Collect coverage data for the current isolate, and resets execution counters. Precise code
+--   coverage needs to have started.
+--   Returns: 'ProfilerTakePreciseCoverage'
 profilerTakePreciseCoverage :: Handle ev -> IO ProfilerTakePreciseCoverage
 profilerTakePreciseCoverage handle = sendReceiveCommandResult handle "Profiler.takePreciseCoverage" (Nothing :: Maybe ())
 
@@ -414,8 +415,8 @@ instance Command ProfilerTakePreciseCoverage where
 
 
 -- | Function for the 'Profiler.takeTypeProfile' command.
- -- Collect type profile.
--- Returns: 'ProfilerTakeTypeProfile'
+--   Collect type profile.
+--   Returns: 'ProfilerTakeTypeProfile'
 profilerTakeTypeProfile :: Handle ev -> IO ProfilerTakeTypeProfile
 profilerTakeTypeProfile handle = sendReceiveCommandResult handle "Profiler.takeTypeProfile" (Nothing :: Maybe ())
 

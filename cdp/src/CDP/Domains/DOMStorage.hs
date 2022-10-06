@@ -50,7 +50,7 @@ import CDP.Handle
 -- | Type 'DOMStorage.SerializedStorageKey' .
 type DomStorageSerializedStorageKey = String
 
--- | DOM Storage identifier.
+-- | Type 'DOMStorage.StorageId' .DOM Storage identifier.
 data DomStorageStorageId = DomStorageStorageId {
   -- | Security origin for the storage.
   domStorageStorageIdSecurityOrigin :: Maybe String,
@@ -67,7 +67,7 @@ instance FromJSON  DomStorageStorageId where
 
 
 
--- | DOM Storage item.
+-- | Type 'DOMStorage.Item' .DOM Storage item.
 type DomStorageItem = [String]
 
 
@@ -140,19 +140,20 @@ instance FromJSON  PDomStorageClear where
 
 
 -- | Function for the 'DOMStorage.clear' command.
--- Parameters: 'PDomStorageClear'
+--   
+--   Parameters: 'PDomStorageClear'
 domStorageClear :: Handle ev -> PDomStorageClear -> IO ()
 domStorageClear handle params = sendReceiveCommand handle "DOMStorage.clear" (Just params)
 
 
 -- | Function for the 'DOMStorage.disable' command.
- -- Disables storage tracking, prevents storage events from being sent to the client.
+--   Disables storage tracking, prevents storage events from being sent to the client.
 domStorageDisable :: Handle ev -> IO ()
 domStorageDisable handle = sendReceiveCommand handle "DOMStorage.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'DOMStorage.enable' command.
- -- Enables storage tracking, storage events will now be delivered to the client.
+--   Enables storage tracking, storage events will now be delivered to the client.
 domStorageEnable :: Handle ev -> IO ()
 domStorageEnable handle = sendReceiveCommand handle "DOMStorage.enable" (Nothing :: Maybe ())
 
@@ -169,8 +170,9 @@ instance FromJSON  PDomStorageGetDomStorageItems where
 
 
 -- | Function for the 'DOMStorage.getDOMStorageItems' command.
--- Parameters: 'PDomStorageGetDomStorageItems'
--- Returns: 'DomStorageGetDomStorageItems'
+--   
+--   Parameters: 'PDomStorageGetDomStorageItems'
+--   Returns: 'DomStorageGetDomStorageItems'
 domStorageGetDomStorageItems :: Handle ev -> PDomStorageGetDomStorageItems -> IO DomStorageGetDomStorageItems
 domStorageGetDomStorageItems handle params = sendReceiveCommandResult handle "DOMStorage.getDOMStorageItems" (Just params)
 
@@ -200,7 +202,8 @@ instance FromJSON  PDomStorageRemoveDomStorageItem where
 
 
 -- | Function for the 'DOMStorage.removeDOMStorageItem' command.
--- Parameters: 'PDomStorageRemoveDomStorageItem'
+--   
+--   Parameters: 'PDomStorageRemoveDomStorageItem'
 domStorageRemoveDomStorageItem :: Handle ev -> PDomStorageRemoveDomStorageItem -> IO ()
 domStorageRemoveDomStorageItem handle params = sendReceiveCommand handle "DOMStorage.removeDOMStorageItem" (Just params)
 
@@ -219,7 +222,8 @@ instance FromJSON  PDomStorageSetDomStorageItem where
 
 
 -- | Function for the 'DOMStorage.setDOMStorageItem' command.
--- Parameters: 'PDomStorageSetDomStorageItem'
+--   
+--   Parameters: 'PDomStorageSetDomStorageItem'
 domStorageSetDomStorageItem :: Handle ev -> PDomStorageSetDomStorageItem -> IO ()
 domStorageSetDomStorageItem handle params = sendReceiveCommand handle "DOMStorage.setDOMStorageItem" (Just params)
 

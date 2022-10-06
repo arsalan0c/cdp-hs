@@ -174,7 +174,7 @@ genType ctx domainName telt = T.unlines . (desc :) . pure $ case D.typesEltEnum 
             ty       ->  T.unwords ["type", tn, "=", lty]                 
   where
     desc     = let td = "Type '" <> (domainName <> "." <> D.typesEltId telt) <> "' ." in 
-        formatDescription 0 td . maybe td fromAltLeft $ D.typesEltDescription telt
+        formatDescription 0 . (td <>) . maybe "" fromAltLeft $ D.typesEltDescription telt
     lty      = leftType ctx domainName (Just . AltLeft $ tytelt) Nothing (D.typesEltItems telt)
     tytelt   = D.typesEltType telt
     tpeltsM  = guardEmptyList isValidParam $ D.typesEltProperties telt
@@ -194,7 +194,7 @@ genEventReturnType :: Context -> T.Text -> D.EventsElt -> T.Text
 genEventReturnType ctx domainName eventElt = T.unlines . (desc :) . pure $
     maybe emptyParams genNonEmptyParams eveltsM
   where
-    desc = formatDescription 0 "" $ "Type of the '" <> 
+    desc = formatDescription 0 $ "Type of the '" <> 
         (eventName domainName eventElt) <> "' event."
     emptyParams = T.unlines 
         [ T.unwords ["data", evrn, "=", evrn]
@@ -213,12 +213,12 @@ genCommand ctx domainName commandElt = T.unlines . catMaybes $
     , returns
     ]
   where
-    pdesc = formatDescription 0 "" $ "Parameters of the '" <> (commandFnName rtn) <> "' command."
+    pdesc = formatDescription 0 $ "Parameters of the '" <> (commandFnName rtn) <> "' command."
     desc = let td = "Function for the '" <> cn <> "' command.\n" in
-        T.intercalate "\n" . catMaybes $ 
-            [ Just $ formatDescription 0 td . (td <>) . maybe "" fromAltLeft $ D.commandsEltDescription commandElt
-            , const ("-- Parameters: '" <> ptn <> "'") <$> peltsM
-            , const ("-- Returns: '" <> rtn <> "'")    <$> reltsM
+        formatDescription 0 . T.intercalate "\n" . catMaybes $ 
+            [ Just $ (td <>) . maybe "" fromAltLeft $ D.commandsEltDescription commandElt
+            , const ("Parameters: '" <> ptn <> "'") <$> peltsM
+            , const ("Returns: '" <> rtn <> "'") <$> reltsM
             ]
     cn   = commandName domainName commandElt 
     ptn  = commandParamsNameHS domainName commandElt
@@ -306,7 +306,7 @@ genReturnType ctx domainName returnTypeName returnElts = T.unlines
     , "} " <> derivingGeneric
     ]
   where
-    desc = formatDescription 0 "" $ "Return type of the '" <> 
+    desc = formatDescription 0 $ "Return type of the '" <> 
         (commandFnName returnTypeName) <> "' command."
     fields = formatFieldDescription . 
         map (reltToField &&& fmap fromAltLeft . D.returnsEltDescription) $ returnElts
@@ -340,17 +340,16 @@ formatComponentDescription component = T.unlines
         ]
     delts  = map fst . Map.elems . cDomDeps $ component
 
-formatDescription :: Int -> T.Text -> T.Text -> T.Text
-formatDescription indent alt desc = go $ T.lines desc 
+formatDescription :: Int -> T.Text -> T.Text
+formatDescription indent desc = go $ T.lines desc 
   where
-    go []      = f indent alt
-    go (hd:tl) = T.intercalate "\n" $ f indent ("-- | " <> hd) : map (f (indent + 2) . ("-- " <>)) tl
+    go (hd:tl) = T.intercalate "\n" $ f indent ("-- | " <> hd) : map (f indent . (("--" <> space 4) <>)) tl
     f i = (space i <>)
 
 formatFieldDescription :: [(T.Text, Maybe T.Text)] -> [T.Text]
 formatFieldDescription = map go
   where
-    go (field,descM) = maybe (space 3 <> field) ((<> (space 3 <> field)) . (<> "\n") . formatDescription 3 "") descM
+    go (field,descM) = maybe (space 3 <> field) ((<> (space 3 <> field)) . (<> "\n") . formatDescription 3) descM
 
 ----- Imports -----
 importDomain :: Bool -> T.Text -> T.Text 

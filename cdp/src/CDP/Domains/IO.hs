@@ -48,8 +48,8 @@ import CDP.Handle
 import CDP.Domains.Runtime as Runtime
 
 
--- | This is either obtained from another method or specified as `blob:&lt;uuid&gt;` where
- -- `&lt;uuid&gt` is an UUID of a Blob.
+-- | Type 'IO.StreamHandle' .This is either obtained from another method or specified as `blob:&lt;uuid&gt;` where
+--   `&lt;uuid&gt` is an UUID of a Blob.
 type IoStreamHandle = String
 
 
@@ -69,8 +69,8 @@ instance FromJSON  PIoClose where
 
 
 -- | Function for the 'IO.close' command.
- -- Close the stream, discard any temporary backing storage.
--- Parameters: 'PIoClose'
+--   Close the stream, discard any temporary backing storage.
+--   Parameters: 'PIoClose'
 ioClose :: Handle ev -> PIoClose -> IO ()
 ioClose handle params = sendReceiveCommand handle "IO.close" (Just params)
 
@@ -80,7 +80,7 @@ data PIoRead = PIoRead {
   -- | Handle of the stream to read.
   pIoReadHandle :: IoStreamHandle,
   -- | Seek to the specified offset before reading (if not specificed, proceed with offset
-    -- following the last read). Some types of streams may only support sequential reads.
+  --   following the last read). Some types of streams may only support sequential reads.
   pIoReadOffset :: Maybe Int,
   -- | Maximum number of bytes to read (left upon the agent discretion if not specified).
   pIoReadSize :: Maybe Int
@@ -93,9 +93,9 @@ instance FromJSON  PIoRead where
 
 
 -- | Function for the 'IO.read' command.
- -- Read a chunk of the stream
--- Parameters: 'PIoRead'
--- Returns: 'IoRead'
+--   Read a chunk of the stream
+--   Parameters: 'PIoRead'
+--   Returns: 'IoRead'
 ioRead :: Handle ev -> PIoRead -> IO IoRead
 ioRead handle params = sendReceiveCommandResult handle "IO.read" (Just params)
 
@@ -130,9 +130,9 @@ instance FromJSON  PIoResolveBlob where
 
 
 -- | Function for the 'IO.resolveBlob' command.
- -- Return UUID of Blob object specified by a remote object id.
--- Parameters: 'PIoResolveBlob'
--- Returns: 'IoResolveBlob'
+--   Return UUID of Blob object specified by a remote object id.
+--   Parameters: 'PIoResolveBlob'
+--   Returns: 'IoResolveBlob'
 ioResolveBlob :: Handle ev -> PIoResolveBlob -> IO IoResolveBlob
 ioResolveBlob handle params = sendReceiveCommandResult handle "IO.resolveBlob" (Just params)
 

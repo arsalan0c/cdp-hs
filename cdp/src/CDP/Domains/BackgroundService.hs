@@ -49,9 +49,9 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 import CDP.Domains.ServiceWorker as ServiceWorker
 
 
--- | The Background Service that will be associated with the commands/events.
- -- Every Background Service operates independently, but they share the same
- -- API.
+-- | Type 'BackgroundService.ServiceName' .The Background Service that will be associated with the commands/events.
+--   Every Background Service operates independently, but they share the same
+--   API.
 data BackgroundServiceServiceName = BackgroundServiceServiceNameBackgroundFetch | BackgroundServiceServiceNameBackgroundSync | BackgroundServiceServiceNamePushMessaging | BackgroundServiceServiceNameNotifications | BackgroundServiceServiceNamePaymentHandler | BackgroundServiceServiceNamePeriodicBackgroundSync
    deriving (Ord, Eq, Show, Read)
 instance FromJSON BackgroundServiceServiceName where
@@ -77,7 +77,7 @@ instance ToJSON BackgroundServiceServiceName where
 
 
 
--- | A key-value pair for additional event information to pass along.
+-- | Type 'BackgroundService.EventMetadata' .A key-value pair for additional event information to pass along.
 data BackgroundServiceEventMetadata = BackgroundServiceEventMetadata {
   backgroundServiceEventMetadataKey :: String,
   backgroundServiceEventMetadataValue :: String
@@ -156,8 +156,8 @@ instance FromJSON  PBackgroundServiceStartObserving where
 
 
 -- | Function for the 'BackgroundService.startObserving' command.
- -- Enables event updates for the service.
--- Parameters: 'PBackgroundServiceStartObserving'
+--   Enables event updates for the service.
+--   Parameters: 'PBackgroundServiceStartObserving'
 backgroundServiceStartObserving :: Handle ev -> PBackgroundServiceStartObserving -> IO ()
 backgroundServiceStartObserving handle params = sendReceiveCommand handle "BackgroundService.startObserving" (Just params)
 
@@ -174,8 +174,8 @@ instance FromJSON  PBackgroundServiceStopObserving where
 
 
 -- | Function for the 'BackgroundService.stopObserving' command.
- -- Disables event updates for the service.
--- Parameters: 'PBackgroundServiceStopObserving'
+--   Disables event updates for the service.
+--   Parameters: 'PBackgroundServiceStopObserving'
 backgroundServiceStopObserving :: Handle ev -> PBackgroundServiceStopObserving -> IO ()
 backgroundServiceStopObserving handle params = sendReceiveCommand handle "BackgroundService.stopObserving" (Just params)
 
@@ -193,8 +193,8 @@ instance FromJSON  PBackgroundServiceSetRecording where
 
 
 -- | Function for the 'BackgroundService.setRecording' command.
- -- Set the recording state for the service.
--- Parameters: 'PBackgroundServiceSetRecording'
+--   Set the recording state for the service.
+--   Parameters: 'PBackgroundServiceSetRecording'
 backgroundServiceSetRecording :: Handle ev -> PBackgroundServiceSetRecording -> IO ()
 backgroundServiceSetRecording handle params = sendReceiveCommand handle "BackgroundService.setRecording" (Just params)
 
@@ -211,8 +211,8 @@ instance FromJSON  PBackgroundServiceClearEvents where
 
 
 -- | Function for the 'BackgroundService.clearEvents' command.
- -- Clears all stored data for the service.
--- Parameters: 'PBackgroundServiceClearEvents'
+--   Clears all stored data for the service.
+--   Parameters: 'PBackgroundServiceClearEvents'
 backgroundServiceClearEvents :: Handle ev -> PBackgroundServiceClearEvents -> IO ()
 backgroundServiceClearEvents handle params = sendReceiveCommand handle "BackgroundService.clearEvents" (Just params)
 

@@ -47,7 +47,7 @@ import CDP.Handle
 
 
 
--- | Describes a single graphics processor (GPU).
+-- | Type 'SystemInfo.GPUDevice' .Describes a single graphics processor (GPU).
 data SystemInfoGpuDevice = SystemInfoGpuDevice {
   -- | PCI ID of the GPU vendor, if available; 0 otherwise.
   systemInfoGpuDeviceVendorId :: Double,
@@ -74,7 +74,7 @@ instance FromJSON  SystemInfoGpuDevice where
 
 
 
--- | Describes the width and height dimensions of an entity.
+-- | Type 'SystemInfo.Size' .Describes the width and height dimensions of an entity.
 data SystemInfoSize = SystemInfoSize {
   -- | Width in pixels.
   systemInfoSizeWidth :: Int,
@@ -89,8 +89,8 @@ instance FromJSON  SystemInfoSize where
 
 
 
--- | Describes a supported video decoding profile with its associated minimum and
- -- maximum resolutions.
+-- | Type 'SystemInfo.VideoDecodeAcceleratorCapability' .Describes a supported video decoding profile with its associated minimum and
+--   maximum resolutions.
 data SystemInfoVideoDecodeAcceleratorCapability = SystemInfoVideoDecodeAcceleratorCapability {
   -- | Video codec profile that is supported, e.g. VP9 Profile 2.
   systemInfoVideoDecodeAcceleratorCapabilityProfile :: String,
@@ -107,16 +107,16 @@ instance FromJSON  SystemInfoVideoDecodeAcceleratorCapability where
 
 
 
--- | Describes a supported video encoding profile with its associated maximum
- -- resolution and maximum framerate.
+-- | Type 'SystemInfo.VideoEncodeAcceleratorCapability' .Describes a supported video encoding profile with its associated maximum
+--   resolution and maximum framerate.
 data SystemInfoVideoEncodeAcceleratorCapability = SystemInfoVideoEncodeAcceleratorCapability {
   -- | Video codec profile that is supported, e.g H264 Main.
   systemInfoVideoEncodeAcceleratorCapabilityProfile :: String,
   -- | Maximum video dimensions in pixels supported for this |profile|.
   systemInfoVideoEncodeAcceleratorCapabilityMaxResolution :: SystemInfoSize,
   -- | Maximum encoding framerate in frames per second supported for this
-    -- |profile|, as fraction's numerator and denominator, e.g. 24/1 fps,
-    -- 24000/1001 fps, etc.
+  --   |profile|, as fraction's numerator and denominator, e.g. 24/1 fps,
+  --   24000/1001 fps, etc.
   systemInfoVideoEncodeAcceleratorCapabilityMaxFramerateNumerator :: Int,
   systemInfoVideoEncodeAcceleratorCapabilityMaxFramerateDenominator :: Int
 } deriving (Generic, Eq, Show, Read)
@@ -128,7 +128,7 @@ instance FromJSON  SystemInfoVideoEncodeAcceleratorCapability where
 
 
 
--- | YUV subsampling type of the pixels of a given image.
+-- | Type 'SystemInfo.SubsamplingFormat' .YUV subsampling type of the pixels of a given image.
 data SystemInfoSubsamplingFormat = SystemInfoSubsamplingFormatYuv420 | SystemInfoSubsamplingFormatYuv422 | SystemInfoSubsamplingFormatYuv444
    deriving (Ord, Eq, Show, Read)
 instance FromJSON SystemInfoSubsamplingFormat where
@@ -148,7 +148,7 @@ instance ToJSON SystemInfoSubsamplingFormat where
 
 
 
--- | Image format of a given image.
+-- | Type 'SystemInfo.ImageType' .Image format of a given image.
 data SystemInfoImageType = SystemInfoImageTypeJpeg | SystemInfoImageTypeWebp | SystemInfoImageTypeUnknown
    deriving (Ord, Eq, Show, Read)
 instance FromJSON SystemInfoImageType where
@@ -168,8 +168,8 @@ instance ToJSON SystemInfoImageType where
 
 
 
--- | Describes a supported image decoding profile with its associated minimum and
- -- maximum resolutions and subsampling.
+-- | Type 'SystemInfo.ImageDecodeAcceleratorCapability' .Describes a supported image decoding profile with its associated minimum and
+--   maximum resolutions and subsampling.
 data SystemInfoImageDecodeAcceleratorCapability = SystemInfoImageDecodeAcceleratorCapability {
   -- | Image coded, e.g. Jpeg.
   systemInfoImageDecodeAcceleratorCapabilityImageType :: SystemInfoImageType,
@@ -188,7 +188,7 @@ instance FromJSON  SystemInfoImageDecodeAcceleratorCapability where
 
 
 
--- | Provides information about the GPU(s) on the system.
+-- | Type 'SystemInfo.GPUInfo' .Provides information about the GPU(s) on the system.
 data SystemInfoGpuInfo = SystemInfoGpuInfo {
   -- | The graphics devices on the system. Element 0 is the primary GPU.
   systemInfoGpuInfoDevices :: [SystemInfoGpuDevice],
@@ -213,14 +213,14 @@ instance FromJSON  SystemInfoGpuInfo where
 
 
 
--- | Represents process info.
+-- | Type 'SystemInfo.ProcessInfo' .Represents process info.
 data SystemInfoProcessInfo = SystemInfoProcessInfo {
   -- | Specifies process type.
   systemInfoProcessInfoType :: String,
   -- | Specifies process id.
   systemInfoProcessInfoId :: Int,
   -- | Specifies cumulative CPU usage in seconds across all threads of the
-    -- process since the process start.
+  --   process since the process start.
   systemInfoProcessInfoCpuTime :: Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON SystemInfoProcessInfo  where
@@ -236,8 +236,8 @@ instance FromJSON  SystemInfoProcessInfo where
 
 
 -- | Function for the 'SystemInfo.getInfo' command.
- -- Returns information about the system.
--- Returns: 'SystemInfoGetInfo'
+--   Returns information about the system.
+--   Returns: 'SystemInfoGetInfo'
 systemInfoGetInfo :: Handle ev -> IO SystemInfoGetInfo
 systemInfoGetInfo handle = sendReceiveCommandResult handle "SystemInfo.getInfo" (Nothing :: Maybe ())
 
@@ -246,13 +246,13 @@ data SystemInfoGetInfo = SystemInfoGetInfo {
   -- | Information about the GPUs on the system.
   systemInfoGetInfoGpu :: SystemInfoGpuInfo,
   -- | A platform-dependent description of the model of the machine. On Mac OS, this is, for
-    -- example, 'MacBookPro'. Will be the empty string if not supported.
+  --   example, 'MacBookPro'. Will be the empty string if not supported.
   systemInfoGetInfoModelName :: String,
   -- | A platform-dependent description of the version of the machine. On Mac OS, this is, for
-    -- example, '10.1'. Will be the empty string if not supported.
+  --   example, '10.1'. Will be the empty string if not supported.
   systemInfoGetInfoModelVersion :: String,
   -- | The command line string used to launch the browser. Will be the empty string if not
-    -- supported.
+  --   supported.
   systemInfoGetInfoCommandLine :: String
 } deriving (Generic, Eq, Show, Read)
 
@@ -265,8 +265,8 @@ instance Command SystemInfoGetInfo where
 
 
 -- | Function for the 'SystemInfo.getProcessInfo' command.
- -- Returns information about all running processes.
--- Returns: 'SystemInfoGetProcessInfo'
+--   Returns information about all running processes.
+--   Returns: 'SystemInfoGetProcessInfo'
 systemInfoGetProcessInfo :: Handle ev -> IO SystemInfoGetProcessInfo
 systemInfoGetProcessInfo handle = sendReceiveCommandResult handle "SystemInfo.getProcessInfo" (Nothing :: Maybe ())
 

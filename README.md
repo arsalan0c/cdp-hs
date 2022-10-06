@@ -19,7 +19,7 @@ To get started:
 
 ## Example usage
 
-Print a page to PDF with Base64 encoded data being read in chunks:
+Print a page to PDF, with Base64 encoded data being read in chunks:
 
 ```hs
 module Main where

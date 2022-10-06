@@ -45,7 +45,7 @@ import CDP.Handle
 
 
 
--- | Run-time execution metric.
+-- | Type 'Performance.Metric' .Run-time execution metric.
 data PerformanceMetric = PerformanceMetric {
   -- | Metric name.
   performanceMetricName :: String,
@@ -80,7 +80,7 @@ instance FromJSON  PerformanceMetrics where
 
 
 -- | Function for the 'Performance.disable' command.
- -- Disable collecting and reporting metrics.
+--   Disable collecting and reporting metrics.
 performanceDisable :: Handle ev -> IO ()
 performanceDisable handle = sendReceiveCommand handle "Performance.disable" (Nothing :: Maybe ())
 
@@ -115,15 +115,15 @@ instance FromJSON  PPerformanceEnable where
 
 
 -- | Function for the 'Performance.enable' command.
- -- Enable collecting and reporting metrics.
--- Parameters: 'PPerformanceEnable'
+--   Enable collecting and reporting metrics.
+--   Parameters: 'PPerformanceEnable'
 performanceEnable :: Handle ev -> PPerformanceEnable -> IO ()
 performanceEnable handle params = sendReceiveCommand handle "Performance.enable" (Just params)
 
 
 -- | Function for the 'Performance.getMetrics' command.
- -- Retrieve current values of run-time metrics.
--- Returns: 'PerformanceGetMetrics'
+--   Retrieve current values of run-time metrics.
+--   Returns: 'PerformanceGetMetrics'
 performanceGetMetrics :: Handle ev -> IO PerformanceGetMetrics
 performanceGetMetrics handle = sendReceiveCommandResult handle "Performance.getMetrics" (Nothing :: Maybe ())
 

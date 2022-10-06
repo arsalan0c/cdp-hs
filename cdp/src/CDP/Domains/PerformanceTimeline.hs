@@ -49,7 +49,7 @@ import CDP.Handle
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
 
 
--- | See https://github.com/WICG/LargestContentfulPaint and largest_contentful_paint.idl
+-- | Type 'PerformanceTimeline.LargestContentfulPaint' .See https://github.com/WICG/LargestContentfulPaint and largest_contentful_paint.idl
 data PerformanceTimelineLargestContentfulPaint = PerformanceTimelineLargestContentfulPaint {
   performanceTimelineLargestContentfulPaintRenderTime :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
   performanceTimelineLargestContentfulPaintLoadTime :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
@@ -83,7 +83,7 @@ instance FromJSON  PerformanceTimelineLayoutShiftAttribution where
 
 
 
--- | See https://wicg.github.io/layout-instability/#sec-layout-shift and layout_shift.idl
+-- | Type 'PerformanceTimeline.LayoutShift' .See https://wicg.github.io/layout-instability/#sec-layout-shift and layout_shift.idl
 data PerformanceTimelineLayoutShift = PerformanceTimelineLayoutShift {
   -- | Score increment produced by this event.
   performanceTimelineLayoutShiftValue :: Double,
@@ -104,7 +104,7 @@ data PerformanceTimelineTimelineEvent = PerformanceTimelineTimelineEvent {
   -- | Identifies the frame that this event is related to. Empty for non-frame targets.
   performanceTimelineTimelineEventFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId,
   -- | The event type, as specified in https://w3c.github.io/performance-timeline/#dom-performanceentry-entrytype
-    -- This determines which of the optional "details" fiedls is present.
+  --   This determines which of the optional "details" fiedls is present.
   performanceTimelineTimelineEventType :: String,
   -- | Name may be empty depending on the type.
   performanceTimelineTimelineEventName :: String,
@@ -142,10 +142,10 @@ instance FromJSON  PerformanceTimelineTimelineEventAdded where
 -- | Parameters of the 'performanceTimelineEnable' command.
 data PPerformanceTimelineEnable = PPerformanceTimelineEnable {
   -- | The types of event to report, as specified in
-    -- https://w3c.github.io/performance-timeline/#dom-performanceentry-entrytype
-    -- The specified filter overrides any previous filters, passing empty
-    -- filter disables recording.
-    -- Note that not all types exposed to the web platform are currently supported.
+  --   https://w3c.github.io/performance-timeline/#dom-performanceentry-entrytype
+  --   The specified filter overrides any previous filters, passing empty
+  --   filter disables recording.
+  --   Note that not all types exposed to the web platform are currently supported.
   pPerformanceTimelineEnableEventTypes :: [String]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPerformanceTimelineEnable  where
@@ -156,9 +156,9 @@ instance FromJSON  PPerformanceTimelineEnable where
 
 
 -- | Function for the 'PerformanceTimeline.enable' command.
- -- Previously buffered events would be reported before method returns.
- -- See also: timelineEventAdded
--- Parameters: 'PPerformanceTimelineEnable'
+--   Previously buffered events would be reported before method returns.
+--   See also: timelineEventAdded
+--   Parameters: 'PPerformanceTimelineEnable'
 performanceTimelineEnable :: Handle ev -> PPerformanceTimelineEnable -> IO ()
 performanceTimelineEnable handle params = sendReceiveCommand handle "PerformanceTimeline.enable" (Just params)
 

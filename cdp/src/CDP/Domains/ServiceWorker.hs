@@ -49,7 +49,7 @@ import CDP.Domains.BrowserTarget as BrowserTarget
 -- | Type 'ServiceWorker.RegistrationID' .
 type ServiceWorkerRegistrationId = String
 
--- | ServiceWorker registration.
+-- | Type 'ServiceWorker.ServiceWorkerRegistration' .ServiceWorker registration.
 data ServiceWorkerServiceWorkerRegistration = ServiceWorkerServiceWorkerRegistration {
   serviceWorkerServiceWorkerRegistrationRegistrationId :: ServiceWorkerRegistrationId,
   serviceWorkerServiceWorkerRegistrationScopeUrl :: String,
@@ -111,7 +111,7 @@ instance ToJSON ServiceWorkerServiceWorkerVersionStatus where
 
 
 
--- | ServiceWorker version.
+-- | Type 'ServiceWorker.ServiceWorkerVersion' .ServiceWorker version.
 data ServiceWorkerServiceWorkerVersion = ServiceWorkerServiceWorkerVersion {
   serviceWorkerServiceWorkerVersionVersionId :: String,
   serviceWorkerServiceWorkerVersionRegistrationId :: ServiceWorkerRegistrationId,
@@ -121,7 +121,7 @@ data ServiceWorkerServiceWorkerVersion = ServiceWorkerServiceWorkerVersion {
   -- | The Last-Modified header value of the main script.
   serviceWorkerServiceWorkerVersionScriptLastModified :: Maybe Double,
   -- | The time at which the response headers of the main script were received from the server.
-    -- For cached script it is the last time the cache entry was validated.
+  --   For cached script it is the last time the cache entry was validated.
   serviceWorkerServiceWorkerVersionScriptResponseTime :: Maybe Double,
   serviceWorkerServiceWorkerVersionControlledClients :: Maybe [BrowserTarget.TargetTargetId],
   serviceWorkerServiceWorkerVersionTargetId :: Maybe BrowserTarget.TargetTargetId
@@ -134,7 +134,7 @@ instance FromJSON  ServiceWorkerServiceWorkerVersion where
 
 
 
--- | ServiceWorker error message.
+-- | Type 'ServiceWorker.ServiceWorkerErrorMessage' .ServiceWorker error message.
 data ServiceWorkerServiceWorkerErrorMessage = ServiceWorkerServiceWorkerErrorMessage {
   serviceWorkerServiceWorkerErrorMessageErrorMessage :: String,
   serviceWorkerServiceWorkerErrorMessageRegistrationId :: ServiceWorkerRegistrationId,
@@ -205,7 +205,8 @@ instance FromJSON  PServiceWorkerDeliverPushMessage where
 
 
 -- | Function for the 'ServiceWorker.deliverPushMessage' command.
--- Parameters: 'PServiceWorkerDeliverPushMessage'
+--   
+--   Parameters: 'PServiceWorkerDeliverPushMessage'
 serviceWorkerDeliverPushMessage :: Handle ev -> PServiceWorkerDeliverPushMessage -> IO ()
 serviceWorkerDeliverPushMessage handle params = sendReceiveCommand handle "ServiceWorker.deliverPushMessage" (Just params)
 
@@ -230,7 +231,8 @@ instance FromJSON  PServiceWorkerDispatchSyncEvent where
 
 
 -- | Function for the 'ServiceWorker.dispatchSyncEvent' command.
--- Parameters: 'PServiceWorkerDispatchSyncEvent'
+--   
+--   Parameters: 'PServiceWorkerDispatchSyncEvent'
 serviceWorkerDispatchSyncEvent :: Handle ev -> PServiceWorkerDispatchSyncEvent -> IO ()
 serviceWorkerDispatchSyncEvent handle params = sendReceiveCommand handle "ServiceWorker.dispatchSyncEvent" (Just params)
 
@@ -249,7 +251,8 @@ instance FromJSON  PServiceWorkerDispatchPeriodicSyncEvent where
 
 
 -- | Function for the 'ServiceWorker.dispatchPeriodicSyncEvent' command.
--- Parameters: 'PServiceWorkerDispatchPeriodicSyncEvent'
+--   
+--   Parameters: 'PServiceWorkerDispatchPeriodicSyncEvent'
 serviceWorkerDispatchPeriodicSyncEvent :: Handle ev -> PServiceWorkerDispatchPeriodicSyncEvent -> IO ()
 serviceWorkerDispatchPeriodicSyncEvent handle params = sendReceiveCommand handle "ServiceWorker.dispatchPeriodicSyncEvent" (Just params)
 
@@ -271,7 +274,8 @@ instance FromJSON  PServiceWorkerInspectWorker where
 
 
 -- | Function for the 'ServiceWorker.inspectWorker' command.
--- Parameters: 'PServiceWorkerInspectWorker'
+--   
+--   Parameters: 'PServiceWorkerInspectWorker'
 serviceWorkerInspectWorker :: Handle ev -> PServiceWorkerInspectWorker -> IO ()
 serviceWorkerInspectWorker handle params = sendReceiveCommand handle "ServiceWorker.inspectWorker" (Just params)
 
@@ -288,7 +292,8 @@ instance FromJSON  PServiceWorkerSetForceUpdateOnPageLoad where
 
 
 -- | Function for the 'ServiceWorker.setForceUpdateOnPageLoad' command.
--- Parameters: 'PServiceWorkerSetForceUpdateOnPageLoad'
+--   
+--   Parameters: 'PServiceWorkerSetForceUpdateOnPageLoad'
 serviceWorkerSetForceUpdateOnPageLoad :: Handle ev -> PServiceWorkerSetForceUpdateOnPageLoad -> IO ()
 serviceWorkerSetForceUpdateOnPageLoad handle params = sendReceiveCommand handle "ServiceWorker.setForceUpdateOnPageLoad" (Just params)
 
@@ -305,7 +310,8 @@ instance FromJSON  PServiceWorkerSkipWaiting where
 
 
 -- | Function for the 'ServiceWorker.skipWaiting' command.
--- Parameters: 'PServiceWorkerSkipWaiting'
+--   
+--   Parameters: 'PServiceWorkerSkipWaiting'
 serviceWorkerSkipWaiting :: Handle ev -> PServiceWorkerSkipWaiting -> IO ()
 serviceWorkerSkipWaiting handle params = sendReceiveCommand handle "ServiceWorker.skipWaiting" (Just params)
 
@@ -322,7 +328,8 @@ instance FromJSON  PServiceWorkerStartWorker where
 
 
 -- | Function for the 'ServiceWorker.startWorker' command.
--- Parameters: 'PServiceWorkerStartWorker'
+--   
+--   Parameters: 'PServiceWorkerStartWorker'
 serviceWorkerStartWorker :: Handle ev -> PServiceWorkerStartWorker -> IO ()
 serviceWorkerStartWorker handle params = sendReceiveCommand handle "ServiceWorker.startWorker" (Just params)
 
@@ -344,7 +351,8 @@ instance FromJSON  PServiceWorkerStopWorker where
 
 
 -- | Function for the 'ServiceWorker.stopWorker' command.
--- Parameters: 'PServiceWorkerStopWorker'
+--   
+--   Parameters: 'PServiceWorkerStopWorker'
 serviceWorkerStopWorker :: Handle ev -> PServiceWorkerStopWorker -> IO ()
 serviceWorkerStopWorker handle params = sendReceiveCommand handle "ServiceWorker.stopWorker" (Just params)
 
@@ -361,7 +369,8 @@ instance FromJSON  PServiceWorkerUnregister where
 
 
 -- | Function for the 'ServiceWorker.unregister' command.
--- Parameters: 'PServiceWorkerUnregister'
+--   
+--   Parameters: 'PServiceWorkerUnregister'
 serviceWorkerUnregister :: Handle ev -> PServiceWorkerUnregister -> IO ()
 serviceWorkerUnregister handle params = sendReceiveCommand handle "ServiceWorker.unregister" (Just params)
 
@@ -378,7 +387,8 @@ instance FromJSON  PServiceWorkerUpdateRegistration where
 
 
 -- | Function for the 'ServiceWorker.updateRegistration' command.
--- Parameters: 'PServiceWorkerUpdateRegistration'
+--   
+--   Parameters: 'PServiceWorkerUpdateRegistration'
 serviceWorkerUpdateRegistration :: Handle ev -> PServiceWorkerUpdateRegistration -> IO ()
 serviceWorkerUpdateRegistration handle params = sendReceiveCommand handle "ServiceWorker.updateRegistration" (Just params)
 

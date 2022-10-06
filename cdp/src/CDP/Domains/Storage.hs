@@ -50,7 +50,7 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 -- | Type 'Storage.SerializedStorageKey' .
 type StorageSerializedStorageKey = String
 
--- | Enum of possible storage types.
+-- | Type 'Storage.StorageType' .Enum of possible storage types.
 data StorageStorageType = StorageStorageTypeAppcache | StorageStorageTypeCookies | StorageStorageTypeFileSystems | StorageStorageTypeIndexeddb | StorageStorageTypeLocalStorage | StorageStorageTypeShaderCache | StorageStorageTypeWebsql | StorageStorageTypeServiceWorkers | StorageStorageTypeCacheStorage | StorageStorageTypeInterestGroups | StorageStorageTypeAll | StorageStorageTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON StorageStorageType where
@@ -88,7 +88,7 @@ instance ToJSON StorageStorageType where
 
 
 
--- | Usage for a storage type.
+-- | Type 'Storage.UsageForType' .Usage for a storage type.
 data StorageUsageForType = StorageUsageForType {
   -- | Name of storage type.
   storageUsageForTypeStorageType :: StorageStorageType,
@@ -103,8 +103,8 @@ instance FromJSON  StorageUsageForType where
 
 
 
--- | Pair of issuer origin and number of available (signed, but not used) Trust
- -- Tokens from that issuer.
+-- | Type 'Storage.TrustTokens' .Pair of issuer origin and number of available (signed, but not used) Trust
+--   Tokens from that issuer.
 data StorageTrustTokens = StorageTrustTokens {
   storageTrustTokensIssuerOrigin :: String,
   storageTrustTokensCount :: Double
@@ -117,7 +117,7 @@ instance FromJSON  StorageTrustTokens where
 
 
 
--- | Enum of interest group access types.
+-- | Type 'Storage.InterestGroupAccessType' .Enum of interest group access types.
 data StorageInterestGroupAccessType = StorageInterestGroupAccessTypeJoin | StorageInterestGroupAccessTypeLeave | StorageInterestGroupAccessTypeUpdate | StorageInterestGroupAccessTypeBid | StorageInterestGroupAccessTypeWin
    deriving (Ord, Eq, Show, Read)
 instance FromJSON StorageInterestGroupAccessType where
@@ -141,7 +141,7 @@ instance ToJSON StorageInterestGroupAccessType where
 
 
 
--- | Ad advertising element inside an interest group.
+-- | Type 'Storage.InterestGroupAd' .Ad advertising element inside an interest group.
 data StorageInterestGroupAd = StorageInterestGroupAd {
   storageInterestGroupAdRenderUrl :: String,
   storageInterestGroupAdMetadata :: Maybe String
@@ -154,7 +154,7 @@ instance FromJSON  StorageInterestGroupAd where
 
 
 
--- | The full details of an interest group.
+-- | Type 'Storage.InterestGroupDetails' .The full details of an interest group.
 data StorageInterestGroupDetails = StorageInterestGroupDetails {
   storageInterestGroupDetailsOwnerOrigin :: String,
   storageInterestGroupDetailsName :: String,
@@ -266,9 +266,9 @@ instance FromJSON  PStorageGetStorageKeyForFrame where
 
 
 -- | Function for the 'Storage.getStorageKeyForFrame' command.
- -- Returns a storage key given a frame id.
--- Parameters: 'PStorageGetStorageKeyForFrame'
--- Returns: 'StorageGetStorageKeyForFrame'
+--   Returns a storage key given a frame id.
+--   Parameters: 'PStorageGetStorageKeyForFrame'
+--   Returns: 'StorageGetStorageKeyForFrame'
 storageGetStorageKeyForFrame :: Handle ev -> PStorageGetStorageKeyForFrame -> IO StorageGetStorageKeyForFrame
 storageGetStorageKeyForFrame handle params = sendReceiveCommandResult handle "Storage.getStorageKeyForFrame" (Just params)
 
@@ -300,8 +300,8 @@ instance FromJSON  PStorageClearDataForOrigin where
 
 
 -- | Function for the 'Storage.clearDataForOrigin' command.
- -- Clears storage for origin.
--- Parameters: 'PStorageClearDataForOrigin'
+--   Clears storage for origin.
+--   Parameters: 'PStorageClearDataForOrigin'
 storageClearDataForOrigin :: Handle ev -> PStorageClearDataForOrigin -> IO ()
 storageClearDataForOrigin handle params = sendReceiveCommand handle "Storage.clearDataForOrigin" (Just params)
 
@@ -319,9 +319,9 @@ instance FromJSON  PStorageGetCookies where
 
 
 -- | Function for the 'Storage.getCookies' command.
- -- Returns all browser cookies.
--- Parameters: 'PStorageGetCookies'
--- Returns: 'StorageGetCookies'
+--   Returns all browser cookies.
+--   Parameters: 'PStorageGetCookies'
+--   Returns: 'StorageGetCookies'
 storageGetCookies :: Handle ev -> PStorageGetCookies -> IO StorageGetCookies
 storageGetCookies handle params = sendReceiveCommandResult handle "Storage.getCookies" (Just params)
 
@@ -354,8 +354,8 @@ instance FromJSON  PStorageSetCookies where
 
 
 -- | Function for the 'Storage.setCookies' command.
- -- Sets given cookies.
--- Parameters: 'PStorageSetCookies'
+--   Sets given cookies.
+--   Parameters: 'PStorageSetCookies'
 storageSetCookies :: Handle ev -> PStorageSetCookies -> IO ()
 storageSetCookies handle params = sendReceiveCommand handle "Storage.setCookies" (Just params)
 
@@ -373,8 +373,8 @@ instance FromJSON  PStorageClearCookies where
 
 
 -- | Function for the 'Storage.clearCookies' command.
- -- Clears cookies.
--- Parameters: 'PStorageClearCookies'
+--   Clears cookies.
+--   Parameters: 'PStorageClearCookies'
 storageClearCookies :: Handle ev -> PStorageClearCookies -> IO ()
 storageClearCookies handle params = sendReceiveCommand handle "Storage.clearCookies" (Just params)
 
@@ -392,9 +392,9 @@ instance FromJSON  PStorageGetUsageAndQuota where
 
 
 -- | Function for the 'Storage.getUsageAndQuota' command.
- -- Returns usage and quota in bytes.
--- Parameters: 'PStorageGetUsageAndQuota'
--- Returns: 'StorageGetUsageAndQuota'
+--   Returns usage and quota in bytes.
+--   Parameters: 'PStorageGetUsageAndQuota'
+--   Returns: 'StorageGetUsageAndQuota'
 storageGetUsageAndQuota :: Handle ev -> PStorageGetUsageAndQuota -> IO StorageGetUsageAndQuota
 storageGetUsageAndQuota handle params = sendReceiveCommandResult handle "Storage.getUsageAndQuota" (Just params)
 
@@ -423,12 +423,12 @@ data PStorageOverrideQuotaForOrigin = PStorageOverrideQuotaForOrigin {
   -- | Security origin.
   pStorageOverrideQuotaForOriginOrigin :: String,
   -- | The quota size (in bytes) to override the original quota with.
-    -- If this is called multiple times, the overridden quota will be equal to
-    -- the quotaSize provided in the final call. If this is called without
-    -- specifying a quotaSize, the quota will be reset to the default value for
-    -- the specified origin. If this is called multiple times with different
-    -- origins, the override will be maintained for each origin until it is
-    -- disabled (called without a quotaSize).
+  --   If this is called multiple times, the overridden quota will be equal to
+  --   the quotaSize provided in the final call. If this is called without
+  --   specifying a quotaSize, the quota will be reset to the default value for
+  --   the specified origin. If this is called multiple times with different
+  --   origins, the override will be maintained for each origin until it is
+  --   disabled (called without a quotaSize).
   pStorageOverrideQuotaForOriginQuotaSize :: Maybe Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PStorageOverrideQuotaForOrigin  where
@@ -439,8 +439,8 @@ instance FromJSON  PStorageOverrideQuotaForOrigin where
 
 
 -- | Function for the 'Storage.overrideQuotaForOrigin' command.
- -- Override quota for the specified origin
--- Parameters: 'PStorageOverrideQuotaForOrigin'
+--   Override quota for the specified origin
+--   Parameters: 'PStorageOverrideQuotaForOrigin'
 storageOverrideQuotaForOrigin :: Handle ev -> PStorageOverrideQuotaForOrigin -> IO ()
 storageOverrideQuotaForOrigin handle params = sendReceiveCommand handle "Storage.overrideQuotaForOrigin" (Just params)
 
@@ -458,8 +458,8 @@ instance FromJSON  PStorageTrackCacheStorageForOrigin where
 
 
 -- | Function for the 'Storage.trackCacheStorageForOrigin' command.
- -- Registers origin to be notified when an update occurs to its cache storage list.
--- Parameters: 'PStorageTrackCacheStorageForOrigin'
+--   Registers origin to be notified when an update occurs to its cache storage list.
+--   Parameters: 'PStorageTrackCacheStorageForOrigin'
 storageTrackCacheStorageForOrigin :: Handle ev -> PStorageTrackCacheStorageForOrigin -> IO ()
 storageTrackCacheStorageForOrigin handle params = sendReceiveCommand handle "Storage.trackCacheStorageForOrigin" (Just params)
 
@@ -477,8 +477,8 @@ instance FromJSON  PStorageTrackIndexedDbForOrigin where
 
 
 -- | Function for the 'Storage.trackIndexedDBForOrigin' command.
- -- Registers origin to be notified when an update occurs to its IndexedDB.
--- Parameters: 'PStorageTrackIndexedDbForOrigin'
+--   Registers origin to be notified when an update occurs to its IndexedDB.
+--   Parameters: 'PStorageTrackIndexedDbForOrigin'
 storageTrackIndexedDbForOrigin :: Handle ev -> PStorageTrackIndexedDbForOrigin -> IO ()
 storageTrackIndexedDbForOrigin handle params = sendReceiveCommand handle "Storage.trackIndexedDBForOrigin" (Just params)
 
@@ -496,8 +496,8 @@ instance FromJSON  PStorageUntrackCacheStorageForOrigin where
 
 
 -- | Function for the 'Storage.untrackCacheStorageForOrigin' command.
- -- Unregisters origin from receiving notifications for cache storage.
--- Parameters: 'PStorageUntrackCacheStorageForOrigin'
+--   Unregisters origin from receiving notifications for cache storage.
+--   Parameters: 'PStorageUntrackCacheStorageForOrigin'
 storageUntrackCacheStorageForOrigin :: Handle ev -> PStorageUntrackCacheStorageForOrigin -> IO ()
 storageUntrackCacheStorageForOrigin handle params = sendReceiveCommand handle "Storage.untrackCacheStorageForOrigin" (Just params)
 
@@ -515,16 +515,16 @@ instance FromJSON  PStorageUntrackIndexedDbForOrigin where
 
 
 -- | Function for the 'Storage.untrackIndexedDBForOrigin' command.
- -- Unregisters origin from receiving notifications for IndexedDB.
--- Parameters: 'PStorageUntrackIndexedDbForOrigin'
+--   Unregisters origin from receiving notifications for IndexedDB.
+--   Parameters: 'PStorageUntrackIndexedDbForOrigin'
 storageUntrackIndexedDbForOrigin :: Handle ev -> PStorageUntrackIndexedDbForOrigin -> IO ()
 storageUntrackIndexedDbForOrigin handle params = sendReceiveCommand handle "Storage.untrackIndexedDBForOrigin" (Just params)
 
 
 -- | Function for the 'Storage.getTrustTokens' command.
- -- Returns the number of stored Trust Tokens per issuer for the
- -- current browsing context.
--- Returns: 'StorageGetTrustTokens'
+--   Returns the number of stored Trust Tokens per issuer for the
+--   current browsing context.
+--   Returns: 'StorageGetTrustTokens'
 storageGetTrustTokens :: Handle ev -> IO StorageGetTrustTokens
 storageGetTrustTokens handle = sendReceiveCommandResult handle "Storage.getTrustTokens" (Nothing :: Maybe ())
 
@@ -553,10 +553,10 @@ instance FromJSON  PStorageClearTrustTokens where
 
 
 -- | Function for the 'Storage.clearTrustTokens' command.
- -- Removes all Trust Tokens issued by the provided issuerOrigin.
- -- Leaves other stored data, including the issuer's Redemption Records, intact.
--- Parameters: 'PStorageClearTrustTokens'
--- Returns: 'StorageClearTrustTokens'
+--   Removes all Trust Tokens issued by the provided issuerOrigin.
+--   Leaves other stored data, including the issuer's Redemption Records, intact.
+--   Parameters: 'PStorageClearTrustTokens'
+--   Returns: 'StorageClearTrustTokens'
 storageClearTrustTokens :: Handle ev -> PStorageClearTrustTokens -> IO StorageClearTrustTokens
 storageClearTrustTokens handle params = sendReceiveCommandResult handle "Storage.clearTrustTokens" (Just params)
 
@@ -587,9 +587,9 @@ instance FromJSON  PStorageGetInterestGroupDetails where
 
 
 -- | Function for the 'Storage.getInterestGroupDetails' command.
- -- Gets details for a named interest group.
--- Parameters: 'PStorageGetInterestGroupDetails'
--- Returns: 'StorageGetInterestGroupDetails'
+--   Gets details for a named interest group.
+--   Parameters: 'PStorageGetInterestGroupDetails'
+--   Returns: 'StorageGetInterestGroupDetails'
 storageGetInterestGroupDetails :: Handle ev -> PStorageGetInterestGroupDetails -> IO StorageGetInterestGroupDetails
 storageGetInterestGroupDetails handle params = sendReceiveCommandResult handle "Storage.getInterestGroupDetails" (Just params)
 
@@ -618,8 +618,8 @@ instance FromJSON  PStorageSetInterestGroupTracking where
 
 
 -- | Function for the 'Storage.setInterestGroupTracking' command.
- -- Enables/Disables issuing of interestGroupAccessed events.
--- Parameters: 'PStorageSetInterestGroupTracking'
+--   Enables/Disables issuing of interestGroupAccessed events.
+--   Parameters: 'PStorageSetInterestGroupTracking'
 storageSetInterestGroupTracking :: Handle ev -> PStorageSetInterestGroupTracking -> IO ()
 storageSetInterestGroupTracking handle params = sendReceiveCommand handle "Storage.setInterestGroupTracking" (Just params)
 

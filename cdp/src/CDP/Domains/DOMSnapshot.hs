@@ -49,7 +49,7 @@ import CDP.Domains.DOMDebugger as DOMDebugger
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
 
 
--- | A Node in the DOM tree.
+-- | Type 'DOMSnapshot.DOMNode' .A Node in the DOM tree.
 data DomSnapshotDomNode = DomSnapshotDomNode {
   -- | `Node`'s nodeType.
   domSnapshotDomNodeNodeType :: Int,
@@ -68,15 +68,15 @@ data DomSnapshotDomNode = DomSnapshotDomNode {
   -- | `Node`'s id, corresponds to DOM.Node.backendNodeId.
   domSnapshotDomNodeBackendNodeId :: DOMPageNetworkEmulationSecurity.DomBackendNodeId,
   -- | The indexes of the node's child nodes in the `domNodes` array returned by `getSnapshot`, if
-    -- any.
+  --   any.
   domSnapshotDomNodeChildNodeIndexes :: Maybe [Int],
   -- | Attributes of an `Element` node.
   domSnapshotDomNodeAttributes :: Maybe [DomSnapshotNameValue],
   -- | Indexes of pseudo elements associated with this node in the `domNodes` array returned by
-    -- `getSnapshot`, if any.
+  --   `getSnapshot`, if any.
   domSnapshotDomNodePseudoElementIndexes :: Maybe [Int],
   -- | The index of the node's related layout tree node in the `layoutTreeNodes` array returned by
-    -- `getSnapshot`, if any.
+  --   `getSnapshot`, if any.
   domSnapshotDomNodeLayoutNodeIndex :: Maybe Int,
   -- | Document URL that `Document` or `FrameOwner` node points to.
   domSnapshotDomNodeDocumentUrl :: Maybe String,
@@ -93,15 +93,15 @@ data DomSnapshotDomNode = DomSnapshotDomNode {
   -- | Frame ID for frame owner elements and also for the document node.
   domSnapshotDomNodeFrameId :: Maybe DOMPageNetworkEmulationSecurity.PageFrameId,
   -- | The index of a frame owner element's content document in the `domNodes` array returned by
-    -- `getSnapshot`, if any.
+  --   `getSnapshot`, if any.
   domSnapshotDomNodeContentDocumentIndex :: Maybe Int,
   -- | Type of a pseudo element node.
   domSnapshotDomNodePseudoType :: Maybe DOMPageNetworkEmulationSecurity.DomPseudoType,
   -- | Shadow root type.
   domSnapshotDomNodeShadowRootType :: Maybe DOMPageNetworkEmulationSecurity.DomShadowRootType,
   -- | Whether this DOM node responds to mouse clicks. This includes nodes that have had click
-    -- event listeners attached via JavaScript as well as anchor tags that naturally navigate when
-    -- clicked.
+  --   event listeners attached via JavaScript as well as anchor tags that naturally navigate when
+  --   clicked.
   domSnapshotDomNodeIsClickable :: Maybe Bool,
   -- | Details of the node's event listeners, if any.
   domSnapshotDomNodeEventListeners :: Maybe [DOMDebugger.DomDebuggerEventListener],
@@ -121,16 +121,16 @@ instance FromJSON  DomSnapshotDomNode where
 
 
 
--- | Details of post layout rendered text positions. The exact layout should not be regarded as
- -- stable and may change between versions.
+-- | Type 'DOMSnapshot.InlineTextBox' .Details of post layout rendered text positions. The exact layout should not be regarded as
+--   stable and may change between versions.
 data DomSnapshotInlineTextBox = DomSnapshotInlineTextBox {
   -- | The bounding box in document coordinates. Note that scroll offset of the document is ignored.
   domSnapshotInlineTextBoxBoundingBox :: DOMPageNetworkEmulationSecurity.DomRect,
   -- | The starting index in characters, for this post layout textbox substring. Characters that
-    -- would be represented as a surrogate pair in UTF-16 have length 2.
+  --   would be represented as a surrogate pair in UTF-16 have length 2.
   domSnapshotInlineTextBoxStartCharacterIndex :: Int,
   -- | The number of characters in this post layout textbox substring. Characters that would be
-    -- represented as a surrogate pair in UTF-16 have length 2.
+  --   represented as a surrogate pair in UTF-16 have length 2.
   domSnapshotInlineTextBoxNumCharacters :: Int
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomSnapshotInlineTextBox  where
@@ -141,7 +141,7 @@ instance FromJSON  DomSnapshotInlineTextBox where
 
 
 
--- | Details of an element in the DOM tree with a LayoutObject.
+-- | Type 'DOMSnapshot.LayoutTreeNode' .Details of an element in the DOM tree with a LayoutObject.
 data DomSnapshotLayoutTreeNode = DomSnapshotLayoutTreeNode {
   -- | The index of the related DOM node in the `domNodes` array returned by `getSnapshot`.
   domSnapshotLayoutTreeNodeDomNodeIndex :: Int,
@@ -154,8 +154,8 @@ data DomSnapshotLayoutTreeNode = DomSnapshotLayoutTreeNode {
   -- | Index into the `computedStyles` array returned by `getSnapshot`.
   domSnapshotLayoutTreeNodeStyleIndex :: Maybe Int,
   -- | Global paint order index, which is determined by the stacking order of the nodes. Nodes
-    -- that are painted together will have the same index. Only provided if includePaintOrder in
-    -- getSnapshot was true.
+  --   that are painted together will have the same index. Only provided if includePaintOrder in
+  --   getSnapshot was true.
   domSnapshotLayoutTreeNodePaintOrder :: Maybe Int,
   -- | Set to true to indicate the element begins a new stacking context.
   domSnapshotLayoutTreeNodeIsStackingContext :: Maybe Bool
@@ -168,7 +168,7 @@ instance FromJSON  DomSnapshotLayoutTreeNode where
 
 
 
--- | A subset of the full ComputedStyle as defined by the request whitelist.
+-- | Type 'DOMSnapshot.ComputedStyle' .A subset of the full ComputedStyle as defined by the request whitelist.
 data DomSnapshotComputedStyle = DomSnapshotComputedStyle {
   -- | Name/value pairs of computed style properties.
   domSnapshotComputedStyleProperties :: [DomSnapshotNameValue]
@@ -181,7 +181,7 @@ instance FromJSON  DomSnapshotComputedStyle where
 
 
 
--- | A name/value pair.
+-- | Type 'DOMSnapshot.NameValue' .A name/value pair.
 data DomSnapshotNameValue = DomSnapshotNameValue {
   -- | Attribute/property name.
   domSnapshotNameValueName :: String,
@@ -196,13 +196,13 @@ instance FromJSON  DomSnapshotNameValue where
 
 
 
--- | Index of the string in the strings table.
+-- | Type 'DOMSnapshot.StringIndex' .Index of the string in the strings table.
 type DomSnapshotStringIndex = Int
 
--- | Index of the string in the strings table.
+-- | Type 'DOMSnapshot.ArrayOfStrings' .Index of the string in the strings table.
 type DomSnapshotArrayOfStrings = [DomSnapshotStringIndex]
 
--- | Data that is only present on rare nodes.
+-- | Type 'DOMSnapshot.RareStringData' .Data that is only present on rare nodes.
 data DomSnapshotRareStringData = DomSnapshotRareStringData {
   domSnapshotRareStringDataIndex :: [Int],
   domSnapshotRareStringDataValue :: [DomSnapshotStringIndex]
@@ -243,7 +243,7 @@ instance FromJSON  DomSnapshotRareIntegerData where
 -- | Type 'DOMSnapshot.Rectangle' .
 type DomSnapshotRectangle = [Double]
 
--- | Document snapshot.
+-- | Type 'DOMSnapshot.DocumentSnapshot' .Document snapshot.
 data DomSnapshotDocumentSnapshot = DomSnapshotDocumentSnapshot {
   -- | Document URL that `Document` or `FrameOwner` node points to.
   domSnapshotDocumentSnapshotDocumentUrl :: DomSnapshotStringIndex,
@@ -284,7 +284,7 @@ instance FromJSON  DomSnapshotDocumentSnapshot where
 
 
 
--- | Table containing nodes.
+-- | Type 'DOMSnapshot.NodeTreeSnapshot' .Table containing nodes.
 data DomSnapshotNodeTreeSnapshot = DomSnapshotNodeTreeSnapshot {
   -- | Parent node index.
   domSnapshotNodeTreeSnapshotParentIndex :: Maybe [Int],
@@ -313,8 +313,8 @@ data DomSnapshotNodeTreeSnapshot = DomSnapshotNodeTreeSnapshot {
   -- | Type of a pseudo element node.
   domSnapshotNodeTreeSnapshotPseudoType :: Maybe DomSnapshotRareStringData,
   -- | Whether this DOM node responds to mouse clicks. This includes nodes that have had click
-    -- event listeners attached via JavaScript as well as anchor tags that naturally navigate when
-    -- clicked.
+  --   event listeners attached via JavaScript as well as anchor tags that naturally navigate when
+  --   clicked.
   domSnapshotNodeTreeSnapshotIsClickable :: Maybe DomSnapshotRareBooleanData,
   -- | The selected url for nodes with a srcset attribute.
   domSnapshotNodeTreeSnapshotCurrentSourceUrl :: Maybe DomSnapshotRareStringData,
@@ -329,7 +329,7 @@ instance FromJSON  DomSnapshotNodeTreeSnapshot where
 
 
 
--- | Table of details of an element in the DOM tree with a LayoutObject.
+-- | Type 'DOMSnapshot.LayoutTreeSnapshot' .Table of details of an element in the DOM tree with a LayoutObject.
 data DomSnapshotLayoutTreeSnapshot = DomSnapshotLayoutTreeSnapshot {
   -- | Index of the corresponding node in the `NodeTreeSnapshot` array returned by `captureSnapshot`.
   domSnapshotLayoutTreeSnapshotNodeIndex :: [Int],
@@ -342,8 +342,8 @@ data DomSnapshotLayoutTreeSnapshot = DomSnapshotLayoutTreeSnapshot {
   -- | Stacking context information.
   domSnapshotLayoutTreeSnapshotStackingContexts :: DomSnapshotRareBooleanData,
   -- | Global paint order index, which is determined by the stacking order of the nodes. Nodes
-    -- that are painted together will have the same index. Only provided if includePaintOrder in
-    -- captureSnapshot was true.
+  --   that are painted together will have the same index. Only provided if includePaintOrder in
+  --   captureSnapshot was true.
   domSnapshotLayoutTreeSnapshotPaintOrders :: Maybe [Int],
   -- | The offset rect of nodes. Only available when includeDOMRects is set to true
   domSnapshotLayoutTreeSnapshotOffsetRects :: Maybe [DomSnapshotRectangle],
@@ -364,18 +364,18 @@ instance FromJSON  DomSnapshotLayoutTreeSnapshot where
 
 
 
--- | Table of details of the post layout rendered text positions. The exact layout should not be regarded as
- -- stable and may change between versions.
+-- | Type 'DOMSnapshot.TextBoxSnapshot' .Table of details of the post layout rendered text positions. The exact layout should not be regarded as
+--   stable and may change between versions.
 data DomSnapshotTextBoxSnapshot = DomSnapshotTextBoxSnapshot {
   -- | Index of the layout tree node that owns this box collection.
   domSnapshotTextBoxSnapshotLayoutIndex :: [Int],
   -- | The absolute position bounding box.
   domSnapshotTextBoxSnapshotBounds :: [DomSnapshotRectangle],
   -- | The starting index in characters, for this post layout textbox substring. Characters that
-    -- would be represented as a surrogate pair in UTF-16 have length 2.
+  --   would be represented as a surrogate pair in UTF-16 have length 2.
   domSnapshotTextBoxSnapshotStart :: [Int],
   -- | The number of characters in this post layout textbox substring. Characters that would be
-    -- represented as a surrogate pair in UTF-16 have length 2.
+  --   represented as a surrogate pair in UTF-16 have length 2.
   domSnapshotTextBoxSnapshotLength :: [Int]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomSnapshotTextBoxSnapshot  where
@@ -391,13 +391,13 @@ instance FromJSON  DomSnapshotTextBoxSnapshot where
 
 
 -- | Function for the 'DOMSnapshot.disable' command.
- -- Disables DOM snapshot agent for the given page.
+--   Disables DOM snapshot agent for the given page.
 domSnapshotDisable :: Handle ev -> IO ()
 domSnapshotDisable handle = sendReceiveCommand handle "DOMSnapshot.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'DOMSnapshot.enable' command.
- -- Enables DOM snapshot agent for the given page.
+--   Enables DOM snapshot agent for the given page.
 domSnapshotEnable :: Handle ev -> IO ()
 domSnapshotEnable handle = sendReceiveCommand handle "DOMSnapshot.enable" (Nothing :: Maybe ())
 
@@ -411,12 +411,12 @@ data PDomSnapshotCaptureSnapshot = PDomSnapshotCaptureSnapshot {
   -- | Whether to include DOM rectangles (offsetRects, clientRects, scrollRects) into the snapshot
   pDomSnapshotCaptureSnapshotIncludeDomRects :: Maybe Bool,
   -- | Whether to include blended background colors in the snapshot (default: false).
-    -- Blended background color is achieved by blending background colors of all elements
-    -- that overlap with the current element.
+  --   Blended background color is achieved by blending background colors of all elements
+  --   that overlap with the current element.
   pDomSnapshotCaptureSnapshotIncludeBlendedBackgroundColors :: Maybe Bool,
   -- | Whether to include text color opacity in the snapshot (default: false).
-    -- An element might have the opacity property set that affects the text color of the element.
-    -- The final text color opacity is computed based on the opacity of all overlapping elements.
+  --   An element might have the opacity property set that affects the text color of the element.
+  --   The final text color opacity is computed based on the opacity of all overlapping elements.
   pDomSnapshotCaptureSnapshotIncludeTextColorOpacities :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomSnapshotCaptureSnapshot  where
@@ -427,12 +427,12 @@ instance FromJSON  PDomSnapshotCaptureSnapshot where
 
 
 -- | Function for the 'DOMSnapshot.captureSnapshot' command.
- -- Returns a document snapshot, including the full DOM tree of the root node (including iframes,
- -- template contents, and imported documents) in a flattened array, as well as layout and
- -- white-listed computed style information for the nodes. Shadow DOM in the returned DOM tree is
- -- flattened.
--- Parameters: 'PDomSnapshotCaptureSnapshot'
--- Returns: 'DomSnapshotCaptureSnapshot'
+--   Returns a document snapshot, including the full DOM tree of the root node (including iframes,
+--   template contents, and imported documents) in a flattened array, as well as layout and
+--   white-listed computed style information for the nodes. Shadow DOM in the returned DOM tree is
+--   flattened.
+--   Parameters: 'PDomSnapshotCaptureSnapshot'
+--   Returns: 'DomSnapshotCaptureSnapshot'
 domSnapshotCaptureSnapshot :: Handle ev -> PDomSnapshotCaptureSnapshot -> IO DomSnapshotCaptureSnapshot
 domSnapshotCaptureSnapshot handle params = sendReceiveCommandResult handle "DOMSnapshot.captureSnapshot" (Just params)
 

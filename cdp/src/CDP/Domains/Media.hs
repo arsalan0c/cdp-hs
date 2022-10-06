@@ -47,14 +47,14 @@ import CDP.Handle
 
 
 
--- | Players will get an ID that is unique within the agent context.
+-- | Type 'Media.PlayerId' .Players will get an ID that is unique within the agent context.
 type MediaPlayerId = String
 
 -- | Type 'Media.Timestamp' .
 type MediaTimestamp = Double
 
--- | Have one type per entry in MediaLogRecord::Type
- -- Corresponds to kMessage
+-- | Type 'Media.PlayerMessage' .Have one type per entry in MediaLogRecord::Type
+--   Corresponds to kMessage
 data MediaPlayerMessageLevel = MediaPlayerMessageLevelError | MediaPlayerMessageLevelWarning | MediaPlayerMessageLevelInfo | MediaPlayerMessageLevelDebug
    deriving (Ord, Eq, Show, Read)
 instance FromJSON MediaPlayerMessageLevel where
@@ -78,14 +78,14 @@ instance ToJSON MediaPlayerMessageLevel where
 
 data MediaPlayerMessage = MediaPlayerMessage {
   -- | Keep in sync with MediaLogMessageLevel
-    -- We are currently keeping the message level 'error' separate from the
-    -- PlayerError type because right now they represent different things,
-    -- this one being a DVLOG(ERROR) style log message that gets printed
-    -- based on what log level is selected in the UI, and the other is a
-    -- representation of a media::PipelineStatus object. Soon however we're
-    -- going to be moving away from using PipelineStatus for errors and
-    -- introducing a new error type which should hopefully let us integrate
-    -- the error log level into the PlayerError type.
+  --   We are currently keeping the message level 'error' separate from the
+  --   PlayerError type because right now they represent different things,
+  --   this one being a DVLOG(ERROR) style log message that gets printed
+  --   based on what log level is selected in the UI, and the other is a
+  --   representation of a media::PipelineStatus object. Soon however we're
+  --   going to be moving away from using PipelineStatus for errors and
+  --   introducing a new error type which should hopefully let us integrate
+  --   the error log level into the PlayerError type.
   mediaPlayerMessageLevel :: MediaPlayerMessageLevel,
   mediaPlayerMessageMessage :: String
 } deriving (Generic, Eq, Show, Read)
@@ -97,7 +97,7 @@ instance FromJSON  MediaPlayerMessage where
 
 
 
--- | Corresponds to kMediaPropertyChange
+-- | Type 'Media.PlayerProperty' .Corresponds to kMediaPropertyChange
 data MediaPlayerProperty = MediaPlayerProperty {
   mediaPlayerPropertyName :: String,
   mediaPlayerPropertyValue :: String
@@ -110,7 +110,7 @@ instance FromJSON  MediaPlayerProperty where
 
 
 
--- | Corresponds to kMediaEventTriggered
+-- | Type 'Media.PlayerEvent' .Corresponds to kMediaEventTriggered
 data MediaPlayerEvent = MediaPlayerEvent {
   mediaPlayerEventTimestamp :: MediaTimestamp,
   mediaPlayerEventValue :: String
@@ -123,8 +123,8 @@ instance FromJSON  MediaPlayerEvent where
 
 
 
--- | Represents logged source line numbers reported in an error.
- -- NOTE: file and line are from chromium c++ implementation code, not js.
+-- | Type 'Media.PlayerErrorSourceLocation' .Represents logged source line numbers reported in an error.
+--   NOTE: file and line are from chromium c++ implementation code, not js.
 data MediaPlayerErrorSourceLocation = MediaPlayerErrorSourceLocation {
   mediaPlayerErrorSourceLocationFile :: String,
   mediaPlayerErrorSourceLocationLine :: Int
@@ -137,16 +137,16 @@ instance FromJSON  MediaPlayerErrorSourceLocation where
 
 
 
--- | Corresponds to kMediaError
+-- | Type 'Media.PlayerError' .Corresponds to kMediaError
 data MediaPlayerError = MediaPlayerError {
   mediaPlayerErrorErrorType :: String,
   -- | Code is the numeric enum entry for a specific set of error codes, such
-    -- as PipelineStatusCodes in media/base/pipeline_status.h
+  --   as PipelineStatusCodes in media/base/pipeline_status.h
   mediaPlayerErrorCode :: Int,
   -- | A trace of where this error was caused / where it passed through.
   mediaPlayerErrorStack :: [MediaPlayerErrorSourceLocation],
   -- | Errors potentially have a root cause error, ie, a DecoderError might be
-    -- caused by an WindowsError
+  --   caused by an WindowsError
   mediaPlayerErrorCause :: [MediaPlayerError],
   -- | Extra data attached to an error, such as an HRESULT, Video Codec, etc.
   mediaPlayerErrorData :: [(String, String)]
@@ -228,13 +228,13 @@ instance FromJSON  MediaPlayersCreated where
 
 
 -- | Function for the 'Media.enable' command.
- -- Enables the Media domain
+--   Enables the Media domain
 mediaEnable :: Handle ev -> IO ()
 mediaEnable handle = sendReceiveCommand handle "Media.enable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Media.disable' command.
- -- Disables the Media domain.
+--   Disables the Media domain.
 mediaDisable :: Handle ev -> IO ()
 mediaDisable handle = sendReceiveCommand handle "Media.disable" (Nothing :: Maybe ())
 

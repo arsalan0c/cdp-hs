@@ -122,22 +122,22 @@ data WebAuthnVirtualAuthenticatorOptions = WebAuthnVirtualAuthenticatorOptions {
   -- | Defaults to false.
   webAuthnVirtualAuthenticatorOptionsHasUserVerification :: Maybe Bool,
   -- | If set to true, the authenticator will support the largeBlob extension.
-    -- https://w3c.github.io/webauthn#largeBlob
-    -- Defaults to false.
+  --   https://w3c.github.io/webauthn#largeBlob
+  --   Defaults to false.
   webAuthnVirtualAuthenticatorOptionsHasLargeBlob :: Maybe Bool,
   -- | If set to true, the authenticator will support the credBlob extension.
-    -- https://fidoalliance.org/specs/fido-v2.1-rd-20201208/fido-client-to-authenticator-protocol-v2.1-rd-20201208.html#sctn-credBlob-extension
-    -- Defaults to false.
+  --   https://fidoalliance.org/specs/fido-v2.1-rd-20201208/fido-client-to-authenticator-protocol-v2.1-rd-20201208.html#sctn-credBlob-extension
+  --   Defaults to false.
   webAuthnVirtualAuthenticatorOptionsHasCredBlob :: Maybe Bool,
   -- | If set to true, the authenticator will support the minPinLength extension.
-    -- https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-minpinlength-extension
-    -- Defaults to false.
+  --   https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-minpinlength-extension
+  --   Defaults to false.
   webAuthnVirtualAuthenticatorOptionsHasMinPinLength :: Maybe Bool,
   -- | If set to true, tests of user presence will succeed immediately.
-    -- Otherwise, they will not be resolved. Defaults to true.
+  --   Otherwise, they will not be resolved. Defaults to true.
   webAuthnVirtualAuthenticatorOptionsAutomaticPresenceSimulation :: Maybe Bool,
   -- | Sets whether User Verification succeeds or fails for an authenticator.
-    -- Defaults to false.
+  --   Defaults to false.
   webAuthnVirtualAuthenticatorOptionsIsUserVerified :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAuthnVirtualAuthenticatorOptions  where
@@ -153,19 +153,19 @@ data WebAuthnCredential = WebAuthnCredential {
   webAuthnCredentialCredentialId :: String,
   webAuthnCredentialIsResidentCredential :: Bool,
   -- | Relying Party ID the credential is scoped to. Must be set when adding a
-    -- credential.
+  --   credential.
   webAuthnCredentialRpId :: Maybe String,
   -- | The ECDSA P-256 private key in PKCS#8 format. (Encoded as a base64 string when passed over JSON)
   webAuthnCredentialPrivateKey :: String,
   -- | An opaque byte sequence with a maximum size of 64 bytes mapping the
-    -- credential to a specific user. (Encoded as a base64 string when passed over JSON)
+  --   credential to a specific user. (Encoded as a base64 string when passed over JSON)
   webAuthnCredentialUserHandle :: Maybe String,
   -- | Signature counter. This is incremented by one for each successful
-    -- assertion.
-    -- See https://w3c.github.io/webauthn/#signature-counter
+  --   assertion.
+  --   See https://w3c.github.io/webauthn/#signature-counter
   webAuthnCredentialSignCount :: Int,
   -- | The large blob associated with the credential.
-    -- See https://w3c.github.io/webauthn/#sctn-large-blob-extension (Encoded as a base64 string when passed over JSON)
+  --   See https://w3c.github.io/webauthn/#sctn-large-blob-extension (Encoded as a base64 string when passed over JSON)
   webAuthnCredentialLargeBlob :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAuthnCredential  where
@@ -183,10 +183,10 @@ instance FromJSON  WebAuthnCredential where
 -- | Parameters of the 'webAuthnEnable' command.
 data PWebAuthnEnable = PWebAuthnEnable {
   -- | Whether to enable the WebAuthn user interface. Enabling the UI is
-    -- recommended for debugging and demo purposes, as it is closer to the real
-    -- experience. Disabling the UI is recommended for automated testing.
-    -- Supported at the embedder's discretion if UI is available.
-    -- Defaults to false.
+  --   recommended for debugging and demo purposes, as it is closer to the real
+  --   experience. Disabling the UI is recommended for automated testing.
+  --   Supported at the embedder's discretion if UI is available.
+  --   Defaults to false.
   pWebAuthnEnableEnableUi :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PWebAuthnEnable  where
@@ -197,15 +197,15 @@ instance FromJSON  PWebAuthnEnable where
 
 
 -- | Function for the 'WebAuthn.enable' command.
- -- Enable the WebAuthn domain and start intercepting credential storage and
- -- retrieval with a virtual authenticator.
--- Parameters: 'PWebAuthnEnable'
+--   Enable the WebAuthn domain and start intercepting credential storage and
+--   retrieval with a virtual authenticator.
+--   Parameters: 'PWebAuthnEnable'
 webAuthnEnable :: Handle ev -> PWebAuthnEnable -> IO ()
 webAuthnEnable handle params = sendReceiveCommand handle "WebAuthn.enable" (Just params)
 
 
 -- | Function for the 'WebAuthn.disable' command.
- -- Disable the WebAuthn domain.
+--   Disable the WebAuthn domain.
 webAuthnDisable :: Handle ev -> IO ()
 webAuthnDisable handle = sendReceiveCommand handle "WebAuthn.disable" (Nothing :: Maybe ())
 
@@ -222,9 +222,9 @@ instance FromJSON  PWebAuthnAddVirtualAuthenticator where
 
 
 -- | Function for the 'WebAuthn.addVirtualAuthenticator' command.
- -- Creates and adds a virtual authenticator.
--- Parameters: 'PWebAuthnAddVirtualAuthenticator'
--- Returns: 'WebAuthnAddVirtualAuthenticator'
+--   Creates and adds a virtual authenticator.
+--   Parameters: 'PWebAuthnAddVirtualAuthenticator'
+--   Returns: 'WebAuthnAddVirtualAuthenticator'
 webAuthnAddVirtualAuthenticator :: Handle ev -> PWebAuthnAddVirtualAuthenticator -> IO WebAuthnAddVirtualAuthenticator
 webAuthnAddVirtualAuthenticator handle params = sendReceiveCommandResult handle "WebAuthn.addVirtualAuthenticator" (Just params)
 
@@ -253,8 +253,8 @@ instance FromJSON  PWebAuthnRemoveVirtualAuthenticator where
 
 
 -- | Function for the 'WebAuthn.removeVirtualAuthenticator' command.
- -- Removes the given authenticator.
--- Parameters: 'PWebAuthnRemoveVirtualAuthenticator'
+--   Removes the given authenticator.
+--   Parameters: 'PWebAuthnRemoveVirtualAuthenticator'
 webAuthnRemoveVirtualAuthenticator :: Handle ev -> PWebAuthnRemoveVirtualAuthenticator -> IO ()
 webAuthnRemoveVirtualAuthenticator handle params = sendReceiveCommand handle "WebAuthn.removeVirtualAuthenticator" (Just params)
 
@@ -272,8 +272,8 @@ instance FromJSON  PWebAuthnAddCredential where
 
 
 -- | Function for the 'WebAuthn.addCredential' command.
- -- Adds the credential to the specified authenticator.
--- Parameters: 'PWebAuthnAddCredential'
+--   Adds the credential to the specified authenticator.
+--   Parameters: 'PWebAuthnAddCredential'
 webAuthnAddCredential :: Handle ev -> PWebAuthnAddCredential -> IO ()
 webAuthnAddCredential handle params = sendReceiveCommand handle "WebAuthn.addCredential" (Just params)
 
@@ -291,10 +291,10 @@ instance FromJSON  PWebAuthnGetCredential where
 
 
 -- | Function for the 'WebAuthn.getCredential' command.
- -- Returns a single credential stored in the given virtual authenticator that
- -- matches the credential ID.
--- Parameters: 'PWebAuthnGetCredential'
--- Returns: 'WebAuthnGetCredential'
+--   Returns a single credential stored in the given virtual authenticator that
+--   matches the credential ID.
+--   Parameters: 'PWebAuthnGetCredential'
+--   Returns: 'WebAuthnGetCredential'
 webAuthnGetCredential :: Handle ev -> PWebAuthnGetCredential -> IO WebAuthnGetCredential
 webAuthnGetCredential handle params = sendReceiveCommandResult handle "WebAuthn.getCredential" (Just params)
 
@@ -323,9 +323,9 @@ instance FromJSON  PWebAuthnGetCredentials where
 
 
 -- | Function for the 'WebAuthn.getCredentials' command.
- -- Returns all the credentials stored in the given virtual authenticator.
--- Parameters: 'PWebAuthnGetCredentials'
--- Returns: 'WebAuthnGetCredentials'
+--   Returns all the credentials stored in the given virtual authenticator.
+--   Parameters: 'PWebAuthnGetCredentials'
+--   Returns: 'WebAuthnGetCredentials'
 webAuthnGetCredentials :: Handle ev -> PWebAuthnGetCredentials -> IO WebAuthnGetCredentials
 webAuthnGetCredentials handle params = sendReceiveCommandResult handle "WebAuthn.getCredentials" (Just params)
 
@@ -355,8 +355,8 @@ instance FromJSON  PWebAuthnRemoveCredential where
 
 
 -- | Function for the 'WebAuthn.removeCredential' command.
- -- Removes a credential from the authenticator.
--- Parameters: 'PWebAuthnRemoveCredential'
+--   Removes a credential from the authenticator.
+--   Parameters: 'PWebAuthnRemoveCredential'
 webAuthnRemoveCredential :: Handle ev -> PWebAuthnRemoveCredential -> IO ()
 webAuthnRemoveCredential handle params = sendReceiveCommand handle "WebAuthn.removeCredential" (Just params)
 
@@ -373,8 +373,8 @@ instance FromJSON  PWebAuthnClearCredentials where
 
 
 -- | Function for the 'WebAuthn.clearCredentials' command.
- -- Clears all the credentials from the specified device.
--- Parameters: 'PWebAuthnClearCredentials'
+--   Clears all the credentials from the specified device.
+--   Parameters: 'PWebAuthnClearCredentials'
 webAuthnClearCredentials :: Handle ev -> PWebAuthnClearCredentials -> IO ()
 webAuthnClearCredentials handle params = sendReceiveCommand handle "WebAuthn.clearCredentials" (Just params)
 
@@ -392,9 +392,9 @@ instance FromJSON  PWebAuthnSetUserVerified where
 
 
 -- | Function for the 'WebAuthn.setUserVerified' command.
- -- Sets whether User Verification succeeds or fails for an authenticator.
- -- The default is true.
--- Parameters: 'PWebAuthnSetUserVerified'
+--   Sets whether User Verification succeeds or fails for an authenticator.
+--   The default is true.
+--   Parameters: 'PWebAuthnSetUserVerified'
 webAuthnSetUserVerified :: Handle ev -> PWebAuthnSetUserVerified -> IO ()
 webAuthnSetUserVerified handle params = sendReceiveCommand handle "WebAuthn.setUserVerified" (Just params)
 
@@ -412,9 +412,9 @@ instance FromJSON  PWebAuthnSetAutomaticPresenceSimulation where
 
 
 -- | Function for the 'WebAuthn.setAutomaticPresenceSimulation' command.
- -- Sets whether tests of user presence will succeed immediately (if true) or fail to resolve (if false) for an authenticator.
- -- The default is true.
--- Parameters: 'PWebAuthnSetAutomaticPresenceSimulation'
+--   Sets whether tests of user presence will succeed immediately (if true) or fail to resolve (if false) for an authenticator.
+--   The default is true.
+--   Parameters: 'PWebAuthnSetAutomaticPresenceSimulation'
 webAuthnSetAutomaticPresenceSimulation :: Handle ev -> PWebAuthnSetAutomaticPresenceSimulation -> IO ()
 webAuthnSetAutomaticPresenceSimulation handle params = sendReceiveCommand handle "WebAuthn.setAutomaticPresenceSimulation" (Just params)
 

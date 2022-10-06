@@ -39,17 +39,14 @@ printPDF :: CDP.Handle CDP.Event -> IO ()
 printPDF handle = do 
     -- the handle contains the websocket connection to the browser, amongst other state
 
-    -- send the print-to-pdf command to the protocol
+    -- send the Page.printToPDF command to the protocol
     -- this command has all arguments as optional and we've specified none
     r <- CDP.pagePrintToPdf handle $ 
         CDP.PPagePrintToPdf Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
-        
-    -- obtain base64 encoded pdf data from the result or report an error
-    let dat  = either (error . show) CDP.pagePrintToPdfData r
-        path = "mypdf.pdf" 
-    
+
+    let path = "mypdf.pdf"     
     -- decode pdf data
-    readProcess "base64" ["--decode", "-o", path] dat
+    readProcess "base64" ["--decode", "-o", path] $ CDP.pagePrintToPdfData r
     -- open pdf file
     callCommand $ unwords ["open", path]
 ```

@@ -56,9 +56,9 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 -- | Type 'CSS.StyleSheetId' .
 type CssStyleSheetId = String
 
--- | Stylesheet type: "injected" for stylesheets injected via extension, "user-agent" for user-agent
- -- stylesheets, "inspector" for stylesheets created by the inspector (i.e. those holding the "via
- -- inspector" rules), "regular" for regular stylesheets.
+-- | Type 'CSS.StyleSheetOrigin' .Stylesheet type: "injected" for stylesheets injected via extension, "user-agent" for user-agent
+--   stylesheets, "inspector" for stylesheets created by the inspector (i.e. those holding the "via
+--   inspector" rules), "regular" for regular stylesheets.
 data CssStyleSheetOrigin = CssStyleSheetOriginInjected | CssStyleSheetOriginUserAgent | CssStyleSheetOriginInspector | CssStyleSheetOriginRegular
    deriving (Ord, Eq, Show, Read)
 instance FromJSON CssStyleSheetOrigin where
@@ -80,7 +80,7 @@ instance ToJSON CssStyleSheetOrigin where
 
 
 
--- | CSS rule collection for a single pseudo style.
+-- | Type 'CSS.PseudoElementMatches' .CSS rule collection for a single pseudo style.
 data CssPseudoElementMatches = CssPseudoElementMatches {
   -- | Pseudo element type.
   cssPseudoElementMatchesPseudoType :: DOMPageNetworkEmulationSecurity.DomPseudoType,
@@ -95,7 +95,7 @@ instance FromJSON  CssPseudoElementMatches where
 
 
 
--- | Inherited CSS rule collection from ancestor node.
+-- | Type 'CSS.InheritedStyleEntry' .Inherited CSS rule collection from ancestor node.
 data CssInheritedStyleEntry = CssInheritedStyleEntry {
   -- | The ancestor node's inline style, if any, in the style inheritance chain.
   cssInheritedStyleEntryInlineStyle :: Maybe CssCssStyle,
@@ -110,7 +110,7 @@ instance FromJSON  CssInheritedStyleEntry where
 
 
 
--- | Inherited pseudo element matches from pseudos of an ancestor node.
+-- | Type 'CSS.InheritedPseudoElementMatches' .Inherited pseudo element matches from pseudos of an ancestor node.
 data CssInheritedPseudoElementMatches = CssInheritedPseudoElementMatches {
   -- | Matches of pseudo styles from the pseudos of an ancestor node.
   cssInheritedPseudoElementMatchesPseudoElements :: [CssPseudoElementMatches]
@@ -123,7 +123,7 @@ instance FromJSON  CssInheritedPseudoElementMatches where
 
 
 
--- | Match data for a CSS rule.
+-- | Type 'CSS.RuleMatch' .Match data for a CSS rule.
 data CssRuleMatch = CssRuleMatch {
   -- | CSS rule in the match.
   cssRuleMatchRule :: CssCssRule,
@@ -138,7 +138,7 @@ instance FromJSON  CssRuleMatch where
 
 
 
--- | Data for a simple selector (these are delimited by commas in a selector list).
+-- | Type 'CSS.Value' .Data for a simple selector (these are delimited by commas in a selector list).
 data CssValue = CssValue {
   -- | Value text.
   cssValueText :: String,
@@ -153,7 +153,7 @@ instance FromJSON  CssValue where
 
 
 
--- | Selector list data.
+-- | Type 'CSS.SelectorList' .Selector list data.
 data CssSelectorList = CssSelectorList {
   -- | Selectors in the list.
   cssSelectorListSelectors :: [CssValue],
@@ -168,15 +168,15 @@ instance FromJSON  CssSelectorList where
 
 
 
--- | CSS stylesheet metainformation.
+-- | Type 'CSS.CSSStyleSheetHeader' .CSS stylesheet metainformation.
 data CssCssStyleSheetHeader = CssCssStyleSheetHeader {
   -- | The stylesheet identifier.
   cssCssStyleSheetHeaderStyleSheetId :: CssStyleSheetId,
   -- | Owner frame identifier.
   cssCssStyleSheetHeaderFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId,
   -- | Stylesheet resource URL. Empty if this is a constructed stylesheet created using
-    -- new CSSStyleSheet() (but non-empty if this is a constructed sylesheet imported
-    -- as a CSS module script).
+  --   new CSSStyleSheet() (but non-empty if this is a constructed sylesheet imported
+  --   as a CSS module script).
   cssCssStyleSheetHeaderSourceUrl :: String,
   -- | URL of source map associated with the stylesheet (if any).
   cssCssStyleSheetHeaderSourceMapUrl :: Maybe String,
@@ -191,15 +191,15 @@ data CssCssStyleSheetHeader = CssCssStyleSheetHeader {
   -- | Whether the sourceURL field value comes from the sourceURL comment.
   cssCssStyleSheetHeaderHasSourceUrl :: Maybe Bool,
   -- | Whether this stylesheet is created for STYLE tag by parser. This flag is not set for
-    -- document.written STYLE tags.
+  --   document.written STYLE tags.
   cssCssStyleSheetHeaderIsInline :: Bool,
   -- | Whether this stylesheet is mutable. Inline stylesheets become mutable
-    -- after they have been modified via CSSOM API.
-    -- <link> element's stylesheets become mutable only if DevTools modifies them.
-    -- Constructed stylesheets (new CSSStyleSheet()) are mutable immediately after creation.
+  --   after they have been modified via CSSOM API.
+  --   <link> element's stylesheets become mutable only if DevTools modifies them.
+  --   Constructed stylesheets (new CSSStyleSheet()) are mutable immediately after creation.
   cssCssStyleSheetHeaderIsMutable :: Bool,
   -- | True if this stylesheet is created through new CSSStyleSheet() or imported as a
-    -- CSS module script.
+  --   CSS module script.
   cssCssStyleSheetHeaderIsConstructed :: Bool,
   -- | Line offset of the stylesheet within the resource (zero based).
   cssCssStyleSheetHeaderStartLine :: Double,
@@ -220,10 +220,10 @@ instance FromJSON  CssCssStyleSheetHeader where
 
 
 
--- | CSS rule representation.
+-- | Type 'CSS.CSSRule' .CSS rule representation.
 data CssCssRule = CssCssRule {
   -- | The css style sheet identifier (absent for user agent stylesheet and user-specified
-    -- stylesheet rules) this rule came from.
+  --   stylesheet rules) this rule came from.
   cssCssRuleStyleSheetId :: Maybe CssStyleSheetId,
   -- | Rule selector data.
   cssCssRuleSelectorList :: CssSelectorList,
@@ -232,16 +232,16 @@ data CssCssRule = CssCssRule {
   -- | Associated style declaration.
   cssCssRuleStyle :: CssCssStyle,
   -- | Media list array (for rules involving media queries). The array enumerates media queries
-    -- starting with the innermost one, going outwards.
+  --   starting with the innermost one, going outwards.
   cssCssRuleMedia :: Maybe [CssCssMedia],
   -- | Container query list array (for rules involving container queries).
-    -- The array enumerates container queries starting with the innermost one, going outwards.
+  --   The array enumerates container queries starting with the innermost one, going outwards.
   cssCssRuleContainerQueries :: Maybe [CssCssContainerQuery],
   -- | @supports CSS at-rule array.
-    -- The array enumerates @supports at-rules starting with the innermost one, going outwards.
+  --   The array enumerates @supports at-rules starting with the innermost one, going outwards.
   cssCssRuleSupports :: Maybe [CssCssSupports],
   -- | Cascade layer array. Contains the layer hierarchy that this rule belongs to starting
-    -- with the innermost layer and going outwards.
+  --   with the innermost layer and going outwards.
   cssCssRuleLayers :: Maybe [CssCssLayer]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON CssCssRule  where
@@ -252,10 +252,10 @@ instance FromJSON  CssCssRule where
 
 
 
--- | CSS coverage information.
+-- | Type 'CSS.RuleUsage' .CSS coverage information.
 data CssRuleUsage = CssRuleUsage {
   -- | The css style sheet identifier (absent for user agent stylesheet and user-specified
-    -- stylesheet rules) this rule came from.
+  --   stylesheet rules) this rule came from.
   cssRuleUsageStyleSheetId :: CssStyleSheetId,
   -- | Offset of the start of the rule (including selector) from the beginning of the stylesheet.
   cssRuleUsageStartOffset :: Double,
@@ -272,7 +272,7 @@ instance FromJSON  CssRuleUsage where
 
 
 
--- | Text range within a resource. All numbers are zero-based.
+-- | Type 'CSS.SourceRange' .Text range within a resource. All numbers are zero-based.
 data CssSourceRange = CssSourceRange {
   -- | Start line of range.
   cssSourceRangeStartLine :: Int,
@@ -323,10 +323,10 @@ instance FromJSON  CssCssComputedStyleProperty where
 
 
 
--- | CSS style representation.
+-- | Type 'CSS.CSSStyle' .CSS style representation.
 data CssCssStyle = CssCssStyle {
   -- | The css style sheet identifier (absent for user agent stylesheet and user-specified
-    -- stylesheet rules) this rule came from.
+  --   stylesheet rules) this rule came from.
   cssCssStyleStyleSheetId :: Maybe CssStyleSheetId,
   -- | CSS properties in the style.
   cssCssStyleCssProperties :: [CssCssProperty],
@@ -345,7 +345,7 @@ instance FromJSON  CssCssStyle where
 
 
 
--- | CSS property declaration data.
+-- | Type 'CSS.CSSProperty' .CSS property declaration data.
 data CssCssProperty = CssCssProperty {
   -- | The property name.
   cssCssPropertyName :: String,
@@ -372,7 +372,7 @@ instance FromJSON  CssCssProperty where
 
 
 
--- | CSS media rule descriptor.
+-- | Type 'CSS.CSSMedia' .CSS media rule descriptor.
 data CssCssMediaSource = CssCssMediaSourceMediaRule | CssCssMediaSourceImportRule | CssCssMediaSourceLinkedSheet | CssCssMediaSourceInlineSheet
    deriving (Ord, Eq, Show, Read)
 instance FromJSON CssCssMediaSource where
@@ -398,14 +398,14 @@ data CssCssMedia = CssCssMedia {
   -- | Media query text.
   cssCssMediaText :: String,
   -- | Source of the media query: "mediaRule" if specified by a @media rule, "importRule" if
-    -- specified by an @import rule, "linkedSheet" if specified by a "media" attribute in a linked
-    -- stylesheet's LINK tag, "inlineSheet" if specified by a "media" attribute in an inline
-    -- stylesheet's STYLE tag.
+  --   specified by an @import rule, "linkedSheet" if specified by a "media" attribute in a linked
+  --   stylesheet's LINK tag, "inlineSheet" if specified by a "media" attribute in an inline
+  --   stylesheet's STYLE tag.
   cssCssMediaSource :: CssCssMediaSource,
   -- | URL of the document containing the media query description.
   cssCssMediaSourceUrl :: Maybe String,
   -- | The associated rule (@media or @import) header range in the enclosing stylesheet (if
-    -- available).
+  --   available).
   cssCssMediaRange :: Maybe CssSourceRange,
   -- | Identifier of the stylesheet containing this object (if exists).
   cssCssMediaStyleSheetId :: Maybe CssStyleSheetId,
@@ -420,7 +420,7 @@ instance FromJSON  CssCssMedia where
 
 
 
--- | Media query descriptor.
+-- | Type 'CSS.MediaQuery' .Media query descriptor.
 data CssMediaQuery = CssMediaQuery {
   -- | Array of media query expressions.
   cssMediaQueryExpressions :: [CssMediaQueryExpression],
@@ -435,7 +435,7 @@ instance FromJSON  CssMediaQuery where
 
 
 
--- | Media query expression descriptor.
+-- | Type 'CSS.MediaQueryExpression' .Media query expression descriptor.
 data CssMediaQueryExpression = CssMediaQueryExpression {
   -- | Media query expression value.
   cssMediaQueryExpressionValue :: Double,
@@ -456,12 +456,12 @@ instance FromJSON  CssMediaQueryExpression where
 
 
 
--- | CSS container query rule descriptor.
+-- | Type 'CSS.CSSContainerQuery' .CSS container query rule descriptor.
 data CssCssContainerQuery = CssCssContainerQuery {
   -- | Container query text.
   cssCssContainerQueryText :: String,
   -- | The associated rule header range in the enclosing stylesheet (if
-    -- available).
+  --   available).
   cssCssContainerQueryRange :: Maybe CssSourceRange,
   -- | Identifier of the stylesheet containing this object (if exists).
   cssCssContainerQueryStyleSheetId :: Maybe CssStyleSheetId,
@@ -476,14 +476,14 @@ instance FromJSON  CssCssContainerQuery where
 
 
 
--- | CSS Supports at-rule descriptor.
+-- | Type 'CSS.CSSSupports' .CSS Supports at-rule descriptor.
 data CssCssSupports = CssCssSupports {
   -- | Supports rule text.
   cssCssSupportsText :: String,
   -- | Whether the supports condition is satisfied.
   cssCssSupportsActive :: Bool,
   -- | The associated rule header range in the enclosing stylesheet (if
-    -- available).
+  --   available).
   cssCssSupportsRange :: Maybe CssSourceRange,
   -- | Identifier of the stylesheet containing this object (if exists).
   cssCssSupportsStyleSheetId :: Maybe CssStyleSheetId
@@ -496,12 +496,12 @@ instance FromJSON  CssCssSupports where
 
 
 
--- | CSS Layer at-rule descriptor.
+-- | Type 'CSS.CSSLayer' .CSS Layer at-rule descriptor.
 data CssCssLayer = CssCssLayer {
   -- | Layer name.
   cssCssLayerText :: String,
   -- | The associated rule header range in the enclosing stylesheet (if
-    -- available).
+  --   available).
   cssCssLayerRange :: Maybe CssSourceRange,
   -- | Identifier of the stylesheet containing this object (if exists).
   cssCssLayerStyleSheetId :: Maybe CssStyleSheetId
@@ -514,14 +514,14 @@ instance FromJSON  CssCssLayer where
 
 
 
--- | CSS Layer data.
+-- | Type 'CSS.CSSLayerData' .CSS Layer data.
 data CssCssLayerData = CssCssLayerData {
   -- | Layer name.
   cssCssLayerDataName :: String,
   -- | Direct sub-layers
   cssCssLayerDataSubLayers :: Maybe [CssCssLayerData],
   -- | Layer order. The order determines the order of the layer in the cascade order.
-    -- A higher number has higher priority in the cascade order.
+  --   A higher number has higher priority in the cascade order.
   cssCssLayerDataOrder :: Double
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON CssCssLayerData  where
@@ -532,7 +532,7 @@ instance FromJSON  CssCssLayerData where
 
 
 
--- | Information about amount of glyphs that were rendered with given font.
+-- | Type 'CSS.PlatformFontUsage' .Information about amount of glyphs that were rendered with given font.
 data CssPlatformFontUsage = CssPlatformFontUsage {
   -- | Font's family name reported by platform.
   cssPlatformFontUsageFamilyName :: String,
@@ -549,7 +549,7 @@ instance FromJSON  CssPlatformFontUsage where
 
 
 
--- | Information about font variation axes for variable fonts
+-- | Type 'CSS.FontVariationAxis' .Information about font variation axes for variable fonts
 data CssFontVariationAxis = CssFontVariationAxis {
   -- | The font-variation-setting tag (a.k.a. "axis tag").
   cssFontVariationAxisTag :: String,
@@ -570,8 +570,8 @@ instance FromJSON  CssFontVariationAxis where
 
 
 
--- | Properties of a web font: https://www.w3.org/TR/2008/REC-CSS2-20080411/fonts.html#font-descriptions
- -- and additional information such as platformFontFamily and fontVariationAxes.
+-- | Type 'CSS.FontFace' .Properties of a web font: https://www.w3.org/TR/2008/REC-CSS2-20080411/fonts.html#font-descriptions
+--   and additional information such as platformFontFamily and fontVariationAxes.
 data CssFontFace = CssFontFace {
   -- | The font-family.
   cssFontFaceFontFamily :: String,
@@ -600,7 +600,7 @@ instance FromJSON  CssFontFace where
 
 
 
--- | CSS keyframes rule representation.
+-- | Type 'CSS.CSSKeyframesRule' .CSS keyframes rule representation.
 data CssCssKeyframesRule = CssCssKeyframesRule {
   -- | Animation name.
   cssCssKeyframesRuleAnimationName :: CssValue,
@@ -615,10 +615,10 @@ instance FromJSON  CssCssKeyframesRule where
 
 
 
--- | CSS keyframe rule representation.
+-- | Type 'CSS.CSSKeyframeRule' .CSS keyframe rule representation.
 data CssCssKeyframeRule = CssCssKeyframeRule {
   -- | The css style sheet identifier (absent for user agent stylesheet and user-specified
-    -- stylesheet rules) this rule came from.
+  --   stylesheet rules) this rule came from.
   cssCssKeyframeRuleStyleSheetId :: Maybe CssStyleSheetId,
   -- | Parent stylesheet's origin.
   cssCssKeyframeRuleOrigin :: CssStyleSheetOrigin,
@@ -635,7 +635,7 @@ instance FromJSON  CssCssKeyframeRule where
 
 
 
--- | A descriptor of operation to mutate style declaration text.
+-- | Type 'CSS.StyleDeclarationEdit' .A descriptor of operation to mutate style declaration text.
 data CssStyleDeclarationEdit = CssStyleDeclarationEdit {
   -- | The css style sheet identifier.
   cssStyleDeclarationEditStyleSheetId :: CssStyleSheetId,
@@ -735,10 +735,10 @@ instance FromJSON  PCssAddRule where
 
 
 -- | Function for the 'CSS.addRule' command.
- -- Inserts a new rule with the given `ruleText` in a stylesheet with given `styleSheetId`, at the
- -- position specified by `location`.
--- Parameters: 'PCssAddRule'
--- Returns: 'CssAddRule'
+--   Inserts a new rule with the given `ruleText` in a stylesheet with given `styleSheetId`, at the
+--   position specified by `location`.
+--   Parameters: 'PCssAddRule'
+--   Returns: 'CssAddRule'
 cssAddRule :: Handle ev -> PCssAddRule -> IO CssAddRule
 cssAddRule handle params = sendReceiveCommandResult handle "CSS.addRule" (Just params)
 
@@ -768,9 +768,9 @@ instance FromJSON  PCssCollectClassNames where
 
 
 -- | Function for the 'CSS.collectClassNames' command.
- -- Returns all class names from specified stylesheet.
--- Parameters: 'PCssCollectClassNames'
--- Returns: 'CssCollectClassNames'
+--   Returns all class names from specified stylesheet.
+--   Parameters: 'PCssCollectClassNames'
+--   Returns: 'CssCollectClassNames'
 cssCollectClassNames :: Handle ev -> PCssCollectClassNames -> IO CssCollectClassNames
 cssCollectClassNames handle params = sendReceiveCommandResult handle "CSS.collectClassNames" (Just params)
 
@@ -801,9 +801,9 @@ instance FromJSON  PCssCreateStyleSheet where
 
 
 -- | Function for the 'CSS.createStyleSheet' command.
- -- Creates a new special "via-inspector" stylesheet in the frame with given `frameId`.
--- Parameters: 'PCssCreateStyleSheet'
--- Returns: 'CssCreateStyleSheet'
+--   Creates a new special "via-inspector" stylesheet in the frame with given `frameId`.
+--   Parameters: 'PCssCreateStyleSheet'
+--   Returns: 'CssCreateStyleSheet'
 cssCreateStyleSheet :: Handle ev -> PCssCreateStyleSheet -> IO CssCreateStyleSheet
 cssCreateStyleSheet handle params = sendReceiveCommandResult handle "CSS.createStyleSheet" (Just params)
 
@@ -822,14 +822,14 @@ instance Command CssCreateStyleSheet where
 
 
 -- | Function for the 'CSS.disable' command.
- -- Disables the CSS agent for the given page.
+--   Disables the CSS agent for the given page.
 cssDisable :: Handle ev -> IO ()
 cssDisable handle = sendReceiveCommand handle "CSS.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'CSS.enable' command.
- -- Enables the CSS agent for the given page. Clients should not assume that the CSS agent has been
- -- enabled until the result of this command is received.
+--   Enables the CSS agent for the given page. Clients should not assume that the CSS agent has been
+--   enabled until the result of this command is received.
 cssEnable :: Handle ev -> IO ()
 cssEnable handle = sendReceiveCommand handle "CSS.enable" (Nothing :: Maybe ())
 
@@ -849,9 +849,9 @@ instance FromJSON  PCssForcePseudoState where
 
 
 -- | Function for the 'CSS.forcePseudoState' command.
- -- Ensures that the given node will have specified pseudo-classes whenever its style is computed by
- -- the browser.
--- Parameters: 'PCssForcePseudoState'
+--   Ensures that the given node will have specified pseudo-classes whenever its style is computed by
+--   the browser.
+--   Parameters: 'PCssForcePseudoState'
 cssForcePseudoState :: Handle ev -> PCssForcePseudoState -> IO ()
 cssForcePseudoState handle params = sendReceiveCommand handle "CSS.forcePseudoState" (Just params)
 
@@ -869,23 +869,24 @@ instance FromJSON  PCssGetBackgroundColors where
 
 
 -- | Function for the 'CSS.getBackgroundColors' command.
--- Parameters: 'PCssGetBackgroundColors'
--- Returns: 'CssGetBackgroundColors'
+--   
+--   Parameters: 'PCssGetBackgroundColors'
+--   Returns: 'CssGetBackgroundColors'
 cssGetBackgroundColors :: Handle ev -> PCssGetBackgroundColors -> IO CssGetBackgroundColors
 cssGetBackgroundColors handle params = sendReceiveCommandResult handle "CSS.getBackgroundColors" (Just params)
 
 -- | Return type of the 'cssGetBackgroundColors' command.
 data CssGetBackgroundColors = CssGetBackgroundColors {
   -- | The range of background colors behind this element, if it contains any visible text. If no
-    -- visible text is present, this will be undefined. In the case of a flat background color,
-    -- this will consist of simply that color. In the case of a gradient, this will consist of each
-    -- of the color stops. For anything more complicated, this will be an empty array. Images will
-    -- be ignored (as if the image had failed to load).
+  --   visible text is present, this will be undefined. In the case of a flat background color,
+  --   this will consist of simply that color. In the case of a gradient, this will consist of each
+  --   of the color stops. For anything more complicated, this will be an empty array. Images will
+  --   be ignored (as if the image had failed to load).
   cssGetBackgroundColorsBackgroundColors :: Maybe [String],
   -- | The computed font size for this node, as a CSS computed value string (e.g. '12px').
   cssGetBackgroundColorsComputedFontSize :: Maybe String,
   -- | The computed font weight for this node, as a CSS computed value string (e.g. 'normal' or
-    -- '100').
+  --   '100').
   cssGetBackgroundColorsComputedFontWeight :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 
@@ -909,9 +910,9 @@ instance FromJSON  PCssGetComputedStyleForNode where
 
 
 -- | Function for the 'CSS.getComputedStyleForNode' command.
- -- Returns the computed style for a DOM node identified by `nodeId`.
--- Parameters: 'PCssGetComputedStyleForNode'
--- Returns: 'CssGetComputedStyleForNode'
+--   Returns the computed style for a DOM node identified by `nodeId`.
+--   Parameters: 'PCssGetComputedStyleForNode'
+--   Returns: 'CssGetComputedStyleForNode'
 cssGetComputedStyleForNode :: Handle ev -> PCssGetComputedStyleForNode -> IO CssGetComputedStyleForNode
 cssGetComputedStyleForNode handle params = sendReceiveCommandResult handle "CSS.getComputedStyleForNode" (Just params)
 
@@ -941,10 +942,10 @@ instance FromJSON  PCssGetInlineStylesForNode where
 
 
 -- | Function for the 'CSS.getInlineStylesForNode' command.
- -- Returns the styles defined inline (explicitly in the "style" attribute and implicitly, using DOM
- -- attributes) for a DOM node identified by `nodeId`.
--- Parameters: 'PCssGetInlineStylesForNode'
--- Returns: 'CssGetInlineStylesForNode'
+--   Returns the styles defined inline (explicitly in the "style" attribute and implicitly, using DOM
+--   attributes) for a DOM node identified by `nodeId`.
+--   Parameters: 'PCssGetInlineStylesForNode'
+--   Returns: 'CssGetInlineStylesForNode'
 cssGetInlineStylesForNode :: Handle ev -> PCssGetInlineStylesForNode -> IO CssGetInlineStylesForNode
 cssGetInlineStylesForNode handle params = sendReceiveCommandResult handle "CSS.getInlineStylesForNode" (Just params)
 
@@ -976,9 +977,9 @@ instance FromJSON  PCssGetMatchedStylesForNode where
 
 
 -- | Function for the 'CSS.getMatchedStylesForNode' command.
- -- Returns requested styles for a DOM node identified by `nodeId`.
--- Parameters: 'PCssGetMatchedStylesForNode'
--- Returns: 'CssGetMatchedStylesForNode'
+--   Returns requested styles for a DOM node identified by `nodeId`.
+--   Parameters: 'PCssGetMatchedStylesForNode'
+--   Returns: 'CssGetMatchedStylesForNode'
 cssGetMatchedStylesForNode :: Handle ev -> PCssGetMatchedStylesForNode -> IO CssGetMatchedStylesForNode
 cssGetMatchedStylesForNode handle params = sendReceiveCommandResult handle "CSS.getMatchedStylesForNode" (Just params)
 
@@ -1009,8 +1010,8 @@ instance Command CssGetMatchedStylesForNode where
 
 
 -- | Function for the 'CSS.getMediaQueries' command.
- -- Returns all media queries parsed by the rendering engine.
--- Returns: 'CssGetMediaQueries'
+--   Returns all media queries parsed by the rendering engine.
+--   Returns: 'CssGetMediaQueries'
 cssGetMediaQueries :: Handle ev -> IO CssGetMediaQueries
 cssGetMediaQueries handle = sendReceiveCommandResult handle "CSS.getMediaQueries" (Nothing :: Maybe ())
 
@@ -1039,10 +1040,10 @@ instance FromJSON  PCssGetPlatformFontsForNode where
 
 
 -- | Function for the 'CSS.getPlatformFontsForNode' command.
- -- Requests information about platform fonts which we used to render child TextNodes in the given
- -- node.
--- Parameters: 'PCssGetPlatformFontsForNode'
--- Returns: 'CssGetPlatformFontsForNode'
+--   Requests information about platform fonts which we used to render child TextNodes in the given
+--   node.
+--   Parameters: 'PCssGetPlatformFontsForNode'
+--   Returns: 'CssGetPlatformFontsForNode'
 cssGetPlatformFontsForNode :: Handle ev -> PCssGetPlatformFontsForNode -> IO CssGetPlatformFontsForNode
 cssGetPlatformFontsForNode handle params = sendReceiveCommandResult handle "CSS.getPlatformFontsForNode" (Just params)
 
@@ -1072,9 +1073,9 @@ instance FromJSON  PCssGetStyleSheetText where
 
 
 -- | Function for the 'CSS.getStyleSheetText' command.
- -- Returns the current textual content for a stylesheet.
--- Parameters: 'PCssGetStyleSheetText'
--- Returns: 'CssGetStyleSheetText'
+--   Returns the current textual content for a stylesheet.
+--   Parameters: 'PCssGetStyleSheetText'
+--   Returns: 'CssGetStyleSheetText'
 cssGetStyleSheetText :: Handle ev -> PCssGetStyleSheetText -> IO CssGetStyleSheetText
 cssGetStyleSheetText handle params = sendReceiveCommandResult handle "CSS.getStyleSheetText" (Just params)
 
@@ -1104,12 +1105,12 @@ instance FromJSON  PCssGetLayersForNode where
 
 
 -- | Function for the 'CSS.getLayersForNode' command.
- -- Returns all layers parsed by the rendering engine for the tree scope of a node.
- -- Given a DOM element identified by nodeId, getLayersForNode returns the root
- -- layer for the nearest ancestor document or shadow root. The layer root contains
- -- the full layer tree for the tree scope and their ordering.
--- Parameters: 'PCssGetLayersForNode'
--- Returns: 'CssGetLayersForNode'
+--   Returns all layers parsed by the rendering engine for the tree scope of a node.
+--   Given a DOM element identified by nodeId, getLayersForNode returns the root
+--   layer for the nearest ancestor document or shadow root. The layer root contains
+--   the full layer tree for the tree scope and their ordering.
+--   Parameters: 'PCssGetLayersForNode'
+--   Returns: 'CssGetLayersForNode'
 cssGetLayersForNode :: Handle ev -> PCssGetLayersForNode -> IO CssGetLayersForNode
 cssGetLayersForNode handle params = sendReceiveCommandResult handle "CSS.getLayersForNode" (Just params)
 
@@ -1138,20 +1139,20 @@ instance FromJSON  PCssTrackComputedStyleUpdates where
 
 
 -- | Function for the 'CSS.trackComputedStyleUpdates' command.
- -- Starts tracking the given computed styles for updates. The specified array of properties
- -- replaces the one previously specified. Pass empty array to disable tracking.
- -- Use takeComputedStyleUpdates to retrieve the list of nodes that had properties modified.
- -- The changes to computed style properties are only tracked for nodes pushed to the front-end
- -- by the DOM agent. If no changes to the tracked properties occur after the node has been pushed
- -- to the front-end, no updates will be issued for the node.
--- Parameters: 'PCssTrackComputedStyleUpdates'
+--   Starts tracking the given computed styles for updates. The specified array of properties
+--   replaces the one previously specified. Pass empty array to disable tracking.
+--   Use takeComputedStyleUpdates to retrieve the list of nodes that had properties modified.
+--   The changes to computed style properties are only tracked for nodes pushed to the front-end
+--   by the DOM agent. If no changes to the tracked properties occur after the node has been pushed
+--   to the front-end, no updates will be issued for the node.
+--   Parameters: 'PCssTrackComputedStyleUpdates'
 cssTrackComputedStyleUpdates :: Handle ev -> PCssTrackComputedStyleUpdates -> IO ()
 cssTrackComputedStyleUpdates handle params = sendReceiveCommand handle "CSS.trackComputedStyleUpdates" (Just params)
 
 
 -- | Function for the 'CSS.takeComputedStyleUpdates' command.
- -- Polls the next batch of computed style updates.
--- Returns: 'CssTakeComputedStyleUpdates'
+--   Polls the next batch of computed style updates.
+--   Returns: 'CssTakeComputedStyleUpdates'
 cssTakeComputedStyleUpdates :: Handle ev -> IO CssTakeComputedStyleUpdates
 cssTakeComputedStyleUpdates handle = sendReceiveCommandResult handle "CSS.takeComputedStyleUpdates" (Nothing :: Maybe ())
 
@@ -1184,9 +1185,9 @@ instance FromJSON  PCssSetEffectivePropertyValueForNode where
 
 
 -- | Function for the 'CSS.setEffectivePropertyValueForNode' command.
- -- Find a rule with the given active property for the given node and set the new value for this
- -- property
--- Parameters: 'PCssSetEffectivePropertyValueForNode'
+--   Find a rule with the given active property for the given node and set the new value for this
+--   property
+--   Parameters: 'PCssSetEffectivePropertyValueForNode'
 cssSetEffectivePropertyValueForNode :: Handle ev -> PCssSetEffectivePropertyValueForNode -> IO ()
 cssSetEffectivePropertyValueForNode handle params = sendReceiveCommand handle "CSS.setEffectivePropertyValueForNode" (Just params)
 
@@ -1205,9 +1206,9 @@ instance FromJSON  PCssSetKeyframeKey where
 
 
 -- | Function for the 'CSS.setKeyframeKey' command.
- -- Modifies the keyframe rule key text.
--- Parameters: 'PCssSetKeyframeKey'
--- Returns: 'CssSetKeyframeKey'
+--   Modifies the keyframe rule key text.
+--   Parameters: 'PCssSetKeyframeKey'
+--   Returns: 'CssSetKeyframeKey'
 cssSetKeyframeKey :: Handle ev -> PCssSetKeyframeKey -> IO CssSetKeyframeKey
 cssSetKeyframeKey handle params = sendReceiveCommandResult handle "CSS.setKeyframeKey" (Just params)
 
@@ -1239,9 +1240,9 @@ instance FromJSON  PCssSetMediaText where
 
 
 -- | Function for the 'CSS.setMediaText' command.
- -- Modifies the rule selector.
--- Parameters: 'PCssSetMediaText'
--- Returns: 'CssSetMediaText'
+--   Modifies the rule selector.
+--   Parameters: 'PCssSetMediaText'
+--   Returns: 'CssSetMediaText'
 cssSetMediaText :: Handle ev -> PCssSetMediaText -> IO CssSetMediaText
 cssSetMediaText handle params = sendReceiveCommandResult handle "CSS.setMediaText" (Just params)
 
@@ -1273,9 +1274,9 @@ instance FromJSON  PCssSetContainerQueryText where
 
 
 -- | Function for the 'CSS.setContainerQueryText' command.
- -- Modifies the expression of a container query.
--- Parameters: 'PCssSetContainerQueryText'
--- Returns: 'CssSetContainerQueryText'
+--   Modifies the expression of a container query.
+--   Parameters: 'PCssSetContainerQueryText'
+--   Returns: 'CssSetContainerQueryText'
 cssSetContainerQueryText :: Handle ev -> PCssSetContainerQueryText -> IO CssSetContainerQueryText
 cssSetContainerQueryText handle params = sendReceiveCommandResult handle "CSS.setContainerQueryText" (Just params)
 
@@ -1307,9 +1308,9 @@ instance FromJSON  PCssSetSupportsText where
 
 
 -- | Function for the 'CSS.setSupportsText' command.
- -- Modifies the expression of a supports at-rule.
--- Parameters: 'PCssSetSupportsText'
--- Returns: 'CssSetSupportsText'
+--   Modifies the expression of a supports at-rule.
+--   Parameters: 'PCssSetSupportsText'
+--   Returns: 'CssSetSupportsText'
 cssSetSupportsText :: Handle ev -> PCssSetSupportsText -> IO CssSetSupportsText
 cssSetSupportsText handle params = sendReceiveCommandResult handle "CSS.setSupportsText" (Just params)
 
@@ -1341,9 +1342,9 @@ instance FromJSON  PCssSetRuleSelector where
 
 
 -- | Function for the 'CSS.setRuleSelector' command.
- -- Modifies the rule selector.
--- Parameters: 'PCssSetRuleSelector'
--- Returns: 'CssSetRuleSelector'
+--   Modifies the rule selector.
+--   Parameters: 'PCssSetRuleSelector'
+--   Returns: 'CssSetRuleSelector'
 cssSetRuleSelector :: Handle ev -> PCssSetRuleSelector -> IO CssSetRuleSelector
 cssSetRuleSelector handle params = sendReceiveCommandResult handle "CSS.setRuleSelector" (Just params)
 
@@ -1374,9 +1375,9 @@ instance FromJSON  PCssSetStyleSheetText where
 
 
 -- | Function for the 'CSS.setStyleSheetText' command.
- -- Sets the new stylesheet text.
--- Parameters: 'PCssSetStyleSheetText'
--- Returns: 'CssSetStyleSheetText'
+--   Sets the new stylesheet text.
+--   Parameters: 'PCssSetStyleSheetText'
+--   Returns: 'CssSetStyleSheetText'
 cssSetStyleSheetText :: Handle ev -> PCssSetStyleSheetText -> IO CssSetStyleSheetText
 cssSetStyleSheetText handle params = sendReceiveCommandResult handle "CSS.setStyleSheetText" (Just params)
 
@@ -1406,9 +1407,9 @@ instance FromJSON  PCssSetStyleTexts where
 
 
 -- | Function for the 'CSS.setStyleTexts' command.
- -- Applies specified style edits one after another in the given order.
--- Parameters: 'PCssSetStyleTexts'
--- Returns: 'CssSetStyleTexts'
+--   Applies specified style edits one after another in the given order.
+--   Parameters: 'PCssSetStyleTexts'
+--   Returns: 'CssSetStyleTexts'
 cssSetStyleTexts :: Handle ev -> PCssSetStyleTexts -> IO CssSetStyleTexts
 cssSetStyleTexts handle params = sendReceiveCommandResult handle "CSS.setStyleTexts" (Just params)
 
@@ -1427,15 +1428,15 @@ instance Command CssSetStyleTexts where
 
 
 -- | Function for the 'CSS.startRuleUsageTracking' command.
- -- Enables the selector recording.
+--   Enables the selector recording.
 cssStartRuleUsageTracking :: Handle ev -> IO ()
 cssStartRuleUsageTracking handle = sendReceiveCommand handle "CSS.startRuleUsageTracking" (Nothing :: Maybe ())
 
 
 -- | Function for the 'CSS.stopRuleUsageTracking' command.
- -- Stop tracking rule usage and return the list of rules that were used since last call to
- -- `takeCoverageDelta` (or since start of coverage instrumentation)
--- Returns: 'CssStopRuleUsageTracking'
+--   Stop tracking rule usage and return the list of rules that were used since last call to
+--   `takeCoverageDelta` (or since start of coverage instrumentation)
+--   Returns: 'CssStopRuleUsageTracking'
 cssStopRuleUsageTracking :: Handle ev -> IO CssStopRuleUsageTracking
 cssStopRuleUsageTracking handle = sendReceiveCommandResult handle "CSS.stopRuleUsageTracking" (Nothing :: Maybe ())
 
@@ -1453,9 +1454,9 @@ instance Command CssStopRuleUsageTracking where
 
 
 -- | Function for the 'CSS.takeCoverageDelta' command.
- -- Obtain list of rules that became used since last call to this method (or since start of coverage
- -- instrumentation)
--- Returns: 'CssTakeCoverageDelta'
+--   Obtain list of rules that became used since last call to this method (or since start of coverage
+--   instrumentation)
+--   Returns: 'CssTakeCoverageDelta'
 cssTakeCoverageDelta :: Handle ev -> IO CssTakeCoverageDelta
 cssTakeCoverageDelta handle = sendReceiveCommandResult handle "CSS.takeCoverageDelta" (Nothing :: Maybe ())
 
@@ -1487,8 +1488,8 @@ instance FromJSON  PCssSetLocalFontsEnabled where
 
 
 -- | Function for the 'CSS.setLocalFontsEnabled' command.
- -- Enables/disables rendering of local CSS fonts (enabled by default).
--- Parameters: 'PCssSetLocalFontsEnabled'
+--   Enables/disables rendering of local CSS fonts (enabled by default).
+--   Parameters: 'PCssSetLocalFontsEnabled'
 cssSetLocalFontsEnabled :: Handle ev -> PCssSetLocalFontsEnabled -> IO ()
 cssSetLocalFontsEnabled handle params = sendReceiveCommand handle "CSS.setLocalFontsEnabled" (Just params)
 

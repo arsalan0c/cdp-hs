@@ -45,7 +45,8 @@ import CDP.Handle
 
 
 
--- | Type 'Performance.Metric' .Run-time execution metric.
+-- | Type 'Performance.Metric'.
+--   Run-time execution metric.
 data PerformanceMetric = PerformanceMetric {
   -- | Metric name.
   performanceMetricName :: String,

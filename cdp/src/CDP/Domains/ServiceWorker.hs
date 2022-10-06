@@ -46,10 +46,11 @@ import CDP.Handle
 import CDP.Domains.BrowserTarget as BrowserTarget
 
 
--- | Type 'ServiceWorker.RegistrationID' .
+-- | Type 'ServiceWorker.RegistrationID'.
 type ServiceWorkerRegistrationId = String
 
--- | Type 'ServiceWorker.ServiceWorkerRegistration' .ServiceWorker registration.
+-- | Type 'ServiceWorker.ServiceWorkerRegistration'.
+--   ServiceWorker registration.
 data ServiceWorkerServiceWorkerRegistration = ServiceWorkerServiceWorkerRegistration {
   serviceWorkerServiceWorkerRegistrationRegistrationId :: ServiceWorkerRegistrationId,
   serviceWorkerServiceWorkerRegistrationScopeUrl :: String,
@@ -63,7 +64,7 @@ instance FromJSON  ServiceWorkerServiceWorkerRegistration where
 
 
 
--- | Type 'ServiceWorker.ServiceWorkerVersionRunningStatus' .
+-- | Type 'ServiceWorker.ServiceWorkerVersionRunningStatus'.
 data ServiceWorkerServiceWorkerVersionRunningStatus = ServiceWorkerServiceWorkerVersionRunningStatusStopped | ServiceWorkerServiceWorkerVersionRunningStatusStarting | ServiceWorkerServiceWorkerVersionRunningStatusRunning | ServiceWorkerServiceWorkerVersionRunningStatusStopping
    deriving (Ord, Eq, Show, Read)
 instance FromJSON ServiceWorkerServiceWorkerVersionRunningStatus where
@@ -85,7 +86,7 @@ instance ToJSON ServiceWorkerServiceWorkerVersionRunningStatus where
 
 
 
--- | Type 'ServiceWorker.ServiceWorkerVersionStatus' .
+-- | Type 'ServiceWorker.ServiceWorkerVersionStatus'.
 data ServiceWorkerServiceWorkerVersionStatus = ServiceWorkerServiceWorkerVersionStatusNew | ServiceWorkerServiceWorkerVersionStatusInstalling | ServiceWorkerServiceWorkerVersionStatusInstalled | ServiceWorkerServiceWorkerVersionStatusActivating | ServiceWorkerServiceWorkerVersionStatusActivated | ServiceWorkerServiceWorkerVersionStatusRedundant
    deriving (Ord, Eq, Show, Read)
 instance FromJSON ServiceWorkerServiceWorkerVersionStatus where
@@ -111,7 +112,8 @@ instance ToJSON ServiceWorkerServiceWorkerVersionStatus where
 
 
 
--- | Type 'ServiceWorker.ServiceWorkerVersion' .ServiceWorker version.
+-- | Type 'ServiceWorker.ServiceWorkerVersion'.
+--   ServiceWorker version.
 data ServiceWorkerServiceWorkerVersion = ServiceWorkerServiceWorkerVersion {
   serviceWorkerServiceWorkerVersionVersionId :: String,
   serviceWorkerServiceWorkerVersionRegistrationId :: ServiceWorkerRegistrationId,
@@ -134,7 +136,8 @@ instance FromJSON  ServiceWorkerServiceWorkerVersion where
 
 
 
--- | Type 'ServiceWorker.ServiceWorkerErrorMessage' .ServiceWorker error message.
+-- | Type 'ServiceWorker.ServiceWorkerErrorMessage'.
+--   ServiceWorker error message.
 data ServiceWorkerServiceWorkerErrorMessage = ServiceWorkerServiceWorkerErrorMessage {
   serviceWorkerServiceWorkerErrorMessageErrorMessage :: String,
   serviceWorkerServiceWorkerErrorMessageRegistrationId :: ServiceWorkerRegistrationId,

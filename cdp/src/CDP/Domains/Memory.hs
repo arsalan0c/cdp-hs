@@ -45,7 +45,8 @@ import CDP.Handle
 
 
 
--- | Type 'Memory.PressureLevel' .Memory pressure level.
+-- | Type 'Memory.PressureLevel'.
+--   Memory pressure level.
 data MemoryPressureLevel = MemoryPressureLevelModerate | MemoryPressureLevelCritical
    deriving (Ord, Eq, Show, Read)
 instance FromJSON MemoryPressureLevel where
@@ -63,7 +64,8 @@ instance ToJSON MemoryPressureLevel where
 
 
 
--- | Type 'Memory.SamplingProfileNode' .Heap profile sample.
+-- | Type 'Memory.SamplingProfileNode'.
+--   Heap profile sample.
 data MemorySamplingProfileNode = MemorySamplingProfileNode {
   -- | Size of the sampled allocation.
   memorySamplingProfileNodeSize :: Double,
@@ -80,7 +82,8 @@ instance FromJSON  MemorySamplingProfileNode where
 
 
 
--- | Type 'Memory.SamplingProfile' .Array of heap profile samples.
+-- | Type 'Memory.SamplingProfile'.
+--   Array of heap profile samples.
 data MemorySamplingProfile = MemorySamplingProfile {
   memorySamplingProfileSamples :: [MemorySamplingProfileNode],
   memorySamplingProfileModules :: [MemoryModule]
@@ -93,7 +96,8 @@ instance FromJSON  MemorySamplingProfile where
 
 
 
--- | Type 'Memory.Module' .Executable module information
+-- | Type 'Memory.Module'.
+--   Executable module information
 data MemoryModule = MemoryModule {
   -- | Name of the module.
   memoryModuleName :: String,

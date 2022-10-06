@@ -45,7 +45,7 @@ import CDP.Handle
 
 
 
--- | Type 'Input.TouchPoint' .
+-- | Type 'Input.TouchPoint'.
 data InputTouchPoint = InputTouchPoint {
   -- | X coordinate of the event relative to the main frame's viewport in CSS pixels.
   inputTouchPointX :: Double,
@@ -79,7 +79,7 @@ instance FromJSON  InputTouchPoint where
 
 
 
--- | Type 'Input.GestureSourceType' .
+-- | Type 'Input.GestureSourceType'.
 data InputGestureSourceType = InputGestureSourceTypeDefault | InputGestureSourceTypeTouch | InputGestureSourceTypeMouse
    deriving (Ord, Eq, Show, Read)
 instance FromJSON InputGestureSourceType where
@@ -99,7 +99,7 @@ instance ToJSON InputGestureSourceType where
 
 
 
--- | Type 'Input.MouseButton' .
+-- | Type 'Input.MouseButton'.
 data InputMouseButton = InputMouseButtonNone | InputMouseButtonLeft | InputMouseButtonMiddle | InputMouseButtonRight | InputMouseButtonBack | InputMouseButtonForward
    deriving (Ord, Eq, Show, Read)
 instance FromJSON InputMouseButton where
@@ -125,10 +125,11 @@ instance ToJSON InputMouseButton where
 
 
 
--- | Type 'Input.TimeSinceEpoch' .UTC time in seconds, counted from January 1, 1970.
+-- | Type 'Input.TimeSinceEpoch'.
+--   UTC time in seconds, counted from January 1, 1970.
 type InputTimeSinceEpoch = Double
 
--- | Type 'Input.DragDataItem' .
+-- | Type 'Input.DragDataItem'.
 data InputDragDataItem = InputDragDataItem {
   -- | Mime type of the dragged data.
   inputDragDataItemMimeType :: String,
@@ -149,7 +150,7 @@ instance FromJSON  InputDragDataItem where
 
 
 
--- | Type 'Input.DragData' .
+-- | Type 'Input.DragData'.
 data InputDragData = InputDragData {
   inputDragDataItems :: [InputDragDataItem],
   -- | List of filenames that should be included when dropping

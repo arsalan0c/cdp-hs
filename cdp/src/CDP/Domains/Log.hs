@@ -49,7 +49,8 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 import CDP.Domains.Runtime as Runtime
 
 
--- | Type 'Log.LogEntry' .Log entry.
+-- | Type 'Log.LogEntry'.
+--   Log entry.
 data LogLogEntrySource = LogLogEntrySourceXml | LogLogEntrySourceJavascript | LogLogEntrySourceNetwork | LogLogEntrySourceStorage | LogLogEntrySourceAppcache | LogLogEntrySourceRendering | LogLogEntrySourceSecurity | LogLogEntrySourceDeprecation | LogLogEntrySourceWorker | LogLogEntrySourceViolation | LogLogEntrySourceIntervention | LogLogEntrySourceRecommendation | LogLogEntrySourceOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON LogLogEntrySource where
@@ -154,7 +155,8 @@ instance FromJSON  LogLogEntry where
 
 
 
--- | Type 'Log.ViolationSetting' .Violation configuration setting.
+-- | Type 'Log.ViolationSetting'.
+--   Violation configuration setting.
 data LogViolationSettingName = LogViolationSettingNameLongTask | LogViolationSettingNameLongLayout | LogViolationSettingNameBlockedEvent | LogViolationSettingNameBlockedParser | LogViolationSettingNameDiscouragedApiUse | LogViolationSettingNameHandler | LogViolationSettingNameRecurringHandler
    deriving (Ord, Eq, Show, Read)
 instance FromJSON LogViolationSettingName where

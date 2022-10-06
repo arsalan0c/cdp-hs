@@ -47,7 +47,8 @@ import CDP.Domains.Debugger as Debugger
 import CDP.Domains.Runtime as Runtime
 
 
--- | Type 'Profiler.ProfileNode' .Profile node. Holds callsite information, execution statistics and child nodes.
+-- | Type 'Profiler.ProfileNode'.
+--   Profile node. Holds callsite information, execution statistics and child nodes.
 data ProfilerProfileNode = ProfilerProfileNode {
   -- | Unique id of the node.
   profilerProfileNodeId :: Int,
@@ -71,7 +72,8 @@ instance FromJSON  ProfilerProfileNode where
 
 
 
--- | Type 'Profiler.Profile' .Profile.
+-- | Type 'Profiler.Profile'.
+--   Profile.
 data ProfilerProfile = ProfilerProfile {
   -- | The list of profile nodes. First item is the root node.
   profilerProfileNodes :: [ProfilerProfileNode],
@@ -93,7 +95,8 @@ instance FromJSON  ProfilerProfile where
 
 
 
--- | Type 'Profiler.PositionTickInfo' .Specifies a number of samples attributed to a certain source position.
+-- | Type 'Profiler.PositionTickInfo'.
+--   Specifies a number of samples attributed to a certain source position.
 data ProfilerPositionTickInfo = ProfilerPositionTickInfo {
   -- | Source line number (1-based).
   profilerPositionTickInfoLine :: Int,
@@ -108,7 +111,8 @@ instance FromJSON  ProfilerPositionTickInfo where
 
 
 
--- | Type 'Profiler.CoverageRange' .Coverage data for a source range.
+-- | Type 'Profiler.CoverageRange'.
+--   Coverage data for a source range.
 data ProfilerCoverageRange = ProfilerCoverageRange {
   -- | JavaScript script source offset for the range start.
   profilerCoverageRangeStartOffset :: Int,
@@ -125,7 +129,8 @@ instance FromJSON  ProfilerCoverageRange where
 
 
 
--- | Type 'Profiler.FunctionCoverage' .Coverage data for a JavaScript function.
+-- | Type 'Profiler.FunctionCoverage'.
+--   Coverage data for a JavaScript function.
 data ProfilerFunctionCoverage = ProfilerFunctionCoverage {
   -- | JavaScript function name.
   profilerFunctionCoverageFunctionName :: String,
@@ -142,7 +147,8 @@ instance FromJSON  ProfilerFunctionCoverage where
 
 
 
--- | Type 'Profiler.ScriptCoverage' .Coverage data for a JavaScript script.
+-- | Type 'Profiler.ScriptCoverage'.
+--   Coverage data for a JavaScript script.
 data ProfilerScriptCoverage = ProfilerScriptCoverage {
   -- | JavaScript script id.
   profilerScriptCoverageScriptId :: Runtime.RuntimeScriptId,
@@ -159,7 +165,8 @@ instance FromJSON  ProfilerScriptCoverage where
 
 
 
--- | Type 'Profiler.TypeObject' .Describes a type collected during runtime.
+-- | Type 'Profiler.TypeObject'.
+--   Describes a type collected during runtime.
 data ProfilerTypeObject = ProfilerTypeObject {
   -- | Name of a type collected with type profiling.
   profilerTypeObjectName :: String
@@ -172,7 +179,8 @@ instance FromJSON  ProfilerTypeObject where
 
 
 
--- | Type 'Profiler.TypeProfileEntry' .Source offset and types for a parameter or return value.
+-- | Type 'Profiler.TypeProfileEntry'.
+--   Source offset and types for a parameter or return value.
 data ProfilerTypeProfileEntry = ProfilerTypeProfileEntry {
   -- | Source offset of the parameter or end of function for return values.
   profilerTypeProfileEntryOffset :: Int,
@@ -187,7 +195,8 @@ instance FromJSON  ProfilerTypeProfileEntry where
 
 
 
--- | Type 'Profiler.ScriptTypeProfile' .Type profile data collected during runtime for a JavaScript script.
+-- | Type 'Profiler.ScriptTypeProfile'.
+--   Type profile data collected during runtime for a JavaScript script.
 data ProfilerScriptTypeProfile = ProfilerScriptTypeProfile {
   -- | JavaScript script id.
   profilerScriptTypeProfileScriptId :: Runtime.RuntimeScriptId,

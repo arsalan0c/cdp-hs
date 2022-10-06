@@ -19,12 +19,13 @@ To get started:
 
 ## Example usage
 
-Print a page:
+Print a page to PDF, with Base64 encoded data being read in chunks:
 
 ```hs
 module Main where
 
 import Data.Default
+import Data.Maybe
 import System.Process
 
 import qualified CDP as CDP
@@ -36,19 +37,31 @@ main = do
     CDP.runClient def printPDF
 
 printPDF :: CDP.Handle CDP.Event -> IO ()
-printPDF handle = do 
-    -- the handle contains the websocket connection to the browser, amongst other state
-
-    -- send the Page.printToPDF command to the protocol
-    -- this command has all arguments as optional and we've specified none
+printPDF handle = do
+    -- send the Page.printToPDF command
     r <- CDP.pagePrintToPdf handle $ 
-        CDP.PPagePrintToPdf Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+            CDP.PPagePrintToPdf Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing $
+                CDP.PPagePrintToPdfTransferModeReturnAsStream
+    
+    -- obtain stream handle from which to read pdf data
+    let streamHandle = fromJust . CDP.pagePrintToPdfStream $ r
 
-    let path = "mypdf.pdf"     
-    -- decode pdf data
-    readProcess "base64" ["--decode", "-o", path] $ CDP.pagePrintToPdfData r
-    -- open pdf file
+    -- read pdf data 24000 bytes at a time
+    let params = CDP.PIoRead streamHandle Nothing $ Just 24000
+    reads <- whileTrue (not . CDP.ioReadEof) $ CDP.ioRead handle params
+    let dat = concatMap CDP.ioReadData $ reads
+
+    -- decode pdf to a file
+    let path   = "mypdfs.pdf"
+    readProcess "base64" ["--decode", "-o", path] dat
     callCommand $ unwords ["open", path]
+
+whileTrue :: Monad m => (a -> Bool) -> m a -> m [a]
+whileTrue f act = do
+    a <- act
+    if f a
+        then pure . (a :) =<< whileTrue f act
+        else pure [a]
 ```
 
 ## Generating the CDP library
@@ -74,3 +87,4 @@ This began as a [Summer of Haskell](https://summer.haskell.org) / [GSoC](https:/
 ## References
 
 - https://jaspervdj.be/posts/2013-09-01-controlling-chromium-in-haskell.html
+- https://www.jsonrpc.org/specification

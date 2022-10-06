@@ -49,7 +49,8 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 import CDP.Domains.Runtime as Runtime
 
 
--- | Type 'Audits.AffectedCookie' .Information about a cookie that is affected by an inspector issue.
+-- | Type 'Audits.AffectedCookie'.
+--   Information about a cookie that is affected by an inspector issue.
 data AuditsAffectedCookie = AuditsAffectedCookie {
   -- | The following three properties uniquely identify a cookie
   auditsAffectedCookieName :: String,
@@ -64,7 +65,8 @@ instance FromJSON  AuditsAffectedCookie where
 
 
 
--- | Type 'Audits.AffectedRequest' .Information about a request that is affected by an inspector issue.
+-- | Type 'Audits.AffectedRequest'.
+--   Information about a request that is affected by an inspector issue.
 data AuditsAffectedRequest = AuditsAffectedRequest {
   -- | The unique request id.
   auditsAffectedRequestRequestId :: DOMPageNetworkEmulationSecurity.NetworkRequestId,
@@ -78,7 +80,8 @@ instance FromJSON  AuditsAffectedRequest where
 
 
 
--- | Type 'Audits.AffectedFrame' .Information about the frame affected by an inspector issue.
+-- | Type 'Audits.AffectedFrame'.
+--   Information about the frame affected by an inspector issue.
 data AuditsAffectedFrame = AuditsAffectedFrame {
   auditsAffectedFrameFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId
 } deriving (Generic, Eq, Show, Read)
@@ -90,7 +93,7 @@ instance FromJSON  AuditsAffectedFrame where
 
 
 
--- | Type 'Audits.CookieExclusionReason' .
+-- | Type 'Audits.CookieExclusionReason'.
 data AuditsCookieExclusionReason = AuditsCookieExclusionReasonExcludeSameSiteUnspecifiedTreatedAsLax | AuditsCookieExclusionReasonExcludeSameSiteNoneInsecure | AuditsCookieExclusionReasonExcludeSameSiteLax | AuditsCookieExclusionReasonExcludeSameSiteStrict | AuditsCookieExclusionReasonExcludeInvalidSameParty | AuditsCookieExclusionReasonExcludeSamePartyCrossPartyContext
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsCookieExclusionReason where
@@ -116,7 +119,7 @@ instance ToJSON AuditsCookieExclusionReason where
 
 
 
--- | Type 'Audits.CookieWarningReason' .
+-- | Type 'Audits.CookieWarningReason'.
 data AuditsCookieWarningReason = AuditsCookieWarningReasonWarnSameSiteUnspecifiedCrossSiteContext | AuditsCookieWarningReasonWarnSameSiteNoneInsecure | AuditsCookieWarningReasonWarnSameSiteUnspecifiedLaxAllowUnsafe | AuditsCookieWarningReasonWarnSameSiteStrictLaxDowngradeStrict | AuditsCookieWarningReasonWarnSameSiteStrictCrossDowngradeStrict | AuditsCookieWarningReasonWarnSameSiteStrictCrossDowngradeLax | AuditsCookieWarningReasonWarnSameSiteLaxCrossDowngradeStrict | AuditsCookieWarningReasonWarnSameSiteLaxCrossDowngradeLax | AuditsCookieWarningReasonWarnAttributeValueExceedsMaxSize
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsCookieWarningReason where
@@ -148,7 +151,7 @@ instance ToJSON AuditsCookieWarningReason where
 
 
 
--- | Type 'Audits.CookieOperation' .
+-- | Type 'Audits.CookieOperation'.
 data AuditsCookieOperation = AuditsCookieOperationSetCookie | AuditsCookieOperationReadCookie
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsCookieOperation where
@@ -166,7 +169,8 @@ instance ToJSON AuditsCookieOperation where
 
 
 
--- | Type 'Audits.CookieIssueDetails' .This information is currently necessary, as the front-end has a difficult
+-- | Type 'Audits.CookieIssueDetails'.
+--   This information is currently necessary, as the front-end has a difficult
 --   time finding a specific cookie. With this, we can convey specific error
 --   information without the cookie.
 data AuditsCookieIssueDetails = AuditsCookieIssueDetails {
@@ -193,7 +197,7 @@ instance FromJSON  AuditsCookieIssueDetails where
 
 
 
--- | Type 'Audits.MixedContentResolutionStatus' .
+-- | Type 'Audits.MixedContentResolutionStatus'.
 data AuditsMixedContentResolutionStatus = AuditsMixedContentResolutionStatusMixedContentBlocked | AuditsMixedContentResolutionStatusMixedContentAutomaticallyUpgraded | AuditsMixedContentResolutionStatusMixedContentWarning
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsMixedContentResolutionStatus where
@@ -213,7 +217,7 @@ instance ToJSON AuditsMixedContentResolutionStatus where
 
 
 
--- | Type 'Audits.MixedContentResourceType' .
+-- | Type 'Audits.MixedContentResourceType'.
 data AuditsMixedContentResourceType = AuditsMixedContentResourceTypeAttributionSrc | AuditsMixedContentResourceTypeAudio | AuditsMixedContentResourceTypeBeacon | AuditsMixedContentResourceTypeCspReport | AuditsMixedContentResourceTypeDownload | AuditsMixedContentResourceTypeEventSource | AuditsMixedContentResourceTypeFavicon | AuditsMixedContentResourceTypeFont | AuditsMixedContentResourceTypeForm | AuditsMixedContentResourceTypeFrame | AuditsMixedContentResourceTypeImage | AuditsMixedContentResourceTypeImport | AuditsMixedContentResourceTypeManifest | AuditsMixedContentResourceTypePing | AuditsMixedContentResourceTypePluginData | AuditsMixedContentResourceTypePluginResource | AuditsMixedContentResourceTypePrefetch | AuditsMixedContentResourceTypeResource | AuditsMixedContentResourceTypeScript | AuditsMixedContentResourceTypeServiceWorker | AuditsMixedContentResourceTypeSharedWorker | AuditsMixedContentResourceTypeStylesheet | AuditsMixedContentResourceTypeTrack | AuditsMixedContentResourceTypeVideo | AuditsMixedContentResourceTypeWorker | AuditsMixedContentResourceTypeXmlHttpRequest | AuditsMixedContentResourceTypeXslt
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsMixedContentResourceType where
@@ -281,7 +285,7 @@ instance ToJSON AuditsMixedContentResourceType where
 
 
 
--- | Type 'Audits.MixedContentIssueDetails' .
+-- | Type 'Audits.MixedContentIssueDetails'.
 data AuditsMixedContentIssueDetails = AuditsMixedContentIssueDetails {
   -- | The type of resource causing the mixed content issue (css, js, iframe,
   --   form,...). Marked as optional because it is mapped to from
@@ -308,7 +312,8 @@ instance FromJSON  AuditsMixedContentIssueDetails where
 
 
 
--- | Type 'Audits.BlockedByResponseReason' .Enum indicating the reason a response has been blocked. These reasons are
+-- | Type 'Audits.BlockedByResponseReason'.
+--   Enum indicating the reason a response has been blocked. These reasons are
 --   refinements of the net error BLOCKED_BY_RESPONSE.
 data AuditsBlockedByResponseReason = AuditsBlockedByResponseReasonCoepFrameResourceNeedsCoepHeader | AuditsBlockedByResponseReasonCoopSandboxedIFrameCannotNavigateToCoopPage | AuditsBlockedByResponseReasonCorpNotSameOrigin | AuditsBlockedByResponseReasonCorpNotSameOriginAfterDefaultedToSameOriginByCoep | AuditsBlockedByResponseReasonCorpNotSameSite
    deriving (Ord, Eq, Show, Read)
@@ -333,7 +338,8 @@ instance ToJSON AuditsBlockedByResponseReason where
 
 
 
--- | Type 'Audits.BlockedByResponseIssueDetails' .Details for a request that has been blocked with the BLOCKED_BY_RESPONSE
+-- | Type 'Audits.BlockedByResponseIssueDetails'.
+--   Details for a request that has been blocked with the BLOCKED_BY_RESPONSE
 --   code. Currently only used for COEP/COOP, but may be extended to include
 --   some CSP errors in the future.
 data AuditsBlockedByResponseIssueDetails = AuditsBlockedByResponseIssueDetails {
@@ -350,7 +356,7 @@ instance FromJSON  AuditsBlockedByResponseIssueDetails where
 
 
 
--- | Type 'Audits.HeavyAdResolutionStatus' .
+-- | Type 'Audits.HeavyAdResolutionStatus'.
 data AuditsHeavyAdResolutionStatus = AuditsHeavyAdResolutionStatusHeavyAdBlocked | AuditsHeavyAdResolutionStatusHeavyAdWarning
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsHeavyAdResolutionStatus where
@@ -368,7 +374,7 @@ instance ToJSON AuditsHeavyAdResolutionStatus where
 
 
 
--- | Type 'Audits.HeavyAdReason' .
+-- | Type 'Audits.HeavyAdReason'.
 data AuditsHeavyAdReason = AuditsHeavyAdReasonNetworkTotalLimit | AuditsHeavyAdReasonCpuTotalLimit | AuditsHeavyAdReasonCpuPeakLimit
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsHeavyAdReason where
@@ -388,7 +394,7 @@ instance ToJSON AuditsHeavyAdReason where
 
 
 
--- | Type 'Audits.HeavyAdIssueDetails' .
+-- | Type 'Audits.HeavyAdIssueDetails'.
 data AuditsHeavyAdIssueDetails = AuditsHeavyAdIssueDetails {
   -- | The resolution status, either blocking the content or warning.
   auditsHeavyAdIssueDetailsResolution :: AuditsHeavyAdResolutionStatus,
@@ -405,7 +411,7 @@ instance FromJSON  AuditsHeavyAdIssueDetails where
 
 
 
--- | Type 'Audits.ContentSecurityPolicyViolationType' .
+-- | Type 'Audits.ContentSecurityPolicyViolationType'.
 data AuditsContentSecurityPolicyViolationType = AuditsContentSecurityPolicyViolationTypeKInlineViolation | AuditsContentSecurityPolicyViolationTypeKEvalViolation | AuditsContentSecurityPolicyViolationTypeKUrlViolation | AuditsContentSecurityPolicyViolationTypeKTrustedTypesSinkViolation | AuditsContentSecurityPolicyViolationTypeKTrustedTypesPolicyViolation | AuditsContentSecurityPolicyViolationTypeKWasmEvalViolation
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsContentSecurityPolicyViolationType where
@@ -431,7 +437,7 @@ instance ToJSON AuditsContentSecurityPolicyViolationType where
 
 
 
--- | Type 'Audits.SourceCodeLocation' .
+-- | Type 'Audits.SourceCodeLocation'.
 data AuditsSourceCodeLocation = AuditsSourceCodeLocation {
   auditsSourceCodeLocationScriptId :: Maybe Runtime.RuntimeScriptId,
   auditsSourceCodeLocationUrl :: String,
@@ -446,7 +452,7 @@ instance FromJSON  AuditsSourceCodeLocation where
 
 
 
--- | Type 'Audits.ContentSecurityPolicyIssueDetails' .
+-- | Type 'Audits.ContentSecurityPolicyIssueDetails'.
 data AuditsContentSecurityPolicyIssueDetails = AuditsContentSecurityPolicyIssueDetails {
   -- | The url not included in allowed sources.
   auditsContentSecurityPolicyIssueDetailsBlockedUrl :: Maybe String,
@@ -466,7 +472,7 @@ instance FromJSON  AuditsContentSecurityPolicyIssueDetails where
 
 
 
--- | Type 'Audits.SharedArrayBufferIssueType' .
+-- | Type 'Audits.SharedArrayBufferIssueType'.
 data AuditsSharedArrayBufferIssueType = AuditsSharedArrayBufferIssueTypeTransferIssue | AuditsSharedArrayBufferIssueTypeCreationIssue
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsSharedArrayBufferIssueType where
@@ -484,7 +490,8 @@ instance ToJSON AuditsSharedArrayBufferIssueType where
 
 
 
--- | Type 'Audits.SharedArrayBufferIssueDetails' .Details for a issue arising from an SAB being instantiated in, or
+-- | Type 'Audits.SharedArrayBufferIssueDetails'.
+--   Details for a issue arising from an SAB being instantiated in, or
 --   transferred to a context that is not cross-origin isolated.
 data AuditsSharedArrayBufferIssueDetails = AuditsSharedArrayBufferIssueDetails {
   auditsSharedArrayBufferIssueDetailsSourceCodeLocation :: AuditsSourceCodeLocation,
@@ -499,7 +506,7 @@ instance FromJSON  AuditsSharedArrayBufferIssueDetails where
 
 
 
--- | Type 'Audits.TwaQualityEnforcementViolationType' .
+-- | Type 'Audits.TwaQualityEnforcementViolationType'.
 data AuditsTwaQualityEnforcementViolationType = AuditsTwaQualityEnforcementViolationTypeKHttpError | AuditsTwaQualityEnforcementViolationTypeKUnavailableOffline | AuditsTwaQualityEnforcementViolationTypeKDigitalAssetLinks
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsTwaQualityEnforcementViolationType where
@@ -519,7 +526,7 @@ instance ToJSON AuditsTwaQualityEnforcementViolationType where
 
 
 
--- | Type 'Audits.TrustedWebActivityIssueDetails' .
+-- | Type 'Audits.TrustedWebActivityIssueDetails'.
 data AuditsTrustedWebActivityIssueDetails = AuditsTrustedWebActivityIssueDetails {
   -- | The url that triggers the violation.
   auditsTrustedWebActivityIssueDetailsUrl :: String,
@@ -540,7 +547,7 @@ instance FromJSON  AuditsTrustedWebActivityIssueDetails where
 
 
 
--- | Type 'Audits.LowTextContrastIssueDetails' .
+-- | Type 'Audits.LowTextContrastIssueDetails'.
 data AuditsLowTextContrastIssueDetails = AuditsLowTextContrastIssueDetails {
   auditsLowTextContrastIssueDetailsViolatingNodeId :: DOMPageNetworkEmulationSecurity.DomBackendNodeId,
   auditsLowTextContrastIssueDetailsViolatingNodeSelector :: String,
@@ -558,7 +565,8 @@ instance FromJSON  AuditsLowTextContrastIssueDetails where
 
 
 
--- | Type 'Audits.CorsIssueDetails' .Details for a CORS related issue, e.g. a warning or error related to
+-- | Type 'Audits.CorsIssueDetails'.
+--   Details for a CORS related issue, e.g. a warning or error related to
 --   CORS RFC1918 enforcement.
 data AuditsCorsIssueDetails = AuditsCorsIssueDetails {
   auditsCorsIssueDetailsCorsErrorStatus :: DOMPageNetworkEmulationSecurity.NetworkCorsErrorStatus,
@@ -577,7 +585,7 @@ instance FromJSON  AuditsCorsIssueDetails where
 
 
 
--- | Type 'Audits.AttributionReportingIssueType' .
+-- | Type 'Audits.AttributionReportingIssueType'.
 data AuditsAttributionReportingIssueType = AuditsAttributionReportingIssueTypePermissionPolicyDisabled | AuditsAttributionReportingIssueTypeAttributionSourceUntrustworthyOrigin | AuditsAttributionReportingIssueTypeAttributionUntrustworthyOrigin | AuditsAttributionReportingIssueTypeInvalidHeader
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsAttributionReportingIssueType where
@@ -599,7 +607,8 @@ instance ToJSON AuditsAttributionReportingIssueType where
 
 
 
--- | Type 'Audits.AttributionReportingIssueDetails' .Details for issues around "Attribution Reporting API" usage.
+-- | Type 'Audits.AttributionReportingIssueDetails'.
+--   Details for issues around "Attribution Reporting API" usage.
 --   Explainer: https://github.com/WICG/conversion-measurement-api
 data AuditsAttributionReportingIssueDetails = AuditsAttributionReportingIssueDetails {
   auditsAttributionReportingIssueDetailsViolationType :: AuditsAttributionReportingIssueType,
@@ -616,7 +625,8 @@ instance FromJSON  AuditsAttributionReportingIssueDetails where
 
 
 
--- | Type 'Audits.QuirksModeIssueDetails' .Details for issues about documents in Quirks Mode
+-- | Type 'Audits.QuirksModeIssueDetails'.
+--   Details for issues about documents in Quirks Mode
 --   or Limited Quirks Mode that affects page layouting.
 data AuditsQuirksModeIssueDetails = AuditsQuirksModeIssueDetails {
   -- | If false, it means the document's mode is "quirks"
@@ -635,7 +645,7 @@ instance FromJSON  AuditsQuirksModeIssueDetails where
 
 
 
--- | Type 'Audits.NavigatorUserAgentIssueDetails' .
+-- | Type 'Audits.NavigatorUserAgentIssueDetails'.
 data AuditsNavigatorUserAgentIssueDetails = AuditsNavigatorUserAgentIssueDetails {
   auditsNavigatorUserAgentIssueDetailsUrl :: String,
   auditsNavigatorUserAgentIssueDetailsLocation :: Maybe AuditsSourceCodeLocation
@@ -648,7 +658,7 @@ instance FromJSON  AuditsNavigatorUserAgentIssueDetails where
 
 
 
--- | Type 'Audits.GenericIssueErrorType' .
+-- | Type 'Audits.GenericIssueErrorType'.
 data AuditsGenericIssueErrorType = AuditsGenericIssueErrorTypeCrossOriginPortalPostMessageError
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsGenericIssueErrorType where
@@ -664,7 +674,8 @@ instance ToJSON AuditsGenericIssueErrorType where
 
 
 
--- | Type 'Audits.GenericIssueDetails' .Depending on the concrete errorType, different properties are set.
+-- | Type 'Audits.GenericIssueDetails'.
+--   Depending on the concrete errorType, different properties are set.
 data AuditsGenericIssueDetails = AuditsGenericIssueDetails {
   -- | Issues with the same errorType are aggregated in the frontend.
   auditsGenericIssueDetailsErrorType :: AuditsGenericIssueErrorType,
@@ -678,7 +689,7 @@ instance FromJSON  AuditsGenericIssueDetails where
 
 
 
--- | Type 'Audits.DeprecationIssueType' .
+-- | Type 'Audits.DeprecationIssueType'.
 data AuditsDeprecationIssueType = AuditsDeprecationIssueTypeAuthorizationCoveredByWildcard | AuditsDeprecationIssueTypeCanRequestUrlhttpContainingNewline | AuditsDeprecationIssueTypeChromeLoadTimesConnectionInfo | AuditsDeprecationIssueTypeChromeLoadTimesFirstPaintAfterLoadTime | AuditsDeprecationIssueTypeChromeLoadTimesWasAlternateProtocolAvailable | AuditsDeprecationIssueTypeCookieWithTruncatingChar | AuditsDeprecationIssueTypeCrossOriginAccessBasedOnDocumentDomain | AuditsDeprecationIssueTypeCrossOriginWindowAlert | AuditsDeprecationIssueTypeCrossOriginWindowConfirm | AuditsDeprecationIssueTypeCssSelectorInternalMediaControlsOverlayCastButton | AuditsDeprecationIssueTypeDeprecationExample | AuditsDeprecationIssueTypeDocumentDomainSettingWithoutOriginAgentClusterHeader | AuditsDeprecationIssueTypeEventPath | AuditsDeprecationIssueTypeGeolocationInsecureOrigin | AuditsDeprecationIssueTypeGeolocationInsecureOriginDeprecatedNotRemoved | AuditsDeprecationIssueTypeGetUserMediaInsecureOrigin | AuditsDeprecationIssueTypeHostCandidateAttributeGetter | AuditsDeprecationIssueTypeInsecurePrivateNetworkSubresourceRequest | AuditsDeprecationIssueTypeLegacyConstraintGoogIPv6 | AuditsDeprecationIssueTypeLocalCssFileExtensionRejected | AuditsDeprecationIssueTypeMediaSourceAbortRemove | AuditsDeprecationIssueTypeMediaSourceDurationTruncatingBuffered | AuditsDeprecationIssueTypeNoSysexWebMidiWithoutPermission | AuditsDeprecationIssueTypeNotificationInsecureOrigin | AuditsDeprecationIssueTypeNotificationPermissionRequestedIframe | AuditsDeprecationIssueTypeObsoleteWebRtcCipherSuite | AuditsDeprecationIssueTypePaymentRequestBasicCard | AuditsDeprecationIssueTypePictureSourceSrc | AuditsDeprecationIssueTypePrefixedCancelAnimationFrame | AuditsDeprecationIssueTypePrefixedRequestAnimationFrame | AuditsDeprecationIssueTypePrefixedStorageInfo | AuditsDeprecationIssueTypePrefixedVideoDisplayingFullscreen | AuditsDeprecationIssueTypePrefixedVideoEnterFullscreen | AuditsDeprecationIssueTypePrefixedVideoEnterFullScreen | AuditsDeprecationIssueTypePrefixedVideoExitFullscreen | AuditsDeprecationIssueTypePrefixedVideoExitFullScreen | AuditsDeprecationIssueTypePrefixedVideoSupportsFullscreen | AuditsDeprecationIssueTypeRangeExpand | AuditsDeprecationIssueTypeRequestedSubresourceWithEmbeddedCredentials | AuditsDeprecationIssueTypeRtcConstraintEnableDtlsSrtpFalse | AuditsDeprecationIssueTypeRtcConstraintEnableDtlsSrtpTrue | AuditsDeprecationIssueTypeRtcPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics | AuditsDeprecationIssueTypeRtcPeerConnectionSdpSemanticsPlanB | AuditsDeprecationIssueTypeRtcpMuxPolicyNegotiate | AuditsDeprecationIssueTypeSharedArrayBufferConstructedWithoutIsolation | AuditsDeprecationIssueTypeTextToSpeechDisallowedByAutoplay | AuditsDeprecationIssueTypeV8SharedArrayBufferConstructedInExtensionWithoutIsolation | AuditsDeprecationIssueTypeXhrjsonEncodingDetection | AuditsDeprecationIssueTypeXmlHttpRequestSynchronousInNonWorkerOutsideBeforeUnload | AuditsDeprecationIssueTypeXrSupportsSession
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsDeprecationIssueType where
@@ -792,7 +803,8 @@ instance ToJSON AuditsDeprecationIssueType where
 
 
 
--- | Type 'Audits.DeprecationIssueDetails' .This issue tracks information needed to print a deprecation message.
+-- | Type 'Audits.DeprecationIssueDetails'.
+--   This issue tracks information needed to print a deprecation message.
 --   https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/third_party/blink/renderer/core/frame/deprecation/README.md
 data AuditsDeprecationIssueDetails = AuditsDeprecationIssueDetails {
   auditsDeprecationIssueDetailsAffectedFrame :: Maybe AuditsAffectedFrame,
@@ -807,7 +819,7 @@ instance FromJSON  AuditsDeprecationIssueDetails where
 
 
 
--- | Type 'Audits.ClientHintIssueReason' .
+-- | Type 'Audits.ClientHintIssueReason'.
 data AuditsClientHintIssueReason = AuditsClientHintIssueReasonMetaTagAllowListInvalidOrigin | AuditsClientHintIssueReasonMetaTagModifiedHtml
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsClientHintIssueReason where
@@ -825,7 +837,7 @@ instance ToJSON AuditsClientHintIssueReason where
 
 
 
--- | Type 'Audits.FederatedAuthRequestIssueDetails' .
+-- | Type 'Audits.FederatedAuthRequestIssueDetails'.
 data AuditsFederatedAuthRequestIssueDetails = AuditsFederatedAuthRequestIssueDetails {
   auditsFederatedAuthRequestIssueDetailsFederatedAuthRequestIssueReason :: AuditsFederatedAuthRequestIssueReason
 } deriving (Generic, Eq, Show, Read)
@@ -837,7 +849,8 @@ instance FromJSON  AuditsFederatedAuthRequestIssueDetails where
 
 
 
--- | Type 'Audits.FederatedAuthRequestIssueReason' .Represents the failure reason when a federated authentication reason fails.
+-- | Type 'Audits.FederatedAuthRequestIssueReason'.
+--   Represents the failure reason when a federated authentication reason fails.
 --   Should be updated alongside RequestIdTokenStatus in
 --   third_party/blink/public/mojom/devtools/inspector_issue.mojom to include
 --   all cases except for success.
@@ -906,7 +919,8 @@ instance ToJSON AuditsFederatedAuthRequestIssueReason where
 
 
 
--- | Type 'Audits.ClientHintIssueDetails' .This issue tracks client hints related issues. It's used to deprecate old
+-- | Type 'Audits.ClientHintIssueDetails'.
+--   This issue tracks client hints related issues. It's used to deprecate old
 --   features, encourage the use of new ones, and provide general guidance.
 data AuditsClientHintIssueDetails = AuditsClientHintIssueDetails {
   auditsClientHintIssueDetailsSourceCodeLocation :: AuditsSourceCodeLocation,
@@ -920,7 +934,8 @@ instance FromJSON  AuditsClientHintIssueDetails where
 
 
 
--- | Type 'Audits.InspectorIssueCode' .A unique identifier for the type of issue. Each type may use one of the
+-- | Type 'Audits.InspectorIssueCode'.
+--   A unique identifier for the type of issue. Each type may use one of the
 --   optional fields in InspectorIssueDetails to convey more specific
 --   information about the kind of issue.
 data AuditsInspectorIssueCode = AuditsInspectorIssueCodeCookieIssue | AuditsInspectorIssueCodeMixedContentIssue | AuditsInspectorIssueCodeBlockedByResponseIssue | AuditsInspectorIssueCodeHeavyAdIssue | AuditsInspectorIssueCodeContentSecurityPolicyIssue | AuditsInspectorIssueCodeSharedArrayBufferIssue | AuditsInspectorIssueCodeTrustedWebActivityIssue | AuditsInspectorIssueCodeLowTextContrastIssue | AuditsInspectorIssueCodeCorsIssue | AuditsInspectorIssueCodeAttributionReportingIssue | AuditsInspectorIssueCodeQuirksModeIssue | AuditsInspectorIssueCodeNavigatorUserAgentIssue | AuditsInspectorIssueCodeGenericIssue | AuditsInspectorIssueCodeDeprecationIssue | AuditsInspectorIssueCodeClientHintIssue | AuditsInspectorIssueCodeFederatedAuthRequestIssue
@@ -968,7 +983,8 @@ instance ToJSON AuditsInspectorIssueCode where
 
 
 
--- | Type 'Audits.InspectorIssueDetails' .This struct holds a list of optional fields with additional information
+-- | Type 'Audits.InspectorIssueDetails'.
+--   This struct holds a list of optional fields with additional information
 --   specific to the kind of issue. When adding a new issue code, please also
 --   add a new optional field to this type.
 data AuditsInspectorIssueDetails = AuditsInspectorIssueDetails {
@@ -997,11 +1013,13 @@ instance FromJSON  AuditsInspectorIssueDetails where
 
 
 
--- | Type 'Audits.IssueId' .A unique id for a DevTools inspector issue. Allows other entities (e.g.
+-- | Type 'Audits.IssueId'.
+--   A unique id for a DevTools inspector issue. Allows other entities (e.g.
 --   exceptions, CDP message, console messages, etc.) to reference an issue.
 type AuditsIssueId = String
 
--- | Type 'Audits.InspectorIssue' .An inspector issue reported from the back-end.
+-- | Type 'Audits.InspectorIssue'.
+--   An inspector issue reported from the back-end.
 data AuditsInspectorIssue = AuditsInspectorIssue {
   auditsInspectorIssueCode :: AuditsInspectorIssueCode,
   auditsInspectorIssueDetails :: AuditsInspectorIssueDetails,

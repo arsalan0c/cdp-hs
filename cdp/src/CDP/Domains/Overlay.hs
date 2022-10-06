@@ -49,7 +49,8 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 import CDP.Domains.Runtime as Runtime
 
 
--- | Type 'Overlay.SourceOrderConfig' .Configuration data for drawing the source order of an elements children.
+-- | Type 'Overlay.SourceOrderConfig'.
+--   Configuration data for drawing the source order of an elements children.
 data OverlaySourceOrderConfig = OverlaySourceOrderConfig {
   -- | the color to outline the givent element in.
   overlaySourceOrderConfigParentOutlineColor :: DOMPageNetworkEmulationSecurity.DomRgba,
@@ -64,7 +65,8 @@ instance FromJSON  OverlaySourceOrderConfig where
 
 
 
--- | Type 'Overlay.GridHighlightConfig' .Configuration data for the highlighting of Grid elements.
+-- | Type 'Overlay.GridHighlightConfig'.
+--   Configuration data for the highlighting of Grid elements.
 data OverlayGridHighlightConfig = OverlayGridHighlightConfig {
   -- | Whether the extension lines from grid cells to the rulers should be shown (default: false).
   overlayGridHighlightConfigShowGridExtensionLines :: Maybe Bool,
@@ -111,7 +113,8 @@ instance FromJSON  OverlayGridHighlightConfig where
 
 
 
--- | Type 'Overlay.FlexContainerHighlightConfig' .Configuration data for the highlighting of Flex container elements.
+-- | Type 'Overlay.FlexContainerHighlightConfig'.
+--   Configuration data for the highlighting of Flex container elements.
 data OverlayFlexContainerHighlightConfig = OverlayFlexContainerHighlightConfig {
   -- | The style of the container border
   overlayFlexContainerHighlightConfigContainerBorder :: Maybe OverlayLineStyle,
@@ -138,7 +141,8 @@ instance FromJSON  OverlayFlexContainerHighlightConfig where
 
 
 
--- | Type 'Overlay.FlexItemHighlightConfig' .Configuration data for the highlighting of Flex item elements.
+-- | Type 'Overlay.FlexItemHighlightConfig'.
+--   Configuration data for the highlighting of Flex item elements.
 data OverlayFlexItemHighlightConfig = OverlayFlexItemHighlightConfig {
   -- | Style of the box representing the item's base size
   overlayFlexItemHighlightConfigBaseSizeBox :: Maybe OverlayBoxStyle,
@@ -155,7 +159,8 @@ instance FromJSON  OverlayFlexItemHighlightConfig where
 
 
 
--- | Type 'Overlay.LineStyle' .Style information for drawing a line.
+-- | Type 'Overlay.LineStyle'.
+--   Style information for drawing a line.
 data OverlayLineStylePattern = OverlayLineStylePatternDashed | OverlayLineStylePatternDotted
    deriving (Ord, Eq, Show, Read)
 instance FromJSON OverlayLineStylePattern where
@@ -187,7 +192,8 @@ instance FromJSON  OverlayLineStyle where
 
 
 
--- | Type 'Overlay.BoxStyle' .Style information for drawing a box.
+-- | Type 'Overlay.BoxStyle'.
+--   Style information for drawing a box.
 data OverlayBoxStyle = OverlayBoxStyle {
   -- | The background color for the box (default: transparent)
   overlayBoxStyleFillColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
@@ -202,7 +208,7 @@ instance FromJSON  OverlayBoxStyle where
 
 
 
--- | Type 'Overlay.ContrastAlgorithm' .
+-- | Type 'Overlay.ContrastAlgorithm'.
 data OverlayContrastAlgorithm = OverlayContrastAlgorithmAa | OverlayContrastAlgorithmAaa | OverlayContrastAlgorithmApca
    deriving (Ord, Eq, Show, Read)
 instance FromJSON OverlayContrastAlgorithm where
@@ -222,7 +228,8 @@ instance ToJSON OverlayContrastAlgorithm where
 
 
 
--- | Type 'Overlay.HighlightConfig' .Configuration data for the highlighting of page elements.
+-- | Type 'Overlay.HighlightConfig'.
+--   Configuration data for the highlighting of page elements.
 data OverlayHighlightConfig = OverlayHighlightConfig {
   -- | Whether the node info tooltip should be shown (default: false).
   overlayHighlightConfigShowInfo :: Maybe Bool,
@@ -271,7 +278,7 @@ instance FromJSON  OverlayHighlightConfig where
 
 
 
--- | Type 'Overlay.ColorFormat' .
+-- | Type 'Overlay.ColorFormat'.
 data OverlayColorFormat = OverlayColorFormatRgb | OverlayColorFormatHsl | OverlayColorFormatHwb | OverlayColorFormatHex
    deriving (Ord, Eq, Show, Read)
 instance FromJSON OverlayColorFormat where
@@ -293,7 +300,8 @@ instance ToJSON OverlayColorFormat where
 
 
 
--- | Type 'Overlay.GridNodeHighlightConfig' .Configurations for Persistent Grid Highlight
+-- | Type 'Overlay.GridNodeHighlightConfig'.
+--   Configurations for Persistent Grid Highlight
 data OverlayGridNodeHighlightConfig = OverlayGridNodeHighlightConfig {
   -- | A descriptor for the highlight appearance.
   overlayGridNodeHighlightConfigGridHighlightConfig :: OverlayGridHighlightConfig,
@@ -308,7 +316,7 @@ instance FromJSON  OverlayGridNodeHighlightConfig where
 
 
 
--- | Type 'Overlay.FlexNodeHighlightConfig' .
+-- | Type 'Overlay.FlexNodeHighlightConfig'.
 data OverlayFlexNodeHighlightConfig = OverlayFlexNodeHighlightConfig {
   -- | A descriptor for the highlight appearance of flex containers.
   overlayFlexNodeHighlightConfigFlexContainerHighlightConfig :: OverlayFlexContainerHighlightConfig,
@@ -323,7 +331,7 @@ instance FromJSON  OverlayFlexNodeHighlightConfig where
 
 
 
--- | Type 'Overlay.ScrollSnapContainerHighlightConfig' .
+-- | Type 'Overlay.ScrollSnapContainerHighlightConfig'.
 data OverlayScrollSnapContainerHighlightConfig = OverlayScrollSnapContainerHighlightConfig {
   -- | The style of the snapport border (default: transparent)
   overlayScrollSnapContainerHighlightConfigSnapportBorder :: Maybe OverlayLineStyle,
@@ -342,7 +350,7 @@ instance FromJSON  OverlayScrollSnapContainerHighlightConfig where
 
 
 
--- | Type 'Overlay.ScrollSnapHighlightConfig' .
+-- | Type 'Overlay.ScrollSnapHighlightConfig'.
 data OverlayScrollSnapHighlightConfig = OverlayScrollSnapHighlightConfig {
   -- | A descriptor for the highlight appearance of scroll snap containers.
   overlayScrollSnapHighlightConfigScrollSnapContainerHighlightConfig :: OverlayScrollSnapContainerHighlightConfig,
@@ -357,7 +365,8 @@ instance FromJSON  OverlayScrollSnapHighlightConfig where
 
 
 
--- | Type 'Overlay.HingeConfig' .Configuration for dual screen hinge
+-- | Type 'Overlay.HingeConfig'.
+--   Configuration for dual screen hinge
 data OverlayHingeConfig = OverlayHingeConfig {
   -- | A rectangle represent hinge
   overlayHingeConfigRect :: DOMPageNetworkEmulationSecurity.DomRect,
@@ -374,7 +383,7 @@ instance FromJSON  OverlayHingeConfig where
 
 
 
--- | Type 'Overlay.ContainerQueryHighlightConfig' .
+-- | Type 'Overlay.ContainerQueryHighlightConfig'.
 data OverlayContainerQueryHighlightConfig = OverlayContainerQueryHighlightConfig {
   -- | A descriptor for the highlight appearance of container query containers.
   overlayContainerQueryHighlightConfigContainerQueryContainerHighlightConfig :: OverlayContainerQueryContainerHighlightConfig,
@@ -389,7 +398,7 @@ instance FromJSON  OverlayContainerQueryHighlightConfig where
 
 
 
--- | Type 'Overlay.ContainerQueryContainerHighlightConfig' .
+-- | Type 'Overlay.ContainerQueryContainerHighlightConfig'.
 data OverlayContainerQueryContainerHighlightConfig = OverlayContainerQueryContainerHighlightConfig {
   -- | The style of the container border.
   overlayContainerQueryContainerHighlightConfigContainerBorder :: Maybe OverlayLineStyle,
@@ -404,7 +413,7 @@ instance FromJSON  OverlayContainerQueryContainerHighlightConfig where
 
 
 
--- | Type 'Overlay.IsolatedElementHighlightConfig' .
+-- | Type 'Overlay.IsolatedElementHighlightConfig'.
 data OverlayIsolatedElementHighlightConfig = OverlayIsolatedElementHighlightConfig {
   -- | A descriptor for the highlight appearance of an element in isolation mode.
   overlayIsolatedElementHighlightConfigIsolationModeHighlightConfig :: OverlayIsolationModeHighlightConfig,
@@ -419,7 +428,7 @@ instance FromJSON  OverlayIsolatedElementHighlightConfig where
 
 
 
--- | Type 'Overlay.IsolationModeHighlightConfig' .
+-- | Type 'Overlay.IsolationModeHighlightConfig'.
 data OverlayIsolationModeHighlightConfig = OverlayIsolationModeHighlightConfig {
   -- | The fill color of the resizers (default: transparent).
   overlayIsolationModeHighlightConfigResizerColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
@@ -436,7 +445,7 @@ instance FromJSON  OverlayIsolationModeHighlightConfig where
 
 
 
--- | Type 'Overlay.InspectMode' .
+-- | Type 'Overlay.InspectMode'.
 data OverlayInspectMode = OverlayInspectModeSearchForNode | OverlayInspectModeSearchForUaShadowDom | OverlayInspectModeCaptureAreaScreenshot | OverlayInspectModeShowDistances | OverlayInspectModeNone
    deriving (Ord, Eq, Show, Read)
 instance FromJSON OverlayInspectMode where

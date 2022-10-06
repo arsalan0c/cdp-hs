@@ -48,7 +48,7 @@ import CDP.Handle
 
 
 
--- | Type 'Cast.Sink' .
+-- | Type 'Cast.Sink'.
 data CastSink = CastSink {
   castSinkName :: String,
   castSinkId :: String,

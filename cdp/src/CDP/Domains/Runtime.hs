@@ -51,10 +51,12 @@ import CDP.Handle
 
 
 
--- | Type 'Runtime.ScriptId' .Unique script identifier.
+-- | Type 'Runtime.ScriptId'.
+--   Unique script identifier.
 type RuntimeScriptId = String
 
--- | Type 'Runtime.WebDriverValue' .Represents the value serialiazed by the WebDriver BiDi specification
+-- | Type 'Runtime.WebDriverValue'.
+--   Represents the value serialiazed by the WebDriver BiDi specification
 --   https://w3c.github.io/webdriver-bidi.
 data RuntimeWebDriverValueType = RuntimeWebDriverValueTypeUndefined | RuntimeWebDriverValueTypeNull | RuntimeWebDriverValueTypeString | RuntimeWebDriverValueTypeNumber | RuntimeWebDriverValueTypeBoolean | RuntimeWebDriverValueTypeBigint | RuntimeWebDriverValueTypeRegexp | RuntimeWebDriverValueTypeDate | RuntimeWebDriverValueTypeSymbol | RuntimeWebDriverValueTypeArray | RuntimeWebDriverValueTypeObject | RuntimeWebDriverValueTypeFunction | RuntimeWebDriverValueTypeMap | RuntimeWebDriverValueTypeSet | RuntimeWebDriverValueTypeWeakmap | RuntimeWebDriverValueTypeWeakset | RuntimeWebDriverValueTypeError | RuntimeWebDriverValueTypeProxy | RuntimeWebDriverValueTypePromise | RuntimeWebDriverValueTypeTypedarray | RuntimeWebDriverValueTypeArraybuffer | RuntimeWebDriverValueTypeNode | RuntimeWebDriverValueTypeWindow
    deriving (Ord, Eq, Show, Read)
@@ -128,14 +130,17 @@ instance FromJSON  RuntimeWebDriverValue where
 
 
 
--- | Type 'Runtime.RemoteObjectId' .Unique object identifier.
+-- | Type 'Runtime.RemoteObjectId'.
+--   Unique object identifier.
 type RuntimeRemoteObjectId = String
 
--- | Type 'Runtime.UnserializableValue' .Primitive value which cannot be JSON-stringified. Includes values `-0`, `NaN`, `Infinity`,
+-- | Type 'Runtime.UnserializableValue'.
+--   Primitive value which cannot be JSON-stringified. Includes values `-0`, `NaN`, `Infinity`,
 --   `-Infinity`, and bigint literals.
 type RuntimeUnserializableValue = String
 
--- | Type 'Runtime.RemoteObject' .Mirror object referencing original JavaScript object.
+-- | Type 'Runtime.RemoteObject'.
+--   Mirror object referencing original JavaScript object.
 data RuntimeRemoteObjectType = RuntimeRemoteObjectTypeObject | RuntimeRemoteObjectTypeFunction | RuntimeRemoteObjectTypeUndefined | RuntimeRemoteObjectTypeString | RuntimeRemoteObjectTypeNumber | RuntimeRemoteObjectTypeBoolean | RuntimeRemoteObjectTypeSymbol | RuntimeRemoteObjectTypeBigint
    deriving (Ord, Eq, Show, Read)
 instance FromJSON RuntimeRemoteObjectType where
@@ -247,7 +252,7 @@ instance FromJSON  RuntimeRemoteObject where
 
 
 
--- | Type 'Runtime.CustomPreview' .
+-- | Type 'Runtime.CustomPreview'.
 data RuntimeCustomPreview = RuntimeCustomPreview {
   -- | The JSON-stringified result of formatter.header(object, config) call.
   --   It contains json ML array that represents RemoteObject.
@@ -265,7 +270,8 @@ instance FromJSON  RuntimeCustomPreview where
 
 
 
--- | Type 'Runtime.ObjectPreview' .Object containing abbreviated remote object value.
+-- | Type 'Runtime.ObjectPreview'.
+--   Object containing abbreviated remote object value.
 data RuntimeObjectPreviewType = RuntimeObjectPreviewTypeObject | RuntimeObjectPreviewTypeFunction | RuntimeObjectPreviewTypeUndefined | RuntimeObjectPreviewTypeString | RuntimeObjectPreviewTypeNumber | RuntimeObjectPreviewTypeBoolean | RuntimeObjectPreviewTypeSymbol | RuntimeObjectPreviewTypeBigint
    deriving (Ord, Eq, Show, Read)
 instance FromJSON RuntimeObjectPreviewType where
@@ -367,7 +373,7 @@ instance FromJSON  RuntimeObjectPreview where
 
 
 
--- | Type 'Runtime.PropertyPreview' .
+-- | Type 'Runtime.PropertyPreview'.
 data RuntimePropertyPreviewType = RuntimePropertyPreviewTypeObject | RuntimePropertyPreviewTypeFunction | RuntimePropertyPreviewTypeUndefined | RuntimePropertyPreviewTypeString | RuntimePropertyPreviewTypeNumber | RuntimePropertyPreviewTypeBoolean | RuntimePropertyPreviewTypeSymbol | RuntimePropertyPreviewTypeAccessor | RuntimePropertyPreviewTypeBigint
    deriving (Ord, Eq, Show, Read)
 instance FromJSON RuntimePropertyPreviewType where
@@ -469,7 +475,7 @@ instance FromJSON  RuntimePropertyPreview where
 
 
 
--- | Type 'Runtime.EntryPreview' .
+-- | Type 'Runtime.EntryPreview'.
 data RuntimeEntryPreview = RuntimeEntryPreview {
   -- | Preview of the key. Specified for map-like collection entries.
   runtimeEntryPreviewKey :: Maybe RuntimeObjectPreview,
@@ -484,7 +490,8 @@ instance FromJSON  RuntimeEntryPreview where
 
 
 
--- | Type 'Runtime.PropertyDescriptor' .Object property descriptor.
+-- | Type 'Runtime.PropertyDescriptor'.
+--   Object property descriptor.
 data RuntimePropertyDescriptor = RuntimePropertyDescriptor {
   -- | Property name or symbol description.
   runtimePropertyDescriptorName :: String,
@@ -519,7 +526,8 @@ instance FromJSON  RuntimePropertyDescriptor where
 
 
 
--- | Type 'Runtime.InternalPropertyDescriptor' .Object internal property descriptor. This property isn't normally visible in JavaScript code.
+-- | Type 'Runtime.InternalPropertyDescriptor'.
+--   Object internal property descriptor. This property isn't normally visible in JavaScript code.
 data RuntimeInternalPropertyDescriptor = RuntimeInternalPropertyDescriptor {
   -- | Conventional property name.
   runtimeInternalPropertyDescriptorName :: String,
@@ -534,7 +542,8 @@ instance FromJSON  RuntimeInternalPropertyDescriptor where
 
 
 
--- | Type 'Runtime.PrivatePropertyDescriptor' .Object private field descriptor.
+-- | Type 'Runtime.PrivatePropertyDescriptor'.
+--   Object private field descriptor.
 data RuntimePrivatePropertyDescriptor = RuntimePrivatePropertyDescriptor {
   -- | Private property name.
   runtimePrivatePropertyDescriptorName :: String,
@@ -555,7 +564,8 @@ instance FromJSON  RuntimePrivatePropertyDescriptor where
 
 
 
--- | Type 'Runtime.CallArgument' .Represents function call argument. Either remote object id `objectId`, primitive `value`,
+-- | Type 'Runtime.CallArgument'.
+--   Represents function call argument. Either remote object id `objectId`, primitive `value`,
 --   unserializable primitive value or neither of (for undefined) them should be specified.
 data RuntimeCallArgument = RuntimeCallArgument {
   -- | Primitive value or serializable javascript object.
@@ -573,10 +583,12 @@ instance FromJSON  RuntimeCallArgument where
 
 
 
--- | Type 'Runtime.ExecutionContextId' .Id of an execution context.
+-- | Type 'Runtime.ExecutionContextId'.
+--   Id of an execution context.
 type RuntimeExecutionContextId = Int
 
--- | Type 'Runtime.ExecutionContextDescription' .Description of an isolated world.
+-- | Type 'Runtime.ExecutionContextDescription'.
+--   Description of an isolated world.
 data RuntimeExecutionContextDescription = RuntimeExecutionContextDescription {
   -- | Unique id of the execution context. It can be used to specify in which execution context
   --   script evaluation should be performed.
@@ -600,7 +612,8 @@ instance FromJSON  RuntimeExecutionContextDescription where
 
 
 
--- | Type 'Runtime.ExceptionDetails' .Detailed information about exception (or error) that was thrown during script compilation or
+-- | Type 'Runtime.ExceptionDetails'.
+--   Detailed information about exception (or error) that was thrown during script compilation or
 --   execution.
 data RuntimeExceptionDetails = RuntimeExceptionDetails {
   -- | Exception id.
@@ -634,13 +647,16 @@ instance FromJSON  RuntimeExceptionDetails where
 
 
 
--- | Type 'Runtime.Timestamp' .Number of milliseconds since epoch.
+-- | Type 'Runtime.Timestamp'.
+--   Number of milliseconds since epoch.
 type RuntimeTimestamp = Double
 
--- | Type 'Runtime.TimeDelta' .Number of milliseconds.
+-- | Type 'Runtime.TimeDelta'.
+--   Number of milliseconds.
 type RuntimeTimeDelta = Double
 
--- | Type 'Runtime.CallFrame' .Stack entry for runtime errors and assertions.
+-- | Type 'Runtime.CallFrame'.
+--   Stack entry for runtime errors and assertions.
 data RuntimeCallFrame = RuntimeCallFrame {
   -- | JavaScript function name.
   runtimeCallFrameFunctionName :: String,
@@ -661,7 +677,8 @@ instance FromJSON  RuntimeCallFrame where
 
 
 
--- | Type 'Runtime.StackTrace' .Call frames for assertions or error messages.
+-- | Type 'Runtime.StackTrace'.
+--   Call frames for assertions or error messages.
 data RuntimeStackTrace = RuntimeStackTrace {
   -- | String label of this stack trace. For async traces this may be a name of the function that
   --   initiated the async call.
@@ -681,10 +698,12 @@ instance FromJSON  RuntimeStackTrace where
 
 
 
--- | Type 'Runtime.UniqueDebuggerId' .Unique identifier of current debugger.
+-- | Type 'Runtime.UniqueDebuggerId'.
+--   Unique identifier of current debugger.
 type RuntimeUniqueDebuggerId = String
 
--- | Type 'Runtime.StackTraceId' .If `debuggerId` is set stack trace comes from another debugger and can be resolved there. This
+-- | Type 'Runtime.StackTraceId'.
+--   If `debuggerId` is set stack trace comes from another debugger and can be resolved there. This
 --   allows to track cross-debugger calls. See `Runtime.StackTrace` and `Debugger.paused` for usages.
 data RuntimeStackTraceId = RuntimeStackTraceId {
   runtimeStackTraceIdId :: String,

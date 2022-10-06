@@ -47,10 +47,11 @@ import CDP.Domains.BrowserTarget as BrowserTarget
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
 
 
--- | Type 'Storage.SerializedStorageKey' .
+-- | Type 'Storage.SerializedStorageKey'.
 type StorageSerializedStorageKey = String
 
--- | Type 'Storage.StorageType' .Enum of possible storage types.
+-- | Type 'Storage.StorageType'.
+--   Enum of possible storage types.
 data StorageStorageType = StorageStorageTypeAppcache | StorageStorageTypeCookies | StorageStorageTypeFileSystems | StorageStorageTypeIndexeddb | StorageStorageTypeLocalStorage | StorageStorageTypeShaderCache | StorageStorageTypeWebsql | StorageStorageTypeServiceWorkers | StorageStorageTypeCacheStorage | StorageStorageTypeInterestGroups | StorageStorageTypeAll | StorageStorageTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON StorageStorageType where
@@ -88,7 +89,8 @@ instance ToJSON StorageStorageType where
 
 
 
--- | Type 'Storage.UsageForType' .Usage for a storage type.
+-- | Type 'Storage.UsageForType'.
+--   Usage for a storage type.
 data StorageUsageForType = StorageUsageForType {
   -- | Name of storage type.
   storageUsageForTypeStorageType :: StorageStorageType,
@@ -103,7 +105,8 @@ instance FromJSON  StorageUsageForType where
 
 
 
--- | Type 'Storage.TrustTokens' .Pair of issuer origin and number of available (signed, but not used) Trust
+-- | Type 'Storage.TrustTokens'.
+--   Pair of issuer origin and number of available (signed, but not used) Trust
 --   Tokens from that issuer.
 data StorageTrustTokens = StorageTrustTokens {
   storageTrustTokensIssuerOrigin :: String,
@@ -117,7 +120,8 @@ instance FromJSON  StorageTrustTokens where
 
 
 
--- | Type 'Storage.InterestGroupAccessType' .Enum of interest group access types.
+-- | Type 'Storage.InterestGroupAccessType'.
+--   Enum of interest group access types.
 data StorageInterestGroupAccessType = StorageInterestGroupAccessTypeJoin | StorageInterestGroupAccessTypeLeave | StorageInterestGroupAccessTypeUpdate | StorageInterestGroupAccessTypeBid | StorageInterestGroupAccessTypeWin
    deriving (Ord, Eq, Show, Read)
 instance FromJSON StorageInterestGroupAccessType where
@@ -141,7 +145,8 @@ instance ToJSON StorageInterestGroupAccessType where
 
 
 
--- | Type 'Storage.InterestGroupAd' .Ad advertising element inside an interest group.
+-- | Type 'Storage.InterestGroupAd'.
+--   Ad advertising element inside an interest group.
 data StorageInterestGroupAd = StorageInterestGroupAd {
   storageInterestGroupAdRenderUrl :: String,
   storageInterestGroupAdMetadata :: Maybe String
@@ -154,7 +159,8 @@ instance FromJSON  StorageInterestGroupAd where
 
 
 
--- | Type 'Storage.InterestGroupDetails' .The full details of an interest group.
+-- | Type 'Storage.InterestGroupDetails'.
+--   The full details of an interest group.
 data StorageInterestGroupDetails = StorageInterestGroupDetails {
   storageInterestGroupDetailsOwnerOrigin :: String,
   storageInterestGroupDetailsName :: String,

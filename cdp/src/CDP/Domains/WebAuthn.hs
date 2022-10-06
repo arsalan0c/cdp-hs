@@ -48,10 +48,10 @@ import CDP.Handle
 
 
 
--- | Type 'WebAuthn.AuthenticatorId' .
+-- | Type 'WebAuthn.AuthenticatorId'.
 type WebAuthnAuthenticatorId = String
 
--- | Type 'WebAuthn.AuthenticatorProtocol' .
+-- | Type 'WebAuthn.AuthenticatorProtocol'.
 data WebAuthnAuthenticatorProtocol = WebAuthnAuthenticatorProtocolU2f | WebAuthnAuthenticatorProtocolCtap2
    deriving (Ord, Eq, Show, Read)
 instance FromJSON WebAuthnAuthenticatorProtocol where
@@ -69,7 +69,7 @@ instance ToJSON WebAuthnAuthenticatorProtocol where
 
 
 
--- | Type 'WebAuthn.Ctap2Version' .
+-- | Type 'WebAuthn.Ctap2Version'.
 data WebAuthnCtap2Version = WebAuthnCtap2VersionCtap20 | WebAuthnCtap2VersionCtap21
    deriving (Ord, Eq, Show, Read)
 instance FromJSON WebAuthnCtap2Version where
@@ -87,7 +87,7 @@ instance ToJSON WebAuthnCtap2Version where
 
 
 
--- | Type 'WebAuthn.AuthenticatorTransport' .
+-- | Type 'WebAuthn.AuthenticatorTransport'.
 data WebAuthnAuthenticatorTransport = WebAuthnAuthenticatorTransportUsb | WebAuthnAuthenticatorTransportNfc | WebAuthnAuthenticatorTransportBle | WebAuthnAuthenticatorTransportCable | WebAuthnAuthenticatorTransportInternal
    deriving (Ord, Eq, Show, Read)
 instance FromJSON WebAuthnAuthenticatorTransport where
@@ -111,7 +111,7 @@ instance ToJSON WebAuthnAuthenticatorTransport where
 
 
 
--- | Type 'WebAuthn.VirtualAuthenticatorOptions' .
+-- | Type 'WebAuthn.VirtualAuthenticatorOptions'.
 data WebAuthnVirtualAuthenticatorOptions = WebAuthnVirtualAuthenticatorOptions {
   webAuthnVirtualAuthenticatorOptionsProtocol :: WebAuthnAuthenticatorProtocol,
   -- | Defaults to ctap2_0. Ignored if |protocol| == u2f.
@@ -148,7 +148,7 @@ instance FromJSON  WebAuthnVirtualAuthenticatorOptions where
 
 
 
--- | Type 'WebAuthn.Credential' .
+-- | Type 'WebAuthn.Credential'.
 data WebAuthnCredential = WebAuthnCredential {
   webAuthnCredentialCredentialId :: String,
   webAuthnCredentialIsResidentCredential :: Bool,

@@ -47,10 +47,11 @@ import CDP.Handle
 
 
 
--- | Type 'DOMStorage.SerializedStorageKey' .
+-- | Type 'DOMStorage.SerializedStorageKey'.
 type DomStorageSerializedStorageKey = String
 
--- | Type 'DOMStorage.StorageId' .DOM Storage identifier.
+-- | Type 'DOMStorage.StorageId'.
+--   DOM Storage identifier.
 data DomStorageStorageId = DomStorageStorageId {
   -- | Security origin for the storage.
   domStorageStorageIdSecurityOrigin :: Maybe String,
@@ -67,7 +68,8 @@ instance FromJSON  DomStorageStorageId where
 
 
 
--- | Type 'DOMStorage.Item' .DOM Storage item.
+-- | Type 'DOMStorage.Item'.
+--   DOM Storage item.
 type DomStorageItem = [String]
 
 

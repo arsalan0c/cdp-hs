@@ -46,10 +46,12 @@ import CDP.Handle
 import CDP.Domains.Runtime as Runtime
 
 
--- | Type 'HeapProfiler.HeapSnapshotObjectId' .Heap snapshot object id.
+-- | Type 'HeapProfiler.HeapSnapshotObjectId'.
+--   Heap snapshot object id.
 type HeapProfilerHeapSnapshotObjectId = String
 
--- | Type 'HeapProfiler.SamplingHeapProfileNode' .Sampling Heap Profile node. Holds callsite information, allocation statistics and child nodes.
+-- | Type 'HeapProfiler.SamplingHeapProfileNode'.
+--   Sampling Heap Profile node. Holds callsite information, allocation statistics and child nodes.
 data HeapProfilerSamplingHeapProfileNode = HeapProfilerSamplingHeapProfileNode {
   -- | Function location.
   heapProfilerSamplingHeapProfileNodeCallFrame :: Runtime.RuntimeCallFrame,
@@ -68,7 +70,8 @@ instance FromJSON  HeapProfilerSamplingHeapProfileNode where
 
 
 
--- | Type 'HeapProfiler.SamplingHeapProfileSample' .A single sample from a sampling profile.
+-- | Type 'HeapProfiler.SamplingHeapProfileSample'.
+--   A single sample from a sampling profile.
 data HeapProfilerSamplingHeapProfileSample = HeapProfilerSamplingHeapProfileSample {
   -- | Allocation size in bytes attributed to the sample.
   heapProfilerSamplingHeapProfileSampleSize :: Double,
@@ -86,7 +89,8 @@ instance FromJSON  HeapProfilerSamplingHeapProfileSample where
 
 
 
--- | Type 'HeapProfiler.SamplingHeapProfile' .Sampling profile.
+-- | Type 'HeapProfiler.SamplingHeapProfile'.
+--   Sampling profile.
 data HeapProfilerSamplingHeapProfile = HeapProfilerSamplingHeapProfile {
   heapProfilerSamplingHeapProfileHead :: HeapProfilerSamplingHeapProfileNode,
   heapProfilerSamplingHeapProfileSamples :: [HeapProfilerSamplingHeapProfileSample]

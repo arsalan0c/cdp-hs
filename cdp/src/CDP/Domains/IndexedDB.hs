@@ -46,7 +46,8 @@ import CDP.Handle
 import CDP.Domains.Runtime as Runtime
 
 
--- | Type 'IndexedDB.DatabaseWithObjectStores' .Database with an array of object stores.
+-- | Type 'IndexedDB.DatabaseWithObjectStores'.
+--   Database with an array of object stores.
 data IndexedDbDatabaseWithObjectStores = IndexedDbDatabaseWithObjectStores {
   -- | Database name.
   indexedDbDatabaseWithObjectStoresName :: String,
@@ -64,7 +65,8 @@ instance FromJSON  IndexedDbDatabaseWithObjectStores where
 
 
 
--- | Type 'IndexedDB.ObjectStore' .Object store.
+-- | Type 'IndexedDB.ObjectStore'.
+--   Object store.
 data IndexedDbObjectStore = IndexedDbObjectStore {
   -- | Object store name.
   indexedDbObjectStoreName :: String,
@@ -83,7 +85,8 @@ instance FromJSON  IndexedDbObjectStore where
 
 
 
--- | Type 'IndexedDB.ObjectStoreIndex' .Object store index.
+-- | Type 'IndexedDB.ObjectStoreIndex'.
+--   Object store index.
 data IndexedDbObjectStoreIndex = IndexedDbObjectStoreIndex {
   -- | Index name.
   indexedDbObjectStoreIndexName :: String,
@@ -102,7 +105,8 @@ instance FromJSON  IndexedDbObjectStoreIndex where
 
 
 
--- | Type 'IndexedDB.Key' .Key.
+-- | Type 'IndexedDB.Key'.
+--   Key.
 data IndexedDbKeyType = IndexedDbKeyTypeNumber | IndexedDbKeyTypeString | IndexedDbKeyTypeDate | IndexedDbKeyTypeArray
    deriving (Ord, Eq, Show, Read)
 instance FromJSON IndexedDbKeyType where
@@ -144,7 +148,8 @@ instance FromJSON  IndexedDbKey where
 
 
 
--- | Type 'IndexedDB.KeyRange' .Key range.
+-- | Type 'IndexedDB.KeyRange'.
+--   Key range.
 data IndexedDbKeyRange = IndexedDbKeyRange {
   -- | Lower bound.
   indexedDbKeyRangeLower :: Maybe IndexedDbKey,
@@ -163,7 +168,8 @@ instance FromJSON  IndexedDbKeyRange where
 
 
 
--- | Type 'IndexedDB.DataEntry' .Data entry.
+-- | Type 'IndexedDB.DataEntry'.
+--   Data entry.
 data IndexedDbDataEntry = IndexedDbDataEntry {
   -- | Key object.
   indexedDbDataEntryKey :: Runtime.RuntimeRemoteObject,
@@ -180,7 +186,8 @@ instance FromJSON  IndexedDbDataEntry where
 
 
 
--- | Type 'IndexedDB.KeyPath' .Key path.
+-- | Type 'IndexedDB.KeyPath'.
+--   Key path.
 data IndexedDbKeyPathType = IndexedDbKeyPathTypeNull | IndexedDbKeyPathTypeString | IndexedDbKeyPathTypeArray
    deriving (Ord, Eq, Show, Read)
 instance FromJSON IndexedDbKeyPathType where

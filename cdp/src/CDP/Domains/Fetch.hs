@@ -49,10 +49,12 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 import CDP.Domains.IO as IO
 
 
--- | Type 'Fetch.RequestId' .Unique request identifier.
+-- | Type 'Fetch.RequestId'.
+--   Unique request identifier.
 type FetchRequestId = String
 
--- | Type 'Fetch.RequestStage' .Stages of the request to handle. Request will intercept before the request is
+-- | Type 'Fetch.RequestStage'.
+--   Stages of the request to handle. Request will intercept before the request is
 --   sent. Response will intercept after the response is received (but before response
 --   body is received).
 data FetchRequestStage = FetchRequestStageRequest | FetchRequestStageResponse
@@ -72,7 +74,7 @@ instance ToJSON FetchRequestStage where
 
 
 
--- | Type 'Fetch.RequestPattern' .
+-- | Type 'Fetch.RequestPattern'.
 data FetchRequestPattern = FetchRequestPattern {
   -- | Wildcards (`'*'` -> zero or more, `'?'` -> exactly one) are allowed. Escape character is
   --   backslash. Omitting is equivalent to `"*"`.
@@ -90,7 +92,8 @@ instance FromJSON  FetchRequestPattern where
 
 
 
--- | Type 'Fetch.HeaderEntry' .Response HTTP header entry
+-- | Type 'Fetch.HeaderEntry'.
+--   Response HTTP header entry
 data FetchHeaderEntry = FetchHeaderEntry {
   fetchHeaderEntryName :: String,
   fetchHeaderEntryValue :: String
@@ -103,7 +106,8 @@ instance FromJSON  FetchHeaderEntry where
 
 
 
--- | Type 'Fetch.AuthChallenge' .Authorization challenge for HTTP status code 401 or 407.
+-- | Type 'Fetch.AuthChallenge'.
+--   Authorization challenge for HTTP status code 401 or 407.
 data FetchAuthChallengeSource = FetchAuthChallengeSourceServer | FetchAuthChallengeSourceProxy
    deriving (Ord, Eq, Show, Read)
 instance FromJSON FetchAuthChallengeSource where
@@ -139,7 +143,8 @@ instance FromJSON  FetchAuthChallenge where
 
 
 
--- | Type 'Fetch.AuthChallengeResponse' .Response to an AuthChallenge.
+-- | Type 'Fetch.AuthChallengeResponse'.
+--   Response to an AuthChallenge.
 data FetchAuthChallengeResponseResponse = FetchAuthChallengeResponseResponseDefault | FetchAuthChallengeResponseResponseCancelAuth | FetchAuthChallengeResponseResponseProvideCredentials
    deriving (Ord, Eq, Show, Read)
 instance FromJSON FetchAuthChallengeResponseResponse where

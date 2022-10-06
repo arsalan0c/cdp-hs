@@ -47,7 +47,8 @@ import CDP.Handle
 
 
 
--- | Type 'SystemInfo.GPUDevice' .Describes a single graphics processor (GPU).
+-- | Type 'SystemInfo.GPUDevice'.
+--   Describes a single graphics processor (GPU).
 data SystemInfoGpuDevice = SystemInfoGpuDevice {
   -- | PCI ID of the GPU vendor, if available; 0 otherwise.
   systemInfoGpuDeviceVendorId :: Double,
@@ -74,7 +75,8 @@ instance FromJSON  SystemInfoGpuDevice where
 
 
 
--- | Type 'SystemInfo.Size' .Describes the width and height dimensions of an entity.
+-- | Type 'SystemInfo.Size'.
+--   Describes the width and height dimensions of an entity.
 data SystemInfoSize = SystemInfoSize {
   -- | Width in pixels.
   systemInfoSizeWidth :: Int,
@@ -89,7 +91,8 @@ instance FromJSON  SystemInfoSize where
 
 
 
--- | Type 'SystemInfo.VideoDecodeAcceleratorCapability' .Describes a supported video decoding profile with its associated minimum and
+-- | Type 'SystemInfo.VideoDecodeAcceleratorCapability'.
+--   Describes a supported video decoding profile with its associated minimum and
 --   maximum resolutions.
 data SystemInfoVideoDecodeAcceleratorCapability = SystemInfoVideoDecodeAcceleratorCapability {
   -- | Video codec profile that is supported, e.g. VP9 Profile 2.
@@ -107,7 +110,8 @@ instance FromJSON  SystemInfoVideoDecodeAcceleratorCapability where
 
 
 
--- | Type 'SystemInfo.VideoEncodeAcceleratorCapability' .Describes a supported video encoding profile with its associated maximum
+-- | Type 'SystemInfo.VideoEncodeAcceleratorCapability'.
+--   Describes a supported video encoding profile with its associated maximum
 --   resolution and maximum framerate.
 data SystemInfoVideoEncodeAcceleratorCapability = SystemInfoVideoEncodeAcceleratorCapability {
   -- | Video codec profile that is supported, e.g H264 Main.
@@ -128,7 +132,8 @@ instance FromJSON  SystemInfoVideoEncodeAcceleratorCapability where
 
 
 
--- | Type 'SystemInfo.SubsamplingFormat' .YUV subsampling type of the pixels of a given image.
+-- | Type 'SystemInfo.SubsamplingFormat'.
+--   YUV subsampling type of the pixels of a given image.
 data SystemInfoSubsamplingFormat = SystemInfoSubsamplingFormatYuv420 | SystemInfoSubsamplingFormatYuv422 | SystemInfoSubsamplingFormatYuv444
    deriving (Ord, Eq, Show, Read)
 instance FromJSON SystemInfoSubsamplingFormat where
@@ -148,7 +153,8 @@ instance ToJSON SystemInfoSubsamplingFormat where
 
 
 
--- | Type 'SystemInfo.ImageType' .Image format of a given image.
+-- | Type 'SystemInfo.ImageType'.
+--   Image format of a given image.
 data SystemInfoImageType = SystemInfoImageTypeJpeg | SystemInfoImageTypeWebp | SystemInfoImageTypeUnknown
    deriving (Ord, Eq, Show, Read)
 instance FromJSON SystemInfoImageType where
@@ -168,7 +174,8 @@ instance ToJSON SystemInfoImageType where
 
 
 
--- | Type 'SystemInfo.ImageDecodeAcceleratorCapability' .Describes a supported image decoding profile with its associated minimum and
+-- | Type 'SystemInfo.ImageDecodeAcceleratorCapability'.
+--   Describes a supported image decoding profile with its associated minimum and
 --   maximum resolutions and subsampling.
 data SystemInfoImageDecodeAcceleratorCapability = SystemInfoImageDecodeAcceleratorCapability {
   -- | Image coded, e.g. Jpeg.
@@ -188,7 +195,8 @@ instance FromJSON  SystemInfoImageDecodeAcceleratorCapability where
 
 
 
--- | Type 'SystemInfo.GPUInfo' .Provides information about the GPU(s) on the system.
+-- | Type 'SystemInfo.GPUInfo'.
+--   Provides information about the GPU(s) on the system.
 data SystemInfoGpuInfo = SystemInfoGpuInfo {
   -- | The graphics devices on the system. Element 0 is the primary GPU.
   systemInfoGpuInfoDevices :: [SystemInfoGpuDevice],
@@ -213,7 +221,8 @@ instance FromJSON  SystemInfoGpuInfo where
 
 
 
--- | Type 'SystemInfo.ProcessInfo' .Represents process info.
+-- | Type 'SystemInfo.ProcessInfo'.
+--   Represents process info.
 data SystemInfoProcessInfo = SystemInfoProcessInfo {
   -- | Specifies process type.
   systemInfoProcessInfoType :: String,

@@ -47,10 +47,12 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 import CDP.Domains.Runtime as Runtime
 
 
--- | Type 'Accessibility.AXNodeId' .Unique accessibility node identifier.
+-- | Type 'Accessibility.AXNodeId'.
+--   Unique accessibility node identifier.
 type AccessibilityAxNodeId = String
 
--- | Type 'Accessibility.AXValueType' .Enum of possible property types.
+-- | Type 'Accessibility.AXValueType'.
+--   Enum of possible property types.
 data AccessibilityAxValueType = AccessibilityAxValueTypeBoolean | AccessibilityAxValueTypeTristate | AccessibilityAxValueTypeBooleanOrUndefined | AccessibilityAxValueTypeIdref | AccessibilityAxValueTypeIdrefList | AccessibilityAxValueTypeInteger | AccessibilityAxValueTypeNode | AccessibilityAxValueTypeNodeList | AccessibilityAxValueTypeNumber | AccessibilityAxValueTypeString | AccessibilityAxValueTypeComputedString | AccessibilityAxValueTypeToken | AccessibilityAxValueTypeTokenList | AccessibilityAxValueTypeDomRelation | AccessibilityAxValueTypeRole | AccessibilityAxValueTypeInternalRole | AccessibilityAxValueTypeValueUndefined
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AccessibilityAxValueType where
@@ -98,7 +100,8 @@ instance ToJSON AccessibilityAxValueType where
 
 
 
--- | Type 'Accessibility.AXValueSourceType' .Enum of possible property sources.
+-- | Type 'Accessibility.AXValueSourceType'.
+--   Enum of possible property sources.
 data AccessibilityAxValueSourceType = AccessibilityAxValueSourceTypeAttribute | AccessibilityAxValueSourceTypeImplicit | AccessibilityAxValueSourceTypeStyle | AccessibilityAxValueSourceTypeContents | AccessibilityAxValueSourceTypePlaceholder | AccessibilityAxValueSourceTypeRelatedElement
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AccessibilityAxValueSourceType where
@@ -124,7 +127,8 @@ instance ToJSON AccessibilityAxValueSourceType where
 
 
 
--- | Type 'Accessibility.AXValueNativeSourceType' .Enum of possible native property sources (as a subtype of a particular AXValueSourceType).
+-- | Type 'Accessibility.AXValueNativeSourceType'.
+--   Enum of possible native property sources (as a subtype of a particular AXValueSourceType).
 data AccessibilityAxValueNativeSourceType = AccessibilityAxValueNativeSourceTypeDescription | AccessibilityAxValueNativeSourceTypeFigcaption | AccessibilityAxValueNativeSourceTypeLabel | AccessibilityAxValueNativeSourceTypeLabelfor | AccessibilityAxValueNativeSourceTypeLabelwrapped | AccessibilityAxValueNativeSourceTypeLegend | AccessibilityAxValueNativeSourceTypeRubyannotation | AccessibilityAxValueNativeSourceTypeTablecaption | AccessibilityAxValueNativeSourceTypeTitle | AccessibilityAxValueNativeSourceTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AccessibilityAxValueNativeSourceType where
@@ -158,7 +162,8 @@ instance ToJSON AccessibilityAxValueNativeSourceType where
 
 
 
--- | Type 'Accessibility.AXValueSource' .A single source for a computed AX property.
+-- | Type 'Accessibility.AXValueSource'.
+--   A single source for a computed AX property.
 data AccessibilityAxValueSource = AccessibilityAxValueSource {
   -- | What type of source this is.
   accessibilityAxValueSourceType :: AccessibilityAxValueSourceType,
@@ -187,7 +192,7 @@ instance FromJSON  AccessibilityAxValueSource where
 
 
 
--- | Type 'Accessibility.AXRelatedNode' .
+-- | Type 'Accessibility.AXRelatedNode'.
 data AccessibilityAxRelatedNode = AccessibilityAxRelatedNode {
   -- | The BackendNodeId of the related DOM node.
   accessibilityAxRelatedNodeBackendDomNodeId :: DOMPageNetworkEmulationSecurity.DomBackendNodeId,
@@ -204,7 +209,7 @@ instance FromJSON  AccessibilityAxRelatedNode where
 
 
 
--- | Type 'Accessibility.AXProperty' .
+-- | Type 'Accessibility.AXProperty'.
 data AccessibilityAxProperty = AccessibilityAxProperty {
   -- | The name of this property.
   accessibilityAxPropertyName :: AccessibilityAxPropertyName,
@@ -219,7 +224,8 @@ instance FromJSON  AccessibilityAxProperty where
 
 
 
--- | Type 'Accessibility.AXValue' .A single computed AX property.
+-- | Type 'Accessibility.AXValue'.
+--   A single computed AX property.
 data AccessibilityAxValue = AccessibilityAxValue {
   -- | The type of this value.
   accessibilityAxValueType :: AccessibilityAxValueType,
@@ -238,7 +244,8 @@ instance FromJSON  AccessibilityAxValue where
 
 
 
--- | Type 'Accessibility.AXPropertyName' .Values of AXProperty name:
+-- | Type 'Accessibility.AXPropertyName'.
+--   Values of AXProperty name:
 --   - from 'busy' to 'roledescription': states which apply to every AX node
 --   - from 'live' to 'root': attributes which apply to nodes in live regions
 --   - from 'autocomplete' to 'valuetext': attributes which apply to widgets
@@ -335,7 +342,8 @@ instance ToJSON AccessibilityAxPropertyName where
 
 
 
--- | Type 'Accessibility.AXNode' .A node in the accessibility tree.
+-- | Type 'Accessibility.AXNode'.
+--   A node in the accessibility tree.
 data AccessibilityAxNode = AccessibilityAxNode {
   -- | Unique identifier for this node.
   accessibilityAxNodeNodeId :: AccessibilityAxNodeId,

@@ -47,7 +47,8 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 import CDP.Domains.Runtime as Runtime
 
 
--- | Type 'Animation.Animation' .Animation instance.
+-- | Type 'Animation.Animation'.
+--   Animation instance.
 data AnimationAnimationType = AnimationAnimationTypeCssTransition | AnimationAnimationTypeCssAnimation | AnimationAnimationTypeWebAnimation
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AnimationAnimationType where
@@ -98,7 +99,8 @@ instance FromJSON  AnimationAnimation where
 
 
 
--- | Type 'Animation.AnimationEffect' .AnimationEffect instance
+-- | Type 'Animation.AnimationEffect'.
+--   AnimationEffect instance
 data AnimationAnimationEffect = AnimationAnimationEffect {
   -- | `AnimationEffect`'s delay.
   animationAnimationEffectDelay :: Double,
@@ -129,7 +131,8 @@ instance FromJSON  AnimationAnimationEffect where
 
 
 
--- | Type 'Animation.KeyframesRule' .Keyframes Rule
+-- | Type 'Animation.KeyframesRule'.
+--   Keyframes Rule
 data AnimationKeyframesRule = AnimationKeyframesRule {
   -- | CSS keyframed animation's name.
   animationKeyframesRuleName :: Maybe String,
@@ -144,7 +147,8 @@ instance FromJSON  AnimationKeyframesRule where
 
 
 
--- | Type 'Animation.KeyframeStyle' .Keyframe Style
+-- | Type 'Animation.KeyframeStyle'.
+--   Keyframe Style
 data AnimationKeyframeStyle = AnimationKeyframeStyle {
   -- | Keyframe's time offset.
   animationKeyframeStyleOffset :: String,

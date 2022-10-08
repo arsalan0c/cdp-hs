@@ -11,8 +11,8 @@ import CDP.Internal.Runtime
 data Handle ev where
     Handle :: FromJSONEvent ev => Handle' ev -> Handle ev
 
-sendReceiveCommandResult :: forall a b ev. (Show a, ToJSON a, Command b) => Handle ev -> String -> Maybe a -> IO b
+sendReceiveCommandResult :: forall a b ev. (Show a, ToJSON a, Command b) => Handle ev -> Maybe SessionId -> String -> Maybe a -> IO b
 sendReceiveCommandResult (Handle h) = sendReceiveCommandResult' h
 
-sendReceiveCommand :: (Show a, ToJSON a) => Handle ev -> String -> Maybe a -> IO ()
+sendReceiveCommand :: (Show a, ToJSON a) => Handle ev -> Maybe SessionId -> String -> Maybe a -> IO ()
 sendReceiveCommand (Handle h) = sendReceiveCommand' h

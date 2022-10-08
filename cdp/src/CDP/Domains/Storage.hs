@@ -275,8 +275,8 @@ instance FromJSON  PStorageGetStorageKeyForFrame where
 --   Returns a storage key given a frame id.
 --   Parameters: 'PStorageGetStorageKeyForFrame'
 --   Returns: 'StorageGetStorageKeyForFrame'
-storageGetStorageKeyForFrame :: Handle ev -> PStorageGetStorageKeyForFrame -> IO StorageGetStorageKeyForFrame
-storageGetStorageKeyForFrame handle params = sendReceiveCommandResult handle "Storage.getStorageKeyForFrame" (Just params)
+storageGetStorageKeyForFrame :: Handle ev -> Maybe String -> PStorageGetStorageKeyForFrame -> IO StorageGetStorageKeyForFrame
+storageGetStorageKeyForFrame handle sessionId params = sendReceiveCommandResult handle sessionId "Storage.getStorageKeyForFrame" (Just params )
 
 -- | Return type of the 'storageGetStorageKeyForFrame' command.
 data StorageGetStorageKeyForFrame = StorageGetStorageKeyForFrame {
@@ -308,8 +308,8 @@ instance FromJSON  PStorageClearDataForOrigin where
 -- | Function for the 'Storage.clearDataForOrigin' command.
 --   Clears storage for origin.
 --   Parameters: 'PStorageClearDataForOrigin'
-storageClearDataForOrigin :: Handle ev -> PStorageClearDataForOrigin -> IO ()
-storageClearDataForOrigin handle params = sendReceiveCommand handle "Storage.clearDataForOrigin" (Just params)
+storageClearDataForOrigin :: Handle ev -> Maybe String -> PStorageClearDataForOrigin -> IO ()
+storageClearDataForOrigin handle sessionId params = sendReceiveCommand handle sessionId "Storage.clearDataForOrigin" (Just params )
 
 
 -- | Parameters of the 'storageGetCookies' command.
@@ -328,8 +328,8 @@ instance FromJSON  PStorageGetCookies where
 --   Returns all browser cookies.
 --   Parameters: 'PStorageGetCookies'
 --   Returns: 'StorageGetCookies'
-storageGetCookies :: Handle ev -> PStorageGetCookies -> IO StorageGetCookies
-storageGetCookies handle params = sendReceiveCommandResult handle "Storage.getCookies" (Just params)
+storageGetCookies :: Handle ev -> Maybe String -> PStorageGetCookies -> IO StorageGetCookies
+storageGetCookies handle sessionId params = sendReceiveCommandResult handle sessionId "Storage.getCookies" (Just params )
 
 -- | Return type of the 'storageGetCookies' command.
 data StorageGetCookies = StorageGetCookies {
@@ -362,8 +362,8 @@ instance FromJSON  PStorageSetCookies where
 -- | Function for the 'Storage.setCookies' command.
 --   Sets given cookies.
 --   Parameters: 'PStorageSetCookies'
-storageSetCookies :: Handle ev -> PStorageSetCookies -> IO ()
-storageSetCookies handle params = sendReceiveCommand handle "Storage.setCookies" (Just params)
+storageSetCookies :: Handle ev -> Maybe String -> PStorageSetCookies -> IO ()
+storageSetCookies handle sessionId params = sendReceiveCommand handle sessionId "Storage.setCookies" (Just params )
 
 
 -- | Parameters of the 'storageClearCookies' command.
@@ -381,8 +381,8 @@ instance FromJSON  PStorageClearCookies where
 -- | Function for the 'Storage.clearCookies' command.
 --   Clears cookies.
 --   Parameters: 'PStorageClearCookies'
-storageClearCookies :: Handle ev -> PStorageClearCookies -> IO ()
-storageClearCookies handle params = sendReceiveCommand handle "Storage.clearCookies" (Just params)
+storageClearCookies :: Handle ev -> Maybe String -> PStorageClearCookies -> IO ()
+storageClearCookies handle sessionId params = sendReceiveCommand handle sessionId "Storage.clearCookies" (Just params )
 
 
 -- | Parameters of the 'storageGetUsageAndQuota' command.
@@ -401,8 +401,8 @@ instance FromJSON  PStorageGetUsageAndQuota where
 --   Returns usage and quota in bytes.
 --   Parameters: 'PStorageGetUsageAndQuota'
 --   Returns: 'StorageGetUsageAndQuota'
-storageGetUsageAndQuota :: Handle ev -> PStorageGetUsageAndQuota -> IO StorageGetUsageAndQuota
-storageGetUsageAndQuota handle params = sendReceiveCommandResult handle "Storage.getUsageAndQuota" (Just params)
+storageGetUsageAndQuota :: Handle ev -> Maybe String -> PStorageGetUsageAndQuota -> IO StorageGetUsageAndQuota
+storageGetUsageAndQuota handle sessionId params = sendReceiveCommandResult handle sessionId "Storage.getUsageAndQuota" (Just params )
 
 -- | Return type of the 'storageGetUsageAndQuota' command.
 data StorageGetUsageAndQuota = StorageGetUsageAndQuota {
@@ -447,8 +447,8 @@ instance FromJSON  PStorageOverrideQuotaForOrigin where
 -- | Function for the 'Storage.overrideQuotaForOrigin' command.
 --   Override quota for the specified origin
 --   Parameters: 'PStorageOverrideQuotaForOrigin'
-storageOverrideQuotaForOrigin :: Handle ev -> PStorageOverrideQuotaForOrigin -> IO ()
-storageOverrideQuotaForOrigin handle params = sendReceiveCommand handle "Storage.overrideQuotaForOrigin" (Just params)
+storageOverrideQuotaForOrigin :: Handle ev -> Maybe String -> PStorageOverrideQuotaForOrigin -> IO ()
+storageOverrideQuotaForOrigin handle sessionId params = sendReceiveCommand handle sessionId "Storage.overrideQuotaForOrigin" (Just params )
 
 
 -- | Parameters of the 'storageTrackCacheStorageForOrigin' command.
@@ -466,8 +466,8 @@ instance FromJSON  PStorageTrackCacheStorageForOrigin where
 -- | Function for the 'Storage.trackCacheStorageForOrigin' command.
 --   Registers origin to be notified when an update occurs to its cache storage list.
 --   Parameters: 'PStorageTrackCacheStorageForOrigin'
-storageTrackCacheStorageForOrigin :: Handle ev -> PStorageTrackCacheStorageForOrigin -> IO ()
-storageTrackCacheStorageForOrigin handle params = sendReceiveCommand handle "Storage.trackCacheStorageForOrigin" (Just params)
+storageTrackCacheStorageForOrigin :: Handle ev -> Maybe String -> PStorageTrackCacheStorageForOrigin -> IO ()
+storageTrackCacheStorageForOrigin handle sessionId params = sendReceiveCommand handle sessionId "Storage.trackCacheStorageForOrigin" (Just params )
 
 
 -- | Parameters of the 'storageTrackIndexedDbForOrigin' command.
@@ -485,8 +485,8 @@ instance FromJSON  PStorageTrackIndexedDbForOrigin where
 -- | Function for the 'Storage.trackIndexedDBForOrigin' command.
 --   Registers origin to be notified when an update occurs to its IndexedDB.
 --   Parameters: 'PStorageTrackIndexedDbForOrigin'
-storageTrackIndexedDbForOrigin :: Handle ev -> PStorageTrackIndexedDbForOrigin -> IO ()
-storageTrackIndexedDbForOrigin handle params = sendReceiveCommand handle "Storage.trackIndexedDBForOrigin" (Just params)
+storageTrackIndexedDbForOrigin :: Handle ev -> Maybe String -> PStorageTrackIndexedDbForOrigin -> IO ()
+storageTrackIndexedDbForOrigin handle sessionId params = sendReceiveCommand handle sessionId "Storage.trackIndexedDBForOrigin" (Just params )
 
 
 -- | Parameters of the 'storageUntrackCacheStorageForOrigin' command.
@@ -504,8 +504,8 @@ instance FromJSON  PStorageUntrackCacheStorageForOrigin where
 -- | Function for the 'Storage.untrackCacheStorageForOrigin' command.
 --   Unregisters origin from receiving notifications for cache storage.
 --   Parameters: 'PStorageUntrackCacheStorageForOrigin'
-storageUntrackCacheStorageForOrigin :: Handle ev -> PStorageUntrackCacheStorageForOrigin -> IO ()
-storageUntrackCacheStorageForOrigin handle params = sendReceiveCommand handle "Storage.untrackCacheStorageForOrigin" (Just params)
+storageUntrackCacheStorageForOrigin :: Handle ev -> Maybe String -> PStorageUntrackCacheStorageForOrigin -> IO ()
+storageUntrackCacheStorageForOrigin handle sessionId params = sendReceiveCommand handle sessionId "Storage.untrackCacheStorageForOrigin" (Just params )
 
 
 -- | Parameters of the 'storageUntrackIndexedDbForOrigin' command.
@@ -523,16 +523,16 @@ instance FromJSON  PStorageUntrackIndexedDbForOrigin where
 -- | Function for the 'Storage.untrackIndexedDBForOrigin' command.
 --   Unregisters origin from receiving notifications for IndexedDB.
 --   Parameters: 'PStorageUntrackIndexedDbForOrigin'
-storageUntrackIndexedDbForOrigin :: Handle ev -> PStorageUntrackIndexedDbForOrigin -> IO ()
-storageUntrackIndexedDbForOrigin handle params = sendReceiveCommand handle "Storage.untrackIndexedDBForOrigin" (Just params)
+storageUntrackIndexedDbForOrigin :: Handle ev -> Maybe String -> PStorageUntrackIndexedDbForOrigin -> IO ()
+storageUntrackIndexedDbForOrigin handle sessionId params = sendReceiveCommand handle sessionId "Storage.untrackIndexedDBForOrigin" (Just params )
 
 
 -- | Function for the 'Storage.getTrustTokens' command.
 --   Returns the number of stored Trust Tokens per issuer for the
 --   current browsing context.
 --   Returns: 'StorageGetTrustTokens'
-storageGetTrustTokens :: Handle ev -> IO StorageGetTrustTokens
-storageGetTrustTokens handle = sendReceiveCommandResult handle "Storage.getTrustTokens" (Nothing :: Maybe ())
+storageGetTrustTokens :: Handle ev -> Maybe String -> IO StorageGetTrustTokens
+storageGetTrustTokens handle sessionId = sendReceiveCommandResult handle sessionId "Storage.getTrustTokens" (Nothing :: Maybe ())
 
 -- | Return type of the 'storageGetTrustTokens' command.
 data StorageGetTrustTokens = StorageGetTrustTokens {
@@ -563,8 +563,8 @@ instance FromJSON  PStorageClearTrustTokens where
 --   Leaves other stored data, including the issuer's Redemption Records, intact.
 --   Parameters: 'PStorageClearTrustTokens'
 --   Returns: 'StorageClearTrustTokens'
-storageClearTrustTokens :: Handle ev -> PStorageClearTrustTokens -> IO StorageClearTrustTokens
-storageClearTrustTokens handle params = sendReceiveCommandResult handle "Storage.clearTrustTokens" (Just params)
+storageClearTrustTokens :: Handle ev -> Maybe String -> PStorageClearTrustTokens -> IO StorageClearTrustTokens
+storageClearTrustTokens handle sessionId params = sendReceiveCommandResult handle sessionId "Storage.clearTrustTokens" (Just params )
 
 -- | Return type of the 'storageClearTrustTokens' command.
 data StorageClearTrustTokens = StorageClearTrustTokens {
@@ -596,8 +596,8 @@ instance FromJSON  PStorageGetInterestGroupDetails where
 --   Gets details for a named interest group.
 --   Parameters: 'PStorageGetInterestGroupDetails'
 --   Returns: 'StorageGetInterestGroupDetails'
-storageGetInterestGroupDetails :: Handle ev -> PStorageGetInterestGroupDetails -> IO StorageGetInterestGroupDetails
-storageGetInterestGroupDetails handle params = sendReceiveCommandResult handle "Storage.getInterestGroupDetails" (Just params)
+storageGetInterestGroupDetails :: Handle ev -> Maybe String -> PStorageGetInterestGroupDetails -> IO StorageGetInterestGroupDetails
+storageGetInterestGroupDetails handle sessionId params = sendReceiveCommandResult handle sessionId "Storage.getInterestGroupDetails" (Just params )
 
 -- | Return type of the 'storageGetInterestGroupDetails' command.
 data StorageGetInterestGroupDetails = StorageGetInterestGroupDetails {
@@ -626,8 +626,8 @@ instance FromJSON  PStorageSetInterestGroupTracking where
 -- | Function for the 'Storage.setInterestGroupTracking' command.
 --   Enables/Disables issuing of interestGroupAccessed events.
 --   Parameters: 'PStorageSetInterestGroupTracking'
-storageSetInterestGroupTracking :: Handle ev -> PStorageSetInterestGroupTracking -> IO ()
-storageSetInterestGroupTracking handle params = sendReceiveCommand handle "Storage.setInterestGroupTracking" (Just params)
+storageSetInterestGroupTracking :: Handle ev -> Maybe String -> PStorageSetInterestGroupTracking -> IO ()
+storageSetInterestGroupTracking handle sessionId params = sendReceiveCommand handle sessionId "Storage.setInterestGroupTracking" (Just params )
 
 
 

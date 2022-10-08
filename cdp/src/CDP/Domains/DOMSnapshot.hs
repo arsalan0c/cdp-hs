@@ -404,14 +404,14 @@ instance FromJSON  DomSnapshotTextBoxSnapshot where
 
 -- | Function for the 'DOMSnapshot.disable' command.
 --   Disables DOM snapshot agent for the given page.
-domSnapshotDisable :: Handle ev -> IO ()
-domSnapshotDisable handle = sendReceiveCommand handle "DOMSnapshot.disable" (Nothing :: Maybe ())
+domSnapshotDisable :: Handle ev -> Maybe String -> IO ()
+domSnapshotDisable handle sessionId = sendReceiveCommand handle sessionId "DOMSnapshot.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'DOMSnapshot.enable' command.
 --   Enables DOM snapshot agent for the given page.
-domSnapshotEnable :: Handle ev -> IO ()
-domSnapshotEnable handle = sendReceiveCommand handle "DOMSnapshot.enable" (Nothing :: Maybe ())
+domSnapshotEnable :: Handle ev -> Maybe String -> IO ()
+domSnapshotEnable handle sessionId = sendReceiveCommand handle sessionId "DOMSnapshot.enable" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'domSnapshotCaptureSnapshot' command.
@@ -445,8 +445,8 @@ instance FromJSON  PDomSnapshotCaptureSnapshot where
 --   flattened.
 --   Parameters: 'PDomSnapshotCaptureSnapshot'
 --   Returns: 'DomSnapshotCaptureSnapshot'
-domSnapshotCaptureSnapshot :: Handle ev -> PDomSnapshotCaptureSnapshot -> IO DomSnapshotCaptureSnapshot
-domSnapshotCaptureSnapshot handle params = sendReceiveCommandResult handle "DOMSnapshot.captureSnapshot" (Just params)
+domSnapshotCaptureSnapshot :: Handle ev -> Maybe String -> PDomSnapshotCaptureSnapshot -> IO DomSnapshotCaptureSnapshot
+domSnapshotCaptureSnapshot handle sessionId params = sendReceiveCommandResult handle sessionId "DOMSnapshot.captureSnapshot" (Just params )
 
 -- | Return type of the 'domSnapshotCaptureSnapshot' command.
 data DomSnapshotCaptureSnapshot = DomSnapshotCaptureSnapshot {

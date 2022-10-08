@@ -22,10 +22,10 @@ import CDP.Internal.Runtime
 --         CDP.subscribe handle $ \frameNavigated -> do
 --             print $ CDP.pageFrameId . CDP.pageFrameNavigatedFrame $ frameNavigated
 --         -- enable events
---         enabled  <- CDP.pageEnable handle
+--         enabled  <- CDP.pageEnable handle Nothing
 --         -- navigate to page
---         nav     <- CDP.pageNavigate handle $
---             CDP.PPageNavigate "http://wikipedia.com" Nothing Nothing Nothing
+--         nav     <- CDP.pageNavigate handle Nothing $
+--             CDP.PPageNavigate "http://wikipedia.com" Nothing Nothing Nothing Nothing
 --         -- wait for events
 --         threadDelay 2000000
 --         -- check the response buffer

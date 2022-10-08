@@ -235,14 +235,14 @@ instance FromJSON  MediaPlayersCreated where
 
 -- | Function for the 'Media.enable' command.
 --   Enables the Media domain
-mediaEnable :: Handle ev -> IO ()
-mediaEnable handle = sendReceiveCommand handle "Media.enable" (Nothing :: Maybe ())
+mediaEnable :: Handle ev -> Maybe String -> IO ()
+mediaEnable handle sessionId = sendReceiveCommand handle sessionId "Media.enable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Media.disable' command.
 --   Disables the Media domain.
-mediaDisable :: Handle ev -> IO ()
-mediaDisable handle = sendReceiveCommand handle "Media.disable" (Nothing :: Maybe ())
+mediaDisable :: Handle ev -> Maybe String -> IO ()
+mediaDisable handle sessionId = sendReceiveCommand handle sessionId "Media.disable" (Nothing :: Maybe ())
 
 
 

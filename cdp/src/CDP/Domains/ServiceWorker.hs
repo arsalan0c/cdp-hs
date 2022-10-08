@@ -210,13 +210,13 @@ instance FromJSON  PServiceWorkerDeliverPushMessage where
 -- | Function for the 'ServiceWorker.deliverPushMessage' command.
 --   
 --   Parameters: 'PServiceWorkerDeliverPushMessage'
-serviceWorkerDeliverPushMessage :: Handle ev -> PServiceWorkerDeliverPushMessage -> IO ()
-serviceWorkerDeliverPushMessage handle params = sendReceiveCommand handle "ServiceWorker.deliverPushMessage" (Just params)
+serviceWorkerDeliverPushMessage :: Handle ev -> Maybe String -> PServiceWorkerDeliverPushMessage -> IO ()
+serviceWorkerDeliverPushMessage handle sessionId params = sendReceiveCommand handle sessionId "ServiceWorker.deliverPushMessage" (Just params )
 
 
 -- | Function for the 'ServiceWorker.disable' command.
-serviceWorkerDisable :: Handle ev -> IO ()
-serviceWorkerDisable handle = sendReceiveCommand handle "ServiceWorker.disable" (Nothing :: Maybe ())
+serviceWorkerDisable :: Handle ev -> Maybe String -> IO ()
+serviceWorkerDisable handle sessionId = sendReceiveCommand handle sessionId "ServiceWorker.disable" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'serviceWorkerDispatchSyncEvent' command.
@@ -236,8 +236,8 @@ instance FromJSON  PServiceWorkerDispatchSyncEvent where
 -- | Function for the 'ServiceWorker.dispatchSyncEvent' command.
 --   
 --   Parameters: 'PServiceWorkerDispatchSyncEvent'
-serviceWorkerDispatchSyncEvent :: Handle ev -> PServiceWorkerDispatchSyncEvent -> IO ()
-serviceWorkerDispatchSyncEvent handle params = sendReceiveCommand handle "ServiceWorker.dispatchSyncEvent" (Just params)
+serviceWorkerDispatchSyncEvent :: Handle ev -> Maybe String -> PServiceWorkerDispatchSyncEvent -> IO ()
+serviceWorkerDispatchSyncEvent handle sessionId params = sendReceiveCommand handle sessionId "ServiceWorker.dispatchSyncEvent" (Just params )
 
 
 -- | Parameters of the 'serviceWorkerDispatchPeriodicSyncEvent' command.
@@ -256,13 +256,13 @@ instance FromJSON  PServiceWorkerDispatchPeriodicSyncEvent where
 -- | Function for the 'ServiceWorker.dispatchPeriodicSyncEvent' command.
 --   
 --   Parameters: 'PServiceWorkerDispatchPeriodicSyncEvent'
-serviceWorkerDispatchPeriodicSyncEvent :: Handle ev -> PServiceWorkerDispatchPeriodicSyncEvent -> IO ()
-serviceWorkerDispatchPeriodicSyncEvent handle params = sendReceiveCommand handle "ServiceWorker.dispatchPeriodicSyncEvent" (Just params)
+serviceWorkerDispatchPeriodicSyncEvent :: Handle ev -> Maybe String -> PServiceWorkerDispatchPeriodicSyncEvent -> IO ()
+serviceWorkerDispatchPeriodicSyncEvent handle sessionId params = sendReceiveCommand handle sessionId "ServiceWorker.dispatchPeriodicSyncEvent" (Just params )
 
 
 -- | Function for the 'ServiceWorker.enable' command.
-serviceWorkerEnable :: Handle ev -> IO ()
-serviceWorkerEnable handle = sendReceiveCommand handle "ServiceWorker.enable" (Nothing :: Maybe ())
+serviceWorkerEnable :: Handle ev -> Maybe String -> IO ()
+serviceWorkerEnable handle sessionId = sendReceiveCommand handle sessionId "ServiceWorker.enable" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'serviceWorkerInspectWorker' command.
@@ -279,8 +279,8 @@ instance FromJSON  PServiceWorkerInspectWorker where
 -- | Function for the 'ServiceWorker.inspectWorker' command.
 --   
 --   Parameters: 'PServiceWorkerInspectWorker'
-serviceWorkerInspectWorker :: Handle ev -> PServiceWorkerInspectWorker -> IO ()
-serviceWorkerInspectWorker handle params = sendReceiveCommand handle "ServiceWorker.inspectWorker" (Just params)
+serviceWorkerInspectWorker :: Handle ev -> Maybe String -> PServiceWorkerInspectWorker -> IO ()
+serviceWorkerInspectWorker handle sessionId params = sendReceiveCommand handle sessionId "ServiceWorker.inspectWorker" (Just params )
 
 
 -- | Parameters of the 'serviceWorkerSetForceUpdateOnPageLoad' command.
@@ -297,8 +297,8 @@ instance FromJSON  PServiceWorkerSetForceUpdateOnPageLoad where
 -- | Function for the 'ServiceWorker.setForceUpdateOnPageLoad' command.
 --   
 --   Parameters: 'PServiceWorkerSetForceUpdateOnPageLoad'
-serviceWorkerSetForceUpdateOnPageLoad :: Handle ev -> PServiceWorkerSetForceUpdateOnPageLoad -> IO ()
-serviceWorkerSetForceUpdateOnPageLoad handle params = sendReceiveCommand handle "ServiceWorker.setForceUpdateOnPageLoad" (Just params)
+serviceWorkerSetForceUpdateOnPageLoad :: Handle ev -> Maybe String -> PServiceWorkerSetForceUpdateOnPageLoad -> IO ()
+serviceWorkerSetForceUpdateOnPageLoad handle sessionId params = sendReceiveCommand handle sessionId "ServiceWorker.setForceUpdateOnPageLoad" (Just params )
 
 
 -- | Parameters of the 'serviceWorkerSkipWaiting' command.
@@ -315,8 +315,8 @@ instance FromJSON  PServiceWorkerSkipWaiting where
 -- | Function for the 'ServiceWorker.skipWaiting' command.
 --   
 --   Parameters: 'PServiceWorkerSkipWaiting'
-serviceWorkerSkipWaiting :: Handle ev -> PServiceWorkerSkipWaiting -> IO ()
-serviceWorkerSkipWaiting handle params = sendReceiveCommand handle "ServiceWorker.skipWaiting" (Just params)
+serviceWorkerSkipWaiting :: Handle ev -> Maybe String -> PServiceWorkerSkipWaiting -> IO ()
+serviceWorkerSkipWaiting handle sessionId params = sendReceiveCommand handle sessionId "ServiceWorker.skipWaiting" (Just params )
 
 
 -- | Parameters of the 'serviceWorkerStartWorker' command.
@@ -333,13 +333,13 @@ instance FromJSON  PServiceWorkerStartWorker where
 -- | Function for the 'ServiceWorker.startWorker' command.
 --   
 --   Parameters: 'PServiceWorkerStartWorker'
-serviceWorkerStartWorker :: Handle ev -> PServiceWorkerStartWorker -> IO ()
-serviceWorkerStartWorker handle params = sendReceiveCommand handle "ServiceWorker.startWorker" (Just params)
+serviceWorkerStartWorker :: Handle ev -> Maybe String -> PServiceWorkerStartWorker -> IO ()
+serviceWorkerStartWorker handle sessionId params = sendReceiveCommand handle sessionId "ServiceWorker.startWorker" (Just params )
 
 
 -- | Function for the 'ServiceWorker.stopAllWorkers' command.
-serviceWorkerStopAllWorkers :: Handle ev -> IO ()
-serviceWorkerStopAllWorkers handle = sendReceiveCommand handle "ServiceWorker.stopAllWorkers" (Nothing :: Maybe ())
+serviceWorkerStopAllWorkers :: Handle ev -> Maybe String -> IO ()
+serviceWorkerStopAllWorkers handle sessionId = sendReceiveCommand handle sessionId "ServiceWorker.stopAllWorkers" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'serviceWorkerStopWorker' command.
@@ -356,8 +356,8 @@ instance FromJSON  PServiceWorkerStopWorker where
 -- | Function for the 'ServiceWorker.stopWorker' command.
 --   
 --   Parameters: 'PServiceWorkerStopWorker'
-serviceWorkerStopWorker :: Handle ev -> PServiceWorkerStopWorker -> IO ()
-serviceWorkerStopWorker handle params = sendReceiveCommand handle "ServiceWorker.stopWorker" (Just params)
+serviceWorkerStopWorker :: Handle ev -> Maybe String -> PServiceWorkerStopWorker -> IO ()
+serviceWorkerStopWorker handle sessionId params = sendReceiveCommand handle sessionId "ServiceWorker.stopWorker" (Just params )
 
 
 -- | Parameters of the 'serviceWorkerUnregister' command.
@@ -374,8 +374,8 @@ instance FromJSON  PServiceWorkerUnregister where
 -- | Function for the 'ServiceWorker.unregister' command.
 --   
 --   Parameters: 'PServiceWorkerUnregister'
-serviceWorkerUnregister :: Handle ev -> PServiceWorkerUnregister -> IO ()
-serviceWorkerUnregister handle params = sendReceiveCommand handle "ServiceWorker.unregister" (Just params)
+serviceWorkerUnregister :: Handle ev -> Maybe String -> PServiceWorkerUnregister -> IO ()
+serviceWorkerUnregister handle sessionId params = sendReceiveCommand handle sessionId "ServiceWorker.unregister" (Just params )
 
 
 -- | Parameters of the 'serviceWorkerUpdateRegistration' command.
@@ -392,8 +392,8 @@ instance FromJSON  PServiceWorkerUpdateRegistration where
 -- | Function for the 'ServiceWorker.updateRegistration' command.
 --   
 --   Parameters: 'PServiceWorkerUpdateRegistration'
-serviceWorkerUpdateRegistration :: Handle ev -> PServiceWorkerUpdateRegistration -> IO ()
-serviceWorkerUpdateRegistration handle params = sendReceiveCommand handle "ServiceWorker.updateRegistration" (Just params)
+serviceWorkerUpdateRegistration :: Handle ev -> Maybe String -> PServiceWorkerUpdateRegistration -> IO ()
+serviceWorkerUpdateRegistration handle sessionId params = sendReceiveCommand handle sessionId "ServiceWorker.updateRegistration" (Just params )
 
 
 

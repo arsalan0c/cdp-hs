@@ -224,8 +224,8 @@ instance FromJSON  PLayerTreeCompositingReasons where
 --   Provides the reasons why the given layer was composited.
 --   Parameters: 'PLayerTreeCompositingReasons'
 --   Returns: 'LayerTreeCompositingReasons'
-layerTreeCompositingReasons :: Handle ev -> PLayerTreeCompositingReasons -> IO LayerTreeCompositingReasons
-layerTreeCompositingReasons handle params = sendReceiveCommandResult handle "LayerTree.compositingReasons" (Just params)
+layerTreeCompositingReasons :: Handle ev -> Maybe String -> PLayerTreeCompositingReasons -> IO LayerTreeCompositingReasons
+layerTreeCompositingReasons handle sessionId params = sendReceiveCommandResult handle sessionId "LayerTree.compositingReasons" (Just params )
 
 -- | Return type of the 'layerTreeCompositingReasons' command.
 data LayerTreeCompositingReasons = LayerTreeCompositingReasons {
@@ -243,14 +243,14 @@ instance Command LayerTreeCompositingReasons where
 
 -- | Function for the 'LayerTree.disable' command.
 --   Disables compositing tree inspection.
-layerTreeDisable :: Handle ev -> IO ()
-layerTreeDisable handle = sendReceiveCommand handle "LayerTree.disable" (Nothing :: Maybe ())
+layerTreeDisable :: Handle ev -> Maybe String -> IO ()
+layerTreeDisable handle sessionId = sendReceiveCommand handle sessionId "LayerTree.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'LayerTree.enable' command.
 --   Enables compositing tree inspection.
-layerTreeEnable :: Handle ev -> IO ()
-layerTreeEnable handle = sendReceiveCommand handle "LayerTree.enable" (Nothing :: Maybe ())
+layerTreeEnable :: Handle ev -> Maybe String -> IO ()
+layerTreeEnable handle sessionId = sendReceiveCommand handle sessionId "LayerTree.enable" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'layerTreeLoadSnapshot' command.
@@ -269,8 +269,8 @@ instance FromJSON  PLayerTreeLoadSnapshot where
 --   Returns the snapshot identifier.
 --   Parameters: 'PLayerTreeLoadSnapshot'
 --   Returns: 'LayerTreeLoadSnapshot'
-layerTreeLoadSnapshot :: Handle ev -> PLayerTreeLoadSnapshot -> IO LayerTreeLoadSnapshot
-layerTreeLoadSnapshot handle params = sendReceiveCommandResult handle "LayerTree.loadSnapshot" (Just params)
+layerTreeLoadSnapshot :: Handle ev -> Maybe String -> PLayerTreeLoadSnapshot -> IO LayerTreeLoadSnapshot
+layerTreeLoadSnapshot handle sessionId params = sendReceiveCommandResult handle sessionId "LayerTree.loadSnapshot" (Just params )
 
 -- | Return type of the 'layerTreeLoadSnapshot' command.
 data LayerTreeLoadSnapshot = LayerTreeLoadSnapshot {
@@ -302,8 +302,8 @@ instance FromJSON  PLayerTreeMakeSnapshot where
 --   Returns the layer snapshot identifier.
 --   Parameters: 'PLayerTreeMakeSnapshot'
 --   Returns: 'LayerTreeMakeSnapshot'
-layerTreeMakeSnapshot :: Handle ev -> PLayerTreeMakeSnapshot -> IO LayerTreeMakeSnapshot
-layerTreeMakeSnapshot handle params = sendReceiveCommandResult handle "LayerTree.makeSnapshot" (Just params)
+layerTreeMakeSnapshot :: Handle ev -> Maybe String -> PLayerTreeMakeSnapshot -> IO LayerTreeMakeSnapshot
+layerTreeMakeSnapshot handle sessionId params = sendReceiveCommandResult handle sessionId "LayerTree.makeSnapshot" (Just params )
 
 -- | Return type of the 'layerTreeMakeSnapshot' command.
 data LayerTreeMakeSnapshot = LayerTreeMakeSnapshot {
@@ -341,8 +341,8 @@ instance FromJSON  PLayerTreeProfileSnapshot where
 --   
 --   Parameters: 'PLayerTreeProfileSnapshot'
 --   Returns: 'LayerTreeProfileSnapshot'
-layerTreeProfileSnapshot :: Handle ev -> PLayerTreeProfileSnapshot -> IO LayerTreeProfileSnapshot
-layerTreeProfileSnapshot handle params = sendReceiveCommandResult handle "LayerTree.profileSnapshot" (Just params)
+layerTreeProfileSnapshot :: Handle ev -> Maybe String -> PLayerTreeProfileSnapshot -> IO LayerTreeProfileSnapshot
+layerTreeProfileSnapshot handle sessionId params = sendReceiveCommandResult handle sessionId "LayerTree.profileSnapshot" (Just params )
 
 -- | Return type of the 'layerTreeProfileSnapshot' command.
 data LayerTreeProfileSnapshot = LayerTreeProfileSnapshot {
@@ -373,8 +373,8 @@ instance FromJSON  PLayerTreeReleaseSnapshot where
 -- | Function for the 'LayerTree.releaseSnapshot' command.
 --   Releases layer snapshot captured by the back-end.
 --   Parameters: 'PLayerTreeReleaseSnapshot'
-layerTreeReleaseSnapshot :: Handle ev -> PLayerTreeReleaseSnapshot -> IO ()
-layerTreeReleaseSnapshot handle params = sendReceiveCommand handle "LayerTree.releaseSnapshot" (Just params)
+layerTreeReleaseSnapshot :: Handle ev -> Maybe String -> PLayerTreeReleaseSnapshot -> IO ()
+layerTreeReleaseSnapshot handle sessionId params = sendReceiveCommand handle sessionId "LayerTree.releaseSnapshot" (Just params )
 
 
 -- | Parameters of the 'layerTreeReplaySnapshot' command.
@@ -399,8 +399,8 @@ instance FromJSON  PLayerTreeReplaySnapshot where
 --   Replays the layer snapshot and returns the resulting bitmap.
 --   Parameters: 'PLayerTreeReplaySnapshot'
 --   Returns: 'LayerTreeReplaySnapshot'
-layerTreeReplaySnapshot :: Handle ev -> PLayerTreeReplaySnapshot -> IO LayerTreeReplaySnapshot
-layerTreeReplaySnapshot handle params = sendReceiveCommandResult handle "LayerTree.replaySnapshot" (Just params)
+layerTreeReplaySnapshot :: Handle ev -> Maybe String -> PLayerTreeReplaySnapshot -> IO LayerTreeReplaySnapshot
+layerTreeReplaySnapshot handle sessionId params = sendReceiveCommandResult handle sessionId "LayerTree.replaySnapshot" (Just params )
 
 -- | Return type of the 'layerTreeReplaySnapshot' command.
 data LayerTreeReplaySnapshot = LayerTreeReplaySnapshot {
@@ -432,8 +432,8 @@ instance FromJSON  PLayerTreeSnapshotCommandLog where
 --   Replays the layer snapshot and returns canvas log.
 --   Parameters: 'PLayerTreeSnapshotCommandLog'
 --   Returns: 'LayerTreeSnapshotCommandLog'
-layerTreeSnapshotCommandLog :: Handle ev -> PLayerTreeSnapshotCommandLog -> IO LayerTreeSnapshotCommandLog
-layerTreeSnapshotCommandLog handle params = sendReceiveCommandResult handle "LayerTree.snapshotCommandLog" (Just params)
+layerTreeSnapshotCommandLog :: Handle ev -> Maybe String -> PLayerTreeSnapshotCommandLog -> IO LayerTreeSnapshotCommandLog
+layerTreeSnapshotCommandLog handle sessionId params = sendReceiveCommandResult handle sessionId "LayerTree.snapshotCommandLog" (Just params )
 
 -- | Return type of the 'layerTreeSnapshotCommandLog' command.
 data LayerTreeSnapshotCommandLog = LayerTreeSnapshotCommandLog {

@@ -148,8 +148,8 @@ instance FromJSON  PDomDebuggerGetEventListeners where
 --   Returns event listeners of the given object.
 --   Parameters: 'PDomDebuggerGetEventListeners'
 --   Returns: 'DomDebuggerGetEventListeners'
-domDebuggerGetEventListeners :: Handle ev -> PDomDebuggerGetEventListeners -> IO DomDebuggerGetEventListeners
-domDebuggerGetEventListeners handle params = sendReceiveCommandResult handle "DOMDebugger.getEventListeners" (Just params)
+domDebuggerGetEventListeners :: Handle ev -> Maybe String -> PDomDebuggerGetEventListeners -> IO DomDebuggerGetEventListeners
+domDebuggerGetEventListeners handle sessionId params = sendReceiveCommandResult handle sessionId "DOMDebugger.getEventListeners" (Just params )
 
 -- | Return type of the 'domDebuggerGetEventListeners' command.
 data DomDebuggerGetEventListeners = DomDebuggerGetEventListeners {
@@ -182,8 +182,8 @@ instance FromJSON  PDomDebuggerRemoveDomBreakpoint where
 -- | Function for the 'DOMDebugger.removeDOMBreakpoint' command.
 --   Removes DOM breakpoint that was set using `setDOMBreakpoint`.
 --   Parameters: 'PDomDebuggerRemoveDomBreakpoint'
-domDebuggerRemoveDomBreakpoint :: Handle ev -> PDomDebuggerRemoveDomBreakpoint -> IO ()
-domDebuggerRemoveDomBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.removeDOMBreakpoint" (Just params)
+domDebuggerRemoveDomBreakpoint :: Handle ev -> Maybe String -> PDomDebuggerRemoveDomBreakpoint -> IO ()
+domDebuggerRemoveDomBreakpoint handle sessionId params = sendReceiveCommand handle sessionId "DOMDebugger.removeDOMBreakpoint" (Just params )
 
 
 -- | Parameters of the 'domDebuggerRemoveEventListenerBreakpoint' command.
@@ -203,8 +203,8 @@ instance FromJSON  PDomDebuggerRemoveEventListenerBreakpoint where
 -- | Function for the 'DOMDebugger.removeEventListenerBreakpoint' command.
 --   Removes breakpoint on particular DOM event.
 --   Parameters: 'PDomDebuggerRemoveEventListenerBreakpoint'
-domDebuggerRemoveEventListenerBreakpoint :: Handle ev -> PDomDebuggerRemoveEventListenerBreakpoint -> IO ()
-domDebuggerRemoveEventListenerBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.removeEventListenerBreakpoint" (Just params)
+domDebuggerRemoveEventListenerBreakpoint :: Handle ev -> Maybe String -> PDomDebuggerRemoveEventListenerBreakpoint -> IO ()
+domDebuggerRemoveEventListenerBreakpoint handle sessionId params = sendReceiveCommand handle sessionId "DOMDebugger.removeEventListenerBreakpoint" (Just params )
 
 
 -- | Parameters of the 'domDebuggerRemoveInstrumentationBreakpoint' command.
@@ -222,8 +222,8 @@ instance FromJSON  PDomDebuggerRemoveInstrumentationBreakpoint where
 -- | Function for the 'DOMDebugger.removeInstrumentationBreakpoint' command.
 --   Removes breakpoint on particular native event.
 --   Parameters: 'PDomDebuggerRemoveInstrumentationBreakpoint'
-domDebuggerRemoveInstrumentationBreakpoint :: Handle ev -> PDomDebuggerRemoveInstrumentationBreakpoint -> IO ()
-domDebuggerRemoveInstrumentationBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.removeInstrumentationBreakpoint" (Just params)
+domDebuggerRemoveInstrumentationBreakpoint :: Handle ev -> Maybe String -> PDomDebuggerRemoveInstrumentationBreakpoint -> IO ()
+domDebuggerRemoveInstrumentationBreakpoint handle sessionId params = sendReceiveCommand handle sessionId "DOMDebugger.removeInstrumentationBreakpoint" (Just params )
 
 
 -- | Parameters of the 'domDebuggerRemoveXhrBreakpoint' command.
@@ -241,8 +241,8 @@ instance FromJSON  PDomDebuggerRemoveXhrBreakpoint where
 -- | Function for the 'DOMDebugger.removeXHRBreakpoint' command.
 --   Removes breakpoint from XMLHttpRequest.
 --   Parameters: 'PDomDebuggerRemoveXhrBreakpoint'
-domDebuggerRemoveXhrBreakpoint :: Handle ev -> PDomDebuggerRemoveXhrBreakpoint -> IO ()
-domDebuggerRemoveXhrBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.removeXHRBreakpoint" (Just params)
+domDebuggerRemoveXhrBreakpoint :: Handle ev -> Maybe String -> PDomDebuggerRemoveXhrBreakpoint -> IO ()
+domDebuggerRemoveXhrBreakpoint handle sessionId params = sendReceiveCommand handle sessionId "DOMDebugger.removeXHRBreakpoint" (Just params )
 
 
 -- | Parameters of the 'domDebuggerSetBreakOnCspViolation' command.
@@ -260,8 +260,8 @@ instance FromJSON  PDomDebuggerSetBreakOnCspViolation where
 -- | Function for the 'DOMDebugger.setBreakOnCSPViolation' command.
 --   Sets breakpoint on particular CSP violations.
 --   Parameters: 'PDomDebuggerSetBreakOnCspViolation'
-domDebuggerSetBreakOnCspViolation :: Handle ev -> PDomDebuggerSetBreakOnCspViolation -> IO ()
-domDebuggerSetBreakOnCspViolation handle params = sendReceiveCommand handle "DOMDebugger.setBreakOnCSPViolation" (Just params)
+domDebuggerSetBreakOnCspViolation :: Handle ev -> Maybe String -> PDomDebuggerSetBreakOnCspViolation -> IO ()
+domDebuggerSetBreakOnCspViolation handle sessionId params = sendReceiveCommand handle sessionId "DOMDebugger.setBreakOnCSPViolation" (Just params )
 
 
 -- | Parameters of the 'domDebuggerSetDomBreakpoint' command.
@@ -281,8 +281,8 @@ instance FromJSON  PDomDebuggerSetDomBreakpoint where
 -- | Function for the 'DOMDebugger.setDOMBreakpoint' command.
 --   Sets breakpoint on particular operation with DOM.
 --   Parameters: 'PDomDebuggerSetDomBreakpoint'
-domDebuggerSetDomBreakpoint :: Handle ev -> PDomDebuggerSetDomBreakpoint -> IO ()
-domDebuggerSetDomBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.setDOMBreakpoint" (Just params)
+domDebuggerSetDomBreakpoint :: Handle ev -> Maybe String -> PDomDebuggerSetDomBreakpoint -> IO ()
+domDebuggerSetDomBreakpoint handle sessionId params = sendReceiveCommand handle sessionId "DOMDebugger.setDOMBreakpoint" (Just params )
 
 
 -- | Parameters of the 'domDebuggerSetEventListenerBreakpoint' command.
@@ -303,8 +303,8 @@ instance FromJSON  PDomDebuggerSetEventListenerBreakpoint where
 -- | Function for the 'DOMDebugger.setEventListenerBreakpoint' command.
 --   Sets breakpoint on particular DOM event.
 --   Parameters: 'PDomDebuggerSetEventListenerBreakpoint'
-domDebuggerSetEventListenerBreakpoint :: Handle ev -> PDomDebuggerSetEventListenerBreakpoint -> IO ()
-domDebuggerSetEventListenerBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.setEventListenerBreakpoint" (Just params)
+domDebuggerSetEventListenerBreakpoint :: Handle ev -> Maybe String -> PDomDebuggerSetEventListenerBreakpoint -> IO ()
+domDebuggerSetEventListenerBreakpoint handle sessionId params = sendReceiveCommand handle sessionId "DOMDebugger.setEventListenerBreakpoint" (Just params )
 
 
 -- | Parameters of the 'domDebuggerSetInstrumentationBreakpoint' command.
@@ -322,8 +322,8 @@ instance FromJSON  PDomDebuggerSetInstrumentationBreakpoint where
 -- | Function for the 'DOMDebugger.setInstrumentationBreakpoint' command.
 --   Sets breakpoint on particular native event.
 --   Parameters: 'PDomDebuggerSetInstrumentationBreakpoint'
-domDebuggerSetInstrumentationBreakpoint :: Handle ev -> PDomDebuggerSetInstrumentationBreakpoint -> IO ()
-domDebuggerSetInstrumentationBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.setInstrumentationBreakpoint" (Just params)
+domDebuggerSetInstrumentationBreakpoint :: Handle ev -> Maybe String -> PDomDebuggerSetInstrumentationBreakpoint -> IO ()
+domDebuggerSetInstrumentationBreakpoint handle sessionId params = sendReceiveCommand handle sessionId "DOMDebugger.setInstrumentationBreakpoint" (Just params )
 
 
 -- | Parameters of the 'domDebuggerSetXhrBreakpoint' command.
@@ -341,8 +341,8 @@ instance FromJSON  PDomDebuggerSetXhrBreakpoint where
 -- | Function for the 'DOMDebugger.setXHRBreakpoint' command.
 --   Sets breakpoint on XMLHttpRequest.
 --   Parameters: 'PDomDebuggerSetXhrBreakpoint'
-domDebuggerSetXhrBreakpoint :: Handle ev -> PDomDebuggerSetXhrBreakpoint -> IO ()
-domDebuggerSetXhrBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.setXHRBreakpoint" (Just params)
+domDebuggerSetXhrBreakpoint :: Handle ev -> Maybe String -> PDomDebuggerSetXhrBreakpoint -> IO ()
+domDebuggerSetXhrBreakpoint handle sessionId params = sendReceiveCommand handle sessionId "DOMDebugger.setXHRBreakpoint" (Just params )
 
 
 

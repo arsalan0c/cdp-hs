@@ -68,7 +68,7 @@ instance ToJSON HeadlessExperimentalScreenshotParamsFormat where
 
 data HeadlessExperimentalScreenshotParams = HeadlessExperimentalScreenshotParams {
   -- | Image compression format (defaults to png).
-  headlessExperimentalScreenshotParamsFormat :: HeadlessExperimentalScreenshotParamsFormat,
+  headlessExperimentalScreenshotParamsFormat :: Maybe HeadlessExperimentalScreenshotParamsFormat,
   -- | Compression quality from range [0..100] (jpeg only).
   headlessExperimentalScreenshotParamsQuality :: Maybe Int
 } deriving (Generic, Eq, Show, Read)
@@ -115,8 +115,8 @@ instance FromJSON  PHeadlessExperimentalBeginFrame where
 --   https://goo.gle/chrome-headless-rendering for more background.
 --   Parameters: 'PHeadlessExperimentalBeginFrame'
 --   Returns: 'HeadlessExperimentalBeginFrame'
-headlessExperimentalBeginFrame :: Handle ev -> PHeadlessExperimentalBeginFrame -> IO HeadlessExperimentalBeginFrame
-headlessExperimentalBeginFrame handle params = sendReceiveCommandResult handle "HeadlessExperimental.beginFrame" (Just params)
+headlessExperimentalBeginFrame :: Handle ev -> Maybe String -> PHeadlessExperimentalBeginFrame -> IO HeadlessExperimentalBeginFrame
+headlessExperimentalBeginFrame handle sessionId params = sendReceiveCommandResult handle sessionId "HeadlessExperimental.beginFrame" (Just params )
 
 -- | Return type of the 'headlessExperimentalBeginFrame' command.
 data HeadlessExperimentalBeginFrame = HeadlessExperimentalBeginFrame {
@@ -137,14 +137,14 @@ instance Command HeadlessExperimentalBeginFrame where
 
 -- | Function for the 'HeadlessExperimental.disable' command.
 --   Disables headless events for the target.
-headlessExperimentalDisable :: Handle ev -> IO ()
-headlessExperimentalDisable handle = sendReceiveCommand handle "HeadlessExperimental.disable" (Nothing :: Maybe ())
+headlessExperimentalDisable :: Handle ev -> Maybe String -> IO ()
+headlessExperimentalDisable handle sessionId = sendReceiveCommand handle sessionId "HeadlessExperimental.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'HeadlessExperimental.enable' command.
 --   Enables headless events for the target.
-headlessExperimentalEnable :: Handle ev -> IO ()
-headlessExperimentalEnable handle = sendReceiveCommand handle "HeadlessExperimental.enable" (Nothing :: Maybe ())
+headlessExperimentalEnable :: Handle ev -> Maybe String -> IO ()
+headlessExperimentalEnable handle sessionId = sendReceiveCommand handle sessionId "HeadlessExperimental.enable" (Nothing :: Maybe ())
 
 
 

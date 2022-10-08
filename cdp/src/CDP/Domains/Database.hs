@@ -103,14 +103,14 @@ instance FromJSON  DatabaseAddDatabase where
 
 -- | Function for the 'Database.disable' command.
 --   Disables database tracking, prevents database events from being sent to the client.
-databaseDisable :: Handle ev -> IO ()
-databaseDisable handle = sendReceiveCommand handle "Database.disable" (Nothing :: Maybe ())
+databaseDisable :: Handle ev -> Maybe String -> IO ()
+databaseDisable handle sessionId = sendReceiveCommand handle sessionId "Database.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Database.enable' command.
 --   Enables database tracking, database events will now be delivered to the client.
-databaseEnable :: Handle ev -> IO ()
-databaseEnable handle = sendReceiveCommand handle "Database.enable" (Nothing :: Maybe ())
+databaseEnable :: Handle ev -> Maybe String -> IO ()
+databaseEnable handle sessionId = sendReceiveCommand handle sessionId "Database.enable" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'databaseExecuteSql' command.
@@ -129,8 +129,8 @@ instance FromJSON  PDatabaseExecuteSql where
 --   
 --   Parameters: 'PDatabaseExecuteSql'
 --   Returns: 'DatabaseExecuteSql'
-databaseExecuteSql :: Handle ev -> PDatabaseExecuteSql -> IO DatabaseExecuteSql
-databaseExecuteSql handle params = sendReceiveCommandResult handle "Database.executeSQL" (Just params)
+databaseExecuteSql :: Handle ev -> Maybe String -> PDatabaseExecuteSql -> IO DatabaseExecuteSql
+databaseExecuteSql handle sessionId params = sendReceiveCommandResult handle sessionId "Database.executeSQL" (Just params )
 
 -- | Return type of the 'databaseExecuteSql' command.
 data DatabaseExecuteSql = DatabaseExecuteSql {
@@ -162,8 +162,8 @@ instance FromJSON  PDatabaseGetDatabaseTableNames where
 --   
 --   Parameters: 'PDatabaseGetDatabaseTableNames'
 --   Returns: 'DatabaseGetDatabaseTableNames'
-databaseGetDatabaseTableNames :: Handle ev -> PDatabaseGetDatabaseTableNames -> IO DatabaseGetDatabaseTableNames
-databaseGetDatabaseTableNames handle params = sendReceiveCommandResult handle "Database.getDatabaseTableNames" (Just params)
+databaseGetDatabaseTableNames :: Handle ev -> Maybe String -> PDatabaseGetDatabaseTableNames -> IO DatabaseGetDatabaseTableNames
+databaseGetDatabaseTableNames handle sessionId params = sendReceiveCommandResult handle sessionId "Database.getDatabaseTableNames" (Just params )
 
 -- | Return type of the 'databaseGetDatabaseTableNames' command.
 data DatabaseGetDatabaseTableNames = DatabaseGetDatabaseTableNames {

@@ -131,7 +131,7 @@ data LogLogEntry = LogLogEntry {
   logLogEntryLevel :: LogLogEntryLevel,
   -- | Logged text.
   logLogEntryText :: String,
-  logLogEntryCategory :: LogLogEntryCategory,
+  logLogEntryCategory :: Maybe LogLogEntryCategory,
   -- | Timestamp when this entry was added.
   logLogEntryTimestamp :: Runtime.RuntimeTimestamp,
   -- | URL of the resource if known.
@@ -217,21 +217,21 @@ instance FromJSON  LogEntryAdded where
 
 -- | Function for the 'Log.clear' command.
 --   Clears the log.
-logClear :: Handle ev -> IO ()
-logClear handle = sendReceiveCommand handle "Log.clear" (Nothing :: Maybe ())
+logClear :: Handle ev -> Maybe String -> IO ()
+logClear handle sessionId = sendReceiveCommand handle sessionId "Log.clear" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Log.disable' command.
 --   Disables log domain, prevents further log entries from being reported to the client.
-logDisable :: Handle ev -> IO ()
-logDisable handle = sendReceiveCommand handle "Log.disable" (Nothing :: Maybe ())
+logDisable :: Handle ev -> Maybe String -> IO ()
+logDisable handle sessionId = sendReceiveCommand handle sessionId "Log.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Log.enable' command.
 --   Enables log domain, sends the entries collected so far to the client by means of the
 --   `entryAdded` notification.
-logEnable :: Handle ev -> IO ()
-logEnable handle = sendReceiveCommand handle "Log.enable" (Nothing :: Maybe ())
+logEnable :: Handle ev -> Maybe String -> IO ()
+logEnable handle sessionId = sendReceiveCommand handle sessionId "Log.enable" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'logStartViolationsReport' command.
@@ -249,14 +249,14 @@ instance FromJSON  PLogStartViolationsReport where
 -- | Function for the 'Log.startViolationsReport' command.
 --   start violation reporting.
 --   Parameters: 'PLogStartViolationsReport'
-logStartViolationsReport :: Handle ev -> PLogStartViolationsReport -> IO ()
-logStartViolationsReport handle params = sendReceiveCommand handle "Log.startViolationsReport" (Just params)
+logStartViolationsReport :: Handle ev -> Maybe String -> PLogStartViolationsReport -> IO ()
+logStartViolationsReport handle sessionId params = sendReceiveCommand handle sessionId "Log.startViolationsReport" (Just params )
 
 
 -- | Function for the 'Log.stopViolationsReport' command.
 --   Stop violation reporting.
-logStopViolationsReport :: Handle ev -> IO ()
-logStopViolationsReport handle = sendReceiveCommand handle "Log.stopViolationsReport" (Nothing :: Maybe ())
+logStopViolationsReport :: Handle ev -> Maybe String -> IO ()
+logStopViolationsReport handle sessionId = sendReceiveCommand handle sessionId "Log.stopViolationsReport" (Nothing :: Maybe ())
 
 
 

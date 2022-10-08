@@ -82,8 +82,8 @@ instance FromJSON  PerformanceMetrics where
 
 -- | Function for the 'Performance.disable' command.
 --   Disable collecting and reporting metrics.
-performanceDisable :: Handle ev -> IO ()
-performanceDisable handle = sendReceiveCommand handle "Performance.disable" (Nothing :: Maybe ())
+performanceDisable :: Handle ev -> Maybe String -> IO ()
+performanceDisable handle sessionId = sendReceiveCommand handle sessionId "Performance.disable" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'performanceEnable' command.
@@ -106,7 +106,7 @@ instance ToJSON PPerformanceEnableTimeDomain where
 
 data PPerformanceEnable = PPerformanceEnable {
   -- | Time domain to use for collecting and reporting duration metrics.
-  pPerformanceEnableTimeDomain :: PPerformanceEnableTimeDomain
+  pPerformanceEnableTimeDomain :: Maybe PPerformanceEnableTimeDomain
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPerformanceEnable  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -118,15 +118,15 @@ instance FromJSON  PPerformanceEnable where
 -- | Function for the 'Performance.enable' command.
 --   Enable collecting and reporting metrics.
 --   Parameters: 'PPerformanceEnable'
-performanceEnable :: Handle ev -> PPerformanceEnable -> IO ()
-performanceEnable handle params = sendReceiveCommand handle "Performance.enable" (Just params)
+performanceEnable :: Handle ev -> Maybe String -> PPerformanceEnable -> IO ()
+performanceEnable handle sessionId params = sendReceiveCommand handle sessionId "Performance.enable" (Just params )
 
 
 -- | Function for the 'Performance.getMetrics' command.
 --   Retrieve current values of run-time metrics.
 --   Returns: 'PerformanceGetMetrics'
-performanceGetMetrics :: Handle ev -> IO PerformanceGetMetrics
-performanceGetMetrics handle = sendReceiveCommandResult handle "Performance.getMetrics" (Nothing :: Maybe ())
+performanceGetMetrics :: Handle ev -> Maybe String -> IO PerformanceGetMetrics
+performanceGetMetrics handle sessionId = sendReceiveCommandResult handle sessionId "Performance.getMetrics" (Nothing :: Maybe ())
 
 -- | Return type of the 'performanceGetMetrics' command.
 data PerformanceGetMetrics = PerformanceGetMetrics {

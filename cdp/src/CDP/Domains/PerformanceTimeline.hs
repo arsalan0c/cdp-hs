@@ -161,8 +161,8 @@ instance FromJSON  PPerformanceTimelineEnable where
 --   Previously buffered events would be reported before method returns.
 --   See also: timelineEventAdded
 --   Parameters: 'PPerformanceTimelineEnable'
-performanceTimelineEnable :: Handle ev -> PPerformanceTimelineEnable -> IO ()
-performanceTimelineEnable handle params = sendReceiveCommand handle "PerformanceTimeline.enable" (Just params)
+performanceTimelineEnable :: Handle ev -> Maybe String -> PPerformanceTimelineEnable -> IO ()
+performanceTimelineEnable handle sessionId params = sendReceiveCommand handle sessionId "PerformanceTimeline.enable" (Just params )
 
 
 

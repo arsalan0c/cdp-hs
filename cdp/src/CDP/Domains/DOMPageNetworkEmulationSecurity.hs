@@ -604,8 +604,8 @@ instance FromJSON  PDomCollectClassNamesFromSubtree where
 --   Collects class names for the node with given id and all of it's child nodes.
 --   Parameters: 'PDomCollectClassNamesFromSubtree'
 --   Returns: 'DomCollectClassNamesFromSubtree'
-domCollectClassNamesFromSubtree :: Handle ev -> PDomCollectClassNamesFromSubtree -> IO DomCollectClassNamesFromSubtree
-domCollectClassNamesFromSubtree handle params = sendReceiveCommandResult handle "DOM.collectClassNamesFromSubtree" (Just params)
+domCollectClassNamesFromSubtree :: Handle ev -> Maybe String -> PDomCollectClassNamesFromSubtree -> IO DomCollectClassNamesFromSubtree
+domCollectClassNamesFromSubtree handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.collectClassNamesFromSubtree" (Just params )
 
 -- | Return type of the 'domCollectClassNamesFromSubtree' command.
 data DomCollectClassNamesFromSubtree = DomCollectClassNamesFromSubtree {
@@ -643,8 +643,8 @@ instance FromJSON  PDomCopyTo where
 --   given anchor.
 --   Parameters: 'PDomCopyTo'
 --   Returns: 'DomCopyTo'
-domCopyTo :: Handle ev -> PDomCopyTo -> IO DomCopyTo
-domCopyTo handle params = sendReceiveCommandResult handle "DOM.copyTo" (Just params)
+domCopyTo :: Handle ev -> Maybe String -> PDomCopyTo -> IO DomCopyTo
+domCopyTo handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.copyTo" (Just params )
 
 -- | Return type of the 'domCopyTo' command.
 data DomCopyTo = DomCopyTo {
@@ -687,8 +687,8 @@ instance FromJSON  PDomDescribeNode where
 --   objects, can be used for automation.
 --   Parameters: 'PDomDescribeNode'
 --   Returns: 'DomDescribeNode'
-domDescribeNode :: Handle ev -> PDomDescribeNode -> IO DomDescribeNode
-domDescribeNode handle params = sendReceiveCommandResult handle "DOM.describeNode" (Just params)
+domDescribeNode :: Handle ev -> Maybe String -> PDomDescribeNode -> IO DomDescribeNode
+domDescribeNode handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.describeNode" (Just params )
 
 -- | Return type of the 'domDescribeNode' command.
 data DomDescribeNode = DomDescribeNode {
@@ -728,14 +728,14 @@ instance FromJSON  PDomScrollIntoViewIfNeeded where
 --   Note: exactly one between nodeId, backendNodeId and objectId should be passed
 --   to identify the node.
 --   Parameters: 'PDomScrollIntoViewIfNeeded'
-domScrollIntoViewIfNeeded :: Handle ev -> PDomScrollIntoViewIfNeeded -> IO ()
-domScrollIntoViewIfNeeded handle params = sendReceiveCommand handle "DOM.scrollIntoViewIfNeeded" (Just params)
+domScrollIntoViewIfNeeded :: Handle ev -> Maybe String -> PDomScrollIntoViewIfNeeded -> IO ()
+domScrollIntoViewIfNeeded handle sessionId params = sendReceiveCommand handle sessionId "DOM.scrollIntoViewIfNeeded" (Just params )
 
 
 -- | Function for the 'DOM.disable' command.
 --   Disables DOM agent for the given page.
-domDisable :: Handle ev -> IO ()
-domDisable handle = sendReceiveCommand handle "DOM.disable" (Nothing :: Maybe ())
+domDisable :: Handle ev -> Maybe String -> IO ()
+domDisable handle sessionId = sendReceiveCommand handle sessionId "DOM.disable" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'domDiscardSearchResults' command.
@@ -754,8 +754,8 @@ instance FromJSON  PDomDiscardSearchResults where
 --   Discards search results from the session with the given id. `getSearchResults` should no longer
 --   be called for that search.
 --   Parameters: 'PDomDiscardSearchResults'
-domDiscardSearchResults :: Handle ev -> PDomDiscardSearchResults -> IO ()
-domDiscardSearchResults handle params = sendReceiveCommand handle "DOM.discardSearchResults" (Just params)
+domDiscardSearchResults :: Handle ev -> Maybe String -> PDomDiscardSearchResults -> IO ()
+domDiscardSearchResults handle sessionId params = sendReceiveCommand handle sessionId "DOM.discardSearchResults" (Just params )
 
 
 -- | Parameters of the 'domEnable' command.
@@ -778,7 +778,7 @@ instance ToJSON PDomEnableIncludeWhitespace where
 
 data PDomEnable = PDomEnable {
   -- | Whether to include whitespaces in the children array of returned Nodes.
-  pDomEnableIncludeWhitespace :: PDomEnableIncludeWhitespace
+  pDomEnableIncludeWhitespace :: Maybe PDomEnableIncludeWhitespace
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomEnable  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 , A.omitNothingFields = True}
@@ -790,8 +790,8 @@ instance FromJSON  PDomEnable where
 -- | Function for the 'DOM.enable' command.
 --   Enables DOM agent for the given page.
 --   Parameters: 'PDomEnable'
-domEnable :: Handle ev -> PDomEnable -> IO ()
-domEnable handle params = sendReceiveCommand handle "DOM.enable" (Just params)
+domEnable :: Handle ev -> Maybe String -> PDomEnable -> IO ()
+domEnable handle sessionId params = sendReceiveCommand handle sessionId "DOM.enable" (Just params )
 
 
 -- | Parameters of the 'domFocus' command.
@@ -813,8 +813,8 @@ instance FromJSON  PDomFocus where
 -- | Function for the 'DOM.focus' command.
 --   Focuses the given element.
 --   Parameters: 'PDomFocus'
-domFocus :: Handle ev -> PDomFocus -> IO ()
-domFocus handle params = sendReceiveCommand handle "DOM.focus" (Just params)
+domFocus :: Handle ev -> Maybe String -> PDomFocus -> IO ()
+domFocus handle sessionId params = sendReceiveCommand handle sessionId "DOM.focus" (Just params )
 
 
 -- | Parameters of the 'domGetAttributes' command.
@@ -833,8 +833,8 @@ instance FromJSON  PDomGetAttributes where
 --   Returns attributes for the specified node.
 --   Parameters: 'PDomGetAttributes'
 --   Returns: 'DomGetAttributes'
-domGetAttributes :: Handle ev -> PDomGetAttributes -> IO DomGetAttributes
-domGetAttributes handle params = sendReceiveCommandResult handle "DOM.getAttributes" (Just params)
+domGetAttributes :: Handle ev -> Maybe String -> PDomGetAttributes -> IO DomGetAttributes
+domGetAttributes handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.getAttributes" (Just params )
 
 -- | Return type of the 'domGetAttributes' command.
 data DomGetAttributes = DomGetAttributes {
@@ -870,8 +870,8 @@ instance FromJSON  PDomGetBoxModel where
 --   Returns boxes for the given node.
 --   Parameters: 'PDomGetBoxModel'
 --   Returns: 'DomGetBoxModel'
-domGetBoxModel :: Handle ev -> PDomGetBoxModel -> IO DomGetBoxModel
-domGetBoxModel handle params = sendReceiveCommandResult handle "DOM.getBoxModel" (Just params)
+domGetBoxModel :: Handle ev -> Maybe String -> PDomGetBoxModel -> IO DomGetBoxModel
+domGetBoxModel handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.getBoxModel" (Just params )
 
 -- | Return type of the 'domGetBoxModel' command.
 data DomGetBoxModel = DomGetBoxModel {
@@ -908,8 +908,8 @@ instance FromJSON  PDomGetContentQuads where
 --   might return multiple quads for inline nodes.
 --   Parameters: 'PDomGetContentQuads'
 --   Returns: 'DomGetContentQuads'
-domGetContentQuads :: Handle ev -> PDomGetContentQuads -> IO DomGetContentQuads
-domGetContentQuads handle params = sendReceiveCommandResult handle "DOM.getContentQuads" (Just params)
+domGetContentQuads :: Handle ev -> Maybe String -> PDomGetContentQuads -> IO DomGetContentQuads
+domGetContentQuads handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.getContentQuads" (Just params )
 
 -- | Return type of the 'domGetContentQuads' command.
 data DomGetContentQuads = DomGetContentQuads {
@@ -945,8 +945,8 @@ instance FromJSON  PDomGetDocument where
 --   Returns the root DOM node (and optionally the subtree) to the caller.
 --   Parameters: 'PDomGetDocument'
 --   Returns: 'DomGetDocument'
-domGetDocument :: Handle ev -> PDomGetDocument -> IO DomGetDocument
-domGetDocument handle params = sendReceiveCommandResult handle "DOM.getDocument" (Just params)
+domGetDocument :: Handle ev -> Maybe String -> PDomGetDocument -> IO DomGetDocument
+domGetDocument handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.getDocument" (Just params )
 
 -- | Return type of the 'domGetDocument' command.
 data DomGetDocument = DomGetDocument {
@@ -983,8 +983,8 @@ instance FromJSON  PDomGetNodesForSubtreeByStyle where
 --   Finds nodes with a given computed style in a subtree.
 --   Parameters: 'PDomGetNodesForSubtreeByStyle'
 --   Returns: 'DomGetNodesForSubtreeByStyle'
-domGetNodesForSubtreeByStyle :: Handle ev -> PDomGetNodesForSubtreeByStyle -> IO DomGetNodesForSubtreeByStyle
-domGetNodesForSubtreeByStyle handle params = sendReceiveCommandResult handle "DOM.getNodesForSubtreeByStyle" (Just params)
+domGetNodesForSubtreeByStyle :: Handle ev -> Maybe String -> PDomGetNodesForSubtreeByStyle -> IO DomGetNodesForSubtreeByStyle
+domGetNodesForSubtreeByStyle handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.getNodesForSubtreeByStyle" (Just params )
 
 -- | Return type of the 'domGetNodesForSubtreeByStyle' command.
 data DomGetNodesForSubtreeByStyle = DomGetNodesForSubtreeByStyle {
@@ -1023,8 +1023,8 @@ instance FromJSON  PDomGetNodeForLocation where
 --   either returned or not.
 --   Parameters: 'PDomGetNodeForLocation'
 --   Returns: 'DomGetNodeForLocation'
-domGetNodeForLocation :: Handle ev -> PDomGetNodeForLocation -> IO DomGetNodeForLocation
-domGetNodeForLocation handle params = sendReceiveCommandResult handle "DOM.getNodeForLocation" (Just params)
+domGetNodeForLocation :: Handle ev -> Maybe String -> PDomGetNodeForLocation -> IO DomGetNodeForLocation
+domGetNodeForLocation handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.getNodeForLocation" (Just params )
 
 -- | Return type of the 'domGetNodeForLocation' command.
 data DomGetNodeForLocation = DomGetNodeForLocation {
@@ -1064,8 +1064,8 @@ instance FromJSON  PDomGetOuterHtml where
 --   Returns node's HTML markup.
 --   Parameters: 'PDomGetOuterHtml'
 --   Returns: 'DomGetOuterHtml'
-domGetOuterHtml :: Handle ev -> PDomGetOuterHtml -> IO DomGetOuterHtml
-domGetOuterHtml handle params = sendReceiveCommandResult handle "DOM.getOuterHTML" (Just params)
+domGetOuterHtml :: Handle ev -> Maybe String -> PDomGetOuterHtml -> IO DomGetOuterHtml
+domGetOuterHtml handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.getOuterHTML" (Just params )
 
 -- | Return type of the 'domGetOuterHtml' command.
 data DomGetOuterHtml = DomGetOuterHtml {
@@ -1097,8 +1097,8 @@ instance FromJSON  PDomGetRelayoutBoundary where
 --   Returns the id of the nearest ancestor that is a relayout boundary.
 --   Parameters: 'PDomGetRelayoutBoundary'
 --   Returns: 'DomGetRelayoutBoundary'
-domGetRelayoutBoundary :: Handle ev -> PDomGetRelayoutBoundary -> IO DomGetRelayoutBoundary
-domGetRelayoutBoundary handle params = sendReceiveCommandResult handle "DOM.getRelayoutBoundary" (Just params)
+domGetRelayoutBoundary :: Handle ev -> Maybe String -> PDomGetRelayoutBoundary -> IO DomGetRelayoutBoundary
+domGetRelayoutBoundary handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.getRelayoutBoundary" (Just params )
 
 -- | Return type of the 'domGetRelayoutBoundary' command.
 data DomGetRelayoutBoundary = DomGetRelayoutBoundary {
@@ -1135,8 +1135,8 @@ instance FromJSON  PDomGetSearchResults where
 --   identifier.
 --   Parameters: 'PDomGetSearchResults'
 --   Returns: 'DomGetSearchResults'
-domGetSearchResults :: Handle ev -> PDomGetSearchResults -> IO DomGetSearchResults
-domGetSearchResults handle params = sendReceiveCommandResult handle "DOM.getSearchResults" (Just params)
+domGetSearchResults :: Handle ev -> Maybe String -> PDomGetSearchResults -> IO DomGetSearchResults
+domGetSearchResults handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.getSearchResults" (Just params )
 
 -- | Return type of the 'domGetSearchResults' command.
 data DomGetSearchResults = DomGetSearchResults {
@@ -1154,26 +1154,26 @@ instance Command DomGetSearchResults where
 
 -- | Function for the 'DOM.hideHighlight' command.
 --   Hides any highlight.
-domHideHighlight :: Handle ev -> IO ()
-domHideHighlight handle = sendReceiveCommand handle "DOM.hideHighlight" (Nothing :: Maybe ())
+domHideHighlight :: Handle ev -> Maybe String -> IO ()
+domHideHighlight handle sessionId = sendReceiveCommand handle sessionId "DOM.hideHighlight" (Nothing :: Maybe ())
 
 
 -- | Function for the 'DOM.highlightNode' command.
 --   Highlights DOM node.
-domHighlightNode :: Handle ev -> IO ()
-domHighlightNode handle = sendReceiveCommand handle "DOM.highlightNode" (Nothing :: Maybe ())
+domHighlightNode :: Handle ev -> Maybe String -> IO ()
+domHighlightNode handle sessionId = sendReceiveCommand handle sessionId "DOM.highlightNode" (Nothing :: Maybe ())
 
 
 -- | Function for the 'DOM.highlightRect' command.
 --   Highlights given rectangle.
-domHighlightRect :: Handle ev -> IO ()
-domHighlightRect handle = sendReceiveCommand handle "DOM.highlightRect" (Nothing :: Maybe ())
+domHighlightRect :: Handle ev -> Maybe String -> IO ()
+domHighlightRect handle sessionId = sendReceiveCommand handle sessionId "DOM.highlightRect" (Nothing :: Maybe ())
 
 
 -- | Function for the 'DOM.markUndoableState' command.
 --   Marks last undoable state.
-domMarkUndoableState :: Handle ev -> IO ()
-domMarkUndoableState handle = sendReceiveCommand handle "DOM.markUndoableState" (Nothing :: Maybe ())
+domMarkUndoableState :: Handle ev -> Maybe String -> IO ()
+domMarkUndoableState handle sessionId = sendReceiveCommand handle sessionId "DOM.markUndoableState" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'domMoveTo' command.
@@ -1197,8 +1197,8 @@ instance FromJSON  PDomMoveTo where
 --   Moves node into the new container, places it before the given anchor.
 --   Parameters: 'PDomMoveTo'
 --   Returns: 'DomMoveTo'
-domMoveTo :: Handle ev -> PDomMoveTo -> IO DomMoveTo
-domMoveTo handle params = sendReceiveCommandResult handle "DOM.moveTo" (Just params)
+domMoveTo :: Handle ev -> Maybe String -> PDomMoveTo -> IO DomMoveTo
+domMoveTo handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.moveTo" (Just params )
 
 -- | Return type of the 'domMoveTo' command.
 data DomMoveTo = DomMoveTo {
@@ -1233,8 +1233,8 @@ instance FromJSON  PDomPerformSearch where
 --   `cancelSearch` to end this search session.
 --   Parameters: 'PDomPerformSearch'
 --   Returns: 'DomPerformSearch'
-domPerformSearch :: Handle ev -> PDomPerformSearch -> IO DomPerformSearch
-domPerformSearch handle params = sendReceiveCommandResult handle "DOM.performSearch" (Just params)
+domPerformSearch :: Handle ev -> Maybe String -> PDomPerformSearch -> IO DomPerformSearch
+domPerformSearch handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.performSearch" (Just params )
 
 -- | Return type of the 'domPerformSearch' command.
 data DomPerformSearch = DomPerformSearch {
@@ -1268,8 +1268,8 @@ instance FromJSON  PDomPushNodeByPathToFrontend where
 --   Requests that the node is sent to the caller given its path. // FIXME, use XPath
 --   Parameters: 'PDomPushNodeByPathToFrontend'
 --   Returns: 'DomPushNodeByPathToFrontend'
-domPushNodeByPathToFrontend :: Handle ev -> PDomPushNodeByPathToFrontend -> IO DomPushNodeByPathToFrontend
-domPushNodeByPathToFrontend handle params = sendReceiveCommandResult handle "DOM.pushNodeByPathToFrontend" (Just params)
+domPushNodeByPathToFrontend :: Handle ev -> Maybe String -> PDomPushNodeByPathToFrontend -> IO DomPushNodeByPathToFrontend
+domPushNodeByPathToFrontend handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.pushNodeByPathToFrontend" (Just params )
 
 -- | Return type of the 'domPushNodeByPathToFrontend' command.
 data DomPushNodeByPathToFrontend = DomPushNodeByPathToFrontend {
@@ -1301,8 +1301,8 @@ instance FromJSON  PDomPushNodesByBackendIdsToFrontend where
 --   Requests that a batch of nodes is sent to the caller given their backend node ids.
 --   Parameters: 'PDomPushNodesByBackendIdsToFrontend'
 --   Returns: 'DomPushNodesByBackendIdsToFrontend'
-domPushNodesByBackendIdsToFrontend :: Handle ev -> PDomPushNodesByBackendIdsToFrontend -> IO DomPushNodesByBackendIdsToFrontend
-domPushNodesByBackendIdsToFrontend handle params = sendReceiveCommandResult handle "DOM.pushNodesByBackendIdsToFrontend" (Just params)
+domPushNodesByBackendIdsToFrontend :: Handle ev -> Maybe String -> PDomPushNodesByBackendIdsToFrontend -> IO DomPushNodesByBackendIdsToFrontend
+domPushNodesByBackendIdsToFrontend handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.pushNodesByBackendIdsToFrontend" (Just params )
 
 -- | Return type of the 'domPushNodesByBackendIdsToFrontend' command.
 data DomPushNodesByBackendIdsToFrontend = DomPushNodesByBackendIdsToFrontend {
@@ -1337,8 +1337,8 @@ instance FromJSON  PDomQuerySelector where
 --   Executes `querySelector` on a given node.
 --   Parameters: 'PDomQuerySelector'
 --   Returns: 'DomQuerySelector'
-domQuerySelector :: Handle ev -> PDomQuerySelector -> IO DomQuerySelector
-domQuerySelector handle params = sendReceiveCommandResult handle "DOM.querySelector" (Just params)
+domQuerySelector :: Handle ev -> Maybe String -> PDomQuerySelector -> IO DomQuerySelector
+domQuerySelector handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.querySelector" (Just params )
 
 -- | Return type of the 'domQuerySelector' command.
 data DomQuerySelector = DomQuerySelector {
@@ -1372,8 +1372,8 @@ instance FromJSON  PDomQuerySelectorAll where
 --   Executes `querySelectorAll` on a given node.
 --   Parameters: 'PDomQuerySelectorAll'
 --   Returns: 'DomQuerySelectorAll'
-domQuerySelectorAll :: Handle ev -> PDomQuerySelectorAll -> IO DomQuerySelectorAll
-domQuerySelectorAll handle params = sendReceiveCommandResult handle "DOM.querySelectorAll" (Just params)
+domQuerySelectorAll :: Handle ev -> Maybe String -> PDomQuerySelectorAll -> IO DomQuerySelectorAll
+domQuerySelectorAll handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.querySelectorAll" (Just params )
 
 -- | Return type of the 'domQuerySelectorAll' command.
 data DomQuerySelectorAll = DomQuerySelectorAll {
@@ -1391,8 +1391,8 @@ instance Command DomQuerySelectorAll where
 
 -- | Function for the 'DOM.redo' command.
 --   Re-does the last undone action.
-domRedo :: Handle ev -> IO ()
-domRedo handle = sendReceiveCommand handle "DOM.redo" (Nothing :: Maybe ())
+domRedo :: Handle ev -> Maybe String -> IO ()
+domRedo handle sessionId = sendReceiveCommand handle sessionId "DOM.redo" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'domRemoveAttribute' command.
@@ -1412,8 +1412,8 @@ instance FromJSON  PDomRemoveAttribute where
 -- | Function for the 'DOM.removeAttribute' command.
 --   Removes attribute with given name from an element with given id.
 --   Parameters: 'PDomRemoveAttribute'
-domRemoveAttribute :: Handle ev -> PDomRemoveAttribute -> IO ()
-domRemoveAttribute handle params = sendReceiveCommand handle "DOM.removeAttribute" (Just params)
+domRemoveAttribute :: Handle ev -> Maybe String -> PDomRemoveAttribute -> IO ()
+domRemoveAttribute handle sessionId params = sendReceiveCommand handle sessionId "DOM.removeAttribute" (Just params )
 
 
 -- | Parameters of the 'domRemoveNode' command.
@@ -1431,8 +1431,8 @@ instance FromJSON  PDomRemoveNode where
 -- | Function for the 'DOM.removeNode' command.
 --   Removes node with given id.
 --   Parameters: 'PDomRemoveNode'
-domRemoveNode :: Handle ev -> PDomRemoveNode -> IO ()
-domRemoveNode handle params = sendReceiveCommand handle "DOM.removeNode" (Just params)
+domRemoveNode :: Handle ev -> Maybe String -> PDomRemoveNode -> IO ()
+domRemoveNode handle sessionId params = sendReceiveCommand handle sessionId "DOM.removeNode" (Just params )
 
 
 -- | Parameters of the 'domRequestChildNodes' command.
@@ -1458,8 +1458,8 @@ instance FromJSON  PDomRequestChildNodes where
 --   `setChildNodes` events where not only immediate children are retrieved, but all children down to
 --   the specified depth.
 --   Parameters: 'PDomRequestChildNodes'
-domRequestChildNodes :: Handle ev -> PDomRequestChildNodes -> IO ()
-domRequestChildNodes handle params = sendReceiveCommand handle "DOM.requestChildNodes" (Just params)
+domRequestChildNodes :: Handle ev -> Maybe String -> PDomRequestChildNodes -> IO ()
+domRequestChildNodes handle sessionId params = sendReceiveCommand handle sessionId "DOM.requestChildNodes" (Just params )
 
 
 -- | Parameters of the 'domRequestNode' command.
@@ -1480,8 +1480,8 @@ instance FromJSON  PDomRequestNode where
 --   `setChildNodes` notifications.
 --   Parameters: 'PDomRequestNode'
 --   Returns: 'DomRequestNode'
-domRequestNode :: Handle ev -> PDomRequestNode -> IO DomRequestNode
-domRequestNode handle params = sendReceiveCommandResult handle "DOM.requestNode" (Just params)
+domRequestNode :: Handle ev -> Maybe String -> PDomRequestNode -> IO DomRequestNode
+domRequestNode handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.requestNode" (Just params )
 
 -- | Return type of the 'domRequestNode' command.
 data DomRequestNode = DomRequestNode {
@@ -1519,8 +1519,8 @@ instance FromJSON  PDomResolveNode where
 --   Resolves the JavaScript node object for a given NodeId or BackendNodeId.
 --   Parameters: 'PDomResolveNode'
 --   Returns: 'DomResolveNode'
-domResolveNode :: Handle ev -> PDomResolveNode -> IO DomResolveNode
-domResolveNode handle params = sendReceiveCommandResult handle "DOM.resolveNode" (Just params)
+domResolveNode :: Handle ev -> Maybe String -> PDomResolveNode -> IO DomResolveNode
+domResolveNode handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.resolveNode" (Just params )
 
 -- | Return type of the 'domResolveNode' command.
 data DomResolveNode = DomResolveNode {
@@ -1555,8 +1555,8 @@ instance FromJSON  PDomSetAttributeValue where
 -- | Function for the 'DOM.setAttributeValue' command.
 --   Sets attribute for an element with given id.
 --   Parameters: 'PDomSetAttributeValue'
-domSetAttributeValue :: Handle ev -> PDomSetAttributeValue -> IO ()
-domSetAttributeValue handle params = sendReceiveCommand handle "DOM.setAttributeValue" (Just params)
+domSetAttributeValue :: Handle ev -> Maybe String -> PDomSetAttributeValue -> IO ()
+domSetAttributeValue handle sessionId params = sendReceiveCommand handle sessionId "DOM.setAttributeValue" (Just params )
 
 
 -- | Parameters of the 'domSetAttributesAsText' command.
@@ -1580,8 +1580,8 @@ instance FromJSON  PDomSetAttributesAsText where
 --   Sets attributes on element with given id. This method is useful when user edits some existing
 --   attribute value and types in several attribute name/value pairs.
 --   Parameters: 'PDomSetAttributesAsText'
-domSetAttributesAsText :: Handle ev -> PDomSetAttributesAsText -> IO ()
-domSetAttributesAsText handle params = sendReceiveCommand handle "DOM.setAttributesAsText" (Just params)
+domSetAttributesAsText :: Handle ev -> Maybe String -> PDomSetAttributesAsText -> IO ()
+domSetAttributesAsText handle sessionId params = sendReceiveCommand handle sessionId "DOM.setAttributesAsText" (Just params )
 
 
 -- | Parameters of the 'domSetFileInputFiles' command.
@@ -1605,8 +1605,8 @@ instance FromJSON  PDomSetFileInputFiles where
 -- | Function for the 'DOM.setFileInputFiles' command.
 --   Sets files for the given file input element.
 --   Parameters: 'PDomSetFileInputFiles'
-domSetFileInputFiles :: Handle ev -> PDomSetFileInputFiles -> IO ()
-domSetFileInputFiles handle params = sendReceiveCommand handle "DOM.setFileInputFiles" (Just params)
+domSetFileInputFiles :: Handle ev -> Maybe String -> PDomSetFileInputFiles -> IO ()
+domSetFileInputFiles handle sessionId params = sendReceiveCommand handle sessionId "DOM.setFileInputFiles" (Just params )
 
 
 -- | Parameters of the 'domSetNodeStackTracesEnabled' command.
@@ -1624,8 +1624,8 @@ instance FromJSON  PDomSetNodeStackTracesEnabled where
 -- | Function for the 'DOM.setNodeStackTracesEnabled' command.
 --   Sets if stack traces should be captured for Nodes. See `Node.getNodeStackTraces`. Default is disabled.
 --   Parameters: 'PDomSetNodeStackTracesEnabled'
-domSetNodeStackTracesEnabled :: Handle ev -> PDomSetNodeStackTracesEnabled -> IO ()
-domSetNodeStackTracesEnabled handle params = sendReceiveCommand handle "DOM.setNodeStackTracesEnabled" (Just params)
+domSetNodeStackTracesEnabled :: Handle ev -> Maybe String -> PDomSetNodeStackTracesEnabled -> IO ()
+domSetNodeStackTracesEnabled handle sessionId params = sendReceiveCommand handle sessionId "DOM.setNodeStackTracesEnabled" (Just params )
 
 
 -- | Parameters of the 'domGetNodeStackTraces' command.
@@ -1644,8 +1644,8 @@ instance FromJSON  PDomGetNodeStackTraces where
 --   Gets stack traces associated with a Node. As of now, only provides stack trace for Node creation.
 --   Parameters: 'PDomGetNodeStackTraces'
 --   Returns: 'DomGetNodeStackTraces'
-domGetNodeStackTraces :: Handle ev -> PDomGetNodeStackTraces -> IO DomGetNodeStackTraces
-domGetNodeStackTraces handle params = sendReceiveCommandResult handle "DOM.getNodeStackTraces" (Just params)
+domGetNodeStackTraces :: Handle ev -> Maybe String -> PDomGetNodeStackTraces -> IO DomGetNodeStackTraces
+domGetNodeStackTraces handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.getNodeStackTraces" (Just params )
 
 -- | Return type of the 'domGetNodeStackTraces' command.
 data DomGetNodeStackTraces = DomGetNodeStackTraces {
@@ -1678,8 +1678,8 @@ instance FromJSON  PDomGetFileInfo where
 --   File wrapper.
 --   Parameters: 'PDomGetFileInfo'
 --   Returns: 'DomGetFileInfo'
-domGetFileInfo :: Handle ev -> PDomGetFileInfo -> IO DomGetFileInfo
-domGetFileInfo handle params = sendReceiveCommandResult handle "DOM.getFileInfo" (Just params)
+domGetFileInfo :: Handle ev -> Maybe String -> PDomGetFileInfo -> IO DomGetFileInfo
+domGetFileInfo handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.getFileInfo" (Just params )
 
 -- | Return type of the 'domGetFileInfo' command.
 data DomGetFileInfo = DomGetFileInfo {
@@ -1710,8 +1710,8 @@ instance FromJSON  PDomSetInspectedNode where
 --   Enables console to refer to the node with given id via $x (see Command Line API for more details
 --   $x functions).
 --   Parameters: 'PDomSetInspectedNode'
-domSetInspectedNode :: Handle ev -> PDomSetInspectedNode -> IO ()
-domSetInspectedNode handle params = sendReceiveCommand handle "DOM.setInspectedNode" (Just params)
+domSetInspectedNode :: Handle ev -> Maybe String -> PDomSetInspectedNode -> IO ()
+domSetInspectedNode handle sessionId params = sendReceiveCommand handle sessionId "DOM.setInspectedNode" (Just params )
 
 
 -- | Parameters of the 'domSetNodeName' command.
@@ -1732,8 +1732,8 @@ instance FromJSON  PDomSetNodeName where
 --   Sets node name for a node with given id.
 --   Parameters: 'PDomSetNodeName'
 --   Returns: 'DomSetNodeName'
-domSetNodeName :: Handle ev -> PDomSetNodeName -> IO DomSetNodeName
-domSetNodeName handle params = sendReceiveCommandResult handle "DOM.setNodeName" (Just params)
+domSetNodeName :: Handle ev -> Maybe String -> PDomSetNodeName -> IO DomSetNodeName
+domSetNodeName handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.setNodeName" (Just params )
 
 -- | Return type of the 'domSetNodeName' command.
 data DomSetNodeName = DomSetNodeName {
@@ -1766,8 +1766,8 @@ instance FromJSON  PDomSetNodeValue where
 -- | Function for the 'DOM.setNodeValue' command.
 --   Sets node value for a node with given id.
 --   Parameters: 'PDomSetNodeValue'
-domSetNodeValue :: Handle ev -> PDomSetNodeValue -> IO ()
-domSetNodeValue handle params = sendReceiveCommand handle "DOM.setNodeValue" (Just params)
+domSetNodeValue :: Handle ev -> Maybe String -> PDomSetNodeValue -> IO ()
+domSetNodeValue handle sessionId params = sendReceiveCommand handle sessionId "DOM.setNodeValue" (Just params )
 
 
 -- | Parameters of the 'domSetOuterHtml' command.
@@ -1787,14 +1787,14 @@ instance FromJSON  PDomSetOuterHtml where
 -- | Function for the 'DOM.setOuterHTML' command.
 --   Sets node HTML markup, returns new node id.
 --   Parameters: 'PDomSetOuterHtml'
-domSetOuterHtml :: Handle ev -> PDomSetOuterHtml -> IO ()
-domSetOuterHtml handle params = sendReceiveCommand handle "DOM.setOuterHTML" (Just params)
+domSetOuterHtml :: Handle ev -> Maybe String -> PDomSetOuterHtml -> IO ()
+domSetOuterHtml handle sessionId params = sendReceiveCommand handle sessionId "DOM.setOuterHTML" (Just params )
 
 
 -- | Function for the 'DOM.undo' command.
 --   Undoes the last performed action.
-domUndo :: Handle ev -> IO ()
-domUndo handle = sendReceiveCommand handle "DOM.undo" (Nothing :: Maybe ())
+domUndo :: Handle ev -> Maybe String -> IO ()
+domUndo handle sessionId = sendReceiveCommand handle sessionId "DOM.undo" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'domGetFrameOwner' command.
@@ -1812,8 +1812,8 @@ instance FromJSON  PDomGetFrameOwner where
 --   Returns iframe node that owns iframe with the given domain.
 --   Parameters: 'PDomGetFrameOwner'
 --   Returns: 'DomGetFrameOwner'
-domGetFrameOwner :: Handle ev -> PDomGetFrameOwner -> IO DomGetFrameOwner
-domGetFrameOwner handle params = sendReceiveCommandResult handle "DOM.getFrameOwner" (Just params)
+domGetFrameOwner :: Handle ev -> Maybe String -> PDomGetFrameOwner -> IO DomGetFrameOwner
+domGetFrameOwner handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.getFrameOwner" (Just params )
 
 -- | Return type of the 'domGetFrameOwner' command.
 data DomGetFrameOwner = DomGetFrameOwner {
@@ -1849,8 +1849,8 @@ instance FromJSON  PDomGetContainerForNode where
 --   otherwise it will find the nearest container regardless of its container name.
 --   Parameters: 'PDomGetContainerForNode'
 --   Returns: 'DomGetContainerForNode'
-domGetContainerForNode :: Handle ev -> PDomGetContainerForNode -> IO DomGetContainerForNode
-domGetContainerForNode handle params = sendReceiveCommandResult handle "DOM.getContainerForNode" (Just params)
+domGetContainerForNode :: Handle ev -> Maybe String -> PDomGetContainerForNode -> IO DomGetContainerForNode
+domGetContainerForNode handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.getContainerForNode" (Just params )
 
 -- | Return type of the 'domGetContainerForNode' command.
 data DomGetContainerForNode = DomGetContainerForNode {
@@ -1883,8 +1883,8 @@ instance FromJSON  PDomGetQueryingDescendantsForContainer where
 --   container queries against this container.
 --   Parameters: 'PDomGetQueryingDescendantsForContainer'
 --   Returns: 'DomGetQueryingDescendantsForContainer'
-domGetQueryingDescendantsForContainer :: Handle ev -> PDomGetQueryingDescendantsForContainer -> IO DomGetQueryingDescendantsForContainer
-domGetQueryingDescendantsForContainer handle params = sendReceiveCommandResult handle "DOM.getQueryingDescendantsForContainer" (Just params)
+domGetQueryingDescendantsForContainer :: Handle ev -> Maybe String -> PDomGetQueryingDescendantsForContainer -> IO DomGetQueryingDescendantsForContainer
+domGetQueryingDescendantsForContainer handle sessionId params = sendReceiveCommandResult handle sessionId "DOM.getQueryingDescendantsForContainer" (Just params )
 
 -- | Return type of the 'domGetQueryingDescendantsForContainer' command.
 data DomGetQueryingDescendantsForContainer = DomGetQueryingDescendantsForContainer {
@@ -2087,8 +2087,8 @@ instance FromJSON EmulationVirtualTimeBudgetExpired where
 -- | Function for the 'Emulation.canEmulate' command.
 --   Tells whether emulation is supported.
 --   Returns: 'EmulationCanEmulate'
-emulationCanEmulate :: Handle ev -> IO EmulationCanEmulate
-emulationCanEmulate handle = sendReceiveCommandResult handle "Emulation.canEmulate" (Nothing :: Maybe ())
+emulationCanEmulate :: Handle ev -> Maybe String -> IO EmulationCanEmulate
+emulationCanEmulate handle sessionId = sendReceiveCommandResult handle sessionId "Emulation.canEmulate" (Nothing :: Maybe ())
 
 -- | Return type of the 'emulationCanEmulate' command.
 data EmulationCanEmulate = EmulationCanEmulate {
@@ -2106,20 +2106,20 @@ instance Command EmulationCanEmulate where
 
 -- | Function for the 'Emulation.clearDeviceMetricsOverride' command.
 --   Clears the overridden device metrics.
-emulationClearDeviceMetricsOverride :: Handle ev -> IO ()
-emulationClearDeviceMetricsOverride handle = sendReceiveCommand handle "Emulation.clearDeviceMetricsOverride" (Nothing :: Maybe ())
+emulationClearDeviceMetricsOverride :: Handle ev -> Maybe String -> IO ()
+emulationClearDeviceMetricsOverride handle sessionId = sendReceiveCommand handle sessionId "Emulation.clearDeviceMetricsOverride" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Emulation.clearGeolocationOverride' command.
 --   Clears the overridden Geolocation Position and Error.
-emulationClearGeolocationOverride :: Handle ev -> IO ()
-emulationClearGeolocationOverride handle = sendReceiveCommand handle "Emulation.clearGeolocationOverride" (Nothing :: Maybe ())
+emulationClearGeolocationOverride :: Handle ev -> Maybe String -> IO ()
+emulationClearGeolocationOverride handle sessionId = sendReceiveCommand handle sessionId "Emulation.clearGeolocationOverride" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Emulation.resetPageScaleFactor' command.
 --   Requests that page scale factor is reset to initial values.
-emulationResetPageScaleFactor :: Handle ev -> IO ()
-emulationResetPageScaleFactor handle = sendReceiveCommand handle "Emulation.resetPageScaleFactor" (Nothing :: Maybe ())
+emulationResetPageScaleFactor :: Handle ev -> Maybe String -> IO ()
+emulationResetPageScaleFactor handle sessionId = sendReceiveCommand handle sessionId "Emulation.resetPageScaleFactor" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'emulationSetFocusEmulationEnabled' command.
@@ -2137,8 +2137,8 @@ instance FromJSON  PEmulationSetFocusEmulationEnabled where
 -- | Function for the 'Emulation.setFocusEmulationEnabled' command.
 --   Enables or disables simulating a focused and active page.
 --   Parameters: 'PEmulationSetFocusEmulationEnabled'
-emulationSetFocusEmulationEnabled :: Handle ev -> PEmulationSetFocusEmulationEnabled -> IO ()
-emulationSetFocusEmulationEnabled handle params = sendReceiveCommand handle "Emulation.setFocusEmulationEnabled" (Just params)
+emulationSetFocusEmulationEnabled :: Handle ev -> Maybe String -> PEmulationSetFocusEmulationEnabled -> IO ()
+emulationSetFocusEmulationEnabled handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setFocusEmulationEnabled" (Just params )
 
 
 -- | Parameters of the 'emulationSetAutoDarkModeOverride' command.
@@ -2157,8 +2157,8 @@ instance FromJSON  PEmulationSetAutoDarkModeOverride where
 -- | Function for the 'Emulation.setAutoDarkModeOverride' command.
 --   Automatically render all web contents using a dark theme.
 --   Parameters: 'PEmulationSetAutoDarkModeOverride'
-emulationSetAutoDarkModeOverride :: Handle ev -> PEmulationSetAutoDarkModeOverride -> IO ()
-emulationSetAutoDarkModeOverride handle params = sendReceiveCommand handle "Emulation.setAutoDarkModeOverride" (Just params)
+emulationSetAutoDarkModeOverride :: Handle ev -> Maybe String -> PEmulationSetAutoDarkModeOverride -> IO ()
+emulationSetAutoDarkModeOverride handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setAutoDarkModeOverride" (Just params )
 
 
 -- | Parameters of the 'emulationSetCpuThrottlingRate' command.
@@ -2176,8 +2176,8 @@ instance FromJSON  PEmulationSetCpuThrottlingRate where
 -- | Function for the 'Emulation.setCPUThrottlingRate' command.
 --   Enables CPU throttling to emulate slow CPUs.
 --   Parameters: 'PEmulationSetCpuThrottlingRate'
-emulationSetCpuThrottlingRate :: Handle ev -> PEmulationSetCpuThrottlingRate -> IO ()
-emulationSetCpuThrottlingRate handle params = sendReceiveCommand handle "Emulation.setCPUThrottlingRate" (Just params)
+emulationSetCpuThrottlingRate :: Handle ev -> Maybe String -> PEmulationSetCpuThrottlingRate -> IO ()
+emulationSetCpuThrottlingRate handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setCPUThrottlingRate" (Just params )
 
 
 -- | Parameters of the 'emulationSetDefaultBackgroundColorOverride' command.
@@ -2197,8 +2197,8 @@ instance FromJSON  PEmulationSetDefaultBackgroundColorOverride where
 --   Sets or clears an override of the default background color of the frame. This override is used
 --   if the content does not specify one.
 --   Parameters: 'PEmulationSetDefaultBackgroundColorOverride'
-emulationSetDefaultBackgroundColorOverride :: Handle ev -> PEmulationSetDefaultBackgroundColorOverride -> IO ()
-emulationSetDefaultBackgroundColorOverride handle params = sendReceiveCommand handle "Emulation.setDefaultBackgroundColorOverride" (Just params)
+emulationSetDefaultBackgroundColorOverride :: Handle ev -> Maybe String -> PEmulationSetDefaultBackgroundColorOverride -> IO ()
+emulationSetDefaultBackgroundColorOverride handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setDefaultBackgroundColorOverride" (Just params )
 
 
 -- | Parameters of the 'emulationSetDeviceMetricsOverride' command.
@@ -2245,8 +2245,8 @@ instance FromJSON  PEmulationSetDeviceMetricsOverride where
 --   window.innerWidth, window.innerHeight, and "device-width"/"device-height"-related CSS media
 --   query results).
 --   Parameters: 'PEmulationSetDeviceMetricsOverride'
-emulationSetDeviceMetricsOverride :: Handle ev -> PEmulationSetDeviceMetricsOverride -> IO ()
-emulationSetDeviceMetricsOverride handle params = sendReceiveCommand handle "Emulation.setDeviceMetricsOverride" (Just params)
+emulationSetDeviceMetricsOverride :: Handle ev -> Maybe String -> PEmulationSetDeviceMetricsOverride -> IO ()
+emulationSetDeviceMetricsOverride handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setDeviceMetricsOverride" (Just params )
 
 
 -- | Parameters of the 'emulationSetScrollbarsHidden' command.
@@ -2264,8 +2264,8 @@ instance FromJSON  PEmulationSetScrollbarsHidden where
 -- | Function for the 'Emulation.setScrollbarsHidden' command.
 --   
 --   Parameters: 'PEmulationSetScrollbarsHidden'
-emulationSetScrollbarsHidden :: Handle ev -> PEmulationSetScrollbarsHidden -> IO ()
-emulationSetScrollbarsHidden handle params = sendReceiveCommand handle "Emulation.setScrollbarsHidden" (Just params)
+emulationSetScrollbarsHidden :: Handle ev -> Maybe String -> PEmulationSetScrollbarsHidden -> IO ()
+emulationSetScrollbarsHidden handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setScrollbarsHidden" (Just params )
 
 
 -- | Parameters of the 'emulationSetDocumentCookieDisabled' command.
@@ -2283,8 +2283,8 @@ instance FromJSON  PEmulationSetDocumentCookieDisabled where
 -- | Function for the 'Emulation.setDocumentCookieDisabled' command.
 --   
 --   Parameters: 'PEmulationSetDocumentCookieDisabled'
-emulationSetDocumentCookieDisabled :: Handle ev -> PEmulationSetDocumentCookieDisabled -> IO ()
-emulationSetDocumentCookieDisabled handle params = sendReceiveCommand handle "Emulation.setDocumentCookieDisabled" (Just params)
+emulationSetDocumentCookieDisabled :: Handle ev -> Maybe String -> PEmulationSetDocumentCookieDisabled -> IO ()
+emulationSetDocumentCookieDisabled handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setDocumentCookieDisabled" (Just params )
 
 
 -- | Parameters of the 'emulationSetEmitTouchEventsForMouse' command.
@@ -2309,7 +2309,7 @@ data PEmulationSetEmitTouchEventsForMouse = PEmulationSetEmitTouchEventsForMouse
   -- | Whether touch emulation based on mouse input should be enabled.
   pEmulationSetEmitTouchEventsForMouseEnabled :: Bool,
   -- | Touch/gesture events configuration. Default: current platform.
-  pEmulationSetEmitTouchEventsForMouseConfiguration :: PEmulationSetEmitTouchEventsForMouseConfiguration
+  pEmulationSetEmitTouchEventsForMouseConfiguration :: Maybe PEmulationSetEmitTouchEventsForMouseConfiguration
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetEmitTouchEventsForMouse  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
@@ -2321,8 +2321,8 @@ instance FromJSON  PEmulationSetEmitTouchEventsForMouse where
 -- | Function for the 'Emulation.setEmitTouchEventsForMouse' command.
 --   
 --   Parameters: 'PEmulationSetEmitTouchEventsForMouse'
-emulationSetEmitTouchEventsForMouse :: Handle ev -> PEmulationSetEmitTouchEventsForMouse -> IO ()
-emulationSetEmitTouchEventsForMouse handle params = sendReceiveCommand handle "Emulation.setEmitTouchEventsForMouse" (Just params)
+emulationSetEmitTouchEventsForMouse :: Handle ev -> Maybe String -> PEmulationSetEmitTouchEventsForMouse -> IO ()
+emulationSetEmitTouchEventsForMouse handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setEmitTouchEventsForMouse" (Just params )
 
 
 -- | Parameters of the 'emulationSetEmulatedMedia' command.
@@ -2342,8 +2342,8 @@ instance FromJSON  PEmulationSetEmulatedMedia where
 -- | Function for the 'Emulation.setEmulatedMedia' command.
 --   Emulates the given media type or media feature for CSS media queries.
 --   Parameters: 'PEmulationSetEmulatedMedia'
-emulationSetEmulatedMedia :: Handle ev -> PEmulationSetEmulatedMedia -> IO ()
-emulationSetEmulatedMedia handle params = sendReceiveCommand handle "Emulation.setEmulatedMedia" (Just params)
+emulationSetEmulatedMedia :: Handle ev -> Maybe String -> PEmulationSetEmulatedMedia -> IO ()
+emulationSetEmulatedMedia handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setEmulatedMedia" (Just params )
 
 
 -- | Parameters of the 'emulationSetEmulatedVisionDeficiency' command.
@@ -2386,8 +2386,8 @@ instance FromJSON  PEmulationSetEmulatedVisionDeficiency where
 -- | Function for the 'Emulation.setEmulatedVisionDeficiency' command.
 --   Emulates the given vision deficiency.
 --   Parameters: 'PEmulationSetEmulatedVisionDeficiency'
-emulationSetEmulatedVisionDeficiency :: Handle ev -> PEmulationSetEmulatedVisionDeficiency -> IO ()
-emulationSetEmulatedVisionDeficiency handle params = sendReceiveCommand handle "Emulation.setEmulatedVisionDeficiency" (Just params)
+emulationSetEmulatedVisionDeficiency :: Handle ev -> Maybe String -> PEmulationSetEmulatedVisionDeficiency -> IO ()
+emulationSetEmulatedVisionDeficiency handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setEmulatedVisionDeficiency" (Just params )
 
 
 -- | Parameters of the 'emulationSetGeolocationOverride' command.
@@ -2410,8 +2410,8 @@ instance FromJSON  PEmulationSetGeolocationOverride where
 --   Overrides the Geolocation Position or Error. Omitting any of the parameters emulates position
 --   unavailable.
 --   Parameters: 'PEmulationSetGeolocationOverride'
-emulationSetGeolocationOverride :: Handle ev -> PEmulationSetGeolocationOverride -> IO ()
-emulationSetGeolocationOverride handle params = sendReceiveCommand handle "Emulation.setGeolocationOverride" (Just params)
+emulationSetGeolocationOverride :: Handle ev -> Maybe String -> PEmulationSetGeolocationOverride -> IO ()
+emulationSetGeolocationOverride handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setGeolocationOverride" (Just params )
 
 
 -- | Parameters of the 'emulationSetIdleOverride' command.
@@ -2431,14 +2431,14 @@ instance FromJSON  PEmulationSetIdleOverride where
 -- | Function for the 'Emulation.setIdleOverride' command.
 --   Overrides the Idle state.
 --   Parameters: 'PEmulationSetIdleOverride'
-emulationSetIdleOverride :: Handle ev -> PEmulationSetIdleOverride -> IO ()
-emulationSetIdleOverride handle params = sendReceiveCommand handle "Emulation.setIdleOverride" (Just params)
+emulationSetIdleOverride :: Handle ev -> Maybe String -> PEmulationSetIdleOverride -> IO ()
+emulationSetIdleOverride handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setIdleOverride" (Just params )
 
 
 -- | Function for the 'Emulation.clearIdleOverride' command.
 --   Clears Idle state overrides.
-emulationClearIdleOverride :: Handle ev -> IO ()
-emulationClearIdleOverride handle = sendReceiveCommand handle "Emulation.clearIdleOverride" (Nothing :: Maybe ())
+emulationClearIdleOverride :: Handle ev -> Maybe String -> IO ()
+emulationClearIdleOverride handle sessionId = sendReceiveCommand handle sessionId "Emulation.clearIdleOverride" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'emulationSetPageScaleFactor' command.
@@ -2456,8 +2456,8 @@ instance FromJSON  PEmulationSetPageScaleFactor where
 -- | Function for the 'Emulation.setPageScaleFactor' command.
 --   Sets a specified page scale factor.
 --   Parameters: 'PEmulationSetPageScaleFactor'
-emulationSetPageScaleFactor :: Handle ev -> PEmulationSetPageScaleFactor -> IO ()
-emulationSetPageScaleFactor handle params = sendReceiveCommand handle "Emulation.setPageScaleFactor" (Just params)
+emulationSetPageScaleFactor :: Handle ev -> Maybe String -> PEmulationSetPageScaleFactor -> IO ()
+emulationSetPageScaleFactor handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setPageScaleFactor" (Just params )
 
 
 -- | Parameters of the 'emulationSetScriptExecutionDisabled' command.
@@ -2475,8 +2475,8 @@ instance FromJSON  PEmulationSetScriptExecutionDisabled where
 -- | Function for the 'Emulation.setScriptExecutionDisabled' command.
 --   Switches script execution in the page.
 --   Parameters: 'PEmulationSetScriptExecutionDisabled'
-emulationSetScriptExecutionDisabled :: Handle ev -> PEmulationSetScriptExecutionDisabled -> IO ()
-emulationSetScriptExecutionDisabled handle params = sendReceiveCommand handle "Emulation.setScriptExecutionDisabled" (Just params)
+emulationSetScriptExecutionDisabled :: Handle ev -> Maybe String -> PEmulationSetScriptExecutionDisabled -> IO ()
+emulationSetScriptExecutionDisabled handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setScriptExecutionDisabled" (Just params )
 
 
 -- | Parameters of the 'emulationSetTouchEmulationEnabled' command.
@@ -2496,8 +2496,8 @@ instance FromJSON  PEmulationSetTouchEmulationEnabled where
 -- | Function for the 'Emulation.setTouchEmulationEnabled' command.
 --   Enables touch on platforms which do not support them.
 --   Parameters: 'PEmulationSetTouchEmulationEnabled'
-emulationSetTouchEmulationEnabled :: Handle ev -> PEmulationSetTouchEmulationEnabled -> IO ()
-emulationSetTouchEmulationEnabled handle params = sendReceiveCommand handle "Emulation.setTouchEmulationEnabled" (Just params)
+emulationSetTouchEmulationEnabled :: Handle ev -> Maybe String -> PEmulationSetTouchEmulationEnabled -> IO ()
+emulationSetTouchEmulationEnabled handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setTouchEmulationEnabled" (Just params )
 
 
 -- | Parameters of the 'emulationSetVirtualTimePolicy' command.
@@ -2524,8 +2524,8 @@ instance FromJSON  PEmulationSetVirtualTimePolicy where
 --   the current virtual time policy.  Note this supersedes any previous time budget.
 --   Parameters: 'PEmulationSetVirtualTimePolicy'
 --   Returns: 'EmulationSetVirtualTimePolicy'
-emulationSetVirtualTimePolicy :: Handle ev -> PEmulationSetVirtualTimePolicy -> IO EmulationSetVirtualTimePolicy
-emulationSetVirtualTimePolicy handle params = sendReceiveCommandResult handle "Emulation.setVirtualTimePolicy" (Just params)
+emulationSetVirtualTimePolicy :: Handle ev -> Maybe String -> PEmulationSetVirtualTimePolicy -> IO EmulationSetVirtualTimePolicy
+emulationSetVirtualTimePolicy handle sessionId params = sendReceiveCommandResult handle sessionId "Emulation.setVirtualTimePolicy" (Just params )
 
 -- | Return type of the 'emulationSetVirtualTimePolicy' command.
 data EmulationSetVirtualTimePolicy = EmulationSetVirtualTimePolicy {
@@ -2557,8 +2557,8 @@ instance FromJSON  PEmulationSetLocaleOverride where
 -- | Function for the 'Emulation.setLocaleOverride' command.
 --   Overrides default host system locale with the specified one.
 --   Parameters: 'PEmulationSetLocaleOverride'
-emulationSetLocaleOverride :: Handle ev -> PEmulationSetLocaleOverride -> IO ()
-emulationSetLocaleOverride handle params = sendReceiveCommand handle "Emulation.setLocaleOverride" (Just params)
+emulationSetLocaleOverride :: Handle ev -> Maybe String -> PEmulationSetLocaleOverride -> IO ()
+emulationSetLocaleOverride handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setLocaleOverride" (Just params )
 
 
 -- | Parameters of the 'emulationSetTimezoneOverride' command.
@@ -2577,8 +2577,8 @@ instance FromJSON  PEmulationSetTimezoneOverride where
 -- | Function for the 'Emulation.setTimezoneOverride' command.
 --   Overrides default host system timezone with the specified one.
 --   Parameters: 'PEmulationSetTimezoneOverride'
-emulationSetTimezoneOverride :: Handle ev -> PEmulationSetTimezoneOverride -> IO ()
-emulationSetTimezoneOverride handle params = sendReceiveCommand handle "Emulation.setTimezoneOverride" (Just params)
+emulationSetTimezoneOverride :: Handle ev -> Maybe String -> PEmulationSetTimezoneOverride -> IO ()
+emulationSetTimezoneOverride handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setTimezoneOverride" (Just params )
 
 
 -- | Parameters of the 'emulationSetDisabledImageTypes' command.
@@ -2596,8 +2596,8 @@ instance FromJSON  PEmulationSetDisabledImageTypes where
 -- | Function for the 'Emulation.setDisabledImageTypes' command.
 --   
 --   Parameters: 'PEmulationSetDisabledImageTypes'
-emulationSetDisabledImageTypes :: Handle ev -> PEmulationSetDisabledImageTypes -> IO ()
-emulationSetDisabledImageTypes handle params = sendReceiveCommand handle "Emulation.setDisabledImageTypes" (Just params)
+emulationSetDisabledImageTypes :: Handle ev -> Maybe String -> PEmulationSetDisabledImageTypes -> IO ()
+emulationSetDisabledImageTypes handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setDisabledImageTypes" (Just params )
 
 
 -- | Parameters of the 'emulationSetHardwareConcurrencyOverride' command.
@@ -2615,8 +2615,8 @@ instance FromJSON  PEmulationSetHardwareConcurrencyOverride where
 -- | Function for the 'Emulation.setHardwareConcurrencyOverride' command.
 --   
 --   Parameters: 'PEmulationSetHardwareConcurrencyOverride'
-emulationSetHardwareConcurrencyOverride :: Handle ev -> PEmulationSetHardwareConcurrencyOverride -> IO ()
-emulationSetHardwareConcurrencyOverride handle params = sendReceiveCommand handle "Emulation.setHardwareConcurrencyOverride" (Just params)
+emulationSetHardwareConcurrencyOverride :: Handle ev -> Maybe String -> PEmulationSetHardwareConcurrencyOverride -> IO ()
+emulationSetHardwareConcurrencyOverride handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setHardwareConcurrencyOverride" (Just params )
 
 
 -- | Parameters of the 'emulationSetUserAgentOverride' command.
@@ -2640,8 +2640,8 @@ instance FromJSON  PEmulationSetUserAgentOverride where
 -- | Function for the 'Emulation.setUserAgentOverride' command.
 --   Allows overriding user agent with the given string.
 --   Parameters: 'PEmulationSetUserAgentOverride'
-emulationSetUserAgentOverride :: Handle ev -> PEmulationSetUserAgentOverride -> IO ()
-emulationSetUserAgentOverride handle params = sendReceiveCommand handle "Emulation.setUserAgentOverride" (Just params)
+emulationSetUserAgentOverride :: Handle ev -> Maybe String -> PEmulationSetUserAgentOverride -> IO ()
+emulationSetUserAgentOverride handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setUserAgentOverride" (Just params )
 
 
 -- | Parameters of the 'emulationSetAutomationOverride' command.
@@ -2659,8 +2659,8 @@ instance FromJSON  PEmulationSetAutomationOverride where
 -- | Function for the 'Emulation.setAutomationOverride' command.
 --   Allows overriding the automation flag.
 --   Parameters: 'PEmulationSetAutomationOverride'
-emulationSetAutomationOverride :: Handle ev -> PEmulationSetAutomationOverride -> IO ()
-emulationSetAutomationOverride handle params = sendReceiveCommand handle "Emulation.setAutomationOverride" (Just params)
+emulationSetAutomationOverride :: Handle ev -> Maybe String -> PEmulationSetAutomationOverride -> IO ()
+emulationSetAutomationOverride handle sessionId params = sendReceiveCommand handle sessionId "Emulation.setAutomationOverride" (Just params )
 
 
 
@@ -3759,7 +3759,7 @@ instance ToJSON NetworkAuthChallengeSource where
 
 data NetworkAuthChallenge = NetworkAuthChallenge {
   -- | Source of the authentication challenge.
-  networkAuthChallengeSource :: NetworkAuthChallengeSource,
+  networkAuthChallengeSource :: Maybe NetworkAuthChallengeSource,
   -- | Origin of the challenger.
   networkAuthChallengeOrigin :: String,
   -- | The authentication scheme used, such as basic or digest
@@ -4857,26 +4857,26 @@ instance FromJSON  PNetworkSetAcceptedEncodings where
 -- | Function for the 'Network.setAcceptedEncodings' command.
 --   Sets a list of content encodings that will be accepted. Empty list means no encoding is accepted.
 --   Parameters: 'PNetworkSetAcceptedEncodings'
-networkSetAcceptedEncodings :: Handle ev -> PNetworkSetAcceptedEncodings -> IO ()
-networkSetAcceptedEncodings handle params = sendReceiveCommand handle "Network.setAcceptedEncodings" (Just params)
+networkSetAcceptedEncodings :: Handle ev -> Maybe String -> PNetworkSetAcceptedEncodings -> IO ()
+networkSetAcceptedEncodings handle sessionId params = sendReceiveCommand handle sessionId "Network.setAcceptedEncodings" (Just params )
 
 
 -- | Function for the 'Network.clearAcceptedEncodingsOverride' command.
 --   Clears accepted encodings set by setAcceptedEncodings
-networkClearAcceptedEncodingsOverride :: Handle ev -> IO ()
-networkClearAcceptedEncodingsOverride handle = sendReceiveCommand handle "Network.clearAcceptedEncodingsOverride" (Nothing :: Maybe ())
+networkClearAcceptedEncodingsOverride :: Handle ev -> Maybe String -> IO ()
+networkClearAcceptedEncodingsOverride handle sessionId = sendReceiveCommand handle sessionId "Network.clearAcceptedEncodingsOverride" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Network.clearBrowserCache' command.
 --   Clears browser cache.
-networkClearBrowserCache :: Handle ev -> IO ()
-networkClearBrowserCache handle = sendReceiveCommand handle "Network.clearBrowserCache" (Nothing :: Maybe ())
+networkClearBrowserCache :: Handle ev -> Maybe String -> IO ()
+networkClearBrowserCache handle sessionId = sendReceiveCommand handle sessionId "Network.clearBrowserCache" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Network.clearBrowserCookies' command.
 --   Clears browser cookies.
-networkClearBrowserCookies :: Handle ev -> IO ()
-networkClearBrowserCookies handle = sendReceiveCommand handle "Network.clearBrowserCookies" (Nothing :: Maybe ())
+networkClearBrowserCookies :: Handle ev -> Maybe String -> IO ()
+networkClearBrowserCookies handle sessionId = sendReceiveCommand handle sessionId "Network.clearBrowserCookies" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'networkDeleteCookies' command.
@@ -4901,14 +4901,14 @@ instance FromJSON  PNetworkDeleteCookies where
 -- | Function for the 'Network.deleteCookies' command.
 --   Deletes browser cookies with matching name and url or domain/path pair.
 --   Parameters: 'PNetworkDeleteCookies'
-networkDeleteCookies :: Handle ev -> PNetworkDeleteCookies -> IO ()
-networkDeleteCookies handle params = sendReceiveCommand handle "Network.deleteCookies" (Just params)
+networkDeleteCookies :: Handle ev -> Maybe String -> PNetworkDeleteCookies -> IO ()
+networkDeleteCookies handle sessionId params = sendReceiveCommand handle sessionId "Network.deleteCookies" (Just params )
 
 
 -- | Function for the 'Network.disable' command.
 --   Disables network tracking, prevents network events from being sent to the client.
-networkDisable :: Handle ev -> IO ()
-networkDisable handle = sendReceiveCommand handle "Network.disable" (Nothing :: Maybe ())
+networkDisable :: Handle ev -> Maybe String -> IO ()
+networkDisable handle sessionId = sendReceiveCommand handle sessionId "Network.disable" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'networkEmulateNetworkConditions' command.
@@ -4934,8 +4934,8 @@ instance FromJSON  PNetworkEmulateNetworkConditions where
 -- | Function for the 'Network.emulateNetworkConditions' command.
 --   Activates emulation of network conditions.
 --   Parameters: 'PNetworkEmulateNetworkConditions'
-networkEmulateNetworkConditions :: Handle ev -> PNetworkEmulateNetworkConditions -> IO ()
-networkEmulateNetworkConditions handle params = sendReceiveCommand handle "Network.emulateNetworkConditions" (Just params)
+networkEmulateNetworkConditions :: Handle ev -> Maybe String -> PNetworkEmulateNetworkConditions -> IO ()
+networkEmulateNetworkConditions handle sessionId params = sendReceiveCommand handle sessionId "Network.emulateNetworkConditions" (Just params )
 
 
 -- | Parameters of the 'networkEnable' command.
@@ -4957,16 +4957,16 @@ instance FromJSON  PNetworkEnable where
 -- | Function for the 'Network.enable' command.
 --   Enables network tracking, network events will now be delivered to the client.
 --   Parameters: 'PNetworkEnable'
-networkEnable :: Handle ev -> PNetworkEnable -> IO ()
-networkEnable handle params = sendReceiveCommand handle "Network.enable" (Just params)
+networkEnable :: Handle ev -> Maybe String -> PNetworkEnable -> IO ()
+networkEnable handle sessionId params = sendReceiveCommand handle sessionId "Network.enable" (Just params )
 
 
 -- | Function for the 'Network.getAllCookies' command.
 --   Returns all browser cookies. Depending on the backend support, will return detailed cookie
 --   information in the `cookies` field.
 --   Returns: 'NetworkGetAllCookies'
-networkGetAllCookies :: Handle ev -> IO NetworkGetAllCookies
-networkGetAllCookies handle = sendReceiveCommandResult handle "Network.getAllCookies" (Nothing :: Maybe ())
+networkGetAllCookies :: Handle ev -> Maybe String -> IO NetworkGetAllCookies
+networkGetAllCookies handle sessionId = sendReceiveCommandResult handle sessionId "Network.getAllCookies" (Nothing :: Maybe ())
 
 -- | Return type of the 'networkGetAllCookies' command.
 data NetworkGetAllCookies = NetworkGetAllCookies {
@@ -4998,8 +4998,8 @@ instance FromJSON  PNetworkGetCertificate where
 --   Returns the DER-encoded certificate.
 --   Parameters: 'PNetworkGetCertificate'
 --   Returns: 'NetworkGetCertificate'
-networkGetCertificate :: Handle ev -> PNetworkGetCertificate -> IO NetworkGetCertificate
-networkGetCertificate handle params = sendReceiveCommandResult handle "Network.getCertificate" (Just params)
+networkGetCertificate :: Handle ev -> Maybe String -> PNetworkGetCertificate -> IO NetworkGetCertificate
+networkGetCertificate handle sessionId params = sendReceiveCommandResult handle sessionId "Network.getCertificate" (Just params )
 
 -- | Return type of the 'networkGetCertificate' command.
 data NetworkGetCertificate = NetworkGetCertificate {
@@ -5033,8 +5033,8 @@ instance FromJSON  PNetworkGetCookies where
 --   detailed cookie information in the `cookies` field.
 --   Parameters: 'PNetworkGetCookies'
 --   Returns: 'NetworkGetCookies'
-networkGetCookies :: Handle ev -> PNetworkGetCookies -> IO NetworkGetCookies
-networkGetCookies handle params = sendReceiveCommandResult handle "Network.getCookies" (Just params)
+networkGetCookies :: Handle ev -> Maybe String -> PNetworkGetCookies -> IO NetworkGetCookies
+networkGetCookies handle sessionId params = sendReceiveCommandResult handle sessionId "Network.getCookies" (Just params )
 
 -- | Return type of the 'networkGetCookies' command.
 data NetworkGetCookies = NetworkGetCookies {
@@ -5066,8 +5066,8 @@ instance FromJSON  PNetworkGetResponseBody where
 --   Returns content served for the given request.
 --   Parameters: 'PNetworkGetResponseBody'
 --   Returns: 'NetworkGetResponseBody'
-networkGetResponseBody :: Handle ev -> PNetworkGetResponseBody -> IO NetworkGetResponseBody
-networkGetResponseBody handle params = sendReceiveCommandResult handle "Network.getResponseBody" (Just params)
+networkGetResponseBody :: Handle ev -> Maybe String -> PNetworkGetResponseBody -> IO NetworkGetResponseBody
+networkGetResponseBody handle sessionId params = sendReceiveCommandResult handle sessionId "Network.getResponseBody" (Just params )
 
 -- | Return type of the 'networkGetResponseBody' command.
 data NetworkGetResponseBody = NetworkGetResponseBody {
@@ -5101,8 +5101,8 @@ instance FromJSON  PNetworkGetRequestPostData where
 --   Returns post data sent with the request. Returns an error when no data was sent with the request.
 --   Parameters: 'PNetworkGetRequestPostData'
 --   Returns: 'NetworkGetRequestPostData'
-networkGetRequestPostData :: Handle ev -> PNetworkGetRequestPostData -> IO NetworkGetRequestPostData
-networkGetRequestPostData handle params = sendReceiveCommandResult handle "Network.getRequestPostData" (Just params)
+networkGetRequestPostData :: Handle ev -> Maybe String -> PNetworkGetRequestPostData -> IO NetworkGetRequestPostData
+networkGetRequestPostData handle sessionId params = sendReceiveCommandResult handle sessionId "Network.getRequestPostData" (Just params )
 
 -- | Return type of the 'networkGetRequestPostData' command.
 data NetworkGetRequestPostData = NetworkGetRequestPostData {
@@ -5134,8 +5134,8 @@ instance FromJSON  PNetworkGetResponseBodyForInterception where
 --   Returns content served for the given currently intercepted request.
 --   Parameters: 'PNetworkGetResponseBodyForInterception'
 --   Returns: 'NetworkGetResponseBodyForInterception'
-networkGetResponseBodyForInterception :: Handle ev -> PNetworkGetResponseBodyForInterception -> IO NetworkGetResponseBodyForInterception
-networkGetResponseBodyForInterception handle params = sendReceiveCommandResult handle "Network.getResponseBodyForInterception" (Just params)
+networkGetResponseBodyForInterception :: Handle ev -> Maybe String -> PNetworkGetResponseBodyForInterception -> IO NetworkGetResponseBodyForInterception
+networkGetResponseBodyForInterception handle sessionId params = sendReceiveCommandResult handle sessionId "Network.getResponseBodyForInterception" (Just params )
 
 -- | Return type of the 'networkGetResponseBodyForInterception' command.
 data NetworkGetResponseBodyForInterception = NetworkGetResponseBodyForInterception {
@@ -5171,8 +5171,8 @@ instance FromJSON  PNetworkTakeResponseBodyForInterceptionAsStream where
 --   is specified.
 --   Parameters: 'PNetworkTakeResponseBodyForInterceptionAsStream'
 --   Returns: 'NetworkTakeResponseBodyForInterceptionAsStream'
-networkTakeResponseBodyForInterceptionAsStream :: Handle ev -> PNetworkTakeResponseBodyForInterceptionAsStream -> IO NetworkTakeResponseBodyForInterceptionAsStream
-networkTakeResponseBodyForInterceptionAsStream handle params = sendReceiveCommandResult handle "Network.takeResponseBodyForInterceptionAsStream" (Just params)
+networkTakeResponseBodyForInterceptionAsStream :: Handle ev -> Maybe String -> PNetworkTakeResponseBodyForInterceptionAsStream -> IO NetworkTakeResponseBodyForInterceptionAsStream
+networkTakeResponseBodyForInterceptionAsStream handle sessionId params = sendReceiveCommandResult handle sessionId "Network.takeResponseBodyForInterceptionAsStream" (Just params )
 
 -- | Return type of the 'networkTakeResponseBodyForInterceptionAsStream' command.
 data NetworkTakeResponseBodyForInterceptionAsStream = NetworkTakeResponseBodyForInterceptionAsStream {
@@ -5204,8 +5204,8 @@ instance FromJSON  PNetworkReplayXhr where
 --   parameters should be identical: method, url, async, request body, extra headers, withCredentials
 --   attribute, user, password.
 --   Parameters: 'PNetworkReplayXhr'
-networkReplayXhr :: Handle ev -> PNetworkReplayXhr -> IO ()
-networkReplayXhr handle params = sendReceiveCommand handle "Network.replayXHR" (Just params)
+networkReplayXhr :: Handle ev -> Maybe String -> PNetworkReplayXhr -> IO ()
+networkReplayXhr handle sessionId params = sendReceiveCommand handle sessionId "Network.replayXHR" (Just params )
 
 
 -- | Parameters of the 'networkSearchInResponseBody' command.
@@ -5230,8 +5230,8 @@ instance FromJSON  PNetworkSearchInResponseBody where
 --   Searches for given string in response content.
 --   Parameters: 'PNetworkSearchInResponseBody'
 --   Returns: 'NetworkSearchInResponseBody'
-networkSearchInResponseBody :: Handle ev -> PNetworkSearchInResponseBody -> IO NetworkSearchInResponseBody
-networkSearchInResponseBody handle params = sendReceiveCommandResult handle "Network.searchInResponseBody" (Just params)
+networkSearchInResponseBody :: Handle ev -> Maybe String -> PNetworkSearchInResponseBody -> IO NetworkSearchInResponseBody
+networkSearchInResponseBody handle sessionId params = sendReceiveCommandResult handle sessionId "Network.searchInResponseBody" (Just params )
 
 -- | Return type of the 'networkSearchInResponseBody' command.
 data NetworkSearchInResponseBody = NetworkSearchInResponseBody {
@@ -5262,8 +5262,8 @@ instance FromJSON  PNetworkSetBlockedUrLs where
 -- | Function for the 'Network.setBlockedURLs' command.
 --   Blocks URLs from loading.
 --   Parameters: 'PNetworkSetBlockedUrLs'
-networkSetBlockedUrLs :: Handle ev -> PNetworkSetBlockedUrLs -> IO ()
-networkSetBlockedUrLs handle params = sendReceiveCommand handle "Network.setBlockedURLs" (Just params)
+networkSetBlockedUrLs :: Handle ev -> Maybe String -> PNetworkSetBlockedUrLs -> IO ()
+networkSetBlockedUrLs handle sessionId params = sendReceiveCommand handle sessionId "Network.setBlockedURLs" (Just params )
 
 
 -- | Parameters of the 'networkSetBypassServiceWorker' command.
@@ -5281,8 +5281,8 @@ instance FromJSON  PNetworkSetBypassServiceWorker where
 -- | Function for the 'Network.setBypassServiceWorker' command.
 --   Toggles ignoring of service worker for each request.
 --   Parameters: 'PNetworkSetBypassServiceWorker'
-networkSetBypassServiceWorker :: Handle ev -> PNetworkSetBypassServiceWorker -> IO ()
-networkSetBypassServiceWorker handle params = sendReceiveCommand handle "Network.setBypassServiceWorker" (Just params)
+networkSetBypassServiceWorker :: Handle ev -> Maybe String -> PNetworkSetBypassServiceWorker -> IO ()
+networkSetBypassServiceWorker handle sessionId params = sendReceiveCommand handle sessionId "Network.setBypassServiceWorker" (Just params )
 
 
 -- | Parameters of the 'networkSetCacheDisabled' command.
@@ -5300,8 +5300,8 @@ instance FromJSON  PNetworkSetCacheDisabled where
 -- | Function for the 'Network.setCacheDisabled' command.
 --   Toggles ignoring cache for each request. If `true`, cache will not be used.
 --   Parameters: 'PNetworkSetCacheDisabled'
-networkSetCacheDisabled :: Handle ev -> PNetworkSetCacheDisabled -> IO ()
-networkSetCacheDisabled handle params = sendReceiveCommand handle "Network.setCacheDisabled" (Just params)
+networkSetCacheDisabled :: Handle ev -> Maybe String -> PNetworkSetCacheDisabled -> IO ()
+networkSetCacheDisabled handle sessionId params = sendReceiveCommand handle sessionId "Network.setCacheDisabled" (Just params )
 
 
 -- | Parameters of the 'networkSetCookie' command.
@@ -5350,8 +5350,8 @@ instance FromJSON  PNetworkSetCookie where
 -- | Function for the 'Network.setCookie' command.
 --   Sets a cookie with the given cookie data; may overwrite equivalent cookies if they exist.
 --   Parameters: 'PNetworkSetCookie'
-networkSetCookie :: Handle ev -> PNetworkSetCookie -> IO ()
-networkSetCookie handle params = sendReceiveCommand handle "Network.setCookie" (Just params)
+networkSetCookie :: Handle ev -> Maybe String -> PNetworkSetCookie -> IO ()
+networkSetCookie handle sessionId params = sendReceiveCommand handle sessionId "Network.setCookie" (Just params )
 
 
 -- | Parameters of the 'networkSetCookies' command.
@@ -5369,8 +5369,8 @@ instance FromJSON  PNetworkSetCookies where
 -- | Function for the 'Network.setCookies' command.
 --   Sets given cookies.
 --   Parameters: 'PNetworkSetCookies'
-networkSetCookies :: Handle ev -> PNetworkSetCookies -> IO ()
-networkSetCookies handle params = sendReceiveCommand handle "Network.setCookies" (Just params)
+networkSetCookies :: Handle ev -> Maybe String -> PNetworkSetCookies -> IO ()
+networkSetCookies handle sessionId params = sendReceiveCommand handle sessionId "Network.setCookies" (Just params )
 
 
 -- | Parameters of the 'networkSetExtraHttpHeaders' command.
@@ -5388,8 +5388,8 @@ instance FromJSON  PNetworkSetExtraHttpHeaders where
 -- | Function for the 'Network.setExtraHTTPHeaders' command.
 --   Specifies whether to always send extra HTTP headers with the requests from this page.
 --   Parameters: 'PNetworkSetExtraHttpHeaders'
-networkSetExtraHttpHeaders :: Handle ev -> PNetworkSetExtraHttpHeaders -> IO ()
-networkSetExtraHttpHeaders handle params = sendReceiveCommand handle "Network.setExtraHTTPHeaders" (Just params)
+networkSetExtraHttpHeaders :: Handle ev -> Maybe String -> PNetworkSetExtraHttpHeaders -> IO ()
+networkSetExtraHttpHeaders handle sessionId params = sendReceiveCommand handle sessionId "Network.setExtraHTTPHeaders" (Just params )
 
 
 -- | Parameters of the 'networkSetAttachDebugStack' command.
@@ -5407,8 +5407,8 @@ instance FromJSON  PNetworkSetAttachDebugStack where
 -- | Function for the 'Network.setAttachDebugStack' command.
 --   Specifies whether to attach a page script stack id in requests
 --   Parameters: 'PNetworkSetAttachDebugStack'
-networkSetAttachDebugStack :: Handle ev -> PNetworkSetAttachDebugStack -> IO ()
-networkSetAttachDebugStack handle params = sendReceiveCommand handle "Network.setAttachDebugStack" (Just params)
+networkSetAttachDebugStack :: Handle ev -> Maybe String -> PNetworkSetAttachDebugStack -> IO ()
+networkSetAttachDebugStack handle sessionId params = sendReceiveCommand handle sessionId "Network.setAttachDebugStack" (Just params )
 
 
 -- | Parameters of the 'networkSetUserAgentOverride' command.
@@ -5432,8 +5432,8 @@ instance FromJSON  PNetworkSetUserAgentOverride where
 -- | Function for the 'Network.setUserAgentOverride' command.
 --   Allows overriding user agent with the given string.
 --   Parameters: 'PNetworkSetUserAgentOverride'
-networkSetUserAgentOverride :: Handle ev -> PNetworkSetUserAgentOverride -> IO ()
-networkSetUserAgentOverride handle params = sendReceiveCommand handle "Network.setUserAgentOverride" (Just params)
+networkSetUserAgentOverride :: Handle ev -> Maybe String -> PNetworkSetUserAgentOverride -> IO ()
+networkSetUserAgentOverride handle sessionId params = sendReceiveCommand handle sessionId "Network.setUserAgentOverride" (Just params )
 
 
 -- | Parameters of the 'networkGetSecurityIsolationStatus' command.
@@ -5452,8 +5452,8 @@ instance FromJSON  PNetworkGetSecurityIsolationStatus where
 --   Returns information about the COEP/COOP isolation status.
 --   Parameters: 'PNetworkGetSecurityIsolationStatus'
 --   Returns: 'NetworkGetSecurityIsolationStatus'
-networkGetSecurityIsolationStatus :: Handle ev -> PNetworkGetSecurityIsolationStatus -> IO NetworkGetSecurityIsolationStatus
-networkGetSecurityIsolationStatus handle params = sendReceiveCommandResult handle "Network.getSecurityIsolationStatus" (Just params)
+networkGetSecurityIsolationStatus :: Handle ev -> Maybe String -> PNetworkGetSecurityIsolationStatus -> IO NetworkGetSecurityIsolationStatus
+networkGetSecurityIsolationStatus handle sessionId params = sendReceiveCommandResult handle sessionId "Network.getSecurityIsolationStatus" (Just params )
 
 -- | Return type of the 'networkGetSecurityIsolationStatus' command.
 data NetworkGetSecurityIsolationStatus = NetworkGetSecurityIsolationStatus {
@@ -5484,8 +5484,8 @@ instance FromJSON  PNetworkEnableReportingApi where
 --   Enables tracking for the Reporting API, events generated by the Reporting API will now be delivered to the client.
 --   Enabling triggers 'reportingApiReportAdded' for all existing reports.
 --   Parameters: 'PNetworkEnableReportingApi'
-networkEnableReportingApi :: Handle ev -> PNetworkEnableReportingApi -> IO ()
-networkEnableReportingApi handle params = sendReceiveCommand handle "Network.enableReportingApi" (Just params)
+networkEnableReportingApi :: Handle ev -> Maybe String -> PNetworkEnableReportingApi -> IO ()
+networkEnableReportingApi handle sessionId params = sendReceiveCommand handle sessionId "Network.enableReportingApi" (Just params )
 
 
 -- | Parameters of the 'networkLoadNetworkResource' command.
@@ -5509,8 +5509,8 @@ instance FromJSON  PNetworkLoadNetworkResource where
 --   Fetches the resource and returns the content.
 --   Parameters: 'PNetworkLoadNetworkResource'
 --   Returns: 'NetworkLoadNetworkResource'
-networkLoadNetworkResource :: Handle ev -> PNetworkLoadNetworkResource -> IO NetworkLoadNetworkResource
-networkLoadNetworkResource handle params = sendReceiveCommandResult handle "Network.loadNetworkResource" (Just params)
+networkLoadNetworkResource :: Handle ev -> Maybe String -> PNetworkLoadNetworkResource -> IO NetworkLoadNetworkResource
+networkLoadNetworkResource handle sessionId params = sendReceiveCommandResult handle sessionId "Network.loadNetworkResource" (Just params )
 
 -- | Return type of the 'networkLoadNetworkResource' command.
 data NetworkLoadNetworkResource = NetworkLoadNetworkResource {
@@ -7313,8 +7313,8 @@ instance FromJSON  PPageAddScriptToEvaluateOnNewDocument where
 --   Evaluates given script in every frame upon creation (before loading frame's scripts).
 --   Parameters: 'PPageAddScriptToEvaluateOnNewDocument'
 --   Returns: 'PageAddScriptToEvaluateOnNewDocument'
-pageAddScriptToEvaluateOnNewDocument :: Handle ev -> PPageAddScriptToEvaluateOnNewDocument -> IO PageAddScriptToEvaluateOnNewDocument
-pageAddScriptToEvaluateOnNewDocument handle params = sendReceiveCommandResult handle "Page.addScriptToEvaluateOnNewDocument" (Just params)
+pageAddScriptToEvaluateOnNewDocument :: Handle ev -> Maybe String -> PPageAddScriptToEvaluateOnNewDocument -> IO PageAddScriptToEvaluateOnNewDocument
+pageAddScriptToEvaluateOnNewDocument handle sessionId params = sendReceiveCommandResult handle sessionId "Page.addScriptToEvaluateOnNewDocument" (Just params )
 
 -- | Return type of the 'pageAddScriptToEvaluateOnNewDocument' command.
 data PageAddScriptToEvaluateOnNewDocument = PageAddScriptToEvaluateOnNewDocument {
@@ -7332,8 +7332,8 @@ instance Command PageAddScriptToEvaluateOnNewDocument where
 
 -- | Function for the 'Page.bringToFront' command.
 --   Brings page to front (activates tab).
-pageBringToFront :: Handle ev -> IO ()
-pageBringToFront handle = sendReceiveCommand handle "Page.bringToFront" (Nothing :: Maybe ())
+pageBringToFront :: Handle ev -> Maybe String -> IO ()
+pageBringToFront handle sessionId = sendReceiveCommand handle sessionId "Page.bringToFront" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'pageCaptureScreenshot' command.
@@ -7358,7 +7358,7 @@ instance ToJSON PPageCaptureScreenshotFormat where
 
 data PPageCaptureScreenshot = PPageCaptureScreenshot {
   -- | Image compression format (defaults to png).
-  pPageCaptureScreenshotFormat :: PPageCaptureScreenshotFormat,
+  pPageCaptureScreenshotFormat :: Maybe PPageCaptureScreenshotFormat,
   -- | Compression quality from range [0..100] (jpeg only).
   pPageCaptureScreenshotQuality :: Maybe Int,
   -- | Capture the screenshot of a given region only.
@@ -7379,8 +7379,8 @@ instance FromJSON  PPageCaptureScreenshot where
 --   Capture page screenshot.
 --   Parameters: 'PPageCaptureScreenshot'
 --   Returns: 'PageCaptureScreenshot'
-pageCaptureScreenshot :: Handle ev -> PPageCaptureScreenshot -> IO PageCaptureScreenshot
-pageCaptureScreenshot handle params = sendReceiveCommandResult handle "Page.captureScreenshot" (Just params)
+pageCaptureScreenshot :: Handle ev -> Maybe String -> PPageCaptureScreenshot -> IO PageCaptureScreenshot
+pageCaptureScreenshot handle sessionId params = sendReceiveCommandResult handle sessionId "Page.captureScreenshot" (Just params )
 
 -- | Return type of the 'pageCaptureScreenshot' command.
 data PageCaptureScreenshot = PageCaptureScreenshot {
@@ -7414,7 +7414,7 @@ instance ToJSON PPageCaptureSnapshotFormat where
 
 data PPageCaptureSnapshot = PPageCaptureSnapshot {
   -- | Format (defaults to mhtml).
-  pPageCaptureSnapshotFormat :: PPageCaptureSnapshotFormat
+  pPageCaptureSnapshotFormat :: Maybe PPageCaptureSnapshotFormat
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageCaptureSnapshot  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -7428,8 +7428,8 @@ instance FromJSON  PPageCaptureSnapshot where
 --   iframes, shadow DOM, external resources, and element-inline styles.
 --   Parameters: 'PPageCaptureSnapshot'
 --   Returns: 'PageCaptureSnapshot'
-pageCaptureSnapshot :: Handle ev -> PPageCaptureSnapshot -> IO PageCaptureSnapshot
-pageCaptureSnapshot handle params = sendReceiveCommandResult handle "Page.captureSnapshot" (Just params)
+pageCaptureSnapshot :: Handle ev -> Maybe String -> PPageCaptureSnapshot -> IO PageCaptureSnapshot
+pageCaptureSnapshot handle sessionId params = sendReceiveCommandResult handle sessionId "Page.captureSnapshot" (Just params )
 
 -- | Return type of the 'pageCaptureSnapshot' command.
 data PageCaptureSnapshot = PageCaptureSnapshot {
@@ -7466,8 +7466,8 @@ instance FromJSON  PPageCreateIsolatedWorld where
 --   Creates an isolated world for the given frame.
 --   Parameters: 'PPageCreateIsolatedWorld'
 --   Returns: 'PageCreateIsolatedWorld'
-pageCreateIsolatedWorld :: Handle ev -> PPageCreateIsolatedWorld -> IO PageCreateIsolatedWorld
-pageCreateIsolatedWorld handle params = sendReceiveCommandResult handle "Page.createIsolatedWorld" (Just params)
+pageCreateIsolatedWorld :: Handle ev -> Maybe String -> PPageCreateIsolatedWorld -> IO PageCreateIsolatedWorld
+pageCreateIsolatedWorld handle sessionId params = sendReceiveCommandResult handle sessionId "Page.createIsolatedWorld" (Just params )
 
 -- | Return type of the 'pageCreateIsolatedWorld' command.
 data PageCreateIsolatedWorld = PageCreateIsolatedWorld {
@@ -7485,21 +7485,21 @@ instance Command PageCreateIsolatedWorld where
 
 -- | Function for the 'Page.disable' command.
 --   Disables page domain notifications.
-pageDisable :: Handle ev -> IO ()
-pageDisable handle = sendReceiveCommand handle "Page.disable" (Nothing :: Maybe ())
+pageDisable :: Handle ev -> Maybe String -> IO ()
+pageDisable handle sessionId = sendReceiveCommand handle sessionId "Page.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Page.enable' command.
 --   Enables page domain notifications.
-pageEnable :: Handle ev -> IO ()
-pageEnable handle = sendReceiveCommand handle "Page.enable" (Nothing :: Maybe ())
+pageEnable :: Handle ev -> Maybe String -> IO ()
+pageEnable handle sessionId = sendReceiveCommand handle sessionId "Page.enable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Page.getAppManifest' command.
 --   
 --   Returns: 'PageGetAppManifest'
-pageGetAppManifest :: Handle ev -> IO PageGetAppManifest
-pageGetAppManifest handle = sendReceiveCommandResult handle "Page.getAppManifest" (Nothing :: Maybe ())
+pageGetAppManifest :: Handle ev -> Maybe String -> IO PageGetAppManifest
+pageGetAppManifest handle sessionId = sendReceiveCommandResult handle sessionId "Page.getAppManifest" (Nothing :: Maybe ())
 
 -- | Return type of the 'pageGetAppManifest' command.
 data PageGetAppManifest = PageGetAppManifest {
@@ -7523,8 +7523,8 @@ instance Command PageGetAppManifest where
 -- | Function for the 'Page.getInstallabilityErrors' command.
 --   
 --   Returns: 'PageGetInstallabilityErrors'
-pageGetInstallabilityErrors :: Handle ev -> IO PageGetInstallabilityErrors
-pageGetInstallabilityErrors handle = sendReceiveCommandResult handle "Page.getInstallabilityErrors" (Nothing :: Maybe ())
+pageGetInstallabilityErrors :: Handle ev -> Maybe String -> IO PageGetInstallabilityErrors
+pageGetInstallabilityErrors handle sessionId = sendReceiveCommandResult handle sessionId "Page.getInstallabilityErrors" (Nothing :: Maybe ())
 
 -- | Return type of the 'pageGetInstallabilityErrors' command.
 data PageGetInstallabilityErrors = PageGetInstallabilityErrors {
@@ -7542,8 +7542,8 @@ instance Command PageGetInstallabilityErrors where
 -- | Function for the 'Page.getManifestIcons' command.
 --   
 --   Returns: 'PageGetManifestIcons'
-pageGetManifestIcons :: Handle ev -> IO PageGetManifestIcons
-pageGetManifestIcons handle = sendReceiveCommandResult handle "Page.getManifestIcons" (Nothing :: Maybe ())
+pageGetManifestIcons :: Handle ev -> Maybe String -> IO PageGetManifestIcons
+pageGetManifestIcons handle sessionId = sendReceiveCommandResult handle sessionId "Page.getManifestIcons" (Nothing :: Maybe ())
 
 -- | Return type of the 'pageGetManifestIcons' command.
 data PageGetManifestIcons = PageGetManifestIcons {
@@ -7562,8 +7562,8 @@ instance Command PageGetManifestIcons where
 --   Returns the unique (PWA) app id.
 --   Only returns values if the feature flag 'WebAppEnableManifestId' is enabled
 --   Returns: 'PageGetAppId'
-pageGetAppId :: Handle ev -> IO PageGetAppId
-pageGetAppId handle = sendReceiveCommandResult handle "Page.getAppId" (Nothing :: Maybe ())
+pageGetAppId :: Handle ev -> Maybe String -> IO PageGetAppId
+pageGetAppId handle sessionId = sendReceiveCommandResult handle sessionId "Page.getAppId" (Nothing :: Maybe ())
 
 -- | Return type of the 'pageGetAppId' command.
 data PageGetAppId = PageGetAppId {
@@ -7584,8 +7584,8 @@ instance Command PageGetAppId where
 -- | Function for the 'Page.getFrameTree' command.
 --   Returns present frame tree structure.
 --   Returns: 'PageGetFrameTree'
-pageGetFrameTree :: Handle ev -> IO PageGetFrameTree
-pageGetFrameTree handle = sendReceiveCommandResult handle "Page.getFrameTree" (Nothing :: Maybe ())
+pageGetFrameTree :: Handle ev -> Maybe String -> IO PageGetFrameTree
+pageGetFrameTree handle sessionId = sendReceiveCommandResult handle sessionId "Page.getFrameTree" (Nothing :: Maybe ())
 
 -- | Return type of the 'pageGetFrameTree' command.
 data PageGetFrameTree = PageGetFrameTree {
@@ -7604,8 +7604,8 @@ instance Command PageGetFrameTree where
 -- | Function for the 'Page.getLayoutMetrics' command.
 --   Returns metrics relating to the layouting of the page, such as viewport bounds/scale.
 --   Returns: 'PageGetLayoutMetrics'
-pageGetLayoutMetrics :: Handle ev -> IO PageGetLayoutMetrics
-pageGetLayoutMetrics handle = sendReceiveCommandResult handle "Page.getLayoutMetrics" (Nothing :: Maybe ())
+pageGetLayoutMetrics :: Handle ev -> Maybe String -> IO PageGetLayoutMetrics
+pageGetLayoutMetrics handle sessionId = sendReceiveCommandResult handle sessionId "Page.getLayoutMetrics" (Nothing :: Maybe ())
 
 -- | Return type of the 'pageGetLayoutMetrics' command.
 data PageGetLayoutMetrics = PageGetLayoutMetrics {
@@ -7628,8 +7628,8 @@ instance Command PageGetLayoutMetrics where
 -- | Function for the 'Page.getNavigationHistory' command.
 --   Returns navigation history for the current page.
 --   Returns: 'PageGetNavigationHistory'
-pageGetNavigationHistory :: Handle ev -> IO PageGetNavigationHistory
-pageGetNavigationHistory handle = sendReceiveCommandResult handle "Page.getNavigationHistory" (Nothing :: Maybe ())
+pageGetNavigationHistory :: Handle ev -> Maybe String -> IO PageGetNavigationHistory
+pageGetNavigationHistory handle sessionId = sendReceiveCommandResult handle sessionId "Page.getNavigationHistory" (Nothing :: Maybe ())
 
 -- | Return type of the 'pageGetNavigationHistory' command.
 data PageGetNavigationHistory = PageGetNavigationHistory {
@@ -7649,8 +7649,8 @@ instance Command PageGetNavigationHistory where
 
 -- | Function for the 'Page.resetNavigationHistory' command.
 --   Resets navigation history for the current page.
-pageResetNavigationHistory :: Handle ev -> IO ()
-pageResetNavigationHistory handle = sendReceiveCommand handle "Page.resetNavigationHistory" (Nothing :: Maybe ())
+pageResetNavigationHistory :: Handle ev -> Maybe String -> IO ()
+pageResetNavigationHistory handle sessionId = sendReceiveCommand handle sessionId "Page.resetNavigationHistory" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'pageGetResourceContent' command.
@@ -7671,8 +7671,8 @@ instance FromJSON  PPageGetResourceContent where
 --   Returns content of the given resource.
 --   Parameters: 'PPageGetResourceContent'
 --   Returns: 'PageGetResourceContent'
-pageGetResourceContent :: Handle ev -> PPageGetResourceContent -> IO PageGetResourceContent
-pageGetResourceContent handle params = sendReceiveCommandResult handle "Page.getResourceContent" (Just params)
+pageGetResourceContent :: Handle ev -> Maybe String -> PPageGetResourceContent -> IO PageGetResourceContent
+pageGetResourceContent handle sessionId params = sendReceiveCommandResult handle sessionId "Page.getResourceContent" (Just params )
 
 -- | Return type of the 'pageGetResourceContent' command.
 data PageGetResourceContent = PageGetResourceContent {
@@ -7693,8 +7693,8 @@ instance Command PageGetResourceContent where
 -- | Function for the 'Page.getResourceTree' command.
 --   Returns present frame / resource tree structure.
 --   Returns: 'PageGetResourceTree'
-pageGetResourceTree :: Handle ev -> IO PageGetResourceTree
-pageGetResourceTree handle = sendReceiveCommandResult handle "Page.getResourceTree" (Nothing :: Maybe ())
+pageGetResourceTree :: Handle ev -> Maybe String -> IO PageGetResourceTree
+pageGetResourceTree handle sessionId = sendReceiveCommandResult handle sessionId "Page.getResourceTree" (Nothing :: Maybe ())
 
 -- | Return type of the 'pageGetResourceTree' command.
 data PageGetResourceTree = PageGetResourceTree {
@@ -7728,8 +7728,8 @@ instance FromJSON  PPageHandleJavaScriptDialog where
 -- | Function for the 'Page.handleJavaScriptDialog' command.
 --   Accepts or dismisses a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload).
 --   Parameters: 'PPageHandleJavaScriptDialog'
-pageHandleJavaScriptDialog :: Handle ev -> PPageHandleJavaScriptDialog -> IO ()
-pageHandleJavaScriptDialog handle params = sendReceiveCommand handle "Page.handleJavaScriptDialog" (Just params)
+pageHandleJavaScriptDialog :: Handle ev -> Maybe String -> PPageHandleJavaScriptDialog -> IO ()
+pageHandleJavaScriptDialog handle sessionId params = sendReceiveCommand handle sessionId "Page.handleJavaScriptDialog" (Just params )
 
 
 -- | Parameters of the 'pageNavigate' command.
@@ -7756,8 +7756,8 @@ instance FromJSON  PPageNavigate where
 --   Navigates current page to the given URL.
 --   Parameters: 'PPageNavigate'
 --   Returns: 'PageNavigate'
-pageNavigate :: Handle ev -> PPageNavigate -> IO PageNavigate
-pageNavigate handle params = sendReceiveCommandResult handle "Page.navigate" (Just params)
+pageNavigate :: Handle ev -> Maybe String -> PPageNavigate -> IO PageNavigate
+pageNavigate handle sessionId params = sendReceiveCommandResult handle sessionId "Page.navigate" (Just params )
 
 -- | Return type of the 'pageNavigate' command.
 data PageNavigate = PageNavigate {
@@ -7793,8 +7793,8 @@ instance FromJSON  PPageNavigateToHistoryEntry where
 -- | Function for the 'Page.navigateToHistoryEntry' command.
 --   Navigates current page to the given history entry.
 --   Parameters: 'PPageNavigateToHistoryEntry'
-pageNavigateToHistoryEntry :: Handle ev -> PPageNavigateToHistoryEntry -> IO ()
-pageNavigateToHistoryEntry handle params = sendReceiveCommand handle "Page.navigateToHistoryEntry" (Just params)
+pageNavigateToHistoryEntry :: Handle ev -> Maybe String -> PPageNavigateToHistoryEntry -> IO ()
+pageNavigateToHistoryEntry handle sessionId params = sendReceiveCommand handle sessionId "Page.navigateToHistoryEntry" (Just params )
 
 
 -- | Parameters of the 'pagePrintToPdf' command.
@@ -7861,7 +7861,7 @@ data PPagePrintToPdf = PPagePrintToPdf {
   --   in which case the content will be scaled to fit the paper size.
   pPagePrintToPdfPreferCssPageSize :: Maybe Bool,
   -- | return as stream
-  pPagePrintToPdfTransferMode :: PPagePrintToPdfTransferMode
+  pPagePrintToPdfTransferMode :: Maybe PPagePrintToPdfTransferMode
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPagePrintToPdf  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
@@ -7874,8 +7874,8 @@ instance FromJSON  PPagePrintToPdf where
 --   Print page as PDF.
 --   Parameters: 'PPagePrintToPdf'
 --   Returns: 'PagePrintToPdf'
-pagePrintToPdf :: Handle ev -> PPagePrintToPdf -> IO PagePrintToPdf
-pagePrintToPdf handle params = sendReceiveCommandResult handle "Page.printToPDF" (Just params)
+pagePrintToPdf :: Handle ev -> Maybe String -> PPagePrintToPdf -> IO PagePrintToPdf
+pagePrintToPdf handle sessionId params = sendReceiveCommandResult handle sessionId "Page.printToPDF" (Just params )
 
 -- | Return type of the 'pagePrintToPdf' command.
 data PagePrintToPdf = PagePrintToPdf {
@@ -7911,8 +7911,8 @@ instance FromJSON  PPageReload where
 -- | Function for the 'Page.reload' command.
 --   Reloads given page optionally ignoring the cache.
 --   Parameters: 'PPageReload'
-pageReload :: Handle ev -> PPageReload -> IO ()
-pageReload handle params = sendReceiveCommand handle "Page.reload" (Just params)
+pageReload :: Handle ev -> Maybe String -> PPageReload -> IO ()
+pageReload handle sessionId params = sendReceiveCommand handle sessionId "Page.reload" (Just params )
 
 
 -- | Parameters of the 'pageRemoveScriptToEvaluateOnNewDocument' command.
@@ -7929,8 +7929,8 @@ instance FromJSON  PPageRemoveScriptToEvaluateOnNewDocument where
 -- | Function for the 'Page.removeScriptToEvaluateOnNewDocument' command.
 --   Removes given script from the list.
 --   Parameters: 'PPageRemoveScriptToEvaluateOnNewDocument'
-pageRemoveScriptToEvaluateOnNewDocument :: Handle ev -> PPageRemoveScriptToEvaluateOnNewDocument -> IO ()
-pageRemoveScriptToEvaluateOnNewDocument handle params = sendReceiveCommand handle "Page.removeScriptToEvaluateOnNewDocument" (Just params)
+pageRemoveScriptToEvaluateOnNewDocument :: Handle ev -> Maybe String -> PPageRemoveScriptToEvaluateOnNewDocument -> IO ()
+pageRemoveScriptToEvaluateOnNewDocument handle sessionId params = sendReceiveCommand handle sessionId "Page.removeScriptToEvaluateOnNewDocument" (Just params )
 
 
 -- | Parameters of the 'pageScreencastFrameAck' command.
@@ -7948,8 +7948,8 @@ instance FromJSON  PPageScreencastFrameAck where
 -- | Function for the 'Page.screencastFrameAck' command.
 --   Acknowledges that a screencast frame has been received by the frontend.
 --   Parameters: 'PPageScreencastFrameAck'
-pageScreencastFrameAck :: Handle ev -> PPageScreencastFrameAck -> IO ()
-pageScreencastFrameAck handle params = sendReceiveCommand handle "Page.screencastFrameAck" (Just params)
+pageScreencastFrameAck :: Handle ev -> Maybe String -> PPageScreencastFrameAck -> IO ()
+pageScreencastFrameAck handle sessionId params = sendReceiveCommand handle sessionId "Page.screencastFrameAck" (Just params )
 
 
 -- | Parameters of the 'pageSearchInResource' command.
@@ -7976,8 +7976,8 @@ instance FromJSON  PPageSearchInResource where
 --   Searches for given string in resource content.
 --   Parameters: 'PPageSearchInResource'
 --   Returns: 'PageSearchInResource'
-pageSearchInResource :: Handle ev -> PPageSearchInResource -> IO PageSearchInResource
-pageSearchInResource handle params = sendReceiveCommandResult handle "Page.searchInResource" (Just params)
+pageSearchInResource :: Handle ev -> Maybe String -> PPageSearchInResource -> IO PageSearchInResource
+pageSearchInResource handle sessionId params = sendReceiveCommandResult handle sessionId "Page.searchInResource" (Just params )
 
 -- | Return type of the 'pageSearchInResource' command.
 data PageSearchInResource = PageSearchInResource {
@@ -8008,8 +8008,8 @@ instance FromJSON  PPageSetAdBlockingEnabled where
 -- | Function for the 'Page.setAdBlockingEnabled' command.
 --   Enable Chrome's experimental ad filter on all sites.
 --   Parameters: 'PPageSetAdBlockingEnabled'
-pageSetAdBlockingEnabled :: Handle ev -> PPageSetAdBlockingEnabled -> IO ()
-pageSetAdBlockingEnabled handle params = sendReceiveCommand handle "Page.setAdBlockingEnabled" (Just params)
+pageSetAdBlockingEnabled :: Handle ev -> Maybe String -> PPageSetAdBlockingEnabled -> IO ()
+pageSetAdBlockingEnabled handle sessionId params = sendReceiveCommand handle sessionId "Page.setAdBlockingEnabled" (Just params )
 
 
 -- | Parameters of the 'pageSetBypassCsp' command.
@@ -8027,8 +8027,8 @@ instance FromJSON  PPageSetBypassCsp where
 -- | Function for the 'Page.setBypassCSP' command.
 --   Enable page Content Security Policy by-passing.
 --   Parameters: 'PPageSetBypassCsp'
-pageSetBypassCsp :: Handle ev -> PPageSetBypassCsp -> IO ()
-pageSetBypassCsp handle params = sendReceiveCommand handle "Page.setBypassCSP" (Just params)
+pageSetBypassCsp :: Handle ev -> Maybe String -> PPageSetBypassCsp -> IO ()
+pageSetBypassCsp handle sessionId params = sendReceiveCommand handle sessionId "Page.setBypassCSP" (Just params )
 
 
 -- | Parameters of the 'pageGetPermissionsPolicyState' command.
@@ -8046,8 +8046,8 @@ instance FromJSON  PPageGetPermissionsPolicyState where
 --   Get Permissions Policy state on given frame.
 --   Parameters: 'PPageGetPermissionsPolicyState'
 --   Returns: 'PageGetPermissionsPolicyState'
-pageGetPermissionsPolicyState :: Handle ev -> PPageGetPermissionsPolicyState -> IO PageGetPermissionsPolicyState
-pageGetPermissionsPolicyState handle params = sendReceiveCommandResult handle "Page.getPermissionsPolicyState" (Just params)
+pageGetPermissionsPolicyState :: Handle ev -> Maybe String -> PPageGetPermissionsPolicyState -> IO PageGetPermissionsPolicyState
+pageGetPermissionsPolicyState handle sessionId params = sendReceiveCommandResult handle sessionId "Page.getPermissionsPolicyState" (Just params )
 
 -- | Return type of the 'pageGetPermissionsPolicyState' command.
 data PageGetPermissionsPolicyState = PageGetPermissionsPolicyState {
@@ -8077,8 +8077,8 @@ instance FromJSON  PPageGetOriginTrials where
 --   Get Origin Trials on given frame.
 --   Parameters: 'PPageGetOriginTrials'
 --   Returns: 'PageGetOriginTrials'
-pageGetOriginTrials :: Handle ev -> PPageGetOriginTrials -> IO PageGetOriginTrials
-pageGetOriginTrials handle params = sendReceiveCommandResult handle "Page.getOriginTrials" (Just params)
+pageGetOriginTrials :: Handle ev -> Maybe String -> PPageGetOriginTrials -> IO PageGetOriginTrials
+pageGetOriginTrials handle sessionId params = sendReceiveCommandResult handle sessionId "Page.getOriginTrials" (Just params )
 
 -- | Return type of the 'pageGetOriginTrials' command.
 data PageGetOriginTrials = PageGetOriginTrials {
@@ -8110,8 +8110,8 @@ instance FromJSON  PPageSetFontFamilies where
 -- | Function for the 'Page.setFontFamilies' command.
 --   Set generic font families.
 --   Parameters: 'PPageSetFontFamilies'
-pageSetFontFamilies :: Handle ev -> PPageSetFontFamilies -> IO ()
-pageSetFontFamilies handle params = sendReceiveCommand handle "Page.setFontFamilies" (Just params)
+pageSetFontFamilies :: Handle ev -> Maybe String -> PPageSetFontFamilies -> IO ()
+pageSetFontFamilies handle sessionId params = sendReceiveCommand handle sessionId "Page.setFontFamilies" (Just params )
 
 
 -- | Parameters of the 'pageSetFontSizes' command.
@@ -8129,8 +8129,8 @@ instance FromJSON  PPageSetFontSizes where
 -- | Function for the 'Page.setFontSizes' command.
 --   Set default font sizes.
 --   Parameters: 'PPageSetFontSizes'
-pageSetFontSizes :: Handle ev -> PPageSetFontSizes -> IO ()
-pageSetFontSizes handle params = sendReceiveCommand handle "Page.setFontSizes" (Just params)
+pageSetFontSizes :: Handle ev -> Maybe String -> PPageSetFontSizes -> IO ()
+pageSetFontSizes handle sessionId params = sendReceiveCommand handle sessionId "Page.setFontSizes" (Just params )
 
 
 -- | Parameters of the 'pageSetDocumentContent' command.
@@ -8150,8 +8150,8 @@ instance FromJSON  PPageSetDocumentContent where
 -- | Function for the 'Page.setDocumentContent' command.
 --   Sets given markup as the document's HTML.
 --   Parameters: 'PPageSetDocumentContent'
-pageSetDocumentContent :: Handle ev -> PPageSetDocumentContent -> IO ()
-pageSetDocumentContent handle params = sendReceiveCommand handle "Page.setDocumentContent" (Just params)
+pageSetDocumentContent :: Handle ev -> Maybe String -> PPageSetDocumentContent -> IO ()
+pageSetDocumentContent handle sessionId params = sendReceiveCommand handle sessionId "Page.setDocumentContent" (Just params )
 
 
 -- | Parameters of the 'pageSetLifecycleEventsEnabled' command.
@@ -8169,8 +8169,8 @@ instance FromJSON  PPageSetLifecycleEventsEnabled where
 -- | Function for the 'Page.setLifecycleEventsEnabled' command.
 --   Controls whether page will emit lifecycle events.
 --   Parameters: 'PPageSetLifecycleEventsEnabled'
-pageSetLifecycleEventsEnabled :: Handle ev -> PPageSetLifecycleEventsEnabled -> IO ()
-pageSetLifecycleEventsEnabled handle params = sendReceiveCommand handle "Page.setLifecycleEventsEnabled" (Just params)
+pageSetLifecycleEventsEnabled :: Handle ev -> Maybe String -> PPageSetLifecycleEventsEnabled -> IO ()
+pageSetLifecycleEventsEnabled handle sessionId params = sendReceiveCommand handle sessionId "Page.setLifecycleEventsEnabled" (Just params )
 
 
 -- | Parameters of the 'pageStartScreencast' command.
@@ -8193,7 +8193,7 @@ instance ToJSON PPageStartScreencastFormat where
 
 data PPageStartScreencast = PPageStartScreencast {
   -- | Image compression format.
-  pPageStartScreencastFormat :: PPageStartScreencastFormat,
+  pPageStartScreencastFormat :: Maybe PPageStartScreencastFormat,
   -- | Compression quality from range [0..100].
   pPageStartScreencastQuality :: Maybe Int,
   -- | Maximum screenshot width.
@@ -8213,26 +8213,26 @@ instance FromJSON  PPageStartScreencast where
 -- | Function for the 'Page.startScreencast' command.
 --   Starts sending each frame using the `screencastFrame` event.
 --   Parameters: 'PPageStartScreencast'
-pageStartScreencast :: Handle ev -> PPageStartScreencast -> IO ()
-pageStartScreencast handle params = sendReceiveCommand handle "Page.startScreencast" (Just params)
+pageStartScreencast :: Handle ev -> Maybe String -> PPageStartScreencast -> IO ()
+pageStartScreencast handle sessionId params = sendReceiveCommand handle sessionId "Page.startScreencast" (Just params )
 
 
 -- | Function for the 'Page.stopLoading' command.
 --   Force the page stop all navigations and pending resource fetches.
-pageStopLoading :: Handle ev -> IO ()
-pageStopLoading handle = sendReceiveCommand handle "Page.stopLoading" (Nothing :: Maybe ())
+pageStopLoading :: Handle ev -> Maybe String -> IO ()
+pageStopLoading handle sessionId = sendReceiveCommand handle sessionId "Page.stopLoading" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Page.crash' command.
 --   Crashes renderer on the IO thread, generates minidumps.
-pageCrash :: Handle ev -> IO ()
-pageCrash handle = sendReceiveCommand handle "Page.crash" (Nothing :: Maybe ())
+pageCrash :: Handle ev -> Maybe String -> IO ()
+pageCrash handle sessionId = sendReceiveCommand handle sessionId "Page.crash" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Page.close' command.
 --   Tries to close page, running its beforeunload hooks, if any.
-pageClose :: Handle ev -> IO ()
-pageClose handle = sendReceiveCommand handle "Page.close" (Nothing :: Maybe ())
+pageClose :: Handle ev -> Maybe String -> IO ()
+pageClose handle sessionId = sendReceiveCommand handle sessionId "Page.close" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'pageSetWebLifecycleState' command.
@@ -8269,14 +8269,14 @@ instance FromJSON  PPageSetWebLifecycleState where
 --   It will transition the page to the given state according to:
 --   https://github.com/WICG/web-lifecycle/
 --   Parameters: 'PPageSetWebLifecycleState'
-pageSetWebLifecycleState :: Handle ev -> PPageSetWebLifecycleState -> IO ()
-pageSetWebLifecycleState handle params = sendReceiveCommand handle "Page.setWebLifecycleState" (Just params)
+pageSetWebLifecycleState :: Handle ev -> Maybe String -> PPageSetWebLifecycleState -> IO ()
+pageSetWebLifecycleState handle sessionId params = sendReceiveCommand handle sessionId "Page.setWebLifecycleState" (Just params )
 
 
 -- | Function for the 'Page.stopScreencast' command.
 --   Stops sending each frame in the `screencastFrame`.
-pageStopScreencast :: Handle ev -> IO ()
-pageStopScreencast handle = sendReceiveCommand handle "Page.stopScreencast" (Nothing :: Maybe ())
+pageStopScreencast :: Handle ev -> Maybe String -> IO ()
+pageStopScreencast handle sessionId = sendReceiveCommand handle sessionId "Page.stopScreencast" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'pageProduceCompilationCache' command.
@@ -8298,8 +8298,8 @@ instance FromJSON  PPageProduceCompilationCache where
 --   produced upon backend discretion, based on internal heuristics.
 --   See also: `Page.compilationCacheProduced`.
 --   Parameters: 'PPageProduceCompilationCache'
-pageProduceCompilationCache :: Handle ev -> PPageProduceCompilationCache -> IO ()
-pageProduceCompilationCache handle params = sendReceiveCommand handle "Page.produceCompilationCache" (Just params)
+pageProduceCompilationCache :: Handle ev -> Maybe String -> PPageProduceCompilationCache -> IO ()
+pageProduceCompilationCache handle sessionId params = sendReceiveCommand handle sessionId "Page.produceCompilationCache" (Just params )
 
 
 -- | Parameters of the 'pageAddCompilationCache' command.
@@ -8319,14 +8319,14 @@ instance FromJSON  PPageAddCompilationCache where
 --   Seeds compilation cache for given url. Compilation cache does not survive
 --   cross-process navigation.
 --   Parameters: 'PPageAddCompilationCache'
-pageAddCompilationCache :: Handle ev -> PPageAddCompilationCache -> IO ()
-pageAddCompilationCache handle params = sendReceiveCommand handle "Page.addCompilationCache" (Just params)
+pageAddCompilationCache :: Handle ev -> Maybe String -> PPageAddCompilationCache -> IO ()
+pageAddCompilationCache handle sessionId params = sendReceiveCommand handle sessionId "Page.addCompilationCache" (Just params )
 
 
 -- | Function for the 'Page.clearCompilationCache' command.
 --   Clears seeded compilation cache.
-pageClearCompilationCache :: Handle ev -> IO ()
-pageClearCompilationCache handle = sendReceiveCommand handle "Page.clearCompilationCache" (Nothing :: Maybe ())
+pageClearCompilationCache :: Handle ev -> Maybe String -> IO ()
+pageClearCompilationCache handle sessionId = sendReceiveCommand handle sessionId "Page.clearCompilationCache" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'pageSetSpcTransactionMode' command.
@@ -8363,8 +8363,8 @@ instance FromJSON  PPageSetSpcTransactionMode where
 --   Sets the Secure Payment Confirmation transaction mode.
 --   https://w3c.github.io/secure-payment-confirmation/#sctn-automation-set-spc-transaction-mode
 --   Parameters: 'PPageSetSpcTransactionMode'
-pageSetSpcTransactionMode :: Handle ev -> PPageSetSpcTransactionMode -> IO ()
-pageSetSpcTransactionMode handle params = sendReceiveCommand handle "Page.setSPCTransactionMode" (Just params)
+pageSetSpcTransactionMode :: Handle ev -> Maybe String -> PPageSetSpcTransactionMode -> IO ()
+pageSetSpcTransactionMode handle sessionId params = sendReceiveCommand handle sessionId "Page.setSPCTransactionMode" (Just params )
 
 
 -- | Parameters of the 'pageGenerateTestReport' command.
@@ -8384,14 +8384,14 @@ instance FromJSON  PPageGenerateTestReport where
 -- | Function for the 'Page.generateTestReport' command.
 --   Generates a report for testing.
 --   Parameters: 'PPageGenerateTestReport'
-pageGenerateTestReport :: Handle ev -> PPageGenerateTestReport -> IO ()
-pageGenerateTestReport handle params = sendReceiveCommand handle "Page.generateTestReport" (Just params)
+pageGenerateTestReport :: Handle ev -> Maybe String -> PPageGenerateTestReport -> IO ()
+pageGenerateTestReport handle sessionId params = sendReceiveCommand handle sessionId "Page.generateTestReport" (Just params )
 
 
 -- | Function for the 'Page.waitForDebugger' command.
 --   Pauses page execution. Can be resumed using generic Runtime.runIfWaitingForDebugger.
-pageWaitForDebugger :: Handle ev -> IO ()
-pageWaitForDebugger handle = sendReceiveCommand handle "Page.waitForDebugger" (Nothing :: Maybe ())
+pageWaitForDebugger :: Handle ev -> Maybe String -> IO ()
+pageWaitForDebugger handle sessionId = sendReceiveCommand handle sessionId "Page.waitForDebugger" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'pageSetInterceptFileChooserDialog' command.
@@ -8410,8 +8410,8 @@ instance FromJSON  PPageSetInterceptFileChooserDialog where
 --   When file chooser interception is enabled, native file chooser dialog is not shown.
 --   Instead, a protocol event `Page.fileChooserOpened` is emitted.
 --   Parameters: 'PPageSetInterceptFileChooserDialog'
-pageSetInterceptFileChooserDialog :: Handle ev -> PPageSetInterceptFileChooserDialog -> IO ()
-pageSetInterceptFileChooserDialog handle params = sendReceiveCommand handle "Page.setInterceptFileChooserDialog" (Just params)
+pageSetInterceptFileChooserDialog :: Handle ev -> Maybe String -> PPageSetInterceptFileChooserDialog -> IO ()
+pageSetInterceptFileChooserDialog handle sessionId params = sendReceiveCommand handle sessionId "Page.setInterceptFileChooserDialog" (Just params )
 
 
 
@@ -8634,14 +8634,14 @@ instance FromJSON  SecurityVisibleSecurityStateChanged where
 
 -- | Function for the 'Security.disable' command.
 --   Disables tracking security state changes.
-securityDisable :: Handle ev -> IO ()
-securityDisable handle = sendReceiveCommand handle "Security.disable" (Nothing :: Maybe ())
+securityDisable :: Handle ev -> Maybe String -> IO ()
+securityDisable handle sessionId = sendReceiveCommand handle sessionId "Security.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Security.enable' command.
 --   Enables tracking security state changes.
-securityEnable :: Handle ev -> IO ()
-securityEnable handle = sendReceiveCommand handle "Security.enable" (Nothing :: Maybe ())
+securityEnable :: Handle ev -> Maybe String -> IO ()
+securityEnable handle sessionId = sendReceiveCommand handle sessionId "Security.enable" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'securitySetIgnoreCertificateErrors' command.
@@ -8659,8 +8659,8 @@ instance FromJSON  PSecuritySetIgnoreCertificateErrors where
 -- | Function for the 'Security.setIgnoreCertificateErrors' command.
 --   Enable/disable whether all certificate errors should be ignored.
 --   Parameters: 'PSecuritySetIgnoreCertificateErrors'
-securitySetIgnoreCertificateErrors :: Handle ev -> PSecuritySetIgnoreCertificateErrors -> IO ()
-securitySetIgnoreCertificateErrors handle params = sendReceiveCommand handle "Security.setIgnoreCertificateErrors" (Just params)
+securitySetIgnoreCertificateErrors :: Handle ev -> Maybe String -> PSecuritySetIgnoreCertificateErrors -> IO ()
+securitySetIgnoreCertificateErrors handle sessionId params = sendReceiveCommand handle sessionId "Security.setIgnoreCertificateErrors" (Just params )
 
 
 

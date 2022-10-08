@@ -1093,8 +1093,8 @@ instance FromJSON  PAuditsGetEncodedResponse where
 --   applies to images.
 --   Parameters: 'PAuditsGetEncodedResponse'
 --   Returns: 'AuditsGetEncodedResponse'
-auditsGetEncodedResponse :: Handle ev -> PAuditsGetEncodedResponse -> IO AuditsGetEncodedResponse
-auditsGetEncodedResponse handle params = sendReceiveCommandResult handle "Audits.getEncodedResponse" (Just params)
+auditsGetEncodedResponse :: Handle ev -> Maybe String -> PAuditsGetEncodedResponse -> IO AuditsGetEncodedResponse
+auditsGetEncodedResponse handle sessionId params = sendReceiveCommandResult handle sessionId "Audits.getEncodedResponse" (Just params )
 
 -- | Return type of the 'auditsGetEncodedResponse' command.
 data AuditsGetEncodedResponse = AuditsGetEncodedResponse {
@@ -1116,15 +1116,15 @@ instance Command AuditsGetEncodedResponse where
 
 -- | Function for the 'Audits.disable' command.
 --   Disables issues domain, prevents further issues from being reported to the client.
-auditsDisable :: Handle ev -> IO ()
-auditsDisable handle = sendReceiveCommand handle "Audits.disable" (Nothing :: Maybe ())
+auditsDisable :: Handle ev -> Maybe String -> IO ()
+auditsDisable handle sessionId = sendReceiveCommand handle sessionId "Audits.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Audits.enable' command.
 --   Enables issues domain, sends the issues collected so far to the client by means of the
 --   `issueAdded` event.
-auditsEnable :: Handle ev -> IO ()
-auditsEnable handle = sendReceiveCommand handle "Audits.enable" (Nothing :: Maybe ())
+auditsEnable :: Handle ev -> Maybe String -> IO ()
+auditsEnable handle sessionId = sendReceiveCommand handle sessionId "Audits.enable" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'auditsCheckContrast' command.
@@ -1143,8 +1143,8 @@ instance FromJSON  PAuditsCheckContrast where
 --   Runs the contrast check for the target page. Found issues are reported
 --   using Audits.issueAdded event.
 --   Parameters: 'PAuditsCheckContrast'
-auditsCheckContrast :: Handle ev -> PAuditsCheckContrast -> IO ()
-auditsCheckContrast handle params = sendReceiveCommand handle "Audits.checkContrast" (Just params)
+auditsCheckContrast :: Handle ev -> Maybe String -> PAuditsCheckContrast -> IO ()
+auditsCheckContrast handle sessionId params = sendReceiveCommand handle sessionId "Audits.checkContrast" (Just params )
 
 
 

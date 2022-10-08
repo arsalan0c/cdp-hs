@@ -144,20 +144,20 @@ instance FromJSON  PDomStorageClear where
 -- | Function for the 'DOMStorage.clear' command.
 --   
 --   Parameters: 'PDomStorageClear'
-domStorageClear :: Handle ev -> PDomStorageClear -> IO ()
-domStorageClear handle params = sendReceiveCommand handle "DOMStorage.clear" (Just params)
+domStorageClear :: Handle ev -> Maybe String -> PDomStorageClear -> IO ()
+domStorageClear handle sessionId params = sendReceiveCommand handle sessionId "DOMStorage.clear" (Just params )
 
 
 -- | Function for the 'DOMStorage.disable' command.
 --   Disables storage tracking, prevents storage events from being sent to the client.
-domStorageDisable :: Handle ev -> IO ()
-domStorageDisable handle = sendReceiveCommand handle "DOMStorage.disable" (Nothing :: Maybe ())
+domStorageDisable :: Handle ev -> Maybe String -> IO ()
+domStorageDisable handle sessionId = sendReceiveCommand handle sessionId "DOMStorage.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'DOMStorage.enable' command.
 --   Enables storage tracking, storage events will now be delivered to the client.
-domStorageEnable :: Handle ev -> IO ()
-domStorageEnable handle = sendReceiveCommand handle "DOMStorage.enable" (Nothing :: Maybe ())
+domStorageEnable :: Handle ev -> Maybe String -> IO ()
+domStorageEnable handle sessionId = sendReceiveCommand handle sessionId "DOMStorage.enable" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'domStorageGetDomStorageItems' command.
@@ -175,8 +175,8 @@ instance FromJSON  PDomStorageGetDomStorageItems where
 --   
 --   Parameters: 'PDomStorageGetDomStorageItems'
 --   Returns: 'DomStorageGetDomStorageItems'
-domStorageGetDomStorageItems :: Handle ev -> PDomStorageGetDomStorageItems -> IO DomStorageGetDomStorageItems
-domStorageGetDomStorageItems handle params = sendReceiveCommandResult handle "DOMStorage.getDOMStorageItems" (Just params)
+domStorageGetDomStorageItems :: Handle ev -> Maybe String -> PDomStorageGetDomStorageItems -> IO DomStorageGetDomStorageItems
+domStorageGetDomStorageItems handle sessionId params = sendReceiveCommandResult handle sessionId "DOMStorage.getDOMStorageItems" (Just params )
 
 -- | Return type of the 'domStorageGetDomStorageItems' command.
 data DomStorageGetDomStorageItems = DomStorageGetDomStorageItems {
@@ -206,8 +206,8 @@ instance FromJSON  PDomStorageRemoveDomStorageItem where
 -- | Function for the 'DOMStorage.removeDOMStorageItem' command.
 --   
 --   Parameters: 'PDomStorageRemoveDomStorageItem'
-domStorageRemoveDomStorageItem :: Handle ev -> PDomStorageRemoveDomStorageItem -> IO ()
-domStorageRemoveDomStorageItem handle params = sendReceiveCommand handle "DOMStorage.removeDOMStorageItem" (Just params)
+domStorageRemoveDomStorageItem :: Handle ev -> Maybe String -> PDomStorageRemoveDomStorageItem -> IO ()
+domStorageRemoveDomStorageItem handle sessionId params = sendReceiveCommand handle sessionId "DOMStorage.removeDOMStorageItem" (Just params )
 
 
 -- | Parameters of the 'domStorageSetDomStorageItem' command.
@@ -226,8 +226,8 @@ instance FromJSON  PDomStorageSetDomStorageItem where
 -- | Function for the 'DOMStorage.setDOMStorageItem' command.
 --   
 --   Parameters: 'PDomStorageSetDomStorageItem'
-domStorageSetDomStorageItem :: Handle ev -> PDomStorageSetDomStorageItem -> IO ()
-domStorageSetDomStorageItem handle params = sendReceiveCommand handle "DOMStorage.setDOMStorageItem" (Just params)
+domStorageSetDomStorageItem :: Handle ev -> Maybe String -> PDomStorageSetDomStorageItem -> IO ()
+domStorageSetDomStorageItem handle sessionId params = sendReceiveCommand handle sessionId "DOMStorage.setDOMStorageItem" (Just params )
 
 
 

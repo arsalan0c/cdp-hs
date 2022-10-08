@@ -37,12 +37,14 @@ import Data.Char
 
 import CDP.Internal.Endpoints
 
+type EventHandlerId   = (String, Maybe SessionId) 
+type EventHandlers ev = Map.Map EventHandlerId (ev -> IO ())
+type CommandBuffer    = Map.Map CommandId BS.ByteString
 
-type CommandBuffer = Map.Map CommandId BS.ByteString
 data Handle' ev = MkHandle
     { config            :: Config
     , randomGen        :: MVar StdGen
-    , eventHandlers    :: MVar (Map.Map String (ev -> IO ()))
+    , eventHandlers    :: MVar (EventHandlers ev)
     , commandBuffer    :: MVar CommandBuffer
     , conn             :: WS.Connection
     , listenThread     :: ThreadId
@@ -112,15 +114,14 @@ logResponse handle s bs = if (doLogResponses (config handle))
         else pure ()
 
 dispatchEventResponse :: forall ev. FromJSONEvent ev => Handle' ev -> BS.ByteString -> IO ()
-dispatchEventResponse handle bs = do
-    void $ go handle . A.decode $ bs
+dispatchEventResponse handle bs = void $ go handle . A.decode $ bs
   where
     go :: forall ev. FromJSONEvent ev => Handle' ev -> Maybe (EventResponse ev) -> IO ()
     go handle evr = maybe (pure ()) f evr -- TODO: throw error
       where
-        f (EventResponse ps p v) = do
+        f (EventResponse ps p sessionIdM v) = do
             evs <- readMVar (eventHandlers handle)
-            let handlerM = Map.lookup (eventName ps p) evs
+            let handlerM = Map.lookup (eventName ps p, sessionIdM) evs
             if isJust handlerM
                 then logResponse handle (eventName ps p) bs
                 else pure ()
@@ -128,18 +129,20 @@ dispatchEventResponse handle bs = do
             let handler = fromMaybe print handlerM -- :CONFIG
             maybe (pure ()) handler v
 
-updateEventHandlers :: forall ev. FromJSONEvent ev => Handle' ev -> (Map.Map String (ev -> IO ()) -> Map.Map String (ev -> IO ())) -> IO ()
+updateEventHandlers :: forall ev. FromJSONEvent ev => Handle' ev 
+    -> (EventHandlers ev -> EventHandlers ev) 
+    -> IO ()
 updateEventHandlers handle f = ($ pure . f) . modifyMVar_ . eventHandlers $ handle
 
-subscribe' :: forall ev a . (FromJSONEvent ev, FromEvent ev a) => Handle' ev -> (a -> IO ()) -> IO ()
-subscribe' handle h = updateEventHandlers handle $ Map.insert (eventName ps p) handler
+subscribe' :: forall ev a . (FromJSONEvent ev, FromEvent ev a) => Handle' ev -> Maybe SessionId -> (a -> IO ()) -> IO ()
+subscribe' handle sessionId handler1 = updateEventHandlers handle $ Map.insert (eventName ps p, sessionId) handler2
   where
-    handler = maybe (pure ()) h . fromEvent
+    handler2 = maybe (pure ()) handler1 . fromEvent
     p  = (Proxy :: Proxy a)
     ps = (Proxy :: Proxy s)
 
-unsubscribe' :: forall ev a. (FromJSONEvent ev, FromEvent ev a) => Handle' ev -> Proxy a -> IO ()
-unsubscribe' handle p = updateEventHandlers handle (Map.delete (eventName ps p))
+unsubscribe' :: forall ev a. (FromJSONEvent ev, FromEvent ev a) => Handle' ev -> Maybe SessionId -> Proxy a -> IO ()
+unsubscribe' handle sessionId p = updateEventHandlers handle (Map.delete (eventName ps p, sessionId))
   where
     ps = Proxy :: Proxy ev
 
@@ -148,7 +151,7 @@ class (FromJSON a) => FromEvent ev a | a -> ev where
     fromEvent     :: ev       -> Maybe a
 
 data EventResponse ev where
-    EventResponse :: (Show ev, Show a, FromEvent ev a) => Proxy ev -> Proxy a -> Maybe ev -> EventResponse ev
+    EventResponse :: (Show ev, Show a, FromEvent ev a) => Proxy ev -> Proxy a -> Maybe SessionId -> Maybe ev -> EventResponse ev
 
 
 newtype CommandId = CommandId { unCommandId :: Int }
@@ -158,37 +161,42 @@ instance FromJSON CommandId where
     parseJSON = A.withObject "CommandId" $ \obj -> do
         CommandId <$> obj .: "id"
 
+type SessionId = String
 data CommandObj a = CommandObj {
-      coId :: CommandId
-    , coMethod :: String
-    , coParams :: Maybe a
+      coId        :: CommandId
+    , coSessionId :: Maybe SessionId
+    , coMethod    :: String
+    , coParams    :: Maybe a
     } deriving Show
 
 instance (ToJSON a) => ToJSON (CommandObj a) where
    toJSON cmd = A.object . concat $
-        [ [ "id"     .= coId cmd ]
-        , [ "method" .= coMethod cmd ]
-        , maybe [] (\p -> [ "params" .= p ]) $ coParams cmd
+        [ [ "id"        .= coId cmd ]
+        , [ "method"    .= coMethod cmd ]
+        , maybe [] (\sid -> [ "sessionId" .= sid ]) $ coSessionId cmd
+        , maybe [] (\p   -> [ "params" .= p ]) $ coParams cmd
         ]
 
 randomCommandId :: Handle' ev -> IO CommandId
 randomCommandId handle = modifyMVar (randomGen handle) $ \g -> do
-    let (id, g2) = uniformR (0 :: Int, 1000 :: Int) g
+    let (id, g2) = uniformR (0 :: Int, 1000000 :: Int) g -- TODO:
     pure (g2, CommandId id)
 
 class (FromJSON b) => Command b where
     commandName :: Proxy b -> String
 
 data CommandResponse b = CommandResponse 
-    { crId      :: CommandId
-    , crResult  :: Either ProtocolError b
+    { crId        :: CommandId
+    , crResult    :: Either ProtocolError b
+    , crSessionId :: Maybe SessionId
     }
     deriving (Eq, Show)
 
 instance (Command b) => FromJSON (CommandResponse b) where
     parseJSON = A.withObject "CommandResponse" $ \obj -> do
-        crId     <- CommandId <$> obj .: "id"
-        crResult <- (Left <$> (obj .: "error")) <|> (Right <$> (obj .: "result"))
+        crId        <- CommandId <$> obj .: "id"
+        crSessionId <- obj .:? "sessionId"
+        crResult    <- (Left <$> (obj .: "error")) <|> (Right <$> (obj .: "result"))
         pure CommandResponse{..}
         
 data NoResponse = NoResponse
@@ -211,13 +219,13 @@ data ProtocolError =
 instance Exception ProtocolError
 
 instance Show ProtocolError where
-    show (PEParse msg)            = msg 
-    show (PEInvalidRequest msg)   = msg
-    show (PEMethodNotFound msg)   = msg
-    show (PEInvalidParams msg)    = msg
-    show (PEInternalError msg)    = msg
-    show (PEServerError msg)      = msg
-    show (PEOther msg)            = msg
+    show (PEParse msg)            = unlines ["Server parsing protocol error:", msg] 
+    show (PEInvalidRequest msg)   = unlines ["Invalid request protocol error:", msg]
+    show (PEMethodNotFound msg)   = unlines ["Method not found protocol error:", msg]
+    show (PEInvalidParams msg)    = unlines ["Invalid params protocol error:", msg]
+    show (PEInternalError msg)    = unlines ["Internal protocol error:", msg]
+    show (PEServerError msg)      = unlines ["Server protocol error:", msg]
+    show (PEOther msg)            = unlines ["Other protocol error:", msg]
 
 instance FromJSON ProtocolError where
     parseJSON = A.withObject "ProtocolError" $ \obj -> do
@@ -244,32 +252,37 @@ instance Show Error where
     show (ERRParse msg)     = unlines ["error in parsing a message received from the protocol:", msg]
     show (ERRProtocol pe)   = show pe 
 
-sendCommand :: forall a. (Show a, ToJSON a) => WS.Connection -> CommandId -> String -> Maybe a -> IO ()
-sendCommand conn id name params = do
-    let co = CommandObj id name params
+sendCommand :: forall a. (Show a, ToJSON a) => WS.Connection -> CommandId -> Maybe SessionId -> String -> Maybe a -> IO ()
+sendCommand conn cid sessionId name params = do
+    let co = CommandObj { 
+              coId        = cid
+            , coSessionId = sessionId
+            , coMethod    = name
+            , coParams    = params
+            }
     WS.sendTextData conn . A.encode $ co
   where
     paramsProxy = Proxy :: Proxy a
 
 receiveCommandResponse :: forall ev b. Command b => Handle' ev -> CommandId -> IO (Either Error (CommandResponse b))
-receiveCommandResponse handle id = do
+receiveCommandResponse handle commandId = do
     bsM <- maybe (fmap Just) timeout (commandTimeout . config $ handle) $ 
         untilJust $ do
             updateCommandBufferM (commandBuffer handle) $ \buffer -> do
-                let bsM = Map.lookup id buffer
+                let bsM = Map.lookup commandId buffer
                 if isNothing bsM
                     then do threadDelay 1000; pure (buffer, bsM)
-                    else pure $ (Map.delete id buffer, bsM)
+                    else pure $ (Map.delete commandId buffer, bsM)
 
     maybe (pure ()) (logResponse handle (commandName p)) bsM
     pure $ maybe (Left ERRNoResponse) (either (Left . ERRParse) Right . A.eitherDecode) $ bsM
   where
     p = Proxy :: Proxy b
 
-sendReceiveCommandResult' :: forall a b ev. (Show a, ToJSON a, Command b) => Handle' ev -> String -> Maybe a -> IO b
-sendReceiveCommandResult' handle name params = do
+sendReceiveCommandResult' :: forall a b ev. (Show a, ToJSON a, Command b) => Handle' ev -> Maybe SessionId -> String -> Maybe a -> IO b
+sendReceiveCommandResult' handle sessionId name params = do
     cid <- randomCommandId handle
-    sendCommand (conn handle) cid name params
+    sendCommand (conn handle) cid sessionId name params
     response <- receiveCommandResponse handle cid
     either throwIO pure $ case response of
         Left err -> Left err
@@ -277,10 +290,10 @@ sendReceiveCommandResult' handle name params = do
   where
     resultProxy = Proxy :: Proxy b
     
-sendReceiveCommand' :: (Show a, ToJSON a) => Handle' ev -> String -> Maybe a -> IO ()
-sendReceiveCommand' handle name params = do
+sendReceiveCommand' :: (Show a, ToJSON a) => Handle' ev -> Maybe SessionId -> String -> Maybe a -> IO ()
+sendReceiveCommand' handle sessionId name params = do
     cid <- randomCommandId handle
-    sendCommand (conn handle) cid name params
+    sendCommand (conn handle) cid sessionId name params
     response <- receiveCommandResponse handle cid :: IO (Either Error (CommandResponse NoResponse))
     maybe (pure ()) throwIO $ case response of
         Left err                  -> Just err

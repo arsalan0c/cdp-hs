@@ -160,8 +160,8 @@ instance FromJSON  PBackgroundServiceStartObserving where
 -- | Function for the 'BackgroundService.startObserving' command.
 --   Enables event updates for the service.
 --   Parameters: 'PBackgroundServiceStartObserving'
-backgroundServiceStartObserving :: Handle ev -> PBackgroundServiceStartObserving -> IO ()
-backgroundServiceStartObserving handle params = sendReceiveCommand handle "BackgroundService.startObserving" (Just params)
+backgroundServiceStartObserving :: Handle ev -> Maybe String -> PBackgroundServiceStartObserving -> IO ()
+backgroundServiceStartObserving handle sessionId params = sendReceiveCommand handle sessionId "BackgroundService.startObserving" (Just params )
 
 
 -- | Parameters of the 'backgroundServiceStopObserving' command.
@@ -178,8 +178,8 @@ instance FromJSON  PBackgroundServiceStopObserving where
 -- | Function for the 'BackgroundService.stopObserving' command.
 --   Disables event updates for the service.
 --   Parameters: 'PBackgroundServiceStopObserving'
-backgroundServiceStopObserving :: Handle ev -> PBackgroundServiceStopObserving -> IO ()
-backgroundServiceStopObserving handle params = sendReceiveCommand handle "BackgroundService.stopObserving" (Just params)
+backgroundServiceStopObserving :: Handle ev -> Maybe String -> PBackgroundServiceStopObserving -> IO ()
+backgroundServiceStopObserving handle sessionId params = sendReceiveCommand handle sessionId "BackgroundService.stopObserving" (Just params )
 
 
 -- | Parameters of the 'backgroundServiceSetRecording' command.
@@ -197,8 +197,8 @@ instance FromJSON  PBackgroundServiceSetRecording where
 -- | Function for the 'BackgroundService.setRecording' command.
 --   Set the recording state for the service.
 --   Parameters: 'PBackgroundServiceSetRecording'
-backgroundServiceSetRecording :: Handle ev -> PBackgroundServiceSetRecording -> IO ()
-backgroundServiceSetRecording handle params = sendReceiveCommand handle "BackgroundService.setRecording" (Just params)
+backgroundServiceSetRecording :: Handle ev -> Maybe String -> PBackgroundServiceSetRecording -> IO ()
+backgroundServiceSetRecording handle sessionId params = sendReceiveCommand handle sessionId "BackgroundService.setRecording" (Just params )
 
 
 -- | Parameters of the 'backgroundServiceClearEvents' command.
@@ -215,8 +215,8 @@ instance FromJSON  PBackgroundServiceClearEvents where
 -- | Function for the 'BackgroundService.clearEvents' command.
 --   Clears all stored data for the service.
 --   Parameters: 'PBackgroundServiceClearEvents'
-backgroundServiceClearEvents :: Handle ev -> PBackgroundServiceClearEvents -> IO ()
-backgroundServiceClearEvents handle params = sendReceiveCommand handle "BackgroundService.clearEvents" (Just params)
+backgroundServiceClearEvents :: Handle ev -> Maybe String -> PBackgroundServiceClearEvents -> IO ()
+backgroundServiceClearEvents handle sessionId params = sendReceiveCommand handle sessionId "BackgroundService.clearEvents" (Just params )
 
 
 

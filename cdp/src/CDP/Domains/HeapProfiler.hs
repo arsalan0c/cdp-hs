@@ -188,23 +188,23 @@ instance FromJSON  PHeapProfilerAddInspectedHeapObject where
 --   Enables console to refer to the node with given id via $x (see Command Line API for more details
 --   $x functions).
 --   Parameters: 'PHeapProfilerAddInspectedHeapObject'
-heapProfilerAddInspectedHeapObject :: Handle ev -> PHeapProfilerAddInspectedHeapObject -> IO ()
-heapProfilerAddInspectedHeapObject handle params = sendReceiveCommand handle "HeapProfiler.addInspectedHeapObject" (Just params)
+heapProfilerAddInspectedHeapObject :: Handle ev -> Maybe String -> PHeapProfilerAddInspectedHeapObject -> IO ()
+heapProfilerAddInspectedHeapObject handle sessionId params = sendReceiveCommand handle sessionId "HeapProfiler.addInspectedHeapObject" (Just params )
 
 
 -- | Function for the 'HeapProfiler.collectGarbage' command.
-heapProfilerCollectGarbage :: Handle ev -> IO ()
-heapProfilerCollectGarbage handle = sendReceiveCommand handle "HeapProfiler.collectGarbage" (Nothing :: Maybe ())
+heapProfilerCollectGarbage :: Handle ev -> Maybe String -> IO ()
+heapProfilerCollectGarbage handle sessionId = sendReceiveCommand handle sessionId "HeapProfiler.collectGarbage" (Nothing :: Maybe ())
 
 
 -- | Function for the 'HeapProfiler.disable' command.
-heapProfilerDisable :: Handle ev -> IO ()
-heapProfilerDisable handle = sendReceiveCommand handle "HeapProfiler.disable" (Nothing :: Maybe ())
+heapProfilerDisable :: Handle ev -> Maybe String -> IO ()
+heapProfilerDisable handle sessionId = sendReceiveCommand handle sessionId "HeapProfiler.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'HeapProfiler.enable' command.
-heapProfilerEnable :: Handle ev -> IO ()
-heapProfilerEnable handle = sendReceiveCommand handle "HeapProfiler.enable" (Nothing :: Maybe ())
+heapProfilerEnable :: Handle ev -> Maybe String -> IO ()
+heapProfilerEnable handle sessionId = sendReceiveCommand handle sessionId "HeapProfiler.enable" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'heapProfilerGetHeapObjectId' command.
@@ -223,8 +223,8 @@ instance FromJSON  PHeapProfilerGetHeapObjectId where
 --   
 --   Parameters: 'PHeapProfilerGetHeapObjectId'
 --   Returns: 'HeapProfilerGetHeapObjectId'
-heapProfilerGetHeapObjectId :: Handle ev -> PHeapProfilerGetHeapObjectId -> IO HeapProfilerGetHeapObjectId
-heapProfilerGetHeapObjectId handle params = sendReceiveCommandResult handle "HeapProfiler.getHeapObjectId" (Just params)
+heapProfilerGetHeapObjectId :: Handle ev -> Maybe String -> PHeapProfilerGetHeapObjectId -> IO HeapProfilerGetHeapObjectId
+heapProfilerGetHeapObjectId handle sessionId params = sendReceiveCommandResult handle sessionId "HeapProfiler.getHeapObjectId" (Just params )
 
 -- | Return type of the 'heapProfilerGetHeapObjectId' command.
 data HeapProfilerGetHeapObjectId = HeapProfilerGetHeapObjectId {
@@ -257,8 +257,8 @@ instance FromJSON  PHeapProfilerGetObjectByHeapObjectId where
 --   
 --   Parameters: 'PHeapProfilerGetObjectByHeapObjectId'
 --   Returns: 'HeapProfilerGetObjectByHeapObjectId'
-heapProfilerGetObjectByHeapObjectId :: Handle ev -> PHeapProfilerGetObjectByHeapObjectId -> IO HeapProfilerGetObjectByHeapObjectId
-heapProfilerGetObjectByHeapObjectId handle params = sendReceiveCommandResult handle "HeapProfiler.getObjectByHeapObjectId" (Just params)
+heapProfilerGetObjectByHeapObjectId :: Handle ev -> Maybe String -> PHeapProfilerGetObjectByHeapObjectId -> IO HeapProfilerGetObjectByHeapObjectId
+heapProfilerGetObjectByHeapObjectId handle sessionId params = sendReceiveCommandResult handle sessionId "HeapProfiler.getObjectByHeapObjectId" (Just params )
 
 -- | Return type of the 'heapProfilerGetObjectByHeapObjectId' command.
 data HeapProfilerGetObjectByHeapObjectId = HeapProfilerGetObjectByHeapObjectId {
@@ -277,8 +277,8 @@ instance Command HeapProfilerGetObjectByHeapObjectId where
 -- | Function for the 'HeapProfiler.getSamplingProfile' command.
 --   
 --   Returns: 'HeapProfilerGetSamplingProfile'
-heapProfilerGetSamplingProfile :: Handle ev -> IO HeapProfilerGetSamplingProfile
-heapProfilerGetSamplingProfile handle = sendReceiveCommandResult handle "HeapProfiler.getSamplingProfile" (Nothing :: Maybe ())
+heapProfilerGetSamplingProfile :: Handle ev -> Maybe String -> IO HeapProfilerGetSamplingProfile
+heapProfilerGetSamplingProfile handle sessionId = sendReceiveCommandResult handle sessionId "HeapProfiler.getSamplingProfile" (Nothing :: Maybe ())
 
 -- | Return type of the 'heapProfilerGetSamplingProfile' command.
 data HeapProfilerGetSamplingProfile = HeapProfilerGetSamplingProfile {
@@ -310,8 +310,8 @@ instance FromJSON  PHeapProfilerStartSampling where
 -- | Function for the 'HeapProfiler.startSampling' command.
 --   
 --   Parameters: 'PHeapProfilerStartSampling'
-heapProfilerStartSampling :: Handle ev -> PHeapProfilerStartSampling -> IO ()
-heapProfilerStartSampling handle params = sendReceiveCommand handle "HeapProfiler.startSampling" (Just params)
+heapProfilerStartSampling :: Handle ev -> Maybe String -> PHeapProfilerStartSampling -> IO ()
+heapProfilerStartSampling handle sessionId params = sendReceiveCommand handle sessionId "HeapProfiler.startSampling" (Just params )
 
 
 -- | Parameters of the 'heapProfilerStartTrackingHeapObjects' command.
@@ -328,15 +328,15 @@ instance FromJSON  PHeapProfilerStartTrackingHeapObjects where
 -- | Function for the 'HeapProfiler.startTrackingHeapObjects' command.
 --   
 --   Parameters: 'PHeapProfilerStartTrackingHeapObjects'
-heapProfilerStartTrackingHeapObjects :: Handle ev -> PHeapProfilerStartTrackingHeapObjects -> IO ()
-heapProfilerStartTrackingHeapObjects handle params = sendReceiveCommand handle "HeapProfiler.startTrackingHeapObjects" (Just params)
+heapProfilerStartTrackingHeapObjects :: Handle ev -> Maybe String -> PHeapProfilerStartTrackingHeapObjects -> IO ()
+heapProfilerStartTrackingHeapObjects handle sessionId params = sendReceiveCommand handle sessionId "HeapProfiler.startTrackingHeapObjects" (Just params )
 
 
 -- | Function for the 'HeapProfiler.stopSampling' command.
 --   
 --   Returns: 'HeapProfilerStopSampling'
-heapProfilerStopSampling :: Handle ev -> IO HeapProfilerStopSampling
-heapProfilerStopSampling handle = sendReceiveCommandResult handle "HeapProfiler.stopSampling" (Nothing :: Maybe ())
+heapProfilerStopSampling :: Handle ev -> Maybe String -> IO HeapProfilerStopSampling
+heapProfilerStopSampling handle sessionId = sendReceiveCommandResult handle sessionId "HeapProfiler.stopSampling" (Nothing :: Maybe ())
 
 -- | Return type of the 'heapProfilerStopSampling' command.
 data HeapProfilerStopSampling = HeapProfilerStopSampling {
@@ -371,8 +371,8 @@ instance FromJSON  PHeapProfilerStopTrackingHeapObjects where
 -- | Function for the 'HeapProfiler.stopTrackingHeapObjects' command.
 --   
 --   Parameters: 'PHeapProfilerStopTrackingHeapObjects'
-heapProfilerStopTrackingHeapObjects :: Handle ev -> PHeapProfilerStopTrackingHeapObjects -> IO ()
-heapProfilerStopTrackingHeapObjects handle params = sendReceiveCommand handle "HeapProfiler.stopTrackingHeapObjects" (Just params)
+heapProfilerStopTrackingHeapObjects :: Handle ev -> Maybe String -> PHeapProfilerStopTrackingHeapObjects -> IO ()
+heapProfilerStopTrackingHeapObjects handle sessionId params = sendReceiveCommand handle sessionId "HeapProfiler.stopTrackingHeapObjects" (Just params )
 
 
 -- | Parameters of the 'heapProfilerTakeHeapSnapshot' command.
@@ -394,8 +394,8 @@ instance FromJSON  PHeapProfilerTakeHeapSnapshot where
 -- | Function for the 'HeapProfiler.takeHeapSnapshot' command.
 --   
 --   Parameters: 'PHeapProfilerTakeHeapSnapshot'
-heapProfilerTakeHeapSnapshot :: Handle ev -> PHeapProfilerTakeHeapSnapshot -> IO ()
-heapProfilerTakeHeapSnapshot handle params = sendReceiveCommand handle "HeapProfiler.takeHeapSnapshot" (Just params)
+heapProfilerTakeHeapSnapshot :: Handle ev -> Maybe String -> PHeapProfilerTakeHeapSnapshot -> IO ()
+heapProfilerTakeHeapSnapshot handle sessionId params = sendReceiveCommand handle sessionId "HeapProfiler.takeHeapSnapshot" (Just params )
 
 
 

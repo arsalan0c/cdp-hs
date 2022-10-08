@@ -81,8 +81,8 @@ instance FromJSON  PTetheringBind where
 -- | Function for the 'Tethering.bind' command.
 --   Request browser port binding.
 --   Parameters: 'PTetheringBind'
-tetheringBind :: Handle ev -> PTetheringBind -> IO ()
-tetheringBind handle params = sendReceiveCommand handle "Tethering.bind" (Just params)
+tetheringBind :: Handle ev -> Maybe String -> PTetheringBind -> IO ()
+tetheringBind handle sessionId params = sendReceiveCommand handle sessionId "Tethering.bind" (Just params )
 
 
 -- | Parameters of the 'tetheringUnbind' command.
@@ -100,8 +100,8 @@ instance FromJSON  PTetheringUnbind where
 -- | Function for the 'Tethering.unbind' command.
 --   Request browser port unbinding.
 --   Parameters: 'PTetheringUnbind'
-tetheringUnbind :: Handle ev -> PTetheringUnbind -> IO ()
-tetheringUnbind handle params = sendReceiveCommand handle "Tethering.unbind" (Just params)
+tetheringUnbind :: Handle ev -> Maybe String -> PTetheringUnbind -> IO ()
+tetheringUnbind handle sessionId params = sendReceiveCommand handle sessionId "Tethering.unbind" (Just params )
 
 
 

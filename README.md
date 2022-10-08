@@ -39,20 +39,20 @@ main = do
 printPDF :: CDP.Handle CDP.Event -> IO ()
 printPDF handle = do
     -- send the Page.printToPDF command
-    r <- CDP.pagePrintToPdf handle $ 
+    r <- CDP.pagePrintToPdf handle Nothing $ 
             CDP.PPagePrintToPdf Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing $
-                CDP.PPagePrintToPdfTransferModeReturnAsStream
+                Just CDP.PPagePrintToPdfTransferModeReturnAsStream
     
     -- obtain stream handle from which to read pdf data
     let streamHandle = fromJust . CDP.pagePrintToPdfStream $ r
 
     -- read pdf data 24000 bytes at a time
     let params = CDP.PIoRead streamHandle Nothing $ Just 24000
-    reads <- whileTrue (not . CDP.ioReadEof) $ CDP.ioRead handle params
+    reads <- whileTrue (not . CDP.ioReadEof) $ CDP.ioRead handle Nothing params
     let dat = concatMap CDP.ioReadData $ reads
 
     -- decode pdf to a file
-    let path   = "mypdfs.pdf"
+    let path   = "mypdf.pdf"
     readProcess "base64" ["--decode", "-o", path] dat
     callCommand $ unwords ["open", path]
 
@@ -64,6 +64,45 @@ whileTrue f act = do
         else pure [a]
 ```
 
+Subscribe to page load events, for a particular session:
+```hs
+import Data.Default
+import Control.Monad
+import Control.Concurrent
+
+import qualified CDP as CDP
+
+main :: IO ()
+main = do
+    putStrLn "Starting CDP example"
+    CDP.runClient def $ \handle -> do
+        sessionId <- attachTarget handle
+        subPageLoad handle $ Just sessionId
+
+-- Attaches to target, returning the session id
+attachTarget :: CDP.Handle CDP.Event -> IO String
+attachTarget handle = do
+    -- get a target id
+    ti <- head . CDP.targetGetTargetsTargetInfos <$> CDP.targetGetTargets handle Nothing
+    let tid = CDP.targetTargetInfoTargetId ti
+    -- get a session id by attaching to the target
+    CDP.targetAttachToTargetSessionId <$>
+        CDP.targetAttachToTarget handle Nothing $ CDP.PTargetAttachToTarget tid (Just True)
+
+-- | Subscribes to page load events, for a particular session
+subPageLoad :: CDP.Handle CDP.Event -> Maybe String -> IO ()
+subPageLoad handle sessionId = do
+    -- register a handler for the page load event 
+    CDP.subscribe handle sessionId (print . CDP.pageLoadEventFiredTimestamp)
+    -- start receiving events
+    CDP.pageEnable handle sessionId
+    -- navigate to a page, triggering the page load event
+    CDP.pageNavigate handle Nothing $
+        CDP.PPageNavigate "http://haskell.foundation" Nothing Nothing Nothing Nothing
+    -- stop the program from terminating, to keep receiving events
+    forever $ do
+        threadDelay 1000
+```
 ## Generating the CDP library
 
 1. Build the generator library: `nix-build --attr exe`
@@ -76,9 +115,6 @@ whileTrue f act = do
 [Project board](https://github.com/users/arsalan0c/projects/1)
 
 Commands and events for all non-deprecated domains are supported.
-
-Upcoming features:
-- sessions
 
 ## Acknowledgements
 

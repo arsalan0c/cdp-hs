@@ -22,7 +22,7 @@ import qualified CDP.Definition as D
 eventClassName, eventResponseName, handleType, commandClassName, sendCommandName, sendCommandResultName, emptyReturnSig :: T.Text
 eventClassName         = "FromEvent"
 eventResponseName      = "EventResponse"
-handleType             = "Handle ev" -- <> eventsSumTypeName
+handleType             = "Handle ev"
 handleTypeName         = "Handle"
 commandClassName       = "Command"
 sendCommandName        = "sendReceiveCommand"
@@ -124,10 +124,20 @@ eventResponseFromJSON eventNamesHS eventConstructorNames eventNames = T.unlines 
     [ T.unwords ["instance FromJSON", "(" <> eventResponseName, eventsSumTypeName, ") where"]
     , T.unwords [space 3, "parseJSON = A.withObject ", (T.pack . show) eventResponseName, " $ \\obj -> do"]
     , T.unwords [space 7, "name", "<-", "obj", ".:", (T.pack . show) "method"]
+    , T.unwords [space 7, "sessionId", "<-", "obj", ".:?", (T.pack . show) "sessionId"]
     , T.unwords [space 7, "case (name :: String) of"]
     ] ++ 
         (map (\(l,r) -> T.unwords [space 11, l, "->", r]) $ zip (map (T.pack . show) $ eventNames)
-            (map ((\(evnHS, evnC) -> T.unwords [eventResponseName, proxy eventsSumTypeName, proxy evnHS, ". fmap", evnC, "<$> obj .:?", (T.pack . show) "params"])) $ zip eventNamesHS eventConstructorNames) ++ 
+            (map ((\(evnHS, evnC) -> T.unwords 
+                [ eventResponseName
+                , proxy eventsSumTypeName
+                , proxy evnHS
+                , "sessionId"
+                , ". fmap"
+                , evnC
+                , "<$> obj .:?"
+                , (T.pack . show) "params"
+                ])) $ zip eventNamesHS eventConstructorNames) ++ 
             [emptyCase eventResponseName])
       
 genEventInstance :: T.Text -> T.Text -> T.Text -> T.Text
@@ -254,19 +264,23 @@ genCommandFn _ isEmptyParams isEmptyReturn commandName paramsTypeName returnType
     fnType = T.unwords
         [ fnName
         , "::"
-        , T.intercalate " -> " $ [handleType] ++ 
+        , T.intercalate " -> " $ [handleType, maybeType targetSessionId] ++ 
             (if isEmptyParams then [] else [paramsTypeName]) ++ 
             [returnTypeSig]
         ]
-    fnHeader = T.unwords [fnName, "handle", if isEmptyParams then "=" else "params ="]
+    fnHeader = T.unwords [fnName, handleVar, sessionIdVar, (if isEmptyParams then "" else paramsVar <> " ") <> "="]
     fnBody   = T.unwords 
         [ if isEmptyReturn then sendCommandName else sendCommandResultName
-        , "handle"
+        , handleVar
+        , sessionIdVar
         , (T.pack . show) commandName
-        , if isEmptyParams then "(Nothing :: Maybe ())" else "(Just params)"
+        , if isEmptyParams then "(Nothing :: Maybe ())" else T.unwords ["(Just", paramsVar, ")"]
         ]
     returnTypeSig  = if isEmptyReturn then emptyReturnSig else resultReturnSig returnTypeName
     fnName         = commandFnName returnTypeName
+    handleVar      = "handle"
+    sessionIdVar   = "sessionId"
+    paramsVar      = "params"
 
 genParamsType :: Context -> T.Text -> T.Text -> [D.ParametersElt] -> T.Text
 genParamsType ctx domainName paramsTypeName []        = genTypeSynonynm ctx domainName paramsTypeName
@@ -286,14 +300,15 @@ genParamsType ctx domainName paramsTypeName paramElts = T.unlines . filter ((> 0
     fieldSigDecls = map (peltToFieldSigDecl &&& D.parametersEltDescription) paramElts
 
     peltToFieldSigDecl pelt = case D.parametersEltEnum pelt of
-        Just enumValues -> (fn, ftn, ) . Just $ genTypeEnum ctx ftn enumValues
+        Just enumValues -> (fn, eftn, ) . Just $ genTypeEnum ctx etn enumValues
         Nothing         -> (fn, , Nothing) $ genEltType ctx domainName (isTrue . D.parametersEltOptional $ pelt)
                 (D.parametersEltType pelt)
                 (D.parametersEltRef pelt) 
                 (D.parametersEltItems pelt)
       where
-        ftn = tyNameHS "" fn
-        fn = fieldNameHS paramsTypeName . D.parametersEltName $ pelt
+        eftn = maybe etn ((\b -> if b then maybeType etn else etn) . fromAltLeft) $ D.parametersEltOptional pelt   
+        etn  = tyNameHS "" fn
+        fn   = fieldNameHS paramsTypeName . D.parametersEltName $ pelt
 
 genTypeSynonynm :: Context -> T.Text -> T.Text -> T.Text
 genTypeSynonynm ctx domainName typeName = T.unwords ["type", typeName, "=", typeCDPToHS ctx domainName "object" Nothing]
@@ -634,8 +649,14 @@ refTypeToDomain r = case T.splitOn "." r of
 proxy :: T.Text -> T.Text
 proxy s = "(Proxy :: Proxy " <> s <> ")"
 
+maybeType :: T.Text -> T.Text
+maybeType = ("Maybe " <>)
+
 emptyCase :: T.Text -> (T.Text, T.Text)
 emptyCase name = ("_", T.unwords ["fail", (T.pack . show) $ "failed to parse " <> name])
+
+targetSessionId :: T.Text
+targetSessionId = "String" -- :TODO: "TargetSessionId" 
 
 derivingBase    :: T.Text
 derivingBase    = "deriving (Eq, Show, Read)"

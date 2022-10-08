@@ -74,7 +74,7 @@ instance ToJSON TracingTraceConfigRecordMode where
 
 data TracingTraceConfig = TracingTraceConfig {
   -- | Controls how the trace buffer stores data.
-  tracingTraceConfigRecordMode :: TracingTraceConfigRecordMode,
+  tracingTraceConfigRecordMode :: Maybe TracingTraceConfigRecordMode,
   -- | Turns on JavaScript stack sampling.
   tracingTraceConfigEnableSampling :: Maybe Bool,
   -- | Turns on system tracing.
@@ -242,15 +242,15 @@ instance FromJSON  TracingTracingComplete where
 
 -- | Function for the 'Tracing.end' command.
 --   Stop trace events collection.
-tracingEnd :: Handle ev -> IO ()
-tracingEnd handle = sendReceiveCommand handle "Tracing.end" (Nothing :: Maybe ())
+tracingEnd :: Handle ev -> Maybe String -> IO ()
+tracingEnd handle sessionId = sendReceiveCommand handle sessionId "Tracing.end" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Tracing.getCategories' command.
 --   Gets supported tracing categories.
 --   Returns: 'TracingGetCategories'
-tracingGetCategories :: Handle ev -> IO TracingGetCategories
-tracingGetCategories handle = sendReceiveCommandResult handle "Tracing.getCategories" (Nothing :: Maybe ())
+tracingGetCategories :: Handle ev -> Maybe String -> IO TracingGetCategories
+tracingGetCategories handle sessionId = sendReceiveCommandResult handle sessionId "Tracing.getCategories" (Nothing :: Maybe ())
 
 -- | Return type of the 'tracingGetCategories' command.
 data TracingGetCategories = TracingGetCategories {
@@ -281,8 +281,8 @@ instance FromJSON  PTracingRecordClockSyncMarker where
 -- | Function for the 'Tracing.recordClockSyncMarker' command.
 --   Record a clock sync marker in the trace.
 --   Parameters: 'PTracingRecordClockSyncMarker'
-tracingRecordClockSyncMarker :: Handle ev -> PTracingRecordClockSyncMarker -> IO ()
-tracingRecordClockSyncMarker handle params = sendReceiveCommand handle "Tracing.recordClockSyncMarker" (Just params)
+tracingRecordClockSyncMarker :: Handle ev -> Maybe String -> PTracingRecordClockSyncMarker -> IO ()
+tracingRecordClockSyncMarker handle sessionId params = sendReceiveCommand handle sessionId "Tracing.recordClockSyncMarker" (Just params )
 
 
 -- | Parameters of the 'tracingRequestMemoryDump' command.
@@ -303,8 +303,8 @@ instance FromJSON  PTracingRequestMemoryDump where
 --   Request a global memory dump.
 --   Parameters: 'PTracingRequestMemoryDump'
 --   Returns: 'TracingRequestMemoryDump'
-tracingRequestMemoryDump :: Handle ev -> PTracingRequestMemoryDump -> IO TracingRequestMemoryDump
-tracingRequestMemoryDump handle params = sendReceiveCommandResult handle "Tracing.requestMemoryDump" (Just params)
+tracingRequestMemoryDump :: Handle ev -> Maybe String -> PTracingRequestMemoryDump -> IO TracingRequestMemoryDump
+tracingRequestMemoryDump handle sessionId params = sendReceiveCommandResult handle sessionId "Tracing.requestMemoryDump" (Just params )
 
 -- | Return type of the 'tracingRequestMemoryDump' command.
 data TracingRequestMemoryDump = TracingRequestMemoryDump {
@@ -345,7 +345,7 @@ data PTracingStart = PTracingStart {
   pTracingStartBufferUsageReportingInterval :: Maybe Double,
   -- | Whether to report trace events as series of dataCollected events or to save trace to a
   --   stream (defaults to `ReportEvents`).
-  pTracingStartTransferMode :: PTracingStartTransferMode,
+  pTracingStartTransferMode :: Maybe PTracingStartTransferMode,
   -- | Trace data format to use. This only applies when using `ReturnAsStream`
   --   transfer mode (defaults to `json`).
   pTracingStartStreamFormat :: Maybe TracingStreamFormat,
@@ -370,8 +370,8 @@ instance FromJSON  PTracingStart where
 -- | Function for the 'Tracing.start' command.
 --   Start trace events collection.
 --   Parameters: 'PTracingStart'
-tracingStart :: Handle ev -> PTracingStart -> IO ()
-tracingStart handle params = sendReceiveCommand handle "Tracing.start" (Just params)
+tracingStart :: Handle ev -> Maybe String -> PTracingStart -> IO ()
+tracingStart handle sessionId params = sendReceiveCommand handle sessionId "Tracing.start" (Just params )
 
 
 

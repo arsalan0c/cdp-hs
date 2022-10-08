@@ -437,14 +437,14 @@ instance FromJSON  WebAudioNodeParamDisconnected where
 
 -- | Function for the 'WebAudio.enable' command.
 --   Enables the WebAudio domain and starts sending context lifetime events.
-webAudioEnable :: Handle ev -> IO ()
-webAudioEnable handle = sendReceiveCommand handle "WebAudio.enable" (Nothing :: Maybe ())
+webAudioEnable :: Handle ev -> Maybe String -> IO ()
+webAudioEnable handle sessionId = sendReceiveCommand handle sessionId "WebAudio.enable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'WebAudio.disable' command.
 --   Disables the WebAudio domain.
-webAudioDisable :: Handle ev -> IO ()
-webAudioDisable handle = sendReceiveCommand handle "WebAudio.disable" (Nothing :: Maybe ())
+webAudioDisable :: Handle ev -> Maybe String -> IO ()
+webAudioDisable handle sessionId = sendReceiveCommand handle sessionId "WebAudio.disable" (Nothing :: Maybe ())
 
 
 -- | Parameters of the 'webAudioGetRealtimeData' command.
@@ -462,8 +462,8 @@ instance FromJSON  PWebAudioGetRealtimeData where
 --   Fetch the realtime data from the registered contexts.
 --   Parameters: 'PWebAudioGetRealtimeData'
 --   Returns: 'WebAudioGetRealtimeData'
-webAudioGetRealtimeData :: Handle ev -> PWebAudioGetRealtimeData -> IO WebAudioGetRealtimeData
-webAudioGetRealtimeData handle params = sendReceiveCommandResult handle "WebAudio.getRealtimeData" (Just params)
+webAudioGetRealtimeData :: Handle ev -> Maybe String -> PWebAudioGetRealtimeData -> IO WebAudioGetRealtimeData
+webAudioGetRealtimeData handle sessionId params = sendReceiveCommandResult handle sessionId "WebAudio.getRealtimeData" (Just params )
 
 -- | Return type of the 'webAudioGetRealtimeData' command.
 data WebAudioGetRealtimeData = WebAudioGetRealtimeData {

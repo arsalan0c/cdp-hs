@@ -19,7 +19,7 @@ prop_dom_get_document :: Property
 prop_dom_get_document = property $ void . 
     evalEitherM . 
         evalIO $ CDP.runClient def $ \handle -> do
-            res <- CDP.domGetDocument handle $ 
+            res <- CDP.domGetDocument handle Nothing $ 
                 CDP.PDomGetDocument Nothing Nothing
             pure res
 
@@ -31,7 +31,7 @@ prop_emulation_can_emulate = property $ void .
 prop_emulation_set_geolocationOverride :: Property
 prop_emulation_set_geolocationOverride = property $ do
     res <- evalIO $ CDP.runClient def $ \handle -> do
-        CDP.emulationSetGeolocationOverride handle $ 
+        CDP.emulationSetGeolocationOverride handle Nothing $ 
             CDP.PEmulationSetGeolocationOverride (Just 90) (Just 90) Nothing
     res === Nothing
 
@@ -41,7 +41,7 @@ prop_emulation_set_geolocationOverride = property $ do
 --         CDP.runtimeEnable handle
 
 --         -- compile
---         (Right res1) <- CDP.runtimeCompileScript handle $ 
+--         (Right res1) <- CDP.runtimeCompileScript handle Nothing $ 
 --             CDP.PRuntimeCompileScript 
 --                 "function fact(x) { return x < 0 ? 0 : x == 0 || x == 1 ? 1 : x * fact(x - 1) }" 
 --                 "file:///Users/arsalanc-v2/Desktop/Dev/GSOC22/project/cdp-hs/app/CDP/fact.js" False Nothing
@@ -51,7 +51,7 @@ prop_emulation_set_geolocationOverride = property $ do
 --         -- run
 --         res2 <- do
 --             let (Just sid) = CDP.runtimeCompileScriptScriptId res1
---             CDP.runtimeRunScript handle $
+--             CDP.runtimeRunScript handle Nothing $
 --                 CDP.PRuntimeRunScript sid Nothing Nothing Nothing Nothing Nothing Nothing (Just True)
 
 --         pure (res1, res2)
@@ -72,11 +72,11 @@ prop_network_cookies = property $ do
 
     (clear, set, cookies, clear2) <- evalIO $ CDP.runClient def $ \handle -> do
         clear   <- CDP.networkClearBrowserCookies handle
-        set     <- CDP.networkSetCookie handle $ 
+        set     <- CDP.networkSetCookie handle Nothing $ 
             CDP.PNetworkSetCookie name value Nothing (Just domain) Nothing Nothing Nothing Nothing Nothing
-        cookies <- CDP.networkGetAllCookies handle
+        cookies <- CDP.networkGetAllCookies handle Nothing
 
-        clear2  <- CDP.networkClearBrowserCookies handle
+        clear2  <- CDP.networkClearBrowserCookies handle Nothing
         pure (clear, set, cookies, clear2)
 
     clear === Nothing        
@@ -100,7 +100,7 @@ prop_targets :: Property
 prop_targets = property $ void . 
     evalEitherM . 
         evalIO $ CDP.runClient def $ \handle -> do
-            CDP.targetCreateTarget handle $
+            CDP.targetCreateTarget handle Nothing $
                 CDP.PTargetCreateTarget "http://haskell.foundation" Nothing Nothing Nothing Nothing
  
 main :: IO ()

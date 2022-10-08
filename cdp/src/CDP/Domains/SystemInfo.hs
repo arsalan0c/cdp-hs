@@ -247,8 +247,8 @@ instance FromJSON  SystemInfoProcessInfo where
 -- | Function for the 'SystemInfo.getInfo' command.
 --   Returns information about the system.
 --   Returns: 'SystemInfoGetInfo'
-systemInfoGetInfo :: Handle ev -> IO SystemInfoGetInfo
-systemInfoGetInfo handle = sendReceiveCommandResult handle "SystemInfo.getInfo" (Nothing :: Maybe ())
+systemInfoGetInfo :: Handle ev -> Maybe String -> IO SystemInfoGetInfo
+systemInfoGetInfo handle sessionId = sendReceiveCommandResult handle sessionId "SystemInfo.getInfo" (Nothing :: Maybe ())
 
 -- | Return type of the 'systemInfoGetInfo' command.
 data SystemInfoGetInfo = SystemInfoGetInfo {
@@ -276,8 +276,8 @@ instance Command SystemInfoGetInfo where
 -- | Function for the 'SystemInfo.getProcessInfo' command.
 --   Returns information about all running processes.
 --   Returns: 'SystemInfoGetProcessInfo'
-systemInfoGetProcessInfo :: Handle ev -> IO SystemInfoGetProcessInfo
-systemInfoGetProcessInfo handle = sendReceiveCommandResult handle "SystemInfo.getProcessInfo" (Nothing :: Maybe ())
+systemInfoGetProcessInfo :: Handle ev -> Maybe String -> IO SystemInfoGetProcessInfo
+systemInfoGetProcessInfo handle sessionId = sendReceiveCommandResult handle sessionId "SystemInfo.getProcessInfo" (Nothing :: Maybe ())
 
 -- | Return type of the 'systemInfoGetProcessInfo' command.
 data SystemInfoGetProcessInfo = SystemInfoGetProcessInfo {

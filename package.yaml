@@ -1,7 +1,7 @@
 name: cdp-gen
 version: 0.0.1.0
 synopsis: Project synopsis
-description: See README at <https://github.com/arsalan0c/cdp-hs
+description: See README at <https://github.com/arsalan0c/cdp-hs>
 author: Arsalan Cheema
 github: arsalan0c/cdp-hs
 category: Package.Category
@@ -10,53 +10,19 @@ license: BSD-3-Clause
 extra-doc-files:
   - README.md
 
-data-files:
-  - cdp/prelude/**/*.hs
-
-dependencies:
-  - base
-  - text
-  - bytestring
-  - containers
-  - mtl
-  - casing
-  - filepath
-  - aeson
-  - directory
-
-internal-libraries:
-  json-alt-fork:
-    source-dirs: 
-      - json-autotype/json-alt
-    exposed-modules:
-      - Data.Aeson.AutoType.Alternative
-    
-library:
-  source-dirs: 
-    - src
-  exposed-modules:
-    - CDP.Gen.Program
-  generated-exposed-modules:
-    - CDP.Definition
-  dependencies:
-    - json-alt-fork
-  
 executables:
-  gen-exe:
-    source-dirs: app
+  cdp-hs-gen:
+    source-dirs: gen
     main: Main.hs
     default-extensions:
       - Strict
     dependencies:
-      - cdp-gen
-  
-tests:
-  cdp-hs-test:
-    source-dirs: test
-    main: Main.hs
-    ghc-options:
-      - -Wall
-      - -threaded
-    dependencies:
-      - cdp-gen
-      - hedgehog
+      - base
+      - text
+      - bytestring
+      - containers
+      - mtl
+      - casing
+      - filepath
+      - aeson
+      - directory

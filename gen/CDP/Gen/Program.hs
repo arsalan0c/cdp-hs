@@ -12,9 +12,9 @@ import qualified Data.Set as Set
 import qualified Data.Graph as Graph
 import qualified Data.Text as T
 import qualified Text.Casing as C
-import Data.Aeson.AutoType.Alternative ((:|:)(AltLeft, AltRight))
 import qualified Data.Aeson as A
 
+import CDP.Definition ((:|:)(AltLeft, AltRight))
 import qualified CDP.Definition as D
 
 ----------- Constants from the handwritten runtime of the CDP library ----------- 

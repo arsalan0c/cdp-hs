@@ -15,11 +15,16 @@ import qualified Data.ByteString.Lazy.Char8 as BSL
 import           System.Environment (getArgs)
 import           Control.Monad      (forM_, mzero, join)
 import           Control.Applicative
-import           Data.Aeson.AutoType.Alternative
 import           Data.Aeson(eitherDecode, Value(..), FromJSON(..), ToJSON(..),pairs,(.:), (.:?), (.=), object)
 import           Data.Monoid((<>))
 import           Data.Text (Text)
 import qualified GHC.Generics
+
+data a :|: b = AltLeft a | AltRight b
+    deriving (Eq, GHC.Generics.Generic, Show)
+
+instance (FromJSON a, FromJSON b) => FromJSON (a :|: b) where
+    parseJSON x = (AltLeft <$> parseJSON x) <|> (AltRight <$> parseJSON x)
 
 data Version = Version { 
     versionMinor :: Text,
@@ -32,11 +37,6 @@ instance FromJSON Version where
   parseJSON _          = mzero
 
 
-instance ToJSON Version where
-  toJSON     (Version {..}) = object ["minor" .= versionMinor, "major" .= versionMajor]
-  toEncoding (Version {..}) = pairs  ("minor" .= versionMinor<>"major" .= versionMajor)
-
-
 data Items = Items { 
     itemsType :: (Maybe (Text:|:[(Maybe Value)])),
     itemsRef :: (Maybe (Text:|:[(Maybe Value)]))
@@ -46,11 +46,6 @@ data Items = Items {
 instance FromJSON Items where
   parseJSON (Object v) = Items <$> v .:? "type" <*> v .:? "$ref"
   parseJSON _          = mzero
-
-
-instance ToJSON Items where
-  toJSON     (Items {..}) = object ["type" .= itemsType, "$ref" .= itemsRef]
-  toEncoding (Items {..}) = pairs  ("type" .= itemsType<>"$ref" .= itemsRef)
 
 
 data ReturnsElt = ReturnsElt { 
@@ -68,11 +63,6 @@ data ReturnsElt = ReturnsElt {
 instance FromJSON ReturnsElt where
   parseJSON (Object v) = ReturnsElt <$> v .:? "items" <*> v .:? "experimental" <*> v .:  "name" <*> v .:? "type" <*> v .:? "optional" <*> v .:? "$ref" <*> v .:? "description" <*> v .:? "deprecated"
   parseJSON _          = mzero
-
-
-instance ToJSON ReturnsElt where
-  toJSON     (ReturnsElt {..}) = object ["items" .= returnsEltItems, "experimental" .= returnsEltExperimental, "name" .= returnsEltName, "type" .= returnsEltType, "optional" .= returnsEltOptional, "$ref" .= returnsEltRef, "description" .= returnsEltDescription, "deprecated" .= returnsEltDeprecated]
-  toEncoding (ReturnsElt {..}) = pairs  ("items" .= returnsEltItems<>"experimental" .= returnsEltExperimental<>"name" .= returnsEltName<>"type" .= returnsEltType<>"optional" .= returnsEltOptional<>"$ref" .= returnsEltRef<>"description" .= returnsEltDescription<>"deprecated" .= returnsEltDeprecated)
 
 
 data ParametersElt = ParametersElt { 
@@ -93,11 +83,6 @@ instance FromJSON ParametersElt where
   parseJSON _          = mzero
 
 
-instance ToJSON ParametersElt where
-  toJSON     (ParametersElt {..}) = object ["items" .= parametersEltItems, "experimental" .= parametersEltExperimental, "name" .= parametersEltName, "type" .= parametersEltType, "enum" .= parametersEltEnum, "optional" .= parametersEltOptional, "$ref" .= parametersEltRef, "description" .= parametersEltDescription, "deprecated" .= parametersEltDeprecated]
-  toEncoding (ParametersElt {..}) = pairs  ("items" .= parametersEltItems<>"experimental" .= parametersEltExperimental<>"name" .= parametersEltName<>"type" .= parametersEltType<>"enum" .= parametersEltEnum<>"optional" .= parametersEltOptional<>"$ref" .= parametersEltRef<>"description" .= parametersEltDescription<>"deprecated" .= parametersEltDeprecated)
-
-
 data CommandsElt = CommandsElt { 
     commandsEltExperimental :: (Maybe (Bool:|:[(Maybe Value)])),
     commandsEltName :: Text,
@@ -112,11 +97,6 @@ data CommandsElt = CommandsElt {
 instance FromJSON CommandsElt where
   parseJSON (Object v) = CommandsElt <$> v .:? "experimental" <*> v .:  "name" <*> v .:? "returns" <*> v .:? "parameters" <*> v .:? "redirect" <*> v .:? "description" <*> v .:? "deprecated"
   parseJSON _          = mzero
-
-
-instance ToJSON CommandsElt where
-  toJSON     (CommandsElt {..}) = object ["experimental" .= commandsEltExperimental, "name" .= commandsEltName, "returns" .= commandsEltReturns, "parameters" .= commandsEltParameters, "redirect" .= commandsEltRedirect, "description" .= commandsEltDescription, "deprecated" .= commandsEltDeprecated]
-  toEncoding (CommandsElt {..}) = pairs  ("experimental" .= commandsEltExperimental<>"name" .= commandsEltName<>"returns" .= commandsEltReturns<>"parameters" .= commandsEltParameters<>"redirect" .= commandsEltRedirect<>"description" .= commandsEltDescription<>"deprecated" .= commandsEltDeprecated)
 
 
 data TypesElt = TypesElt { 
@@ -136,11 +116,6 @@ instance FromJSON TypesElt where
   parseJSON _          = mzero
 
 
-instance ToJSON TypesElt where
-  toJSON     (TypesElt {..}) = object ["items" .= typesEltItems, "experimental" .= typesEltExperimental, "id" .= typesEltId, "type" .= typesEltType, "enum" .= typesEltEnum, "properties" .= typesEltProperties, "description" .= typesEltDescription, "deprecated" .= typesEltDeprecated]
-  toEncoding (TypesElt {..}) = pairs  ("items" .= typesEltItems<>"experimental" .= typesEltExperimental<>"id" .= typesEltId<>"type" .= typesEltType<>"enum" .= typesEltEnum<>"properties" .= typesEltProperties<>"description" .= typesEltDescription<>"deprecated" .= typesEltDeprecated)
-
-
 data EventsElt = EventsElt { 
     eventsEltExperimental :: (Maybe (Bool:|:[(Maybe Value)])),
     eventsEltName :: Text,
@@ -153,11 +128,6 @@ data EventsElt = EventsElt {
 instance FromJSON EventsElt where
   parseJSON (Object v) = EventsElt <$> v .:? "experimental" <*> v .:  "name" <*> v .:? "parameters" <*> v .:? "description" <*> v .:? "deprecated"
   parseJSON _          = mzero
-
-
-instance ToJSON EventsElt where
-  toJSON     (EventsElt {..}) = object ["experimental" .= eventsEltExperimental, "name" .= eventsEltName, "parameters" .= eventsEltParameters, "description" .= eventsEltDescription, "deprecated" .= eventsEltDeprecated]
-  toEncoding (EventsElt {..}) = pairs  ("experimental" .= eventsEltExperimental<>"name" .= eventsEltName<>"parameters" .= eventsEltParameters<>"description" .= eventsEltDescription<>"deprecated" .= eventsEltDeprecated)
 
 
 data DomainsElt = DomainsElt { 
@@ -177,11 +147,6 @@ instance FromJSON DomainsElt where
   parseJSON _          = mzero
 
 
-instance ToJSON DomainsElt where
-  toJSON     (DomainsElt {..}) = object ["commands" .= domainsEltCommands, "domain" .= domainsEltDomain, "dependencies" .= domainsEltDependencies, "experimental" .= domainsEltExperimental, "types" .= domainsEltTypes, "events" .= domainsEltEvents, "description" .= domainsEltDescription, "deprecated" .= domainsEltDeprecated]
-  toEncoding (DomainsElt {..}) = pairs  ("commands" .= domainsEltCommands<>"domain" .= domainsEltDomain<>"dependencies" .= domainsEltDependencies<>"experimental" .= domainsEltExperimental<>"types" .= domainsEltTypes<>"events" .= domainsEltEvents<>"description" .= domainsEltDescription<>"deprecated" .= domainsEltDeprecated)
-
-
 data TopLevel = TopLevel { 
     topLevelVersion :: Version,
     topLevelDomains :: [DomainsElt]
@@ -191,12 +156,6 @@ data TopLevel = TopLevel {
 instance FromJSON TopLevel where
   parseJSON (Object v) = TopLevel <$> v .:  "version" <*> v .:  "domains"
   parseJSON _          = mzero
-
-
-instance ToJSON TopLevel where
-  toJSON     (TopLevel {..}) = object ["version" .= topLevelVersion, "domains" .= topLevelDomains]
-  toEncoding (TopLevel {..}) = pairs  ("version" .= topLevelVersion<>"domains" .= topLevelDomains)
-
 
 
 

@@ -12,28 +12,22 @@ import qualified CDP as CDP
 
 prop_browser_get_version :: Property
 prop_browser_get_version = property $ void . 
-    evalEitherM . 
-        evalIO $ CDP.runClient def $ CDP.browserGetVersion
+    evalIO $ CDP.runClient def $ CDP.browserGetVersion
 
 prop_dom_get_document :: Property
 prop_dom_get_document = property $ void . 
-    evalEitherM . 
-        evalIO $ CDP.runClient def $ \handle -> do
-            res <- CDP.domGetDocument handle $ 
-                CDP.PDomGetDocument Nothing Nothing
-            pure res
+    evalIO $ CDP.runClient def $ \handle ->
+        CDP.domGetDocument handle $ CDP.PDomGetDocument Nothing Nothing
 
 prop_emulation_can_emulate :: Property
 prop_emulation_can_emulate = property $ void . 
-    evalEitherM . 
         evalIO $ CDP.runClient def $ CDP.emulationCanEmulate
 
 prop_emulation_set_geolocationOverride :: Property
-prop_emulation_set_geolocationOverride = property $ do
-    res <- evalIO $ CDP.runClient def $ \handle -> do
-        CDP.emulationSetGeolocationOverride handle $ 
+prop_emulation_set_geolocationOverride = property $
+    evalIO $ CDP.runClient def $ \handle -> do
+        CDP.emulationSetGeolocationOverride handle $
             CDP.PEmulationSetGeolocationOverride (Just 90) (Just 90) Nothing
-    res === Nothing
 
 -- prop_runtime_compileScript :: Property
 -- prop_runtime_compileScript = property $ do
@@ -74,14 +68,13 @@ prop_network_cookies = property $ do
         clear   <- CDP.networkClearBrowserCookies handle
         set     <- CDP.networkSetCookie handle $ 
             CDP.PNetworkSetCookie name value Nothing (Just domain) Nothing Nothing Nothing Nothing Nothing
+                Nothing Nothing Nothing Nothing Nothing
         cookies <- CDP.networkGetAllCookies handle
 
         clear2  <- CDP.networkClearBrowserCookies handle
         pure (clear, set, cookies, clear2)
 
-    clear === Nothing        
-    set   === Nothing
-    cks <- fmap CDP.networkGetAllCookiesCookies . evalEither $ cookies
+    let cks = CDP.networkGetAllCookiesCookies cookies
     length cks === 1
 
     let cookie = head cks
@@ -89,19 +82,15 @@ prop_network_cookies = property $ do
     CDP.networkCookieValue  cookie === value
     CDP.networkCookieDomain cookie === domain
 
-    clear2 === Nothing        
-
 prop_performance_get_metrics :: Property
 prop_performance_get_metrics = property $ void . 
-    evalEitherM . 
-        evalIO $ CDP.runClient def $ CDP.performanceGetMetrics
+    evalIO $ CDP.runClient def $ CDP.performanceGetMetrics
 
 prop_targets :: Property
 prop_targets = property $ void . 
-    evalEitherM . 
-        evalIO $ CDP.runClient def $ \handle -> do
-            CDP.targetCreateTarget handle $
-                CDP.PTargetCreateTarget "http://haskell.foundation" Nothing Nothing Nothing Nothing
+    evalIO $ CDP.runClient def $ \handle -> do
+        CDP.targetCreateTarget handle $
+            CDP.PTargetCreateTarget "http://haskell.foundation" Nothing Nothing Nothing Nothing Nothing Nothing
  
 main :: IO ()
 main = defaultMain [checkSequential $$(discoverPrefix "prop")]

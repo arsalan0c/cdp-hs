@@ -2,10 +2,13 @@
 
 module Main where
 
+import Data.Foldable (for_)
 import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import qualified Data.Map as Map
 import qualified System.FilePath as FP
 import qualified System.Directory as Dir
+import qualified System.IO as IO
 
 import qualified CDP.Definition as D
 import qualified CDP.Gen.Program as GP
@@ -23,7 +26,10 @@ main = do
 
     Dir.removePathForcibly domainDir
     Dir.createDirectory domainDir
-    mapM (\(dn,d) -> writeFile (domainPath . T.unpack . GP.unComponentName $ dn) (T.unpack d)) $ Map.toList . GP.pComponents $ program
+    for_ (Map.toList . GP.pComponents $ program) $ \(dn,d) -> do
+        let path = domainPath . T.unpack . GP.unComponentName $ dn
+        IO.hPutStrLn IO.stderr $ "Writing domain to " ++ path ++ "..."
+        T.writeFile path d
     cdpExtensions <- fmap T.pack . readFile . FP.joinPath $ pathToPrelude ++ ["CDPExtensions.txt"]
     cdpImports    <- fmap T.pack . readFile . FP.joinPath $ pathToPrelude ++ ["CDPImports.txt"]
     
@@ -34,7 +40,8 @@ main = do
             , T.pack libraryMain
             , GP.pEvents program
             ]
-    
+
+    IO.hPutStrLn IO.stderr $ "Writing protocol to " ++ cdpPath ++ "..."
     writeFile cdpPath protocol
   where
     cdpPath        = FP.joinPath $ pathToGen ++ pathToCDP

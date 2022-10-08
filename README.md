@@ -27,6 +27,7 @@ module Main where
 import Data.Default
 import Data.Maybe
 import System.Process
+import qualified Data.Text as T
 
 import qualified CDP as CDP
 
@@ -49,11 +50,11 @@ printPDF handle = do
     -- read pdf data 24000 bytes at a time
     let params = CDP.PIoRead streamHandle Nothing $ Just 24000
     reads <- whileTrue (not . CDP.ioReadEof) $ CDP.ioRead handle params
-    let dat = concatMap CDP.ioReadData $ reads
+    let dat = T.concat . map CDP.ioReadData $ reads
 
     -- decode pdf to a file
     let path   = "mypdfs.pdf"
-    readProcess "base64" ["--decode", "-o", path] dat
+    readProcess "base64" ["--decode", "-o", path] $ T.unpack dat
     callCommand $ unwords ["open", path]
 
 whileTrue :: Monad m => (a -> Bool) -> m a -> m [a]

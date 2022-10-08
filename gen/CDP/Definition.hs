@@ -174,11 +174,3 @@ parse filename = do
     fatal :: String -> IO a
     fatal msg = do hPutStrLn stderr msg
                    exitFailure
-
--- | For quick testing
-main :: IO ()
-main = do
-  filenames <- getArgs
-  forM_ filenames (\f -> parse f >>= (\p -> p `seq` putStrLn $ "Successfully parsed " ++ f))
-  exitSuccess
-

@@ -16,6 +16,7 @@ import qualified Data.Aeson as A
 
 import CDP.Definition ((:|:)(AltLeft, AltRight))
 import qualified CDP.Definition as D
+import qualified CDP.Gen.Snippets as Snippets
 
 ----------- Constants from the handwritten runtime of the CDP library ----------- 
 
@@ -28,7 +29,7 @@ commandClassName       = "Command"
 sendCommandName        = "sendReceiveCommand"
 sendCommandResultName  = "sendReceiveCommandResult"
 emptyReturnSig         = "IO ()"
-configType              = "Config(..)"
+configType             = "Config(..)"
 
 resultReturnSig :: T.Text -> T.Text
 resultReturnSig resultTy = "IO " <> resultTy 
@@ -43,9 +44,9 @@ data Program = Program
 
 data Context = Context { ctxDomainComponents :: DomainComponents }
 
-genProgram :: T.Text -> T.Text -> [D.DomainsElt] -> Program
-genProgram domainExtensions domainImports domainElts = Program
-    { pComponents        = allComponents ctx domainExtensions domainImports $ Map.elems dc
+genProgram :: [D.DomainsElt] -> Program
+genProgram domainElts = Program
+    { pComponents        = allComponents ctx $ Map.elems dc
     , pComponentImports  = T.unlines $ allComponentImports ctx
     , pEvents            = genEvents ctx delts 
     }
@@ -56,12 +57,17 @@ genProgram domainExtensions domainImports domainElts = Program
 
 ----------- Generation of global types / values ----------- 
 
-genProtocolModule :: T.Text -> T.Text -> [ComponentName] -> T.Text -> T.Text
-genProtocolModule extensions imports names source = T.unlines
-    [ extensions
+genProtocolModule :: [ComponentName] -> T.Text -> T.Text
+genProtocolModule names source = T.unlines
+    [ "{-# LANGUAGE OverloadedStrings, RecordWildCards, TupleSections #-}"
+    , "{-# LANGUAGE ScopedTypeVariables #-}"
+    , "{-# LANGUAGE FlexibleContexts #-}"
+    , "{-# LANGUAGE MultiParamTypeClasses #-}"
+    , "{-# LANGUAGE FlexibleInstances #-}"
+    , "{-# LANGUAGE DeriveGeneric #-}"
     , ""
     , protocolModuleHeader names
-    , imports
+    , Snippets.domainImports
     , source
     ]
 
@@ -69,9 +75,9 @@ allComponentImports :: Context -> [T.Text]
 allComponentImports = Set.toList . Set.fromList . 
     concatMap ((\n -> [importDomain False n, importDomain True n]) . unComponentName . cName) . Map.elems . ctxDomainComponents
 
-allComponents :: Context -> T.Text -> T.Text -> [Component] -> Map.Map ComponentName T.Text
-allComponents ctx extensions imports components = Map.fromList . 
-    map (cName &&& genComponent ctx extensions imports) $ 
+allComponents :: Context -> [Component] -> Map.Map ComponentName T.Text
+allComponents ctx components = Map.fromList . 
+    map (cName &&& genComponent ctx) $ 
     components
 
 genEvents :: Context -> [D.DomainsElt] -> T.Text
@@ -139,12 +145,12 @@ genEventInstance eventNameHS eventConstructorName eventName = T.unlines $
  
 ----------- Generation of domain types / values -----------
 
-genComponent :: Context -> T.Text -> T.Text -> Component -> T.Text
-genComponent ctx extensions imports component = T.intercalate "\n\n" $
-    [ extensions
+genComponent :: Context -> Component -> T.Text
+genComponent ctx component = T.intercalate "\n\n" $
+    [ Snippets.domainLanguageExtensions
     , formatComponentDescription component
     , domainModuleHeader cn
-    , imports
+    , Snippets.domainImports
     , T.unlines $ map (importDomain True) deps
     , T.unlines $ map (genDomain ctx) delts
     ]
@@ -364,14 +370,16 @@ componentToImport = map (("module " <>) . domainModuleName . unComponentName)
 protocolModuleHeader :: [ComponentName] -> T.Text
 protocolModuleHeader names = T.unlines
     [ mod
-    , "( " <> (T.intercalate "\n, " $ handleTypeName : configType : mod : componentToImport names)
+    , "( " <> T.intercalate "\n, " exports
     , ") where"
     ]
   where
     mod = T.unwords [ "module", protocolModuleName ]
 
+    exports = eventsSumTypeName : componentToImport names
+
 protocolModuleName :: T.Text
-protocolModuleName = "CDP"
+protocolModuleName = "CDP.Domains"
 
 domainModuleHeader :: T.Text -> T.Text
 domainModuleHeader domainName = T.unwords ["module", domainModuleName domainName, "(module", domainModuleName domainName <>")", "where"]

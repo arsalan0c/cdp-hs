@@ -1,4 +1,4 @@
-name: cdp-gen
+name: cdp
 version: 0.0.1.0
 synopsis: Project synopsis
 description: See README at <https://github.com/arsalan0c/cdp-hs>
@@ -10,19 +10,54 @@ license: BSD-3-Clause
 extra-doc-files:
   - README.md
 
+library:
+  source-dirs: src
+
+dependencies:
+  - base
+  - aeson
+  - text
+  - bytestring
+  - containers
+  - data-default
+  - http-conduit
+  - mtl
+  - network-uri
+  - extra
+  - text
+  - vector
+  - websockets
+  - casing
+  - random
+  - monad-loops
+  - data-default
+  - process
+
 executables:
-  cdp-hs-gen:
+  cdp-gen:
     source-dirs: gen
     main: Main.hs
     default-extensions:
       - Strict
     dependencies:
-      - base
-      - text
-      - bytestring
       - containers
-      - mtl
       - casing
       - filepath
-      - aeson
       - directory
+
+  cdp-example-print-page:
+    source-dirs: examples
+    main: PrintPage.hs
+    dependencies:
+      - cdp
+
+tests:
+  cdp-test:
+    source-dirs: test
+    main: Main.hs
+    ghc-options:
+      - -Wall
+      - -threaded
+    dependencies:
+      - cdp
+      - hedgehog

@@ -20,43 +20,24 @@ main = do
         , jsDefinitionPath 
         ] 
 
-    domainExtensions <- fmap T.pack . readFile . FP.joinPath $ pathToPrelude ++ pathToDomains ++ ["DomainExtensions.txt"]
-    domainImports    <- fmap T.pack . readFile . FP.joinPath $ pathToPrelude ++ pathToDomains ++ ["DomainImports.txt"]   
-    let program = GP.genProgram domainExtensions domainImports $ domains
+    let program = GP.genProgram domains
 
-    Dir.removePathForcibly domainDir
-    Dir.createDirectory domainDir
     for_ (Map.toList . GP.pComponents $ program) $ \(dn,d) -> do
         let path = domainPath . T.unpack . GP.unComponentName $ dn
         IO.hPutStrLn IO.stderr $ "Writing domain to " ++ path ++ "..."
         T.writeFile path d
-    cdpExtensions <- fmap T.pack . readFile . FP.joinPath $ pathToPrelude ++ ["CDPExtensions.txt"]
-    cdpImports    <- fmap T.pack . readFile . FP.joinPath $ pathToPrelude ++ ["CDPImports.txt"]
-    
-    libraryMain <- readFile cdpPreludePath
-    let protocol = T.unpack . GP.genProtocolModule cdpExtensions cdpImports (Map.keys . GP.pComponents $ program) $
+
+    let protocol = GP.genProtocolModule (Map.keys . GP.pComponents $ program) $
           T.intercalate "\n\n" 
             [ GP.pComponentImports program
-            , T.pack libraryMain
             , GP.pEvents program
             ]
 
-    IO.hPutStrLn IO.stderr $ "Writing protocol to " ++ cdpPath ++ "..."
-    writeFile cdpPath protocol
+    IO.hPutStrLn IO.stderr $ "Writing protocol to " ++ protocolModulePath ++ "..."
+    T.writeFile protocolModulePath protocol
   where
-    cdpPath        = FP.joinPath $ pathToGen ++ pathToCDP
-    domainPath dn  = domainDir FP.</> FP.addExtension dn "hs"
-    domainDir      = FP.joinPath $ pathToGen ++ pathToDomains   
-
-    cdpPreludePath = FP.joinPath $ pathToPrelude ++ pathToCDP
-    pathToCDP      = [FP.addExtension "CDP" "hs"]
-    pathToDomains  = [libName, "Domains"]
-    libName = "CDP"
-
-    pathToGen      = [libFolder, "src"]
-    pathToPrelude  = [libFolder, "prelude"]
-    libFolder = "cdp"
-
-    jsDefinitionPath      = FP.joinPath [definitionFolder, "js_protocol.json"]
-    browserDefinitionPath = FP.joinPath [definitionFolder, "browser_protocol.json"]
-    definitionFolder = "protocol"
+    domainPath dn         = domainDir FP.</> FP.addExtension dn "hs"
+    domainDir             = "src/CDP/Domains"
+    protocolModulePath    = "src/CDP/Domains.hs"
+    jsDefinitionPath      = "protocol/js_protocol.json"
+    browserDefinitionPath = "protocol/browser_protocol.json"

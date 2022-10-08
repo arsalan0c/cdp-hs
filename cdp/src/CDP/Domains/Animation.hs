@@ -20,6 +20,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -70,13 +71,13 @@ instance ToJSON AnimationAnimationType where
 
 data AnimationAnimation = AnimationAnimation {
   -- | `Animation`'s id.
-  animationAnimationId :: String,
+  animationAnimationId :: Text,
   -- | `Animation`'s name.
-  animationAnimationName :: String,
+  animationAnimationName :: Text,
   -- | `Animation`'s internal paused state.
   animationAnimationPausedState :: Bool,
   -- | `Animation`'s play state.
-  animationAnimationPlayState :: String,
+  animationAnimationPlayState :: Text,
   -- | `Animation`'s playback rate.
   animationAnimationPlaybackRate :: Double,
   -- | `Animation`'s start time.
@@ -89,7 +90,7 @@ data AnimationAnimation = AnimationAnimation {
   animationAnimationSource :: Maybe AnimationAnimationEffect,
   -- | A unique ID for `Animation` representing the sources that triggered this CSS
   --   animation/transition.
-  animationAnimationCssId :: Maybe String
+  animationAnimationCssId :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AnimationAnimation  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -113,15 +114,15 @@ data AnimationAnimationEffect = AnimationAnimationEffect {
   -- | `AnimationEffect`'s iteration duration.
   animationAnimationEffectDuration :: Double,
   -- | `AnimationEffect`'s playback direction.
-  animationAnimationEffectDirection :: String,
+  animationAnimationEffectDirection :: Text,
   -- | `AnimationEffect`'s fill mode.
-  animationAnimationEffectFill :: String,
+  animationAnimationEffectFill :: Text,
   -- | `AnimationEffect`'s target node.
   animationAnimationEffectBackendNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomBackendNodeId,
   -- | `AnimationEffect`'s keyframes.
   animationAnimationEffectKeyframesRule :: Maybe AnimationKeyframesRule,
   -- | `AnimationEffect`'s timing function.
-  animationAnimationEffectEasing :: String
+  animationAnimationEffectEasing :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AnimationAnimationEffect  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -135,7 +136,7 @@ instance FromJSON  AnimationAnimationEffect where
 --   Keyframes Rule
 data AnimationKeyframesRule = AnimationKeyframesRule {
   -- | CSS keyframed animation's name.
-  animationKeyframesRuleName :: Maybe String,
+  animationKeyframesRuleName :: Maybe Text,
   -- | List of animation keyframes.
   animationKeyframesRuleKeyframes :: [AnimationKeyframeStyle]
 } deriving (Generic, Eq, Show, Read)
@@ -151,9 +152,9 @@ instance FromJSON  AnimationKeyframesRule where
 --   Keyframe Style
 data AnimationKeyframeStyle = AnimationKeyframeStyle {
   -- | Keyframe's time offset.
-  animationKeyframeStyleOffset :: String,
+  animationKeyframeStyleOffset :: Text,
   -- | `AnimationEffect`'s timing function.
-  animationKeyframeStyleEasing :: String
+  animationKeyframeStyleEasing :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AnimationKeyframeStyle  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -168,7 +169,7 @@ instance FromJSON  AnimationKeyframeStyle where
 -- | Type of the 'Animation.animationCanceled' event.
 data AnimationAnimationCanceled = AnimationAnimationCanceled {
   -- | Id of the animation that was cancelled.
-  animationAnimationCanceledId :: String
+  animationAnimationCanceledId :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AnimationAnimationCanceled  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -181,7 +182,7 @@ instance FromJSON  AnimationAnimationCanceled where
 -- | Type of the 'Animation.animationCreated' event.
 data AnimationAnimationCreated = AnimationAnimationCreated {
   -- | Id of the animation that was created.
-  animationAnimationCreatedId :: String
+  animationAnimationCreatedId :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AnimationAnimationCreated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -221,7 +222,7 @@ animationEnable handle = sendReceiveCommand handle "Animation.enable" (Nothing :
 -- | Parameters of the 'animationGetCurrentTime' command.
 data PAnimationGetCurrentTime = PAnimationGetCurrentTime {
   -- | Id of animation.
-  pAnimationGetCurrentTimeId :: String
+  pAnimationGetCurrentTimeId :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PAnimationGetCurrentTime  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -274,7 +275,7 @@ instance Command AnimationGetPlaybackRate where
 -- | Parameters of the 'animationReleaseAnimations' command.
 data PAnimationReleaseAnimations = PAnimationReleaseAnimations {
   -- | List of animation ids to seek.
-  pAnimationReleaseAnimationsAnimations :: [String]
+  pAnimationReleaseAnimationsAnimations :: [Text]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PAnimationReleaseAnimations  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -293,7 +294,7 @@ animationReleaseAnimations handle params = sendReceiveCommand handle "Animation.
 -- | Parameters of the 'animationResolveAnimation' command.
 data PAnimationResolveAnimation = PAnimationResolveAnimation {
   -- | Animation id.
-  pAnimationResolveAnimationAnimationId :: String
+  pAnimationResolveAnimationAnimationId :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PAnimationResolveAnimation  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -326,7 +327,7 @@ instance Command AnimationResolveAnimation where
 -- | Parameters of the 'animationSeekAnimations' command.
 data PAnimationSeekAnimations = PAnimationSeekAnimations {
   -- | List of animation ids to seek.
-  pAnimationSeekAnimationsAnimations :: [String],
+  pAnimationSeekAnimationsAnimations :: [Text],
   -- | Set the current time of each animation.
   pAnimationSeekAnimationsCurrentTime :: Double
 } deriving (Generic, Eq, Show, Read)
@@ -347,7 +348,7 @@ animationSeekAnimations handle params = sendReceiveCommand handle "Animation.see
 -- | Parameters of the 'animationSetPaused' command.
 data PAnimationSetPaused = PAnimationSetPaused {
   -- | Animations to set the pause state of.
-  pAnimationSetPausedAnimations :: [String],
+  pAnimationSetPausedAnimations :: [Text],
   -- | Paused state to set to.
   pAnimationSetPausedPaused :: Bool
 } deriving (Generic, Eq, Show, Read)
@@ -387,7 +388,7 @@ animationSetPlaybackRate handle params = sendReceiveCommand handle "Animation.se
 -- | Parameters of the 'animationSetTiming' command.
 data PAnimationSetTiming = PAnimationSetTiming {
   -- | Animation id.
-  pAnimationSetTimingAnimationId :: String,
+  pAnimationSetTimingAnimationId :: Text,
   -- | Duration of the animation.
   pAnimationSetTimingDuration :: Double,
   -- | Delay of the animation.

@@ -22,6 +22,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -54,7 +55,7 @@ data TetheringAccepted = TetheringAccepted {
   -- | Port number that was successfully bound.
   tetheringAcceptedPort :: Int,
   -- | Connection id to be used.
-  tetheringAcceptedConnectionId :: String
+  tetheringAcceptedConnectionId :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON TetheringAccepted  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}

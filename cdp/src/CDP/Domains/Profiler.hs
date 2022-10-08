@@ -20,6 +20,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -60,7 +61,7 @@ data ProfilerProfileNode = ProfilerProfileNode {
   profilerProfileNodeChildren :: Maybe [Int],
   -- | The reason of being not optimized. The function may be deoptimized or marked as don't
   --   optimize.
-  profilerProfileNodeDeoptReason :: Maybe String,
+  profilerProfileNodeDeoptReason :: Maybe Text,
   -- | An array of source position ticks.
   profilerProfileNodePositionTicks :: Maybe [ProfilerPositionTickInfo]
 } deriving (Generic, Eq, Show, Read)
@@ -133,7 +134,7 @@ instance FromJSON  ProfilerCoverageRange where
 --   Coverage data for a JavaScript function.
 data ProfilerFunctionCoverage = ProfilerFunctionCoverage {
   -- | JavaScript function name.
-  profilerFunctionCoverageFunctionName :: String,
+  profilerFunctionCoverageFunctionName :: Text,
   -- | Source ranges inside the function with coverage data.
   profilerFunctionCoverageRanges :: [ProfilerCoverageRange],
   -- | Whether coverage data for this function has block granularity.
@@ -153,7 +154,7 @@ data ProfilerScriptCoverage = ProfilerScriptCoverage {
   -- | JavaScript script id.
   profilerScriptCoverageScriptId :: Runtime.RuntimeScriptId,
   -- | JavaScript script name or url.
-  profilerScriptCoverageUrl :: String,
+  profilerScriptCoverageUrl :: Text,
   -- | Functions contained in the script that has coverage data.
   profilerScriptCoverageFunctions :: [ProfilerFunctionCoverage]
 } deriving (Generic, Eq, Show, Read)
@@ -169,7 +170,7 @@ instance FromJSON  ProfilerScriptCoverage where
 --   Describes a type collected during runtime.
 data ProfilerTypeObject = ProfilerTypeObject {
   -- | Name of a type collected with type profiling.
-  profilerTypeObjectName :: String
+  profilerTypeObjectName :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON ProfilerTypeObject  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -201,7 +202,7 @@ data ProfilerScriptTypeProfile = ProfilerScriptTypeProfile {
   -- | JavaScript script id.
   profilerScriptTypeProfileScriptId :: Runtime.RuntimeScriptId,
   -- | JavaScript script name or url.
-  profilerScriptTypeProfileUrl :: String,
+  profilerScriptTypeProfileUrl :: Text,
   -- | Type profile entries for parameters and return values of the functions in the script.
   profilerScriptTypeProfileEntries :: [ProfilerTypeProfileEntry]
 } deriving (Generic, Eq, Show, Read)
@@ -217,12 +218,12 @@ instance FromJSON  ProfilerScriptTypeProfile where
 
 -- | Type of the 'Profiler.consoleProfileFinished' event.
 data ProfilerConsoleProfileFinished = ProfilerConsoleProfileFinished {
-  profilerConsoleProfileFinishedId :: String,
+  profilerConsoleProfileFinishedId :: Text,
   -- | Location of console.profileEnd().
   profilerConsoleProfileFinishedLocation :: Debugger.DebuggerLocation,
   profilerConsoleProfileFinishedProfile :: ProfilerProfile,
   -- | Profile title passed as an argument to console.profile().
-  profilerConsoleProfileFinishedTitle :: Maybe String
+  profilerConsoleProfileFinishedTitle :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON ProfilerConsoleProfileFinished  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -234,11 +235,11 @@ instance FromJSON  ProfilerConsoleProfileFinished where
 
 -- | Type of the 'Profiler.consoleProfileStarted' event.
 data ProfilerConsoleProfileStarted = ProfilerConsoleProfileStarted {
-  profilerConsoleProfileStartedId :: String,
+  profilerConsoleProfileStartedId :: Text,
   -- | Location of console.profile().
   profilerConsoleProfileStartedLocation :: Debugger.DebuggerLocation,
   -- | Profile title passed as an argument to console.profile().
-  profilerConsoleProfileStartedTitle :: Maybe String
+  profilerConsoleProfileStartedTitle :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON ProfilerConsoleProfileStarted  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -253,7 +254,7 @@ data ProfilerPreciseCoverageDeltaUpdate = ProfilerPreciseCoverageDeltaUpdate {
   -- | Monotonically increasing time (in seconds) when the coverage update was taken in the backend.
   profilerPreciseCoverageDeltaUpdateTimestamp :: Double,
   -- | Identifier for distinguishing coverage events.
-  profilerPreciseCoverageDeltaUpdateOccasion :: String,
+  profilerPreciseCoverageDeltaUpdateOccasion :: Text,
   -- | Coverage data for the current isolate.
   profilerPreciseCoverageDeltaUpdateResult :: [ProfilerScriptCoverage]
 } deriving (Generic, Eq, Show, Read)

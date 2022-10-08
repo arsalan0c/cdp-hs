@@ -27,6 +27,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -54,7 +55,7 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 
 
 -- | Type 'CSS.StyleSheetId'.
-type CssStyleSheetId = String
+type CssStyleSheetId = Text
 
 -- | Type 'CSS.StyleSheetOrigin'.
 --   Stylesheet type: "injected" for stylesheets injected via extension, "user-agent" for user-agent
@@ -147,7 +148,7 @@ instance FromJSON  CssRuleMatch where
 --   Data for a simple selector (these are delimited by commas in a selector list).
 data CssValue = CssValue {
   -- | Value text.
-  cssValueText :: String,
+  cssValueText :: Text,
   -- | Value range in the underlying resource (if available).
   cssValueRange :: Maybe CssSourceRange
 } deriving (Generic, Eq, Show, Read)
@@ -165,7 +166,7 @@ data CssSelectorList = CssSelectorList {
   -- | Selectors in the list.
   cssSelectorListSelectors :: [CssValue],
   -- | Rule selector text.
-  cssSelectorListText :: String
+  cssSelectorListText :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON CssSelectorList  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
@@ -185,13 +186,13 @@ data CssCssStyleSheetHeader = CssCssStyleSheetHeader {
   -- | Stylesheet resource URL. Empty if this is a constructed stylesheet created using
   --   new CSSStyleSheet() (but non-empty if this is a constructed sylesheet imported
   --   as a CSS module script).
-  cssCssStyleSheetHeaderSourceUrl :: String,
+  cssCssStyleSheetHeaderSourceUrl :: Text,
   -- | URL of source map associated with the stylesheet (if any).
-  cssCssStyleSheetHeaderSourceMapUrl :: Maybe String,
+  cssCssStyleSheetHeaderSourceMapUrl :: Maybe Text,
   -- | Stylesheet origin.
   cssCssStyleSheetHeaderOrigin :: CssStyleSheetOrigin,
   -- | Stylesheet title.
-  cssCssStyleSheetHeaderTitle :: String,
+  cssCssStyleSheetHeaderTitle :: Text,
   -- | The backend id for the owner node of the stylesheet.
   cssCssStyleSheetHeaderOwnerNode :: Maybe DOMPageNetworkEmulationSecurity.DomBackendNodeId,
   -- | Denotes whether the stylesheet is disabled.
@@ -305,9 +306,9 @@ instance FromJSON  CssSourceRange where
 -- | Type 'CSS.ShorthandEntry'.
 data CssShorthandEntry = CssShorthandEntry {
   -- | Shorthand name.
-  cssShorthandEntryName :: String,
+  cssShorthandEntryName :: Text,
   -- | Shorthand value.
-  cssShorthandEntryValue :: String,
+  cssShorthandEntryValue :: Text,
   -- | Whether the property has "!important" annotation (implies `false` if absent).
   cssShorthandEntryImportant :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
@@ -322,9 +323,9 @@ instance FromJSON  CssShorthandEntry where
 -- | Type 'CSS.CSSComputedStyleProperty'.
 data CssCssComputedStyleProperty = CssCssComputedStyleProperty {
   -- | Computed style property name.
-  cssCssComputedStylePropertyName :: String,
+  cssCssComputedStylePropertyName :: Text,
   -- | Computed style property value.
-  cssCssComputedStylePropertyValue :: String
+  cssCssComputedStylePropertyValue :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON CssCssComputedStyleProperty  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -345,7 +346,7 @@ data CssCssStyle = CssCssStyle {
   -- | Computed values for all shorthands found in the style.
   cssCssStyleShorthandEntries :: [CssShorthandEntry],
   -- | Style declaration text (if available).
-  cssCssStyleCssText :: Maybe String,
+  cssCssStyleCssText :: Maybe Text,
   -- | Style declaration range in the enclosing stylesheet (if available).
   cssCssStyleRange :: Maybe CssSourceRange
 } deriving (Generic, Eq, Show, Read)
@@ -361,15 +362,15 @@ instance FromJSON  CssCssStyle where
 --   CSS property declaration data.
 data CssCssProperty = CssCssProperty {
   -- | The property name.
-  cssCssPropertyName :: String,
+  cssCssPropertyName :: Text,
   -- | The property value.
-  cssCssPropertyValue :: String,
+  cssCssPropertyValue :: Text,
   -- | Whether the property has "!important" annotation (implies `false` if absent).
   cssCssPropertyImportant :: Maybe Bool,
   -- | Whether the property is implicit (implies `false` if absent).
   cssCssPropertyImplicit :: Maybe Bool,
   -- | The full property text as specified in the style.
-  cssCssPropertyText :: Maybe String,
+  cssCssPropertyText :: Maybe Text,
   -- | Whether the property is understood by the browser (implies `true` if absent).
   cssCssPropertyParsedOk :: Maybe Bool,
   -- | Whether the property is disabled by the user (present for source-based properties only).
@@ -410,14 +411,14 @@ instance ToJSON CssCssMediaSource where
 
 data CssCssMedia = CssCssMedia {
   -- | Media query text.
-  cssCssMediaText :: String,
+  cssCssMediaText :: Text,
   -- | Source of the media query: "mediaRule" if specified by a @media rule, "importRule" if
   --   specified by an @import rule, "linkedSheet" if specified by a "media" attribute in a linked
   --   stylesheet's LINK tag, "inlineSheet" if specified by a "media" attribute in an inline
   --   stylesheet's STYLE tag.
   cssCssMediaSource :: CssCssMediaSource,
   -- | URL of the document containing the media query description.
-  cssCssMediaSourceUrl :: Maybe String,
+  cssCssMediaSourceUrl :: Maybe Text,
   -- | The associated rule (@media or @import) header range in the enclosing stylesheet (if
   --   available).
   cssCssMediaRange :: Maybe CssSourceRange,
@@ -456,9 +457,9 @@ data CssMediaQueryExpression = CssMediaQueryExpression {
   -- | Media query expression value.
   cssMediaQueryExpressionValue :: Double,
   -- | Media query expression units.
-  cssMediaQueryExpressionUnit :: String,
+  cssMediaQueryExpressionUnit :: Text,
   -- | Media query expression feature.
-  cssMediaQueryExpressionFeature :: String,
+  cssMediaQueryExpressionFeature :: Text,
   -- | The associated range of the value text in the enclosing stylesheet (if available).
   cssMediaQueryExpressionValueRange :: Maybe CssSourceRange,
   -- | Computed length of media query expression (if applicable).
@@ -476,14 +477,14 @@ instance FromJSON  CssMediaQueryExpression where
 --   CSS container query rule descriptor.
 data CssCssContainerQuery = CssCssContainerQuery {
   -- | Container query text.
-  cssCssContainerQueryText :: String,
+  cssCssContainerQueryText :: Text,
   -- | The associated rule header range in the enclosing stylesheet (if
   --   available).
   cssCssContainerQueryRange :: Maybe CssSourceRange,
   -- | Identifier of the stylesheet containing this object (if exists).
   cssCssContainerQueryStyleSheetId :: Maybe CssStyleSheetId,
   -- | Optional name for the container.
-  cssCssContainerQueryName :: Maybe String
+  cssCssContainerQueryName :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON CssCssContainerQuery  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -497,7 +498,7 @@ instance FromJSON  CssCssContainerQuery where
 --   CSS Supports at-rule descriptor.
 data CssCssSupports = CssCssSupports {
   -- | Supports rule text.
-  cssCssSupportsText :: String,
+  cssCssSupportsText :: Text,
   -- | Whether the supports condition is satisfied.
   cssCssSupportsActive :: Bool,
   -- | The associated rule header range in the enclosing stylesheet (if
@@ -518,7 +519,7 @@ instance FromJSON  CssCssSupports where
 --   CSS Layer at-rule descriptor.
 data CssCssLayer = CssCssLayer {
   -- | Layer name.
-  cssCssLayerText :: String,
+  cssCssLayerText :: Text,
   -- | The associated rule header range in the enclosing stylesheet (if
   --   available).
   cssCssLayerRange :: Maybe CssSourceRange,
@@ -537,7 +538,7 @@ instance FromJSON  CssCssLayer where
 --   CSS Layer data.
 data CssCssLayerData = CssCssLayerData {
   -- | Layer name.
-  cssCssLayerDataName :: String,
+  cssCssLayerDataName :: Text,
   -- | Direct sub-layers
   cssCssLayerDataSubLayers :: Maybe [CssCssLayerData],
   -- | Layer order. The order determines the order of the layer in the cascade order.
@@ -556,7 +557,7 @@ instance FromJSON  CssCssLayerData where
 --   Information about amount of glyphs that were rendered with given font.
 data CssPlatformFontUsage = CssPlatformFontUsage {
   -- | Font's family name reported by platform.
-  cssPlatformFontUsageFamilyName :: String,
+  cssPlatformFontUsageFamilyName :: Text,
   -- | Indicates if the font was downloaded or resolved locally.
   cssPlatformFontUsageIsCustomFont :: Bool,
   -- | Amount of glyphs that were rendered with this font.
@@ -574,9 +575,9 @@ instance FromJSON  CssPlatformFontUsage where
 --   Information about font variation axes for variable fonts
 data CssFontVariationAxis = CssFontVariationAxis {
   -- | The font-variation-setting tag (a.k.a. "axis tag").
-  cssFontVariationAxisTag :: String,
+  cssFontVariationAxisTag :: Text,
   -- | Human-readable variation name in the default language (normally, "en").
-  cssFontVariationAxisName :: String,
+  cssFontVariationAxisName :: Text,
   -- | The minimum value (inclusive) the font supports for this tag.
   cssFontVariationAxisMinValue :: Double,
   -- | The maximum value (inclusive) the font supports for this tag.
@@ -597,21 +598,21 @@ instance FromJSON  CssFontVariationAxis where
 --   and additional information such as platformFontFamily and fontVariationAxes.
 data CssFontFace = CssFontFace {
   -- | The font-family.
-  cssFontFaceFontFamily :: String,
+  cssFontFaceFontFamily :: Text,
   -- | The font-style.
-  cssFontFaceFontStyle :: String,
+  cssFontFaceFontStyle :: Text,
   -- | The font-variant.
-  cssFontFaceFontVariant :: String,
+  cssFontFaceFontVariant :: Text,
   -- | The font-weight.
-  cssFontFaceFontWeight :: String,
+  cssFontFaceFontWeight :: Text,
   -- | The font-stretch.
-  cssFontFaceFontStretch :: String,
+  cssFontFaceFontStretch :: Text,
   -- | The unicode-range.
-  cssFontFaceUnicodeRange :: String,
+  cssFontFaceUnicodeRange :: Text,
   -- | The src.
-  cssFontFaceSrc :: String,
+  cssFontFaceSrc :: Text,
   -- | The resolved platform font family
-  cssFontFacePlatformFontFamily :: String,
+  cssFontFacePlatformFontFamily :: Text,
   -- | Available variation settings (a.k.a. "axes").
   cssFontFaceFontVariationAxes :: Maybe [CssFontVariationAxis]
 } deriving (Generic, Eq, Show, Read)
@@ -668,7 +669,7 @@ data CssStyleDeclarationEdit = CssStyleDeclarationEdit {
   -- | The range of the style text in the enclosing stylesheet.
   cssStyleDeclarationEditRange :: CssSourceRange,
   -- | New style text.
-  cssStyleDeclarationEditText :: String
+  cssStyleDeclarationEditText :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON CssStyleDeclarationEdit  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -749,7 +750,7 @@ data PCssAddRule = PCssAddRule {
   -- | The css style sheet identifier where a new rule should be inserted.
   pCssAddRuleStyleSheetId :: CssStyleSheetId,
   -- | The text of a new rule.
-  pCssAddRuleRuleText :: String,
+  pCssAddRuleRuleText :: Text,
   -- | Text position of a new rule in the target style sheet.
   pCssAddRuleLocation :: CssSourceRange
 } deriving (Generic, Eq, Show, Read)
@@ -803,7 +804,7 @@ cssCollectClassNames handle params = sendReceiveCommandResult handle "CSS.collec
 -- | Return type of the 'cssCollectClassNames' command.
 data CssCollectClassNames = CssCollectClassNames {
   -- | Class name list.
-  cssCollectClassNamesClassNames :: [String]
+  cssCollectClassNamesClassNames :: [Text]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  CssCollectClassNames where
@@ -865,7 +866,7 @@ data PCssForcePseudoState = PCssForcePseudoState {
   -- | The element id for which to force the pseudo state.
   pCssForcePseudoStateNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId,
   -- | Element pseudo classes to force when computing the element's style.
-  pCssForcePseudoStateForcedPseudoClasses :: [String]
+  pCssForcePseudoStateForcedPseudoClasses :: [Text]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PCssForcePseudoState  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -908,12 +909,12 @@ data CssGetBackgroundColors = CssGetBackgroundColors {
   --   this will consist of simply that color. In the case of a gradient, this will consist of each
   --   of the color stops. For anything more complicated, this will be an empty array. Images will
   --   be ignored (as if the image had failed to load).
-  cssGetBackgroundColorsBackgroundColors :: Maybe [String],
+  cssGetBackgroundColorsBackgroundColors :: Maybe [Text],
   -- | The computed font size for this node, as a CSS computed value string (e.g. '12px').
-  cssGetBackgroundColorsComputedFontSize :: Maybe String,
+  cssGetBackgroundColorsComputedFontSize :: Maybe Text,
   -- | The computed font weight for this node, as a CSS computed value string (e.g. 'normal' or
   --   '100').
-  cssGetBackgroundColorsComputedFontWeight :: Maybe String
+  cssGetBackgroundColorsComputedFontWeight :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  CssGetBackgroundColors where
@@ -1108,7 +1109,7 @@ cssGetStyleSheetText handle params = sendReceiveCommandResult handle "CSS.getSty
 -- | Return type of the 'cssGetStyleSheetText' command.
 data CssGetStyleSheetText = CssGetStyleSheetText {
   -- | The stylesheet text.
-  cssGetStyleSheetTextText :: String
+  cssGetStyleSheetTextText :: Text
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  CssGetStyleSheetText where
@@ -1200,8 +1201,8 @@ instance Command CssTakeComputedStyleUpdates where
 data PCssSetEffectivePropertyValueForNode = PCssSetEffectivePropertyValueForNode {
   -- | The element id for which to set property.
   pCssSetEffectivePropertyValueForNodeNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId,
-  pCssSetEffectivePropertyValueForNodePropertyName :: String,
-  pCssSetEffectivePropertyValueForNodeValue :: String
+  pCssSetEffectivePropertyValueForNodePropertyName :: Text,
+  pCssSetEffectivePropertyValueForNodeValue :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PCssSetEffectivePropertyValueForNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
@@ -1222,7 +1223,7 @@ cssSetEffectivePropertyValueForNode handle params = sendReceiveCommand handle "C
 data PCssSetKeyframeKey = PCssSetKeyframeKey {
   pCssSetKeyframeKeyStyleSheetId :: CssStyleSheetId,
   pCssSetKeyframeKeyRange :: CssSourceRange,
-  pCssSetKeyframeKeyKeyText :: String
+  pCssSetKeyframeKeyKeyText :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PCssSetKeyframeKey  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -1256,7 +1257,7 @@ instance Command CssSetKeyframeKey where
 data PCssSetMediaText = PCssSetMediaText {
   pCssSetMediaTextStyleSheetId :: CssStyleSheetId,
   pCssSetMediaTextRange :: CssSourceRange,
-  pCssSetMediaTextText :: String
+  pCssSetMediaTextText :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PCssSetMediaText  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -1290,7 +1291,7 @@ instance Command CssSetMediaText where
 data PCssSetContainerQueryText = PCssSetContainerQueryText {
   pCssSetContainerQueryTextStyleSheetId :: CssStyleSheetId,
   pCssSetContainerQueryTextRange :: CssSourceRange,
-  pCssSetContainerQueryTextText :: String
+  pCssSetContainerQueryTextText :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PCssSetContainerQueryText  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -1324,7 +1325,7 @@ instance Command CssSetContainerQueryText where
 data PCssSetSupportsText = PCssSetSupportsText {
   pCssSetSupportsTextStyleSheetId :: CssStyleSheetId,
   pCssSetSupportsTextRange :: CssSourceRange,
-  pCssSetSupportsTextText :: String
+  pCssSetSupportsTextText :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PCssSetSupportsText  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -1358,7 +1359,7 @@ instance Command CssSetSupportsText where
 data PCssSetRuleSelector = PCssSetRuleSelector {
   pCssSetRuleSelectorStyleSheetId :: CssStyleSheetId,
   pCssSetRuleSelectorRange :: CssSourceRange,
-  pCssSetRuleSelectorSelector :: String
+  pCssSetRuleSelectorSelector :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PCssSetRuleSelector  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -1391,7 +1392,7 @@ instance Command CssSetRuleSelector where
 -- | Parameters of the 'cssSetStyleSheetText' command.
 data PCssSetStyleSheetText = PCssSetStyleSheetText {
   pCssSetStyleSheetTextStyleSheetId :: CssStyleSheetId,
-  pCssSetStyleSheetTextText :: String
+  pCssSetStyleSheetTextText :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PCssSetStyleSheetText  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -1410,7 +1411,7 @@ cssSetStyleSheetText handle params = sendReceiveCommandResult handle "CSS.setSty
 -- | Return type of the 'cssSetStyleSheetText' command.
 data CssSetStyleSheetText = CssSetStyleSheetText {
   -- | URL of source map associated with script (if any).
-  cssSetStyleSheetTextSourceMapUrl :: Maybe String
+  cssSetStyleSheetTextSourceMapUrl :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  CssSetStyleSheetText where

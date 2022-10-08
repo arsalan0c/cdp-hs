@@ -23,6 +23,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -50,11 +51,11 @@ import CDP.Handle
 
 -- | Type 'Cast.Sink'.
 data CastSink = CastSink {
-  castSinkName :: String,
-  castSinkId :: String,
+  castSinkName :: Text,
+  castSinkId :: Text,
   -- | Text describing the current session. Present only if there is an active
   --   session on the sink.
-  castSinkSession :: Maybe String
+  castSinkSession :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON CastSink  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 8 , A.omitNothingFields = True}
@@ -80,7 +81,7 @@ instance FromJSON  CastSinksUpdated where
 
 -- | Type of the 'Cast.issueUpdated' event.
 data CastIssueUpdated = CastIssueUpdated {
-  castIssueUpdatedIssueMessage :: String
+  castIssueUpdatedIssueMessage :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON CastIssueUpdated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -94,7 +95,7 @@ instance FromJSON  CastIssueUpdated where
 
 -- | Parameters of the 'castEnable' command.
 data PCastEnable = PCastEnable {
-  pCastEnablePresentationUrl :: Maybe String
+  pCastEnablePresentationUrl :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PCastEnable  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 , A.omitNothingFields = True}
@@ -122,7 +123,7 @@ castDisable handle = sendReceiveCommand handle "Cast.disable" (Nothing :: Maybe 
 
 -- | Parameters of the 'castSetSinkToUse' command.
 data PCastSetSinkToUse = PCastSetSinkToUse {
-  pCastSetSinkToUseSinkName :: String
+  pCastSetSinkToUseSinkName :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PCastSetSinkToUse  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -141,7 +142,7 @@ castSetSinkToUse handle params = sendReceiveCommand handle "Cast.setSinkToUse" (
 
 -- | Parameters of the 'castStartDesktopMirroring' command.
 data PCastStartDesktopMirroring = PCastStartDesktopMirroring {
-  pCastStartDesktopMirroringSinkName :: String
+  pCastStartDesktopMirroringSinkName :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PCastStartDesktopMirroring  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -159,7 +160,7 @@ castStartDesktopMirroring handle params = sendReceiveCommand handle "Cast.startD
 
 -- | Parameters of the 'castStartTabMirroring' command.
 data PCastStartTabMirroring = PCastStartTabMirroring {
-  pCastStartTabMirroringSinkName :: String
+  pCastStartTabMirroringSinkName :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PCastStartTabMirroring  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -177,7 +178,7 @@ castStartTabMirroring handle params = sendReceiveCommand handle "Cast.startTabMi
 
 -- | Parameters of the 'castStopCasting' command.
 data PCastStopCasting = PCastStopCasting {
-  pCastStopCastingSinkName :: String
+  pCastStopCastingSinkName :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PCastStopCasting  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}

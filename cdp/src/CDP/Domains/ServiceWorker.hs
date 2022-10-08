@@ -20,6 +20,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -47,13 +48,13 @@ import CDP.Domains.BrowserTarget as BrowserTarget
 
 
 -- | Type 'ServiceWorker.RegistrationID'.
-type ServiceWorkerRegistrationId = String
+type ServiceWorkerRegistrationId = Text
 
 -- | Type 'ServiceWorker.ServiceWorkerRegistration'.
 --   ServiceWorker registration.
 data ServiceWorkerServiceWorkerRegistration = ServiceWorkerServiceWorkerRegistration {
   serviceWorkerServiceWorkerRegistrationRegistrationId :: ServiceWorkerRegistrationId,
-  serviceWorkerServiceWorkerRegistrationScopeUrl :: String,
+  serviceWorkerServiceWorkerRegistrationScopeUrl :: Text,
   serviceWorkerServiceWorkerRegistrationIsDeleted :: Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON ServiceWorkerServiceWorkerRegistration  where
@@ -115,9 +116,9 @@ instance ToJSON ServiceWorkerServiceWorkerVersionStatus where
 -- | Type 'ServiceWorker.ServiceWorkerVersion'.
 --   ServiceWorker version.
 data ServiceWorkerServiceWorkerVersion = ServiceWorkerServiceWorkerVersion {
-  serviceWorkerServiceWorkerVersionVersionId :: String,
+  serviceWorkerServiceWorkerVersionVersionId :: Text,
   serviceWorkerServiceWorkerVersionRegistrationId :: ServiceWorkerRegistrationId,
-  serviceWorkerServiceWorkerVersionScriptUrl :: String,
+  serviceWorkerServiceWorkerVersionScriptUrl :: Text,
   serviceWorkerServiceWorkerVersionRunningStatus :: ServiceWorkerServiceWorkerVersionRunningStatus,
   serviceWorkerServiceWorkerVersionStatus :: ServiceWorkerServiceWorkerVersionStatus,
   -- | The Last-Modified header value of the main script.
@@ -139,10 +140,10 @@ instance FromJSON  ServiceWorkerServiceWorkerVersion where
 -- | Type 'ServiceWorker.ServiceWorkerErrorMessage'.
 --   ServiceWorker error message.
 data ServiceWorkerServiceWorkerErrorMessage = ServiceWorkerServiceWorkerErrorMessage {
-  serviceWorkerServiceWorkerErrorMessageErrorMessage :: String,
+  serviceWorkerServiceWorkerErrorMessageErrorMessage :: Text,
   serviceWorkerServiceWorkerErrorMessageRegistrationId :: ServiceWorkerRegistrationId,
-  serviceWorkerServiceWorkerErrorMessageVersionId :: String,
-  serviceWorkerServiceWorkerErrorMessageSourceUrl :: String,
+  serviceWorkerServiceWorkerErrorMessageVersionId :: Text,
+  serviceWorkerServiceWorkerErrorMessageSourceUrl :: Text,
   serviceWorkerServiceWorkerErrorMessageLineNumber :: Int,
   serviceWorkerServiceWorkerErrorMessageColumnNumber :: Int
 } deriving (Generic, Eq, Show, Read)
@@ -196,9 +197,9 @@ instance FromJSON  ServiceWorkerWorkerVersionUpdated where
 
 -- | Parameters of the 'serviceWorkerDeliverPushMessage' command.
 data PServiceWorkerDeliverPushMessage = PServiceWorkerDeliverPushMessage {
-  pServiceWorkerDeliverPushMessageOrigin :: String,
+  pServiceWorkerDeliverPushMessageOrigin :: Text,
   pServiceWorkerDeliverPushMessageRegistrationId :: ServiceWorkerRegistrationId,
-  pServiceWorkerDeliverPushMessageData :: String
+  pServiceWorkerDeliverPushMessageData :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PServiceWorkerDeliverPushMessage  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
@@ -221,9 +222,9 @@ serviceWorkerDisable handle = sendReceiveCommand handle "ServiceWorker.disable" 
 
 -- | Parameters of the 'serviceWorkerDispatchSyncEvent' command.
 data PServiceWorkerDispatchSyncEvent = PServiceWorkerDispatchSyncEvent {
-  pServiceWorkerDispatchSyncEventOrigin :: String,
+  pServiceWorkerDispatchSyncEventOrigin :: Text,
   pServiceWorkerDispatchSyncEventRegistrationId :: ServiceWorkerRegistrationId,
-  pServiceWorkerDispatchSyncEventTag :: String,
+  pServiceWorkerDispatchSyncEventTag :: Text,
   pServiceWorkerDispatchSyncEventLastChance :: Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PServiceWorkerDispatchSyncEvent  where
@@ -242,9 +243,9 @@ serviceWorkerDispatchSyncEvent handle params = sendReceiveCommand handle "Servic
 
 -- | Parameters of the 'serviceWorkerDispatchPeriodicSyncEvent' command.
 data PServiceWorkerDispatchPeriodicSyncEvent = PServiceWorkerDispatchPeriodicSyncEvent {
-  pServiceWorkerDispatchPeriodicSyncEventOrigin :: String,
+  pServiceWorkerDispatchPeriodicSyncEventOrigin :: Text,
   pServiceWorkerDispatchPeriodicSyncEventRegistrationId :: ServiceWorkerRegistrationId,
-  pServiceWorkerDispatchPeriodicSyncEventTag :: String
+  pServiceWorkerDispatchPeriodicSyncEventTag :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PServiceWorkerDispatchPeriodicSyncEvent  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 39 , A.omitNothingFields = True}
@@ -267,7 +268,7 @@ serviceWorkerEnable handle = sendReceiveCommand handle "ServiceWorker.enable" (N
 
 -- | Parameters of the 'serviceWorkerInspectWorker' command.
 data PServiceWorkerInspectWorker = PServiceWorkerInspectWorker {
-  pServiceWorkerInspectWorkerVersionId :: String
+  pServiceWorkerInspectWorkerVersionId :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PServiceWorkerInspectWorker  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -303,7 +304,7 @@ serviceWorkerSetForceUpdateOnPageLoad handle params = sendReceiveCommand handle 
 
 -- | Parameters of the 'serviceWorkerSkipWaiting' command.
 data PServiceWorkerSkipWaiting = PServiceWorkerSkipWaiting {
-  pServiceWorkerSkipWaitingScopeUrl :: String
+  pServiceWorkerSkipWaitingScopeUrl :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PServiceWorkerSkipWaiting  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -321,7 +322,7 @@ serviceWorkerSkipWaiting handle params = sendReceiveCommand handle "ServiceWorke
 
 -- | Parameters of the 'serviceWorkerStartWorker' command.
 data PServiceWorkerStartWorker = PServiceWorkerStartWorker {
-  pServiceWorkerStartWorkerScopeUrl :: String
+  pServiceWorkerStartWorkerScopeUrl :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PServiceWorkerStartWorker  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -344,7 +345,7 @@ serviceWorkerStopAllWorkers handle = sendReceiveCommand handle "ServiceWorker.st
 
 -- | Parameters of the 'serviceWorkerStopWorker' command.
 data PServiceWorkerStopWorker = PServiceWorkerStopWorker {
-  pServiceWorkerStopWorkerVersionId :: String
+  pServiceWorkerStopWorkerVersionId :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PServiceWorkerStopWorker  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -362,7 +363,7 @@ serviceWorkerStopWorker handle params = sendReceiveCommand handle "ServiceWorker
 
 -- | Parameters of the 'serviceWorkerUnregister' command.
 data PServiceWorkerUnregister = PServiceWorkerUnregister {
-  pServiceWorkerUnregisterScopeUrl :: String
+  pServiceWorkerUnregisterScopeUrl :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PServiceWorkerUnregister  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -380,7 +381,7 @@ serviceWorkerUnregister handle params = sendReceiveCommand handle "ServiceWorker
 
 -- | Parameters of the 'serviceWorkerUpdateRegistration' command.
 data PServiceWorkerUpdateRegistration = PServiceWorkerUpdateRegistration {
-  pServiceWorkerUpdateRegistrationScopeUrl :: String
+  pServiceWorkerUpdateRegistrationScopeUrl :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PServiceWorkerUpdateRegistration  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}

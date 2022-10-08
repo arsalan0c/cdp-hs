@@ -25,6 +25,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -57,7 +58,7 @@ import CDP.Handle
 -- | Parameters of the 'eventBreakpointsSetInstrumentationBreakpoint' command.
 data PEventBreakpointsSetInstrumentationBreakpoint = PEventBreakpointsSetInstrumentationBreakpoint {
   -- | Instrumentation name to stop on.
-  pEventBreakpointsSetInstrumentationBreakpointEventName :: String
+  pEventBreakpointsSetInstrumentationBreakpointEventName :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEventBreakpointsSetInstrumentationBreakpoint  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 45 , A.omitNothingFields = True}
@@ -76,7 +77,7 @@ eventBreakpointsSetInstrumentationBreakpoint handle params = sendReceiveCommand 
 -- | Parameters of the 'eventBreakpointsRemoveInstrumentationBreakpoint' command.
 data PEventBreakpointsRemoveInstrumentationBreakpoint = PEventBreakpointsRemoveInstrumentationBreakpoint {
   -- | Instrumentation name to stop on.
-  pEventBreakpointsRemoveInstrumentationBreakpointEventName :: String
+  pEventBreakpointsRemoveInstrumentationBreakpointEventName :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEventBreakpointsRemoveInstrumentationBreakpoint  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 48 , A.omitNothingFields = True}

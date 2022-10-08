@@ -20,6 +20,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -82,11 +83,11 @@ data TracingTraceConfig = TracingTraceConfig {
   -- | Turns on argument filter.
   tracingTraceConfigEnableArgumentFilter :: Maybe Bool,
   -- | Included category filters.
-  tracingTraceConfigIncludedCategories :: Maybe [String],
+  tracingTraceConfigIncludedCategories :: Maybe [Text],
   -- | Excluded category filters.
-  tracingTraceConfigExcludedCategories :: Maybe [String],
+  tracingTraceConfigExcludedCategories :: Maybe [Text],
   -- | Configuration to synthesize the delays in tracing.
-  tracingTraceConfigSyntheticDelays :: Maybe [String],
+  tracingTraceConfigSyntheticDelays :: Maybe [Text],
   -- | Configuration for memory dump triggers. Used only when "memory-infra" category is enabled.
   tracingTraceConfigMemoryDumpConfig :: Maybe TracingMemoryDumpConfig
 } deriving (Generic, Eq, Show, Read)
@@ -255,7 +256,7 @@ tracingGetCategories handle = sendReceiveCommandResult handle "Tracing.getCatego
 -- | Return type of the 'tracingGetCategories' command.
 data TracingGetCategories = TracingGetCategories {
   -- | A list of supported tracing categories.
-  tracingGetCategoriesCategories :: [String]
+  tracingGetCategoriesCategories :: [Text]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  TracingGetCategories where
@@ -269,7 +270,7 @@ instance Command TracingGetCategories where
 -- | Parameters of the 'tracingRecordClockSyncMarker' command.
 data PTracingRecordClockSyncMarker = PTracingRecordClockSyncMarker {
   -- | The ID of this clock sync marker
-  pTracingRecordClockSyncMarkerSyncId :: String
+  pTracingRecordClockSyncMarkerSyncId :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTracingRecordClockSyncMarker  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -309,7 +310,7 @@ tracingRequestMemoryDump handle params = sendReceiveCommandResult handle "Tracin
 -- | Return type of the 'tracingRequestMemoryDump' command.
 data TracingRequestMemoryDump = TracingRequestMemoryDump {
   -- | GUID of the resulting global memory dump.
-  tracingRequestMemoryDumpDumpGuid :: String,
+  tracingRequestMemoryDumpDumpGuid :: Text,
   -- | True iff the global memory dump succeeded.
   tracingRequestMemoryDumpSuccess :: Bool
 } deriving (Generic, Eq, Show, Read)
@@ -356,7 +357,7 @@ data PTracingStart = PTracingStart {
   -- | Base64-encoded serialized perfetto.protos.TraceConfig protobuf message
   --   When specified, the parameters `categories`, `options`, `traceConfig`
   --   are ignored. (Encoded as a base64 string when passed over JSON)
-  pTracingStartPerfettoConfig :: Maybe String,
+  pTracingStartPerfettoConfig :: Maybe Text,
   -- | Backend type (defaults to `auto`)
   pTracingStartTracingBackend :: Maybe TracingTracingBackend
 } deriving (Generic, Eq, Show, Read)

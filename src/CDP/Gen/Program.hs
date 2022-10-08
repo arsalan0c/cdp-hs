@@ -437,7 +437,7 @@ typeCDPToHS ctx domain ty Nothing = convertType ctx domain ty
 typeCDPToHS ctx _ _ _ = error "no matching type"
 
 convertType :: Context -> T.Text -> T.Text -> T.Text
-convertType _ _ "string"  = "String"
+convertType _ _ "string"  = "Text"
 convertType _ _ "integer" = "Int"
 convertType _ _ "boolean" = "Bool"
 convertType _ _ "number"  = "Double"

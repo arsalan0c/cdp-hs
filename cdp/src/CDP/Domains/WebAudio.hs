@@ -23,6 +23,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -50,7 +51,7 @@ import CDP.Handle
 
 -- | Type 'WebAudio.GraphObjectId'.
 --   An unique ID for a graph object (AudioContext, AudioNode, AudioParam) in Web Audio API
-type WebAudioGraphObjectId = String
+type WebAudioGraphObjectId = Text
 
 -- | Type 'WebAudio.ContextType'.
 --   Enum of BaseAudioContext types
@@ -94,7 +95,7 @@ instance ToJSON WebAudioContextState where
 
 -- | Type 'WebAudio.NodeType'.
 --   Enum of AudioNode types
-type WebAudioNodeType = String
+type WebAudioNodeType = Text
 
 -- | Type 'WebAudio.ChannelCountMode'.
 --   Enum of AudioNode::ChannelCountMode from the spec
@@ -138,7 +139,7 @@ instance ToJSON WebAudioChannelInterpretation where
 
 -- | Type 'WebAudio.ParamType'.
 --   Enum of AudioParam types
-type WebAudioParamType = String
+type WebAudioParamType = Text
 
 -- | Type 'WebAudio.AutomationRate'.
 --   Enum of AudioParam::AutomationRate from the spec

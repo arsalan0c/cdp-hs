@@ -22,6 +22,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -81,8 +82,8 @@ instance ToJSON BackgroundServiceServiceName where
 -- | Type 'BackgroundService.EventMetadata'.
 --   A key-value pair for additional event information to pass along.
 data BackgroundServiceEventMetadata = BackgroundServiceEventMetadata {
-  backgroundServiceEventMetadataKey :: String,
-  backgroundServiceEventMetadataValue :: String
+  backgroundServiceEventMetadataKey :: Text,
+  backgroundServiceEventMetadataValue :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON BackgroundServiceEventMetadata  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -97,15 +98,15 @@ data BackgroundServiceBackgroundServiceEvent = BackgroundServiceBackgroundServic
   -- | Timestamp of the event (in seconds).
   backgroundServiceBackgroundServiceEventTimestamp :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
   -- | The origin this event belongs to.
-  backgroundServiceBackgroundServiceEventOrigin :: String,
+  backgroundServiceBackgroundServiceEventOrigin :: Text,
   -- | The Service Worker ID that initiated the event.
   backgroundServiceBackgroundServiceEventServiceWorkerRegistrationId :: ServiceWorker.ServiceWorkerRegistrationId,
   -- | The Background Service this event belongs to.
   backgroundServiceBackgroundServiceEventService :: BackgroundServiceServiceName,
   -- | A description of the event.
-  backgroundServiceBackgroundServiceEventEventName :: String,
+  backgroundServiceBackgroundServiceEventEventName :: Text,
   -- | An identifier that groups related events together.
-  backgroundServiceBackgroundServiceEventInstanceId :: String,
+  backgroundServiceBackgroundServiceEventInstanceId :: Text,
   -- | A list of event-specific information.
   backgroundServiceBackgroundServiceEventEventMetadata :: [BackgroundServiceEventMetadata]
 } deriving (Generic, Eq, Show, Read)

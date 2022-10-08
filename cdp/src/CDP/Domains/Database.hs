@@ -20,6 +20,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -47,7 +48,7 @@ import CDP.Handle
 
 -- | Type 'Database.DatabaseId'.
 --   Unique identifier of Database object.
-type DatabaseDatabaseId = String
+type DatabaseDatabaseId = Text
 
 -- | Type 'Database.Database'.
 --   Database object.
@@ -55,11 +56,11 @@ data DatabaseDatabase = DatabaseDatabase {
   -- | Database ID.
   databaseDatabaseId :: DatabaseDatabaseId,
   -- | Database domain.
-  databaseDatabaseDomain :: String,
+  databaseDatabaseDomain :: Text,
   -- | Database name.
-  databaseDatabaseName :: String,
+  databaseDatabaseName :: Text,
   -- | Database version.
-  databaseDatabaseVersion :: String
+  databaseDatabaseVersion :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DatabaseDatabase  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -73,7 +74,7 @@ instance FromJSON  DatabaseDatabase where
 --   Database error.
 data DatabaseError = DatabaseError {
   -- | Error message.
-  databaseErrorMessage :: String,
+  databaseErrorMessage :: Text,
   -- | Error code.
   databaseErrorCode :: Int
 } deriving (Generic, Eq, Show, Read)
@@ -116,7 +117,7 @@ databaseEnable handle = sendReceiveCommand handle "Database.enable" (Nothing :: 
 -- | Parameters of the 'databaseExecuteSql' command.
 data PDatabaseExecuteSql = PDatabaseExecuteSql {
   pDatabaseExecuteSqlDatabaseId :: DatabaseDatabaseId,
-  pDatabaseExecuteSqlQuery :: String
+  pDatabaseExecuteSqlQuery :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDatabaseExecuteSql  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -134,7 +135,7 @@ databaseExecuteSql handle params = sendReceiveCommandResult handle "Database.exe
 
 -- | Return type of the 'databaseExecuteSql' command.
 data DatabaseExecuteSql = DatabaseExecuteSql {
-  databaseExecuteSqlColumnNames :: Maybe [String],
+  databaseExecuteSqlColumnNames :: Maybe [Text],
   databaseExecuteSqlValues :: Maybe [Int],
   databaseExecuteSqlSqlError :: Maybe DatabaseError
 } deriving (Generic, Eq, Show, Read)
@@ -167,7 +168,7 @@ databaseGetDatabaseTableNames handle params = sendReceiveCommandResult handle "D
 
 -- | Return type of the 'databaseGetDatabaseTableNames' command.
 data DatabaseGetDatabaseTableNames = DatabaseGetDatabaseTableNames {
-  databaseGetDatabaseTableNamesTableNames :: [String]
+  databaseGetDatabaseTableNamesTableNames :: [Text]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DatabaseGetDatabaseTableNames where

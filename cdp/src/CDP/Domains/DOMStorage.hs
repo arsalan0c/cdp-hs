@@ -22,6 +22,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -48,13 +49,13 @@ import CDP.Handle
 
 
 -- | Type 'DOMStorage.SerializedStorageKey'.
-type DomStorageSerializedStorageKey = String
+type DomStorageSerializedStorageKey = Text
 
 -- | Type 'DOMStorage.StorageId'.
 --   DOM Storage identifier.
 data DomStorageStorageId = DomStorageStorageId {
   -- | Security origin for the storage.
-  domStorageStorageIdSecurityOrigin :: Maybe String,
+  domStorageStorageIdSecurityOrigin :: Maybe Text,
   -- | Represents a key by which DOM Storage keys its CachedStorageAreas
   domStorageStorageIdStorageKey :: Maybe DomStorageSerializedStorageKey,
   -- | Whether the storage is local storage (not session storage).
@@ -70,15 +71,15 @@ instance FromJSON  DomStorageStorageId where
 
 -- | Type 'DOMStorage.Item'.
 --   DOM Storage item.
-type DomStorageItem = [String]
+type DomStorageItem = [Text]
 
 
 
 -- | Type of the 'DOMStorage.domStorageItemAdded' event.
 data DomStorageDomStorageItemAdded = DomStorageDomStorageItemAdded {
   domStorageDomStorageItemAddedStorageId :: DomStorageStorageId,
-  domStorageDomStorageItemAddedKey :: String,
-  domStorageDomStorageItemAddedNewValue :: String
+  domStorageDomStorageItemAddedKey :: Text,
+  domStorageDomStorageItemAddedNewValue :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomStorageDomStorageItemAdded  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -91,7 +92,7 @@ instance FromJSON  DomStorageDomStorageItemAdded where
 -- | Type of the 'DOMStorage.domStorageItemRemoved' event.
 data DomStorageDomStorageItemRemoved = DomStorageDomStorageItemRemoved {
   domStorageDomStorageItemRemovedStorageId :: DomStorageStorageId,
-  domStorageDomStorageItemRemovedKey :: String
+  domStorageDomStorageItemRemovedKey :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomStorageDomStorageItemRemoved  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
@@ -104,9 +105,9 @@ instance FromJSON  DomStorageDomStorageItemRemoved where
 -- | Type of the 'DOMStorage.domStorageItemUpdated' event.
 data DomStorageDomStorageItemUpdated = DomStorageDomStorageItemUpdated {
   domStorageDomStorageItemUpdatedStorageId :: DomStorageStorageId,
-  domStorageDomStorageItemUpdatedKey :: String,
-  domStorageDomStorageItemUpdatedOldValue :: String,
-  domStorageDomStorageItemUpdatedNewValue :: String
+  domStorageDomStorageItemUpdatedKey :: Text,
+  domStorageDomStorageItemUpdatedOldValue :: Text,
+  domStorageDomStorageItemUpdatedNewValue :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomStorageDomStorageItemUpdated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
@@ -194,7 +195,7 @@ instance Command DomStorageGetDomStorageItems where
 -- | Parameters of the 'domStorageRemoveDomStorageItem' command.
 data PDomStorageRemoveDomStorageItem = PDomStorageRemoveDomStorageItem {
   pDomStorageRemoveDomStorageItemStorageId :: DomStorageStorageId,
-  pDomStorageRemoveDomStorageItemKey :: String
+  pDomStorageRemoveDomStorageItemKey :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomStorageRemoveDomStorageItem  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
@@ -213,8 +214,8 @@ domStorageRemoveDomStorageItem handle params = sendReceiveCommand handle "DOMSto
 -- | Parameters of the 'domStorageSetDomStorageItem' command.
 data PDomStorageSetDomStorageItem = PDomStorageSetDomStorageItem {
   pDomStorageSetDomStorageItemStorageId :: DomStorageStorageId,
-  pDomStorageSetDomStorageItemKey :: String,
-  pDomStorageSetDomStorageItemValue :: String
+  pDomStorageSetDomStorageItemKey :: Text,
+  pDomStorageSetDomStorageItemValue :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomStorageSetDomStorageItem  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}

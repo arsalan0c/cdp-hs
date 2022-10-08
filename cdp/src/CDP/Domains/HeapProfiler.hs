@@ -20,6 +20,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -48,7 +49,7 @@ import CDP.Domains.Runtime as Runtime
 
 -- | Type 'HeapProfiler.HeapSnapshotObjectId'.
 --   Heap snapshot object id.
-type HeapProfilerHeapSnapshotObjectId = String
+type HeapProfilerHeapSnapshotObjectId = Text
 
 -- | Type 'HeapProfiler.SamplingHeapProfileNode'.
 --   Sampling Heap Profile node. Holds callsite information, allocation statistics and child nodes.
@@ -107,7 +108,7 @@ instance FromJSON  HeapProfilerSamplingHeapProfile where
 
 -- | Type of the 'HeapProfiler.addHeapSnapshotChunk' event.
 data HeapProfilerAddHeapSnapshotChunk = HeapProfilerAddHeapSnapshotChunk {
-  heapProfilerAddHeapSnapshotChunkChunk :: String
+  heapProfilerAddHeapSnapshotChunkChunk :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON HeapProfilerAddHeapSnapshotChunk  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
@@ -244,7 +245,7 @@ instance Command HeapProfilerGetHeapObjectId where
 data PHeapProfilerGetObjectByHeapObjectId = PHeapProfilerGetObjectByHeapObjectId {
   pHeapProfilerGetObjectByHeapObjectIdObjectId :: HeapProfilerHeapSnapshotObjectId,
   -- | Symbolic group name that can be used to release multiple objects.
-  pHeapProfilerGetObjectByHeapObjectIdObjectGroup :: Maybe String
+  pHeapProfilerGetObjectByHeapObjectIdObjectGroup :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PHeapProfilerGetObjectByHeapObjectId  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}

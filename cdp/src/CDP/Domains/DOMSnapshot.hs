@@ -22,6 +22,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -55,13 +56,13 @@ data DomSnapshotDomNode = DomSnapshotDomNode {
   -- | `Node`'s nodeType.
   domSnapshotDomNodeNodeType :: Int,
   -- | `Node`'s nodeName.
-  domSnapshotDomNodeNodeName :: String,
+  domSnapshotDomNodeNodeName :: Text,
   -- | `Node`'s nodeValue.
-  domSnapshotDomNodeNodeValue :: String,
+  domSnapshotDomNodeNodeValue :: Text,
   -- | Only set for textarea elements, contains the text value.
-  domSnapshotDomNodeTextValue :: Maybe String,
+  domSnapshotDomNodeTextValue :: Maybe Text,
   -- | Only set for input elements, contains the input's associated text value.
-  domSnapshotDomNodeInputValue :: Maybe String,
+  domSnapshotDomNodeInputValue :: Maybe Text,
   -- | Only set for radio and checkbox input elements, indicates if the element has been checked
   domSnapshotDomNodeInputChecked :: Maybe Bool,
   -- | Only set for option elements, indicates if the element has been selected
@@ -80,17 +81,17 @@ data DomSnapshotDomNode = DomSnapshotDomNode {
   --   `getSnapshot`, if any.
   domSnapshotDomNodeLayoutNodeIndex :: Maybe Int,
   -- | Document URL that `Document` or `FrameOwner` node points to.
-  domSnapshotDomNodeDocumentUrl :: Maybe String,
+  domSnapshotDomNodeDocumentUrl :: Maybe Text,
   -- | Base URL that `Document` or `FrameOwner` node uses for URL completion.
-  domSnapshotDomNodeBaseUrl :: Maybe String,
+  domSnapshotDomNodeBaseUrl :: Maybe Text,
   -- | Only set for documents, contains the document's content language.
-  domSnapshotDomNodeContentLanguage :: Maybe String,
+  domSnapshotDomNodeContentLanguage :: Maybe Text,
   -- | Only set for documents, contains the document's character set encoding.
-  domSnapshotDomNodeDocumentEncoding :: Maybe String,
+  domSnapshotDomNodeDocumentEncoding :: Maybe Text,
   -- | `DocumentType` node's publicId.
-  domSnapshotDomNodePublicId :: Maybe String,
+  domSnapshotDomNodePublicId :: Maybe Text,
   -- | `DocumentType` node's systemId.
-  domSnapshotDomNodeSystemId :: Maybe String,
+  domSnapshotDomNodeSystemId :: Maybe Text,
   -- | Frame ID for frame owner elements and also for the document node.
   domSnapshotDomNodeFrameId :: Maybe DOMPageNetworkEmulationSecurity.PageFrameId,
   -- | The index of a frame owner element's content document in the `domNodes` array returned by
@@ -107,9 +108,9 @@ data DomSnapshotDomNode = DomSnapshotDomNode {
   -- | Details of the node's event listeners, if any.
   domSnapshotDomNodeEventListeners :: Maybe [DOMDebugger.DomDebuggerEventListener],
   -- | The selected url for nodes with a srcset attribute.
-  domSnapshotDomNodeCurrentSourceUrl :: Maybe String,
+  domSnapshotDomNodeCurrentSourceUrl :: Maybe Text,
   -- | The url of the script (if any) that generates this node.
-  domSnapshotDomNodeOriginUrl :: Maybe String,
+  domSnapshotDomNodeOriginUrl :: Maybe Text,
   -- | Scroll offsets, set when this node is a Document.
   domSnapshotDomNodeScrollOffsetX :: Maybe Double,
   domSnapshotDomNodeScrollOffsetY :: Maybe Double
@@ -151,7 +152,7 @@ data DomSnapshotLayoutTreeNode = DomSnapshotLayoutTreeNode {
   -- | The bounding box in document coordinates. Note that scroll offset of the document is ignored.
   domSnapshotLayoutTreeNodeBoundingBox :: DOMPageNetworkEmulationSecurity.DomRect,
   -- | Contents of the LayoutText, if any.
-  domSnapshotLayoutTreeNodeLayoutText :: Maybe String,
+  domSnapshotLayoutTreeNodeLayoutText :: Maybe Text,
   -- | The post-layout inline text nodes, if any.
   domSnapshotLayoutTreeNodeInlineTextNodes :: Maybe [DomSnapshotInlineTextBox],
   -- | Index into the `computedStyles` array returned by `getSnapshot`.
@@ -189,9 +190,9 @@ instance FromJSON  DomSnapshotComputedStyle where
 --   A name/value pair.
 data DomSnapshotNameValue = DomSnapshotNameValue {
   -- | Attribute/property name.
-  domSnapshotNameValueName :: String,
+  domSnapshotNameValueName :: Text,
   -- | Attribute/property value.
-  domSnapshotNameValueValue :: String
+  domSnapshotNameValueValue :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DomSnapshotNameValue  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -417,7 +418,7 @@ domSnapshotEnable handle = sendReceiveCommand handle "DOMSnapshot.enable" (Nothi
 -- | Parameters of the 'domSnapshotCaptureSnapshot' command.
 data PDomSnapshotCaptureSnapshot = PDomSnapshotCaptureSnapshot {
   -- | Whitelist of computed styles to return.
-  pDomSnapshotCaptureSnapshotComputedStyles :: [String],
+  pDomSnapshotCaptureSnapshotComputedStyles :: [Text],
   -- | Whether to include layout object paint orders into the snapshot.
   pDomSnapshotCaptureSnapshotIncludePaintOrder :: Maybe Bool,
   -- | Whether to include DOM rectangles (offsetRects, clientRects, scrollRects) into the snapshot
@@ -453,7 +454,7 @@ data DomSnapshotCaptureSnapshot = DomSnapshotCaptureSnapshot {
   -- | The nodes in the DOM tree. The DOMNode at index 0 corresponds to the root document.
   domSnapshotCaptureSnapshotDocuments :: [DomSnapshotDocumentSnapshot],
   -- | Shared string table that all string properties refer to with indexes.
-  domSnapshotCaptureSnapshotStrings :: [String]
+  domSnapshotCaptureSnapshotStrings :: [Text]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DomSnapshotCaptureSnapshot where

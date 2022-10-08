@@ -20,6 +20,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -50,7 +51,7 @@ import CDP.Handle
 -- | Type of the 'Inspector.detached' event.
 data InspectorDetached = InspectorDetached {
   -- | The reason why connection has been terminated.
-  inspectorDetachedReason :: String
+  inspectorDetachedReason :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON InspectorDetached  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}

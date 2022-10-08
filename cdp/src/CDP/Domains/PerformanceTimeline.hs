@@ -23,6 +23,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -57,9 +58,9 @@ data PerformanceTimelineLargestContentfulPaint = PerformanceTimelineLargestConte
   -- | The number of pixels being painted.
   performanceTimelineLargestContentfulPaintSize :: Double,
   -- | The id attribute of the element, if available.
-  performanceTimelineLargestContentfulPaintElementId :: Maybe String,
+  performanceTimelineLargestContentfulPaintElementId :: Maybe Text,
   -- | The URL of the image (may be trimmed).
-  performanceTimelineLargestContentfulPaintUrl :: Maybe String,
+  performanceTimelineLargestContentfulPaintUrl :: Maybe Text,
   performanceTimelineLargestContentfulPaintNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomBackendNodeId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PerformanceTimelineLargestContentfulPaint  where
@@ -107,9 +108,9 @@ data PerformanceTimelineTimelineEvent = PerformanceTimelineTimelineEvent {
   performanceTimelineTimelineEventFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId,
   -- | The event type, as specified in https://w3c.github.io/performance-timeline/#dom-performanceentry-entrytype
   --   This determines which of the optional "details" fiedls is present.
-  performanceTimelineTimelineEventType :: String,
+  performanceTimelineTimelineEventType :: Text,
   -- | Name may be empty depending on the type.
-  performanceTimelineTimelineEventName :: String,
+  performanceTimelineTimelineEventName :: Text,
   -- | Time in seconds since Epoch, monotonically increasing within document lifetime.
   performanceTimelineTimelineEventTime :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
   -- | Event duration, if applicable.
@@ -148,7 +149,7 @@ data PPerformanceTimelineEnable = PPerformanceTimelineEnable {
   --   The specified filter overrides any previous filters, passing empty
   --   filter disables recording.
   --   Note that not all types exposed to the web platform are currently supported.
-  pPerformanceTimelineEnableEventTypes :: [String]
+  pPerformanceTimelineEnableEventTypes :: [Text]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPerformanceTimelineEnable  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}

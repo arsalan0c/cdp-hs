@@ -23,6 +23,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -94,7 +95,7 @@ instance ToJSON DomDebuggerCspViolationType where
 --   Object event listener.
 data DomDebuggerEventListener = DomDebuggerEventListener {
   -- | `EventListener`'s type.
-  domDebuggerEventListenerType :: String,
+  domDebuggerEventListenerType :: Text,
   -- | `EventListener`'s useCapture.
   domDebuggerEventListenerUseCapture :: Bool,
   -- | `EventListener`'s passive flag.
@@ -189,9 +190,9 @@ domDebuggerRemoveDomBreakpoint handle params = sendReceiveCommand handle "DOMDeb
 -- | Parameters of the 'domDebuggerRemoveEventListenerBreakpoint' command.
 data PDomDebuggerRemoveEventListenerBreakpoint = PDomDebuggerRemoveEventListenerBreakpoint {
   -- | Event name.
-  pDomDebuggerRemoveEventListenerBreakpointEventName :: String,
+  pDomDebuggerRemoveEventListenerBreakpointEventName :: Text,
   -- | EventTarget interface name.
-  pDomDebuggerRemoveEventListenerBreakpointTargetName :: Maybe String
+  pDomDebuggerRemoveEventListenerBreakpointTargetName :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomDebuggerRemoveEventListenerBreakpoint  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 41 , A.omitNothingFields = True}
@@ -210,7 +211,7 @@ domDebuggerRemoveEventListenerBreakpoint handle params = sendReceiveCommand hand
 -- | Parameters of the 'domDebuggerRemoveInstrumentationBreakpoint' command.
 data PDomDebuggerRemoveInstrumentationBreakpoint = PDomDebuggerRemoveInstrumentationBreakpoint {
   -- | Instrumentation name to stop on.
-  pDomDebuggerRemoveInstrumentationBreakpointEventName :: String
+  pDomDebuggerRemoveInstrumentationBreakpointEventName :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomDebuggerRemoveInstrumentationBreakpoint  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 43 , A.omitNothingFields = True}
@@ -229,7 +230,7 @@ domDebuggerRemoveInstrumentationBreakpoint handle params = sendReceiveCommand ha
 -- | Parameters of the 'domDebuggerRemoveXhrBreakpoint' command.
 data PDomDebuggerRemoveXhrBreakpoint = PDomDebuggerRemoveXhrBreakpoint {
   -- | Resource URL substring.
-  pDomDebuggerRemoveXhrBreakpointUrl :: String
+  pDomDebuggerRemoveXhrBreakpointUrl :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomDebuggerRemoveXhrBreakpoint  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
@@ -288,10 +289,10 @@ domDebuggerSetDomBreakpoint handle params = sendReceiveCommand handle "DOMDebugg
 -- | Parameters of the 'domDebuggerSetEventListenerBreakpoint' command.
 data PDomDebuggerSetEventListenerBreakpoint = PDomDebuggerSetEventListenerBreakpoint {
   -- | DOM Event name to stop on (any DOM event will do).
-  pDomDebuggerSetEventListenerBreakpointEventName :: String,
+  pDomDebuggerSetEventListenerBreakpointEventName :: Text,
   -- | EventTarget interface name to stop on. If equal to `"*"` or not provided, will stop on any
   --   EventTarget.
-  pDomDebuggerSetEventListenerBreakpointTargetName :: Maybe String
+  pDomDebuggerSetEventListenerBreakpointTargetName :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomDebuggerSetEventListenerBreakpoint  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 , A.omitNothingFields = True}
@@ -310,7 +311,7 @@ domDebuggerSetEventListenerBreakpoint handle params = sendReceiveCommand handle 
 -- | Parameters of the 'domDebuggerSetInstrumentationBreakpoint' command.
 data PDomDebuggerSetInstrumentationBreakpoint = PDomDebuggerSetInstrumentationBreakpoint {
   -- | Instrumentation name to stop on.
-  pDomDebuggerSetInstrumentationBreakpointEventName :: String
+  pDomDebuggerSetInstrumentationBreakpointEventName :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomDebuggerSetInstrumentationBreakpoint  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 , A.omitNothingFields = True}
@@ -329,7 +330,7 @@ domDebuggerSetInstrumentationBreakpoint handle params = sendReceiveCommand handl
 -- | Parameters of the 'domDebuggerSetXhrBreakpoint' command.
 data PDomDebuggerSetXhrBreakpoint = PDomDebuggerSetXhrBreakpoint {
   -- | Resource URL substring. All XHRs having this substring in the URL will get stopped upon.
-  pDomDebuggerSetXhrBreakpointUrl :: String
+  pDomDebuggerSetXhrBreakpointUrl :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDomDebuggerSetXhrBreakpoint  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}

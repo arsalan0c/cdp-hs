@@ -22,6 +22,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -51,7 +52,7 @@ import CDP.Domains.Runtime as Runtime
 -- | Type 'IO.StreamHandle'.
 --   This is either obtained from another method or specified as `blob:&lt;uuid&gt;` where
 --   `&lt;uuid&gt` is an UUID of a Blob.
-type IoStreamHandle = String
+type IoStreamHandle = Text
 
 
 
@@ -105,7 +106,7 @@ data IoRead = IoRead {
   -- | Set if the data is base64-encoded
   ioReadBase64Encoded :: Maybe Bool,
   -- | Data that were read.
-  ioReadData :: String,
+  ioReadData :: Text,
   -- | Set if the end-of-file condition occurred while reading.
   ioReadEof :: Bool
 } deriving (Generic, Eq, Show, Read)
@@ -140,7 +141,7 @@ ioResolveBlob handle params = sendReceiveCommandResult handle "IO.resolveBlob" (
 -- | Return type of the 'ioResolveBlob' command.
 data IoResolveBlob = IoResolveBlob {
   -- | UUID of the specified Blob.
-  ioResolveBlobUuid :: String
+  ioResolveBlobUuid :: Text
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  IoResolveBlob where

@@ -22,6 +22,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -124,7 +125,7 @@ data HeadlessExperimentalBeginFrame = HeadlessExperimentalBeginFrame {
   --   display. Reported for diagnostic uses, may be removed in the future.
   headlessExperimentalBeginFrameHasDamage :: Bool,
   -- | Base64-encoded image data of the screenshot, if one was requested and successfully taken. (Encoded as a base64 string when passed over JSON)
-  headlessExperimentalBeginFrameScreenshotData :: Maybe String
+  headlessExperimentalBeginFrameScreenshotData :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  HeadlessExperimentalBeginFrame where

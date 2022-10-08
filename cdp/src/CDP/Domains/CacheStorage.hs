@@ -20,6 +20,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -47,7 +48,7 @@ import CDP.Handle
 
 -- | Type 'CacheStorage.CacheId'.
 --   Unique identifier of the Cache object.
-type CacheStorageCacheId = String
+type CacheStorageCacheId = Text
 
 -- | Type 'CacheStorage.CachedResponseType'.
 --   type of HTTP response cached
@@ -80,9 +81,9 @@ instance ToJSON CacheStorageCachedResponseType where
 --   Data entry.
 data CacheStorageDataEntry = CacheStorageDataEntry {
   -- | Request URL.
-  cacheStorageDataEntryRequestUrl :: String,
+  cacheStorageDataEntryRequestUrl :: Text,
   -- | Request method.
-  cacheStorageDataEntryRequestMethod :: String,
+  cacheStorageDataEntryRequestMethod :: Text,
   -- | Request headers
   cacheStorageDataEntryRequestHeaders :: [CacheStorageHeader],
   -- | Number of seconds since epoch.
@@ -90,7 +91,7 @@ data CacheStorageDataEntry = CacheStorageDataEntry {
   -- | HTTP response status code.
   cacheStorageDataEntryResponseStatus :: Int,
   -- | HTTP response status text.
-  cacheStorageDataEntryResponseStatusText :: String,
+  cacheStorageDataEntryResponseStatusText :: Text,
   -- | HTTP response type
   cacheStorageDataEntryResponseType :: CacheStorageCachedResponseType,
   -- | Response headers
@@ -110,9 +111,9 @@ data CacheStorageCache = CacheStorageCache {
   -- | An opaque unique id of the cache.
   cacheStorageCacheCacheId :: CacheStorageCacheId,
   -- | Security origin of the cache.
-  cacheStorageCacheSecurityOrigin :: String,
+  cacheStorageCacheSecurityOrigin :: Text,
   -- | The name of the cache.
-  cacheStorageCacheCacheName :: String
+  cacheStorageCacheCacheName :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON CacheStorageCache  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
@@ -124,8 +125,8 @@ instance FromJSON  CacheStorageCache where
 
 -- | Type 'CacheStorage.Header'.
 data CacheStorageHeader = CacheStorageHeader {
-  cacheStorageHeaderName :: String,
-  cacheStorageHeaderValue :: String
+  cacheStorageHeaderName :: Text,
+  cacheStorageHeaderValue :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON CacheStorageHeader  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -139,7 +140,7 @@ instance FromJSON  CacheStorageHeader where
 --   Cached response
 data CacheStorageCachedResponse = CacheStorageCachedResponse {
   -- | Entry content, base64-encoded. (Encoded as a base64 string when passed over JSON)
-  cacheStorageCachedResponseBody :: String
+  cacheStorageCachedResponseBody :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON CacheStorageCachedResponse  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -177,7 +178,7 @@ data PCacheStorageDeleteEntry = PCacheStorageDeleteEntry {
   -- | Id of cache where the entry will be deleted.
   pCacheStorageDeleteEntryCacheId :: CacheStorageCacheId,
   -- | URL spec of the request.
-  pCacheStorageDeleteEntryRequest :: String
+  pCacheStorageDeleteEntryRequest :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PCacheStorageDeleteEntry  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -196,7 +197,7 @@ cacheStorageDeleteEntry handle params = sendReceiveCommand handle "CacheStorage.
 -- | Parameters of the 'cacheStorageRequestCacheNames' command.
 data PCacheStorageRequestCacheNames = PCacheStorageRequestCacheNames {
   -- | Security origin.
-  pCacheStorageRequestCacheNamesSecurityOrigin :: String
+  pCacheStorageRequestCacheNamesSecurityOrigin :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PCacheStorageRequestCacheNames  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -231,7 +232,7 @@ data PCacheStorageRequestCachedResponse = PCacheStorageRequestCachedResponse {
   -- | Id of cache that contains the entry.
   pCacheStorageRequestCachedResponseCacheId :: CacheStorageCacheId,
   -- | URL spec of the request.
-  pCacheStorageRequestCachedResponseRequestUrl :: String,
+  pCacheStorageRequestCachedResponseRequestUrl :: Text,
   -- | headers of the request.
   pCacheStorageRequestCachedResponseRequestHeaders :: [CacheStorageHeader]
 } deriving (Generic, Eq, Show, Read)
@@ -272,7 +273,7 @@ data PCacheStorageRequestEntries = PCacheStorageRequestEntries {
   -- | Number of records to fetch.
   pCacheStorageRequestEntriesPageSize :: Maybe Int,
   -- | If present, only return the entries containing this substring in the path
-  pCacheStorageRequestEntriesPathFilter :: Maybe String
+  pCacheStorageRequestEntriesPathFilter :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PCacheStorageRequestEntries  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}

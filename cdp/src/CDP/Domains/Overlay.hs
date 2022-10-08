@@ -22,6 +22,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -658,7 +659,7 @@ data POverlayHighlightNode = POverlayHighlightNode {
   -- | JavaScript object id of the node to be highlighted.
   pOverlayHighlightNodeObjectId :: Maybe Runtime.RuntimeRemoteObjectId,
   -- | Selectors to highlight relevant nodes.
-  pOverlayHighlightNodeSelector :: Maybe String
+  pOverlayHighlightNodeSelector :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON POverlayHighlightNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -798,7 +799,7 @@ overlaySetShowAdHighlights handle params = sendReceiveCommand handle "Overlay.se
 -- | Parameters of the 'overlaySetPausedInDebuggerMessage' command.
 data POverlaySetPausedInDebuggerMessage = POverlaySetPausedInDebuggerMessage {
   -- | The message to display, also triggers resume and step over controls.
-  pOverlaySetPausedInDebuggerMessageMessage :: Maybe String
+  pOverlaySetPausedInDebuggerMessageMessage :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON POverlaySetPausedInDebuggerMessage  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 , A.omitNothingFields = True}

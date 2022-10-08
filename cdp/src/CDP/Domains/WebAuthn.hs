@@ -23,6 +23,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -49,7 +50,7 @@ import CDP.Handle
 
 
 -- | Type 'WebAuthn.AuthenticatorId'.
-type WebAuthnAuthenticatorId = String
+type WebAuthnAuthenticatorId = Text
 
 -- | Type 'WebAuthn.AuthenticatorProtocol'.
 data WebAuthnAuthenticatorProtocol = WebAuthnAuthenticatorProtocolU2f | WebAuthnAuthenticatorProtocolCtap2
@@ -150,23 +151,23 @@ instance FromJSON  WebAuthnVirtualAuthenticatorOptions where
 
 -- | Type 'WebAuthn.Credential'.
 data WebAuthnCredential = WebAuthnCredential {
-  webAuthnCredentialCredentialId :: String,
+  webAuthnCredentialCredentialId :: Text,
   webAuthnCredentialIsResidentCredential :: Bool,
   -- | Relying Party ID the credential is scoped to. Must be set when adding a
   --   credential.
-  webAuthnCredentialRpId :: Maybe String,
+  webAuthnCredentialRpId :: Maybe Text,
   -- | The ECDSA P-256 private key in PKCS#8 format. (Encoded as a base64 string when passed over JSON)
-  webAuthnCredentialPrivateKey :: String,
+  webAuthnCredentialPrivateKey :: Text,
   -- | An opaque byte sequence with a maximum size of 64 bytes mapping the
   --   credential to a specific user. (Encoded as a base64 string when passed over JSON)
-  webAuthnCredentialUserHandle :: Maybe String,
+  webAuthnCredentialUserHandle :: Maybe Text,
   -- | Signature counter. This is incremented by one for each successful
   --   assertion.
   --   See https://w3c.github.io/webauthn/#signature-counter
   webAuthnCredentialSignCount :: Int,
   -- | The large blob associated with the credential.
   --   See https://w3c.github.io/webauthn/#sctn-large-blob-extension (Encoded as a base64 string when passed over JSON)
-  webAuthnCredentialLargeBlob :: Maybe String
+  webAuthnCredentialLargeBlob :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON WebAuthnCredential  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -281,7 +282,7 @@ webAuthnAddCredential handle params = sendReceiveCommand handle "WebAuthn.addCre
 -- | Parameters of the 'webAuthnGetCredential' command.
 data PWebAuthnGetCredential = PWebAuthnGetCredential {
   pWebAuthnGetCredentialAuthenticatorId :: WebAuthnAuthenticatorId,
-  pWebAuthnGetCredentialCredentialId :: String
+  pWebAuthnGetCredentialCredentialId :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PWebAuthnGetCredential  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -345,7 +346,7 @@ instance Command WebAuthnGetCredentials where
 -- | Parameters of the 'webAuthnRemoveCredential' command.
 data PWebAuthnRemoveCredential = PWebAuthnRemoveCredential {
   pWebAuthnRemoveCredentialAuthenticatorId :: WebAuthnAuthenticatorId,
-  pWebAuthnRemoveCredentialCredentialId :: String
+  pWebAuthnRemoveCredentialCredentialId :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PWebAuthnRemoveCredential  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}

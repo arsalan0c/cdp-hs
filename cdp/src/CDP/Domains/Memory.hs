@@ -20,6 +20,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -72,7 +73,7 @@ data MemorySamplingProfileNode = MemorySamplingProfileNode {
   -- | Total bytes attributed to this sample.
   memorySamplingProfileNodeTotal :: Double,
   -- | Execution stack at the point of allocation.
-  memorySamplingProfileNodeStack :: [String]
+  memorySamplingProfileNodeStack :: [Text]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON MemorySamplingProfileNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -100,12 +101,12 @@ instance FromJSON  MemorySamplingProfile where
 --   Executable module information
 data MemoryModule = MemoryModule {
   -- | Name of the module.
-  memoryModuleName :: String,
+  memoryModuleName :: Text,
   -- | UUID of the module.
-  memoryModuleUuid :: String,
+  memoryModuleUuid :: Text,
   -- | Base address where the module is loaded into memory. Encoded as a decimal
   --   or hexadecimal (0x prefixed) string.
-  memoryModuleBaseAddress :: String,
+  memoryModuleBaseAddress :: Text,
   -- | Size of the module in bytes.
   memoryModuleSize :: Double
 } deriving (Generic, Eq, Show, Read)

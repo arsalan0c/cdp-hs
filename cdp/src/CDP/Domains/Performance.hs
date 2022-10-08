@@ -20,6 +20,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -49,7 +50,7 @@ import CDP.Handle
 --   Run-time execution metric.
 data PerformanceMetric = PerformanceMetric {
   -- | Metric name.
-  performanceMetricName :: String,
+  performanceMetricName :: Text,
   -- | Metric value.
   performanceMetricValue :: Double
 } deriving (Generic, Eq, Show, Read)
@@ -68,7 +69,7 @@ data PerformanceMetrics = PerformanceMetrics {
   -- | Current values of the metrics.
   performanceMetricsMetrics :: [PerformanceMetric],
   -- | Timestamp title.
-  performanceMetricsTitle :: String
+  performanceMetricsTitle :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PerformanceMetrics  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}

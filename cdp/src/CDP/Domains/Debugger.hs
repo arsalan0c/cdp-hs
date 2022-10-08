@@ -23,6 +23,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -51,11 +52,11 @@ import CDP.Domains.Runtime as Runtime
 
 -- | Type 'Debugger.BreakpointId'.
 --   Breakpoint identifier.
-type DebuggerBreakpointId = String
+type DebuggerBreakpointId = Text
 
 -- | Type 'Debugger.CallFrameId'.
 --   Call frame identifier.
-type DebuggerCallFrameId = String
+type DebuggerCallFrameId = Text
 
 -- | Type 'Debugger.Location'.
 --   Location in the source code.
@@ -110,7 +111,7 @@ data DebuggerCallFrame = DebuggerCallFrame {
   -- | Call frame identifier. This identifier is only valid while the virtual machine is paused.
   debuggerCallFrameCallFrameId :: DebuggerCallFrameId,
   -- | Name of the JavaScript function called on this call frame.
-  debuggerCallFrameFunctionName :: String,
+  debuggerCallFrameFunctionName :: Text,
   -- | Location in the source code.
   debuggerCallFrameFunctionLocation :: Maybe DebuggerLocation,
   -- | Location in the source code.
@@ -177,7 +178,7 @@ data DebuggerScope = DebuggerScope {
   --   object; for the rest of the scopes, it is artificial transient object enumerating scope
   --   variables as its properties.
   debuggerScopeObject :: Runtime.RuntimeRemoteObject,
-  debuggerScopeName :: Maybe String,
+  debuggerScopeName :: Maybe Text,
   -- | Location in the source code where scope starts
   debuggerScopeStartLocation :: Maybe DebuggerLocation,
   -- | Location in the source code where scope ends
@@ -197,7 +198,7 @@ data DebuggerSearchMatch = DebuggerSearchMatch {
   -- | Line number in resource content.
   debuggerSearchMatchLineNumber :: Double,
   -- | Line with match content.
-  debuggerSearchMatchLineContent :: String
+  debuggerSearchMatchLineContent :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DebuggerSearchMatch  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -290,7 +291,7 @@ data DebuggerDebugSymbols = DebuggerDebugSymbols {
   -- | Type of the debug symbols.
   debuggerDebugSymbolsType :: DebuggerDebugSymbolsType,
   -- | URL of the external symbol source.
-  debuggerDebugSymbolsExternalUrl :: Maybe String
+  debuggerDebugSymbolsExternalUrl :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DebuggerDebugSymbols  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -363,7 +364,7 @@ data DebuggerPaused = DebuggerPaused {
   -- | Object containing break-specific auxiliary properties.
   debuggerPausedData :: Maybe [(String, String)],
   -- | Hit breakpoints IDs
-  debuggerPausedHitBreakpoints :: Maybe [String],
+  debuggerPausedHitBreakpoints :: Maybe [Text],
   -- | Async stack trace, if any.
   debuggerPausedAsyncStackTrace :: Maybe Runtime.RuntimeStackTrace,
   -- | Async stack trace, if any.
@@ -393,7 +394,7 @@ data DebuggerScriptFailedToParse = DebuggerScriptFailedToParse {
   -- | Identifier of the script parsed.
   debuggerScriptFailedToParseScriptId :: Runtime.RuntimeScriptId,
   -- | URL or name of the script parsed (if any).
-  debuggerScriptFailedToParseUrl :: String,
+  debuggerScriptFailedToParseUrl :: Text,
   -- | Line offset of the script within the resource with given URL (for script tags).
   debuggerScriptFailedToParseStartLine :: Int,
   -- | Column offset of the script within the resource with given URL.
@@ -405,11 +406,11 @@ data DebuggerScriptFailedToParse = DebuggerScriptFailedToParse {
   -- | Specifies script creation context.
   debuggerScriptFailedToParseExecutionContextId :: Runtime.RuntimeExecutionContextId,
   -- | Content hash of the script, SHA-256.
-  debuggerScriptFailedToParseHash :: String,
+  debuggerScriptFailedToParseHash :: Text,
   -- | Embedder-specific auxiliary data.
   debuggerScriptFailedToParseExecutionContextAuxData :: Maybe [(String, String)],
   -- | URL of source map associated with script (if any).
-  debuggerScriptFailedToParseSourceMapUrl :: Maybe String,
+  debuggerScriptFailedToParseSourceMapUrl :: Maybe Text,
   -- | True, if this script has sourceURL.
   debuggerScriptFailedToParseHasSourceUrl :: Maybe Bool,
   -- | True, if this script is ES6 module.
@@ -423,7 +424,7 @@ data DebuggerScriptFailedToParse = DebuggerScriptFailedToParse {
   -- | The language of the script.
   debuggerScriptFailedToParseScriptLanguage :: Maybe DebuggerScriptLanguage,
   -- | The name the embedder supplied for this script.
-  debuggerScriptFailedToParseEmbedderName :: Maybe String
+  debuggerScriptFailedToParseEmbedderName :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DebuggerScriptFailedToParse  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -438,7 +439,7 @@ data DebuggerScriptParsed = DebuggerScriptParsed {
   -- | Identifier of the script parsed.
   debuggerScriptParsedScriptId :: Runtime.RuntimeScriptId,
   -- | URL or name of the script parsed (if any).
-  debuggerScriptParsedUrl :: String,
+  debuggerScriptParsedUrl :: Text,
   -- | Line offset of the script within the resource with given URL (for script tags).
   debuggerScriptParsedStartLine :: Int,
   -- | Column offset of the script within the resource with given URL.
@@ -450,13 +451,13 @@ data DebuggerScriptParsed = DebuggerScriptParsed {
   -- | Specifies script creation context.
   debuggerScriptParsedExecutionContextId :: Runtime.RuntimeExecutionContextId,
   -- | Content hash of the script, SHA-256.
-  debuggerScriptParsedHash :: String,
+  debuggerScriptParsedHash :: Text,
   -- | Embedder-specific auxiliary data.
   debuggerScriptParsedExecutionContextAuxData :: Maybe [(String, String)],
   -- | True, if this script is generated as a result of the live edit operation.
   debuggerScriptParsedIsLiveEdit :: Maybe Bool,
   -- | URL of source map associated with script (if any).
-  debuggerScriptParsedSourceMapUrl :: Maybe String,
+  debuggerScriptParsedSourceMapUrl :: Maybe Text,
   -- | True, if this script has sourceURL.
   debuggerScriptParsedHasSourceUrl :: Maybe Bool,
   -- | True, if this script is ES6 module.
@@ -472,7 +473,7 @@ data DebuggerScriptParsed = DebuggerScriptParsed {
   -- | If the scriptLanguage is WebASsembly, the source of debug symbols for the module.
   debuggerScriptParsedDebugSymbols :: Maybe DebuggerDebugSymbols,
   -- | The name the embedder supplied for this script.
-  debuggerScriptParsedEmbedderName :: Maybe String
+  debuggerScriptParsedEmbedderName :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DebuggerScriptParsed  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -567,10 +568,10 @@ data PDebuggerEvaluateOnCallFrame = PDebuggerEvaluateOnCallFrame {
   -- | Call frame identifier to evaluate on.
   pDebuggerEvaluateOnCallFrameCallFrameId :: DebuggerCallFrameId,
   -- | Expression to evaluate.
-  pDebuggerEvaluateOnCallFrameExpression :: String,
+  pDebuggerEvaluateOnCallFrameExpression :: Text,
   -- | String object group name to put result into (allows rapid releasing resulting object handles
   --   using `releaseObjectGroup`).
-  pDebuggerEvaluateOnCallFrameObjectGroup :: Maybe String,
+  pDebuggerEvaluateOnCallFrameObjectGroup :: Maybe Text,
   -- | Specifies whether command line API should be available to the evaluated expression, defaults
   --   to false.
   pDebuggerEvaluateOnCallFrameIncludeCommandLineApi :: Maybe Bool,
@@ -677,9 +678,9 @@ debuggerGetScriptSource handle params = sendReceiveCommandResult handle "Debugge
 -- | Return type of the 'debuggerGetScriptSource' command.
 data DebuggerGetScriptSource = DebuggerGetScriptSource {
   -- | Script source (empty in case of Wasm bytecode).
-  debuggerGetScriptSourceScriptSource :: String,
+  debuggerGetScriptSourceScriptSource :: Text,
   -- | Wasm bytecode. (Encoded as a base64 string when passed over JSON)
-  debuggerGetScriptSourceBytecode :: Maybe String
+  debuggerGetScriptSourceBytecode :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  DebuggerGetScriptSource where
@@ -773,7 +774,7 @@ data PDebuggerSearchInContent = PDebuggerSearchInContent {
   -- | Id of the script to search in.
   pDebuggerSearchInContentScriptId :: Runtime.RuntimeScriptId,
   -- | String to search for.
-  pDebuggerSearchInContentQuery :: String,
+  pDebuggerSearchInContentQuery :: Text,
   -- | If true, search is case sensitive.
   pDebuggerSearchInContentCaseSensitive :: Maybe Bool,
   -- | If true, treats string parameter as regex.
@@ -830,7 +831,7 @@ debuggerSetAsyncCallStackDepth handle params = sendReceiveCommand handle "Debugg
 -- | Parameters of the 'debuggerSetBlackboxPatterns' command.
 data PDebuggerSetBlackboxPatterns = PDebuggerSetBlackboxPatterns {
   -- | Array of regexps that will be used to check script url for blackbox state.
-  pDebuggerSetBlackboxPatternsPatterns :: [String]
+  pDebuggerSetBlackboxPatternsPatterns :: [Text]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDebuggerSetBlackboxPatterns  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
@@ -877,7 +878,7 @@ data PDebuggerSetBreakpoint = PDebuggerSetBreakpoint {
   pDebuggerSetBreakpointLocation :: DebuggerLocation,
   -- | Expression to use as a breakpoint condition. When specified, debugger will only stop on the
   --   breakpoint if this expression evaluates to true.
-  pDebuggerSetBreakpointCondition :: Maybe String
+  pDebuggerSetBreakpointCondition :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDebuggerSetBreakpoint  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -964,17 +965,17 @@ data PDebuggerSetBreakpointByUrl = PDebuggerSetBreakpointByUrl {
   -- | Line number to set breakpoint at.
   pDebuggerSetBreakpointByUrlLineNumber :: Int,
   -- | URL of the resources to set breakpoint on.
-  pDebuggerSetBreakpointByUrlUrl :: Maybe String,
+  pDebuggerSetBreakpointByUrlUrl :: Maybe Text,
   -- | Regex pattern for the URLs of the resources to set breakpoints on. Either `url` or
   --   `urlRegex` must be specified.
-  pDebuggerSetBreakpointByUrlUrlRegex :: Maybe String,
+  pDebuggerSetBreakpointByUrlUrlRegex :: Maybe Text,
   -- | Script hash of the resources to set breakpoint on.
-  pDebuggerSetBreakpointByUrlScriptHash :: Maybe String,
+  pDebuggerSetBreakpointByUrlScriptHash :: Maybe Text,
   -- | Offset in the line to set breakpoint at.
   pDebuggerSetBreakpointByUrlColumnNumber :: Maybe Int,
   -- | Expression to use as a breakpoint condition. When specified, debugger will only stop on the
   --   breakpoint if this expression evaluates to true.
-  pDebuggerSetBreakpointByUrlCondition :: Maybe String
+  pDebuggerSetBreakpointByUrlCondition :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDebuggerSetBreakpointByUrl  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -1015,7 +1016,7 @@ data PDebuggerSetBreakpointOnFunctionCall = PDebuggerSetBreakpointOnFunctionCall
   pDebuggerSetBreakpointOnFunctionCallObjectId :: Runtime.RuntimeRemoteObjectId,
   -- | Expression to use as a breakpoint condition. When specified, debugger will
   --   stop on the breakpoint if this expression evaluates to true.
-  pDebuggerSetBreakpointOnFunctionCallCondition :: Maybe String
+  pDebuggerSetBreakpointOnFunctionCallCondition :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDebuggerSetBreakpointOnFunctionCall  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
@@ -1129,7 +1130,7 @@ data PDebuggerSetScriptSource = PDebuggerSetScriptSource {
   -- | Id of the script to edit.
   pDebuggerSetScriptSourceScriptId :: Runtime.RuntimeScriptId,
   -- | New content of the script.
-  pDebuggerSetScriptSourceScriptSource :: String,
+  pDebuggerSetScriptSourceScriptSource :: Text,
   -- | If true the change will not actually be applied. Dry run may be used to get result
   --   description without actually modifying the code.
   pDebuggerSetScriptSourceDryRun :: Maybe Bool
@@ -1195,7 +1196,7 @@ data PDebuggerSetVariableValue = PDebuggerSetVariableValue {
   --   scope types are allowed. Other scopes could be manipulated manually.
   pDebuggerSetVariableValueScopeNumber :: Int,
   -- | Variable name.
-  pDebuggerSetVariableValueVariableName :: String,
+  pDebuggerSetVariableValueVariableName :: Text,
   -- | New variable value.
   pDebuggerSetVariableValueNewValue :: Runtime.RuntimeCallArgument,
   -- | Id of callframe that holds variable.

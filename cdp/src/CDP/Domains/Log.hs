@@ -22,6 +22,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -130,12 +131,12 @@ data LogLogEntry = LogLogEntry {
   -- | Log entry severity.
   logLogEntryLevel :: LogLogEntryLevel,
   -- | Logged text.
-  logLogEntryText :: String,
+  logLogEntryText :: Text,
   logLogEntryCategory :: LogLogEntryCategory,
   -- | Timestamp when this entry was added.
   logLogEntryTimestamp :: Runtime.RuntimeTimestamp,
   -- | URL of the resource if known.
-  logLogEntryUrl :: Maybe String,
+  logLogEntryUrl :: Maybe Text,
   -- | Line number in the resource.
   logLogEntryLineNumber :: Maybe Int,
   -- | JavaScript stack trace.
@@ -143,7 +144,7 @@ data LogLogEntry = LogLogEntry {
   -- | Identifier of the network request associated with this entry.
   logLogEntryNetworkRequestId :: Maybe DOMPageNetworkEmulationSecurity.NetworkRequestId,
   -- | Identifier of the worker associated with this entry.
-  logLogEntryWorkerId :: Maybe String,
+  logLogEntryWorkerId :: Maybe Text,
   -- | Call arguments.
   logLogEntryArgs :: Maybe [Runtime.RuntimeRemoteObject]
 } deriving (Generic, Eq, Show, Read)

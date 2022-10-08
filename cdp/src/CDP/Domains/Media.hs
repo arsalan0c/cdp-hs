@@ -22,6 +22,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -49,7 +50,7 @@ import CDP.Handle
 
 -- | Type 'Media.PlayerId'.
 --   Players will get an ID that is unique within the agent context.
-type MediaPlayerId = String
+type MediaPlayerId = Text
 
 -- | Type 'Media.Timestamp'.
 type MediaTimestamp = Double
@@ -89,7 +90,7 @@ data MediaPlayerMessage = MediaPlayerMessage {
   --   introducing a new error type which should hopefully let us integrate
   --   the error log level into the PlayerError type.
   mediaPlayerMessageLevel :: MediaPlayerMessageLevel,
-  mediaPlayerMessageMessage :: String
+  mediaPlayerMessageMessage :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON MediaPlayerMessage  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -102,8 +103,8 @@ instance FromJSON  MediaPlayerMessage where
 -- | Type 'Media.PlayerProperty'.
 --   Corresponds to kMediaPropertyChange
 data MediaPlayerProperty = MediaPlayerProperty {
-  mediaPlayerPropertyName :: String,
-  mediaPlayerPropertyValue :: String
+  mediaPlayerPropertyName :: Text,
+  mediaPlayerPropertyValue :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON MediaPlayerProperty  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
@@ -117,7 +118,7 @@ instance FromJSON  MediaPlayerProperty where
 --   Corresponds to kMediaEventTriggered
 data MediaPlayerEvent = MediaPlayerEvent {
   mediaPlayerEventTimestamp :: MediaTimestamp,
-  mediaPlayerEventValue :: String
+  mediaPlayerEventValue :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON MediaPlayerEvent  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -131,7 +132,7 @@ instance FromJSON  MediaPlayerEvent where
 --   Represents logged source line numbers reported in an error.
 --   NOTE: file and line are from chromium c++ implementation code, not js.
 data MediaPlayerErrorSourceLocation = MediaPlayerErrorSourceLocation {
-  mediaPlayerErrorSourceLocationFile :: String,
+  mediaPlayerErrorSourceLocationFile :: Text,
   mediaPlayerErrorSourceLocationLine :: Int
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON MediaPlayerErrorSourceLocation  where
@@ -145,7 +146,7 @@ instance FromJSON  MediaPlayerErrorSourceLocation where
 -- | Type 'Media.PlayerError'.
 --   Corresponds to kMediaError
 data MediaPlayerError = MediaPlayerError {
-  mediaPlayerErrorErrorType :: String,
+  mediaPlayerErrorErrorType :: Text,
   -- | Code is the numeric enum entry for a specific set of error codes, such
   --   as PipelineStatusCodes in media/base/pipeline_status.h
   mediaPlayerErrorCode :: Int,

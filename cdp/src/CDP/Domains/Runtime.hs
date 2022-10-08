@@ -26,6 +26,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -53,7 +54,7 @@ import CDP.Handle
 
 -- | Type 'Runtime.ScriptId'.
 --   Unique script identifier.
-type RuntimeScriptId = String
+type RuntimeScriptId = Text
 
 -- | Type 'Runtime.WebDriverValue'.
 --   Represents the value serialiazed by the WebDriver BiDi specification
@@ -120,7 +121,7 @@ instance ToJSON RuntimeWebDriverValueType where
 data RuntimeWebDriverValue = RuntimeWebDriverValue {
   runtimeWebDriverValueType :: RuntimeWebDriverValueType,
   runtimeWebDriverValueValue :: Maybe Int,
-  runtimeWebDriverValueObjectId :: Maybe String
+  runtimeWebDriverValueObjectId :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON RuntimeWebDriverValue  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -132,12 +133,12 @@ instance FromJSON  RuntimeWebDriverValue where
 
 -- | Type 'Runtime.RemoteObjectId'.
 --   Unique object identifier.
-type RuntimeRemoteObjectId = String
+type RuntimeRemoteObjectId = Text
 
 -- | Type 'Runtime.UnserializableValue'.
 --   Primitive value which cannot be JSON-stringified. Includes values `-0`, `NaN`, `Infinity`,
 --   `-Infinity`, and bigint literals.
-type RuntimeUnserializableValue = String
+type RuntimeUnserializableValue = Text
 
 -- | Type 'Runtime.RemoteObject'.
 --   Mirror object referencing original JavaScript object.
@@ -228,14 +229,14 @@ data RuntimeRemoteObject = RuntimeRemoteObject {
   --   `subtype` in `ObjectPreview` and `PropertyPreview` below.
   runtimeRemoteObjectSubtype :: RuntimeRemoteObjectSubtype,
   -- | Object class (constructor) name. Specified for `object` type values only.
-  runtimeRemoteObjectClassName :: Maybe String,
+  runtimeRemoteObjectClassName :: Maybe Text,
   -- | Remote object value in case of primitive values or JSON values (if it was requested).
   runtimeRemoteObjectValue :: Maybe Int,
   -- | Primitive value which can not be JSON-stringified does not have `value`, but gets this
   --   property.
   runtimeRemoteObjectUnserializableValue :: Maybe RuntimeUnserializableValue,
   -- | String representation of the object.
-  runtimeRemoteObjectDescription :: Maybe String,
+  runtimeRemoteObjectDescription :: Maybe Text,
   -- | WebDriver BiDi representation of the value.
   runtimeRemoteObjectWebDriverValue :: Maybe RuntimeWebDriverValue,
   -- | Unique object identifier (for non-primitive values).
@@ -256,7 +257,7 @@ instance FromJSON  RuntimeRemoteObject where
 data RuntimeCustomPreview = RuntimeCustomPreview {
   -- | The JSON-stringified result of formatter.header(object, config) call.
   --   It contains json ML array that represents RemoteObject.
-  runtimeCustomPreviewHeader :: String,
+  runtimeCustomPreviewHeader :: Text,
   -- | If formatter returns true as a result of formatter.hasBody call then bodyGetterId will
   --   contain RemoteObjectId for the function that returns result of formatter.body(object, config) call.
   --   The result value is json ML array.
@@ -357,7 +358,7 @@ data RuntimeObjectPreview = RuntimeObjectPreview {
   -- | Object subtype hint. Specified for `object` type values only.
   runtimeObjectPreviewSubtype :: RuntimeObjectPreviewSubtype,
   -- | String representation of the object.
-  runtimeObjectPreviewDescription :: Maybe String,
+  runtimeObjectPreviewDescription :: Maybe Text,
   -- | True iff some of the properties or entries of the original object did not fit.
   runtimeObjectPreviewOverflow :: Bool,
   -- | List of the properties.
@@ -457,11 +458,11 @@ instance ToJSON RuntimePropertyPreviewSubtype where
 
 data RuntimePropertyPreview = RuntimePropertyPreview {
   -- | Property name.
-  runtimePropertyPreviewName :: String,
+  runtimePropertyPreviewName :: Text,
   -- | Object type. Accessor means that the property itself is an accessor property.
   runtimePropertyPreviewType :: RuntimePropertyPreviewType,
   -- | User-friendly property value string.
-  runtimePropertyPreviewValue :: Maybe String,
+  runtimePropertyPreviewValue :: Maybe Text,
   -- | Nested value preview.
   runtimePropertyPreviewValuePreview :: Maybe RuntimeObjectPreview,
   -- | Object subtype hint. Specified for `object` type values only.
@@ -494,7 +495,7 @@ instance FromJSON  RuntimeEntryPreview where
 --   Object property descriptor.
 data RuntimePropertyDescriptor = RuntimePropertyDescriptor {
   -- | Property name or symbol description.
-  runtimePropertyDescriptorName :: String,
+  runtimePropertyDescriptorName :: Text,
   -- | The value associated with the property.
   runtimePropertyDescriptorValue :: Maybe RuntimeRemoteObject,
   -- | True if the value associated with the property may be changed (data descriptors only).
@@ -530,7 +531,7 @@ instance FromJSON  RuntimePropertyDescriptor where
 --   Object internal property descriptor. This property isn't normally visible in JavaScript code.
 data RuntimeInternalPropertyDescriptor = RuntimeInternalPropertyDescriptor {
   -- | Conventional property name.
-  runtimeInternalPropertyDescriptorName :: String,
+  runtimeInternalPropertyDescriptorName :: Text,
   -- | The value associated with the property.
   runtimeInternalPropertyDescriptorValue :: Maybe RuntimeRemoteObject
 } deriving (Generic, Eq, Show, Read)
@@ -546,7 +547,7 @@ instance FromJSON  RuntimeInternalPropertyDescriptor where
 --   Object private field descriptor.
 data RuntimePrivatePropertyDescriptor = RuntimePrivatePropertyDescriptor {
   -- | Private property name.
-  runtimePrivatePropertyDescriptorName :: String,
+  runtimePrivatePropertyDescriptorName :: Text,
   -- | The value associated with the private property.
   runtimePrivatePropertyDescriptorValue :: Maybe RuntimeRemoteObject,
   -- | A function which serves as a getter for the private property,
@@ -594,13 +595,13 @@ data RuntimeExecutionContextDescription = RuntimeExecutionContextDescription {
   --   script evaluation should be performed.
   runtimeExecutionContextDescriptionId :: RuntimeExecutionContextId,
   -- | Execution context origin.
-  runtimeExecutionContextDescriptionOrigin :: String,
+  runtimeExecutionContextDescriptionOrigin :: Text,
   -- | Human readable name describing given context.
-  runtimeExecutionContextDescriptionName :: String,
+  runtimeExecutionContextDescriptionName :: Text,
   -- | A system-unique execution context identifier. Unlike the id, this is unique across
   --   multiple processes, so can be reliably used to identify specific context while backend
   --   performs a cross-process navigation.
-  runtimeExecutionContextDescriptionUniqueId :: String,
+  runtimeExecutionContextDescriptionUniqueId :: Text,
   -- | Embedder-specific auxiliary data.
   runtimeExecutionContextDescriptionAuxData :: Maybe [(String, String)]
 } deriving (Generic, Eq, Show, Read)
@@ -619,7 +620,7 @@ data RuntimeExceptionDetails = RuntimeExceptionDetails {
   -- | Exception id.
   runtimeExceptionDetailsExceptionId :: Int,
   -- | Exception text, which should be used together with exception object when available.
-  runtimeExceptionDetailsText :: String,
+  runtimeExceptionDetailsText :: Text,
   -- | Line number of the exception location (0-based).
   runtimeExceptionDetailsLineNumber :: Int,
   -- | Column number of the exception location (0-based).
@@ -627,7 +628,7 @@ data RuntimeExceptionDetails = RuntimeExceptionDetails {
   -- | Script ID of the exception location.
   runtimeExceptionDetailsScriptId :: Maybe RuntimeScriptId,
   -- | URL of the exception location, to be used when the script was not reported.
-  runtimeExceptionDetailsUrl :: Maybe String,
+  runtimeExceptionDetailsUrl :: Maybe Text,
   -- | JavaScript stack trace if available.
   runtimeExceptionDetailsStackTrace :: Maybe RuntimeStackTrace,
   -- | Exception object if available.
@@ -659,11 +660,11 @@ type RuntimeTimeDelta = Double
 --   Stack entry for runtime errors and assertions.
 data RuntimeCallFrame = RuntimeCallFrame {
   -- | JavaScript function name.
-  runtimeCallFrameFunctionName :: String,
+  runtimeCallFrameFunctionName :: Text,
   -- | JavaScript script id.
   runtimeCallFrameScriptId :: RuntimeScriptId,
   -- | JavaScript script name or url.
-  runtimeCallFrameUrl :: String,
+  runtimeCallFrameUrl :: Text,
   -- | JavaScript script line number (0-based).
   runtimeCallFrameLineNumber :: Int,
   -- | JavaScript script column number (0-based).
@@ -682,7 +683,7 @@ instance FromJSON  RuntimeCallFrame where
 data RuntimeStackTrace = RuntimeStackTrace {
   -- | String label of this stack trace. For async traces this may be a name of the function that
   --   initiated the async call.
-  runtimeStackTraceDescription :: Maybe String,
+  runtimeStackTraceDescription :: Maybe Text,
   -- | JavaScript function name.
   runtimeStackTraceCallFrames :: [RuntimeCallFrame],
   -- | Asynchronous JavaScript stack trace that preceded this stack, if available.
@@ -700,13 +701,13 @@ instance FromJSON  RuntimeStackTrace where
 
 -- | Type 'Runtime.UniqueDebuggerId'.
 --   Unique identifier of current debugger.
-type RuntimeUniqueDebuggerId = String
+type RuntimeUniqueDebuggerId = Text
 
 -- | Type 'Runtime.StackTraceId'.
 --   If `debuggerId` is set stack trace comes from another debugger and can be resolved there. This
 --   allows to track cross-debugger calls. See `Runtime.StackTrace` and `Debugger.paused` for usages.
 data RuntimeStackTraceId = RuntimeStackTraceId {
-  runtimeStackTraceIdId :: String,
+  runtimeStackTraceIdId :: Text,
   runtimeStackTraceIdDebuggerId :: Maybe RuntimeUniqueDebuggerId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON RuntimeStackTraceId  where
@@ -721,8 +722,8 @@ instance FromJSON  RuntimeStackTraceId where
 
 -- | Type of the 'Runtime.bindingCalled' event.
 data RuntimeBindingCalled = RuntimeBindingCalled {
-  runtimeBindingCalledName :: String,
-  runtimeBindingCalledPayload :: String,
+  runtimeBindingCalledName :: Text,
+  runtimeBindingCalledPayload :: Text,
   -- | Identifier of the context where the call was made.
   runtimeBindingCalledExecutionContextId :: RuntimeExecutionContextId
 } deriving (Generic, Eq, Show, Read)
@@ -800,7 +801,7 @@ data RuntimeConsoleApiCalled = RuntimeConsoleApiCalled {
   -- | Console context descriptor for calls on non-default console context (not console.*):
   --   'anonymous#unique-logger-id' for call on unnamed context, 'name#unique-logger-id' for call
   --   on named context.
-  runtimeConsoleApiCalledContext :: Maybe String
+  runtimeConsoleApiCalledContext :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON RuntimeConsoleApiCalled  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
@@ -813,7 +814,7 @@ instance FromJSON  RuntimeConsoleApiCalled where
 -- | Type of the 'Runtime.exceptionRevoked' event.
 data RuntimeExceptionRevoked = RuntimeExceptionRevoked {
   -- | Reason describing why exception was revoked.
-  runtimeExceptionRevokedReason :: String,
+  runtimeExceptionRevokedReason :: Text,
   -- | The id of revoked exception, as reported in `exceptionThrown`.
   runtimeExceptionRevokedExceptionId :: Int
 } deriving (Generic, Eq, Show, Read)
@@ -935,7 +936,7 @@ instance Command RuntimeAwaitPromise where
 -- | Parameters of the 'runtimeCallFunctionOn' command.
 data PRuntimeCallFunctionOn = PRuntimeCallFunctionOn {
   -- | Declaration of the function to call.
-  pRuntimeCallFunctionOnFunctionDeclaration :: String,
+  pRuntimeCallFunctionOnFunctionDeclaration :: Text,
   -- | Identifier of the object to call function on. Either objectId or executionContextId should
   --   be specified.
   pRuntimeCallFunctionOnObjectId :: Maybe RuntimeRemoteObjectId,
@@ -959,7 +960,7 @@ data PRuntimeCallFunctionOn = PRuntimeCallFunctionOn {
   pRuntimeCallFunctionOnExecutionContextId :: Maybe RuntimeExecutionContextId,
   -- | Symbolic group name that can be used to release multiple objects. If objectGroup is not
   --   specified and objectId is, objectGroup will be inherited from object.
-  pRuntimeCallFunctionOnObjectGroup :: Maybe String,
+  pRuntimeCallFunctionOnObjectGroup :: Maybe Text,
   -- | Whether to throw an exception if side effect cannot be ruled out during evaluation.
   pRuntimeCallFunctionOnThrowOnSideEffect :: Maybe Bool,
   -- | Whether the result should contain `webDriverValue`, serialized according to
@@ -1001,9 +1002,9 @@ instance Command RuntimeCallFunctionOn where
 -- | Parameters of the 'runtimeCompileScript' command.
 data PRuntimeCompileScript = PRuntimeCompileScript {
   -- | Expression to compile.
-  pRuntimeCompileScriptExpression :: String,
+  pRuntimeCompileScriptExpression :: Text,
   -- | Source url to be set for the script.
-  pRuntimeCompileScriptSourceUrl :: String,
+  pRuntimeCompileScriptSourceUrl :: Text,
   -- | Specifies whether the compiled script should be persisted.
   pRuntimeCompileScriptPersistScript :: Bool,
   -- | Specifies in which execution context to perform script run. If the parameter is omitted the
@@ -1063,9 +1064,9 @@ runtimeEnable handle = sendReceiveCommand handle "Runtime.enable" (Nothing :: Ma
 -- | Parameters of the 'runtimeEvaluate' command.
 data PRuntimeEvaluate = PRuntimeEvaluate {
   -- | Expression to evaluate.
-  pRuntimeEvaluateExpression :: String,
+  pRuntimeEvaluateExpression :: Text,
   -- | Symbolic group name that can be used to release multiple objects.
-  pRuntimeEvaluateObjectGroup :: Maybe String,
+  pRuntimeEvaluateObjectGroup :: Maybe Text,
   -- | Determines whether Command Line API should be available during the evaluation.
   pRuntimeEvaluateIncludeCommandLineApi :: Maybe Bool,
   -- | In silent mode exceptions thrown during evaluation are not reported and do not pause
@@ -1108,7 +1109,7 @@ data PRuntimeEvaluate = PRuntimeEvaluate {
   --   in context different than intended (e.g. as a result of navigation across process
   --   boundaries).
   --   This is mutually exclusive with `contextId`.
-  pRuntimeEvaluateUniqueContextId :: Maybe String,
+  pRuntimeEvaluateUniqueContextId :: Maybe Text,
   -- | Whether the result should be serialized according to https://w3c.github.io/webdriver-bidi.
   pRuntimeEvaluateGenerateWebDriverValue :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
@@ -1151,7 +1152,7 @@ runtimeGetIsolateId handle = sendReceiveCommandResult handle "Runtime.getIsolate
 -- | Return type of the 'runtimeGetIsolateId' command.
 data RuntimeGetIsolateId = RuntimeGetIsolateId {
   -- | The isolate id.
-  runtimeGetIsolateIdId :: String
+  runtimeGetIsolateIdId :: Text
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  RuntimeGetIsolateId where
@@ -1256,7 +1257,7 @@ runtimeGlobalLexicalScopeNames handle params = sendReceiveCommandResult handle "
 
 -- | Return type of the 'runtimeGlobalLexicalScopeNames' command.
 data RuntimeGlobalLexicalScopeNames = RuntimeGlobalLexicalScopeNames {
-  runtimeGlobalLexicalScopeNamesNames :: [String]
+  runtimeGlobalLexicalScopeNamesNames :: [Text]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  RuntimeGlobalLexicalScopeNames where
@@ -1272,7 +1273,7 @@ data PRuntimeQueryObjects = PRuntimeQueryObjects {
   -- | Identifier of the prototype to return objects for.
   pRuntimeQueryObjectsPrototypeObjectId :: RuntimeRemoteObjectId,
   -- | Symbolic group name that can be used to release the results.
-  pRuntimeQueryObjectsObjectGroup :: Maybe String
+  pRuntimeQueryObjectsObjectGroup :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PRuntimeQueryObjects  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -1324,7 +1325,7 @@ runtimeReleaseObject handle params = sendReceiveCommand handle "Runtime.releaseO
 -- | Parameters of the 'runtimeReleaseObjectGroup' command.
 data PRuntimeReleaseObjectGroup = PRuntimeReleaseObjectGroup {
   -- | Symbolic object group name.
-  pRuntimeReleaseObjectGroupObjectGroup :: String
+  pRuntimeReleaseObjectGroupObjectGroup :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PRuntimeReleaseObjectGroup  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -1354,7 +1355,7 @@ data PRuntimeRunScript = PRuntimeRunScript {
   --   evaluation will be performed in the context of the inspected page.
   pRuntimeRunScriptExecutionContextId :: Maybe RuntimeExecutionContextId,
   -- | Symbolic group name that can be used to release multiple objects.
-  pRuntimeRunScriptObjectGroup :: Maybe String,
+  pRuntimeRunScriptObjectGroup :: Maybe Text,
   -- | In silent mode exceptions thrown during evaluation are not reported and do not pause
   --   execution. Overrides `setPauseOnException` state.
   pRuntimeRunScriptSilent :: Maybe Bool,
@@ -1463,13 +1464,13 @@ runtimeTerminateExecution handle = sendReceiveCommand handle "Runtime.terminateE
 
 -- | Parameters of the 'runtimeAddBinding' command.
 data PRuntimeAddBinding = PRuntimeAddBinding {
-  pRuntimeAddBindingName :: String,
+  pRuntimeAddBindingName :: Text,
   -- | If specified, the binding is exposed to the executionContext with
   --   matching name, even for contexts created after the binding is added.
   --   See also `ExecutionContext.name` and `worldName` parameter to
   --   `Page.addScriptToEvaluateOnNewDocument`.
   --   This parameter is mutually exclusive with `executionContextId`.
-  pRuntimeAddBindingExecutionContextName :: Maybe String
+  pRuntimeAddBindingExecutionContextName :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PRuntimeAddBinding  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -1492,7 +1493,7 @@ runtimeAddBinding handle params = sendReceiveCommand handle "Runtime.addBinding"
 
 -- | Parameters of the 'runtimeRemoveBinding' command.
 data PRuntimeRemoveBinding = PRuntimeRemoveBinding {
-  pRuntimeRemoveBindingName :: String
+  pRuntimeRemoveBindingName :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PRuntimeRemoveBinding  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}

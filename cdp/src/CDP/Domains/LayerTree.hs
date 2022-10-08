@@ -20,6 +20,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -48,11 +49,11 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 
 -- | Type 'LayerTree.LayerId'.
 --   Unique Layer identifier.
-type LayerTreeLayerId = String
+type LayerTreeLayerId = Text
 
 -- | Type 'LayerTree.SnapshotId'.
 --   Unique snapshot identifier.
-type LayerTreeSnapshotId = String
+type LayerTreeSnapshotId = Text
 
 -- | Type 'LayerTree.ScrollRect'.
 --   Rectangle where scrolling happens on the main thread.
@@ -117,7 +118,7 @@ data LayerTreePictureTile = LayerTreePictureTile {
   -- | Offset from owning layer top boundary
   layerTreePictureTileY :: Double,
   -- | Base64-encoded snapshot data. (Encoded as a base64 string when passed over JSON)
-  layerTreePictureTilePicture :: String
+  layerTreePictureTilePicture :: Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON LayerTreePictureTile  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -230,7 +231,7 @@ layerTreeCompositingReasons handle params = sendReceiveCommandResult handle "Lay
 -- | Return type of the 'layerTreeCompositingReasons' command.
 data LayerTreeCompositingReasons = LayerTreeCompositingReasons {
   -- | A list of strings specifying reason IDs for the given layer to become composited.
-  layerTreeCompositingReasonsCompositingReasonIds :: [String]
+  layerTreeCompositingReasonsCompositingReasonIds :: [Text]
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  LayerTreeCompositingReasons where
@@ -405,7 +406,7 @@ layerTreeReplaySnapshot handle params = sendReceiveCommandResult handle "LayerTr
 -- | Return type of the 'layerTreeReplaySnapshot' command.
 data LayerTreeReplaySnapshot = LayerTreeReplaySnapshot {
   -- | A data: URL for resulting image.
-  layerTreeReplaySnapshotDataUrl :: String
+  layerTreeReplaySnapshotDataUrl :: Text
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  LayerTreeReplaySnapshot where

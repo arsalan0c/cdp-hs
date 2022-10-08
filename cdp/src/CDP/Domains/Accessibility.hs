@@ -20,6 +20,7 @@ import qualified Data.Map             as M
 import           Data.Maybe          
 import Data.Functor.Identity
 import Data.String
+import Data.Text (Text(..))
 import qualified Data.Text as T
 import qualified Data.List as List
 import qualified Data.Text.IO         as TI
@@ -49,7 +50,7 @@ import CDP.Domains.Runtime as Runtime
 
 -- | Type 'Accessibility.AXNodeId'.
 --   Unique accessibility node identifier.
-type AccessibilityAxNodeId = String
+type AccessibilityAxNodeId = Text
 
 -- | Type 'Accessibility.AXValueType'.
 --   Enum of possible property types.
@@ -170,7 +171,7 @@ data AccessibilityAxValueSource = AccessibilityAxValueSource {
   -- | The value of this property source.
   accessibilityAxValueSourceValue :: Maybe AccessibilityAxValue,
   -- | The name of the relevant attribute, if any.
-  accessibilityAxValueSourceAttribute :: Maybe String,
+  accessibilityAxValueSourceAttribute :: Maybe Text,
   -- | The value of the relevant attribute, if any.
   accessibilityAxValueSourceAttributeValue :: Maybe AccessibilityAxValue,
   -- | Whether this source is superseded by a higher priority source.
@@ -182,7 +183,7 @@ data AccessibilityAxValueSource = AccessibilityAxValueSource {
   -- | Whether the value for this property is invalid.
   accessibilityAxValueSourceInvalid :: Maybe Bool,
   -- | Reason for the value being invalid, if it is.
-  accessibilityAxValueSourceInvalidReason :: Maybe String
+  accessibilityAxValueSourceInvalidReason :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AccessibilityAxValueSource  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -197,9 +198,9 @@ data AccessibilityAxRelatedNode = AccessibilityAxRelatedNode {
   -- | The BackendNodeId of the related DOM node.
   accessibilityAxRelatedNodeBackendDomNodeId :: DOMPageNetworkEmulationSecurity.DomBackendNodeId,
   -- | The IDRef value provided, if any.
-  accessibilityAxRelatedNodeIdref :: Maybe String,
+  accessibilityAxRelatedNodeIdref :: Maybe Text,
   -- | The text alternative of this node in the current context.
-  accessibilityAxRelatedNodeText :: Maybe String
+  accessibilityAxRelatedNodeText :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AccessibilityAxRelatedNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -612,9 +613,9 @@ data PAccessibilityQueryAxTree = PAccessibilityQueryAxTree {
   -- | JavaScript object id of the node wrapper for the root to query.
   pAccessibilityQueryAxTreeObjectId :: Maybe Runtime.RuntimeRemoteObjectId,
   -- | Find nodes with this computed name.
-  pAccessibilityQueryAxTreeAccessibleName :: Maybe String,
+  pAccessibilityQueryAxTreeAccessibleName :: Maybe Text,
   -- | Find nodes with this computed role.
-  pAccessibilityQueryAxTreeRole :: Maybe String
+  pAccessibilityQueryAxTreeRole :: Maybe Text
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PAccessibilityQueryAxTree  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}

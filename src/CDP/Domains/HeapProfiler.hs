@@ -118,6 +118,8 @@ instance FromJSON  HeapProfilerAddHeapSnapshotChunk where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
+instance Event HeapProfilerAddHeapSnapshotChunk where
+    eventName _ = "HeapProfiler.addHeapSnapshotChunk"
 
 -- | Type of the 'HeapProfiler.heapStatsUpdate' event.
 data HeapProfilerHeapStatsUpdate = HeapProfilerHeapStatsUpdate {
@@ -133,6 +135,8 @@ instance FromJSON  HeapProfilerHeapStatsUpdate where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
+instance Event HeapProfilerHeapStatsUpdate where
+    eventName _ = "HeapProfiler.heapStatsUpdate"
 
 -- | Type of the 'HeapProfiler.lastSeenObjectId' event.
 data HeapProfilerLastSeenObjectId = HeapProfilerLastSeenObjectId {
@@ -146,6 +150,8 @@ instance FromJSON  HeapProfilerLastSeenObjectId where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
+instance Event HeapProfilerLastSeenObjectId where
+    eventName _ = "HeapProfiler.lastSeenObjectId"
 
 -- | Type of the 'HeapProfiler.reportHeapSnapshotProgress' event.
 data HeapProfilerReportHeapSnapshotProgress = HeapProfilerReportHeapSnapshotProgress {
@@ -160,6 +166,8 @@ instance FromJSON  HeapProfilerReportHeapSnapshotProgress where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 }
 
 
+instance Event HeapProfilerReportHeapSnapshotProgress where
+    eventName _ = "HeapProfiler.reportHeapSnapshotProgress"
 
 -- | Type of the 'HeapProfiler.resetProfiles' event.
 data HeapProfilerResetProfiles = HeapProfilerResetProfiles
@@ -171,6 +179,8 @@ instance FromJSON HeapProfilerResetProfiles where
          _ -> fail "failed to parse HeapProfilerResetProfiles"
 
 
+instance Event HeapProfilerResetProfiles where
+    eventName _ = "HeapProfiler.resetProfiles"
 
 
 

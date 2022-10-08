@@ -24,7 +24,7 @@ main = do
     putStrLn "Starting CDP example"
     CDP.runClient def printPDF
 
-targets :: CDP.Handle CDP.Event -> IO ()
+targets :: CDP.Handle () -> IO ()
 targets handle = do
     ti <- head . CDP.targetGetTargetsTargetInfos <$> CDP.targetGetTargets handle
     let tid = CDP.targetTargetInfoTargetId ti
@@ -32,10 +32,10 @@ targets handle = do
     print r
     browser handle 
 
-browser :: CDP.Handle CDP.Event -> IO ()
+browser :: CDP.Handle () -> IO ()
 browser handle = print =<< CDP.browserGetVersion handle
 
-subUnsub :: CDP.Handle CDP.Event -> IO ()
+subUnsub :: CDP.Handle () -> IO ()
 subUnsub handle = do
     CDP.subscribe handle (print . CDP.pageWindowOpenUrl)
     CDP.pageEnable handle
@@ -44,7 +44,7 @@ subUnsub handle = do
     forever $ do
         threadDelay 1000
 
-printPDF :: CDP.Handle CDP.Event -> IO ()
+printPDF :: CDP.Handle () -> IO ()
 printPDF handle = do
     -- send the Page.printToPDF command
     r <- CDP.pagePrintToPdf handle $

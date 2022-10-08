@@ -194,6 +194,8 @@ instance FromJSON  LayerTreeLayerPainted where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
+instance Event LayerTreeLayerPainted where
+    eventName _ = "LayerTree.layerPainted"
 
 -- | Type of the 'LayerTree.layerTreeDidChange' event.
 data LayerTreeLayerTreeDidChange = LayerTreeLayerTreeDidChange {
@@ -207,6 +209,8 @@ instance FromJSON  LayerTreeLayerTreeDidChange where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
+instance Event LayerTreeLayerTreeDidChange where
+    eventName _ = "LayerTree.layerTreeDidChange"
 
 
 

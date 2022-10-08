@@ -272,6 +272,8 @@ instance FromJSON  WebAudioContextCreated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
+instance Event WebAudioContextCreated where
+    eventName _ = "WebAudio.contextCreated"
 
 -- | Type of the 'WebAudio.contextWillBeDestroyed' event.
 data WebAudioContextWillBeDestroyed = WebAudioContextWillBeDestroyed {
@@ -284,6 +286,8 @@ instance FromJSON  WebAudioContextWillBeDestroyed where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
+instance Event WebAudioContextWillBeDestroyed where
+    eventName _ = "WebAudio.contextWillBeDestroyed"
 
 -- | Type of the 'WebAudio.contextChanged' event.
 data WebAudioContextChanged = WebAudioContextChanged {
@@ -296,6 +300,8 @@ instance FromJSON  WebAudioContextChanged where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
+instance Event WebAudioContextChanged where
+    eventName _ = "WebAudio.contextChanged"
 
 -- | Type of the 'WebAudio.audioListenerCreated' event.
 data WebAudioAudioListenerCreated = WebAudioAudioListenerCreated {
@@ -308,6 +314,8 @@ instance FromJSON  WebAudioAudioListenerCreated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
+instance Event WebAudioAudioListenerCreated where
+    eventName _ = "WebAudio.audioListenerCreated"
 
 -- | Type of the 'WebAudio.audioListenerWillBeDestroyed' event.
 data WebAudioAudioListenerWillBeDestroyed = WebAudioAudioListenerWillBeDestroyed {
@@ -321,6 +329,8 @@ instance FromJSON  WebAudioAudioListenerWillBeDestroyed where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 }
 
 
+instance Event WebAudioAudioListenerWillBeDestroyed where
+    eventName _ = "WebAudio.audioListenerWillBeDestroyed"
 
 -- | Type of the 'WebAudio.audioNodeCreated' event.
 data WebAudioAudioNodeCreated = WebAudioAudioNodeCreated {
@@ -333,6 +343,8 @@ instance FromJSON  WebAudioAudioNodeCreated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
+instance Event WebAudioAudioNodeCreated where
+    eventName _ = "WebAudio.audioNodeCreated"
 
 -- | Type of the 'WebAudio.audioNodeWillBeDestroyed' event.
 data WebAudioAudioNodeWillBeDestroyed = WebAudioAudioNodeWillBeDestroyed {
@@ -346,6 +358,8 @@ instance FromJSON  WebAudioAudioNodeWillBeDestroyed where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
+instance Event WebAudioAudioNodeWillBeDestroyed where
+    eventName _ = "WebAudio.audioNodeWillBeDestroyed"
 
 -- | Type of the 'WebAudio.audioParamCreated' event.
 data WebAudioAudioParamCreated = WebAudioAudioParamCreated {
@@ -358,6 +372,8 @@ instance FromJSON  WebAudioAudioParamCreated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
+instance Event WebAudioAudioParamCreated where
+    eventName _ = "WebAudio.audioParamCreated"
 
 -- | Type of the 'WebAudio.audioParamWillBeDestroyed' event.
 data WebAudioAudioParamWillBeDestroyed = WebAudioAudioParamWillBeDestroyed {
@@ -372,6 +388,8 @@ instance FromJSON  WebAudioAudioParamWillBeDestroyed where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 }
 
 
+instance Event WebAudioAudioParamWillBeDestroyed where
+    eventName _ = "WebAudio.audioParamWillBeDestroyed"
 
 -- | Type of the 'WebAudio.nodesConnected' event.
 data WebAudioNodesConnected = WebAudioNodesConnected {
@@ -388,6 +406,8 @@ instance FromJSON  WebAudioNodesConnected where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
+instance Event WebAudioNodesConnected where
+    eventName _ = "WebAudio.nodesConnected"
 
 -- | Type of the 'WebAudio.nodesDisconnected' event.
 data WebAudioNodesDisconnected = WebAudioNodesDisconnected {
@@ -404,6 +424,8 @@ instance FromJSON  WebAudioNodesDisconnected where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
+instance Event WebAudioNodesDisconnected where
+    eventName _ = "WebAudio.nodesDisconnected"
 
 -- | Type of the 'WebAudio.nodeParamConnected' event.
 data WebAudioNodeParamConnected = WebAudioNodeParamConnected {
@@ -419,6 +441,8 @@ instance FromJSON  WebAudioNodeParamConnected where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
+instance Event WebAudioNodeParamConnected where
+    eventName _ = "WebAudio.nodeParamConnected"
 
 -- | Type of the 'WebAudio.nodeParamDisconnected' event.
 data WebAudioNodeParamDisconnected = WebAudioNodeParamDisconnected {
@@ -434,6 +458,8 @@ instance FromJSON  WebAudioNodeParamDisconnected where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
+instance Event WebAudioNodeParamDisconnected where
+    eventName _ = "WebAudio.nodeParamDisconnected"
 
 
 

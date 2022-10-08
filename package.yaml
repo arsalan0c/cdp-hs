@@ -47,10 +47,16 @@ executables:
 
   cdp-example-print-page:
     source-dirs: examples
-    main: PrintPage.hs
+    main: print-page.hs
     dependencies:
       - cdp
       - base64-bytestring
+
+  cdp-example-subscribe:
+    source-dirs: examples
+    main: subscribe.hs
+    dependencies:
+      - cdp
 
 tests:
   cdp-test:

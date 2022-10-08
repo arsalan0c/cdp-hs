@@ -28,10 +28,7 @@ main = do
         T.writeFile path d
 
     let protocol = GP.genProtocolModule (Map.keys . GP.pComponents $ program) $
-          T.intercalate "\n\n" 
-            [ GP.pComponentImports program
-            , GP.pEvents program
-            ]
+          GP.pComponentImports program
 
     IO.hPutStrLn IO.stderr $ "Writing protocol to " ++ protocolModulePath ++ "..."
     T.writeFile protocolModulePath protocol

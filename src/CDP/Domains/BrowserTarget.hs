@@ -286,6 +286,8 @@ instance FromJSON  BrowserDownloadWillBegin where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
+instance Event BrowserDownloadWillBegin where
+    eventName _ = "Browser.downloadWillBegin"
 
 -- | Type of the 'Browser.downloadProgress' event.
 data BrowserDownloadProgressState = BrowserDownloadProgressStateInProgress | BrowserDownloadProgressStateCompleted | BrowserDownloadProgressStateCanceled
@@ -324,6 +326,8 @@ instance FromJSON  BrowserDownloadProgress where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+instance Event BrowserDownloadProgress where
+    eventName _ = "Browser.downloadProgress"
 
 
 
@@ -793,6 +797,8 @@ instance FromJSON  TargetAttachedToTarget where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
+instance Event TargetAttachedToTarget where
+    eventName _ = "Target.attachedToTarget"
 
 -- | Type of the 'Target.detachedFromTarget' event.
 data TargetDetachedFromTarget = TargetDetachedFromTarget {
@@ -806,6 +812,8 @@ instance FromJSON  TargetDetachedFromTarget where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
+instance Event TargetDetachedFromTarget where
+    eventName _ = "Target.detachedFromTarget"
 
 -- | Type of the 'Target.receivedMessageFromTarget' event.
 data TargetReceivedMessageFromTarget = TargetReceivedMessageFromTarget {
@@ -820,6 +828,8 @@ instance FromJSON  TargetReceivedMessageFromTarget where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
+instance Event TargetReceivedMessageFromTarget where
+    eventName _ = "Target.receivedMessageFromTarget"
 
 -- | Type of the 'Target.targetCreated' event.
 data TargetTargetCreated = TargetTargetCreated {
@@ -832,6 +842,8 @@ instance FromJSON  TargetTargetCreated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
+instance Event TargetTargetCreated where
+    eventName _ = "Target.targetCreated"
 
 -- | Type of the 'Target.targetDestroyed' event.
 data TargetTargetDestroyed = TargetTargetDestroyed {
@@ -844,6 +856,8 @@ instance FromJSON  TargetTargetDestroyed where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
+instance Event TargetTargetDestroyed where
+    eventName _ = "Target.targetDestroyed"
 
 -- | Type of the 'Target.targetCrashed' event.
 data TargetTargetCrashed = TargetTargetCrashed {
@@ -860,6 +874,8 @@ instance FromJSON  TargetTargetCrashed where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
+instance Event TargetTargetCrashed where
+    eventName _ = "Target.targetCrashed"
 
 -- | Type of the 'Target.targetInfoChanged' event.
 data TargetTargetInfoChanged = TargetTargetInfoChanged {
@@ -872,6 +888,8 @@ instance FromJSON  TargetTargetInfoChanged where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+instance Event TargetTargetInfoChanged where
+    eventName _ = "Target.targetInfoChanged"
 
 
 

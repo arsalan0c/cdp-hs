@@ -485,6 +485,8 @@ instance FromJSON  OverlayInspectNodeRequested where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
+instance Event OverlayInspectNodeRequested where
+    eventName _ = "Overlay.inspectNodeRequested"
 
 -- | Type of the 'Overlay.nodeHighlightRequested' event.
 data OverlayNodeHighlightRequested = OverlayNodeHighlightRequested {
@@ -497,6 +499,8 @@ instance FromJSON  OverlayNodeHighlightRequested where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
+instance Event OverlayNodeHighlightRequested where
+    eventName _ = "Overlay.nodeHighlightRequested"
 
 -- | Type of the 'Overlay.screenshotRequested' event.
 data OverlayScreenshotRequested = OverlayScreenshotRequested {
@@ -510,6 +514,8 @@ instance FromJSON  OverlayScreenshotRequested where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
+instance Event OverlayScreenshotRequested where
+    eventName _ = "Overlay.screenshotRequested"
 
 -- | Type of the 'Overlay.inspectModeCanceled' event.
 data OverlayInspectModeCanceled = OverlayInspectModeCanceled
@@ -521,6 +527,8 @@ instance FromJSON OverlayInspectModeCanceled where
          _ -> fail "failed to parse OverlayInspectModeCanceled"
 
 
+instance Event OverlayInspectModeCanceled where
+    eventName _ = "Overlay.inspectModeCanceled"
 
 
 

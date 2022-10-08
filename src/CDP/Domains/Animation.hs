@@ -179,6 +179,8 @@ instance FromJSON  AnimationAnimationCanceled where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
+instance Event AnimationAnimationCanceled where
+    eventName _ = "Animation.animationCanceled"
 
 -- | Type of the 'Animation.animationCreated' event.
 data AnimationAnimationCreated = AnimationAnimationCreated {
@@ -192,6 +194,8 @@ instance FromJSON  AnimationAnimationCreated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
+instance Event AnimationAnimationCreated where
+    eventName _ = "Animation.animationCreated"
 
 -- | Type of the 'Animation.animationStarted' event.
 data AnimationAnimationStarted = AnimationAnimationStarted {
@@ -205,6 +209,8 @@ instance FromJSON  AnimationAnimationStarted where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
+instance Event AnimationAnimationStarted where
+    eventName _ = "Animation.animationStarted"
 
 
 

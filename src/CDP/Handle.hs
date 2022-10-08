@@ -9,7 +9,7 @@ import Data.Aeson (ToJSON)
 import CDP.Internal.Runtime
 
 data Handle ev where
-    Handle :: FromJSONEvent ev => Handle' ev -> Handle ev
+    Handle :: Handle' ev -> Handle ev
 
 sendReceiveCommandResult :: forall a b ev. (Show a, ToJSON a, Command b) => Handle ev -> String -> Maybe a -> IO b
 sendReceiveCommandResult (Handle h) = sendReceiveCommandResult' h

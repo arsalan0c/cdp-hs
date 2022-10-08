@@ -89,6 +89,8 @@ instance FromJSON  DomStorageDomStorageItemAdded where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
+instance Event DomStorageDomStorageItemAdded where
+    eventName _ = "DOMStorage.domStorageItemAdded"
 
 -- | Type of the 'DOMStorage.domStorageItemRemoved' event.
 data DomStorageDomStorageItemRemoved = DomStorageDomStorageItemRemoved {
@@ -102,6 +104,8 @@ instance FromJSON  DomStorageDomStorageItemRemoved where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
+instance Event DomStorageDomStorageItemRemoved where
+    eventName _ = "DOMStorage.domStorageItemRemoved"
 
 -- | Type of the 'DOMStorage.domStorageItemUpdated' event.
 data DomStorageDomStorageItemUpdated = DomStorageDomStorageItemUpdated {
@@ -117,6 +121,8 @@ instance FromJSON  DomStorageDomStorageItemUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
+instance Event DomStorageDomStorageItemUpdated where
+    eventName _ = "DOMStorage.domStorageItemUpdated"
 
 -- | Type of the 'DOMStorage.domStorageItemsCleared' event.
 data DomStorageDomStorageItemsCleared = DomStorageDomStorageItemsCleared {
@@ -129,6 +135,8 @@ instance FromJSON  DomStorageDomStorageItemsCleared where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
+instance Event DomStorageDomStorageItemsCleared where
+    eventName _ = "DOMStorage.domStorageItemsCleared"
 
 
 

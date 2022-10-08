@@ -1050,6 +1050,8 @@ instance FromJSON  AuditsIssueAdded where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
+instance Event AuditsIssueAdded where
+    eventName _ = "Audits.issueAdded"
 
 
 

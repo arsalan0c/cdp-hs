@@ -396,6 +396,8 @@ instance FromJSON  DomAttributeModified where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
+instance Event DomAttributeModified where
+    eventName _ = "DOM.attributeModified"
 
 -- | Type of the 'DOM.attributeRemoved' event.
 data DomAttributeRemoved = DomAttributeRemoved {
@@ -411,6 +413,8 @@ instance FromJSON  DomAttributeRemoved where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
+instance Event DomAttributeRemoved where
+    eventName _ = "DOM.attributeRemoved"
 
 -- | Type of the 'DOM.characterDataModified' event.
 data DomCharacterDataModified = DomCharacterDataModified {
@@ -426,6 +430,8 @@ instance FromJSON  DomCharacterDataModified where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
+instance Event DomCharacterDataModified where
+    eventName _ = "DOM.characterDataModified"
 
 -- | Type of the 'DOM.childNodeCountUpdated' event.
 data DomChildNodeCountUpdated = DomChildNodeCountUpdated {
@@ -441,6 +447,8 @@ instance FromJSON  DomChildNodeCountUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
+instance Event DomChildNodeCountUpdated where
+    eventName _ = "DOM.childNodeCountUpdated"
 
 -- | Type of the 'DOM.childNodeInserted' event.
 data DomChildNodeInserted = DomChildNodeInserted {
@@ -458,6 +466,8 @@ instance FromJSON  DomChildNodeInserted where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
+instance Event DomChildNodeInserted where
+    eventName _ = "DOM.childNodeInserted"
 
 -- | Type of the 'DOM.childNodeRemoved' event.
 data DomChildNodeRemoved = DomChildNodeRemoved {
@@ -473,6 +483,8 @@ instance FromJSON  DomChildNodeRemoved where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
+instance Event DomChildNodeRemoved where
+    eventName _ = "DOM.childNodeRemoved"
 
 -- | Type of the 'DOM.distributedNodesUpdated' event.
 data DomDistributedNodesUpdated = DomDistributedNodesUpdated {
@@ -488,6 +500,8 @@ instance FromJSON  DomDistributedNodesUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
+instance Event DomDistributedNodesUpdated where
+    eventName _ = "DOM.distributedNodesUpdated"
 
 -- | Type of the 'DOM.documentUpdated' event.
 data DomDocumentUpdated = DomDocumentUpdated
@@ -499,6 +513,8 @@ instance FromJSON DomDocumentUpdated where
          _ -> fail "failed to parse DomDocumentUpdated"
 
 
+instance Event DomDocumentUpdated where
+    eventName _ = "DOM.documentUpdated"
 
 -- | Type of the 'DOM.inlineStyleInvalidated' event.
 data DomInlineStyleInvalidated = DomInlineStyleInvalidated {
@@ -512,6 +528,8 @@ instance FromJSON  DomInlineStyleInvalidated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
+instance Event DomInlineStyleInvalidated where
+    eventName _ = "DOM.inlineStyleInvalidated"
 
 -- | Type of the 'DOM.pseudoElementAdded' event.
 data DomPseudoElementAdded = DomPseudoElementAdded {
@@ -527,6 +545,8 @@ instance FromJSON  DomPseudoElementAdded where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
+instance Event DomPseudoElementAdded where
+    eventName _ = "DOM.pseudoElementAdded"
 
 -- | Type of the 'DOM.pseudoElementRemoved' event.
 data DomPseudoElementRemoved = DomPseudoElementRemoved {
@@ -542,6 +562,8 @@ instance FromJSON  DomPseudoElementRemoved where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+instance Event DomPseudoElementRemoved where
+    eventName _ = "DOM.pseudoElementRemoved"
 
 -- | Type of the 'DOM.setChildNodes' event.
 data DomSetChildNodes = DomSetChildNodes {
@@ -557,6 +579,8 @@ instance FromJSON  DomSetChildNodes where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
+instance Event DomSetChildNodes where
+    eventName _ = "DOM.setChildNodes"
 
 -- | Type of the 'DOM.shadowRootPopped' event.
 data DomShadowRootPopped = DomShadowRootPopped {
@@ -572,6 +596,8 @@ instance FromJSON  DomShadowRootPopped where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
+instance Event DomShadowRootPopped where
+    eventName _ = "DOM.shadowRootPopped"
 
 -- | Type of the 'DOM.shadowRootPushed' event.
 data DomShadowRootPushed = DomShadowRootPushed {
@@ -587,6 +613,8 @@ instance FromJSON  DomShadowRootPushed where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
+instance Event DomShadowRootPushed where
+    eventName _ = "DOM.shadowRootPushed"
 
 
 
@@ -2083,6 +2111,8 @@ instance FromJSON EmulationVirtualTimeBudgetExpired where
          _ -> fail "failed to parse EmulationVirtualTimeBudgetExpired"
 
 
+instance Event EmulationVirtualTimeBudgetExpired where
+    eventName _ = "Emulation.virtualTimeBudgetExpired"
 
 
 
@@ -4283,6 +4313,8 @@ instance FromJSON  NetworkDataReceived where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
+instance Event NetworkDataReceived where
+    eventName _ = "Network.dataReceived"
 
 -- | Type of the 'Network.eventSourceMessageReceived' event.
 data NetworkEventSourceMessageReceived = NetworkEventSourceMessageReceived {
@@ -4304,6 +4336,8 @@ instance FromJSON  NetworkEventSourceMessageReceived where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 }
 
 
+instance Event NetworkEventSourceMessageReceived where
+    eventName _ = "Network.eventSourceMessageReceived"
 
 -- | Type of the 'Network.loadingFailed' event.
 data NetworkLoadingFailed = NetworkLoadingFailed {
@@ -4329,6 +4363,8 @@ instance FromJSON  NetworkLoadingFailed where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
+instance Event NetworkLoadingFailed where
+    eventName _ = "Network.loadingFailed"
 
 -- | Type of the 'Network.loadingFinished' event.
 data NetworkLoadingFinished = NetworkLoadingFinished {
@@ -4349,6 +4385,8 @@ instance FromJSON  NetworkLoadingFinished where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
+instance Event NetworkLoadingFinished where
+    eventName _ = "Network.loadingFinished"
 
 -- | Type of the 'Network.requestServedFromCache' event.
 data NetworkRequestServedFromCache = NetworkRequestServedFromCache {
@@ -4362,6 +4400,8 @@ instance FromJSON  NetworkRequestServedFromCache where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
+instance Event NetworkRequestServedFromCache where
+    eventName _ = "Network.requestServedFromCache"
 
 -- | Type of the 'Network.requestWillBeSent' event.
 data NetworkRequestWillBeSent = NetworkRequestWillBeSent {
@@ -4399,6 +4439,8 @@ instance FromJSON  NetworkRequestWillBeSent where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
+instance Event NetworkRequestWillBeSent where
+    eventName _ = "Network.requestWillBeSent"
 
 -- | Type of the 'Network.resourceChangedPriority' event.
 data NetworkResourceChangedPriority = NetworkResourceChangedPriority {
@@ -4416,6 +4458,8 @@ instance FromJSON  NetworkResourceChangedPriority where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
+instance Event NetworkResourceChangedPriority where
+    eventName _ = "Network.resourceChangedPriority"
 
 -- | Type of the 'Network.signedExchangeReceived' event.
 data NetworkSignedExchangeReceived = NetworkSignedExchangeReceived {
@@ -4431,6 +4475,8 @@ instance FromJSON  NetworkSignedExchangeReceived where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
+instance Event NetworkSignedExchangeReceived where
+    eventName _ = "Network.signedExchangeReceived"
 
 -- | Type of the 'Network.responseReceived' event.
 data NetworkResponseReceived = NetworkResponseReceived {
@@ -4457,6 +4503,8 @@ instance FromJSON  NetworkResponseReceived where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+instance Event NetworkResponseReceived where
+    eventName _ = "Network.responseReceived"
 
 -- | Type of the 'Network.webSocketClosed' event.
 data NetworkWebSocketClosed = NetworkWebSocketClosed {
@@ -4472,6 +4520,8 @@ instance FromJSON  NetworkWebSocketClosed where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
+instance Event NetworkWebSocketClosed where
+    eventName _ = "Network.webSocketClosed"
 
 -- | Type of the 'Network.webSocketCreated' event.
 data NetworkWebSocketCreated = NetworkWebSocketCreated {
@@ -4489,6 +4539,8 @@ instance FromJSON  NetworkWebSocketCreated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+instance Event NetworkWebSocketCreated where
+    eventName _ = "Network.webSocketCreated"
 
 -- | Type of the 'Network.webSocketFrameError' event.
 data NetworkWebSocketFrameError = NetworkWebSocketFrameError {
@@ -4506,6 +4558,8 @@ instance FromJSON  NetworkWebSocketFrameError where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
+instance Event NetworkWebSocketFrameError where
+    eventName _ = "Network.webSocketFrameError"
 
 -- | Type of the 'Network.webSocketFrameReceived' event.
 data NetworkWebSocketFrameReceived = NetworkWebSocketFrameReceived {
@@ -4523,6 +4577,8 @@ instance FromJSON  NetworkWebSocketFrameReceived where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
+instance Event NetworkWebSocketFrameReceived where
+    eventName _ = "Network.webSocketFrameReceived"
 
 -- | Type of the 'Network.webSocketFrameSent' event.
 data NetworkWebSocketFrameSent = NetworkWebSocketFrameSent {
@@ -4540,6 +4596,8 @@ instance FromJSON  NetworkWebSocketFrameSent where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
+instance Event NetworkWebSocketFrameSent where
+    eventName _ = "Network.webSocketFrameSent"
 
 -- | Type of the 'Network.webSocketHandshakeResponseReceived' event.
 data NetworkWebSocketHandshakeResponseReceived = NetworkWebSocketHandshakeResponseReceived {
@@ -4557,6 +4615,8 @@ instance FromJSON  NetworkWebSocketHandshakeResponseReceived where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 41 }
 
 
+instance Event NetworkWebSocketHandshakeResponseReceived where
+    eventName _ = "Network.webSocketHandshakeResponseReceived"
 
 -- | Type of the 'Network.webSocketWillSendHandshakeRequest' event.
 data NetworkWebSocketWillSendHandshakeRequest = NetworkWebSocketWillSendHandshakeRequest {
@@ -4576,6 +4636,8 @@ instance FromJSON  NetworkWebSocketWillSendHandshakeRequest where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 }
 
 
+instance Event NetworkWebSocketWillSendHandshakeRequest where
+    eventName _ = "Network.webSocketWillSendHandshakeRequest"
 
 -- | Type of the 'Network.webTransportCreated' event.
 data NetworkWebTransportCreated = NetworkWebTransportCreated {
@@ -4595,6 +4657,8 @@ instance FromJSON  NetworkWebTransportCreated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
+instance Event NetworkWebTransportCreated where
+    eventName _ = "Network.webTransportCreated"
 
 -- | Type of the 'Network.webTransportConnectionEstablished' event.
 data NetworkWebTransportConnectionEstablished = NetworkWebTransportConnectionEstablished {
@@ -4610,6 +4674,8 @@ instance FromJSON  NetworkWebTransportConnectionEstablished where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 }
 
 
+instance Event NetworkWebTransportConnectionEstablished where
+    eventName _ = "Network.webTransportConnectionEstablished"
 
 -- | Type of the 'Network.webTransportClosed' event.
 data NetworkWebTransportClosed = NetworkWebTransportClosed {
@@ -4625,6 +4691,8 @@ instance FromJSON  NetworkWebTransportClosed where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
+instance Event NetworkWebTransportClosed where
+    eventName _ = "Network.webTransportClosed"
 
 -- | Type of the 'Network.requestWillBeSentExtraInfo' event.
 data NetworkRequestWillBeSentExtraInfo = NetworkRequestWillBeSentExtraInfo {
@@ -4647,6 +4715,8 @@ instance FromJSON  NetworkRequestWillBeSentExtraInfo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 }
 
 
+instance Event NetworkRequestWillBeSentExtraInfo where
+    eventName _ = "Network.requestWillBeSentExtraInfo"
 
 -- | Type of the 'Network.responseReceivedExtraInfo' event.
 data NetworkResponseReceivedExtraInfo = NetworkResponseReceivedExtraInfo {
@@ -4676,6 +4746,8 @@ instance FromJSON  NetworkResponseReceivedExtraInfo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
+instance Event NetworkResponseReceivedExtraInfo where
+    eventName _ = "Network.responseReceivedExtraInfo"
 
 -- | Type of the 'Network.trustTokenOperationDone' event.
 data NetworkTrustTokenOperationDoneStatus = NetworkTrustTokenOperationDoneStatusOk | NetworkTrustTokenOperationDoneStatusInvalidArgument | NetworkTrustTokenOperationDoneStatusFailedPrecondition | NetworkTrustTokenOperationDoneStatusResourceExhausted | NetworkTrustTokenOperationDoneStatusAlreadyExists | NetworkTrustTokenOperationDoneStatusUnavailable | NetworkTrustTokenOperationDoneStatusBadResponse | NetworkTrustTokenOperationDoneStatusInternalError | NetworkTrustTokenOperationDoneStatusUnknownError | NetworkTrustTokenOperationDoneStatusFulfilledLocally
@@ -4733,6 +4805,8 @@ instance FromJSON  NetworkTrustTokenOperationDone where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
+instance Event NetworkTrustTokenOperationDone where
+    eventName _ = "Network.trustTokenOperationDone"
 
 -- | Type of the 'Network.subresourceWebBundleMetadataReceived' event.
 data NetworkSubresourceWebBundleMetadataReceived = NetworkSubresourceWebBundleMetadataReceived {
@@ -4748,6 +4822,8 @@ instance FromJSON  NetworkSubresourceWebBundleMetadataReceived where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 43 }
 
 
+instance Event NetworkSubresourceWebBundleMetadataReceived where
+    eventName _ = "Network.subresourceWebBundleMetadataReceived"
 
 -- | Type of the 'Network.subresourceWebBundleMetadataError' event.
 data NetworkSubresourceWebBundleMetadataError = NetworkSubresourceWebBundleMetadataError {
@@ -4763,6 +4839,8 @@ instance FromJSON  NetworkSubresourceWebBundleMetadataError where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 }
 
 
+instance Event NetworkSubresourceWebBundleMetadataError where
+    eventName _ = "Network.subresourceWebBundleMetadataError"
 
 -- | Type of the 'Network.subresourceWebBundleInnerResponseParsed' event.
 data NetworkSubresourceWebBundleInnerResponseParsed = NetworkSubresourceWebBundleInnerResponseParsed {
@@ -4782,6 +4860,8 @@ instance FromJSON  NetworkSubresourceWebBundleInnerResponseParsed where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 46 }
 
 
+instance Event NetworkSubresourceWebBundleInnerResponseParsed where
+    eventName _ = "Network.subresourceWebBundleInnerResponseParsed"
 
 -- | Type of the 'Network.subresourceWebBundleInnerResponseError' event.
 data NetworkSubresourceWebBundleInnerResponseError = NetworkSubresourceWebBundleInnerResponseError {
@@ -4803,6 +4883,8 @@ instance FromJSON  NetworkSubresourceWebBundleInnerResponseError where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 45 }
 
 
+instance Event NetworkSubresourceWebBundleInnerResponseError where
+    eventName _ = "Network.subresourceWebBundleInnerResponseError"
 
 -- | Type of the 'Network.reportingApiReportAdded' event.
 data NetworkReportingApiReportAdded = NetworkReportingApiReportAdded {
@@ -4815,6 +4897,8 @@ instance FromJSON  NetworkReportingApiReportAdded where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
+instance Event NetworkReportingApiReportAdded where
+    eventName _ = "Network.reportingApiReportAdded"
 
 -- | Type of the 'Network.reportingApiReportUpdated' event.
 data NetworkReportingApiReportUpdated = NetworkReportingApiReportUpdated {
@@ -4827,6 +4911,8 @@ instance FromJSON  NetworkReportingApiReportUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
+instance Event NetworkReportingApiReportUpdated where
+    eventName _ = "Network.reportingApiReportUpdated"
 
 -- | Type of the 'Network.reportingApiEndpointsChangedForOrigin' event.
 data NetworkReportingApiEndpointsChangedForOrigin = NetworkReportingApiEndpointsChangedForOrigin {
@@ -4841,6 +4927,8 @@ instance FromJSON  NetworkReportingApiEndpointsChangedForOrigin where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 44 }
 
 
+instance Event NetworkReportingApiEndpointsChangedForOrigin where
+    eventName _ = "Network.reportingApiEndpointsChangedForOrigin"
 
 
 
@@ -6924,6 +7012,8 @@ instance FromJSON  PageDomContentEventFired where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
+instance Event PageDomContentEventFired where
+    eventName _ = "Page.domContentEventFired"
 
 -- | Type of the 'Page.fileChooserOpened' event.
 data PageFileChooserOpenedMode = PageFileChooserOpenedModeSelectSingle | PageFileChooserOpenedModeSelectMultiple
@@ -6958,6 +7048,8 @@ instance FromJSON  PageFileChooserOpened where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
+instance Event PageFileChooserOpened where
+    eventName _ = "Page.fileChooserOpened"
 
 -- | Type of the 'Page.frameAttached' event.
 data PageFrameAttached = PageFrameAttached {
@@ -6975,6 +7067,8 @@ instance FromJSON  PageFrameAttached where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
+instance Event PageFrameAttached where
+    eventName _ = "Page.frameAttached"
 
 -- | Type of the 'Page.frameDetached' event.
 data PageFrameDetachedReason = PageFrameDetachedReasonRemove | PageFrameDetachedReasonSwap
@@ -7006,6 +7100,8 @@ instance FromJSON  PageFrameDetached where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
+instance Event PageFrameDetached where
+    eventName _ = "Page.frameDetached"
 
 -- | Type of the 'Page.frameNavigated' event.
 data PageFrameNavigated = PageFrameNavigated {
@@ -7020,6 +7116,8 @@ instance FromJSON  PageFrameNavigated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
+instance Event PageFrameNavigated where
+    eventName _ = "Page.frameNavigated"
 
 -- | Type of the 'Page.documentOpened' event.
 data PageDocumentOpened = PageDocumentOpened {
@@ -7033,6 +7131,8 @@ instance FromJSON  PageDocumentOpened where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
+instance Event PageDocumentOpened where
+    eventName _ = "Page.documentOpened"
 
 -- | Type of the 'Page.frameResized' event.
 data PageFrameResized = PageFrameResized
@@ -7044,6 +7144,8 @@ instance FromJSON PageFrameResized where
          _ -> fail "failed to parse PageFrameResized"
 
 
+instance Event PageFrameResized where
+    eventName _ = "Page.frameResized"
 
 -- | Type of the 'Page.frameRequestedNavigation' event.
 data PageFrameRequestedNavigation = PageFrameRequestedNavigation {
@@ -7063,6 +7165,8 @@ instance FromJSON  PageFrameRequestedNavigation where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
+instance Event PageFrameRequestedNavigation where
+    eventName _ = "Page.frameRequestedNavigation"
 
 -- | Type of the 'Page.frameStartedLoading' event.
 data PageFrameStartedLoading = PageFrameStartedLoading {
@@ -7076,6 +7180,8 @@ instance FromJSON  PageFrameStartedLoading where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+instance Event PageFrameStartedLoading where
+    eventName _ = "Page.frameStartedLoading"
 
 -- | Type of the 'Page.frameStoppedLoading' event.
 data PageFrameStoppedLoading = PageFrameStoppedLoading {
@@ -7089,6 +7195,8 @@ instance FromJSON  PageFrameStoppedLoading where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+instance Event PageFrameStoppedLoading where
+    eventName _ = "Page.frameStoppedLoading"
 
 -- | Type of the 'Page.interstitialHidden' event.
 data PageInterstitialHidden = PageInterstitialHidden
@@ -7100,6 +7208,8 @@ instance FromJSON PageInterstitialHidden where
          _ -> fail "failed to parse PageInterstitialHidden"
 
 
+instance Event PageInterstitialHidden where
+    eventName _ = "Page.interstitialHidden"
 
 -- | Type of the 'Page.interstitialShown' event.
 data PageInterstitialShown = PageInterstitialShown
@@ -7111,6 +7221,8 @@ instance FromJSON PageInterstitialShown where
          _ -> fail "failed to parse PageInterstitialShown"
 
 
+instance Event PageInterstitialShown where
+    eventName _ = "Page.interstitialShown"
 
 -- | Type of the 'Page.javascriptDialogClosed' event.
 data PageJavascriptDialogClosed = PageJavascriptDialogClosed {
@@ -7126,6 +7238,8 @@ instance FromJSON  PageJavascriptDialogClosed where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
+instance Event PageJavascriptDialogClosed where
+    eventName _ = "Page.javascriptDialogClosed"
 
 -- | Type of the 'Page.javascriptDialogOpening' event.
 data PageJavascriptDialogOpening = PageJavascriptDialogOpening {
@@ -7149,6 +7263,8 @@ instance FromJSON  PageJavascriptDialogOpening where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
+instance Event PageJavascriptDialogOpening where
+    eventName _ = "Page.javascriptDialogOpening"
 
 -- | Type of the 'Page.lifecycleEvent' event.
 data PageLifecycleEvent = PageLifecycleEvent {
@@ -7166,6 +7282,8 @@ instance FromJSON  PageLifecycleEvent where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
+instance Event PageLifecycleEvent where
+    eventName _ = "Page.lifecycleEvent"
 
 -- | Type of the 'Page.backForwardCacheNotUsed' event.
 data PageBackForwardCacheNotUsed = PageBackForwardCacheNotUsed {
@@ -7185,6 +7303,8 @@ instance FromJSON  PageBackForwardCacheNotUsed where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
+instance Event PageBackForwardCacheNotUsed where
+    eventName _ = "Page.backForwardCacheNotUsed"
 
 -- | Type of the 'Page.prerenderAttemptCompleted' event.
 data PagePrerenderAttemptCompleted = PagePrerenderAttemptCompleted {
@@ -7200,6 +7320,8 @@ instance FromJSON  PagePrerenderAttemptCompleted where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
+instance Event PagePrerenderAttemptCompleted where
+    eventName _ = "Page.prerenderAttemptCompleted"
 
 -- | Type of the 'Page.loadEventFired' event.
 data PageLoadEventFired = PageLoadEventFired {
@@ -7212,6 +7334,8 @@ instance FromJSON  PageLoadEventFired where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
+instance Event PageLoadEventFired where
+    eventName _ = "Page.loadEventFired"
 
 -- | Type of the 'Page.navigatedWithinDocument' event.
 data PageNavigatedWithinDocument = PageNavigatedWithinDocument {
@@ -7227,6 +7351,8 @@ instance FromJSON  PageNavigatedWithinDocument where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
+instance Event PageNavigatedWithinDocument where
+    eventName _ = "Page.navigatedWithinDocument"
 
 -- | Type of the 'Page.screencastFrame' event.
 data PageScreencastFrame = PageScreencastFrame {
@@ -7244,6 +7370,8 @@ instance FromJSON  PageScreencastFrame where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
+instance Event PageScreencastFrame where
+    eventName _ = "Page.screencastFrame"
 
 -- | Type of the 'Page.screencastVisibilityChanged' event.
 data PageScreencastVisibilityChanged = PageScreencastVisibilityChanged {
@@ -7257,6 +7385,8 @@ instance FromJSON  PageScreencastVisibilityChanged where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
+instance Event PageScreencastVisibilityChanged where
+    eventName _ = "Page.screencastVisibilityChanged"
 
 -- | Type of the 'Page.windowOpen' event.
 data PageWindowOpen = PageWindowOpen {
@@ -7276,6 +7406,8 @@ instance FromJSON  PageWindowOpen where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
+instance Event PageWindowOpen where
+    eventName _ = "Page.windowOpen"
 
 -- | Type of the 'Page.compilationCacheProduced' event.
 data PageCompilationCacheProduced = PageCompilationCacheProduced {
@@ -7290,6 +7422,8 @@ instance FromJSON  PageCompilationCacheProduced where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
+instance Event PageCompilationCacheProduced where
+    eventName _ = "Page.compilationCacheProduced"
 
 
 
@@ -8631,6 +8765,8 @@ instance FromJSON  SecurityVisibleSecurityStateChanged where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 }
 
 
+instance Event SecurityVisibleSecurityStateChanged where
+    eventName _ = "Security.visibleSecurityStateChanged"
 
 
 

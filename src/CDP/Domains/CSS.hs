@@ -694,6 +694,8 @@ instance FromJSON  CssFontsUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
+instance Event CssFontsUpdated where
+    eventName _ = "CSS.fontsUpdated"
 
 -- | Type of the 'CSS.mediaQueryResultChanged' event.
 data CssMediaQueryResultChanged = CssMediaQueryResultChanged
@@ -705,6 +707,8 @@ instance FromJSON CssMediaQueryResultChanged where
          _ -> fail "failed to parse CssMediaQueryResultChanged"
 
 
+instance Event CssMediaQueryResultChanged where
+    eventName _ = "CSS.mediaQueryResultChanged"
 
 -- | Type of the 'CSS.styleSheetAdded' event.
 data CssStyleSheetAdded = CssStyleSheetAdded {
@@ -718,6 +722,8 @@ instance FromJSON  CssStyleSheetAdded where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
+instance Event CssStyleSheetAdded where
+    eventName _ = "CSS.styleSheetAdded"
 
 -- | Type of the 'CSS.styleSheetChanged' event.
 data CssStyleSheetChanged = CssStyleSheetChanged {
@@ -730,6 +736,8 @@ instance FromJSON  CssStyleSheetChanged where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
+instance Event CssStyleSheetChanged where
+    eventName _ = "CSS.styleSheetChanged"
 
 -- | Type of the 'CSS.styleSheetRemoved' event.
 data CssStyleSheetRemoved = CssStyleSheetRemoved {
@@ -743,6 +751,8 @@ instance FromJSON  CssStyleSheetRemoved where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
+instance Event CssStyleSheetRemoved where
+    eventName _ = "CSS.styleSheetRemoved"
 
 
 

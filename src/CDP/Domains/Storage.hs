@@ -201,6 +201,8 @@ instance FromJSON  StorageCacheStorageContentUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 }
 
 
+instance Event StorageCacheStorageContentUpdated where
+    eventName _ = "Storage.cacheStorageContentUpdated"
 
 -- | Type of the 'Storage.cacheStorageListUpdated' event.
 data StorageCacheStorageListUpdated = StorageCacheStorageListUpdated {
@@ -214,6 +216,8 @@ instance FromJSON  StorageCacheStorageListUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
+instance Event StorageCacheStorageListUpdated where
+    eventName _ = "Storage.cacheStorageListUpdated"
 
 -- | Type of the 'Storage.indexedDBContentUpdated' event.
 data StorageIndexedDbContentUpdated = StorageIndexedDbContentUpdated {
@@ -231,6 +235,8 @@ instance FromJSON  StorageIndexedDbContentUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
+instance Event StorageIndexedDbContentUpdated where
+    eventName _ = "Storage.indexedDBContentUpdated"
 
 -- | Type of the 'Storage.indexedDBListUpdated' event.
 data StorageIndexedDbListUpdated = StorageIndexedDbListUpdated {
@@ -244,6 +250,8 @@ instance FromJSON  StorageIndexedDbListUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
+instance Event StorageIndexedDbListUpdated where
+    eventName _ = "Storage.indexedDBListUpdated"
 
 -- | Type of the 'Storage.interestGroupAccessed' event.
 data StorageInterestGroupAccessed = StorageInterestGroupAccessed {
@@ -259,6 +267,8 @@ instance FromJSON  StorageInterestGroupAccessed where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
+instance Event StorageInterestGroupAccessed where
+    eventName _ = "Storage.interestGroupAccessed"
 
 
 

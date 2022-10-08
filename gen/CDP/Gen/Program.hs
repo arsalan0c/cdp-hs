@@ -1,6 +1,12 @@
 {-# LANGUAGE OverloadedStrings, FlexibleContexts, TupleSections, TypeOperators #-}
 
-module CDP.Gen.Program where
+module CDP.Gen.Program
+    ( Program (..)
+    , genProgram
+    , genProtocolModule
+
+    , ComponentName (..)
+    ) where
 
 import Control.Arrow
 import Data.List
@@ -39,7 +45,6 @@ resultReturnSig resultTy = "IO " <> resultTy
 data Program = Program
     { pComponents       :: Map.Map ComponentName T.Text
     , pComponentImports :: T.Text
-    , pEvents           :: T.Text
     }
 
 data Context = Context { ctxDomainComponents :: DomainComponents }
@@ -48,7 +53,6 @@ genProgram :: [D.DomainsElt] -> Program
 genProgram domainElts = Program
     { pComponents        = allComponents ctx $ Map.elems dc
     , pComponentImports  = T.unlines $ allComponentImports ctx
-    , pEvents            = genEvents ctx delts 
     }
   where
     ctx    = Context dc
@@ -80,69 +84,6 @@ allComponents ctx components = Map.fromList .
     map (cName &&& genComponent ctx) $ 
     components
 
-genEvents :: Context -> [D.DomainsElt] -> T.Text
-genEvents ctx delts = T.unlines $ 
-    [ eventsSumType evnCs evnQNs
-    , eventResponseFromJSON evnQNs evnCs evns 
-    , T.unlines $ evnInsts 
-    ]
-  where
-    evnInsts = map evnInst $ zip evnQNs . zip evnCs $ evns
-    evnInst (evnHS, (evnC, evn)) = genEventInstance evnHS evnC evn
-
-    evnQNs = allEventQualifiedNames ctx delts
-    evnCs  = map eventsSumTypeConstructor evnHS'
-    evnHS' = allEventNamesHS delts
-    evns   = allEventNames delts
-
-allEventNamesHS :: [D.DomainsElt] -> [T.Text]
-allEventNamesHS = concatMap f . map (id &&& validEvents)
-  where
-    f (d, evelts) = map (eventNameHS $ domainName d) evelts
-
-allEventQualifiedNames :: Context -> [D.DomainsElt] -> [T.Text]
-allEventQualifiedNames ctx = concatMap f
-  where
-    f d = map (g (cn d) (domainName d)) (validEvents d)
-    g cn dn evelt = domainQualifiedName cn (eventNameHS dn evelt)
-    cn d = unComponentName . domainToComponentName ctx . domainName $ d
-    dn d = domainName d
-
-allEventNames :: [D.DomainsElt] -> [T.Text]
-allEventNames = concatMap (\(d, evs) -> map (eventName $ domainName d) evs) . map (id &&& validEvents)
-
-eventsSumTypeName :: T.Text
-eventsSumTypeName = "Event"
-
-eventsSumTypeConstructor :: T.Text -> T.Text
-eventsSumTypeConstructor = ("EV" <>)
-
-eventsSumType :: [T.Text] -> [T.Text] -> T.Text
-eventsSumType constructors qualifiedNames = (<> ("\n" <> space 3 <> derivingBase)) . 
-        (T.unwords ["data", eventsSumTypeName, "= "] <>) .
-        T.intercalate " | " . 
-        map f $ zip constructors qualifiedNames
-  where
-    f (evnC, evnQN) = T.unwords [evnC, evnQN]
-        
-eventResponseFromJSON :: [T.Text] -> [T.Text] -> [T.Text] -> T.Text
-eventResponseFromJSON eventNamesHS eventConstructorNames eventNames = T.unlines $
-    [ T.unwords ["instance FromJSON", "(" <> eventResponseName, eventsSumTypeName, ") where"]
-    , T.unwords [space 3, "parseJSON = A.withObject ", (T.pack . show) eventResponseName, " $ \\obj -> do"]
-    , T.unwords [space 7, "name", "<-", "obj", ".:", (T.pack . show) "method"]
-    , T.unwords [space 7, "case (name :: String) of"]
-    ] ++ 
-        (map (\(l,r) -> T.unwords [space 11, l, "->", r]) $ zip (map (T.pack . show) $ eventNames)
-            (map ((\(evnHS, evnC) -> T.unwords [eventResponseName, proxy eventsSumTypeName, proxy evnHS, ". fmap", evnC, "<$> obj .:?", (T.pack . show) "params"])) $ zip eventNamesHS eventConstructorNames) ++ 
-            [emptyCase eventResponseName])
-      
-genEventInstance :: T.Text -> T.Text -> T.Text -> T.Text
-genEventInstance eventNameHS eventConstructorName eventName = T.unlines $
-    [ T.unwords ["instance", eventClassName, eventsSumTypeName, eventNameHS, "where"]
-    , T.unwords [space 3, "eventName  _ _    = ", (T.pack . show) $ eventName]
-    , T.unwords [space 3, "fromEvent ev      = ", "case ev of", eventConstructorName, "v -> Just v; _ -> Nothing"]
-    ]
- 
 ----------- Generation of domain types / values -----------
 
 genComponent :: Context -> Component -> T.Text
@@ -197,8 +138,12 @@ genTypeEnum _ typeEnumName values = T.unlines . filter ((/= 0) . T.length) $
     constructors = map (tyNameHS typeEnumName) values
 
 genEventReturnType :: Context -> T.Text -> D.EventsElt -> T.Text
-genEventReturnType ctx domainName eventElt = T.unlines . (desc :) . pure $
-    maybe emptyParams genNonEmptyParams eveltsM
+genEventReturnType ctx domainName eventElt = T.unlines
+    [ desc
+    , maybe emptyParams genNonEmptyParams eveltsM
+    , "instance Event " <> evrn <> " where"
+    , "    eventName _ = \"" <> eventName domainName eventElt <> "\""
+    ]
   where
     desc = formatDescription 0 $ "Type of the '" <> 
         (eventName domainName eventElt) <> "' event."
@@ -376,7 +321,7 @@ protocolModuleHeader names = T.unlines
   where
     mod = T.unwords [ "module", protocolModuleName ]
 
-    exports = eventsSumTypeName : componentToImport names
+    exports = componentToImport names
 
 protocolModuleName :: T.Text
 protocolModuleName = "CDP.Domains"

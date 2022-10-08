@@ -318,6 +318,8 @@ instance FromJSON  DebuggerBreakpointResolved where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
+instance Event DebuggerBreakpointResolved where
+    eventName _ = "Debugger.breakpointResolved"
 
 -- | Type of the 'Debugger.paused' event.
 data DebuggerPausedReason = DebuggerPausedReasonAmbiguous | DebuggerPausedReasonAssert | DebuggerPausedReasonCspViolation | DebuggerPausedReasonDebugCommand | DebuggerPausedReasonDom | DebuggerPausedReasonEventListener | DebuggerPausedReasonException | DebuggerPausedReasonInstrumentation | DebuggerPausedReasonOom | DebuggerPausedReasonOther | DebuggerPausedReasonPromiseRejection | DebuggerPausedReasonXhr
@@ -378,6 +380,8 @@ instance FromJSON  DebuggerPaused where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
+instance Event DebuggerPaused where
+    eventName _ = "Debugger.paused"
 
 -- | Type of the 'Debugger.resumed' event.
 data DebuggerResumed = DebuggerResumed
@@ -389,6 +393,8 @@ instance FromJSON DebuggerResumed where
          _ -> fail "failed to parse DebuggerResumed"
 
 
+instance Event DebuggerResumed where
+    eventName _ = "Debugger.resumed"
 
 -- | Type of the 'Debugger.scriptFailedToParse' event.
 data DebuggerScriptFailedToParse = DebuggerScriptFailedToParse {
@@ -434,6 +440,8 @@ instance FromJSON  DebuggerScriptFailedToParse where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
+instance Event DebuggerScriptFailedToParse where
+    eventName _ = "Debugger.scriptFailedToParse"
 
 -- | Type of the 'Debugger.scriptParsed' event.
 data DebuggerScriptParsed = DebuggerScriptParsed {
@@ -483,6 +491,8 @@ instance FromJSON  DebuggerScriptParsed where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
+instance Event DebuggerScriptParsed where
+    eventName _ = "Debugger.scriptParsed"
 
 
 

@@ -133,6 +133,8 @@ instance FromJSON  BackgroundServiceRecordingStateChanged where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 }
 
 
+instance Event BackgroundServiceRecordingStateChanged where
+    eventName _ = "BackgroundService.recordingStateChanged"
 
 -- | Type of the 'BackgroundService.backgroundServiceEventReceived' event.
 data BackgroundServiceBackgroundServiceEventReceived = BackgroundServiceBackgroundServiceEventReceived {
@@ -145,6 +147,8 @@ instance FromJSON  BackgroundServiceBackgroundServiceEventReceived where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 47 }
 
 
+instance Event BackgroundServiceBackgroundServiceEventReceived where
+    eventName _ = "BackgroundService.backgroundServiceEventReceived"
 
 
 

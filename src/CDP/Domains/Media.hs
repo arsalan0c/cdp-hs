@@ -181,6 +181,8 @@ instance FromJSON  MediaPlayerPropertiesChanged where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
+instance Event MediaPlayerPropertiesChanged where
+    eventName _ = "Media.playerPropertiesChanged"
 
 -- | Type of the 'Media.playerEventsAdded' event.
 data MediaPlayerEventsAdded = MediaPlayerEventsAdded {
@@ -194,6 +196,8 @@ instance FromJSON  MediaPlayerEventsAdded where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
+instance Event MediaPlayerEventsAdded where
+    eventName _ = "Media.playerEventsAdded"
 
 -- | Type of the 'Media.playerMessagesLogged' event.
 data MediaPlayerMessagesLogged = MediaPlayerMessagesLogged {
@@ -207,6 +211,8 @@ instance FromJSON  MediaPlayerMessagesLogged where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
+instance Event MediaPlayerMessagesLogged where
+    eventName _ = "Media.playerMessagesLogged"
 
 -- | Type of the 'Media.playerErrorsRaised' event.
 data MediaPlayerErrorsRaised = MediaPlayerErrorsRaised {
@@ -220,6 +226,8 @@ instance FromJSON  MediaPlayerErrorsRaised where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+instance Event MediaPlayerErrorsRaised where
+    eventName _ = "Media.playerErrorsRaised"
 
 -- | Type of the 'Media.playersCreated' event.
 data MediaPlayersCreated = MediaPlayersCreated {
@@ -232,6 +240,8 @@ instance FromJSON  MediaPlayersCreated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
+instance Event MediaPlayersCreated where
+    eventName _ = "Media.playersCreated"
 
 
 

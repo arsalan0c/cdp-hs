@@ -207,6 +207,8 @@ instance FromJSON  TracingBufferUsage where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
+instance Event TracingBufferUsage where
+    eventName _ = "Tracing.bufferUsage"
 
 -- | Type of the 'Tracing.dataCollected' event.
 data TracingDataCollected = TracingDataCollected {
@@ -219,6 +221,8 @@ instance FromJSON  TracingDataCollected where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
+instance Event TracingDataCollected where
+    eventName _ = "Tracing.dataCollected"
 
 -- | Type of the 'Tracing.tracingComplete' event.
 data TracingTracingComplete = TracingTracingComplete {
@@ -239,6 +243,8 @@ instance FromJSON  TracingTracingComplete where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
+instance Event TracingTracingComplete where
+    eventName _ = "Tracing.tracingComplete"
 
 
 

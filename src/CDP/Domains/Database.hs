@@ -100,6 +100,8 @@ instance FromJSON  DatabaseAddDatabase where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
+instance Event DatabaseAddDatabase where
+    eventName _ = "Database.addDatabase"
 
 
 

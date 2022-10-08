@@ -140,6 +140,8 @@ instance FromJSON  PerformanceTimelineTimelineEventAdded where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 }
 
 
+instance Event PerformanceTimelineTimelineEventAdded where
+    eventName _ = "PerformanceTimeline.timelineEventAdded"
 
 
 

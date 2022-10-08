@@ -214,6 +214,8 @@ instance FromJSON  LogEntryAdded where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 }
 
 
+instance Event LogEntryAdded where
+    eventName _ = "Log.entryAdded"
 
 
 

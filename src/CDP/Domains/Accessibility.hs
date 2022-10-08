@@ -394,6 +394,8 @@ instance FromJSON  AccessibilityLoadComplete where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
+instance Event AccessibilityLoadComplete where
+    eventName _ = "Accessibility.loadComplete"
 
 -- | Type of the 'Accessibility.nodesUpdated' event.
 data AccessibilityNodesUpdated = AccessibilityNodesUpdated {
@@ -407,6 +409,8 @@ instance FromJSON  AccessibilityNodesUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
+instance Event AccessibilityNodesUpdated where
+    eventName _ = "Accessibility.nodesUpdated"
 
 
 

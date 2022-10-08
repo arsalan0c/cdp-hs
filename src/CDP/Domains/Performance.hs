@@ -79,6 +79,8 @@ instance FromJSON  PerformanceMetrics where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
+instance Event PerformanceMetrics where
+    eventName _ = "Performance.metrics"
 
 
 

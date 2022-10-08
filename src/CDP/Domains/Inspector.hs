@@ -61,6 +61,8 @@ instance FromJSON  InspectorDetached where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
+instance Event InspectorDetached where
+    eventName _ = "Inspector.detached"
 
 -- | Type of the 'Inspector.targetCrashed' event.
 data InspectorTargetCrashed = InspectorTargetCrashed
@@ -72,6 +74,8 @@ instance FromJSON InspectorTargetCrashed where
          _ -> fail "failed to parse InspectorTargetCrashed"
 
 
+instance Event InspectorTargetCrashed where
+    eventName _ = "Inspector.targetCrashed"
 
 -- | Type of the 'Inspector.targetReloadedAfterCrash' event.
 data InspectorTargetReloadedAfterCrash = InspectorTargetReloadedAfterCrash
@@ -83,6 +87,8 @@ instance FromJSON InspectorTargetReloadedAfterCrash where
          _ -> fail "failed to parse InspectorTargetReloadedAfterCrash"
 
 
+instance Event InspectorTargetReloadedAfterCrash where
+    eventName _ = "Inspector.targetReloadedAfterCrash"
 
 
 

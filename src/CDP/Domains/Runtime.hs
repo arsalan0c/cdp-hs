@@ -735,6 +735,8 @@ instance FromJSON  RuntimeBindingCalled where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
+instance Event RuntimeBindingCalled where
+    eventName _ = "Runtime.bindingCalled"
 
 -- | Type of the 'Runtime.consoleAPICalled' event.
 data RuntimeConsoleApiCalledType = RuntimeConsoleApiCalledTypeLog | RuntimeConsoleApiCalledTypeDebug | RuntimeConsoleApiCalledTypeInfo | RuntimeConsoleApiCalledTypeError | RuntimeConsoleApiCalledTypeWarning | RuntimeConsoleApiCalledTypeDir | RuntimeConsoleApiCalledTypeDirxml | RuntimeConsoleApiCalledTypeTable | RuntimeConsoleApiCalledTypeTrace | RuntimeConsoleApiCalledTypeClear | RuntimeConsoleApiCalledTypeStartGroup | RuntimeConsoleApiCalledTypeStartGroupCollapsed | RuntimeConsoleApiCalledTypeEndGroup | RuntimeConsoleApiCalledTypeAssert | RuntimeConsoleApiCalledTypeProfile | RuntimeConsoleApiCalledTypeProfileEnd | RuntimeConsoleApiCalledTypeCount | RuntimeConsoleApiCalledTypeTimeEnd
@@ -811,6 +813,8 @@ instance FromJSON  RuntimeConsoleApiCalled where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+instance Event RuntimeConsoleApiCalled where
+    eventName _ = "Runtime.consoleAPICalled"
 
 -- | Type of the 'Runtime.exceptionRevoked' event.
 data RuntimeExceptionRevoked = RuntimeExceptionRevoked {
@@ -826,6 +830,8 @@ instance FromJSON  RuntimeExceptionRevoked where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+instance Event RuntimeExceptionRevoked where
+    eventName _ = "Runtime.exceptionRevoked"
 
 -- | Type of the 'Runtime.exceptionThrown' event.
 data RuntimeExceptionThrown = RuntimeExceptionThrown {
@@ -840,6 +846,8 @@ instance FromJSON  RuntimeExceptionThrown where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
+instance Event RuntimeExceptionThrown where
+    eventName _ = "Runtime.exceptionThrown"
 
 -- | Type of the 'Runtime.executionContextCreated' event.
 data RuntimeExecutionContextCreated = RuntimeExecutionContextCreated {
@@ -853,6 +861,8 @@ instance FromJSON  RuntimeExecutionContextCreated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
+instance Event RuntimeExecutionContextCreated where
+    eventName _ = "Runtime.executionContextCreated"
 
 -- | Type of the 'Runtime.executionContextDestroyed' event.
 data RuntimeExecutionContextDestroyed = RuntimeExecutionContextDestroyed {
@@ -866,6 +876,8 @@ instance FromJSON  RuntimeExecutionContextDestroyed where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
+instance Event RuntimeExecutionContextDestroyed where
+    eventName _ = "Runtime.executionContextDestroyed"
 
 -- | Type of the 'Runtime.executionContextsCleared' event.
 data RuntimeExecutionContextsCleared = RuntimeExecutionContextsCleared
@@ -877,6 +889,8 @@ instance FromJSON RuntimeExecutionContextsCleared where
          _ -> fail "failed to parse RuntimeExecutionContextsCleared"
 
 
+instance Event RuntimeExecutionContextsCleared where
+    eventName _ = "Runtime.executionContextsCleared"
 
 -- | Type of the 'Runtime.inspectRequested' event.
 data RuntimeInspectRequested = RuntimeInspectRequested {
@@ -892,6 +906,8 @@ instance FromJSON  RuntimeInspectRequested where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
+instance Event RuntimeInspectRequested where
+    eventName _ = "Runtime.inspectRequested"
 
 
 

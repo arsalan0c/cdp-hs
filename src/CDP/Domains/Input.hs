@@ -181,6 +181,8 @@ instance FromJSON  InputDragIntercepted where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
+instance Event InputDragIntercepted where
+    eventName _ = "Input.dragIntercepted"
 
 
 

@@ -217,6 +217,8 @@ instance FromJSON  FetchRequestPaused where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
+instance Event FetchRequestPaused where
+    eventName _ = "Fetch.requestPaused"
 
 -- | Type of the 'Fetch.authRequired' event.
 data FetchAuthRequired = FetchAuthRequired {
@@ -240,6 +242,8 @@ instance FromJSON  FetchAuthRequired where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
+instance Event FetchAuthRequired where
+    eventName _ = "Fetch.authRequired"
 
 
 

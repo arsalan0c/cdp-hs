@@ -233,6 +233,8 @@ instance FromJSON  ProfilerConsoleProfileFinished where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
+instance Event ProfilerConsoleProfileFinished where
+    eventName _ = "Profiler.consoleProfileFinished"
 
 -- | Type of the 'Profiler.consoleProfileStarted' event.
 data ProfilerConsoleProfileStarted = ProfilerConsoleProfileStarted {
@@ -249,6 +251,8 @@ instance FromJSON  ProfilerConsoleProfileStarted where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
+instance Event ProfilerConsoleProfileStarted where
+    eventName _ = "Profiler.consoleProfileStarted"
 
 -- | Type of the 'Profiler.preciseCoverageDeltaUpdate' event.
 data ProfilerPreciseCoverageDeltaUpdate = ProfilerPreciseCoverageDeltaUpdate {
@@ -266,6 +270,8 @@ instance FromJSON  ProfilerPreciseCoverageDeltaUpdate where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
 
 
+instance Event ProfilerPreciseCoverageDeltaUpdate where
+    eventName _ = "Profiler.preciseCoverageDeltaUpdate"
 
 
 

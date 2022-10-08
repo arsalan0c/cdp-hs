@@ -169,6 +169,8 @@ instance FromJSON  ServiceWorkerWorkerErrorReported where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
+instance Event ServiceWorkerWorkerErrorReported where
+    eventName _ = "ServiceWorker.workerErrorReported"
 
 -- | Type of the 'ServiceWorker.workerRegistrationUpdated' event.
 data ServiceWorkerWorkerRegistrationUpdated = ServiceWorkerWorkerRegistrationUpdated {
@@ -181,6 +183,8 @@ instance FromJSON  ServiceWorkerWorkerRegistrationUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 }
 
 
+instance Event ServiceWorkerWorkerRegistrationUpdated where
+    eventName _ = "ServiceWorker.workerRegistrationUpdated"
 
 -- | Type of the 'ServiceWorker.workerVersionUpdated' event.
 data ServiceWorkerWorkerVersionUpdated = ServiceWorkerWorkerVersionUpdated {
@@ -193,6 +197,8 @@ instance FromJSON  ServiceWorkerWorkerVersionUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 }
 
 
+instance Event ServiceWorkerWorkerVersionUpdated where
+    eventName _ = "ServiceWorker.workerVersionUpdated"
 
 
 

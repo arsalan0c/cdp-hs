@@ -79,6 +79,8 @@ instance FromJSON  CastSinksUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
+instance Event CastSinksUpdated where
+    eventName _ = "Cast.sinksUpdated"
 
 -- | Type of the 'Cast.issueUpdated' event.
 data CastIssueUpdated = CastIssueUpdated {
@@ -91,6 +93,8 @@ instance FromJSON  CastIssueUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
+instance Event CastIssueUpdated where
+    eventName _ = "Cast.issueUpdated"
 
 
 

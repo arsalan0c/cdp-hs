@@ -65,6 +65,8 @@ instance FromJSON  TetheringAccepted where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
+instance Event TetheringAccepted where
+    eventName _ = "Tethering.accepted"
 
 
 

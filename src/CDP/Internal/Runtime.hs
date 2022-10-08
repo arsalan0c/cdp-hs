@@ -34,15 +34,18 @@ import Data.Default
 import Control.Exception
 import System.Timeout
 import Data.Char
+import qualified System.IO as IO
 
 import CDP.Internal.Endpoints
 
+class FromJSON a => Event a where
+    eventName :: Proxy a -> String
 
 type CommandBuffer = Map.Map CommandId BS.ByteString
 data Handle' ev = MkHandle
     { config            :: Config
     , randomGen        :: MVar StdGen
-    , eventHandlers    :: MVar (Map.Map String (ev -> IO ()))
+    , eventHandlers    :: MVar (Map.Map String (A.Value -> IO ()))
     , commandBuffer    :: MVar CommandBuffer
     , conn             :: WS.Connection
     , listenThread     :: ThreadId
@@ -63,9 +66,8 @@ instance Default Config where
         doLogResponses = False
         commandTimeout = def
 
-type FromJSONEvent ev = FromJSON (EventResponse ev)
 type ClientApp' ev b  = Handle' ev -> IO b
-runClient' :: forall ev b. FromJSONEvent ev => Config -> ClientApp' ev b -> IO b
+runClient' :: forall ev b. Config -> ClientApp' ev b -> IO b
 runClient' config app = do
     randomGen      <- newMVar . mkStdGen $ 42
     eventHandlers  <- newMVar Map.empty
@@ -81,22 +83,43 @@ runClient' config app = do
                 listenThread <- myThreadId
                 forever $ do
                     bs <- WS.fromDataMessage <$> WS.receiveDataMessage conn
+                    case A.decode bs of
+                        Nothing -> IO.hPutStrLn IO.stderr $
+                            "Could not parse message: " ++ show bs
+                        Just im | Just method <- imMethod im -> do
+                            IO.hPutStrLn IO.stderr $ "dispatching with method " ++ show method
+                            dispatchEvent MkHandle{..} method (imParams im)
+                        _ -> dispatchCommandResponse commandBuffer bs
+                            {-
                     if isCommand bs
                         then dispatchCommandResponse commandBuffer bs
                         else dispatchEventResponse MkHandle{..} bs
+                        -}
         
         bracket listen killThread (\listenThread -> app MkHandle{..})
-      
-isCommand :: BS.ByteString -> Bool
-isCommand bs = do
-    case A.decode bs of
-        Nothing            -> False
-        Just (CommandId _) -> True
+
+-- | A message from the browser.  We don't know yet if this is a command
+-- response or an event
+data IncomingMessage = IncomingMessage
+    { imMethod :: Maybe String
+    , imParams :: Maybe A.Value
+    , imId     :: Maybe CommandId
+    , imError  :: Maybe ProtocolError
+    , imResult :: Maybe A.Value
+    }
+
+instance FromJSON IncomingMessage where
+    parseJSON = A.withObject "IncomingMessage" $ \obj -> IncomingMessage
+        <$> obj A..:? "method"
+        <*> obj A..:? "params"
+        <*> obj A..:? "id"
+        <*> obj A..:? "error"
+        <*> obj A..:? "result"
         
 dispatchCommandResponse :: MVar CommandBuffer -> BS.ByteString -> IO ()
 dispatchCommandResponse commandBuffer bs = do
     case A.decode bs of
-        Nothing  -> error "not a command"
+        Nothing  -> IO.hPutStrLn IO.stderr $ "not a command: " ++ show bs
         Just cid@(CommandId id)  -> do
             updateCommandBuffer commandBuffer (Map.insert cid bs)
             
@@ -106,57 +129,33 @@ updateCommandBuffer commandBuffer f = ($ pure . f) . modifyMVar_ $ commandBuffer
 updateCommandBufferM :: MVar CommandBuffer -> (CommandBuffer -> IO (CommandBuffer, a)) -> IO a
 updateCommandBufferM = modifyMVar
 
-logResponse :: forall ev. Handle' ev -> String -> BS.ByteString -> IO ()
-logResponse handle s bs = if (doLogResponses (config handle)) 
-        then modifyMVar_ (responseBuffer handle) $ pure . (++ [(s, bs)])
-        else pure ()
+dispatchEvent :: Handle' ev -> String -> Maybe A.Value -> IO ()
+dispatchEvent handle method mbParams = do
+    evs <- readMVar (eventHandlers handle)
+    let handlerM = Map.lookup method evs
 
-dispatchEventResponse :: forall ev. FromJSONEvent ev => Handle' ev -> BS.ByteString -> IO ()
-dispatchEventResponse handle bs = do
-    void $ go handle . A.decode $ bs
-  where
-    go :: forall ev. FromJSONEvent ev => Handle' ev -> Maybe (EventResponse ev) -> IO ()
-    go handle evr = maybe (pure ()) f evr -- TODO: throw error
-      where
-        f (EventResponse ps p v) = do
-            evs <- readMVar (eventHandlers handle)
-            let handlerM = Map.lookup (eventName ps p) evs
-            if isJust handlerM
-                then logResponse handle (eventName ps p) bs
-                else pure ()
-            
-            let handler = fromMaybe print handlerM -- :CONFIG
-            maybe (pure ()) handler v
+    let handler = fromMaybe print handlerM -- :CONFIG
+    maybe (pure ()) handler mbParams
 
-updateEventHandlers :: forall ev. FromJSONEvent ev => Handle' ev -> (Map.Map String (ev -> IO ()) -> Map.Map String (ev -> IO ())) -> IO ()
+updateEventHandlers :: forall ev. Handle' ev -> (Map.Map String (A.Value -> IO ()) -> Map.Map String (A.Value -> IO ())) -> IO ()
 updateEventHandlers handle f = ($ pure . f) . modifyMVar_ . eventHandlers $ handle
 
-subscribe' :: forall ev a . (FromJSONEvent ev, FromEvent ev a) => Handle' ev -> (a -> IO ()) -> IO ()
-subscribe' handle h = updateEventHandlers handle $ Map.insert (eventName ps p) handler
+subscribe' :: forall ev a. Event a => Handle' ev -> (a -> IO ()) -> IO ()
+subscribe' handle h = updateEventHandlers handle $ Map.insert (eventName p) handler
   where
-    handler = maybe (pure ()) h . fromEvent
-    p  = (Proxy :: Proxy a)
-    ps = (Proxy :: Proxy s)
+    p = Proxy :: Proxy a
 
-unsubscribe' :: forall ev a. (FromJSONEvent ev, FromEvent ev a) => Handle' ev -> Proxy a -> IO ()
-unsubscribe' handle p = updateEventHandlers handle (Map.delete (eventName ps p))
-  where
-    ps = Proxy :: Proxy ev
+    handler :: A.Value -> IO ()
+    handler val = case A.fromJSON val :: A.Result a of
+        A.Error   _ -> pure () -- TODO: throw error?
+        A.Success x -> h x
 
-class (FromJSON a) => FromEvent ev a | a -> ev where
-    eventName     :: Proxy ev -> Proxy a -> String
-    fromEvent     :: ev       -> Maybe a
-
-data EventResponse ev where
-    EventResponse :: (Show ev, Show a, FromEvent ev a) => Proxy ev -> Proxy a -> Maybe ev -> EventResponse ev
+unsubscribe' :: forall ev a. Event a => Handle' ev -> Proxy a -> IO ()
+unsubscribe' handle proxy = updateEventHandlers handle (Map.delete (eventName proxy))
 
 
 newtype CommandId = CommandId { unCommandId :: Int }
-    deriving (Eq, Ord, Show, ToJSON)
-
-instance FromJSON CommandId where
-    parseJSON = A.withObject "CommandId" $ \obj -> do
-        CommandId <$> obj .: "id"
+    deriving (Eq, Ord, Show, FromJSON, ToJSON)
 
 data CommandObj a = CommandObj {
       coId :: CommandId
@@ -261,7 +260,6 @@ receiveCommandResponse handle id = do
                     then do threadDelay 1000; pure (buffer, bsM)
                     else pure $ (Map.delete id buffer, bsM)
 
-    maybe (pure ()) (logResponse handle (commandName p)) bsM
     pure $ maybe (Left ERRNoResponse) (either (Left . ERRParse) Right . A.eitherDecode) $ bsM
   where
     p = Proxy :: Proxy b

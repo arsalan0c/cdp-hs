@@ -50,6 +50,7 @@ executables:
     main: PrintPage.hs
     dependencies:
       - cdp
+      - base64-bytestring
 
 tests:
   cdp-test:

@@ -4,6 +4,8 @@ module CDP
     ( ClientApp
     , Handle
     , runClient
+
+    , Subscription
     , subscribe
     , unsubscribe
 

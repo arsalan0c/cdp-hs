@@ -37,9 +37,9 @@ browser handle = print =<< CDP.browserGetVersion handle
 
 subUnsub :: CDP.Handle -> IO ()
 subUnsub handle = do
-    CDP.subscribe handle (print . CDP.pageWindowOpenUrl)
+    sub <- CDP.subscribe handle (print . CDP.pageWindowOpenUrl)
     CDP.pageEnable handle
-    CDP.unsubscribe handle (Proxy :: Proxy CDP.PageWindowOpen)
+    CDP.unsubscribe handle sub
 
     forever $ do
         threadDelay 1000

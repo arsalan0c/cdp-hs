@@ -13,7 +13,8 @@ import           Control.Monad
 import           Control.Monad.Loops
 import           Control.Monad.Trans  (liftIO)
 import qualified Data.Map             as M
-import           Data.Maybe          
+import           Data.Maybe
+import Data.Foldable (for_)
 import Data.Functor.Identity
 import Data.String
 import qualified Data.Text as T
@@ -42,14 +43,19 @@ import CDP.Internal.Endpoints
 class FromJSON a => Event a where
     eventName :: Proxy a -> String
 
-type CommandResponseBuffer = IORef.IORef
-    (Map.Map CommandId (MVar (Either ProtocolError A.Value)))
+type CommandResponseBuffer =
+    Map.Map CommandId (MVar (Either ProtocolError A.Value))
+
+data Subscriptions = Subscriptions
+    { subscriptionsHandlers :: Map.Map String (Map.Map Int (A.Value -> IO ()))
+    , subscriptionsNextId   :: Int
+    }
 
 data Handle = Handle
-    { config            :: Config
+    { config           :: Config
     , randomGen        :: MVar StdGen
-    , eventHandlers    :: MVar (Map.Map String (A.Value -> IO ()))
-    , commandBuffer    :: CommandResponseBuffer
+    , subscriptions    :: IORef.IORef Subscriptions
+    , commandBuffer    :: IORef.IORef CommandResponseBuffer
     , conn             :: WS.Connection
     , listenThread     :: ThreadId
     , responseBuffer   :: MVar [(String, BS.ByteString)]
@@ -74,7 +80,7 @@ type ClientApp b  = Handle -> IO b
 runClient :: forall b. Config -> ClientApp b -> IO b
 runClient config app = do
     randomGen      <- newMVar . mkStdGen $ 42
-    eventHandlers  <- newMVar Map.empty
+    subscriptions  <- IORef.newIORef $ Subscriptions Map.empty 0
     commandBuffer  <- IORef.newIORef Map.empty
     responseBuffer <- newMVar []
 
@@ -139,33 +145,53 @@ dispatchCommandResponse h cid mbErr mbVal = do
 
 dispatchEvent :: Handle -> String -> Maybe A.Value -> IO ()
 dispatchEvent handle method mbParams = do
-    evs <- readMVar (eventHandlers handle)
-    case Map.lookup method evs of
+    byMethod <- subscriptionsHandlers <$> IORef.readIORef (subscriptions handle)
+    case Map.lookup method byMethod of
         Nothing -> IO.hPutStrLn IO.stderr $ "No handler for " ++ show method
-        Just f -> case mbParams of
+        Just byId -> case mbParams of
             Nothing -> IO.hPutStrLn IO.stderr $ "No params for " ++ show method
-            Just p -> do
+            Just params -> do
                 IO.hPutStrLn IO.stderr $ "Calling handler for " ++ show method
-                f p
+                for_ byId ($ params)
 
-updateEventHandlers :: forall ev. Handle -> (Map.Map String (A.Value -> IO ()) -> Map.Map String (A.Value -> IO ())) -> IO ()
-updateEventHandlers handle f = ($ pure . f) . modifyMVar_ . eventHandlers $ handle
+data Subscription = Subscription
+    { subscriptionEventName :: String
+    , subscriptionId        :: Int
+    }
 
-subscribe :: forall ev a. Event a => Handle -> (a -> IO ()) -> IO ()
-subscribe handle h = updateEventHandlers handle $ Map.insert (eventName p) handler
+subscribe :: forall a. Event a => Handle -> (a -> IO ()) -> IO Subscription
+subscribe handle f = do
+    id' <- IORef.atomicModifyIORef' (subscriptions handle) $ \s ->
+        let id' = subscriptionsNextId s in
+        ( s { subscriptionsNextId   = id' + 1
+            , subscriptionsHandlers = Map.insertWith
+                Map.union
+                ename
+                (Map.singleton id' handler)
+                (subscriptionsHandlers s)
+            }
+        , id'
+        )
+
+    pure $ Subscription ename id'
   where
-    p = Proxy :: Proxy a
+    ename = eventName (Proxy :: Proxy a)
 
     handler :: A.Value -> IO ()
     handler val = case A.fromJSON val :: A.Result a of
         A.Error   err -> do
             IO.hPutStrLn IO.stderr $ "Error parsing JSON: " ++ err
             IO.hPutStrLn IO.stderr $ "Value: " ++ show val
-        A.Success x   -> h x
+        A.Success x   -> f x
 
-unsubscribe :: forall ev a. Event a => Handle -> Proxy a -> IO ()
-unsubscribe handle proxy = updateEventHandlers handle (Map.delete (eventName proxy))
-
+unsubscribe :: Handle -> Subscription -> IO ()
+unsubscribe handle (Subscription ename id') =
+    IORef.atomicModifyIORef' (subscriptions handle) $ \s ->
+        ( s { subscriptionsHandlers =
+                Map.adjust (Map.delete id') ename (subscriptionsHandlers s)
+            }
+        , ()
+        )
 
 newtype CommandId = CommandId { unCommandId :: Int }
     deriving (Eq, Ord, Show, FromJSON, ToJSON)

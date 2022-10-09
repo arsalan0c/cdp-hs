@@ -35,19 +35,21 @@ import Control.Exception
 import System.Timeout
 import Data.Char
 import qualified System.IO as IO
+import qualified Data.IORef as IORef
 
 import CDP.Internal.Endpoints
 
 class FromJSON a => Event a where
     eventName :: Proxy a -> String
 
-type CommandBuffer = Map.Map CommandId (Either ProtocolError A.Value)
+type CommandResponseBuffer = IORef.IORef
+    (Map.Map CommandId (MVar (Either ProtocolError A.Value)))
 
 data Handle = Handle
     { config            :: Config
     , randomGen        :: MVar StdGen
     , eventHandlers    :: MVar (Map.Map String (A.Value -> IO ()))
-    , commandBuffer    :: MVar CommandBuffer
+    , commandBuffer    :: CommandResponseBuffer
     , conn             :: WS.Connection
     , listenThread     :: ThreadId
     , responseBuffer   :: MVar [(String, BS.ByteString)]
@@ -73,7 +75,7 @@ runClient :: forall b. Config -> ClientApp b -> IO b
 runClient config app = do
     randomGen      <- newMVar . mkStdGen $ 42
     eventHandlers  <- newMVar Map.empty
-    commandBuffer  <- newMVar Map.empty
+    commandBuffer  <- IORef.newIORef Map.empty
     responseBuffer <- newMVar []
 
     let endpoint = hostPortToEndpoint $ hostPort config
@@ -122,20 +124,18 @@ instance FromJSON IncomingMessage where
 
 dispatchCommandResponse
     :: Handle -> CommandId -> Maybe ProtocolError -> Maybe A.Value -> IO ()
-dispatchCommandResponse h cid mbErr mbVal =
-    updateCommandBuffer (commandBuffer h) (Map.insert cid entry)
-  where
-    entry = case mbErr of
-        Just err -> Left err
-        Nothing -> case mbVal of
-            Just val -> Right val
-            Nothing  -> Right A.Null
-            
-updateCommandBuffer :: MVar CommandBuffer -> (CommandBuffer -> CommandBuffer) -> IO ()
-updateCommandBuffer commandBuffer f = ($ pure . f) . modifyMVar_ $ commandBuffer
-
-updateCommandBufferM :: MVar CommandBuffer -> (CommandBuffer -> IO (CommandBuffer, a)) -> IO a
-updateCommandBufferM = modifyMVar
+dispatchCommandResponse h cid mbErr mbVal = do
+    mbMVar <- IORef.atomicModifyIORef' (commandBuffer h) $ \buffer ->
+        case M.lookup cid buffer of
+            Nothing -> (buffer, Nothing)
+            Just mv -> (Map.delete cid buffer, Just mv)
+    case mbMVar of
+        Nothing -> pure ()
+        Just mv -> putMVar mv $ case mbErr of
+            Just err -> Left err
+            Nothing -> case mbVal of
+                Just val -> Right val
+                Nothing  -> Right A.Null
 
 dispatchEvent :: Handle -> String -> Maybe A.Value -> IO ()
 dispatchEvent handle method mbParams = do
@@ -245,57 +245,46 @@ instance Show Error where
     show (ERRParse msg)     = unlines ["error in parsing a message received from the protocol:", msg]
     show (ERRProtocol pe)   = show pe 
 
+data Promise a where
+    Promise :: MVar tmp -> (tmp -> Either Error a) -> Promise a
+
+-- TODO: timeout here?
+readPromise :: Promise a -> IO a
+readPromise (Promise mv f) = do
+    x <- readMVar mv
+    either throwIO pure $ f x
+
 sendCommand
     :: forall cmd. Command cmd
-    => WS.Connection -> CommandId -> String -> cmd -> IO ()
-sendCommand conn id name params = do
-    let co = CommandObj id name params
-    WS.sendTextData conn . A.encode $ co
-  where
-    paramsProxy = Proxy :: Proxy cmd
-
-receiveCommandResponse
-    :: forall cmd. Command cmd
-    => Handle -> Proxy cmd -> CommandId -> IO (Either Error (CommandResponse cmd))
-receiveCommandResponse handle proxy id = do
-    entry <- maybe (fmap Just) timeout (commandTimeout . config $ handle) $
-        untilJust $ do
-            updateCommandBufferM (commandBuffer handle) $ \buffer -> do
-                let entry = Map.lookup id buffer
-                if isNothing entry
-                    then do threadDelay 1000; pure (buffer, entry)
-                    else pure $ (Map.delete id buffer, entry)
-
-    pure $ case entry of
-        Nothing -> Left ERRNoResponse
-        Just (Left err) -> Left $ ERRProtocol err
-        Just (Right v) -> case A.fromJSON v :: A.Result (CommandResponse cmd) of
+    => Handle -> CommandId -> cmd -> IO (Promise (CommandResponse cmd))
+sendCommand h id params = do
+    let co = CommandObj id (commandName proxy) params
+    mv <- newEmptyMVar
+    IORef.atomicModifyIORef' (commandBuffer h) $ \buffer ->
+        (M.insert id mv buffer, ())
+    WS.sendTextData (conn h) . A.encode $ co
+    pure $ Promise mv $ \entry -> case entry of
+        Left err -> Left $ ERRProtocol err
+        Right v  -> case A.fromJSON v :: A.Result (CommandResponse cmd) of
             A.Error   err -> Left $ ERRParse err
             A.Success x   -> Right x
+  where
+    proxy = Proxy :: Proxy cmd
 
 sendReceiveCommandResult
     :: forall cmd. Command cmd
     => Handle -> cmd -> IO (CommandResponse cmd)
 sendReceiveCommandResult handle params = do
     cid <- randomCommandId handle
-    sendCommand (conn handle) cid (commandName proxy) params
-    response <- receiveCommandResponse handle proxy cid
-    either throwIO pure response
+    promise <- sendCommand handle cid params
+    readPromise promise
   where
     proxy = Proxy :: Proxy cmd
 
 sendReceiveCommand
     :: forall cmd. (Command cmd, CommandResponse cmd ~ NoResponse)
     => Handle -> cmd -> IO ()
-sendReceiveCommand handle params = do
-    cid <- randomCommandId handle
-    sendCommand (conn handle) cid (commandName proxy) params
-    response <- receiveCommandResponse handle proxy cid :: IO (Either Error NoResponse)
-    case response of
-        Left err -> throwIO err
-        Right NoResponse -> pure ()
-  where
-    proxy = Proxy :: Proxy cmd
+sendReceiveCommand handle params = () <$ sendReceiveCommandResult handle params
 
 uncapitalizeFirst :: String -> String
 uncapitalizeFirst [] = []

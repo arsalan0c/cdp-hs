@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -44,7 +45,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
@@ -147,10 +147,10 @@ instance FromJSON  PDOMDebuggerGetEventListeners where
 
 -- | Function for the 'DOMDebugger.getEventListeners' command.
 --   Returns event listeners of the given object.
---   Parameters: 'PDOMDebuggerGetEventListeners'
+--   Returns: 'PDOMDebuggerGetEventListeners'
 --   Returns: 'DOMDebuggerGetEventListeners'
 dOMDebuggerGetEventListeners :: Handle -> PDOMDebuggerGetEventListeners -> IO DOMDebuggerGetEventListeners
-dOMDebuggerGetEventListeners handle params = sendReceiveCommandResult handle "DOMDebugger.getEventListeners" (Just params)
+dOMDebuggerGetEventListeners handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMDebuggerGetEventListeners' command.
 data DOMDebuggerGetEventListeners = DOMDebuggerGetEventListeners {
@@ -161,9 +161,9 @@ data DOMDebuggerGetEventListeners = DOMDebuggerGetEventListeners {
 instance FromJSON  DOMDebuggerGetEventListeners where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
-instance Command DOMDebuggerGetEventListeners where
-   commandName _ = "DOMDebugger.getEventListeners"
-
+instance Command PDOMDebuggerGetEventListeners where
+    type CommandResponse PDOMDebuggerGetEventListeners = DOMDebuggerGetEventListeners
+    commandName _ = "DOMDebugger.getEventListeners"
 
 
 -- | Parameters of the 'dOMDebuggerRemoveDOMBreakpoint' command.
@@ -182,9 +182,13 @@ instance FromJSON  PDOMDebuggerRemoveDOMBreakpoint where
 
 -- | Function for the 'DOMDebugger.removeDOMBreakpoint' command.
 --   Removes DOM breakpoint that was set using `setDOMBreakpoint`.
---   Parameters: 'PDOMDebuggerRemoveDOMBreakpoint'
+--   Returns: 'PDOMDebuggerRemoveDOMBreakpoint'
 dOMDebuggerRemoveDOMBreakpoint :: Handle -> PDOMDebuggerRemoveDOMBreakpoint -> IO ()
-dOMDebuggerRemoveDOMBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.removeDOMBreakpoint" (Just params)
+dOMDebuggerRemoveDOMBreakpoint handle params = sendReceiveCommand handle params
+
+instance Command PDOMDebuggerRemoveDOMBreakpoint where
+    type CommandResponse PDOMDebuggerRemoveDOMBreakpoint = NoResponse
+    commandName _ = "DOMDebugger.removeDOMBreakpoint"
 
 
 -- | Parameters of the 'dOMDebuggerRemoveEventListenerBreakpoint' command.
@@ -203,9 +207,13 @@ instance FromJSON  PDOMDebuggerRemoveEventListenerBreakpoint where
 
 -- | Function for the 'DOMDebugger.removeEventListenerBreakpoint' command.
 --   Removes breakpoint on particular DOM event.
---   Parameters: 'PDOMDebuggerRemoveEventListenerBreakpoint'
+--   Returns: 'PDOMDebuggerRemoveEventListenerBreakpoint'
 dOMDebuggerRemoveEventListenerBreakpoint :: Handle -> PDOMDebuggerRemoveEventListenerBreakpoint -> IO ()
-dOMDebuggerRemoveEventListenerBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.removeEventListenerBreakpoint" (Just params)
+dOMDebuggerRemoveEventListenerBreakpoint handle params = sendReceiveCommand handle params
+
+instance Command PDOMDebuggerRemoveEventListenerBreakpoint where
+    type CommandResponse PDOMDebuggerRemoveEventListenerBreakpoint = NoResponse
+    commandName _ = "DOMDebugger.removeEventListenerBreakpoint"
 
 
 -- | Parameters of the 'dOMDebuggerRemoveInstrumentationBreakpoint' command.
@@ -222,9 +230,13 @@ instance FromJSON  PDOMDebuggerRemoveInstrumentationBreakpoint where
 
 -- | Function for the 'DOMDebugger.removeInstrumentationBreakpoint' command.
 --   Removes breakpoint on particular native event.
---   Parameters: 'PDOMDebuggerRemoveInstrumentationBreakpoint'
+--   Returns: 'PDOMDebuggerRemoveInstrumentationBreakpoint'
 dOMDebuggerRemoveInstrumentationBreakpoint :: Handle -> PDOMDebuggerRemoveInstrumentationBreakpoint -> IO ()
-dOMDebuggerRemoveInstrumentationBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.removeInstrumentationBreakpoint" (Just params)
+dOMDebuggerRemoveInstrumentationBreakpoint handle params = sendReceiveCommand handle params
+
+instance Command PDOMDebuggerRemoveInstrumentationBreakpoint where
+    type CommandResponse PDOMDebuggerRemoveInstrumentationBreakpoint = NoResponse
+    commandName _ = "DOMDebugger.removeInstrumentationBreakpoint"
 
 
 -- | Parameters of the 'dOMDebuggerRemoveXHRBreakpoint' command.
@@ -241,9 +253,13 @@ instance FromJSON  PDOMDebuggerRemoveXHRBreakpoint where
 
 -- | Function for the 'DOMDebugger.removeXHRBreakpoint' command.
 --   Removes breakpoint from XMLHttpRequest.
---   Parameters: 'PDOMDebuggerRemoveXHRBreakpoint'
+--   Returns: 'PDOMDebuggerRemoveXHRBreakpoint'
 dOMDebuggerRemoveXHRBreakpoint :: Handle -> PDOMDebuggerRemoveXHRBreakpoint -> IO ()
-dOMDebuggerRemoveXHRBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.removeXHRBreakpoint" (Just params)
+dOMDebuggerRemoveXHRBreakpoint handle params = sendReceiveCommand handle params
+
+instance Command PDOMDebuggerRemoveXHRBreakpoint where
+    type CommandResponse PDOMDebuggerRemoveXHRBreakpoint = NoResponse
+    commandName _ = "DOMDebugger.removeXHRBreakpoint"
 
 
 -- | Parameters of the 'dOMDebuggerSetBreakOnCSPViolation' command.
@@ -260,9 +276,13 @@ instance FromJSON  PDOMDebuggerSetBreakOnCSPViolation where
 
 -- | Function for the 'DOMDebugger.setBreakOnCSPViolation' command.
 --   Sets breakpoint on particular CSP violations.
---   Parameters: 'PDOMDebuggerSetBreakOnCSPViolation'
+--   Returns: 'PDOMDebuggerSetBreakOnCSPViolation'
 dOMDebuggerSetBreakOnCSPViolation :: Handle -> PDOMDebuggerSetBreakOnCSPViolation -> IO ()
-dOMDebuggerSetBreakOnCSPViolation handle params = sendReceiveCommand handle "DOMDebugger.setBreakOnCSPViolation" (Just params)
+dOMDebuggerSetBreakOnCSPViolation handle params = sendReceiveCommand handle params
+
+instance Command PDOMDebuggerSetBreakOnCSPViolation where
+    type CommandResponse PDOMDebuggerSetBreakOnCSPViolation = NoResponse
+    commandName _ = "DOMDebugger.setBreakOnCSPViolation"
 
 
 -- | Parameters of the 'dOMDebuggerSetDOMBreakpoint' command.
@@ -281,9 +301,13 @@ instance FromJSON  PDOMDebuggerSetDOMBreakpoint where
 
 -- | Function for the 'DOMDebugger.setDOMBreakpoint' command.
 --   Sets breakpoint on particular operation with DOM.
---   Parameters: 'PDOMDebuggerSetDOMBreakpoint'
+--   Returns: 'PDOMDebuggerSetDOMBreakpoint'
 dOMDebuggerSetDOMBreakpoint :: Handle -> PDOMDebuggerSetDOMBreakpoint -> IO ()
-dOMDebuggerSetDOMBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.setDOMBreakpoint" (Just params)
+dOMDebuggerSetDOMBreakpoint handle params = sendReceiveCommand handle params
+
+instance Command PDOMDebuggerSetDOMBreakpoint where
+    type CommandResponse PDOMDebuggerSetDOMBreakpoint = NoResponse
+    commandName _ = "DOMDebugger.setDOMBreakpoint"
 
 
 -- | Parameters of the 'dOMDebuggerSetEventListenerBreakpoint' command.
@@ -303,9 +327,13 @@ instance FromJSON  PDOMDebuggerSetEventListenerBreakpoint where
 
 -- | Function for the 'DOMDebugger.setEventListenerBreakpoint' command.
 --   Sets breakpoint on particular DOM event.
---   Parameters: 'PDOMDebuggerSetEventListenerBreakpoint'
+--   Returns: 'PDOMDebuggerSetEventListenerBreakpoint'
 dOMDebuggerSetEventListenerBreakpoint :: Handle -> PDOMDebuggerSetEventListenerBreakpoint -> IO ()
-dOMDebuggerSetEventListenerBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.setEventListenerBreakpoint" (Just params)
+dOMDebuggerSetEventListenerBreakpoint handle params = sendReceiveCommand handle params
+
+instance Command PDOMDebuggerSetEventListenerBreakpoint where
+    type CommandResponse PDOMDebuggerSetEventListenerBreakpoint = NoResponse
+    commandName _ = "DOMDebugger.setEventListenerBreakpoint"
 
 
 -- | Parameters of the 'dOMDebuggerSetInstrumentationBreakpoint' command.
@@ -322,9 +350,13 @@ instance FromJSON  PDOMDebuggerSetInstrumentationBreakpoint where
 
 -- | Function for the 'DOMDebugger.setInstrumentationBreakpoint' command.
 --   Sets breakpoint on particular native event.
---   Parameters: 'PDOMDebuggerSetInstrumentationBreakpoint'
+--   Returns: 'PDOMDebuggerSetInstrumentationBreakpoint'
 dOMDebuggerSetInstrumentationBreakpoint :: Handle -> PDOMDebuggerSetInstrumentationBreakpoint -> IO ()
-dOMDebuggerSetInstrumentationBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.setInstrumentationBreakpoint" (Just params)
+dOMDebuggerSetInstrumentationBreakpoint handle params = sendReceiveCommand handle params
+
+instance Command PDOMDebuggerSetInstrumentationBreakpoint where
+    type CommandResponse PDOMDebuggerSetInstrumentationBreakpoint = NoResponse
+    commandName _ = "DOMDebugger.setInstrumentationBreakpoint"
 
 
 -- | Parameters of the 'dOMDebuggerSetXHRBreakpoint' command.
@@ -341,9 +373,13 @@ instance FromJSON  PDOMDebuggerSetXHRBreakpoint where
 
 -- | Function for the 'DOMDebugger.setXHRBreakpoint' command.
 --   Sets breakpoint on XMLHttpRequest.
---   Parameters: 'PDOMDebuggerSetXHRBreakpoint'
+--   Returns: 'PDOMDebuggerSetXHRBreakpoint'
 dOMDebuggerSetXHRBreakpoint :: Handle -> PDOMDebuggerSetXHRBreakpoint -> IO ()
-dOMDebuggerSetXHRBreakpoint handle params = sendReceiveCommand handle "DOMDebugger.setXHRBreakpoint" (Just params)
+dOMDebuggerSetXHRBreakpoint handle params = sendReceiveCommand handle params
+
+instance Command PDOMDebuggerSetXHRBreakpoint where
+    type CommandResponse PDOMDebuggerSetXHRBreakpoint = NoResponse
+    commandName _ = "DOMDebugger.setXHRBreakpoint"
 
 
 

@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -44,7 +45,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 
@@ -200,15 +200,27 @@ instance FromJSON  PWebAuthnEnable where
 -- | Function for the 'WebAuthn.enable' command.
 --   Enable the WebAuthn domain and start intercepting credential storage and
 --   retrieval with a virtual authenticator.
---   Parameters: 'PWebAuthnEnable'
+--   Returns: 'PWebAuthnEnable'
 webAuthnEnable :: Handle -> PWebAuthnEnable -> IO ()
-webAuthnEnable handle params = sendReceiveCommand handle "WebAuthn.enable" (Just params)
+webAuthnEnable handle params = sendReceiveCommand handle params
 
+instance Command PWebAuthnEnable where
+    type CommandResponse PWebAuthnEnable = NoResponse
+    commandName _ = "WebAuthn.enable"
+
+
+-- | Parameters of the 'webAuthnDisable' command.
+data PWebAuthnDisable = PWebAuthnDisable
+instance ToJSON PWebAuthnDisable where toJSON _ = A.Null
 
 -- | Function for the 'WebAuthn.disable' command.
 --   Disable the WebAuthn domain.
 webAuthnDisable :: Handle -> IO ()
-webAuthnDisable handle = sendReceiveCommand handle "WebAuthn.disable" (Nothing :: Maybe ())
+webAuthnDisable handle = sendReceiveCommand handle PWebAuthnDisable
+
+instance Command PWebAuthnDisable where
+    type CommandResponse PWebAuthnDisable = NoResponse
+    commandName _ = "WebAuthn.disable"
 
 
 -- | Parameters of the 'webAuthnAddVirtualAuthenticator' command.
@@ -224,10 +236,10 @@ instance FromJSON  PWebAuthnAddVirtualAuthenticator where
 
 -- | Function for the 'WebAuthn.addVirtualAuthenticator' command.
 --   Creates and adds a virtual authenticator.
---   Parameters: 'PWebAuthnAddVirtualAuthenticator'
+--   Returns: 'PWebAuthnAddVirtualAuthenticator'
 --   Returns: 'WebAuthnAddVirtualAuthenticator'
 webAuthnAddVirtualAuthenticator :: Handle -> PWebAuthnAddVirtualAuthenticator -> IO WebAuthnAddVirtualAuthenticator
-webAuthnAddVirtualAuthenticator handle params = sendReceiveCommandResult handle "WebAuthn.addVirtualAuthenticator" (Just params)
+webAuthnAddVirtualAuthenticator handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'webAuthnAddVirtualAuthenticator' command.
 data WebAuthnAddVirtualAuthenticator = WebAuthnAddVirtualAuthenticator {
@@ -237,9 +249,9 @@ data WebAuthnAddVirtualAuthenticator = WebAuthnAddVirtualAuthenticator {
 instance FromJSON  WebAuthnAddVirtualAuthenticator where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
-instance Command WebAuthnAddVirtualAuthenticator where
-   commandName _ = "WebAuthn.addVirtualAuthenticator"
-
+instance Command PWebAuthnAddVirtualAuthenticator where
+    type CommandResponse PWebAuthnAddVirtualAuthenticator = WebAuthnAddVirtualAuthenticator
+    commandName _ = "WebAuthn.addVirtualAuthenticator"
 
 
 -- | Parameters of the 'webAuthnRemoveVirtualAuthenticator' command.
@@ -255,9 +267,13 @@ instance FromJSON  PWebAuthnRemoveVirtualAuthenticator where
 
 -- | Function for the 'WebAuthn.removeVirtualAuthenticator' command.
 --   Removes the given authenticator.
---   Parameters: 'PWebAuthnRemoveVirtualAuthenticator'
+--   Returns: 'PWebAuthnRemoveVirtualAuthenticator'
 webAuthnRemoveVirtualAuthenticator :: Handle -> PWebAuthnRemoveVirtualAuthenticator -> IO ()
-webAuthnRemoveVirtualAuthenticator handle params = sendReceiveCommand handle "WebAuthn.removeVirtualAuthenticator" (Just params)
+webAuthnRemoveVirtualAuthenticator handle params = sendReceiveCommand handle params
+
+instance Command PWebAuthnRemoveVirtualAuthenticator where
+    type CommandResponse PWebAuthnRemoveVirtualAuthenticator = NoResponse
+    commandName _ = "WebAuthn.removeVirtualAuthenticator"
 
 
 -- | Parameters of the 'webAuthnAddCredential' command.
@@ -274,9 +290,13 @@ instance FromJSON  PWebAuthnAddCredential where
 
 -- | Function for the 'WebAuthn.addCredential' command.
 --   Adds the credential to the specified authenticator.
---   Parameters: 'PWebAuthnAddCredential'
+--   Returns: 'PWebAuthnAddCredential'
 webAuthnAddCredential :: Handle -> PWebAuthnAddCredential -> IO ()
-webAuthnAddCredential handle params = sendReceiveCommand handle "WebAuthn.addCredential" (Just params)
+webAuthnAddCredential handle params = sendReceiveCommand handle params
+
+instance Command PWebAuthnAddCredential where
+    type CommandResponse PWebAuthnAddCredential = NoResponse
+    commandName _ = "WebAuthn.addCredential"
 
 
 -- | Parameters of the 'webAuthnGetCredential' command.
@@ -294,10 +314,10 @@ instance FromJSON  PWebAuthnGetCredential where
 -- | Function for the 'WebAuthn.getCredential' command.
 --   Returns a single credential stored in the given virtual authenticator that
 --   matches the credential ID.
---   Parameters: 'PWebAuthnGetCredential'
+--   Returns: 'PWebAuthnGetCredential'
 --   Returns: 'WebAuthnGetCredential'
 webAuthnGetCredential :: Handle -> PWebAuthnGetCredential -> IO WebAuthnGetCredential
-webAuthnGetCredential handle params = sendReceiveCommandResult handle "WebAuthn.getCredential" (Just params)
+webAuthnGetCredential handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'webAuthnGetCredential' command.
 data WebAuthnGetCredential = WebAuthnGetCredential {
@@ -307,9 +327,9 @@ data WebAuthnGetCredential = WebAuthnGetCredential {
 instance FromJSON  WebAuthnGetCredential where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
-instance Command WebAuthnGetCredential where
-   commandName _ = "WebAuthn.getCredential"
-
+instance Command PWebAuthnGetCredential where
+    type CommandResponse PWebAuthnGetCredential = WebAuthnGetCredential
+    commandName _ = "WebAuthn.getCredential"
 
 
 -- | Parameters of the 'webAuthnGetCredentials' command.
@@ -325,10 +345,10 @@ instance FromJSON  PWebAuthnGetCredentials where
 
 -- | Function for the 'WebAuthn.getCredentials' command.
 --   Returns all the credentials stored in the given virtual authenticator.
---   Parameters: 'PWebAuthnGetCredentials'
+--   Returns: 'PWebAuthnGetCredentials'
 --   Returns: 'WebAuthnGetCredentials'
 webAuthnGetCredentials :: Handle -> PWebAuthnGetCredentials -> IO WebAuthnGetCredentials
-webAuthnGetCredentials handle params = sendReceiveCommandResult handle "WebAuthn.getCredentials" (Just params)
+webAuthnGetCredentials handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'webAuthnGetCredentials' command.
 data WebAuthnGetCredentials = WebAuthnGetCredentials {
@@ -338,9 +358,9 @@ data WebAuthnGetCredentials = WebAuthnGetCredentials {
 instance FromJSON  WebAuthnGetCredentials where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
-instance Command WebAuthnGetCredentials where
-   commandName _ = "WebAuthn.getCredentials"
-
+instance Command PWebAuthnGetCredentials where
+    type CommandResponse PWebAuthnGetCredentials = WebAuthnGetCredentials
+    commandName _ = "WebAuthn.getCredentials"
 
 
 -- | Parameters of the 'webAuthnRemoveCredential' command.
@@ -357,9 +377,13 @@ instance FromJSON  PWebAuthnRemoveCredential where
 
 -- | Function for the 'WebAuthn.removeCredential' command.
 --   Removes a credential from the authenticator.
---   Parameters: 'PWebAuthnRemoveCredential'
+--   Returns: 'PWebAuthnRemoveCredential'
 webAuthnRemoveCredential :: Handle -> PWebAuthnRemoveCredential -> IO ()
-webAuthnRemoveCredential handle params = sendReceiveCommand handle "WebAuthn.removeCredential" (Just params)
+webAuthnRemoveCredential handle params = sendReceiveCommand handle params
+
+instance Command PWebAuthnRemoveCredential where
+    type CommandResponse PWebAuthnRemoveCredential = NoResponse
+    commandName _ = "WebAuthn.removeCredential"
 
 
 -- | Parameters of the 'webAuthnClearCredentials' command.
@@ -375,9 +399,13 @@ instance FromJSON  PWebAuthnClearCredentials where
 
 -- | Function for the 'WebAuthn.clearCredentials' command.
 --   Clears all the credentials from the specified device.
---   Parameters: 'PWebAuthnClearCredentials'
+--   Returns: 'PWebAuthnClearCredentials'
 webAuthnClearCredentials :: Handle -> PWebAuthnClearCredentials -> IO ()
-webAuthnClearCredentials handle params = sendReceiveCommand handle "WebAuthn.clearCredentials" (Just params)
+webAuthnClearCredentials handle params = sendReceiveCommand handle params
+
+instance Command PWebAuthnClearCredentials where
+    type CommandResponse PWebAuthnClearCredentials = NoResponse
+    commandName _ = "WebAuthn.clearCredentials"
 
 
 -- | Parameters of the 'webAuthnSetUserVerified' command.
@@ -395,9 +423,13 @@ instance FromJSON  PWebAuthnSetUserVerified where
 -- | Function for the 'WebAuthn.setUserVerified' command.
 --   Sets whether User Verification succeeds or fails for an authenticator.
 --   The default is true.
---   Parameters: 'PWebAuthnSetUserVerified'
+--   Returns: 'PWebAuthnSetUserVerified'
 webAuthnSetUserVerified :: Handle -> PWebAuthnSetUserVerified -> IO ()
-webAuthnSetUserVerified handle params = sendReceiveCommand handle "WebAuthn.setUserVerified" (Just params)
+webAuthnSetUserVerified handle params = sendReceiveCommand handle params
+
+instance Command PWebAuthnSetUserVerified where
+    type CommandResponse PWebAuthnSetUserVerified = NoResponse
+    commandName _ = "WebAuthn.setUserVerified"
 
 
 -- | Parameters of the 'webAuthnSetAutomaticPresenceSimulation' command.
@@ -415,9 +447,13 @@ instance FromJSON  PWebAuthnSetAutomaticPresenceSimulation where
 -- | Function for the 'WebAuthn.setAutomaticPresenceSimulation' command.
 --   Sets whether tests of user presence will succeed immediately (if true) or fail to resolve (if false) for an authenticator.
 --   The default is true.
---   Parameters: 'PWebAuthnSetAutomaticPresenceSimulation'
+--   Returns: 'PWebAuthnSetAutomaticPresenceSimulation'
 webAuthnSetAutomaticPresenceSimulation :: Handle -> PWebAuthnSetAutomaticPresenceSimulation -> IO ()
-webAuthnSetAutomaticPresenceSimulation handle params = sendReceiveCommand handle "WebAuthn.setAutomaticPresenceSimulation" (Just params)
+webAuthnSetAutomaticPresenceSimulation handle params = sendReceiveCommand handle params
+
+instance Command PWebAuthnSetAutomaticPresenceSimulation where
+    type CommandResponse PWebAuthnSetAutomaticPresenceSimulation = NoResponse
+    commandName _ = "WebAuthn.setAutomaticPresenceSimulation"
 
 
 

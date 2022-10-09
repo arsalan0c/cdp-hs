@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -44,7 +45,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
@@ -163,9 +163,13 @@ instance FromJSON  PPerformanceTimelineEnable where
 -- | Function for the 'PerformanceTimeline.enable' command.
 --   Previously buffered events would be reported before method returns.
 --   See also: timelineEventAdded
---   Parameters: 'PPerformanceTimelineEnable'
+--   Returns: 'PPerformanceTimelineEnable'
 performanceTimelineEnable :: Handle -> PPerformanceTimelineEnable -> IO ()
-performanceTimelineEnable handle params = sendReceiveCommand handle "PerformanceTimeline.enable" (Just params)
+performanceTimelineEnable handle params = sendReceiveCommand handle params
+
+instance Command PPerformanceTimelineEnable where
+    type CommandResponse PPerformanceTimelineEnable = NoResponse
+    commandName _ = "PerformanceTimeline.enable"
 
 
 

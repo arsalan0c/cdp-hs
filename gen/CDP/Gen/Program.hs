@@ -155,10 +155,10 @@ genEventReturnType ctx domainName eventElt = T.unlines
     evrn = eventNameHS domainName eventElt
 
 genCommand :: Context -> T.Text -> D.CommandsElt -> T.Text
-genCommand ctx domainName commandElt = T.unlines . catMaybes $
-    [ ((pdesc <> "\n") <>) <$> paramsTypeDef
-    , Just desc
-    , Just $ genCommandFn ctx (peltsM == Nothing) (reltsM == Nothing) cn ptn rtn
+genCommand ctx domainName commandElt = T.unlines $
+    [ pdesc <> "\n" <> paramsTypeDef
+    , desc
+    , genCommandFn ctx (null pelts) (null relts) cn ptn rtn
     , returns
     ]
   where
@@ -166,32 +166,32 @@ genCommand ctx domainName commandElt = T.unlines . catMaybes $
     desc = let td = "Function for the '" <> cn <> "' command." in
         formatDescription 0 . T.intercalate "\n" . catMaybes $ 
             [ Just $ ((td <> "\n") <>) . maybe "" fromAltLeft $ D.commandsEltDescription commandElt
-            , const ("Parameters: '" <> ptn <> "'") <$> peltsM
-            , const ("Returns: '" <> rtn <> "'") <$> reltsM
+            , do
+                guard . not $ null pelts
+                pure ("Returns: '" <> ptn <> "'")
+            , do
+                guard . not $ null relts
+                pure ("Returns: '" <> rtn <> "'")
             ]
     cn   = commandName domainName commandElt 
     ptn  = commandParamsNameHS domainName commandElt
-    rtn  = commandNameHS domainName commandElt 
+    rtn  = commandNameHS domainName commandElt
 
-    paramsTypeDef = genParamsType ctx domainName ptn <$> peltsM
-    peltsM = guardEmptyList isValidParam $ D.commandsEltParameters commandElt
+    paramsTypeDef = genParamsType ctx domainName ptn pelts
+    pelts = filter isValidParam $ fromMaybe [] $ D.commandsEltParameters commandElt
 
-    returns = genNonEmptyReturns <$> reltsM
-    genNonEmptyReturns relts = T.unlines
-        [ genReturnType ctx domainName rtn relts
-        , genFromJSONInstance rtn
-        , genCommandInstance ctx
-            (commandNameHS domainName commandElt) 
-            (commandName domainName commandElt)
-        ]
+    returns = T.unlines $
+        [ genReturnType ctx domainName rtn relts | not (null relts) ] <>
+        [ genFromJSONInstance rtn | not (null relts) ] <>
+        commandInstance
 
-    reltsM = guardEmptyList isValidReturn $ D.commandsEltReturns commandElt
+    relts = filter isValidReturn $ fromMaybe [] $ D.commandsEltReturns commandElt
 
-genCommandInstance :: Context -> T.Text -> T.Text -> T.Text
-genCommandInstance _ commandNameHS commandName =
-    T.unlines $
-        [ T.unwords ["instance", commandClassName, commandNameHS, "where"]
-        , T.unwords [space 3, "commandName _ =", (T.pack . show) commandName]
+    commandAssociatedType = if null relts then "NoResponse" else rtn
+    commandInstance =
+        [ "instance " <> commandClassName <> " " <> ptn <> " where"
+        , "    type CommandResponse " <> ptn <> " = " <> commandAssociatedType
+        , "    commandName _ = \"" <> cn <> "\""
         ]
 
 genCommandFn :: Context -> Bool -> Bool -> T.Text -> T.Text -> T.Text -> T.Text
@@ -211,14 +211,16 @@ genCommandFn _ isEmptyParams isEmptyReturn commandName paramsTypeName returnType
     fnBody   = T.unwords 
         [ if isEmptyReturn then sendCommandName else sendCommandResultName
         , "handle"
-        , (T.pack . show) commandName
-        , if isEmptyParams then "(Nothing :: Maybe ())" else "(Just params)"
+        , if isEmptyParams then paramsTypeName else "params"
         ]
     returnTypeSig  = if isEmptyReturn then emptyReturnSig else resultReturnSig returnTypeName
     fnName         = commandFnName returnTypeName
 
 genParamsType :: Context -> T.Text -> T.Text -> [D.ParametersElt] -> T.Text
-genParamsType ctx domainName paramsTypeName []        = genTypeSynonynm ctx domainName paramsTypeName
+genParamsType ctx domainName paramsTypeName [] = T.unlines
+    [ "data " <> paramsTypeName <> " = " <> paramsTypeName
+    , "instance ToJSON " <> paramsTypeName <> " where toJSON _ = A.Null"
+    ]
 genParamsType ctx domainName paramsTypeName paramElts = T.unlines . filter ((> 0) . T.length) $
     [ T.unlines enumDecls
     , T.unwords ["data", paramsTypeName, "=", paramsTypeName, "{"]

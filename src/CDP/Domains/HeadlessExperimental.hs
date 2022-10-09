@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -43,7 +44,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 
@@ -114,10 +114,10 @@ instance FromJSON  PHeadlessExperimentalBeginFrame where
 --   screenshot from the resulting frame. Requires that the target was created with enabled
 --   BeginFrameControl. Designed for use with --run-all-compositor-stages-before-draw, see also
 --   https://goo.gle/chrome-headless-rendering for more background.
---   Parameters: 'PHeadlessExperimentalBeginFrame'
+--   Returns: 'PHeadlessExperimentalBeginFrame'
 --   Returns: 'HeadlessExperimentalBeginFrame'
 headlessExperimentalBeginFrame :: Handle -> PHeadlessExperimentalBeginFrame -> IO HeadlessExperimentalBeginFrame
-headlessExperimentalBeginFrame handle params = sendReceiveCommandResult handle "HeadlessExperimental.beginFrame" (Just params)
+headlessExperimentalBeginFrame handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'headlessExperimentalBeginFrame' command.
 data HeadlessExperimentalBeginFrame = HeadlessExperimentalBeginFrame {
@@ -131,21 +131,37 @@ data HeadlessExperimentalBeginFrame = HeadlessExperimentalBeginFrame {
 instance FromJSON  HeadlessExperimentalBeginFrame where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
-instance Command HeadlessExperimentalBeginFrame where
-   commandName _ = "HeadlessExperimental.beginFrame"
+instance Command PHeadlessExperimentalBeginFrame where
+    type CommandResponse PHeadlessExperimentalBeginFrame = HeadlessExperimentalBeginFrame
+    commandName _ = "HeadlessExperimental.beginFrame"
 
 
+-- | Parameters of the 'headlessExperimentalDisable' command.
+data PHeadlessExperimentalDisable = PHeadlessExperimentalDisable
+instance ToJSON PHeadlessExperimentalDisable where toJSON _ = A.Null
 
 -- | Function for the 'HeadlessExperimental.disable' command.
 --   Disables headless events for the target.
 headlessExperimentalDisable :: Handle -> IO ()
-headlessExperimentalDisable handle = sendReceiveCommand handle "HeadlessExperimental.disable" (Nothing :: Maybe ())
+headlessExperimentalDisable handle = sendReceiveCommand handle PHeadlessExperimentalDisable
 
+instance Command PHeadlessExperimentalDisable where
+    type CommandResponse PHeadlessExperimentalDisable = NoResponse
+    commandName _ = "HeadlessExperimental.disable"
+
+
+-- | Parameters of the 'headlessExperimentalEnable' command.
+data PHeadlessExperimentalEnable = PHeadlessExperimentalEnable
+instance ToJSON PHeadlessExperimentalEnable where toJSON _ = A.Null
 
 -- | Function for the 'HeadlessExperimental.enable' command.
 --   Enables headless events for the target.
 headlessExperimentalEnable :: Handle -> IO ()
-headlessExperimentalEnable handle = sendReceiveCommand handle "HeadlessExperimental.enable" (Nothing :: Maybe ())
+headlessExperimentalEnable handle = sendReceiveCommand handle PHeadlessExperimentalEnable
+
+instance Command PHeadlessExperimentalEnable where
+    type CommandResponse PHeadlessExperimentalEnable = NoResponse
+    commandName _ = "HeadlessExperimental.enable"
 
 
 

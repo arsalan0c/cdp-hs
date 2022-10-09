@@ -75,7 +75,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 import CDP.Domains.Accessibility
 import CDP.Domains.Accessibility as Accessibility

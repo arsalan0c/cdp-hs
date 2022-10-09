@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -41,7 +42,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 
@@ -122,11 +122,15 @@ instance FromJSON  MemoryModule where
 
 
 
+-- | Parameters of the 'memoryGetDOMCounters' command.
+data PMemoryGetDOMCounters = PMemoryGetDOMCounters
+instance ToJSON PMemoryGetDOMCounters where toJSON _ = A.Null
+
 -- | Function for the 'Memory.getDOMCounters' command.
 --   
 --   Returns: 'MemoryGetDOMCounters'
 memoryGetDOMCounters :: Handle -> IO MemoryGetDOMCounters
-memoryGetDOMCounters handle = sendReceiveCommandResult handle "Memory.getDOMCounters" (Nothing :: Maybe ())
+memoryGetDOMCounters handle = sendReceiveCommandResult handle PMemoryGetDOMCounters
 
 -- | Return type of the 'memoryGetDOMCounters' command.
 data MemoryGetDOMCounters = MemoryGetDOMCounters {
@@ -138,20 +142,36 @@ data MemoryGetDOMCounters = MemoryGetDOMCounters {
 instance FromJSON  MemoryGetDOMCounters where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command MemoryGetDOMCounters where
-   commandName _ = "Memory.getDOMCounters"
+instance Command PMemoryGetDOMCounters where
+    type CommandResponse PMemoryGetDOMCounters = MemoryGetDOMCounters
+    commandName _ = "Memory.getDOMCounters"
 
 
+-- | Parameters of the 'memoryPrepareForLeakDetection' command.
+data PMemoryPrepareForLeakDetection = PMemoryPrepareForLeakDetection
+instance ToJSON PMemoryPrepareForLeakDetection where toJSON _ = A.Null
 
 -- | Function for the 'Memory.prepareForLeakDetection' command.
 memoryPrepareForLeakDetection :: Handle -> IO ()
-memoryPrepareForLeakDetection handle = sendReceiveCommand handle "Memory.prepareForLeakDetection" (Nothing :: Maybe ())
+memoryPrepareForLeakDetection handle = sendReceiveCommand handle PMemoryPrepareForLeakDetection
 
+instance Command PMemoryPrepareForLeakDetection where
+    type CommandResponse PMemoryPrepareForLeakDetection = NoResponse
+    commandName _ = "Memory.prepareForLeakDetection"
+
+
+-- | Parameters of the 'memoryForciblyPurgeJavaScriptMemory' command.
+data PMemoryForciblyPurgeJavaScriptMemory = PMemoryForciblyPurgeJavaScriptMemory
+instance ToJSON PMemoryForciblyPurgeJavaScriptMemory where toJSON _ = A.Null
 
 -- | Function for the 'Memory.forciblyPurgeJavaScriptMemory' command.
 --   Simulate OomIntervention by purging V8 memory.
 memoryForciblyPurgeJavaScriptMemory :: Handle -> IO ()
-memoryForciblyPurgeJavaScriptMemory handle = sendReceiveCommand handle "Memory.forciblyPurgeJavaScriptMemory" (Nothing :: Maybe ())
+memoryForciblyPurgeJavaScriptMemory handle = sendReceiveCommand handle PMemoryForciblyPurgeJavaScriptMemory
+
+instance Command PMemoryForciblyPurgeJavaScriptMemory where
+    type CommandResponse PMemoryForciblyPurgeJavaScriptMemory = NoResponse
+    commandName _ = "Memory.forciblyPurgeJavaScriptMemory"
 
 
 -- | Parameters of the 'memorySetPressureNotificationsSuppressed' command.
@@ -168,9 +188,13 @@ instance FromJSON  PMemorySetPressureNotificationsSuppressed where
 
 -- | Function for the 'Memory.setPressureNotificationsSuppressed' command.
 --   Enable/disable suppressing memory pressure notifications in all processes.
---   Parameters: 'PMemorySetPressureNotificationsSuppressed'
+--   Returns: 'PMemorySetPressureNotificationsSuppressed'
 memorySetPressureNotificationsSuppressed :: Handle -> PMemorySetPressureNotificationsSuppressed -> IO ()
-memorySetPressureNotificationsSuppressed handle params = sendReceiveCommand handle "Memory.setPressureNotificationsSuppressed" (Just params)
+memorySetPressureNotificationsSuppressed handle params = sendReceiveCommand handle params
+
+instance Command PMemorySetPressureNotificationsSuppressed where
+    type CommandResponse PMemorySetPressureNotificationsSuppressed = NoResponse
+    commandName _ = "Memory.setPressureNotificationsSuppressed"
 
 
 -- | Parameters of the 'memorySimulatePressureNotification' command.
@@ -187,9 +211,13 @@ instance FromJSON  PMemorySimulatePressureNotification where
 
 -- | Function for the 'Memory.simulatePressureNotification' command.
 --   Simulate a memory pressure notification in all processes.
---   Parameters: 'PMemorySimulatePressureNotification'
+--   Returns: 'PMemorySimulatePressureNotification'
 memorySimulatePressureNotification :: Handle -> PMemorySimulatePressureNotification -> IO ()
-memorySimulatePressureNotification handle params = sendReceiveCommand handle "Memory.simulatePressureNotification" (Just params)
+memorySimulatePressureNotification handle params = sendReceiveCommand handle params
+
+instance Command PMemorySimulatePressureNotification where
+    type CommandResponse PMemorySimulatePressureNotification = NoResponse
+    commandName _ = "Memory.simulatePressureNotification"
 
 
 -- | Parameters of the 'memoryStartSampling' command.
@@ -208,23 +236,39 @@ instance FromJSON  PMemoryStartSampling where
 
 -- | Function for the 'Memory.startSampling' command.
 --   Start collecting native memory profile.
---   Parameters: 'PMemoryStartSampling'
+--   Returns: 'PMemoryStartSampling'
 memoryStartSampling :: Handle -> PMemoryStartSampling -> IO ()
-memoryStartSampling handle params = sendReceiveCommand handle "Memory.startSampling" (Just params)
+memoryStartSampling handle params = sendReceiveCommand handle params
 
+instance Command PMemoryStartSampling where
+    type CommandResponse PMemoryStartSampling = NoResponse
+    commandName _ = "Memory.startSampling"
+
+
+-- | Parameters of the 'memoryStopSampling' command.
+data PMemoryStopSampling = PMemoryStopSampling
+instance ToJSON PMemoryStopSampling where toJSON _ = A.Null
 
 -- | Function for the 'Memory.stopSampling' command.
 --   Stop collecting native memory profile.
 memoryStopSampling :: Handle -> IO ()
-memoryStopSampling handle = sendReceiveCommand handle "Memory.stopSampling" (Nothing :: Maybe ())
+memoryStopSampling handle = sendReceiveCommand handle PMemoryStopSampling
 
+instance Command PMemoryStopSampling where
+    type CommandResponse PMemoryStopSampling = NoResponse
+    commandName _ = "Memory.stopSampling"
+
+
+-- | Parameters of the 'memoryGetAllTimeSamplingProfile' command.
+data PMemoryGetAllTimeSamplingProfile = PMemoryGetAllTimeSamplingProfile
+instance ToJSON PMemoryGetAllTimeSamplingProfile where toJSON _ = A.Null
 
 -- | Function for the 'Memory.getAllTimeSamplingProfile' command.
 --   Retrieve native memory allocations profile
 --   collected since renderer process startup.
 --   Returns: 'MemoryGetAllTimeSamplingProfile'
 memoryGetAllTimeSamplingProfile :: Handle -> IO MemoryGetAllTimeSamplingProfile
-memoryGetAllTimeSamplingProfile handle = sendReceiveCommandResult handle "Memory.getAllTimeSamplingProfile" (Nothing :: Maybe ())
+memoryGetAllTimeSamplingProfile handle = sendReceiveCommandResult handle PMemoryGetAllTimeSamplingProfile
 
 -- | Return type of the 'memoryGetAllTimeSamplingProfile' command.
 data MemoryGetAllTimeSamplingProfile = MemoryGetAllTimeSamplingProfile {
@@ -234,17 +278,21 @@ data MemoryGetAllTimeSamplingProfile = MemoryGetAllTimeSamplingProfile {
 instance FromJSON  MemoryGetAllTimeSamplingProfile where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
-instance Command MemoryGetAllTimeSamplingProfile where
-   commandName _ = "Memory.getAllTimeSamplingProfile"
+instance Command PMemoryGetAllTimeSamplingProfile where
+    type CommandResponse PMemoryGetAllTimeSamplingProfile = MemoryGetAllTimeSamplingProfile
+    commandName _ = "Memory.getAllTimeSamplingProfile"
 
 
+-- | Parameters of the 'memoryGetBrowserSamplingProfile' command.
+data PMemoryGetBrowserSamplingProfile = PMemoryGetBrowserSamplingProfile
+instance ToJSON PMemoryGetBrowserSamplingProfile where toJSON _ = A.Null
 
 -- | Function for the 'Memory.getBrowserSamplingProfile' command.
 --   Retrieve native memory allocations profile
 --   collected since browser process startup.
 --   Returns: 'MemoryGetBrowserSamplingProfile'
 memoryGetBrowserSamplingProfile :: Handle -> IO MemoryGetBrowserSamplingProfile
-memoryGetBrowserSamplingProfile handle = sendReceiveCommandResult handle "Memory.getBrowserSamplingProfile" (Nothing :: Maybe ())
+memoryGetBrowserSamplingProfile handle = sendReceiveCommandResult handle PMemoryGetBrowserSamplingProfile
 
 -- | Return type of the 'memoryGetBrowserSamplingProfile' command.
 data MemoryGetBrowserSamplingProfile = MemoryGetBrowserSamplingProfile {
@@ -254,17 +302,21 @@ data MemoryGetBrowserSamplingProfile = MemoryGetBrowserSamplingProfile {
 instance FromJSON  MemoryGetBrowserSamplingProfile where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
-instance Command MemoryGetBrowserSamplingProfile where
-   commandName _ = "Memory.getBrowserSamplingProfile"
+instance Command PMemoryGetBrowserSamplingProfile where
+    type CommandResponse PMemoryGetBrowserSamplingProfile = MemoryGetBrowserSamplingProfile
+    commandName _ = "Memory.getBrowserSamplingProfile"
 
 
+-- | Parameters of the 'memoryGetSamplingProfile' command.
+data PMemoryGetSamplingProfile = PMemoryGetSamplingProfile
+instance ToJSON PMemoryGetSamplingProfile where toJSON _ = A.Null
 
 -- | Function for the 'Memory.getSamplingProfile' command.
 --   Retrieve native memory allocations profile collected since last
 --   `startSampling` call.
 --   Returns: 'MemoryGetSamplingProfile'
 memoryGetSamplingProfile :: Handle -> IO MemoryGetSamplingProfile
-memoryGetSamplingProfile handle = sendReceiveCommandResult handle "Memory.getSamplingProfile" (Nothing :: Maybe ())
+memoryGetSamplingProfile handle = sendReceiveCommandResult handle PMemoryGetSamplingProfile
 
 -- | Return type of the 'memoryGetSamplingProfile' command.
 data MemoryGetSamplingProfile = MemoryGetSamplingProfile {
@@ -274,9 +326,9 @@ data MemoryGetSamplingProfile = MemoryGetSamplingProfile {
 instance FromJSON  MemoryGetSamplingProfile where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
-instance Command MemoryGetSamplingProfile where
-   commandName _ = "Memory.getSamplingProfile"
-
+instance Command PMemoryGetSamplingProfile where
+    type CommandResponse PMemoryGetSamplingProfile = MemoryGetSamplingProfile
+    commandName _ = "Memory.getSamplingProfile"
 
 
 

@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -41,7 +42,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 import CDP.Domains.Runtime as Runtime
@@ -198,24 +198,52 @@ instance FromJSON  PHeapProfilerAddInspectedHeapObject where
 -- | Function for the 'HeapProfiler.addInspectedHeapObject' command.
 --   Enables console to refer to the node with given id via $x (see Command Line API for more details
 --   $x functions).
---   Parameters: 'PHeapProfilerAddInspectedHeapObject'
+--   Returns: 'PHeapProfilerAddInspectedHeapObject'
 heapProfilerAddInspectedHeapObject :: Handle -> PHeapProfilerAddInspectedHeapObject -> IO ()
-heapProfilerAddInspectedHeapObject handle params = sendReceiveCommand handle "HeapProfiler.addInspectedHeapObject" (Just params)
+heapProfilerAddInspectedHeapObject handle params = sendReceiveCommand handle params
 
+instance Command PHeapProfilerAddInspectedHeapObject where
+    type CommandResponse PHeapProfilerAddInspectedHeapObject = NoResponse
+    commandName _ = "HeapProfiler.addInspectedHeapObject"
+
+
+-- | Parameters of the 'heapProfilerCollectGarbage' command.
+data PHeapProfilerCollectGarbage = PHeapProfilerCollectGarbage
+instance ToJSON PHeapProfilerCollectGarbage where toJSON _ = A.Null
 
 -- | Function for the 'HeapProfiler.collectGarbage' command.
 heapProfilerCollectGarbage :: Handle -> IO ()
-heapProfilerCollectGarbage handle = sendReceiveCommand handle "HeapProfiler.collectGarbage" (Nothing :: Maybe ())
+heapProfilerCollectGarbage handle = sendReceiveCommand handle PHeapProfilerCollectGarbage
 
+instance Command PHeapProfilerCollectGarbage where
+    type CommandResponse PHeapProfilerCollectGarbage = NoResponse
+    commandName _ = "HeapProfiler.collectGarbage"
+
+
+-- | Parameters of the 'heapProfilerDisable' command.
+data PHeapProfilerDisable = PHeapProfilerDisable
+instance ToJSON PHeapProfilerDisable where toJSON _ = A.Null
 
 -- | Function for the 'HeapProfiler.disable' command.
 heapProfilerDisable :: Handle -> IO ()
-heapProfilerDisable handle = sendReceiveCommand handle "HeapProfiler.disable" (Nothing :: Maybe ())
+heapProfilerDisable handle = sendReceiveCommand handle PHeapProfilerDisable
 
+instance Command PHeapProfilerDisable where
+    type CommandResponse PHeapProfilerDisable = NoResponse
+    commandName _ = "HeapProfiler.disable"
+
+
+-- | Parameters of the 'heapProfilerEnable' command.
+data PHeapProfilerEnable = PHeapProfilerEnable
+instance ToJSON PHeapProfilerEnable where toJSON _ = A.Null
 
 -- | Function for the 'HeapProfiler.enable' command.
 heapProfilerEnable :: Handle -> IO ()
-heapProfilerEnable handle = sendReceiveCommand handle "HeapProfiler.enable" (Nothing :: Maybe ())
+heapProfilerEnable handle = sendReceiveCommand handle PHeapProfilerEnable
+
+instance Command PHeapProfilerEnable where
+    type CommandResponse PHeapProfilerEnable = NoResponse
+    commandName _ = "HeapProfiler.enable"
 
 
 -- | Parameters of the 'heapProfilerGetHeapObjectId' command.
@@ -232,10 +260,10 @@ instance FromJSON  PHeapProfilerGetHeapObjectId where
 
 -- | Function for the 'HeapProfiler.getHeapObjectId' command.
 --   
---   Parameters: 'PHeapProfilerGetHeapObjectId'
+--   Returns: 'PHeapProfilerGetHeapObjectId'
 --   Returns: 'HeapProfilerGetHeapObjectId'
 heapProfilerGetHeapObjectId :: Handle -> PHeapProfilerGetHeapObjectId -> IO HeapProfilerGetHeapObjectId
-heapProfilerGetHeapObjectId handle params = sendReceiveCommandResult handle "HeapProfiler.getHeapObjectId" (Just params)
+heapProfilerGetHeapObjectId handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'heapProfilerGetHeapObjectId' command.
 data HeapProfilerGetHeapObjectId = HeapProfilerGetHeapObjectId {
@@ -246,9 +274,9 @@ data HeapProfilerGetHeapObjectId = HeapProfilerGetHeapObjectId {
 instance FromJSON  HeapProfilerGetHeapObjectId where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
-instance Command HeapProfilerGetHeapObjectId where
-   commandName _ = "HeapProfiler.getHeapObjectId"
-
+instance Command PHeapProfilerGetHeapObjectId where
+    type CommandResponse PHeapProfilerGetHeapObjectId = HeapProfilerGetHeapObjectId
+    commandName _ = "HeapProfiler.getHeapObjectId"
 
 
 -- | Parameters of the 'heapProfilerGetObjectByHeapObjectId' command.
@@ -266,10 +294,10 @@ instance FromJSON  PHeapProfilerGetObjectByHeapObjectId where
 
 -- | Function for the 'HeapProfiler.getObjectByHeapObjectId' command.
 --   
---   Parameters: 'PHeapProfilerGetObjectByHeapObjectId'
+--   Returns: 'PHeapProfilerGetObjectByHeapObjectId'
 --   Returns: 'HeapProfilerGetObjectByHeapObjectId'
 heapProfilerGetObjectByHeapObjectId :: Handle -> PHeapProfilerGetObjectByHeapObjectId -> IO HeapProfilerGetObjectByHeapObjectId
-heapProfilerGetObjectByHeapObjectId handle params = sendReceiveCommandResult handle "HeapProfiler.getObjectByHeapObjectId" (Just params)
+heapProfilerGetObjectByHeapObjectId handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'heapProfilerGetObjectByHeapObjectId' command.
 data HeapProfilerGetObjectByHeapObjectId = HeapProfilerGetObjectByHeapObjectId {
@@ -280,16 +308,20 @@ data HeapProfilerGetObjectByHeapObjectId = HeapProfilerGetObjectByHeapObjectId {
 instance FromJSON  HeapProfilerGetObjectByHeapObjectId where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 }
 
-instance Command HeapProfilerGetObjectByHeapObjectId where
-   commandName _ = "HeapProfiler.getObjectByHeapObjectId"
+instance Command PHeapProfilerGetObjectByHeapObjectId where
+    type CommandResponse PHeapProfilerGetObjectByHeapObjectId = HeapProfilerGetObjectByHeapObjectId
+    commandName _ = "HeapProfiler.getObjectByHeapObjectId"
 
 
+-- | Parameters of the 'heapProfilerGetSamplingProfile' command.
+data PHeapProfilerGetSamplingProfile = PHeapProfilerGetSamplingProfile
+instance ToJSON PHeapProfilerGetSamplingProfile where toJSON _ = A.Null
 
 -- | Function for the 'HeapProfiler.getSamplingProfile' command.
 --   
 --   Returns: 'HeapProfilerGetSamplingProfile'
 heapProfilerGetSamplingProfile :: Handle -> IO HeapProfilerGetSamplingProfile
-heapProfilerGetSamplingProfile handle = sendReceiveCommandResult handle "HeapProfiler.getSamplingProfile" (Nothing :: Maybe ())
+heapProfilerGetSamplingProfile handle = sendReceiveCommandResult handle PHeapProfilerGetSamplingProfile
 
 -- | Return type of the 'heapProfilerGetSamplingProfile' command.
 data HeapProfilerGetSamplingProfile = HeapProfilerGetSamplingProfile {
@@ -300,9 +332,9 @@ data HeapProfilerGetSamplingProfile = HeapProfilerGetSamplingProfile {
 instance FromJSON  HeapProfilerGetSamplingProfile where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
-instance Command HeapProfilerGetSamplingProfile where
-   commandName _ = "HeapProfiler.getSamplingProfile"
-
+instance Command PHeapProfilerGetSamplingProfile where
+    type CommandResponse PHeapProfilerGetSamplingProfile = HeapProfilerGetSamplingProfile
+    commandName _ = "HeapProfiler.getSamplingProfile"
 
 
 -- | Parameters of the 'heapProfilerStartSampling' command.
@@ -320,9 +352,13 @@ instance FromJSON  PHeapProfilerStartSampling where
 
 -- | Function for the 'HeapProfiler.startSampling' command.
 --   
---   Parameters: 'PHeapProfilerStartSampling'
+--   Returns: 'PHeapProfilerStartSampling'
 heapProfilerStartSampling :: Handle -> PHeapProfilerStartSampling -> IO ()
-heapProfilerStartSampling handle params = sendReceiveCommand handle "HeapProfiler.startSampling" (Just params)
+heapProfilerStartSampling handle params = sendReceiveCommand handle params
+
+instance Command PHeapProfilerStartSampling where
+    type CommandResponse PHeapProfilerStartSampling = NoResponse
+    commandName _ = "HeapProfiler.startSampling"
 
 
 -- | Parameters of the 'heapProfilerStartTrackingHeapObjects' command.
@@ -338,16 +374,24 @@ instance FromJSON  PHeapProfilerStartTrackingHeapObjects where
 
 -- | Function for the 'HeapProfiler.startTrackingHeapObjects' command.
 --   
---   Parameters: 'PHeapProfilerStartTrackingHeapObjects'
+--   Returns: 'PHeapProfilerStartTrackingHeapObjects'
 heapProfilerStartTrackingHeapObjects :: Handle -> PHeapProfilerStartTrackingHeapObjects -> IO ()
-heapProfilerStartTrackingHeapObjects handle params = sendReceiveCommand handle "HeapProfiler.startTrackingHeapObjects" (Just params)
+heapProfilerStartTrackingHeapObjects handle params = sendReceiveCommand handle params
 
+instance Command PHeapProfilerStartTrackingHeapObjects where
+    type CommandResponse PHeapProfilerStartTrackingHeapObjects = NoResponse
+    commandName _ = "HeapProfiler.startTrackingHeapObjects"
+
+
+-- | Parameters of the 'heapProfilerStopSampling' command.
+data PHeapProfilerStopSampling = PHeapProfilerStopSampling
+instance ToJSON PHeapProfilerStopSampling where toJSON _ = A.Null
 
 -- | Function for the 'HeapProfiler.stopSampling' command.
 --   
 --   Returns: 'HeapProfilerStopSampling'
 heapProfilerStopSampling :: Handle -> IO HeapProfilerStopSampling
-heapProfilerStopSampling handle = sendReceiveCommandResult handle "HeapProfiler.stopSampling" (Nothing :: Maybe ())
+heapProfilerStopSampling handle = sendReceiveCommandResult handle PHeapProfilerStopSampling
 
 -- | Return type of the 'heapProfilerStopSampling' command.
 data HeapProfilerStopSampling = HeapProfilerStopSampling {
@@ -358,9 +402,9 @@ data HeapProfilerStopSampling = HeapProfilerStopSampling {
 instance FromJSON  HeapProfilerStopSampling where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
-instance Command HeapProfilerStopSampling where
-   commandName _ = "HeapProfiler.stopSampling"
-
+instance Command PHeapProfilerStopSampling where
+    type CommandResponse PHeapProfilerStopSampling = HeapProfilerStopSampling
+    commandName _ = "HeapProfiler.stopSampling"
 
 
 -- | Parameters of the 'heapProfilerStopTrackingHeapObjects' command.
@@ -381,9 +425,13 @@ instance FromJSON  PHeapProfilerStopTrackingHeapObjects where
 
 -- | Function for the 'HeapProfiler.stopTrackingHeapObjects' command.
 --   
---   Parameters: 'PHeapProfilerStopTrackingHeapObjects'
+--   Returns: 'PHeapProfilerStopTrackingHeapObjects'
 heapProfilerStopTrackingHeapObjects :: Handle -> PHeapProfilerStopTrackingHeapObjects -> IO ()
-heapProfilerStopTrackingHeapObjects handle params = sendReceiveCommand handle "HeapProfiler.stopTrackingHeapObjects" (Just params)
+heapProfilerStopTrackingHeapObjects handle params = sendReceiveCommand handle params
+
+instance Command PHeapProfilerStopTrackingHeapObjects where
+    type CommandResponse PHeapProfilerStopTrackingHeapObjects = NoResponse
+    commandName _ = "HeapProfiler.stopTrackingHeapObjects"
 
 
 -- | Parameters of the 'heapProfilerTakeHeapSnapshot' command.
@@ -404,9 +452,13 @@ instance FromJSON  PHeapProfilerTakeHeapSnapshot where
 
 -- | Function for the 'HeapProfiler.takeHeapSnapshot' command.
 --   
---   Parameters: 'PHeapProfilerTakeHeapSnapshot'
+--   Returns: 'PHeapProfilerTakeHeapSnapshot'
 heapProfilerTakeHeapSnapshot :: Handle -> PHeapProfilerTakeHeapSnapshot -> IO ()
-heapProfilerTakeHeapSnapshot handle params = sendReceiveCommand handle "HeapProfiler.takeHeapSnapshot" (Just params)
+heapProfilerTakeHeapSnapshot handle params = sendReceiveCommand handle params
+
+instance Command PHeapProfilerTakeHeapSnapshot where
+    type CommandResponse PHeapProfilerTakeHeapSnapshot = NoResponse
+    commandName _ = "HeapProfiler.takeHeapSnapshot"
 
 
 

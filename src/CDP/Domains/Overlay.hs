@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -43,7 +44,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
@@ -531,16 +531,32 @@ instance Event OverlayInspectModeCanceled where
 
 
 
+-- | Parameters of the 'overlayDisable' command.
+data POverlayDisable = POverlayDisable
+instance ToJSON POverlayDisable where toJSON _ = A.Null
+
 -- | Function for the 'Overlay.disable' command.
 --   Disables domain notifications.
 overlayDisable :: Handle -> IO ()
-overlayDisable handle = sendReceiveCommand handle "Overlay.disable" (Nothing :: Maybe ())
+overlayDisable handle = sendReceiveCommand handle POverlayDisable
 
+instance Command POverlayDisable where
+    type CommandResponse POverlayDisable = NoResponse
+    commandName _ = "Overlay.disable"
+
+
+-- | Parameters of the 'overlayEnable' command.
+data POverlayEnable = POverlayEnable
+instance ToJSON POverlayEnable where toJSON _ = A.Null
 
 -- | Function for the 'Overlay.enable' command.
 --   Enables domain notifications.
 overlayEnable :: Handle -> IO ()
-overlayEnable handle = sendReceiveCommand handle "Overlay.enable" (Nothing :: Maybe ())
+overlayEnable handle = sendReceiveCommand handle POverlayEnable
+
+instance Command POverlayEnable where
+    type CommandResponse POverlayEnable = NoResponse
+    commandName _ = "Overlay.enable"
 
 
 -- | Parameters of the 'overlayGetHighlightObjectForTest' command.
@@ -565,10 +581,10 @@ instance FromJSON  POverlayGetHighlightObjectForTest where
 
 -- | Function for the 'Overlay.getHighlightObjectForTest' command.
 --   For testing.
---   Parameters: 'POverlayGetHighlightObjectForTest'
+--   Returns: 'POverlayGetHighlightObjectForTest'
 --   Returns: 'OverlayGetHighlightObjectForTest'
 overlayGetHighlightObjectForTest :: Handle -> POverlayGetHighlightObjectForTest -> IO OverlayGetHighlightObjectForTest
-overlayGetHighlightObjectForTest handle params = sendReceiveCommandResult handle "Overlay.getHighlightObjectForTest" (Just params)
+overlayGetHighlightObjectForTest handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'overlayGetHighlightObjectForTest' command.
 data OverlayGetHighlightObjectForTest = OverlayGetHighlightObjectForTest {
@@ -579,9 +595,9 @@ data OverlayGetHighlightObjectForTest = OverlayGetHighlightObjectForTest {
 instance FromJSON  OverlayGetHighlightObjectForTest where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
-instance Command OverlayGetHighlightObjectForTest where
-   commandName _ = "Overlay.getHighlightObjectForTest"
-
+instance Command POverlayGetHighlightObjectForTest where
+    type CommandResponse POverlayGetHighlightObjectForTest = OverlayGetHighlightObjectForTest
+    commandName _ = "Overlay.getHighlightObjectForTest"
 
 
 -- | Parameters of the 'overlayGetGridHighlightObjectsForTest' command.
@@ -598,10 +614,10 @@ instance FromJSON  POverlayGetGridHighlightObjectsForTest where
 
 -- | Function for the 'Overlay.getGridHighlightObjectsForTest' command.
 --   For Persistent Grid testing.
---   Parameters: 'POverlayGetGridHighlightObjectsForTest'
+--   Returns: 'POverlayGetGridHighlightObjectsForTest'
 --   Returns: 'OverlayGetGridHighlightObjectsForTest'
 overlayGetGridHighlightObjectsForTest :: Handle -> POverlayGetGridHighlightObjectsForTest -> IO OverlayGetGridHighlightObjectsForTest
-overlayGetGridHighlightObjectsForTest handle params = sendReceiveCommandResult handle "Overlay.getGridHighlightObjectsForTest" (Just params)
+overlayGetGridHighlightObjectsForTest handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'overlayGetGridHighlightObjectsForTest' command.
 data OverlayGetGridHighlightObjectsForTest = OverlayGetGridHighlightObjectsForTest {
@@ -612,9 +628,9 @@ data OverlayGetGridHighlightObjectsForTest = OverlayGetGridHighlightObjectsForTe
 instance FromJSON  OverlayGetGridHighlightObjectsForTest where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 }
 
-instance Command OverlayGetGridHighlightObjectsForTest where
-   commandName _ = "Overlay.getGridHighlightObjectsForTest"
-
+instance Command POverlayGetGridHighlightObjectsForTest where
+    type CommandResponse POverlayGetGridHighlightObjectsForTest = OverlayGetGridHighlightObjectsForTest
+    commandName _ = "Overlay.getGridHighlightObjectsForTest"
 
 
 -- | Parameters of the 'overlayGetSourceOrderHighlightObjectForTest' command.
@@ -631,10 +647,10 @@ instance FromJSON  POverlayGetSourceOrderHighlightObjectForTest where
 
 -- | Function for the 'Overlay.getSourceOrderHighlightObjectForTest' command.
 --   For Source Order Viewer testing.
---   Parameters: 'POverlayGetSourceOrderHighlightObjectForTest'
+--   Returns: 'POverlayGetSourceOrderHighlightObjectForTest'
 --   Returns: 'OverlayGetSourceOrderHighlightObjectForTest'
 overlayGetSourceOrderHighlightObjectForTest :: Handle -> POverlayGetSourceOrderHighlightObjectForTest -> IO OverlayGetSourceOrderHighlightObjectForTest
-overlayGetSourceOrderHighlightObjectForTest handle params = sendReceiveCommandResult handle "Overlay.getSourceOrderHighlightObjectForTest" (Just params)
+overlayGetSourceOrderHighlightObjectForTest handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'overlayGetSourceOrderHighlightObjectForTest' command.
 data OverlayGetSourceOrderHighlightObjectForTest = OverlayGetSourceOrderHighlightObjectForTest {
@@ -645,15 +661,23 @@ data OverlayGetSourceOrderHighlightObjectForTest = OverlayGetSourceOrderHighligh
 instance FromJSON  OverlayGetSourceOrderHighlightObjectForTest where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 43 }
 
-instance Command OverlayGetSourceOrderHighlightObjectForTest where
-   commandName _ = "Overlay.getSourceOrderHighlightObjectForTest"
+instance Command POverlayGetSourceOrderHighlightObjectForTest where
+    type CommandResponse POverlayGetSourceOrderHighlightObjectForTest = OverlayGetSourceOrderHighlightObjectForTest
+    commandName _ = "Overlay.getSourceOrderHighlightObjectForTest"
 
 
+-- | Parameters of the 'overlayHideHighlight' command.
+data POverlayHideHighlight = POverlayHideHighlight
+instance ToJSON POverlayHideHighlight where toJSON _ = A.Null
 
 -- | Function for the 'Overlay.hideHighlight' command.
 --   Hides any highlight.
 overlayHideHighlight :: Handle -> IO ()
-overlayHideHighlight handle = sendReceiveCommand handle "Overlay.hideHighlight" (Nothing :: Maybe ())
+overlayHideHighlight handle = sendReceiveCommand handle POverlayHideHighlight
+
+instance Command POverlayHideHighlight where
+    type CommandResponse POverlayHideHighlight = NoResponse
+    commandName _ = "Overlay.hideHighlight"
 
 
 -- | Parameters of the 'overlayHighlightNode' command.
@@ -679,9 +703,13 @@ instance FromJSON  POverlayHighlightNode where
 -- | Function for the 'Overlay.highlightNode' command.
 --   Highlights DOM node with given id or with the given JavaScript object wrapper. Either nodeId or
 --   objectId must be specified.
---   Parameters: 'POverlayHighlightNode'
+--   Returns: 'POverlayHighlightNode'
 overlayHighlightNode :: Handle -> POverlayHighlightNode -> IO ()
-overlayHighlightNode handle params = sendReceiveCommand handle "Overlay.highlightNode" (Just params)
+overlayHighlightNode handle params = sendReceiveCommand handle params
+
+instance Command POverlayHighlightNode where
+    type CommandResponse POverlayHighlightNode = NoResponse
+    commandName _ = "Overlay.highlightNode"
 
 
 -- | Parameters of the 'overlayHighlightQuad' command.
@@ -702,9 +730,13 @@ instance FromJSON  POverlayHighlightQuad where
 
 -- | Function for the 'Overlay.highlightQuad' command.
 --   Highlights given quad. Coordinates are absolute with respect to the main frame viewport.
---   Parameters: 'POverlayHighlightQuad'
+--   Returns: 'POverlayHighlightQuad'
 overlayHighlightQuad :: Handle -> POverlayHighlightQuad -> IO ()
-overlayHighlightQuad handle params = sendReceiveCommand handle "Overlay.highlightQuad" (Just params)
+overlayHighlightQuad handle params = sendReceiveCommand handle params
+
+instance Command POverlayHighlightQuad where
+    type CommandResponse POverlayHighlightQuad = NoResponse
+    commandName _ = "Overlay.highlightQuad"
 
 
 -- | Parameters of the 'overlayHighlightRect' command.
@@ -731,9 +763,13 @@ instance FromJSON  POverlayHighlightRect where
 
 -- | Function for the 'Overlay.highlightRect' command.
 --   Highlights given rectangle. Coordinates are absolute with respect to the main frame viewport.
---   Parameters: 'POverlayHighlightRect'
+--   Returns: 'POverlayHighlightRect'
 overlayHighlightRect :: Handle -> POverlayHighlightRect -> IO ()
-overlayHighlightRect handle params = sendReceiveCommand handle "Overlay.highlightRect" (Just params)
+overlayHighlightRect handle params = sendReceiveCommand handle params
+
+instance Command POverlayHighlightRect where
+    type CommandResponse POverlayHighlightRect = NoResponse
+    commandName _ = "Overlay.highlightRect"
 
 
 -- | Parameters of the 'overlayHighlightSourceOrder' command.
@@ -757,9 +793,13 @@ instance FromJSON  POverlayHighlightSourceOrder where
 -- | Function for the 'Overlay.highlightSourceOrder' command.
 --   Highlights the source order of the children of the DOM node with given id or with the given
 --   JavaScript object wrapper. Either nodeId or objectId must be specified.
---   Parameters: 'POverlayHighlightSourceOrder'
+--   Returns: 'POverlayHighlightSourceOrder'
 overlayHighlightSourceOrder :: Handle -> POverlayHighlightSourceOrder -> IO ()
-overlayHighlightSourceOrder handle params = sendReceiveCommand handle "Overlay.highlightSourceOrder" (Just params)
+overlayHighlightSourceOrder handle params = sendReceiveCommand handle params
+
+instance Command POverlayHighlightSourceOrder where
+    type CommandResponse POverlayHighlightSourceOrder = NoResponse
+    commandName _ = "Overlay.highlightSourceOrder"
 
 
 -- | Parameters of the 'overlaySetInspectMode' command.
@@ -780,9 +820,13 @@ instance FromJSON  POverlaySetInspectMode where
 -- | Function for the 'Overlay.setInspectMode' command.
 --   Enters the 'inspect' mode. In this mode, elements that user is hovering over are highlighted.
 --   Backend then generates 'inspectNodeRequested' event upon element selection.
---   Parameters: 'POverlaySetInspectMode'
+--   Returns: 'POverlaySetInspectMode'
 overlaySetInspectMode :: Handle -> POverlaySetInspectMode -> IO ()
-overlaySetInspectMode handle params = sendReceiveCommand handle "Overlay.setInspectMode" (Just params)
+overlaySetInspectMode handle params = sendReceiveCommand handle params
+
+instance Command POverlaySetInspectMode where
+    type CommandResponse POverlaySetInspectMode = NoResponse
+    commandName _ = "Overlay.setInspectMode"
 
 
 -- | Parameters of the 'overlaySetShowAdHighlights' command.
@@ -799,9 +843,13 @@ instance FromJSON  POverlaySetShowAdHighlights where
 
 -- | Function for the 'Overlay.setShowAdHighlights' command.
 --   Highlights owner element of all frames detected to be ads.
---   Parameters: 'POverlaySetShowAdHighlights'
+--   Returns: 'POverlaySetShowAdHighlights'
 overlaySetShowAdHighlights :: Handle -> POverlaySetShowAdHighlights -> IO ()
-overlaySetShowAdHighlights handle params = sendReceiveCommand handle "Overlay.setShowAdHighlights" (Just params)
+overlaySetShowAdHighlights handle params = sendReceiveCommand handle params
+
+instance Command POverlaySetShowAdHighlights where
+    type CommandResponse POverlaySetShowAdHighlights = NoResponse
+    commandName _ = "Overlay.setShowAdHighlights"
 
 
 -- | Parameters of the 'overlaySetPausedInDebuggerMessage' command.
@@ -818,9 +866,13 @@ instance FromJSON  POverlaySetPausedInDebuggerMessage where
 
 -- | Function for the 'Overlay.setPausedInDebuggerMessage' command.
 --   
---   Parameters: 'POverlaySetPausedInDebuggerMessage'
+--   Returns: 'POverlaySetPausedInDebuggerMessage'
 overlaySetPausedInDebuggerMessage :: Handle -> POverlaySetPausedInDebuggerMessage -> IO ()
-overlaySetPausedInDebuggerMessage handle params = sendReceiveCommand handle "Overlay.setPausedInDebuggerMessage" (Just params)
+overlaySetPausedInDebuggerMessage handle params = sendReceiveCommand handle params
+
+instance Command POverlaySetPausedInDebuggerMessage where
+    type CommandResponse POverlaySetPausedInDebuggerMessage = NoResponse
+    commandName _ = "Overlay.setPausedInDebuggerMessage"
 
 
 -- | Parameters of the 'overlaySetShowDebugBorders' command.
@@ -837,9 +889,13 @@ instance FromJSON  POverlaySetShowDebugBorders where
 
 -- | Function for the 'Overlay.setShowDebugBorders' command.
 --   Requests that backend shows debug borders on layers
---   Parameters: 'POverlaySetShowDebugBorders'
+--   Returns: 'POverlaySetShowDebugBorders'
 overlaySetShowDebugBorders :: Handle -> POverlaySetShowDebugBorders -> IO ()
-overlaySetShowDebugBorders handle params = sendReceiveCommand handle "Overlay.setShowDebugBorders" (Just params)
+overlaySetShowDebugBorders handle params = sendReceiveCommand handle params
+
+instance Command POverlaySetShowDebugBorders where
+    type CommandResponse POverlaySetShowDebugBorders = NoResponse
+    commandName _ = "Overlay.setShowDebugBorders"
 
 
 -- | Parameters of the 'overlaySetShowFPSCounter' command.
@@ -856,9 +912,13 @@ instance FromJSON  POverlaySetShowFPSCounter where
 
 -- | Function for the 'Overlay.setShowFPSCounter' command.
 --   Requests that backend shows the FPS counter
---   Parameters: 'POverlaySetShowFPSCounter'
+--   Returns: 'POverlaySetShowFPSCounter'
 overlaySetShowFPSCounter :: Handle -> POverlaySetShowFPSCounter -> IO ()
-overlaySetShowFPSCounter handle params = sendReceiveCommand handle "Overlay.setShowFPSCounter" (Just params)
+overlaySetShowFPSCounter handle params = sendReceiveCommand handle params
+
+instance Command POverlaySetShowFPSCounter where
+    type CommandResponse POverlaySetShowFPSCounter = NoResponse
+    commandName _ = "Overlay.setShowFPSCounter"
 
 
 -- | Parameters of the 'overlaySetShowGridOverlays' command.
@@ -875,9 +935,13 @@ instance FromJSON  POverlaySetShowGridOverlays where
 
 -- | Function for the 'Overlay.setShowGridOverlays' command.
 --   Highlight multiple elements with the CSS Grid overlay.
---   Parameters: 'POverlaySetShowGridOverlays'
+--   Returns: 'POverlaySetShowGridOverlays'
 overlaySetShowGridOverlays :: Handle -> POverlaySetShowGridOverlays -> IO ()
-overlaySetShowGridOverlays handle params = sendReceiveCommand handle "Overlay.setShowGridOverlays" (Just params)
+overlaySetShowGridOverlays handle params = sendReceiveCommand handle params
+
+instance Command POverlaySetShowGridOverlays where
+    type CommandResponse POverlaySetShowGridOverlays = NoResponse
+    commandName _ = "Overlay.setShowGridOverlays"
 
 
 -- | Parameters of the 'overlaySetShowFlexOverlays' command.
@@ -894,9 +958,13 @@ instance FromJSON  POverlaySetShowFlexOverlays where
 
 -- | Function for the 'Overlay.setShowFlexOverlays' command.
 --   
---   Parameters: 'POverlaySetShowFlexOverlays'
+--   Returns: 'POverlaySetShowFlexOverlays'
 overlaySetShowFlexOverlays :: Handle -> POverlaySetShowFlexOverlays -> IO ()
-overlaySetShowFlexOverlays handle params = sendReceiveCommand handle "Overlay.setShowFlexOverlays" (Just params)
+overlaySetShowFlexOverlays handle params = sendReceiveCommand handle params
+
+instance Command POverlaySetShowFlexOverlays where
+    type CommandResponse POverlaySetShowFlexOverlays = NoResponse
+    commandName _ = "Overlay.setShowFlexOverlays"
 
 
 -- | Parameters of the 'overlaySetShowScrollSnapOverlays' command.
@@ -913,9 +981,13 @@ instance FromJSON  POverlaySetShowScrollSnapOverlays where
 
 -- | Function for the 'Overlay.setShowScrollSnapOverlays' command.
 --   
---   Parameters: 'POverlaySetShowScrollSnapOverlays'
+--   Returns: 'POverlaySetShowScrollSnapOverlays'
 overlaySetShowScrollSnapOverlays :: Handle -> POverlaySetShowScrollSnapOverlays -> IO ()
-overlaySetShowScrollSnapOverlays handle params = sendReceiveCommand handle "Overlay.setShowScrollSnapOverlays" (Just params)
+overlaySetShowScrollSnapOverlays handle params = sendReceiveCommand handle params
+
+instance Command POverlaySetShowScrollSnapOverlays where
+    type CommandResponse POverlaySetShowScrollSnapOverlays = NoResponse
+    commandName _ = "Overlay.setShowScrollSnapOverlays"
 
 
 -- | Parameters of the 'overlaySetShowContainerQueryOverlays' command.
@@ -932,9 +1004,13 @@ instance FromJSON  POverlaySetShowContainerQueryOverlays where
 
 -- | Function for the 'Overlay.setShowContainerQueryOverlays' command.
 --   
---   Parameters: 'POverlaySetShowContainerQueryOverlays'
+--   Returns: 'POverlaySetShowContainerQueryOverlays'
 overlaySetShowContainerQueryOverlays :: Handle -> POverlaySetShowContainerQueryOverlays -> IO ()
-overlaySetShowContainerQueryOverlays handle params = sendReceiveCommand handle "Overlay.setShowContainerQueryOverlays" (Just params)
+overlaySetShowContainerQueryOverlays handle params = sendReceiveCommand handle params
+
+instance Command POverlaySetShowContainerQueryOverlays where
+    type CommandResponse POverlaySetShowContainerQueryOverlays = NoResponse
+    commandName _ = "Overlay.setShowContainerQueryOverlays"
 
 
 -- | Parameters of the 'overlaySetShowPaintRects' command.
@@ -951,9 +1027,13 @@ instance FromJSON  POverlaySetShowPaintRects where
 
 -- | Function for the 'Overlay.setShowPaintRects' command.
 --   Requests that backend shows paint rectangles
---   Parameters: 'POverlaySetShowPaintRects'
+--   Returns: 'POverlaySetShowPaintRects'
 overlaySetShowPaintRects :: Handle -> POverlaySetShowPaintRects -> IO ()
-overlaySetShowPaintRects handle params = sendReceiveCommand handle "Overlay.setShowPaintRects" (Just params)
+overlaySetShowPaintRects handle params = sendReceiveCommand handle params
+
+instance Command POverlaySetShowPaintRects where
+    type CommandResponse POverlaySetShowPaintRects = NoResponse
+    commandName _ = "Overlay.setShowPaintRects"
 
 
 -- | Parameters of the 'overlaySetShowLayoutShiftRegions' command.
@@ -970,9 +1050,13 @@ instance FromJSON  POverlaySetShowLayoutShiftRegions where
 
 -- | Function for the 'Overlay.setShowLayoutShiftRegions' command.
 --   Requests that backend shows layout shift regions
---   Parameters: 'POverlaySetShowLayoutShiftRegions'
+--   Returns: 'POverlaySetShowLayoutShiftRegions'
 overlaySetShowLayoutShiftRegions :: Handle -> POverlaySetShowLayoutShiftRegions -> IO ()
-overlaySetShowLayoutShiftRegions handle params = sendReceiveCommand handle "Overlay.setShowLayoutShiftRegions" (Just params)
+overlaySetShowLayoutShiftRegions handle params = sendReceiveCommand handle params
+
+instance Command POverlaySetShowLayoutShiftRegions where
+    type CommandResponse POverlaySetShowLayoutShiftRegions = NoResponse
+    commandName _ = "Overlay.setShowLayoutShiftRegions"
 
 
 -- | Parameters of the 'overlaySetShowScrollBottleneckRects' command.
@@ -989,9 +1073,13 @@ instance FromJSON  POverlaySetShowScrollBottleneckRects where
 
 -- | Function for the 'Overlay.setShowScrollBottleneckRects' command.
 --   Requests that backend shows scroll bottleneck rects
---   Parameters: 'POverlaySetShowScrollBottleneckRects'
+--   Returns: 'POverlaySetShowScrollBottleneckRects'
 overlaySetShowScrollBottleneckRects :: Handle -> POverlaySetShowScrollBottleneckRects -> IO ()
-overlaySetShowScrollBottleneckRects handle params = sendReceiveCommand handle "Overlay.setShowScrollBottleneckRects" (Just params)
+overlaySetShowScrollBottleneckRects handle params = sendReceiveCommand handle params
+
+instance Command POverlaySetShowScrollBottleneckRects where
+    type CommandResponse POverlaySetShowScrollBottleneckRects = NoResponse
+    commandName _ = "Overlay.setShowScrollBottleneckRects"
 
 
 -- | Parameters of the 'overlaySetShowWebVitals' command.
@@ -1007,9 +1095,13 @@ instance FromJSON  POverlaySetShowWebVitals where
 
 -- | Function for the 'Overlay.setShowWebVitals' command.
 --   Request that backend shows an overlay with web vital metrics.
---   Parameters: 'POverlaySetShowWebVitals'
+--   Returns: 'POverlaySetShowWebVitals'
 overlaySetShowWebVitals :: Handle -> POverlaySetShowWebVitals -> IO ()
-overlaySetShowWebVitals handle params = sendReceiveCommand handle "Overlay.setShowWebVitals" (Just params)
+overlaySetShowWebVitals handle params = sendReceiveCommand handle params
+
+instance Command POverlaySetShowWebVitals where
+    type CommandResponse POverlaySetShowWebVitals = NoResponse
+    commandName _ = "Overlay.setShowWebVitals"
 
 
 -- | Parameters of the 'overlaySetShowViewportSizeOnResize' command.
@@ -1026,9 +1118,13 @@ instance FromJSON  POverlaySetShowViewportSizeOnResize where
 
 -- | Function for the 'Overlay.setShowViewportSizeOnResize' command.
 --   Paints viewport size upon main frame resize.
---   Parameters: 'POverlaySetShowViewportSizeOnResize'
+--   Returns: 'POverlaySetShowViewportSizeOnResize'
 overlaySetShowViewportSizeOnResize :: Handle -> POverlaySetShowViewportSizeOnResize -> IO ()
-overlaySetShowViewportSizeOnResize handle params = sendReceiveCommand handle "Overlay.setShowViewportSizeOnResize" (Just params)
+overlaySetShowViewportSizeOnResize handle params = sendReceiveCommand handle params
+
+instance Command POverlaySetShowViewportSizeOnResize where
+    type CommandResponse POverlaySetShowViewportSizeOnResize = NoResponse
+    commandName _ = "Overlay.setShowViewportSizeOnResize"
 
 
 -- | Parameters of the 'overlaySetShowHinge' command.
@@ -1045,9 +1141,13 @@ instance FromJSON  POverlaySetShowHinge where
 
 -- | Function for the 'Overlay.setShowHinge' command.
 --   Add a dual screen device hinge
---   Parameters: 'POverlaySetShowHinge'
+--   Returns: 'POverlaySetShowHinge'
 overlaySetShowHinge :: Handle -> POverlaySetShowHinge -> IO ()
-overlaySetShowHinge handle params = sendReceiveCommand handle "Overlay.setShowHinge" (Just params)
+overlaySetShowHinge handle params = sendReceiveCommand handle params
+
+instance Command POverlaySetShowHinge where
+    type CommandResponse POverlaySetShowHinge = NoResponse
+    commandName _ = "Overlay.setShowHinge"
 
 
 -- | Parameters of the 'overlaySetShowIsolatedElements' command.
@@ -1064,9 +1164,13 @@ instance FromJSON  POverlaySetShowIsolatedElements where
 
 -- | Function for the 'Overlay.setShowIsolatedElements' command.
 --   Show elements in isolation mode with overlays.
---   Parameters: 'POverlaySetShowIsolatedElements'
+--   Returns: 'POverlaySetShowIsolatedElements'
 overlaySetShowIsolatedElements :: Handle -> POverlaySetShowIsolatedElements -> IO ()
-overlaySetShowIsolatedElements handle params = sendReceiveCommand handle "Overlay.setShowIsolatedElements" (Just params)
+overlaySetShowIsolatedElements handle params = sendReceiveCommand handle params
+
+instance Command POverlaySetShowIsolatedElements where
+    type CommandResponse POverlaySetShowIsolatedElements = NoResponse
+    commandName _ = "Overlay.setShowIsolatedElements"
 
 
 

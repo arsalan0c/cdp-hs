@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -48,7 +49,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
@@ -774,10 +774,10 @@ instance FromJSON  PCSSAddRule where
 -- | Function for the 'CSS.addRule' command.
 --   Inserts a new rule with the given `ruleText` in a stylesheet with given `styleSheetId`, at the
 --   position specified by `location`.
---   Parameters: 'PCSSAddRule'
+--   Returns: 'PCSSAddRule'
 --   Returns: 'CSSAddRule'
 cSSAddRule :: Handle -> PCSSAddRule -> IO CSSAddRule
-cSSAddRule handle params = sendReceiveCommandResult handle "CSS.addRule" (Just params)
+cSSAddRule handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'cSSAddRule' command.
 data CSSAddRule = CSSAddRule {
@@ -788,9 +788,9 @@ data CSSAddRule = CSSAddRule {
 instance FromJSON  CSSAddRule where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 }
 
-instance Command CSSAddRule where
-   commandName _ = "CSS.addRule"
-
+instance Command PCSSAddRule where
+    type CommandResponse PCSSAddRule = CSSAddRule
+    commandName _ = "CSS.addRule"
 
 
 -- | Parameters of the 'cSSCollectClassNames' command.
@@ -806,10 +806,10 @@ instance FromJSON  PCSSCollectClassNames where
 
 -- | Function for the 'CSS.collectClassNames' command.
 --   Returns all class names from specified stylesheet.
---   Parameters: 'PCSSCollectClassNames'
+--   Returns: 'PCSSCollectClassNames'
 --   Returns: 'CSSCollectClassNames'
 cSSCollectClassNames :: Handle -> PCSSCollectClassNames -> IO CSSCollectClassNames
-cSSCollectClassNames handle params = sendReceiveCommandResult handle "CSS.collectClassNames" (Just params)
+cSSCollectClassNames handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'cSSCollectClassNames' command.
 data CSSCollectClassNames = CSSCollectClassNames {
@@ -820,9 +820,9 @@ data CSSCollectClassNames = CSSCollectClassNames {
 instance FromJSON  CSSCollectClassNames where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command CSSCollectClassNames where
-   commandName _ = "CSS.collectClassNames"
-
+instance Command PCSSCollectClassNames where
+    type CommandResponse PCSSCollectClassNames = CSSCollectClassNames
+    commandName _ = "CSS.collectClassNames"
 
 
 -- | Parameters of the 'cSSCreateStyleSheet' command.
@@ -839,10 +839,10 @@ instance FromJSON  PCSSCreateStyleSheet where
 
 -- | Function for the 'CSS.createStyleSheet' command.
 --   Creates a new special "via-inspector" stylesheet in the frame with given `frameId`.
---   Parameters: 'PCSSCreateStyleSheet'
+--   Returns: 'PCSSCreateStyleSheet'
 --   Returns: 'CSSCreateStyleSheet'
 cSSCreateStyleSheet :: Handle -> PCSSCreateStyleSheet -> IO CSSCreateStyleSheet
-cSSCreateStyleSheet handle params = sendReceiveCommandResult handle "CSS.createStyleSheet" (Just params)
+cSSCreateStyleSheet handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'cSSCreateStyleSheet' command.
 data CSSCreateStyleSheet = CSSCreateStyleSheet {
@@ -853,22 +853,38 @@ data CSSCreateStyleSheet = CSSCreateStyleSheet {
 instance FromJSON  CSSCreateStyleSheet where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
-instance Command CSSCreateStyleSheet where
-   commandName _ = "CSS.createStyleSheet"
+instance Command PCSSCreateStyleSheet where
+    type CommandResponse PCSSCreateStyleSheet = CSSCreateStyleSheet
+    commandName _ = "CSS.createStyleSheet"
 
 
+-- | Parameters of the 'cSSDisable' command.
+data PCSSDisable = PCSSDisable
+instance ToJSON PCSSDisable where toJSON _ = A.Null
 
 -- | Function for the 'CSS.disable' command.
 --   Disables the CSS agent for the given page.
 cSSDisable :: Handle -> IO ()
-cSSDisable handle = sendReceiveCommand handle "CSS.disable" (Nothing :: Maybe ())
+cSSDisable handle = sendReceiveCommand handle PCSSDisable
 
+instance Command PCSSDisable where
+    type CommandResponse PCSSDisable = NoResponse
+    commandName _ = "CSS.disable"
+
+
+-- | Parameters of the 'cSSEnable' command.
+data PCSSEnable = PCSSEnable
+instance ToJSON PCSSEnable where toJSON _ = A.Null
 
 -- | Function for the 'CSS.enable' command.
 --   Enables the CSS agent for the given page. Clients should not assume that the CSS agent has been
 --   enabled until the result of this command is received.
 cSSEnable :: Handle -> IO ()
-cSSEnable handle = sendReceiveCommand handle "CSS.enable" (Nothing :: Maybe ())
+cSSEnable handle = sendReceiveCommand handle PCSSEnable
+
+instance Command PCSSEnable where
+    type CommandResponse PCSSEnable = NoResponse
+    commandName _ = "CSS.enable"
 
 
 -- | Parameters of the 'cSSForcePseudoState' command.
@@ -888,9 +904,13 @@ instance FromJSON  PCSSForcePseudoState where
 -- | Function for the 'CSS.forcePseudoState' command.
 --   Ensures that the given node will have specified pseudo-classes whenever its style is computed by
 --   the browser.
---   Parameters: 'PCSSForcePseudoState'
+--   Returns: 'PCSSForcePseudoState'
 cSSForcePseudoState :: Handle -> PCSSForcePseudoState -> IO ()
-cSSForcePseudoState handle params = sendReceiveCommand handle "CSS.forcePseudoState" (Just params)
+cSSForcePseudoState handle params = sendReceiveCommand handle params
+
+instance Command PCSSForcePseudoState where
+    type CommandResponse PCSSForcePseudoState = NoResponse
+    commandName _ = "CSS.forcePseudoState"
 
 
 -- | Parameters of the 'cSSGetBackgroundColors' command.
@@ -907,10 +927,10 @@ instance FromJSON  PCSSGetBackgroundColors where
 
 -- | Function for the 'CSS.getBackgroundColors' command.
 --   
---   Parameters: 'PCSSGetBackgroundColors'
+--   Returns: 'PCSSGetBackgroundColors'
 --   Returns: 'CSSGetBackgroundColors'
 cSSGetBackgroundColors :: Handle -> PCSSGetBackgroundColors -> IO CSSGetBackgroundColors
-cSSGetBackgroundColors handle params = sendReceiveCommandResult handle "CSS.getBackgroundColors" (Just params)
+cSSGetBackgroundColors handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'cSSGetBackgroundColors' command.
 data CSSGetBackgroundColors = CSSGetBackgroundColors {
@@ -930,9 +950,9 @@ data CSSGetBackgroundColors = CSSGetBackgroundColors {
 instance FromJSON  CSSGetBackgroundColors where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
-instance Command CSSGetBackgroundColors where
-   commandName _ = "CSS.getBackgroundColors"
-
+instance Command PCSSGetBackgroundColors where
+    type CommandResponse PCSSGetBackgroundColors = CSSGetBackgroundColors
+    commandName _ = "CSS.getBackgroundColors"
 
 
 -- | Parameters of the 'cSSGetComputedStyleForNode' command.
@@ -948,10 +968,10 @@ instance FromJSON  PCSSGetComputedStyleForNode where
 
 -- | Function for the 'CSS.getComputedStyleForNode' command.
 --   Returns the computed style for a DOM node identified by `nodeId`.
---   Parameters: 'PCSSGetComputedStyleForNode'
+--   Returns: 'PCSSGetComputedStyleForNode'
 --   Returns: 'CSSGetComputedStyleForNode'
 cSSGetComputedStyleForNode :: Handle -> PCSSGetComputedStyleForNode -> IO CSSGetComputedStyleForNode
-cSSGetComputedStyleForNode handle params = sendReceiveCommandResult handle "CSS.getComputedStyleForNode" (Just params)
+cSSGetComputedStyleForNode handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'cSSGetComputedStyleForNode' command.
 data CSSGetComputedStyleForNode = CSSGetComputedStyleForNode {
@@ -962,9 +982,9 @@ data CSSGetComputedStyleForNode = CSSGetComputedStyleForNode {
 instance FromJSON  CSSGetComputedStyleForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
-instance Command CSSGetComputedStyleForNode where
-   commandName _ = "CSS.getComputedStyleForNode"
-
+instance Command PCSSGetComputedStyleForNode where
+    type CommandResponse PCSSGetComputedStyleForNode = CSSGetComputedStyleForNode
+    commandName _ = "CSS.getComputedStyleForNode"
 
 
 -- | Parameters of the 'cSSGetInlineStylesForNode' command.
@@ -981,10 +1001,10 @@ instance FromJSON  PCSSGetInlineStylesForNode where
 -- | Function for the 'CSS.getInlineStylesForNode' command.
 --   Returns the styles defined inline (explicitly in the "style" attribute and implicitly, using DOM
 --   attributes) for a DOM node identified by `nodeId`.
---   Parameters: 'PCSSGetInlineStylesForNode'
+--   Returns: 'PCSSGetInlineStylesForNode'
 --   Returns: 'CSSGetInlineStylesForNode'
 cSSGetInlineStylesForNode :: Handle -> PCSSGetInlineStylesForNode -> IO CSSGetInlineStylesForNode
-cSSGetInlineStylesForNode handle params = sendReceiveCommandResult handle "CSS.getInlineStylesForNode" (Just params)
+cSSGetInlineStylesForNode handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'cSSGetInlineStylesForNode' command.
 data CSSGetInlineStylesForNode = CSSGetInlineStylesForNode {
@@ -997,9 +1017,9 @@ data CSSGetInlineStylesForNode = CSSGetInlineStylesForNode {
 instance FromJSON  CSSGetInlineStylesForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
-instance Command CSSGetInlineStylesForNode where
-   commandName _ = "CSS.getInlineStylesForNode"
-
+instance Command PCSSGetInlineStylesForNode where
+    type CommandResponse PCSSGetInlineStylesForNode = CSSGetInlineStylesForNode
+    commandName _ = "CSS.getInlineStylesForNode"
 
 
 -- | Parameters of the 'cSSGetMatchedStylesForNode' command.
@@ -1015,10 +1035,10 @@ instance FromJSON  PCSSGetMatchedStylesForNode where
 
 -- | Function for the 'CSS.getMatchedStylesForNode' command.
 --   Returns requested styles for a DOM node identified by `nodeId`.
---   Parameters: 'PCSSGetMatchedStylesForNode'
+--   Returns: 'PCSSGetMatchedStylesForNode'
 --   Returns: 'CSSGetMatchedStylesForNode'
 cSSGetMatchedStylesForNode :: Handle -> PCSSGetMatchedStylesForNode -> IO CSSGetMatchedStylesForNode
-cSSGetMatchedStylesForNode handle params = sendReceiveCommandResult handle "CSS.getMatchedStylesForNode" (Just params)
+cSSGetMatchedStylesForNode handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'cSSGetMatchedStylesForNode' command.
 data CSSGetMatchedStylesForNode = CSSGetMatchedStylesForNode {
@@ -1041,16 +1061,20 @@ data CSSGetMatchedStylesForNode = CSSGetMatchedStylesForNode {
 instance FromJSON  CSSGetMatchedStylesForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
-instance Command CSSGetMatchedStylesForNode where
-   commandName _ = "CSS.getMatchedStylesForNode"
+instance Command PCSSGetMatchedStylesForNode where
+    type CommandResponse PCSSGetMatchedStylesForNode = CSSGetMatchedStylesForNode
+    commandName _ = "CSS.getMatchedStylesForNode"
 
 
+-- | Parameters of the 'cSSGetMediaQueries' command.
+data PCSSGetMediaQueries = PCSSGetMediaQueries
+instance ToJSON PCSSGetMediaQueries where toJSON _ = A.Null
 
 -- | Function for the 'CSS.getMediaQueries' command.
 --   Returns all media queries parsed by the rendering engine.
 --   Returns: 'CSSGetMediaQueries'
 cSSGetMediaQueries :: Handle -> IO CSSGetMediaQueries
-cSSGetMediaQueries handle = sendReceiveCommandResult handle "CSS.getMediaQueries" (Nothing :: Maybe ())
+cSSGetMediaQueries handle = sendReceiveCommandResult handle PCSSGetMediaQueries
 
 -- | Return type of the 'cSSGetMediaQueries' command.
 data CSSGetMediaQueries = CSSGetMediaQueries {
@@ -1060,9 +1084,9 @@ data CSSGetMediaQueries = CSSGetMediaQueries {
 instance FromJSON  CSSGetMediaQueries where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
-instance Command CSSGetMediaQueries where
-   commandName _ = "CSS.getMediaQueries"
-
+instance Command PCSSGetMediaQueries where
+    type CommandResponse PCSSGetMediaQueries = CSSGetMediaQueries
+    commandName _ = "CSS.getMediaQueries"
 
 
 -- | Parameters of the 'cSSGetPlatformFontsForNode' command.
@@ -1079,10 +1103,10 @@ instance FromJSON  PCSSGetPlatformFontsForNode where
 -- | Function for the 'CSS.getPlatformFontsForNode' command.
 --   Requests information about platform fonts which we used to render child TextNodes in the given
 --   node.
---   Parameters: 'PCSSGetPlatformFontsForNode'
+--   Returns: 'PCSSGetPlatformFontsForNode'
 --   Returns: 'CSSGetPlatformFontsForNode'
 cSSGetPlatformFontsForNode :: Handle -> PCSSGetPlatformFontsForNode -> IO CSSGetPlatformFontsForNode
-cSSGetPlatformFontsForNode handle params = sendReceiveCommandResult handle "CSS.getPlatformFontsForNode" (Just params)
+cSSGetPlatformFontsForNode handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'cSSGetPlatformFontsForNode' command.
 data CSSGetPlatformFontsForNode = CSSGetPlatformFontsForNode {
@@ -1093,9 +1117,9 @@ data CSSGetPlatformFontsForNode = CSSGetPlatformFontsForNode {
 instance FromJSON  CSSGetPlatformFontsForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
-instance Command CSSGetPlatformFontsForNode where
-   commandName _ = "CSS.getPlatformFontsForNode"
-
+instance Command PCSSGetPlatformFontsForNode where
+    type CommandResponse PCSSGetPlatformFontsForNode = CSSGetPlatformFontsForNode
+    commandName _ = "CSS.getPlatformFontsForNode"
 
 
 -- | Parameters of the 'cSSGetStyleSheetText' command.
@@ -1111,10 +1135,10 @@ instance FromJSON  PCSSGetStyleSheetText where
 
 -- | Function for the 'CSS.getStyleSheetText' command.
 --   Returns the current textual content for a stylesheet.
---   Parameters: 'PCSSGetStyleSheetText'
+--   Returns: 'PCSSGetStyleSheetText'
 --   Returns: 'CSSGetStyleSheetText'
 cSSGetStyleSheetText :: Handle -> PCSSGetStyleSheetText -> IO CSSGetStyleSheetText
-cSSGetStyleSheetText handle params = sendReceiveCommandResult handle "CSS.getStyleSheetText" (Just params)
+cSSGetStyleSheetText handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'cSSGetStyleSheetText' command.
 data CSSGetStyleSheetText = CSSGetStyleSheetText {
@@ -1125,9 +1149,9 @@ data CSSGetStyleSheetText = CSSGetStyleSheetText {
 instance FromJSON  CSSGetStyleSheetText where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command CSSGetStyleSheetText where
-   commandName _ = "CSS.getStyleSheetText"
-
+instance Command PCSSGetStyleSheetText where
+    type CommandResponse PCSSGetStyleSheetText = CSSGetStyleSheetText
+    commandName _ = "CSS.getStyleSheetText"
 
 
 -- | Parameters of the 'cSSGetLayersForNode' command.
@@ -1146,10 +1170,10 @@ instance FromJSON  PCSSGetLayersForNode where
 --   Given a DOM element identified by nodeId, getLayersForNode returns the root
 --   layer for the nearest ancestor document or shadow root. The layer root contains
 --   the full layer tree for the tree scope and their ordering.
---   Parameters: 'PCSSGetLayersForNode'
+--   Returns: 'PCSSGetLayersForNode'
 --   Returns: 'CSSGetLayersForNode'
 cSSGetLayersForNode :: Handle -> PCSSGetLayersForNode -> IO CSSGetLayersForNode
-cSSGetLayersForNode handle params = sendReceiveCommandResult handle "CSS.getLayersForNode" (Just params)
+cSSGetLayersForNode handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'cSSGetLayersForNode' command.
 data CSSGetLayersForNode = CSSGetLayersForNode {
@@ -1159,9 +1183,9 @@ data CSSGetLayersForNode = CSSGetLayersForNode {
 instance FromJSON  CSSGetLayersForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
-instance Command CSSGetLayersForNode where
-   commandName _ = "CSS.getLayersForNode"
-
+instance Command PCSSGetLayersForNode where
+    type CommandResponse PCSSGetLayersForNode = CSSGetLayersForNode
+    commandName _ = "CSS.getLayersForNode"
 
 
 -- | Parameters of the 'cSSTrackComputedStyleUpdates' command.
@@ -1182,16 +1206,24 @@ instance FromJSON  PCSSTrackComputedStyleUpdates where
 --   The changes to computed style properties are only tracked for nodes pushed to the front-end
 --   by the DOM agent. If no changes to the tracked properties occur after the node has been pushed
 --   to the front-end, no updates will be issued for the node.
---   Parameters: 'PCSSTrackComputedStyleUpdates'
+--   Returns: 'PCSSTrackComputedStyleUpdates'
 cSSTrackComputedStyleUpdates :: Handle -> PCSSTrackComputedStyleUpdates -> IO ()
-cSSTrackComputedStyleUpdates handle params = sendReceiveCommand handle "CSS.trackComputedStyleUpdates" (Just params)
+cSSTrackComputedStyleUpdates handle params = sendReceiveCommand handle params
 
+instance Command PCSSTrackComputedStyleUpdates where
+    type CommandResponse PCSSTrackComputedStyleUpdates = NoResponse
+    commandName _ = "CSS.trackComputedStyleUpdates"
+
+
+-- | Parameters of the 'cSSTakeComputedStyleUpdates' command.
+data PCSSTakeComputedStyleUpdates = PCSSTakeComputedStyleUpdates
+instance ToJSON PCSSTakeComputedStyleUpdates where toJSON _ = A.Null
 
 -- | Function for the 'CSS.takeComputedStyleUpdates' command.
 --   Polls the next batch of computed style updates.
 --   Returns: 'CSSTakeComputedStyleUpdates'
 cSSTakeComputedStyleUpdates :: Handle -> IO CSSTakeComputedStyleUpdates
-cSSTakeComputedStyleUpdates handle = sendReceiveCommandResult handle "CSS.takeComputedStyleUpdates" (Nothing :: Maybe ())
+cSSTakeComputedStyleUpdates handle = sendReceiveCommandResult handle PCSSTakeComputedStyleUpdates
 
 -- | Return type of the 'cSSTakeComputedStyleUpdates' command.
 data CSSTakeComputedStyleUpdates = CSSTakeComputedStyleUpdates {
@@ -1202,9 +1234,9 @@ data CSSTakeComputedStyleUpdates = CSSTakeComputedStyleUpdates {
 instance FromJSON  CSSTakeComputedStyleUpdates where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
-instance Command CSSTakeComputedStyleUpdates where
-   commandName _ = "CSS.takeComputedStyleUpdates"
-
+instance Command PCSSTakeComputedStyleUpdates where
+    type CommandResponse PCSSTakeComputedStyleUpdates = CSSTakeComputedStyleUpdates
+    commandName _ = "CSS.takeComputedStyleUpdates"
 
 
 -- | Parameters of the 'cSSSetEffectivePropertyValueForNode' command.
@@ -1224,9 +1256,13 @@ instance FromJSON  PCSSSetEffectivePropertyValueForNode where
 -- | Function for the 'CSS.setEffectivePropertyValueForNode' command.
 --   Find a rule with the given active property for the given node and set the new value for this
 --   property
---   Parameters: 'PCSSSetEffectivePropertyValueForNode'
+--   Returns: 'PCSSSetEffectivePropertyValueForNode'
 cSSSetEffectivePropertyValueForNode :: Handle -> PCSSSetEffectivePropertyValueForNode -> IO ()
-cSSSetEffectivePropertyValueForNode handle params = sendReceiveCommand handle "CSS.setEffectivePropertyValueForNode" (Just params)
+cSSSetEffectivePropertyValueForNode handle params = sendReceiveCommand handle params
+
+instance Command PCSSSetEffectivePropertyValueForNode where
+    type CommandResponse PCSSSetEffectivePropertyValueForNode = NoResponse
+    commandName _ = "CSS.setEffectivePropertyValueForNode"
 
 
 -- | Parameters of the 'cSSSetKeyframeKey' command.
@@ -1244,10 +1280,10 @@ instance FromJSON  PCSSSetKeyframeKey where
 
 -- | Function for the 'CSS.setKeyframeKey' command.
 --   Modifies the keyframe rule key text.
---   Parameters: 'PCSSSetKeyframeKey'
+--   Returns: 'PCSSSetKeyframeKey'
 --   Returns: 'CSSSetKeyframeKey'
 cSSSetKeyframeKey :: Handle -> PCSSSetKeyframeKey -> IO CSSSetKeyframeKey
-cSSSetKeyframeKey handle params = sendReceiveCommandResult handle "CSS.setKeyframeKey" (Just params)
+cSSSetKeyframeKey handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'cSSSetKeyframeKey' command.
 data CSSSetKeyframeKey = CSSSetKeyframeKey {
@@ -1258,9 +1294,9 @@ data CSSSetKeyframeKey = CSSSetKeyframeKey {
 instance FromJSON  CSSSetKeyframeKey where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
-instance Command CSSSetKeyframeKey where
-   commandName _ = "CSS.setKeyframeKey"
-
+instance Command PCSSSetKeyframeKey where
+    type CommandResponse PCSSSetKeyframeKey = CSSSetKeyframeKey
+    commandName _ = "CSS.setKeyframeKey"
 
 
 -- | Parameters of the 'cSSSetMediaText' command.
@@ -1278,10 +1314,10 @@ instance FromJSON  PCSSSetMediaText where
 
 -- | Function for the 'CSS.setMediaText' command.
 --   Modifies the rule selector.
---   Parameters: 'PCSSSetMediaText'
+--   Returns: 'PCSSSetMediaText'
 --   Returns: 'CSSSetMediaText'
 cSSSetMediaText :: Handle -> PCSSSetMediaText -> IO CSSSetMediaText
-cSSSetMediaText handle params = sendReceiveCommandResult handle "CSS.setMediaText" (Just params)
+cSSSetMediaText handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'cSSSetMediaText' command.
 data CSSSetMediaText = CSSSetMediaText {
@@ -1292,9 +1328,9 @@ data CSSSetMediaText = CSSSetMediaText {
 instance FromJSON  CSSSetMediaText where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
-instance Command CSSSetMediaText where
-   commandName _ = "CSS.setMediaText"
-
+instance Command PCSSSetMediaText where
+    type CommandResponse PCSSSetMediaText = CSSSetMediaText
+    commandName _ = "CSS.setMediaText"
 
 
 -- | Parameters of the 'cSSSetContainerQueryText' command.
@@ -1312,10 +1348,10 @@ instance FromJSON  PCSSSetContainerQueryText where
 
 -- | Function for the 'CSS.setContainerQueryText' command.
 --   Modifies the expression of a container query.
---   Parameters: 'PCSSSetContainerQueryText'
+--   Returns: 'PCSSSetContainerQueryText'
 --   Returns: 'CSSSetContainerQueryText'
 cSSSetContainerQueryText :: Handle -> PCSSSetContainerQueryText -> IO CSSSetContainerQueryText
-cSSSetContainerQueryText handle params = sendReceiveCommandResult handle "CSS.setContainerQueryText" (Just params)
+cSSSetContainerQueryText handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'cSSSetContainerQueryText' command.
 data CSSSetContainerQueryText = CSSSetContainerQueryText {
@@ -1326,9 +1362,9 @@ data CSSSetContainerQueryText = CSSSetContainerQueryText {
 instance FromJSON  CSSSetContainerQueryText where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
-instance Command CSSSetContainerQueryText where
-   commandName _ = "CSS.setContainerQueryText"
-
+instance Command PCSSSetContainerQueryText where
+    type CommandResponse PCSSSetContainerQueryText = CSSSetContainerQueryText
+    commandName _ = "CSS.setContainerQueryText"
 
 
 -- | Parameters of the 'cSSSetSupportsText' command.
@@ -1346,10 +1382,10 @@ instance FromJSON  PCSSSetSupportsText where
 
 -- | Function for the 'CSS.setSupportsText' command.
 --   Modifies the expression of a supports at-rule.
---   Parameters: 'PCSSSetSupportsText'
+--   Returns: 'PCSSSetSupportsText'
 --   Returns: 'CSSSetSupportsText'
 cSSSetSupportsText :: Handle -> PCSSSetSupportsText -> IO CSSSetSupportsText
-cSSSetSupportsText handle params = sendReceiveCommandResult handle "CSS.setSupportsText" (Just params)
+cSSSetSupportsText handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'cSSSetSupportsText' command.
 data CSSSetSupportsText = CSSSetSupportsText {
@@ -1360,9 +1396,9 @@ data CSSSetSupportsText = CSSSetSupportsText {
 instance FromJSON  CSSSetSupportsText where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
-instance Command CSSSetSupportsText where
-   commandName _ = "CSS.setSupportsText"
-
+instance Command PCSSSetSupportsText where
+    type CommandResponse PCSSSetSupportsText = CSSSetSupportsText
+    commandName _ = "CSS.setSupportsText"
 
 
 -- | Parameters of the 'cSSSetRuleSelector' command.
@@ -1380,10 +1416,10 @@ instance FromJSON  PCSSSetRuleSelector where
 
 -- | Function for the 'CSS.setRuleSelector' command.
 --   Modifies the rule selector.
---   Parameters: 'PCSSSetRuleSelector'
+--   Returns: 'PCSSSetRuleSelector'
 --   Returns: 'CSSSetRuleSelector'
 cSSSetRuleSelector :: Handle -> PCSSSetRuleSelector -> IO CSSSetRuleSelector
-cSSSetRuleSelector handle params = sendReceiveCommandResult handle "CSS.setRuleSelector" (Just params)
+cSSSetRuleSelector handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'cSSSetRuleSelector' command.
 data CSSSetRuleSelector = CSSSetRuleSelector {
@@ -1394,9 +1430,9 @@ data CSSSetRuleSelector = CSSSetRuleSelector {
 instance FromJSON  CSSSetRuleSelector where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
-instance Command CSSSetRuleSelector where
-   commandName _ = "CSS.setRuleSelector"
-
+instance Command PCSSSetRuleSelector where
+    type CommandResponse PCSSSetRuleSelector = CSSSetRuleSelector
+    commandName _ = "CSS.setRuleSelector"
 
 
 -- | Parameters of the 'cSSSetStyleSheetText' command.
@@ -1413,10 +1449,10 @@ instance FromJSON  PCSSSetStyleSheetText where
 
 -- | Function for the 'CSS.setStyleSheetText' command.
 --   Sets the new stylesheet text.
---   Parameters: 'PCSSSetStyleSheetText'
+--   Returns: 'PCSSSetStyleSheetText'
 --   Returns: 'CSSSetStyleSheetText'
 cSSSetStyleSheetText :: Handle -> PCSSSetStyleSheetText -> IO CSSSetStyleSheetText
-cSSSetStyleSheetText handle params = sendReceiveCommandResult handle "CSS.setStyleSheetText" (Just params)
+cSSSetStyleSheetText handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'cSSSetStyleSheetText' command.
 data CSSSetStyleSheetText = CSSSetStyleSheetText {
@@ -1427,9 +1463,9 @@ data CSSSetStyleSheetText = CSSSetStyleSheetText {
 instance FromJSON  CSSSetStyleSheetText where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command CSSSetStyleSheetText where
-   commandName _ = "CSS.setStyleSheetText"
-
+instance Command PCSSSetStyleSheetText where
+    type CommandResponse PCSSSetStyleSheetText = CSSSetStyleSheetText
+    commandName _ = "CSS.setStyleSheetText"
 
 
 -- | Parameters of the 'cSSSetStyleTexts' command.
@@ -1445,10 +1481,10 @@ instance FromJSON  PCSSSetStyleTexts where
 
 -- | Function for the 'CSS.setStyleTexts' command.
 --   Applies specified style edits one after another in the given order.
---   Parameters: 'PCSSSetStyleTexts'
+--   Returns: 'PCSSSetStyleTexts'
 --   Returns: 'CSSSetStyleTexts'
 cSSSetStyleTexts :: Handle -> PCSSSetStyleTexts -> IO CSSSetStyleTexts
-cSSSetStyleTexts handle params = sendReceiveCommandResult handle "CSS.setStyleTexts" (Just params)
+cSSSetStyleTexts handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'cSSSetStyleTexts' command.
 data CSSSetStyleTexts = CSSSetStyleTexts {
@@ -1459,23 +1495,35 @@ data CSSSetStyleTexts = CSSSetStyleTexts {
 instance FromJSON  CSSSetStyleTexts where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
-instance Command CSSSetStyleTexts where
-   commandName _ = "CSS.setStyleTexts"
+instance Command PCSSSetStyleTexts where
+    type CommandResponse PCSSSetStyleTexts = CSSSetStyleTexts
+    commandName _ = "CSS.setStyleTexts"
 
 
+-- | Parameters of the 'cSSStartRuleUsageTracking' command.
+data PCSSStartRuleUsageTracking = PCSSStartRuleUsageTracking
+instance ToJSON PCSSStartRuleUsageTracking where toJSON _ = A.Null
 
 -- | Function for the 'CSS.startRuleUsageTracking' command.
 --   Enables the selector recording.
 cSSStartRuleUsageTracking :: Handle -> IO ()
-cSSStartRuleUsageTracking handle = sendReceiveCommand handle "CSS.startRuleUsageTracking" (Nothing :: Maybe ())
+cSSStartRuleUsageTracking handle = sendReceiveCommand handle PCSSStartRuleUsageTracking
 
+instance Command PCSSStartRuleUsageTracking where
+    type CommandResponse PCSSStartRuleUsageTracking = NoResponse
+    commandName _ = "CSS.startRuleUsageTracking"
+
+
+-- | Parameters of the 'cSSStopRuleUsageTracking' command.
+data PCSSStopRuleUsageTracking = PCSSStopRuleUsageTracking
+instance ToJSON PCSSStopRuleUsageTracking where toJSON _ = A.Null
 
 -- | Function for the 'CSS.stopRuleUsageTracking' command.
 --   Stop tracking rule usage and return the list of rules that were used since last call to
 --   `takeCoverageDelta` (or since start of coverage instrumentation)
 --   Returns: 'CSSStopRuleUsageTracking'
 cSSStopRuleUsageTracking :: Handle -> IO CSSStopRuleUsageTracking
-cSSStopRuleUsageTracking handle = sendReceiveCommandResult handle "CSS.stopRuleUsageTracking" (Nothing :: Maybe ())
+cSSStopRuleUsageTracking handle = sendReceiveCommandResult handle PCSSStopRuleUsageTracking
 
 -- | Return type of the 'cSSStopRuleUsageTracking' command.
 data CSSStopRuleUsageTracking = CSSStopRuleUsageTracking {
@@ -1485,17 +1533,21 @@ data CSSStopRuleUsageTracking = CSSStopRuleUsageTracking {
 instance FromJSON  CSSStopRuleUsageTracking where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
-instance Command CSSStopRuleUsageTracking where
-   commandName _ = "CSS.stopRuleUsageTracking"
+instance Command PCSSStopRuleUsageTracking where
+    type CommandResponse PCSSStopRuleUsageTracking = CSSStopRuleUsageTracking
+    commandName _ = "CSS.stopRuleUsageTracking"
 
 
+-- | Parameters of the 'cSSTakeCoverageDelta' command.
+data PCSSTakeCoverageDelta = PCSSTakeCoverageDelta
+instance ToJSON PCSSTakeCoverageDelta where toJSON _ = A.Null
 
 -- | Function for the 'CSS.takeCoverageDelta' command.
 --   Obtain list of rules that became used since last call to this method (or since start of coverage
 --   instrumentation)
 --   Returns: 'CSSTakeCoverageDelta'
 cSSTakeCoverageDelta :: Handle -> IO CSSTakeCoverageDelta
-cSSTakeCoverageDelta handle = sendReceiveCommandResult handle "CSS.takeCoverageDelta" (Nothing :: Maybe ())
+cSSTakeCoverageDelta handle = sendReceiveCommandResult handle PCSSTakeCoverageDelta
 
 -- | Return type of the 'cSSTakeCoverageDelta' command.
 data CSSTakeCoverageDelta = CSSTakeCoverageDelta {
@@ -1507,9 +1559,9 @@ data CSSTakeCoverageDelta = CSSTakeCoverageDelta {
 instance FromJSON  CSSTakeCoverageDelta where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command CSSTakeCoverageDelta where
-   commandName _ = "CSS.takeCoverageDelta"
-
+instance Command PCSSTakeCoverageDelta where
+    type CommandResponse PCSSTakeCoverageDelta = CSSTakeCoverageDelta
+    commandName _ = "CSS.takeCoverageDelta"
 
 
 -- | Parameters of the 'cSSSetLocalFontsEnabled' command.
@@ -1526,9 +1578,13 @@ instance FromJSON  PCSSSetLocalFontsEnabled where
 
 -- | Function for the 'CSS.setLocalFontsEnabled' command.
 --   Enables/disables rendering of local CSS fonts (enabled by default).
---   Parameters: 'PCSSSetLocalFontsEnabled'
+--   Returns: 'PCSSSetLocalFontsEnabled'
 cSSSetLocalFontsEnabled :: Handle -> PCSSSetLocalFontsEnabled -> IO ()
-cSSSetLocalFontsEnabled handle params = sendReceiveCommand handle "CSS.setLocalFontsEnabled" (Just params)
+cSSSetLocalFontsEnabled handle params = sendReceiveCommand handle params
+
+instance Command PCSSSetLocalFontsEnabled where
+    type CommandResponse PCSSSetLocalFontsEnabled = NoResponse
+    commandName _ = "CSS.setLocalFontsEnabled"
 
 
 

@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -43,7 +44,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 
@@ -83,9 +83,13 @@ instance FromJSON  PTetheringBind where
 
 -- | Function for the 'Tethering.bind' command.
 --   Request browser port binding.
---   Parameters: 'PTetheringBind'
+--   Returns: 'PTetheringBind'
 tetheringBind :: Handle -> PTetheringBind -> IO ()
-tetheringBind handle params = sendReceiveCommand handle "Tethering.bind" (Just params)
+tetheringBind handle params = sendReceiveCommand handle params
+
+instance Command PTetheringBind where
+    type CommandResponse PTetheringBind = NoResponse
+    commandName _ = "Tethering.bind"
 
 
 -- | Parameters of the 'tetheringUnbind' command.
@@ -102,9 +106,13 @@ instance FromJSON  PTetheringUnbind where
 
 -- | Function for the 'Tethering.unbind' command.
 --   Request browser port unbinding.
---   Parameters: 'PTetheringUnbind'
+--   Returns: 'PTetheringUnbind'
 tetheringUnbind :: Handle -> PTetheringUnbind -> IO ()
-tetheringUnbind handle params = sendReceiveCommand handle "Tethering.unbind" (Just params)
+tetheringUnbind handle params = sendReceiveCommand handle params
+
+instance Command PTetheringUnbind where
+    type CommandResponse PTetheringUnbind = NoResponse
+    commandName _ = "Tethering.unbind"
 
 
 

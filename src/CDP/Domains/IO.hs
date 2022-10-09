@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -43,7 +44,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 import CDP.Domains.Runtime as Runtime
@@ -72,9 +72,13 @@ instance FromJSON  PIOClose where
 
 -- | Function for the 'IO.close' command.
 --   Close the stream, discard any temporary backing storage.
---   Parameters: 'PIOClose'
+--   Returns: 'PIOClose'
 iOClose :: Handle -> PIOClose -> IO ()
-iOClose handle params = sendReceiveCommand handle "IO.close" (Just params)
+iOClose handle params = sendReceiveCommand handle params
+
+instance Command PIOClose where
+    type CommandResponse PIOClose = NoResponse
+    commandName _ = "IO.close"
 
 
 -- | Parameters of the 'iORead' command.
@@ -96,10 +100,10 @@ instance FromJSON  PIORead where
 
 -- | Function for the 'IO.read' command.
 --   Read a chunk of the stream
---   Parameters: 'PIORead'
+--   Returns: 'PIORead'
 --   Returns: 'IORead'
 iORead :: Handle -> PIORead -> IO IORead
-iORead handle params = sendReceiveCommandResult handle "IO.read" (Just params)
+iORead handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'iORead' command.
 data IORead = IORead {
@@ -114,9 +118,9 @@ data IORead = IORead {
 instance FromJSON  IORead where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 6 }
 
-instance Command IORead where
-   commandName _ = "IO.read"
-
+instance Command PIORead where
+    type CommandResponse PIORead = IORead
+    commandName _ = "IO.read"
 
 
 -- | Parameters of the 'iOResolveBlob' command.
@@ -133,10 +137,10 @@ instance FromJSON  PIOResolveBlob where
 
 -- | Function for the 'IO.resolveBlob' command.
 --   Return UUID of Blob object specified by a remote object id.
---   Parameters: 'PIOResolveBlob'
+--   Returns: 'PIOResolveBlob'
 --   Returns: 'IOResolveBlob'
 iOResolveBlob :: Handle -> PIOResolveBlob -> IO IOResolveBlob
-iOResolveBlob handle params = sendReceiveCommandResult handle "IO.resolveBlob" (Just params)
+iOResolveBlob handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'iOResolveBlob' command.
 data IOResolveBlob = IOResolveBlob {
@@ -147,9 +151,9 @@ data IOResolveBlob = IOResolveBlob {
 instance FromJSON  IOResolveBlob where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 }
 
-instance Command IOResolveBlob where
-   commandName _ = "IO.resolveBlob"
-
+instance Command PIOResolveBlob where
+    type CommandResponse PIOResolveBlob = IOResolveBlob
+    commandName _ = "IO.resolveBlob"
 
 
 

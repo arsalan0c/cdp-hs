@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -43,7 +44,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 
@@ -152,21 +152,41 @@ instance FromJSON  PDOMStorageClear where
 
 -- | Function for the 'DOMStorage.clear' command.
 --   
---   Parameters: 'PDOMStorageClear'
+--   Returns: 'PDOMStorageClear'
 dOMStorageClear :: Handle -> PDOMStorageClear -> IO ()
-dOMStorageClear handle params = sendReceiveCommand handle "DOMStorage.clear" (Just params)
+dOMStorageClear handle params = sendReceiveCommand handle params
 
+instance Command PDOMStorageClear where
+    type CommandResponse PDOMStorageClear = NoResponse
+    commandName _ = "DOMStorage.clear"
+
+
+-- | Parameters of the 'dOMStorageDisable' command.
+data PDOMStorageDisable = PDOMStorageDisable
+instance ToJSON PDOMStorageDisable where toJSON _ = A.Null
 
 -- | Function for the 'DOMStorage.disable' command.
 --   Disables storage tracking, prevents storage events from being sent to the client.
 dOMStorageDisable :: Handle -> IO ()
-dOMStorageDisable handle = sendReceiveCommand handle "DOMStorage.disable" (Nothing :: Maybe ())
+dOMStorageDisable handle = sendReceiveCommand handle PDOMStorageDisable
 
+instance Command PDOMStorageDisable where
+    type CommandResponse PDOMStorageDisable = NoResponse
+    commandName _ = "DOMStorage.disable"
+
+
+-- | Parameters of the 'dOMStorageEnable' command.
+data PDOMStorageEnable = PDOMStorageEnable
+instance ToJSON PDOMStorageEnable where toJSON _ = A.Null
 
 -- | Function for the 'DOMStorage.enable' command.
 --   Enables storage tracking, storage events will now be delivered to the client.
 dOMStorageEnable :: Handle -> IO ()
-dOMStorageEnable handle = sendReceiveCommand handle "DOMStorage.enable" (Nothing :: Maybe ())
+dOMStorageEnable handle = sendReceiveCommand handle PDOMStorageEnable
+
+instance Command PDOMStorageEnable where
+    type CommandResponse PDOMStorageEnable = NoResponse
+    commandName _ = "DOMStorage.enable"
 
 
 -- | Parameters of the 'dOMStorageGetDOMStorageItems' command.
@@ -182,10 +202,10 @@ instance FromJSON  PDOMStorageGetDOMStorageItems where
 
 -- | Function for the 'DOMStorage.getDOMStorageItems' command.
 --   
---   Parameters: 'PDOMStorageGetDOMStorageItems'
+--   Returns: 'PDOMStorageGetDOMStorageItems'
 --   Returns: 'DOMStorageGetDOMStorageItems'
 dOMStorageGetDOMStorageItems :: Handle -> PDOMStorageGetDOMStorageItems -> IO DOMStorageGetDOMStorageItems
-dOMStorageGetDOMStorageItems handle params = sendReceiveCommandResult handle "DOMStorage.getDOMStorageItems" (Just params)
+dOMStorageGetDOMStorageItems handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMStorageGetDOMStorageItems' command.
 data DOMStorageGetDOMStorageItems = DOMStorageGetDOMStorageItems {
@@ -195,9 +215,9 @@ data DOMStorageGetDOMStorageItems = DOMStorageGetDOMStorageItems {
 instance FromJSON  DOMStorageGetDOMStorageItems where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
-instance Command DOMStorageGetDOMStorageItems where
-   commandName _ = "DOMStorage.getDOMStorageItems"
-
+instance Command PDOMStorageGetDOMStorageItems where
+    type CommandResponse PDOMStorageGetDOMStorageItems = DOMStorageGetDOMStorageItems
+    commandName _ = "DOMStorage.getDOMStorageItems"
 
 
 -- | Parameters of the 'dOMStorageRemoveDOMStorageItem' command.
@@ -214,9 +234,13 @@ instance FromJSON  PDOMStorageRemoveDOMStorageItem where
 
 -- | Function for the 'DOMStorage.removeDOMStorageItem' command.
 --   
---   Parameters: 'PDOMStorageRemoveDOMStorageItem'
+--   Returns: 'PDOMStorageRemoveDOMStorageItem'
 dOMStorageRemoveDOMStorageItem :: Handle -> PDOMStorageRemoveDOMStorageItem -> IO ()
-dOMStorageRemoveDOMStorageItem handle params = sendReceiveCommand handle "DOMStorage.removeDOMStorageItem" (Just params)
+dOMStorageRemoveDOMStorageItem handle params = sendReceiveCommand handle params
+
+instance Command PDOMStorageRemoveDOMStorageItem where
+    type CommandResponse PDOMStorageRemoveDOMStorageItem = NoResponse
+    commandName _ = "DOMStorage.removeDOMStorageItem"
 
 
 -- | Parameters of the 'dOMStorageSetDOMStorageItem' command.
@@ -234,9 +258,13 @@ instance FromJSON  PDOMStorageSetDOMStorageItem where
 
 -- | Function for the 'DOMStorage.setDOMStorageItem' command.
 --   
---   Parameters: 'PDOMStorageSetDOMStorageItem'
+--   Returns: 'PDOMStorageSetDOMStorageItem'
 dOMStorageSetDOMStorageItem :: Handle -> PDOMStorageSetDOMStorageItem -> IO ()
-dOMStorageSetDOMStorageItem handle params = sendReceiveCommand handle "DOMStorage.setDOMStorageItem" (Just params)
+dOMStorageSetDOMStorageItem handle params = sendReceiveCommand handle params
+
+instance Command PDOMStorageSetDOMStorageItem where
+    type CommandResponse PDOMStorageSetDOMStorageItem = NoResponse
+    commandName _ = "DOMStorage.setDOMStorageItem"
 
 
 

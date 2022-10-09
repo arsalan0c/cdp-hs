@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -41,7 +42,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 
@@ -83,10 +83,18 @@ instance Event PerformanceMetrics where
 
 
 
+-- | Parameters of the 'performanceDisable' command.
+data PPerformanceDisable = PPerformanceDisable
+instance ToJSON PPerformanceDisable where toJSON _ = A.Null
+
 -- | Function for the 'Performance.disable' command.
 --   Disable collecting and reporting metrics.
 performanceDisable :: Handle -> IO ()
-performanceDisable handle = sendReceiveCommand handle "Performance.disable" (Nothing :: Maybe ())
+performanceDisable handle = sendReceiveCommand handle PPerformanceDisable
+
+instance Command PPerformanceDisable where
+    type CommandResponse PPerformanceDisable = NoResponse
+    commandName _ = "Performance.disable"
 
 
 -- | Parameters of the 'performanceEnable' command.
@@ -120,16 +128,24 @@ instance FromJSON  PPerformanceEnable where
 
 -- | Function for the 'Performance.enable' command.
 --   Enable collecting and reporting metrics.
---   Parameters: 'PPerformanceEnable'
+--   Returns: 'PPerformanceEnable'
 performanceEnable :: Handle -> PPerformanceEnable -> IO ()
-performanceEnable handle params = sendReceiveCommand handle "Performance.enable" (Just params)
+performanceEnable handle params = sendReceiveCommand handle params
 
+instance Command PPerformanceEnable where
+    type CommandResponse PPerformanceEnable = NoResponse
+    commandName _ = "Performance.enable"
+
+
+-- | Parameters of the 'performanceGetMetrics' command.
+data PPerformanceGetMetrics = PPerformanceGetMetrics
+instance ToJSON PPerformanceGetMetrics where toJSON _ = A.Null
 
 -- | Function for the 'Performance.getMetrics' command.
 --   Retrieve current values of run-time metrics.
 --   Returns: 'PerformanceGetMetrics'
 performanceGetMetrics :: Handle -> IO PerformanceGetMetrics
-performanceGetMetrics handle = sendReceiveCommandResult handle "Performance.getMetrics" (Nothing :: Maybe ())
+performanceGetMetrics handle = sendReceiveCommandResult handle PPerformanceGetMetrics
 
 -- | Return type of the 'performanceGetMetrics' command.
 data PerformanceGetMetrics = PerformanceGetMetrics {
@@ -140,9 +156,9 @@ data PerformanceGetMetrics = PerformanceGetMetrics {
 instance FromJSON  PerformanceGetMetrics where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
-instance Command PerformanceGetMetrics where
-   commandName _ = "Performance.getMetrics"
-
+instance Command PPerformanceGetMetrics where
+    type CommandResponse PPerformanceGetMetrics = PerformanceGetMetrics
+    commandName _ = "Performance.getMetrics"
 
 
 

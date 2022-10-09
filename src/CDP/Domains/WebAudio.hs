@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -44,7 +45,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 
@@ -462,16 +462,32 @@ instance Event WebAudioNodeParamDisconnected where
 
 
 
+-- | Parameters of the 'webAudioEnable' command.
+data PWebAudioEnable = PWebAudioEnable
+instance ToJSON PWebAudioEnable where toJSON _ = A.Null
+
 -- | Function for the 'WebAudio.enable' command.
 --   Enables the WebAudio domain and starts sending context lifetime events.
 webAudioEnable :: Handle -> IO ()
-webAudioEnable handle = sendReceiveCommand handle "WebAudio.enable" (Nothing :: Maybe ())
+webAudioEnable handle = sendReceiveCommand handle PWebAudioEnable
 
+instance Command PWebAudioEnable where
+    type CommandResponse PWebAudioEnable = NoResponse
+    commandName _ = "WebAudio.enable"
+
+
+-- | Parameters of the 'webAudioDisable' command.
+data PWebAudioDisable = PWebAudioDisable
+instance ToJSON PWebAudioDisable where toJSON _ = A.Null
 
 -- | Function for the 'WebAudio.disable' command.
 --   Disables the WebAudio domain.
 webAudioDisable :: Handle -> IO ()
-webAudioDisable handle = sendReceiveCommand handle "WebAudio.disable" (Nothing :: Maybe ())
+webAudioDisable handle = sendReceiveCommand handle PWebAudioDisable
+
+instance Command PWebAudioDisable where
+    type CommandResponse PWebAudioDisable = NoResponse
+    commandName _ = "WebAudio.disable"
 
 
 -- | Parameters of the 'webAudioGetRealtimeData' command.
@@ -487,10 +503,10 @@ instance FromJSON  PWebAudioGetRealtimeData where
 
 -- | Function for the 'WebAudio.getRealtimeData' command.
 --   Fetch the realtime data from the registered contexts.
---   Parameters: 'PWebAudioGetRealtimeData'
+--   Returns: 'PWebAudioGetRealtimeData'
 --   Returns: 'WebAudioGetRealtimeData'
 webAudioGetRealtimeData :: Handle -> PWebAudioGetRealtimeData -> IO WebAudioGetRealtimeData
-webAudioGetRealtimeData handle params = sendReceiveCommandResult handle "WebAudio.getRealtimeData" (Just params)
+webAudioGetRealtimeData handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'webAudioGetRealtimeData' command.
 data WebAudioGetRealtimeData = WebAudioGetRealtimeData {
@@ -500,9 +516,9 @@ data WebAudioGetRealtimeData = WebAudioGetRealtimeData {
 instance FromJSON  WebAudioGetRealtimeData where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
-instance Command WebAudioGetRealtimeData where
-   commandName _ = "WebAudio.getRealtimeData"
-
+instance Command PWebAudioGetRealtimeData where
+    type CommandResponse PWebAudioGetRealtimeData = WebAudioGetRealtimeData
+    commandName _ = "WebAudio.getRealtimeData"
 
 
 

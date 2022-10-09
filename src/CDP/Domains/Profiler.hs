@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -41,7 +42,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 import CDP.Domains.Debugger as Debugger
@@ -274,22 +274,42 @@ instance Event ProfilerPreciseCoverageDeltaUpdate where
 
 
 
+-- | Parameters of the 'profilerDisable' command.
+data PProfilerDisable = PProfilerDisable
+instance ToJSON PProfilerDisable where toJSON _ = A.Null
+
 -- | Function for the 'Profiler.disable' command.
 profilerDisable :: Handle -> IO ()
-profilerDisable handle = sendReceiveCommand handle "Profiler.disable" (Nothing :: Maybe ())
+profilerDisable handle = sendReceiveCommand handle PProfilerDisable
 
+instance Command PProfilerDisable where
+    type CommandResponse PProfilerDisable = NoResponse
+    commandName _ = "Profiler.disable"
+
+
+-- | Parameters of the 'profilerEnable' command.
+data PProfilerEnable = PProfilerEnable
+instance ToJSON PProfilerEnable where toJSON _ = A.Null
 
 -- | Function for the 'Profiler.enable' command.
 profilerEnable :: Handle -> IO ()
-profilerEnable handle = sendReceiveCommand handle "Profiler.enable" (Nothing :: Maybe ())
+profilerEnable handle = sendReceiveCommand handle PProfilerEnable
 
+instance Command PProfilerEnable where
+    type CommandResponse PProfilerEnable = NoResponse
+    commandName _ = "Profiler.enable"
+
+
+-- | Parameters of the 'profilerGetBestEffortCoverage' command.
+data PProfilerGetBestEffortCoverage = PProfilerGetBestEffortCoverage
+instance ToJSON PProfilerGetBestEffortCoverage where toJSON _ = A.Null
 
 -- | Function for the 'Profiler.getBestEffortCoverage' command.
 --   Collect coverage data for the current isolate. The coverage data may be incomplete due to
 --   garbage collection.
 --   Returns: 'ProfilerGetBestEffortCoverage'
 profilerGetBestEffortCoverage :: Handle -> IO ProfilerGetBestEffortCoverage
-profilerGetBestEffortCoverage handle = sendReceiveCommandResult handle "Profiler.getBestEffortCoverage" (Nothing :: Maybe ())
+profilerGetBestEffortCoverage handle = sendReceiveCommandResult handle PProfilerGetBestEffortCoverage
 
 -- | Return type of the 'profilerGetBestEffortCoverage' command.
 data ProfilerGetBestEffortCoverage = ProfilerGetBestEffortCoverage {
@@ -300,9 +320,9 @@ data ProfilerGetBestEffortCoverage = ProfilerGetBestEffortCoverage {
 instance FromJSON  ProfilerGetBestEffortCoverage where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
-instance Command ProfilerGetBestEffortCoverage where
-   commandName _ = "Profiler.getBestEffortCoverage"
-
+instance Command PProfilerGetBestEffortCoverage where
+    type CommandResponse PProfilerGetBestEffortCoverage = ProfilerGetBestEffortCoverage
+    commandName _ = "Profiler.getBestEffortCoverage"
 
 
 -- | Parameters of the 'profilerSetSamplingInterval' command.
@@ -319,14 +339,26 @@ instance FromJSON  PProfilerSetSamplingInterval where
 
 -- | Function for the 'Profiler.setSamplingInterval' command.
 --   Changes CPU profiler sampling interval. Must be called before CPU profiles recording started.
---   Parameters: 'PProfilerSetSamplingInterval'
+--   Returns: 'PProfilerSetSamplingInterval'
 profilerSetSamplingInterval :: Handle -> PProfilerSetSamplingInterval -> IO ()
-profilerSetSamplingInterval handle params = sendReceiveCommand handle "Profiler.setSamplingInterval" (Just params)
+profilerSetSamplingInterval handle params = sendReceiveCommand handle params
 
+instance Command PProfilerSetSamplingInterval where
+    type CommandResponse PProfilerSetSamplingInterval = NoResponse
+    commandName _ = "Profiler.setSamplingInterval"
+
+
+-- | Parameters of the 'profilerStart' command.
+data PProfilerStart = PProfilerStart
+instance ToJSON PProfilerStart where toJSON _ = A.Null
 
 -- | Function for the 'Profiler.start' command.
 profilerStart :: Handle -> IO ()
-profilerStart handle = sendReceiveCommand handle "Profiler.start" (Nothing :: Maybe ())
+profilerStart handle = sendReceiveCommand handle PProfilerStart
+
+instance Command PProfilerStart where
+    type CommandResponse PProfilerStart = NoResponse
+    commandName _ = "Profiler.start"
 
 
 -- | Parameters of the 'profilerStartPreciseCoverage' command.
@@ -349,10 +381,10 @@ instance FromJSON  PProfilerStartPreciseCoverage where
 --   Enable precise code coverage. Coverage data for JavaScript executed before enabling precise code
 --   coverage may be incomplete. Enabling prevents running optimized code and resets execution
 --   counters.
---   Parameters: 'PProfilerStartPreciseCoverage'
+--   Returns: 'PProfilerStartPreciseCoverage'
 --   Returns: 'ProfilerStartPreciseCoverage'
 profilerStartPreciseCoverage :: Handle -> PProfilerStartPreciseCoverage -> IO ProfilerStartPreciseCoverage
-profilerStartPreciseCoverage handle params = sendReceiveCommandResult handle "Profiler.startPreciseCoverage" (Just params)
+profilerStartPreciseCoverage handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'profilerStartPreciseCoverage' command.
 data ProfilerStartPreciseCoverage = ProfilerStartPreciseCoverage {
@@ -363,22 +395,34 @@ data ProfilerStartPreciseCoverage = ProfilerStartPreciseCoverage {
 instance FromJSON  ProfilerStartPreciseCoverage where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
-instance Command ProfilerStartPreciseCoverage where
-   commandName _ = "Profiler.startPreciseCoverage"
+instance Command PProfilerStartPreciseCoverage where
+    type CommandResponse PProfilerStartPreciseCoverage = ProfilerStartPreciseCoverage
+    commandName _ = "Profiler.startPreciseCoverage"
 
 
+-- | Parameters of the 'profilerStartTypeProfile' command.
+data PProfilerStartTypeProfile = PProfilerStartTypeProfile
+instance ToJSON PProfilerStartTypeProfile where toJSON _ = A.Null
 
 -- | Function for the 'Profiler.startTypeProfile' command.
 --   Enable type profile.
 profilerStartTypeProfile :: Handle -> IO ()
-profilerStartTypeProfile handle = sendReceiveCommand handle "Profiler.startTypeProfile" (Nothing :: Maybe ())
+profilerStartTypeProfile handle = sendReceiveCommand handle PProfilerStartTypeProfile
 
+instance Command PProfilerStartTypeProfile where
+    type CommandResponse PProfilerStartTypeProfile = NoResponse
+    commandName _ = "Profiler.startTypeProfile"
+
+
+-- | Parameters of the 'profilerStop' command.
+data PProfilerStop = PProfilerStop
+instance ToJSON PProfilerStop where toJSON _ = A.Null
 
 -- | Function for the 'Profiler.stop' command.
 --   
 --   Returns: 'ProfilerStop'
 profilerStop :: Handle -> IO ProfilerStop
-profilerStop handle = sendReceiveCommandResult handle "Profiler.stop" (Nothing :: Maybe ())
+profilerStop handle = sendReceiveCommandResult handle PProfilerStop
 
 -- | Return type of the 'profilerStop' command.
 data ProfilerStop = ProfilerStop {
@@ -389,30 +433,50 @@ data ProfilerStop = ProfilerStop {
 instance FromJSON  ProfilerStop where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 }
 
-instance Command ProfilerStop where
-   commandName _ = "Profiler.stop"
+instance Command PProfilerStop where
+    type CommandResponse PProfilerStop = ProfilerStop
+    commandName _ = "Profiler.stop"
 
 
+-- | Parameters of the 'profilerStopPreciseCoverage' command.
+data PProfilerStopPreciseCoverage = PProfilerStopPreciseCoverage
+instance ToJSON PProfilerStopPreciseCoverage where toJSON _ = A.Null
 
 -- | Function for the 'Profiler.stopPreciseCoverage' command.
 --   Disable precise code coverage. Disabling releases unnecessary execution count records and allows
 --   executing optimized code.
 profilerStopPreciseCoverage :: Handle -> IO ()
-profilerStopPreciseCoverage handle = sendReceiveCommand handle "Profiler.stopPreciseCoverage" (Nothing :: Maybe ())
+profilerStopPreciseCoverage handle = sendReceiveCommand handle PProfilerStopPreciseCoverage
 
+instance Command PProfilerStopPreciseCoverage where
+    type CommandResponse PProfilerStopPreciseCoverage = NoResponse
+    commandName _ = "Profiler.stopPreciseCoverage"
+
+
+-- | Parameters of the 'profilerStopTypeProfile' command.
+data PProfilerStopTypeProfile = PProfilerStopTypeProfile
+instance ToJSON PProfilerStopTypeProfile where toJSON _ = A.Null
 
 -- | Function for the 'Profiler.stopTypeProfile' command.
 --   Disable type profile. Disabling releases type profile data collected so far.
 profilerStopTypeProfile :: Handle -> IO ()
-profilerStopTypeProfile handle = sendReceiveCommand handle "Profiler.stopTypeProfile" (Nothing :: Maybe ())
+profilerStopTypeProfile handle = sendReceiveCommand handle PProfilerStopTypeProfile
 
+instance Command PProfilerStopTypeProfile where
+    type CommandResponse PProfilerStopTypeProfile = NoResponse
+    commandName _ = "Profiler.stopTypeProfile"
+
+
+-- | Parameters of the 'profilerTakePreciseCoverage' command.
+data PProfilerTakePreciseCoverage = PProfilerTakePreciseCoverage
+instance ToJSON PProfilerTakePreciseCoverage where toJSON _ = A.Null
 
 -- | Function for the 'Profiler.takePreciseCoverage' command.
 --   Collect coverage data for the current isolate, and resets execution counters. Precise code
 --   coverage needs to have started.
 --   Returns: 'ProfilerTakePreciseCoverage'
 profilerTakePreciseCoverage :: Handle -> IO ProfilerTakePreciseCoverage
-profilerTakePreciseCoverage handle = sendReceiveCommandResult handle "Profiler.takePreciseCoverage" (Nothing :: Maybe ())
+profilerTakePreciseCoverage handle = sendReceiveCommandResult handle PProfilerTakePreciseCoverage
 
 -- | Return type of the 'profilerTakePreciseCoverage' command.
 data ProfilerTakePreciseCoverage = ProfilerTakePreciseCoverage {
@@ -425,16 +489,20 @@ data ProfilerTakePreciseCoverage = ProfilerTakePreciseCoverage {
 instance FromJSON  ProfilerTakePreciseCoverage where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
-instance Command ProfilerTakePreciseCoverage where
-   commandName _ = "Profiler.takePreciseCoverage"
+instance Command PProfilerTakePreciseCoverage where
+    type CommandResponse PProfilerTakePreciseCoverage = ProfilerTakePreciseCoverage
+    commandName _ = "Profiler.takePreciseCoverage"
 
 
+-- | Parameters of the 'profilerTakeTypeProfile' command.
+data PProfilerTakeTypeProfile = PProfilerTakeTypeProfile
+instance ToJSON PProfilerTakeTypeProfile where toJSON _ = A.Null
 
 -- | Function for the 'Profiler.takeTypeProfile' command.
 --   Collect type profile.
 --   Returns: 'ProfilerTakeTypeProfile'
 profilerTakeTypeProfile :: Handle -> IO ProfilerTakeTypeProfile
-profilerTakeTypeProfile handle = sendReceiveCommandResult handle "Profiler.takeTypeProfile" (Nothing :: Maybe ())
+profilerTakeTypeProfile handle = sendReceiveCommandResult handle PProfilerTakeTypeProfile
 
 -- | Return type of the 'profilerTakeTypeProfile' command.
 data ProfilerTakeTypeProfile = ProfilerTakeTypeProfile {
@@ -445,9 +513,9 @@ data ProfilerTakeTypeProfile = ProfilerTakeTypeProfile {
 instance FromJSON  ProfilerTakeTypeProfile where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
-instance Command ProfilerTakeTypeProfile where
-   commandName _ = "Profiler.takeTypeProfile"
-
+instance Command PProfilerTakeTypeProfile where
+    type CommandResponse PProfilerTakeTypeProfile = ProfilerTakeTypeProfile
+    commandName _ = "Profiler.takeTypeProfile"
 
 
 

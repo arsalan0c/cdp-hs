@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -43,7 +44,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
@@ -218,23 +218,47 @@ instance Event LogEntryAdded where
 
 
 
+-- | Parameters of the 'logClear' command.
+data PLogClear = PLogClear
+instance ToJSON PLogClear where toJSON _ = A.Null
+
 -- | Function for the 'Log.clear' command.
 --   Clears the log.
 logClear :: Handle -> IO ()
-logClear handle = sendReceiveCommand handle "Log.clear" (Nothing :: Maybe ())
+logClear handle = sendReceiveCommand handle PLogClear
 
+instance Command PLogClear where
+    type CommandResponse PLogClear = NoResponse
+    commandName _ = "Log.clear"
+
+
+-- | Parameters of the 'logDisable' command.
+data PLogDisable = PLogDisable
+instance ToJSON PLogDisable where toJSON _ = A.Null
 
 -- | Function for the 'Log.disable' command.
 --   Disables log domain, prevents further log entries from being reported to the client.
 logDisable :: Handle -> IO ()
-logDisable handle = sendReceiveCommand handle "Log.disable" (Nothing :: Maybe ())
+logDisable handle = sendReceiveCommand handle PLogDisable
 
+instance Command PLogDisable where
+    type CommandResponse PLogDisable = NoResponse
+    commandName _ = "Log.disable"
+
+
+-- | Parameters of the 'logEnable' command.
+data PLogEnable = PLogEnable
+instance ToJSON PLogEnable where toJSON _ = A.Null
 
 -- | Function for the 'Log.enable' command.
 --   Enables log domain, sends the entries collected so far to the client by means of the
 --   `entryAdded` notification.
 logEnable :: Handle -> IO ()
-logEnable handle = sendReceiveCommand handle "Log.enable" (Nothing :: Maybe ())
+logEnable handle = sendReceiveCommand handle PLogEnable
+
+instance Command PLogEnable where
+    type CommandResponse PLogEnable = NoResponse
+    commandName _ = "Log.enable"
 
 
 -- | Parameters of the 'logStartViolationsReport' command.
@@ -251,15 +275,27 @@ instance FromJSON  PLogStartViolationsReport where
 
 -- | Function for the 'Log.startViolationsReport' command.
 --   start violation reporting.
---   Parameters: 'PLogStartViolationsReport'
+--   Returns: 'PLogStartViolationsReport'
 logStartViolationsReport :: Handle -> PLogStartViolationsReport -> IO ()
-logStartViolationsReport handle params = sendReceiveCommand handle "Log.startViolationsReport" (Just params)
+logStartViolationsReport handle params = sendReceiveCommand handle params
 
+instance Command PLogStartViolationsReport where
+    type CommandResponse PLogStartViolationsReport = NoResponse
+    commandName _ = "Log.startViolationsReport"
+
+
+-- | Parameters of the 'logStopViolationsReport' command.
+data PLogStopViolationsReport = PLogStopViolationsReport
+instance ToJSON PLogStopViolationsReport where toJSON _ = A.Null
 
 -- | Function for the 'Log.stopViolationsReport' command.
 --   Stop violation reporting.
 logStopViolationsReport :: Handle -> IO ()
-logStopViolationsReport handle = sendReceiveCommand handle "Log.stopViolationsReport" (Nothing :: Maybe ())
+logStopViolationsReport handle = sendReceiveCommand handle PLogStopViolationsReport
+
+instance Command PLogStopViolationsReport where
+    type CommandResponse PLogStopViolationsReport = NoResponse
+    commandName _ = "Log.stopViolationsReport"
 
 
 

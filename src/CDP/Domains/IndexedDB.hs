@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -41,7 +42,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 import CDP.Domains.Runtime as Runtime
@@ -246,9 +246,13 @@ instance FromJSON  PIndexedDBClearObjectStore where
 
 -- | Function for the 'IndexedDB.clearObjectStore' command.
 --   Clears all entries from an object store.
---   Parameters: 'PIndexedDBClearObjectStore'
+--   Returns: 'PIndexedDBClearObjectStore'
 indexedDBClearObjectStore :: Handle -> PIndexedDBClearObjectStore -> IO ()
-indexedDBClearObjectStore handle params = sendReceiveCommand handle "IndexedDB.clearObjectStore" (Just params)
+indexedDBClearObjectStore handle params = sendReceiveCommand handle params
+
+instance Command PIndexedDBClearObjectStore where
+    type CommandResponse PIndexedDBClearObjectStore = NoResponse
+    commandName _ = "IndexedDB.clearObjectStore"
 
 
 -- | Parameters of the 'indexedDBDeleteDatabase' command.
@@ -267,9 +271,13 @@ instance FromJSON  PIndexedDBDeleteDatabase where
 
 -- | Function for the 'IndexedDB.deleteDatabase' command.
 --   Deletes a database.
---   Parameters: 'PIndexedDBDeleteDatabase'
+--   Returns: 'PIndexedDBDeleteDatabase'
 indexedDBDeleteDatabase :: Handle -> PIndexedDBDeleteDatabase -> IO ()
-indexedDBDeleteDatabase handle params = sendReceiveCommand handle "IndexedDB.deleteDatabase" (Just params)
+indexedDBDeleteDatabase handle params = sendReceiveCommand handle params
+
+instance Command PIndexedDBDeleteDatabase where
+    type CommandResponse PIndexedDBDeleteDatabase = NoResponse
+    commandName _ = "IndexedDB.deleteDatabase"
 
 
 -- | Parameters of the 'indexedDBDeleteObjectStoreEntries' command.
@@ -289,21 +297,41 @@ instance FromJSON  PIndexedDBDeleteObjectStoreEntries where
 
 -- | Function for the 'IndexedDB.deleteObjectStoreEntries' command.
 --   Delete a range of entries from an object store
---   Parameters: 'PIndexedDBDeleteObjectStoreEntries'
+--   Returns: 'PIndexedDBDeleteObjectStoreEntries'
 indexedDBDeleteObjectStoreEntries :: Handle -> PIndexedDBDeleteObjectStoreEntries -> IO ()
-indexedDBDeleteObjectStoreEntries handle params = sendReceiveCommand handle "IndexedDB.deleteObjectStoreEntries" (Just params)
+indexedDBDeleteObjectStoreEntries handle params = sendReceiveCommand handle params
 
+instance Command PIndexedDBDeleteObjectStoreEntries where
+    type CommandResponse PIndexedDBDeleteObjectStoreEntries = NoResponse
+    commandName _ = "IndexedDB.deleteObjectStoreEntries"
+
+
+-- | Parameters of the 'indexedDBDisable' command.
+data PIndexedDBDisable = PIndexedDBDisable
+instance ToJSON PIndexedDBDisable where toJSON _ = A.Null
 
 -- | Function for the 'IndexedDB.disable' command.
 --   Disables events from backend.
 indexedDBDisable :: Handle -> IO ()
-indexedDBDisable handle = sendReceiveCommand handle "IndexedDB.disable" (Nothing :: Maybe ())
+indexedDBDisable handle = sendReceiveCommand handle PIndexedDBDisable
 
+instance Command PIndexedDBDisable where
+    type CommandResponse PIndexedDBDisable = NoResponse
+    commandName _ = "IndexedDB.disable"
+
+
+-- | Parameters of the 'indexedDBEnable' command.
+data PIndexedDBEnable = PIndexedDBEnable
+instance ToJSON PIndexedDBEnable where toJSON _ = A.Null
 
 -- | Function for the 'IndexedDB.enable' command.
 --   Enables events from backend.
 indexedDBEnable :: Handle -> IO ()
-indexedDBEnable handle = sendReceiveCommand handle "IndexedDB.enable" (Nothing :: Maybe ())
+indexedDBEnable handle = sendReceiveCommand handle PIndexedDBEnable
+
+instance Command PIndexedDBEnable where
+    type CommandResponse PIndexedDBEnable = NoResponse
+    commandName _ = "IndexedDB.enable"
 
 
 -- | Parameters of the 'indexedDBRequestData' command.
@@ -332,10 +360,10 @@ instance FromJSON  PIndexedDBRequestData where
 
 -- | Function for the 'IndexedDB.requestData' command.
 --   Requests data from object store or index.
---   Parameters: 'PIndexedDBRequestData'
+--   Returns: 'PIndexedDBRequestData'
 --   Returns: 'IndexedDBRequestData'
 indexedDBRequestData :: Handle -> PIndexedDBRequestData -> IO IndexedDBRequestData
-indexedDBRequestData handle params = sendReceiveCommandResult handle "IndexedDB.requestData" (Just params)
+indexedDBRequestData handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'indexedDBRequestData' command.
 data IndexedDBRequestData = IndexedDBRequestData {
@@ -348,9 +376,9 @@ data IndexedDBRequestData = IndexedDBRequestData {
 instance FromJSON  IndexedDBRequestData where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command IndexedDBRequestData where
-   commandName _ = "IndexedDB.requestData"
-
+instance Command PIndexedDBRequestData where
+    type CommandResponse PIndexedDBRequestData = IndexedDBRequestData
+    commandName _ = "IndexedDB.requestData"
 
 
 -- | Parameters of the 'indexedDBGetMetadata' command.
@@ -371,10 +399,10 @@ instance FromJSON  PIndexedDBGetMetadata where
 
 -- | Function for the 'IndexedDB.getMetadata' command.
 --   Gets metadata of an object store
---   Parameters: 'PIndexedDBGetMetadata'
+--   Returns: 'PIndexedDBGetMetadata'
 --   Returns: 'IndexedDBGetMetadata'
 indexedDBGetMetadata :: Handle -> PIndexedDBGetMetadata -> IO IndexedDBGetMetadata
-indexedDBGetMetadata handle params = sendReceiveCommandResult handle "IndexedDB.getMetadata" (Just params)
+indexedDBGetMetadata handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'indexedDBGetMetadata' command.
 data IndexedDBGetMetadata = IndexedDBGetMetadata {
@@ -389,9 +417,9 @@ data IndexedDBGetMetadata = IndexedDBGetMetadata {
 instance FromJSON  IndexedDBGetMetadata where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command IndexedDBGetMetadata where
-   commandName _ = "IndexedDB.getMetadata"
-
+instance Command PIndexedDBGetMetadata where
+    type CommandResponse PIndexedDBGetMetadata = IndexedDBGetMetadata
+    commandName _ = "IndexedDB.getMetadata"
 
 
 -- | Parameters of the 'indexedDBRequestDatabase' command.
@@ -410,10 +438,10 @@ instance FromJSON  PIndexedDBRequestDatabase where
 
 -- | Function for the 'IndexedDB.requestDatabase' command.
 --   Requests database with given name in given frame.
---   Parameters: 'PIndexedDBRequestDatabase'
+--   Returns: 'PIndexedDBRequestDatabase'
 --   Returns: 'IndexedDBRequestDatabase'
 indexedDBRequestDatabase :: Handle -> PIndexedDBRequestDatabase -> IO IndexedDBRequestDatabase
-indexedDBRequestDatabase handle params = sendReceiveCommandResult handle "IndexedDB.requestDatabase" (Just params)
+indexedDBRequestDatabase handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'indexedDBRequestDatabase' command.
 data IndexedDBRequestDatabase = IndexedDBRequestDatabase {
@@ -424,9 +452,9 @@ data IndexedDBRequestDatabase = IndexedDBRequestDatabase {
 instance FromJSON  IndexedDBRequestDatabase where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
-instance Command IndexedDBRequestDatabase where
-   commandName _ = "IndexedDB.requestDatabase"
-
+instance Command PIndexedDBRequestDatabase where
+    type CommandResponse PIndexedDBRequestDatabase = IndexedDBRequestDatabase
+    commandName _ = "IndexedDB.requestDatabase"
 
 
 -- | Parameters of the 'indexedDBRequestDatabaseNames' command.
@@ -443,10 +471,10 @@ instance FromJSON  PIndexedDBRequestDatabaseNames where
 
 -- | Function for the 'IndexedDB.requestDatabaseNames' command.
 --   Requests database names for given security origin.
---   Parameters: 'PIndexedDBRequestDatabaseNames'
+--   Returns: 'PIndexedDBRequestDatabaseNames'
 --   Returns: 'IndexedDBRequestDatabaseNames'
 indexedDBRequestDatabaseNames :: Handle -> PIndexedDBRequestDatabaseNames -> IO IndexedDBRequestDatabaseNames
-indexedDBRequestDatabaseNames handle params = sendReceiveCommandResult handle "IndexedDB.requestDatabaseNames" (Just params)
+indexedDBRequestDatabaseNames handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'indexedDBRequestDatabaseNames' command.
 data IndexedDBRequestDatabaseNames = IndexedDBRequestDatabaseNames {
@@ -457,9 +485,9 @@ data IndexedDBRequestDatabaseNames = IndexedDBRequestDatabaseNames {
 instance FromJSON  IndexedDBRequestDatabaseNames where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
-instance Command IndexedDBRequestDatabaseNames where
-   commandName _ = "IndexedDB.requestDatabaseNames"
-
+instance Command PIndexedDBRequestDatabaseNames where
+    type CommandResponse PIndexedDBRequestDatabaseNames = IndexedDBRequestDatabaseNames
+    commandName _ = "IndexedDB.requestDatabaseNames"
 
 
 

@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -43,7 +44,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 import CDP.Domains.DOMDebugger as DOMDebugger
@@ -403,16 +403,32 @@ instance FromJSON  DOMSnapshotTextBoxSnapshot where
 
 
 
+-- | Parameters of the 'dOMSnapshotDisable' command.
+data PDOMSnapshotDisable = PDOMSnapshotDisable
+instance ToJSON PDOMSnapshotDisable where toJSON _ = A.Null
+
 -- | Function for the 'DOMSnapshot.disable' command.
 --   Disables DOM snapshot agent for the given page.
 dOMSnapshotDisable :: Handle -> IO ()
-dOMSnapshotDisable handle = sendReceiveCommand handle "DOMSnapshot.disable" (Nothing :: Maybe ())
+dOMSnapshotDisable handle = sendReceiveCommand handle PDOMSnapshotDisable
 
+instance Command PDOMSnapshotDisable where
+    type CommandResponse PDOMSnapshotDisable = NoResponse
+    commandName _ = "DOMSnapshot.disable"
+
+
+-- | Parameters of the 'dOMSnapshotEnable' command.
+data PDOMSnapshotEnable = PDOMSnapshotEnable
+instance ToJSON PDOMSnapshotEnable where toJSON _ = A.Null
 
 -- | Function for the 'DOMSnapshot.enable' command.
 --   Enables DOM snapshot agent for the given page.
 dOMSnapshotEnable :: Handle -> IO ()
-dOMSnapshotEnable handle = sendReceiveCommand handle "DOMSnapshot.enable" (Nothing :: Maybe ())
+dOMSnapshotEnable handle = sendReceiveCommand handle PDOMSnapshotEnable
+
+instance Command PDOMSnapshotEnable where
+    type CommandResponse PDOMSnapshotEnable = NoResponse
+    commandName _ = "DOMSnapshot.enable"
 
 
 -- | Parameters of the 'dOMSnapshotCaptureSnapshot' command.
@@ -444,10 +460,10 @@ instance FromJSON  PDOMSnapshotCaptureSnapshot where
 --   template contents, and imported documents) in a flattened array, as well as layout and
 --   white-listed computed style information for the nodes. Shadow DOM in the returned DOM tree is
 --   flattened.
---   Parameters: 'PDOMSnapshotCaptureSnapshot'
+--   Returns: 'PDOMSnapshotCaptureSnapshot'
 --   Returns: 'DOMSnapshotCaptureSnapshot'
 dOMSnapshotCaptureSnapshot :: Handle -> PDOMSnapshotCaptureSnapshot -> IO DOMSnapshotCaptureSnapshot
-dOMSnapshotCaptureSnapshot handle params = sendReceiveCommandResult handle "DOMSnapshot.captureSnapshot" (Just params)
+dOMSnapshotCaptureSnapshot handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMSnapshotCaptureSnapshot' command.
 data DOMSnapshotCaptureSnapshot = DOMSnapshotCaptureSnapshot {
@@ -460,9 +476,9 @@ data DOMSnapshotCaptureSnapshot = DOMSnapshotCaptureSnapshot {
 instance FromJSON  DOMSnapshotCaptureSnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
-instance Command DOMSnapshotCaptureSnapshot where
-   commandName _ = "DOMSnapshot.captureSnapshot"
-
+instance Command PDOMSnapshotCaptureSnapshot where
+    type CommandResponse PDOMSnapshotCaptureSnapshot = DOMSnapshotCaptureSnapshot
+    commandName _ = "DOMSnapshot.captureSnapshot"
 
 
 

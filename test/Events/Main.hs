@@ -10,7 +10,6 @@ import Control.Concurrent
 import Data.Default
 
 import CDP as CDP
-import CDP.Handle
 import CDP.Internal.Runtime
 
 -- Takes too long

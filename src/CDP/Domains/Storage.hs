@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -41,7 +42,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 import CDP.Domains.BrowserTarget as BrowserTarget
@@ -284,10 +284,10 @@ instance FromJSON  PStorageGetStorageKeyForFrame where
 
 -- | Function for the 'Storage.getStorageKeyForFrame' command.
 --   Returns a storage key given a frame id.
---   Parameters: 'PStorageGetStorageKeyForFrame'
+--   Returns: 'PStorageGetStorageKeyForFrame'
 --   Returns: 'StorageGetStorageKeyForFrame'
 storageGetStorageKeyForFrame :: Handle -> PStorageGetStorageKeyForFrame -> IO StorageGetStorageKeyForFrame
-storageGetStorageKeyForFrame handle params = sendReceiveCommandResult handle "Storage.getStorageKeyForFrame" (Just params)
+storageGetStorageKeyForFrame handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'storageGetStorageKeyForFrame' command.
 data StorageGetStorageKeyForFrame = StorageGetStorageKeyForFrame {
@@ -297,9 +297,9 @@ data StorageGetStorageKeyForFrame = StorageGetStorageKeyForFrame {
 instance FromJSON  StorageGetStorageKeyForFrame where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
-instance Command StorageGetStorageKeyForFrame where
-   commandName _ = "Storage.getStorageKeyForFrame"
-
+instance Command PStorageGetStorageKeyForFrame where
+    type CommandResponse PStorageGetStorageKeyForFrame = StorageGetStorageKeyForFrame
+    commandName _ = "Storage.getStorageKeyForFrame"
 
 
 -- | Parameters of the 'storageClearDataForOrigin' command.
@@ -318,9 +318,13 @@ instance FromJSON  PStorageClearDataForOrigin where
 
 -- | Function for the 'Storage.clearDataForOrigin' command.
 --   Clears storage for origin.
---   Parameters: 'PStorageClearDataForOrigin'
+--   Returns: 'PStorageClearDataForOrigin'
 storageClearDataForOrigin :: Handle -> PStorageClearDataForOrigin -> IO ()
-storageClearDataForOrigin handle params = sendReceiveCommand handle "Storage.clearDataForOrigin" (Just params)
+storageClearDataForOrigin handle params = sendReceiveCommand handle params
+
+instance Command PStorageClearDataForOrigin where
+    type CommandResponse PStorageClearDataForOrigin = NoResponse
+    commandName _ = "Storage.clearDataForOrigin"
 
 
 -- | Parameters of the 'storageGetCookies' command.
@@ -337,10 +341,10 @@ instance FromJSON  PStorageGetCookies where
 
 -- | Function for the 'Storage.getCookies' command.
 --   Returns all browser cookies.
---   Parameters: 'PStorageGetCookies'
+--   Returns: 'PStorageGetCookies'
 --   Returns: 'StorageGetCookies'
 storageGetCookies :: Handle -> PStorageGetCookies -> IO StorageGetCookies
-storageGetCookies handle params = sendReceiveCommandResult handle "Storage.getCookies" (Just params)
+storageGetCookies handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'storageGetCookies' command.
 data StorageGetCookies = StorageGetCookies {
@@ -351,9 +355,9 @@ data StorageGetCookies = StorageGetCookies {
 instance FromJSON  StorageGetCookies where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
-instance Command StorageGetCookies where
-   commandName _ = "Storage.getCookies"
-
+instance Command PStorageGetCookies where
+    type CommandResponse PStorageGetCookies = StorageGetCookies
+    commandName _ = "Storage.getCookies"
 
 
 -- | Parameters of the 'storageSetCookies' command.
@@ -372,9 +376,13 @@ instance FromJSON  PStorageSetCookies where
 
 -- | Function for the 'Storage.setCookies' command.
 --   Sets given cookies.
---   Parameters: 'PStorageSetCookies'
+--   Returns: 'PStorageSetCookies'
 storageSetCookies :: Handle -> PStorageSetCookies -> IO ()
-storageSetCookies handle params = sendReceiveCommand handle "Storage.setCookies" (Just params)
+storageSetCookies handle params = sendReceiveCommand handle params
+
+instance Command PStorageSetCookies where
+    type CommandResponse PStorageSetCookies = NoResponse
+    commandName _ = "Storage.setCookies"
 
 
 -- | Parameters of the 'storageClearCookies' command.
@@ -391,9 +399,13 @@ instance FromJSON  PStorageClearCookies where
 
 -- | Function for the 'Storage.clearCookies' command.
 --   Clears cookies.
---   Parameters: 'PStorageClearCookies'
+--   Returns: 'PStorageClearCookies'
 storageClearCookies :: Handle -> PStorageClearCookies -> IO ()
-storageClearCookies handle params = sendReceiveCommand handle "Storage.clearCookies" (Just params)
+storageClearCookies handle params = sendReceiveCommand handle params
+
+instance Command PStorageClearCookies where
+    type CommandResponse PStorageClearCookies = NoResponse
+    commandName _ = "Storage.clearCookies"
 
 
 -- | Parameters of the 'storageGetUsageAndQuota' command.
@@ -410,10 +422,10 @@ instance FromJSON  PStorageGetUsageAndQuota where
 
 -- | Function for the 'Storage.getUsageAndQuota' command.
 --   Returns usage and quota in bytes.
---   Parameters: 'PStorageGetUsageAndQuota'
+--   Returns: 'PStorageGetUsageAndQuota'
 --   Returns: 'StorageGetUsageAndQuota'
 storageGetUsageAndQuota :: Handle -> PStorageGetUsageAndQuota -> IO StorageGetUsageAndQuota
-storageGetUsageAndQuota handle params = sendReceiveCommandResult handle "Storage.getUsageAndQuota" (Just params)
+storageGetUsageAndQuota handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'storageGetUsageAndQuota' command.
 data StorageGetUsageAndQuota = StorageGetUsageAndQuota {
@@ -430,9 +442,9 @@ data StorageGetUsageAndQuota = StorageGetUsageAndQuota {
 instance FromJSON  StorageGetUsageAndQuota where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
-instance Command StorageGetUsageAndQuota where
-   commandName _ = "Storage.getUsageAndQuota"
-
+instance Command PStorageGetUsageAndQuota where
+    type CommandResponse PStorageGetUsageAndQuota = StorageGetUsageAndQuota
+    commandName _ = "Storage.getUsageAndQuota"
 
 
 -- | Parameters of the 'storageOverrideQuotaForOrigin' command.
@@ -457,9 +469,13 @@ instance FromJSON  PStorageOverrideQuotaForOrigin where
 
 -- | Function for the 'Storage.overrideQuotaForOrigin' command.
 --   Override quota for the specified origin
---   Parameters: 'PStorageOverrideQuotaForOrigin'
+--   Returns: 'PStorageOverrideQuotaForOrigin'
 storageOverrideQuotaForOrigin :: Handle -> PStorageOverrideQuotaForOrigin -> IO ()
-storageOverrideQuotaForOrigin handle params = sendReceiveCommand handle "Storage.overrideQuotaForOrigin" (Just params)
+storageOverrideQuotaForOrigin handle params = sendReceiveCommand handle params
+
+instance Command PStorageOverrideQuotaForOrigin where
+    type CommandResponse PStorageOverrideQuotaForOrigin = NoResponse
+    commandName _ = "Storage.overrideQuotaForOrigin"
 
 
 -- | Parameters of the 'storageTrackCacheStorageForOrigin' command.
@@ -476,9 +492,13 @@ instance FromJSON  PStorageTrackCacheStorageForOrigin where
 
 -- | Function for the 'Storage.trackCacheStorageForOrigin' command.
 --   Registers origin to be notified when an update occurs to its cache storage list.
---   Parameters: 'PStorageTrackCacheStorageForOrigin'
+--   Returns: 'PStorageTrackCacheStorageForOrigin'
 storageTrackCacheStorageForOrigin :: Handle -> PStorageTrackCacheStorageForOrigin -> IO ()
-storageTrackCacheStorageForOrigin handle params = sendReceiveCommand handle "Storage.trackCacheStorageForOrigin" (Just params)
+storageTrackCacheStorageForOrigin handle params = sendReceiveCommand handle params
+
+instance Command PStorageTrackCacheStorageForOrigin where
+    type CommandResponse PStorageTrackCacheStorageForOrigin = NoResponse
+    commandName _ = "Storage.trackCacheStorageForOrigin"
 
 
 -- | Parameters of the 'storageTrackIndexedDBForOrigin' command.
@@ -495,9 +515,13 @@ instance FromJSON  PStorageTrackIndexedDBForOrigin where
 
 -- | Function for the 'Storage.trackIndexedDBForOrigin' command.
 --   Registers origin to be notified when an update occurs to its IndexedDB.
---   Parameters: 'PStorageTrackIndexedDBForOrigin'
+--   Returns: 'PStorageTrackIndexedDBForOrigin'
 storageTrackIndexedDBForOrigin :: Handle -> PStorageTrackIndexedDBForOrigin -> IO ()
-storageTrackIndexedDBForOrigin handle params = sendReceiveCommand handle "Storage.trackIndexedDBForOrigin" (Just params)
+storageTrackIndexedDBForOrigin handle params = sendReceiveCommand handle params
+
+instance Command PStorageTrackIndexedDBForOrigin where
+    type CommandResponse PStorageTrackIndexedDBForOrigin = NoResponse
+    commandName _ = "Storage.trackIndexedDBForOrigin"
 
 
 -- | Parameters of the 'storageUntrackCacheStorageForOrigin' command.
@@ -514,9 +538,13 @@ instance FromJSON  PStorageUntrackCacheStorageForOrigin where
 
 -- | Function for the 'Storage.untrackCacheStorageForOrigin' command.
 --   Unregisters origin from receiving notifications for cache storage.
---   Parameters: 'PStorageUntrackCacheStorageForOrigin'
+--   Returns: 'PStorageUntrackCacheStorageForOrigin'
 storageUntrackCacheStorageForOrigin :: Handle -> PStorageUntrackCacheStorageForOrigin -> IO ()
-storageUntrackCacheStorageForOrigin handle params = sendReceiveCommand handle "Storage.untrackCacheStorageForOrigin" (Just params)
+storageUntrackCacheStorageForOrigin handle params = sendReceiveCommand handle params
+
+instance Command PStorageUntrackCacheStorageForOrigin where
+    type CommandResponse PStorageUntrackCacheStorageForOrigin = NoResponse
+    commandName _ = "Storage.untrackCacheStorageForOrigin"
 
 
 -- | Parameters of the 'storageUntrackIndexedDBForOrigin' command.
@@ -533,17 +561,25 @@ instance FromJSON  PStorageUntrackIndexedDBForOrigin where
 
 -- | Function for the 'Storage.untrackIndexedDBForOrigin' command.
 --   Unregisters origin from receiving notifications for IndexedDB.
---   Parameters: 'PStorageUntrackIndexedDBForOrigin'
+--   Returns: 'PStorageUntrackIndexedDBForOrigin'
 storageUntrackIndexedDBForOrigin :: Handle -> PStorageUntrackIndexedDBForOrigin -> IO ()
-storageUntrackIndexedDBForOrigin handle params = sendReceiveCommand handle "Storage.untrackIndexedDBForOrigin" (Just params)
+storageUntrackIndexedDBForOrigin handle params = sendReceiveCommand handle params
 
+instance Command PStorageUntrackIndexedDBForOrigin where
+    type CommandResponse PStorageUntrackIndexedDBForOrigin = NoResponse
+    commandName _ = "Storage.untrackIndexedDBForOrigin"
+
+
+-- | Parameters of the 'storageGetTrustTokens' command.
+data PStorageGetTrustTokens = PStorageGetTrustTokens
+instance ToJSON PStorageGetTrustTokens where toJSON _ = A.Null
 
 -- | Function for the 'Storage.getTrustTokens' command.
 --   Returns the number of stored Trust Tokens per issuer for the
 --   current browsing context.
 --   Returns: 'StorageGetTrustTokens'
 storageGetTrustTokens :: Handle -> IO StorageGetTrustTokens
-storageGetTrustTokens handle = sendReceiveCommandResult handle "Storage.getTrustTokens" (Nothing :: Maybe ())
+storageGetTrustTokens handle = sendReceiveCommandResult handle PStorageGetTrustTokens
 
 -- | Return type of the 'storageGetTrustTokens' command.
 data StorageGetTrustTokens = StorageGetTrustTokens {
@@ -553,9 +589,9 @@ data StorageGetTrustTokens = StorageGetTrustTokens {
 instance FromJSON  StorageGetTrustTokens where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
-instance Command StorageGetTrustTokens where
-   commandName _ = "Storage.getTrustTokens"
-
+instance Command PStorageGetTrustTokens where
+    type CommandResponse PStorageGetTrustTokens = StorageGetTrustTokens
+    commandName _ = "Storage.getTrustTokens"
 
 
 -- | Parameters of the 'storageClearTrustTokens' command.
@@ -572,10 +608,10 @@ instance FromJSON  PStorageClearTrustTokens where
 -- | Function for the 'Storage.clearTrustTokens' command.
 --   Removes all Trust Tokens issued by the provided issuerOrigin.
 --   Leaves other stored data, including the issuer's Redemption Records, intact.
---   Parameters: 'PStorageClearTrustTokens'
+--   Returns: 'PStorageClearTrustTokens'
 --   Returns: 'StorageClearTrustTokens'
 storageClearTrustTokens :: Handle -> PStorageClearTrustTokens -> IO StorageClearTrustTokens
-storageClearTrustTokens handle params = sendReceiveCommandResult handle "Storage.clearTrustTokens" (Just params)
+storageClearTrustTokens handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'storageClearTrustTokens' command.
 data StorageClearTrustTokens = StorageClearTrustTokens {
@@ -586,9 +622,9 @@ data StorageClearTrustTokens = StorageClearTrustTokens {
 instance FromJSON  StorageClearTrustTokens where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
-instance Command StorageClearTrustTokens where
-   commandName _ = "Storage.clearTrustTokens"
-
+instance Command PStorageClearTrustTokens where
+    type CommandResponse PStorageClearTrustTokens = StorageClearTrustTokens
+    commandName _ = "Storage.clearTrustTokens"
 
 
 -- | Parameters of the 'storageGetInterestGroupDetails' command.
@@ -605,10 +641,10 @@ instance FromJSON  PStorageGetInterestGroupDetails where
 
 -- | Function for the 'Storage.getInterestGroupDetails' command.
 --   Gets details for a named interest group.
---   Parameters: 'PStorageGetInterestGroupDetails'
+--   Returns: 'PStorageGetInterestGroupDetails'
 --   Returns: 'StorageGetInterestGroupDetails'
 storageGetInterestGroupDetails :: Handle -> PStorageGetInterestGroupDetails -> IO StorageGetInterestGroupDetails
-storageGetInterestGroupDetails handle params = sendReceiveCommandResult handle "Storage.getInterestGroupDetails" (Just params)
+storageGetInterestGroupDetails handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'storageGetInterestGroupDetails' command.
 data StorageGetInterestGroupDetails = StorageGetInterestGroupDetails {
@@ -618,9 +654,9 @@ data StorageGetInterestGroupDetails = StorageGetInterestGroupDetails {
 instance FromJSON  StorageGetInterestGroupDetails where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
-instance Command StorageGetInterestGroupDetails where
-   commandName _ = "Storage.getInterestGroupDetails"
-
+instance Command PStorageGetInterestGroupDetails where
+    type CommandResponse PStorageGetInterestGroupDetails = StorageGetInterestGroupDetails
+    commandName _ = "Storage.getInterestGroupDetails"
 
 
 -- | Parameters of the 'storageSetInterestGroupTracking' command.
@@ -636,9 +672,13 @@ instance FromJSON  PStorageSetInterestGroupTracking where
 
 -- | Function for the 'Storage.setInterestGroupTracking' command.
 --   Enables/Disables issuing of interestGroupAccessed events.
---   Parameters: 'PStorageSetInterestGroupTracking'
+--   Returns: 'PStorageSetInterestGroupTracking'
 storageSetInterestGroupTracking :: Handle -> PStorageSetInterestGroupTracking -> IO ()
-storageSetInterestGroupTracking handle params = sendReceiveCommand handle "Storage.setInterestGroupTracking" (Just params)
+storageSetInterestGroupTracking handle params = sendReceiveCommand handle params
+
+instance Command PStorageSetInterestGroupTracking where
+    type CommandResponse PStorageSetInterestGroupTracking = NoResponse
+    commandName _ = "Storage.setInterestGroupTracking"
 
 
 

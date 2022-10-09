@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -46,7 +47,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 
@@ -69,9 +69,13 @@ instance FromJSON  PEventBreakpointsSetInstrumentationBreakpoint where
 
 -- | Function for the 'EventBreakpoints.setInstrumentationBreakpoint' command.
 --   Sets breakpoint on particular native event.
---   Parameters: 'PEventBreakpointsSetInstrumentationBreakpoint'
+--   Returns: 'PEventBreakpointsSetInstrumentationBreakpoint'
 eventBreakpointsSetInstrumentationBreakpoint :: Handle -> PEventBreakpointsSetInstrumentationBreakpoint -> IO ()
-eventBreakpointsSetInstrumentationBreakpoint handle params = sendReceiveCommand handle "EventBreakpoints.setInstrumentationBreakpoint" (Just params)
+eventBreakpointsSetInstrumentationBreakpoint handle params = sendReceiveCommand handle params
+
+instance Command PEventBreakpointsSetInstrumentationBreakpoint where
+    type CommandResponse PEventBreakpointsSetInstrumentationBreakpoint = NoResponse
+    commandName _ = "EventBreakpoints.setInstrumentationBreakpoint"
 
 
 -- | Parameters of the 'eventBreakpointsRemoveInstrumentationBreakpoint' command.
@@ -88,9 +92,13 @@ instance FromJSON  PEventBreakpointsRemoveInstrumentationBreakpoint where
 
 -- | Function for the 'EventBreakpoints.removeInstrumentationBreakpoint' command.
 --   Removes breakpoint on particular native event.
---   Parameters: 'PEventBreakpointsRemoveInstrumentationBreakpoint'
+--   Returns: 'PEventBreakpointsRemoveInstrumentationBreakpoint'
 eventBreakpointsRemoveInstrumentationBreakpoint :: Handle -> PEventBreakpointsRemoveInstrumentationBreakpoint -> IO ()
-eventBreakpointsRemoveInstrumentationBreakpoint handle params = sendReceiveCommand handle "EventBreakpoints.removeInstrumentationBreakpoint" (Just params)
+eventBreakpointsRemoveInstrumentationBreakpoint handle params = sendReceiveCommand handle params
+
+instance Command PEventBreakpointsRemoveInstrumentationBreakpoint where
+    type CommandResponse PEventBreakpointsRemoveInstrumentationBreakpoint = NoResponse
+    commandName _ = "EventBreakpoints.removeInstrumentationBreakpoint"
 
 
 

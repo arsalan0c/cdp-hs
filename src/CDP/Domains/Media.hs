@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -43,7 +44,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 
@@ -244,16 +244,32 @@ instance Event MediaPlayersCreated where
 
 
 
+-- | Parameters of the 'mediaEnable' command.
+data PMediaEnable = PMediaEnable
+instance ToJSON PMediaEnable where toJSON _ = A.Null
+
 -- | Function for the 'Media.enable' command.
 --   Enables the Media domain
 mediaEnable :: Handle -> IO ()
-mediaEnable handle = sendReceiveCommand handle "Media.enable" (Nothing :: Maybe ())
+mediaEnable handle = sendReceiveCommand handle PMediaEnable
 
+instance Command PMediaEnable where
+    type CommandResponse PMediaEnable = NoResponse
+    commandName _ = "Media.enable"
+
+
+-- | Parameters of the 'mediaDisable' command.
+data PMediaDisable = PMediaDisable
+instance ToJSON PMediaDisable where toJSON _ = A.Null
 
 -- | Function for the 'Media.disable' command.
 --   Disables the Media domain.
 mediaDisable :: Handle -> IO ()
-mediaDisable handle = sendReceiveCommand handle "Media.disable" (Nothing :: Maybe ())
+mediaDisable handle = sendReceiveCommand handle PMediaDisable
+
+instance Command PMediaDisable where
+    type CommandResponse PMediaDisable = NoResponse
+    commandName _ = "Media.disable"
 
 
 

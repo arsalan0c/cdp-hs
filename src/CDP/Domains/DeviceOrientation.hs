@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -41,7 +42,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 
@@ -49,11 +49,19 @@ import CDP.Handle
 
 
 
+
+-- | Parameters of the 'deviceOrientationClearDeviceOrientationOverride' command.
+data PDeviceOrientationClearDeviceOrientationOverride = PDeviceOrientationClearDeviceOrientationOverride
+instance ToJSON PDeviceOrientationClearDeviceOrientationOverride where toJSON _ = A.Null
 
 -- | Function for the 'DeviceOrientation.clearDeviceOrientationOverride' command.
 --   Clears the overridden Device Orientation.
 deviceOrientationClearDeviceOrientationOverride :: Handle -> IO ()
-deviceOrientationClearDeviceOrientationOverride handle = sendReceiveCommand handle "DeviceOrientation.clearDeviceOrientationOverride" (Nothing :: Maybe ())
+deviceOrientationClearDeviceOrientationOverride handle = sendReceiveCommand handle PDeviceOrientationClearDeviceOrientationOverride
+
+instance Command PDeviceOrientationClearDeviceOrientationOverride where
+    type CommandResponse PDeviceOrientationClearDeviceOrientationOverride = NoResponse
+    commandName _ = "DeviceOrientation.clearDeviceOrientationOverride"
 
 
 -- | Parameters of the 'deviceOrientationSetDeviceOrientationOverride' command.
@@ -74,9 +82,13 @@ instance FromJSON  PDeviceOrientationSetDeviceOrientationOverride where
 
 -- | Function for the 'DeviceOrientation.setDeviceOrientationOverride' command.
 --   Overrides the Device Orientation.
---   Parameters: 'PDeviceOrientationSetDeviceOrientationOverride'
+--   Returns: 'PDeviceOrientationSetDeviceOrientationOverride'
 deviceOrientationSetDeviceOrientationOverride :: Handle -> PDeviceOrientationSetDeviceOrientationOverride -> IO ()
-deviceOrientationSetDeviceOrientationOverride handle params = sendReceiveCommand handle "DeviceOrientation.setDeviceOrientationOverride" (Just params)
+deviceOrientationSetDeviceOrientationOverride handle params = sendReceiveCommand handle params
+
+instance Command PDeviceOrientationSetDeviceOrientationOverride where
+    type CommandResponse PDeviceOrientationSetDeviceOrientationOverride = NoResponse
+    commandName _ = "DeviceOrientation.setDeviceOrientationOverride"
 
 
 

@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -43,7 +44,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
@@ -164,9 +164,13 @@ instance FromJSON  PBackgroundServiceStartObserving where
 
 -- | Function for the 'BackgroundService.startObserving' command.
 --   Enables event updates for the service.
---   Parameters: 'PBackgroundServiceStartObserving'
+--   Returns: 'PBackgroundServiceStartObserving'
 backgroundServiceStartObserving :: Handle -> PBackgroundServiceStartObserving -> IO ()
-backgroundServiceStartObserving handle params = sendReceiveCommand handle "BackgroundService.startObserving" (Just params)
+backgroundServiceStartObserving handle params = sendReceiveCommand handle params
+
+instance Command PBackgroundServiceStartObserving where
+    type CommandResponse PBackgroundServiceStartObserving = NoResponse
+    commandName _ = "BackgroundService.startObserving"
 
 
 -- | Parameters of the 'backgroundServiceStopObserving' command.
@@ -182,9 +186,13 @@ instance FromJSON  PBackgroundServiceStopObserving where
 
 -- | Function for the 'BackgroundService.stopObserving' command.
 --   Disables event updates for the service.
---   Parameters: 'PBackgroundServiceStopObserving'
+--   Returns: 'PBackgroundServiceStopObserving'
 backgroundServiceStopObserving :: Handle -> PBackgroundServiceStopObserving -> IO ()
-backgroundServiceStopObserving handle params = sendReceiveCommand handle "BackgroundService.stopObserving" (Just params)
+backgroundServiceStopObserving handle params = sendReceiveCommand handle params
+
+instance Command PBackgroundServiceStopObserving where
+    type CommandResponse PBackgroundServiceStopObserving = NoResponse
+    commandName _ = "BackgroundService.stopObserving"
 
 
 -- | Parameters of the 'backgroundServiceSetRecording' command.
@@ -201,9 +209,13 @@ instance FromJSON  PBackgroundServiceSetRecording where
 
 -- | Function for the 'BackgroundService.setRecording' command.
 --   Set the recording state for the service.
---   Parameters: 'PBackgroundServiceSetRecording'
+--   Returns: 'PBackgroundServiceSetRecording'
 backgroundServiceSetRecording :: Handle -> PBackgroundServiceSetRecording -> IO ()
-backgroundServiceSetRecording handle params = sendReceiveCommand handle "BackgroundService.setRecording" (Just params)
+backgroundServiceSetRecording handle params = sendReceiveCommand handle params
+
+instance Command PBackgroundServiceSetRecording where
+    type CommandResponse PBackgroundServiceSetRecording = NoResponse
+    commandName _ = "BackgroundService.setRecording"
 
 
 -- | Parameters of the 'backgroundServiceClearEvents' command.
@@ -219,9 +231,13 @@ instance FromJSON  PBackgroundServiceClearEvents where
 
 -- | Function for the 'BackgroundService.clearEvents' command.
 --   Clears all stored data for the service.
---   Parameters: 'PBackgroundServiceClearEvents'
+--   Returns: 'PBackgroundServiceClearEvents'
 backgroundServiceClearEvents :: Handle -> PBackgroundServiceClearEvents -> IO ()
-backgroundServiceClearEvents handle params = sendReceiveCommand handle "BackgroundService.clearEvents" (Just params)
+backgroundServiceClearEvents handle params = sendReceiveCommand handle params
+
+instance Command PBackgroundServiceClearEvents where
+    type CommandResponse PBackgroundServiceClearEvents = NoResponse
+    commandName _ = "BackgroundService.clearEvents"
 
 
 

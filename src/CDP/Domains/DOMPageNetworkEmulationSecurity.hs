@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -62,7 +63,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 import CDP.Domains.Debugger as Debugger
@@ -631,10 +631,10 @@ instance FromJSON  PDOMCollectClassNamesFromSubtree where
 
 -- | Function for the 'DOM.collectClassNamesFromSubtree' command.
 --   Collects class names for the node with given id and all of it's child nodes.
---   Parameters: 'PDOMCollectClassNamesFromSubtree'
+--   Returns: 'PDOMCollectClassNamesFromSubtree'
 --   Returns: 'DOMCollectClassNamesFromSubtree'
 dOMCollectClassNamesFromSubtree :: Handle -> PDOMCollectClassNamesFromSubtree -> IO DOMCollectClassNamesFromSubtree
-dOMCollectClassNamesFromSubtree handle params = sendReceiveCommandResult handle "DOM.collectClassNamesFromSubtree" (Just params)
+dOMCollectClassNamesFromSubtree handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMCollectClassNamesFromSubtree' command.
 data DOMCollectClassNamesFromSubtree = DOMCollectClassNamesFromSubtree {
@@ -645,9 +645,9 @@ data DOMCollectClassNamesFromSubtree = DOMCollectClassNamesFromSubtree {
 instance FromJSON  DOMCollectClassNamesFromSubtree where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
-instance Command DOMCollectClassNamesFromSubtree where
-   commandName _ = "DOM.collectClassNamesFromSubtree"
-
+instance Command PDOMCollectClassNamesFromSubtree where
+    type CommandResponse PDOMCollectClassNamesFromSubtree = DOMCollectClassNamesFromSubtree
+    commandName _ = "DOM.collectClassNamesFromSubtree"
 
 
 -- | Parameters of the 'dOMCopyTo' command.
@@ -670,10 +670,10 @@ instance FromJSON  PDOMCopyTo where
 -- | Function for the 'DOM.copyTo' command.
 --   Creates a deep copy of the specified node and places it into the target container before the
 --   given anchor.
---   Parameters: 'PDOMCopyTo'
+--   Returns: 'PDOMCopyTo'
 --   Returns: 'DOMCopyTo'
 dOMCopyTo :: Handle -> PDOMCopyTo -> IO DOMCopyTo
-dOMCopyTo handle params = sendReceiveCommandResult handle "DOM.copyTo" (Just params)
+dOMCopyTo handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMCopyTo' command.
 data DOMCopyTo = DOMCopyTo {
@@ -684,9 +684,9 @@ data DOMCopyTo = DOMCopyTo {
 instance FromJSON  DOMCopyTo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 9 }
 
-instance Command DOMCopyTo where
-   commandName _ = "DOM.copyTo"
-
+instance Command PDOMCopyTo where
+    type CommandResponse PDOMCopyTo = DOMCopyTo
+    commandName _ = "DOM.copyTo"
 
 
 -- | Parameters of the 'dOMDescribeNode' command.
@@ -714,10 +714,10 @@ instance FromJSON  PDOMDescribeNode where
 -- | Function for the 'DOM.describeNode' command.
 --   Describes node given its id, does not require domain to be enabled. Does not start tracking any
 --   objects, can be used for automation.
---   Parameters: 'PDOMDescribeNode'
+--   Returns: 'PDOMDescribeNode'
 --   Returns: 'DOMDescribeNode'
 dOMDescribeNode :: Handle -> PDOMDescribeNode -> IO DOMDescribeNode
-dOMDescribeNode handle params = sendReceiveCommandResult handle "DOM.describeNode" (Just params)
+dOMDescribeNode handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMDescribeNode' command.
 data DOMDescribeNode = DOMDescribeNode {
@@ -728,9 +728,9 @@ data DOMDescribeNode = DOMDescribeNode {
 instance FromJSON  DOMDescribeNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
-instance Command DOMDescribeNode where
-   commandName _ = "DOM.describeNode"
-
+instance Command PDOMDescribeNode where
+    type CommandResponse PDOMDescribeNode = DOMDescribeNode
+    commandName _ = "DOM.describeNode"
 
 
 -- | Parameters of the 'dOMScrollIntoViewIfNeeded' command.
@@ -756,15 +756,27 @@ instance FromJSON  PDOMScrollIntoViewIfNeeded where
 --   Scrolls the specified rect of the given node into view if not already visible.
 --   Note: exactly one between nodeId, backendNodeId and objectId should be passed
 --   to identify the node.
---   Parameters: 'PDOMScrollIntoViewIfNeeded'
+--   Returns: 'PDOMScrollIntoViewIfNeeded'
 dOMScrollIntoViewIfNeeded :: Handle -> PDOMScrollIntoViewIfNeeded -> IO ()
-dOMScrollIntoViewIfNeeded handle params = sendReceiveCommand handle "DOM.scrollIntoViewIfNeeded" (Just params)
+dOMScrollIntoViewIfNeeded handle params = sendReceiveCommand handle params
 
+instance Command PDOMScrollIntoViewIfNeeded where
+    type CommandResponse PDOMScrollIntoViewIfNeeded = NoResponse
+    commandName _ = "DOM.scrollIntoViewIfNeeded"
+
+
+-- | Parameters of the 'dOMDisable' command.
+data PDOMDisable = PDOMDisable
+instance ToJSON PDOMDisable where toJSON _ = A.Null
 
 -- | Function for the 'DOM.disable' command.
 --   Disables DOM agent for the given page.
 dOMDisable :: Handle -> IO ()
-dOMDisable handle = sendReceiveCommand handle "DOM.disable" (Nothing :: Maybe ())
+dOMDisable handle = sendReceiveCommand handle PDOMDisable
+
+instance Command PDOMDisable where
+    type CommandResponse PDOMDisable = NoResponse
+    commandName _ = "DOM.disable"
 
 
 -- | Parameters of the 'dOMDiscardSearchResults' command.
@@ -782,9 +794,13 @@ instance FromJSON  PDOMDiscardSearchResults where
 -- | Function for the 'DOM.discardSearchResults' command.
 --   Discards search results from the session with the given id. `getSearchResults` should no longer
 --   be called for that search.
---   Parameters: 'PDOMDiscardSearchResults'
+--   Returns: 'PDOMDiscardSearchResults'
 dOMDiscardSearchResults :: Handle -> PDOMDiscardSearchResults -> IO ()
-dOMDiscardSearchResults handle params = sendReceiveCommand handle "DOM.discardSearchResults" (Just params)
+dOMDiscardSearchResults handle params = sendReceiveCommand handle params
+
+instance Command PDOMDiscardSearchResults where
+    type CommandResponse PDOMDiscardSearchResults = NoResponse
+    commandName _ = "DOM.discardSearchResults"
 
 
 -- | Parameters of the 'dOMEnable' command.
@@ -818,9 +834,13 @@ instance FromJSON  PDOMEnable where
 
 -- | Function for the 'DOM.enable' command.
 --   Enables DOM agent for the given page.
---   Parameters: 'PDOMEnable'
+--   Returns: 'PDOMEnable'
 dOMEnable :: Handle -> PDOMEnable -> IO ()
-dOMEnable handle params = sendReceiveCommand handle "DOM.enable" (Just params)
+dOMEnable handle params = sendReceiveCommand handle params
+
+instance Command PDOMEnable where
+    type CommandResponse PDOMEnable = NoResponse
+    commandName _ = "DOM.enable"
 
 
 -- | Parameters of the 'dOMFocus' command.
@@ -841,9 +861,13 @@ instance FromJSON  PDOMFocus where
 
 -- | Function for the 'DOM.focus' command.
 --   Focuses the given element.
---   Parameters: 'PDOMFocus'
+--   Returns: 'PDOMFocus'
 dOMFocus :: Handle -> PDOMFocus -> IO ()
-dOMFocus handle params = sendReceiveCommand handle "DOM.focus" (Just params)
+dOMFocus handle params = sendReceiveCommand handle params
+
+instance Command PDOMFocus where
+    type CommandResponse PDOMFocus = NoResponse
+    commandName _ = "DOM.focus"
 
 
 -- | Parameters of the 'dOMGetAttributes' command.
@@ -860,10 +884,10 @@ instance FromJSON  PDOMGetAttributes where
 
 -- | Function for the 'DOM.getAttributes' command.
 --   Returns attributes for the specified node.
---   Parameters: 'PDOMGetAttributes'
+--   Returns: 'PDOMGetAttributes'
 --   Returns: 'DOMGetAttributes'
 dOMGetAttributes :: Handle -> PDOMGetAttributes -> IO DOMGetAttributes
-dOMGetAttributes handle params = sendReceiveCommandResult handle "DOM.getAttributes" (Just params)
+dOMGetAttributes handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMGetAttributes' command.
 data DOMGetAttributes = DOMGetAttributes {
@@ -874,9 +898,9 @@ data DOMGetAttributes = DOMGetAttributes {
 instance FromJSON  DOMGetAttributes where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
-instance Command DOMGetAttributes where
-   commandName _ = "DOM.getAttributes"
-
+instance Command PDOMGetAttributes where
+    type CommandResponse PDOMGetAttributes = DOMGetAttributes
+    commandName _ = "DOM.getAttributes"
 
 
 -- | Parameters of the 'dOMGetBoxModel' command.
@@ -897,10 +921,10 @@ instance FromJSON  PDOMGetBoxModel where
 
 -- | Function for the 'DOM.getBoxModel' command.
 --   Returns boxes for the given node.
---   Parameters: 'PDOMGetBoxModel'
+--   Returns: 'PDOMGetBoxModel'
 --   Returns: 'DOMGetBoxModel'
 dOMGetBoxModel :: Handle -> PDOMGetBoxModel -> IO DOMGetBoxModel
-dOMGetBoxModel handle params = sendReceiveCommandResult handle "DOM.getBoxModel" (Just params)
+dOMGetBoxModel handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMGetBoxModel' command.
 data DOMGetBoxModel = DOMGetBoxModel {
@@ -911,9 +935,9 @@ data DOMGetBoxModel = DOMGetBoxModel {
 instance FromJSON  DOMGetBoxModel where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
-instance Command DOMGetBoxModel where
-   commandName _ = "DOM.getBoxModel"
-
+instance Command PDOMGetBoxModel where
+    type CommandResponse PDOMGetBoxModel = DOMGetBoxModel
+    commandName _ = "DOM.getBoxModel"
 
 
 -- | Parameters of the 'dOMGetContentQuads' command.
@@ -935,10 +959,10 @@ instance FromJSON  PDOMGetContentQuads where
 -- | Function for the 'DOM.getContentQuads' command.
 --   Returns quads that describe node position on the page. This method
 --   might return multiple quads for inline nodes.
---   Parameters: 'PDOMGetContentQuads'
+--   Returns: 'PDOMGetContentQuads'
 --   Returns: 'DOMGetContentQuads'
 dOMGetContentQuads :: Handle -> PDOMGetContentQuads -> IO DOMGetContentQuads
-dOMGetContentQuads handle params = sendReceiveCommandResult handle "DOM.getContentQuads" (Just params)
+dOMGetContentQuads handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMGetContentQuads' command.
 data DOMGetContentQuads = DOMGetContentQuads {
@@ -949,9 +973,9 @@ data DOMGetContentQuads = DOMGetContentQuads {
 instance FromJSON  DOMGetContentQuads where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
-instance Command DOMGetContentQuads where
-   commandName _ = "DOM.getContentQuads"
-
+instance Command PDOMGetContentQuads where
+    type CommandResponse PDOMGetContentQuads = DOMGetContentQuads
+    commandName _ = "DOM.getContentQuads"
 
 
 -- | Parameters of the 'dOMGetDocument' command.
@@ -972,10 +996,10 @@ instance FromJSON  PDOMGetDocument where
 
 -- | Function for the 'DOM.getDocument' command.
 --   Returns the root DOM node (and optionally the subtree) to the caller.
---   Parameters: 'PDOMGetDocument'
+--   Returns: 'PDOMGetDocument'
 --   Returns: 'DOMGetDocument'
 dOMGetDocument :: Handle -> PDOMGetDocument -> IO DOMGetDocument
-dOMGetDocument handle params = sendReceiveCommandResult handle "DOM.getDocument" (Just params)
+dOMGetDocument handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMGetDocument' command.
 data DOMGetDocument = DOMGetDocument {
@@ -986,9 +1010,9 @@ data DOMGetDocument = DOMGetDocument {
 instance FromJSON  DOMGetDocument where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
-instance Command DOMGetDocument where
-   commandName _ = "DOM.getDocument"
-
+instance Command PDOMGetDocument where
+    type CommandResponse PDOMGetDocument = DOMGetDocument
+    commandName _ = "DOM.getDocument"
 
 
 -- | Parameters of the 'dOMGetNodesForSubtreeByStyle' command.
@@ -1010,10 +1034,10 @@ instance FromJSON  PDOMGetNodesForSubtreeByStyle where
 
 -- | Function for the 'DOM.getNodesForSubtreeByStyle' command.
 --   Finds nodes with a given computed style in a subtree.
---   Parameters: 'PDOMGetNodesForSubtreeByStyle'
+--   Returns: 'PDOMGetNodesForSubtreeByStyle'
 --   Returns: 'DOMGetNodesForSubtreeByStyle'
 dOMGetNodesForSubtreeByStyle :: Handle -> PDOMGetNodesForSubtreeByStyle -> IO DOMGetNodesForSubtreeByStyle
-dOMGetNodesForSubtreeByStyle handle params = sendReceiveCommandResult handle "DOM.getNodesForSubtreeByStyle" (Just params)
+dOMGetNodesForSubtreeByStyle handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMGetNodesForSubtreeByStyle' command.
 data DOMGetNodesForSubtreeByStyle = DOMGetNodesForSubtreeByStyle {
@@ -1024,9 +1048,9 @@ data DOMGetNodesForSubtreeByStyle = DOMGetNodesForSubtreeByStyle {
 instance FromJSON  DOMGetNodesForSubtreeByStyle where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
-instance Command DOMGetNodesForSubtreeByStyle where
-   commandName _ = "DOM.getNodesForSubtreeByStyle"
-
+instance Command PDOMGetNodesForSubtreeByStyle where
+    type CommandResponse PDOMGetNodesForSubtreeByStyle = DOMGetNodesForSubtreeByStyle
+    commandName _ = "DOM.getNodesForSubtreeByStyle"
 
 
 -- | Parameters of the 'dOMGetNodeForLocation' command.
@@ -1050,10 +1074,10 @@ instance FromJSON  PDOMGetNodeForLocation where
 -- | Function for the 'DOM.getNodeForLocation' command.
 --   Returns node id at given location. Depending on whether DOM domain is enabled, nodeId is
 --   either returned or not.
---   Parameters: 'PDOMGetNodeForLocation'
+--   Returns: 'PDOMGetNodeForLocation'
 --   Returns: 'DOMGetNodeForLocation'
 dOMGetNodeForLocation :: Handle -> PDOMGetNodeForLocation -> IO DOMGetNodeForLocation
-dOMGetNodeForLocation handle params = sendReceiveCommandResult handle "DOM.getNodeForLocation" (Just params)
+dOMGetNodeForLocation handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMGetNodeForLocation' command.
 data DOMGetNodeForLocation = DOMGetNodeForLocation {
@@ -1068,9 +1092,9 @@ data DOMGetNodeForLocation = DOMGetNodeForLocation {
 instance FromJSON  DOMGetNodeForLocation where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
-instance Command DOMGetNodeForLocation where
-   commandName _ = "DOM.getNodeForLocation"
-
+instance Command PDOMGetNodeForLocation where
+    type CommandResponse PDOMGetNodeForLocation = DOMGetNodeForLocation
+    commandName _ = "DOM.getNodeForLocation"
 
 
 -- | Parameters of the 'dOMGetOuterHTML' command.
@@ -1091,10 +1115,10 @@ instance FromJSON  PDOMGetOuterHTML where
 
 -- | Function for the 'DOM.getOuterHTML' command.
 --   Returns node's HTML markup.
---   Parameters: 'PDOMGetOuterHTML'
+--   Returns: 'PDOMGetOuterHTML'
 --   Returns: 'DOMGetOuterHTML'
 dOMGetOuterHTML :: Handle -> PDOMGetOuterHTML -> IO DOMGetOuterHTML
-dOMGetOuterHTML handle params = sendReceiveCommandResult handle "DOM.getOuterHTML" (Just params)
+dOMGetOuterHTML handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMGetOuterHTML' command.
 data DOMGetOuterHTML = DOMGetOuterHTML {
@@ -1105,9 +1129,9 @@ data DOMGetOuterHTML = DOMGetOuterHTML {
 instance FromJSON  DOMGetOuterHTML where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
-instance Command DOMGetOuterHTML where
-   commandName _ = "DOM.getOuterHTML"
-
+instance Command PDOMGetOuterHTML where
+    type CommandResponse PDOMGetOuterHTML = DOMGetOuterHTML
+    commandName _ = "DOM.getOuterHTML"
 
 
 -- | Parameters of the 'dOMGetRelayoutBoundary' command.
@@ -1124,10 +1148,10 @@ instance FromJSON  PDOMGetRelayoutBoundary where
 
 -- | Function for the 'DOM.getRelayoutBoundary' command.
 --   Returns the id of the nearest ancestor that is a relayout boundary.
---   Parameters: 'PDOMGetRelayoutBoundary'
+--   Returns: 'PDOMGetRelayoutBoundary'
 --   Returns: 'DOMGetRelayoutBoundary'
 dOMGetRelayoutBoundary :: Handle -> PDOMGetRelayoutBoundary -> IO DOMGetRelayoutBoundary
-dOMGetRelayoutBoundary handle params = sendReceiveCommandResult handle "DOM.getRelayoutBoundary" (Just params)
+dOMGetRelayoutBoundary handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMGetRelayoutBoundary' command.
 data DOMGetRelayoutBoundary = DOMGetRelayoutBoundary {
@@ -1138,9 +1162,9 @@ data DOMGetRelayoutBoundary = DOMGetRelayoutBoundary {
 instance FromJSON  DOMGetRelayoutBoundary where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
-instance Command DOMGetRelayoutBoundary where
-   commandName _ = "DOM.getRelayoutBoundary"
-
+instance Command PDOMGetRelayoutBoundary where
+    type CommandResponse PDOMGetRelayoutBoundary = DOMGetRelayoutBoundary
+    commandName _ = "DOM.getRelayoutBoundary"
 
 
 -- | Parameters of the 'dOMGetSearchResults' command.
@@ -1162,10 +1186,10 @@ instance FromJSON  PDOMGetSearchResults where
 -- | Function for the 'DOM.getSearchResults' command.
 --   Returns search results from given `fromIndex` to given `toIndex` from the search with the given
 --   identifier.
---   Parameters: 'PDOMGetSearchResults'
+--   Returns: 'PDOMGetSearchResults'
 --   Returns: 'DOMGetSearchResults'
 dOMGetSearchResults :: Handle -> PDOMGetSearchResults -> IO DOMGetSearchResults
-dOMGetSearchResults handle params = sendReceiveCommandResult handle "DOM.getSearchResults" (Just params)
+dOMGetSearchResults handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMGetSearchResults' command.
 data DOMGetSearchResults = DOMGetSearchResults {
@@ -1176,33 +1200,65 @@ data DOMGetSearchResults = DOMGetSearchResults {
 instance FromJSON  DOMGetSearchResults where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
-instance Command DOMGetSearchResults where
-   commandName _ = "DOM.getSearchResults"
+instance Command PDOMGetSearchResults where
+    type CommandResponse PDOMGetSearchResults = DOMGetSearchResults
+    commandName _ = "DOM.getSearchResults"
 
 
+-- | Parameters of the 'dOMHideHighlight' command.
+data PDOMHideHighlight = PDOMHideHighlight
+instance ToJSON PDOMHideHighlight where toJSON _ = A.Null
 
 -- | Function for the 'DOM.hideHighlight' command.
 --   Hides any highlight.
 dOMHideHighlight :: Handle -> IO ()
-dOMHideHighlight handle = sendReceiveCommand handle "DOM.hideHighlight" (Nothing :: Maybe ())
+dOMHideHighlight handle = sendReceiveCommand handle PDOMHideHighlight
 
+instance Command PDOMHideHighlight where
+    type CommandResponse PDOMHideHighlight = NoResponse
+    commandName _ = "DOM.hideHighlight"
+
+
+-- | Parameters of the 'dOMHighlightNode' command.
+data PDOMHighlightNode = PDOMHighlightNode
+instance ToJSON PDOMHighlightNode where toJSON _ = A.Null
 
 -- | Function for the 'DOM.highlightNode' command.
 --   Highlights DOM node.
 dOMHighlightNode :: Handle -> IO ()
-dOMHighlightNode handle = sendReceiveCommand handle "DOM.highlightNode" (Nothing :: Maybe ())
+dOMHighlightNode handle = sendReceiveCommand handle PDOMHighlightNode
 
+instance Command PDOMHighlightNode where
+    type CommandResponse PDOMHighlightNode = NoResponse
+    commandName _ = "DOM.highlightNode"
+
+
+-- | Parameters of the 'dOMHighlightRect' command.
+data PDOMHighlightRect = PDOMHighlightRect
+instance ToJSON PDOMHighlightRect where toJSON _ = A.Null
 
 -- | Function for the 'DOM.highlightRect' command.
 --   Highlights given rectangle.
 dOMHighlightRect :: Handle -> IO ()
-dOMHighlightRect handle = sendReceiveCommand handle "DOM.highlightRect" (Nothing :: Maybe ())
+dOMHighlightRect handle = sendReceiveCommand handle PDOMHighlightRect
 
+instance Command PDOMHighlightRect where
+    type CommandResponse PDOMHighlightRect = NoResponse
+    commandName _ = "DOM.highlightRect"
+
+
+-- | Parameters of the 'dOMMarkUndoableState' command.
+data PDOMMarkUndoableState = PDOMMarkUndoableState
+instance ToJSON PDOMMarkUndoableState where toJSON _ = A.Null
 
 -- | Function for the 'DOM.markUndoableState' command.
 --   Marks last undoable state.
 dOMMarkUndoableState :: Handle -> IO ()
-dOMMarkUndoableState handle = sendReceiveCommand handle "DOM.markUndoableState" (Nothing :: Maybe ())
+dOMMarkUndoableState handle = sendReceiveCommand handle PDOMMarkUndoableState
+
+instance Command PDOMMarkUndoableState where
+    type CommandResponse PDOMMarkUndoableState = NoResponse
+    commandName _ = "DOM.markUndoableState"
 
 
 -- | Parameters of the 'dOMMoveTo' command.
@@ -1224,10 +1280,10 @@ instance FromJSON  PDOMMoveTo where
 
 -- | Function for the 'DOM.moveTo' command.
 --   Moves node into the new container, places it before the given anchor.
---   Parameters: 'PDOMMoveTo'
+--   Returns: 'PDOMMoveTo'
 --   Returns: 'DOMMoveTo'
 dOMMoveTo :: Handle -> PDOMMoveTo -> IO DOMMoveTo
-dOMMoveTo handle params = sendReceiveCommandResult handle "DOM.moveTo" (Just params)
+dOMMoveTo handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMMoveTo' command.
 data DOMMoveTo = DOMMoveTo {
@@ -1238,9 +1294,9 @@ data DOMMoveTo = DOMMoveTo {
 instance FromJSON  DOMMoveTo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 9 }
 
-instance Command DOMMoveTo where
-   commandName _ = "DOM.moveTo"
-
+instance Command PDOMMoveTo where
+    type CommandResponse PDOMMoveTo = DOMMoveTo
+    commandName _ = "DOM.moveTo"
 
 
 -- | Parameters of the 'dOMPerformSearch' command.
@@ -1260,10 +1316,10 @@ instance FromJSON  PDOMPerformSearch where
 -- | Function for the 'DOM.performSearch' command.
 --   Searches for a given string in the DOM tree. Use `getSearchResults` to access search results or
 --   `cancelSearch` to end this search session.
---   Parameters: 'PDOMPerformSearch'
+--   Returns: 'PDOMPerformSearch'
 --   Returns: 'DOMPerformSearch'
 dOMPerformSearch :: Handle -> PDOMPerformSearch -> IO DOMPerformSearch
-dOMPerformSearch handle params = sendReceiveCommandResult handle "DOM.performSearch" (Just params)
+dOMPerformSearch handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMPerformSearch' command.
 data DOMPerformSearch = DOMPerformSearch {
@@ -1276,9 +1332,9 @@ data DOMPerformSearch = DOMPerformSearch {
 instance FromJSON  DOMPerformSearch where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
-instance Command DOMPerformSearch where
-   commandName _ = "DOM.performSearch"
-
+instance Command PDOMPerformSearch where
+    type CommandResponse PDOMPerformSearch = DOMPerformSearch
+    commandName _ = "DOM.performSearch"
 
 
 -- | Parameters of the 'dOMPushNodeByPathToFrontend' command.
@@ -1295,10 +1351,10 @@ instance FromJSON  PDOMPushNodeByPathToFrontend where
 
 -- | Function for the 'DOM.pushNodeByPathToFrontend' command.
 --   Requests that the node is sent to the caller given its path. // FIXME, use XPath
---   Parameters: 'PDOMPushNodeByPathToFrontend'
+--   Returns: 'PDOMPushNodeByPathToFrontend'
 --   Returns: 'DOMPushNodeByPathToFrontend'
 dOMPushNodeByPathToFrontend :: Handle -> PDOMPushNodeByPathToFrontend -> IO DOMPushNodeByPathToFrontend
-dOMPushNodeByPathToFrontend handle params = sendReceiveCommandResult handle "DOM.pushNodeByPathToFrontend" (Just params)
+dOMPushNodeByPathToFrontend handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMPushNodeByPathToFrontend' command.
 data DOMPushNodeByPathToFrontend = DOMPushNodeByPathToFrontend {
@@ -1309,9 +1365,9 @@ data DOMPushNodeByPathToFrontend = DOMPushNodeByPathToFrontend {
 instance FromJSON  DOMPushNodeByPathToFrontend where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
-instance Command DOMPushNodeByPathToFrontend where
-   commandName _ = "DOM.pushNodeByPathToFrontend"
-
+instance Command PDOMPushNodeByPathToFrontend where
+    type CommandResponse PDOMPushNodeByPathToFrontend = DOMPushNodeByPathToFrontend
+    commandName _ = "DOM.pushNodeByPathToFrontend"
 
 
 -- | Parameters of the 'dOMPushNodesByBackendIdsToFrontend' command.
@@ -1328,10 +1384,10 @@ instance FromJSON  PDOMPushNodesByBackendIdsToFrontend where
 
 -- | Function for the 'DOM.pushNodesByBackendIdsToFrontend' command.
 --   Requests that a batch of nodes is sent to the caller given their backend node ids.
---   Parameters: 'PDOMPushNodesByBackendIdsToFrontend'
+--   Returns: 'PDOMPushNodesByBackendIdsToFrontend'
 --   Returns: 'DOMPushNodesByBackendIdsToFrontend'
 dOMPushNodesByBackendIdsToFrontend :: Handle -> PDOMPushNodesByBackendIdsToFrontend -> IO DOMPushNodesByBackendIdsToFrontend
-dOMPushNodesByBackendIdsToFrontend handle params = sendReceiveCommandResult handle "DOM.pushNodesByBackendIdsToFrontend" (Just params)
+dOMPushNodesByBackendIdsToFrontend handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMPushNodesByBackendIdsToFrontend' command.
 data DOMPushNodesByBackendIdsToFrontend = DOMPushNodesByBackendIdsToFrontend {
@@ -1343,9 +1399,9 @@ data DOMPushNodesByBackendIdsToFrontend = DOMPushNodesByBackendIdsToFrontend {
 instance FromJSON  DOMPushNodesByBackendIdsToFrontend where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
 
-instance Command DOMPushNodesByBackendIdsToFrontend where
-   commandName _ = "DOM.pushNodesByBackendIdsToFrontend"
-
+instance Command PDOMPushNodesByBackendIdsToFrontend where
+    type CommandResponse PDOMPushNodesByBackendIdsToFrontend = DOMPushNodesByBackendIdsToFrontend
+    commandName _ = "DOM.pushNodesByBackendIdsToFrontend"
 
 
 -- | Parameters of the 'dOMQuerySelector' command.
@@ -1364,10 +1420,10 @@ instance FromJSON  PDOMQuerySelector where
 
 -- | Function for the 'DOM.querySelector' command.
 --   Executes `querySelector` on a given node.
---   Parameters: 'PDOMQuerySelector'
+--   Returns: 'PDOMQuerySelector'
 --   Returns: 'DOMQuerySelector'
 dOMQuerySelector :: Handle -> PDOMQuerySelector -> IO DOMQuerySelector
-dOMQuerySelector handle params = sendReceiveCommandResult handle "DOM.querySelector" (Just params)
+dOMQuerySelector handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMQuerySelector' command.
 data DOMQuerySelector = DOMQuerySelector {
@@ -1378,9 +1434,9 @@ data DOMQuerySelector = DOMQuerySelector {
 instance FromJSON  DOMQuerySelector where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
-instance Command DOMQuerySelector where
-   commandName _ = "DOM.querySelector"
-
+instance Command PDOMQuerySelector where
+    type CommandResponse PDOMQuerySelector = DOMQuerySelector
+    commandName _ = "DOM.querySelector"
 
 
 -- | Parameters of the 'dOMQuerySelectorAll' command.
@@ -1399,10 +1455,10 @@ instance FromJSON  PDOMQuerySelectorAll where
 
 -- | Function for the 'DOM.querySelectorAll' command.
 --   Executes `querySelectorAll` on a given node.
---   Parameters: 'PDOMQuerySelectorAll'
+--   Returns: 'PDOMQuerySelectorAll'
 --   Returns: 'DOMQuerySelectorAll'
 dOMQuerySelectorAll :: Handle -> PDOMQuerySelectorAll -> IO DOMQuerySelectorAll
-dOMQuerySelectorAll handle params = sendReceiveCommandResult handle "DOM.querySelectorAll" (Just params)
+dOMQuerySelectorAll handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMQuerySelectorAll' command.
 data DOMQuerySelectorAll = DOMQuerySelectorAll {
@@ -1413,15 +1469,23 @@ data DOMQuerySelectorAll = DOMQuerySelectorAll {
 instance FromJSON  DOMQuerySelectorAll where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
-instance Command DOMQuerySelectorAll where
-   commandName _ = "DOM.querySelectorAll"
+instance Command PDOMQuerySelectorAll where
+    type CommandResponse PDOMQuerySelectorAll = DOMQuerySelectorAll
+    commandName _ = "DOM.querySelectorAll"
 
 
+-- | Parameters of the 'dOMRedo' command.
+data PDOMRedo = PDOMRedo
+instance ToJSON PDOMRedo where toJSON _ = A.Null
 
 -- | Function for the 'DOM.redo' command.
 --   Re-does the last undone action.
 dOMRedo :: Handle -> IO ()
-dOMRedo handle = sendReceiveCommand handle "DOM.redo" (Nothing :: Maybe ())
+dOMRedo handle = sendReceiveCommand handle PDOMRedo
+
+instance Command PDOMRedo where
+    type CommandResponse PDOMRedo = NoResponse
+    commandName _ = "DOM.redo"
 
 
 -- | Parameters of the 'dOMRemoveAttribute' command.
@@ -1440,9 +1504,13 @@ instance FromJSON  PDOMRemoveAttribute where
 
 -- | Function for the 'DOM.removeAttribute' command.
 --   Removes attribute with given name from an element with given id.
---   Parameters: 'PDOMRemoveAttribute'
+--   Returns: 'PDOMRemoveAttribute'
 dOMRemoveAttribute :: Handle -> PDOMRemoveAttribute -> IO ()
-dOMRemoveAttribute handle params = sendReceiveCommand handle "DOM.removeAttribute" (Just params)
+dOMRemoveAttribute handle params = sendReceiveCommand handle params
+
+instance Command PDOMRemoveAttribute where
+    type CommandResponse PDOMRemoveAttribute = NoResponse
+    commandName _ = "DOM.removeAttribute"
 
 
 -- | Parameters of the 'dOMRemoveNode' command.
@@ -1459,9 +1527,13 @@ instance FromJSON  PDOMRemoveNode where
 
 -- | Function for the 'DOM.removeNode' command.
 --   Removes node with given id.
---   Parameters: 'PDOMRemoveNode'
+--   Returns: 'PDOMRemoveNode'
 dOMRemoveNode :: Handle -> PDOMRemoveNode -> IO ()
-dOMRemoveNode handle params = sendReceiveCommand handle "DOM.removeNode" (Just params)
+dOMRemoveNode handle params = sendReceiveCommand handle params
+
+instance Command PDOMRemoveNode where
+    type CommandResponse PDOMRemoveNode = NoResponse
+    commandName _ = "DOM.removeNode"
 
 
 -- | Parameters of the 'dOMRequestChildNodes' command.
@@ -1486,9 +1558,13 @@ instance FromJSON  PDOMRequestChildNodes where
 --   Requests that children of the node with given id are returned to the caller in form of
 --   `setChildNodes` events where not only immediate children are retrieved, but all children down to
 --   the specified depth.
---   Parameters: 'PDOMRequestChildNodes'
+--   Returns: 'PDOMRequestChildNodes'
 dOMRequestChildNodes :: Handle -> PDOMRequestChildNodes -> IO ()
-dOMRequestChildNodes handle params = sendReceiveCommand handle "DOM.requestChildNodes" (Just params)
+dOMRequestChildNodes handle params = sendReceiveCommand handle params
+
+instance Command PDOMRequestChildNodes where
+    type CommandResponse PDOMRequestChildNodes = NoResponse
+    commandName _ = "DOM.requestChildNodes"
 
 
 -- | Parameters of the 'dOMRequestNode' command.
@@ -1507,10 +1583,10 @@ instance FromJSON  PDOMRequestNode where
 --   Requests that the node is sent to the caller given the JavaScript node object reference. All
 --   nodes that form the path from the node to the root are also sent to the client as a series of
 --   `setChildNodes` notifications.
---   Parameters: 'PDOMRequestNode'
+--   Returns: 'PDOMRequestNode'
 --   Returns: 'DOMRequestNode'
 dOMRequestNode :: Handle -> PDOMRequestNode -> IO DOMRequestNode
-dOMRequestNode handle params = sendReceiveCommandResult handle "DOM.requestNode" (Just params)
+dOMRequestNode handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMRequestNode' command.
 data DOMRequestNode = DOMRequestNode {
@@ -1521,9 +1597,9 @@ data DOMRequestNode = DOMRequestNode {
 instance FromJSON  DOMRequestNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
-instance Command DOMRequestNode where
-   commandName _ = "DOM.requestNode"
-
+instance Command PDOMRequestNode where
+    type CommandResponse PDOMRequestNode = DOMRequestNode
+    commandName _ = "DOM.requestNode"
 
 
 -- | Parameters of the 'dOMResolveNode' command.
@@ -1546,10 +1622,10 @@ instance FromJSON  PDOMResolveNode where
 
 -- | Function for the 'DOM.resolveNode' command.
 --   Resolves the JavaScript node object for a given NodeId or BackendNodeId.
---   Parameters: 'PDOMResolveNode'
+--   Returns: 'PDOMResolveNode'
 --   Returns: 'DOMResolveNode'
 dOMResolveNode :: Handle -> PDOMResolveNode -> IO DOMResolveNode
-dOMResolveNode handle params = sendReceiveCommandResult handle "DOM.resolveNode" (Just params)
+dOMResolveNode handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMResolveNode' command.
 data DOMResolveNode = DOMResolveNode {
@@ -1560,9 +1636,9 @@ data DOMResolveNode = DOMResolveNode {
 instance FromJSON  DOMResolveNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
-instance Command DOMResolveNode where
-   commandName _ = "DOM.resolveNode"
-
+instance Command PDOMResolveNode where
+    type CommandResponse PDOMResolveNode = DOMResolveNode
+    commandName _ = "DOM.resolveNode"
 
 
 -- | Parameters of the 'dOMSetAttributeValue' command.
@@ -1583,9 +1659,13 @@ instance FromJSON  PDOMSetAttributeValue where
 
 -- | Function for the 'DOM.setAttributeValue' command.
 --   Sets attribute for an element with given id.
---   Parameters: 'PDOMSetAttributeValue'
+--   Returns: 'PDOMSetAttributeValue'
 dOMSetAttributeValue :: Handle -> PDOMSetAttributeValue -> IO ()
-dOMSetAttributeValue handle params = sendReceiveCommand handle "DOM.setAttributeValue" (Just params)
+dOMSetAttributeValue handle params = sendReceiveCommand handle params
+
+instance Command PDOMSetAttributeValue where
+    type CommandResponse PDOMSetAttributeValue = NoResponse
+    commandName _ = "DOM.setAttributeValue"
 
 
 -- | Parameters of the 'dOMSetAttributesAsText' command.
@@ -1608,9 +1688,13 @@ instance FromJSON  PDOMSetAttributesAsText where
 -- | Function for the 'DOM.setAttributesAsText' command.
 --   Sets attributes on element with given id. This method is useful when user edits some existing
 --   attribute value and types in several attribute name/value pairs.
---   Parameters: 'PDOMSetAttributesAsText'
+--   Returns: 'PDOMSetAttributesAsText'
 dOMSetAttributesAsText :: Handle -> PDOMSetAttributesAsText -> IO ()
-dOMSetAttributesAsText handle params = sendReceiveCommand handle "DOM.setAttributesAsText" (Just params)
+dOMSetAttributesAsText handle params = sendReceiveCommand handle params
+
+instance Command PDOMSetAttributesAsText where
+    type CommandResponse PDOMSetAttributesAsText = NoResponse
+    commandName _ = "DOM.setAttributesAsText"
 
 
 -- | Parameters of the 'dOMSetFileInputFiles' command.
@@ -1633,9 +1717,13 @@ instance FromJSON  PDOMSetFileInputFiles where
 
 -- | Function for the 'DOM.setFileInputFiles' command.
 --   Sets files for the given file input element.
---   Parameters: 'PDOMSetFileInputFiles'
+--   Returns: 'PDOMSetFileInputFiles'
 dOMSetFileInputFiles :: Handle -> PDOMSetFileInputFiles -> IO ()
-dOMSetFileInputFiles handle params = sendReceiveCommand handle "DOM.setFileInputFiles" (Just params)
+dOMSetFileInputFiles handle params = sendReceiveCommand handle params
+
+instance Command PDOMSetFileInputFiles where
+    type CommandResponse PDOMSetFileInputFiles = NoResponse
+    commandName _ = "DOM.setFileInputFiles"
 
 
 -- | Parameters of the 'dOMSetNodeStackTracesEnabled' command.
@@ -1652,9 +1740,13 @@ instance FromJSON  PDOMSetNodeStackTracesEnabled where
 
 -- | Function for the 'DOM.setNodeStackTracesEnabled' command.
 --   Sets if stack traces should be captured for Nodes. See `Node.getNodeStackTraces`. Default is disabled.
---   Parameters: 'PDOMSetNodeStackTracesEnabled'
+--   Returns: 'PDOMSetNodeStackTracesEnabled'
 dOMSetNodeStackTracesEnabled :: Handle -> PDOMSetNodeStackTracesEnabled -> IO ()
-dOMSetNodeStackTracesEnabled handle params = sendReceiveCommand handle "DOM.setNodeStackTracesEnabled" (Just params)
+dOMSetNodeStackTracesEnabled handle params = sendReceiveCommand handle params
+
+instance Command PDOMSetNodeStackTracesEnabled where
+    type CommandResponse PDOMSetNodeStackTracesEnabled = NoResponse
+    commandName _ = "DOM.setNodeStackTracesEnabled"
 
 
 -- | Parameters of the 'dOMGetNodeStackTraces' command.
@@ -1671,10 +1763,10 @@ instance FromJSON  PDOMGetNodeStackTraces where
 
 -- | Function for the 'DOM.getNodeStackTraces' command.
 --   Gets stack traces associated with a Node. As of now, only provides stack trace for Node creation.
---   Parameters: 'PDOMGetNodeStackTraces'
+--   Returns: 'PDOMGetNodeStackTraces'
 --   Returns: 'DOMGetNodeStackTraces'
 dOMGetNodeStackTraces :: Handle -> PDOMGetNodeStackTraces -> IO DOMGetNodeStackTraces
-dOMGetNodeStackTraces handle params = sendReceiveCommandResult handle "DOM.getNodeStackTraces" (Just params)
+dOMGetNodeStackTraces handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMGetNodeStackTraces' command.
 data DOMGetNodeStackTraces = DOMGetNodeStackTraces {
@@ -1685,9 +1777,9 @@ data DOMGetNodeStackTraces = DOMGetNodeStackTraces {
 instance FromJSON  DOMGetNodeStackTraces where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
-instance Command DOMGetNodeStackTraces where
-   commandName _ = "DOM.getNodeStackTraces"
-
+instance Command PDOMGetNodeStackTraces where
+    type CommandResponse PDOMGetNodeStackTraces = DOMGetNodeStackTraces
+    commandName _ = "DOM.getNodeStackTraces"
 
 
 -- | Parameters of the 'dOMGetFileInfo' command.
@@ -1705,10 +1797,10 @@ instance FromJSON  PDOMGetFileInfo where
 -- | Function for the 'DOM.getFileInfo' command.
 --   Returns file information for the given
 --   File wrapper.
---   Parameters: 'PDOMGetFileInfo'
+--   Returns: 'PDOMGetFileInfo'
 --   Returns: 'DOMGetFileInfo'
 dOMGetFileInfo :: Handle -> PDOMGetFileInfo -> IO DOMGetFileInfo
-dOMGetFileInfo handle params = sendReceiveCommandResult handle "DOM.getFileInfo" (Just params)
+dOMGetFileInfo handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMGetFileInfo' command.
 data DOMGetFileInfo = DOMGetFileInfo {
@@ -1718,9 +1810,9 @@ data DOMGetFileInfo = DOMGetFileInfo {
 instance FromJSON  DOMGetFileInfo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
-instance Command DOMGetFileInfo where
-   commandName _ = "DOM.getFileInfo"
-
+instance Command PDOMGetFileInfo where
+    type CommandResponse PDOMGetFileInfo = DOMGetFileInfo
+    commandName _ = "DOM.getFileInfo"
 
 
 -- | Parameters of the 'dOMSetInspectedNode' command.
@@ -1738,9 +1830,13 @@ instance FromJSON  PDOMSetInspectedNode where
 -- | Function for the 'DOM.setInspectedNode' command.
 --   Enables console to refer to the node with given id via $x (see Command Line API for more details
 --   $x functions).
---   Parameters: 'PDOMSetInspectedNode'
+--   Returns: 'PDOMSetInspectedNode'
 dOMSetInspectedNode :: Handle -> PDOMSetInspectedNode -> IO ()
-dOMSetInspectedNode handle params = sendReceiveCommand handle "DOM.setInspectedNode" (Just params)
+dOMSetInspectedNode handle params = sendReceiveCommand handle params
+
+instance Command PDOMSetInspectedNode where
+    type CommandResponse PDOMSetInspectedNode = NoResponse
+    commandName _ = "DOM.setInspectedNode"
 
 
 -- | Parameters of the 'dOMSetNodeName' command.
@@ -1759,10 +1855,10 @@ instance FromJSON  PDOMSetNodeName where
 
 -- | Function for the 'DOM.setNodeName' command.
 --   Sets node name for a node with given id.
---   Parameters: 'PDOMSetNodeName'
+--   Returns: 'PDOMSetNodeName'
 --   Returns: 'DOMSetNodeName'
 dOMSetNodeName :: Handle -> PDOMSetNodeName -> IO DOMSetNodeName
-dOMSetNodeName handle params = sendReceiveCommandResult handle "DOM.setNodeName" (Just params)
+dOMSetNodeName handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMSetNodeName' command.
 data DOMSetNodeName = DOMSetNodeName {
@@ -1773,9 +1869,9 @@ data DOMSetNodeName = DOMSetNodeName {
 instance FromJSON  DOMSetNodeName where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
-instance Command DOMSetNodeName where
-   commandName _ = "DOM.setNodeName"
-
+instance Command PDOMSetNodeName where
+    type CommandResponse PDOMSetNodeName = DOMSetNodeName
+    commandName _ = "DOM.setNodeName"
 
 
 -- | Parameters of the 'dOMSetNodeValue' command.
@@ -1794,9 +1890,13 @@ instance FromJSON  PDOMSetNodeValue where
 
 -- | Function for the 'DOM.setNodeValue' command.
 --   Sets node value for a node with given id.
---   Parameters: 'PDOMSetNodeValue'
+--   Returns: 'PDOMSetNodeValue'
 dOMSetNodeValue :: Handle -> PDOMSetNodeValue -> IO ()
-dOMSetNodeValue handle params = sendReceiveCommand handle "DOM.setNodeValue" (Just params)
+dOMSetNodeValue handle params = sendReceiveCommand handle params
+
+instance Command PDOMSetNodeValue where
+    type CommandResponse PDOMSetNodeValue = NoResponse
+    commandName _ = "DOM.setNodeValue"
 
 
 -- | Parameters of the 'dOMSetOuterHTML' command.
@@ -1815,15 +1915,27 @@ instance FromJSON  PDOMSetOuterHTML where
 
 -- | Function for the 'DOM.setOuterHTML' command.
 --   Sets node HTML markup, returns new node id.
---   Parameters: 'PDOMSetOuterHTML'
+--   Returns: 'PDOMSetOuterHTML'
 dOMSetOuterHTML :: Handle -> PDOMSetOuterHTML -> IO ()
-dOMSetOuterHTML handle params = sendReceiveCommand handle "DOM.setOuterHTML" (Just params)
+dOMSetOuterHTML handle params = sendReceiveCommand handle params
 
+instance Command PDOMSetOuterHTML where
+    type CommandResponse PDOMSetOuterHTML = NoResponse
+    commandName _ = "DOM.setOuterHTML"
+
+
+-- | Parameters of the 'dOMUndo' command.
+data PDOMUndo = PDOMUndo
+instance ToJSON PDOMUndo where toJSON _ = A.Null
 
 -- | Function for the 'DOM.undo' command.
 --   Undoes the last performed action.
 dOMUndo :: Handle -> IO ()
-dOMUndo handle = sendReceiveCommand handle "DOM.undo" (Nothing :: Maybe ())
+dOMUndo handle = sendReceiveCommand handle PDOMUndo
+
+instance Command PDOMUndo where
+    type CommandResponse PDOMUndo = NoResponse
+    commandName _ = "DOM.undo"
 
 
 -- | Parameters of the 'dOMGetFrameOwner' command.
@@ -1839,10 +1951,10 @@ instance FromJSON  PDOMGetFrameOwner where
 
 -- | Function for the 'DOM.getFrameOwner' command.
 --   Returns iframe node that owns iframe with the given domain.
---   Parameters: 'PDOMGetFrameOwner'
+--   Returns: 'PDOMGetFrameOwner'
 --   Returns: 'DOMGetFrameOwner'
 dOMGetFrameOwner :: Handle -> PDOMGetFrameOwner -> IO DOMGetFrameOwner
-dOMGetFrameOwner handle params = sendReceiveCommandResult handle "DOM.getFrameOwner" (Just params)
+dOMGetFrameOwner handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMGetFrameOwner' command.
 data DOMGetFrameOwner = DOMGetFrameOwner {
@@ -1855,9 +1967,9 @@ data DOMGetFrameOwner = DOMGetFrameOwner {
 instance FromJSON  DOMGetFrameOwner where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
-instance Command DOMGetFrameOwner where
-   commandName _ = "DOM.getFrameOwner"
-
+instance Command PDOMGetFrameOwner where
+    type CommandResponse PDOMGetFrameOwner = DOMGetFrameOwner
+    commandName _ = "DOM.getFrameOwner"
 
 
 -- | Parameters of the 'dOMGetContainerForNode' command.
@@ -1876,10 +1988,10 @@ instance FromJSON  PDOMGetContainerForNode where
 --   Returns the container of the given node based on container query conditions.
 --   If containerName is given, it will find the nearest container with a matching name;
 --   otherwise it will find the nearest container regardless of its container name.
---   Parameters: 'PDOMGetContainerForNode'
+--   Returns: 'PDOMGetContainerForNode'
 --   Returns: 'DOMGetContainerForNode'
 dOMGetContainerForNode :: Handle -> PDOMGetContainerForNode -> IO DOMGetContainerForNode
-dOMGetContainerForNode handle params = sendReceiveCommandResult handle "DOM.getContainerForNode" (Just params)
+dOMGetContainerForNode handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMGetContainerForNode' command.
 data DOMGetContainerForNode = DOMGetContainerForNode {
@@ -1890,9 +2002,9 @@ data DOMGetContainerForNode = DOMGetContainerForNode {
 instance FromJSON  DOMGetContainerForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
-instance Command DOMGetContainerForNode where
-   commandName _ = "DOM.getContainerForNode"
-
+instance Command PDOMGetContainerForNode where
+    type CommandResponse PDOMGetContainerForNode = DOMGetContainerForNode
+    commandName _ = "DOM.getContainerForNode"
 
 
 -- | Parameters of the 'dOMGetQueryingDescendantsForContainer' command.
@@ -1910,10 +2022,10 @@ instance FromJSON  PDOMGetQueryingDescendantsForContainer where
 -- | Function for the 'DOM.getQueryingDescendantsForContainer' command.
 --   Returns the descendants of a container query container that have
 --   container queries against this container.
---   Parameters: 'PDOMGetQueryingDescendantsForContainer'
+--   Returns: 'PDOMGetQueryingDescendantsForContainer'
 --   Returns: 'DOMGetQueryingDescendantsForContainer'
 dOMGetQueryingDescendantsForContainer :: Handle -> PDOMGetQueryingDescendantsForContainer -> IO DOMGetQueryingDescendantsForContainer
-dOMGetQueryingDescendantsForContainer handle params = sendReceiveCommandResult handle "DOM.getQueryingDescendantsForContainer" (Just params)
+dOMGetQueryingDescendantsForContainer handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'dOMGetQueryingDescendantsForContainer' command.
 data DOMGetQueryingDescendantsForContainer = DOMGetQueryingDescendantsForContainer {
@@ -1924,9 +2036,9 @@ data DOMGetQueryingDescendantsForContainer = DOMGetQueryingDescendantsForContain
 instance FromJSON  DOMGetQueryingDescendantsForContainer where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 }
 
-instance Command DOMGetQueryingDescendantsForContainer where
-   commandName _ = "DOM.getQueryingDescendantsForContainer"
-
+instance Command PDOMGetQueryingDescendantsForContainer where
+    type CommandResponse PDOMGetQueryingDescendantsForContainer = DOMGetQueryingDescendantsForContainer
+    commandName _ = "DOM.getQueryingDescendantsForContainer"
 
 
 
@@ -2115,11 +2227,15 @@ instance Event EmulationVirtualTimeBudgetExpired where
 
 
 
+-- | Parameters of the 'emulationCanEmulate' command.
+data PEmulationCanEmulate = PEmulationCanEmulate
+instance ToJSON PEmulationCanEmulate where toJSON _ = A.Null
+
 -- | Function for the 'Emulation.canEmulate' command.
 --   Tells whether emulation is supported.
 --   Returns: 'EmulationCanEmulate'
 emulationCanEmulate :: Handle -> IO EmulationCanEmulate
-emulationCanEmulate handle = sendReceiveCommandResult handle "Emulation.canEmulate" (Nothing :: Maybe ())
+emulationCanEmulate handle = sendReceiveCommandResult handle PEmulationCanEmulate
 
 -- | Return type of the 'emulationCanEmulate' command.
 data EmulationCanEmulate = EmulationCanEmulate {
@@ -2130,27 +2246,51 @@ data EmulationCanEmulate = EmulationCanEmulate {
 instance FromJSON  EmulationCanEmulate where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
-instance Command EmulationCanEmulate where
-   commandName _ = "Emulation.canEmulate"
+instance Command PEmulationCanEmulate where
+    type CommandResponse PEmulationCanEmulate = EmulationCanEmulate
+    commandName _ = "Emulation.canEmulate"
 
 
+-- | Parameters of the 'emulationClearDeviceMetricsOverride' command.
+data PEmulationClearDeviceMetricsOverride = PEmulationClearDeviceMetricsOverride
+instance ToJSON PEmulationClearDeviceMetricsOverride where toJSON _ = A.Null
 
 -- | Function for the 'Emulation.clearDeviceMetricsOverride' command.
 --   Clears the overridden device metrics.
 emulationClearDeviceMetricsOverride :: Handle -> IO ()
-emulationClearDeviceMetricsOverride handle = sendReceiveCommand handle "Emulation.clearDeviceMetricsOverride" (Nothing :: Maybe ())
+emulationClearDeviceMetricsOverride handle = sendReceiveCommand handle PEmulationClearDeviceMetricsOverride
 
+instance Command PEmulationClearDeviceMetricsOverride where
+    type CommandResponse PEmulationClearDeviceMetricsOverride = NoResponse
+    commandName _ = "Emulation.clearDeviceMetricsOverride"
+
+
+-- | Parameters of the 'emulationClearGeolocationOverride' command.
+data PEmulationClearGeolocationOverride = PEmulationClearGeolocationOverride
+instance ToJSON PEmulationClearGeolocationOverride where toJSON _ = A.Null
 
 -- | Function for the 'Emulation.clearGeolocationOverride' command.
 --   Clears the overridden Geolocation Position and Error.
 emulationClearGeolocationOverride :: Handle -> IO ()
-emulationClearGeolocationOverride handle = sendReceiveCommand handle "Emulation.clearGeolocationOverride" (Nothing :: Maybe ())
+emulationClearGeolocationOverride handle = sendReceiveCommand handle PEmulationClearGeolocationOverride
 
+instance Command PEmulationClearGeolocationOverride where
+    type CommandResponse PEmulationClearGeolocationOverride = NoResponse
+    commandName _ = "Emulation.clearGeolocationOverride"
+
+
+-- | Parameters of the 'emulationResetPageScaleFactor' command.
+data PEmulationResetPageScaleFactor = PEmulationResetPageScaleFactor
+instance ToJSON PEmulationResetPageScaleFactor where toJSON _ = A.Null
 
 -- | Function for the 'Emulation.resetPageScaleFactor' command.
 --   Requests that page scale factor is reset to initial values.
 emulationResetPageScaleFactor :: Handle -> IO ()
-emulationResetPageScaleFactor handle = sendReceiveCommand handle "Emulation.resetPageScaleFactor" (Nothing :: Maybe ())
+emulationResetPageScaleFactor handle = sendReceiveCommand handle PEmulationResetPageScaleFactor
+
+instance Command PEmulationResetPageScaleFactor where
+    type CommandResponse PEmulationResetPageScaleFactor = NoResponse
+    commandName _ = "Emulation.resetPageScaleFactor"
 
 
 -- | Parameters of the 'emulationSetFocusEmulationEnabled' command.
@@ -2167,9 +2307,13 @@ instance FromJSON  PEmulationSetFocusEmulationEnabled where
 
 -- | Function for the 'Emulation.setFocusEmulationEnabled' command.
 --   Enables or disables simulating a focused and active page.
---   Parameters: 'PEmulationSetFocusEmulationEnabled'
+--   Returns: 'PEmulationSetFocusEmulationEnabled'
 emulationSetFocusEmulationEnabled :: Handle -> PEmulationSetFocusEmulationEnabled -> IO ()
-emulationSetFocusEmulationEnabled handle params = sendReceiveCommand handle "Emulation.setFocusEmulationEnabled" (Just params)
+emulationSetFocusEmulationEnabled handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetFocusEmulationEnabled where
+    type CommandResponse PEmulationSetFocusEmulationEnabled = NoResponse
+    commandName _ = "Emulation.setFocusEmulationEnabled"
 
 
 -- | Parameters of the 'emulationSetAutoDarkModeOverride' command.
@@ -2187,9 +2331,13 @@ instance FromJSON  PEmulationSetAutoDarkModeOverride where
 
 -- | Function for the 'Emulation.setAutoDarkModeOverride' command.
 --   Automatically render all web contents using a dark theme.
---   Parameters: 'PEmulationSetAutoDarkModeOverride'
+--   Returns: 'PEmulationSetAutoDarkModeOverride'
 emulationSetAutoDarkModeOverride :: Handle -> PEmulationSetAutoDarkModeOverride -> IO ()
-emulationSetAutoDarkModeOverride handle params = sendReceiveCommand handle "Emulation.setAutoDarkModeOverride" (Just params)
+emulationSetAutoDarkModeOverride handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetAutoDarkModeOverride where
+    type CommandResponse PEmulationSetAutoDarkModeOverride = NoResponse
+    commandName _ = "Emulation.setAutoDarkModeOverride"
 
 
 -- | Parameters of the 'emulationSetCPUThrottlingRate' command.
@@ -2206,9 +2354,13 @@ instance FromJSON  PEmulationSetCPUThrottlingRate where
 
 -- | Function for the 'Emulation.setCPUThrottlingRate' command.
 --   Enables CPU throttling to emulate slow CPUs.
---   Parameters: 'PEmulationSetCPUThrottlingRate'
+--   Returns: 'PEmulationSetCPUThrottlingRate'
 emulationSetCPUThrottlingRate :: Handle -> PEmulationSetCPUThrottlingRate -> IO ()
-emulationSetCPUThrottlingRate handle params = sendReceiveCommand handle "Emulation.setCPUThrottlingRate" (Just params)
+emulationSetCPUThrottlingRate handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetCPUThrottlingRate where
+    type CommandResponse PEmulationSetCPUThrottlingRate = NoResponse
+    commandName _ = "Emulation.setCPUThrottlingRate"
 
 
 -- | Parameters of the 'emulationSetDefaultBackgroundColorOverride' command.
@@ -2227,9 +2379,13 @@ instance FromJSON  PEmulationSetDefaultBackgroundColorOverride where
 -- | Function for the 'Emulation.setDefaultBackgroundColorOverride' command.
 --   Sets or clears an override of the default background color of the frame. This override is used
 --   if the content does not specify one.
---   Parameters: 'PEmulationSetDefaultBackgroundColorOverride'
+--   Returns: 'PEmulationSetDefaultBackgroundColorOverride'
 emulationSetDefaultBackgroundColorOverride :: Handle -> PEmulationSetDefaultBackgroundColorOverride -> IO ()
-emulationSetDefaultBackgroundColorOverride handle params = sendReceiveCommand handle "Emulation.setDefaultBackgroundColorOverride" (Just params)
+emulationSetDefaultBackgroundColorOverride handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetDefaultBackgroundColorOverride where
+    type CommandResponse PEmulationSetDefaultBackgroundColorOverride = NoResponse
+    commandName _ = "Emulation.setDefaultBackgroundColorOverride"
 
 
 -- | Parameters of the 'emulationSetDeviceMetricsOverride' command.
@@ -2275,9 +2431,13 @@ instance FromJSON  PEmulationSetDeviceMetricsOverride where
 --   Overrides the values of device screen dimensions (window.screen.width, window.screen.height,
 --   window.innerWidth, window.innerHeight, and "device-width"/"device-height"-related CSS media
 --   query results).
---   Parameters: 'PEmulationSetDeviceMetricsOverride'
+--   Returns: 'PEmulationSetDeviceMetricsOverride'
 emulationSetDeviceMetricsOverride :: Handle -> PEmulationSetDeviceMetricsOverride -> IO ()
-emulationSetDeviceMetricsOverride handle params = sendReceiveCommand handle "Emulation.setDeviceMetricsOverride" (Just params)
+emulationSetDeviceMetricsOverride handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetDeviceMetricsOverride where
+    type CommandResponse PEmulationSetDeviceMetricsOverride = NoResponse
+    commandName _ = "Emulation.setDeviceMetricsOverride"
 
 
 -- | Parameters of the 'emulationSetScrollbarsHidden' command.
@@ -2294,9 +2454,13 @@ instance FromJSON  PEmulationSetScrollbarsHidden where
 
 -- | Function for the 'Emulation.setScrollbarsHidden' command.
 --   
---   Parameters: 'PEmulationSetScrollbarsHidden'
+--   Returns: 'PEmulationSetScrollbarsHidden'
 emulationSetScrollbarsHidden :: Handle -> PEmulationSetScrollbarsHidden -> IO ()
-emulationSetScrollbarsHidden handle params = sendReceiveCommand handle "Emulation.setScrollbarsHidden" (Just params)
+emulationSetScrollbarsHidden handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetScrollbarsHidden where
+    type CommandResponse PEmulationSetScrollbarsHidden = NoResponse
+    commandName _ = "Emulation.setScrollbarsHidden"
 
 
 -- | Parameters of the 'emulationSetDocumentCookieDisabled' command.
@@ -2313,9 +2477,13 @@ instance FromJSON  PEmulationSetDocumentCookieDisabled where
 
 -- | Function for the 'Emulation.setDocumentCookieDisabled' command.
 --   
---   Parameters: 'PEmulationSetDocumentCookieDisabled'
+--   Returns: 'PEmulationSetDocumentCookieDisabled'
 emulationSetDocumentCookieDisabled :: Handle -> PEmulationSetDocumentCookieDisabled -> IO ()
-emulationSetDocumentCookieDisabled handle params = sendReceiveCommand handle "Emulation.setDocumentCookieDisabled" (Just params)
+emulationSetDocumentCookieDisabled handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetDocumentCookieDisabled where
+    type CommandResponse PEmulationSetDocumentCookieDisabled = NoResponse
+    commandName _ = "Emulation.setDocumentCookieDisabled"
 
 
 -- | Parameters of the 'emulationSetEmitTouchEventsForMouse' command.
@@ -2351,9 +2519,13 @@ instance FromJSON  PEmulationSetEmitTouchEventsForMouse where
 
 -- | Function for the 'Emulation.setEmitTouchEventsForMouse' command.
 --   
---   Parameters: 'PEmulationSetEmitTouchEventsForMouse'
+--   Returns: 'PEmulationSetEmitTouchEventsForMouse'
 emulationSetEmitTouchEventsForMouse :: Handle -> PEmulationSetEmitTouchEventsForMouse -> IO ()
-emulationSetEmitTouchEventsForMouse handle params = sendReceiveCommand handle "Emulation.setEmitTouchEventsForMouse" (Just params)
+emulationSetEmitTouchEventsForMouse handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetEmitTouchEventsForMouse where
+    type CommandResponse PEmulationSetEmitTouchEventsForMouse = NoResponse
+    commandName _ = "Emulation.setEmitTouchEventsForMouse"
 
 
 -- | Parameters of the 'emulationSetEmulatedMedia' command.
@@ -2372,9 +2544,13 @@ instance FromJSON  PEmulationSetEmulatedMedia where
 
 -- | Function for the 'Emulation.setEmulatedMedia' command.
 --   Emulates the given media type or media feature for CSS media queries.
---   Parameters: 'PEmulationSetEmulatedMedia'
+--   Returns: 'PEmulationSetEmulatedMedia'
 emulationSetEmulatedMedia :: Handle -> PEmulationSetEmulatedMedia -> IO ()
-emulationSetEmulatedMedia handle params = sendReceiveCommand handle "Emulation.setEmulatedMedia" (Just params)
+emulationSetEmulatedMedia handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetEmulatedMedia where
+    type CommandResponse PEmulationSetEmulatedMedia = NoResponse
+    commandName _ = "Emulation.setEmulatedMedia"
 
 
 -- | Parameters of the 'emulationSetEmulatedVisionDeficiency' command.
@@ -2416,9 +2592,13 @@ instance FromJSON  PEmulationSetEmulatedVisionDeficiency where
 
 -- | Function for the 'Emulation.setEmulatedVisionDeficiency' command.
 --   Emulates the given vision deficiency.
---   Parameters: 'PEmulationSetEmulatedVisionDeficiency'
+--   Returns: 'PEmulationSetEmulatedVisionDeficiency'
 emulationSetEmulatedVisionDeficiency :: Handle -> PEmulationSetEmulatedVisionDeficiency -> IO ()
-emulationSetEmulatedVisionDeficiency handle params = sendReceiveCommand handle "Emulation.setEmulatedVisionDeficiency" (Just params)
+emulationSetEmulatedVisionDeficiency handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetEmulatedVisionDeficiency where
+    type CommandResponse PEmulationSetEmulatedVisionDeficiency = NoResponse
+    commandName _ = "Emulation.setEmulatedVisionDeficiency"
 
 
 -- | Parameters of the 'emulationSetGeolocationOverride' command.
@@ -2440,9 +2620,13 @@ instance FromJSON  PEmulationSetGeolocationOverride where
 -- | Function for the 'Emulation.setGeolocationOverride' command.
 --   Overrides the Geolocation Position or Error. Omitting any of the parameters emulates position
 --   unavailable.
---   Parameters: 'PEmulationSetGeolocationOverride'
+--   Returns: 'PEmulationSetGeolocationOverride'
 emulationSetGeolocationOverride :: Handle -> PEmulationSetGeolocationOverride -> IO ()
-emulationSetGeolocationOverride handle params = sendReceiveCommand handle "Emulation.setGeolocationOverride" (Just params)
+emulationSetGeolocationOverride handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetGeolocationOverride where
+    type CommandResponse PEmulationSetGeolocationOverride = NoResponse
+    commandName _ = "Emulation.setGeolocationOverride"
 
 
 -- | Parameters of the 'emulationSetIdleOverride' command.
@@ -2461,15 +2645,27 @@ instance FromJSON  PEmulationSetIdleOverride where
 
 -- | Function for the 'Emulation.setIdleOverride' command.
 --   Overrides the Idle state.
---   Parameters: 'PEmulationSetIdleOverride'
+--   Returns: 'PEmulationSetIdleOverride'
 emulationSetIdleOverride :: Handle -> PEmulationSetIdleOverride -> IO ()
-emulationSetIdleOverride handle params = sendReceiveCommand handle "Emulation.setIdleOverride" (Just params)
+emulationSetIdleOverride handle params = sendReceiveCommand handle params
 
+instance Command PEmulationSetIdleOverride where
+    type CommandResponse PEmulationSetIdleOverride = NoResponse
+    commandName _ = "Emulation.setIdleOverride"
+
+
+-- | Parameters of the 'emulationClearIdleOverride' command.
+data PEmulationClearIdleOverride = PEmulationClearIdleOverride
+instance ToJSON PEmulationClearIdleOverride where toJSON _ = A.Null
 
 -- | Function for the 'Emulation.clearIdleOverride' command.
 --   Clears Idle state overrides.
 emulationClearIdleOverride :: Handle -> IO ()
-emulationClearIdleOverride handle = sendReceiveCommand handle "Emulation.clearIdleOverride" (Nothing :: Maybe ())
+emulationClearIdleOverride handle = sendReceiveCommand handle PEmulationClearIdleOverride
+
+instance Command PEmulationClearIdleOverride where
+    type CommandResponse PEmulationClearIdleOverride = NoResponse
+    commandName _ = "Emulation.clearIdleOverride"
 
 
 -- | Parameters of the 'emulationSetPageScaleFactor' command.
@@ -2486,9 +2682,13 @@ instance FromJSON  PEmulationSetPageScaleFactor where
 
 -- | Function for the 'Emulation.setPageScaleFactor' command.
 --   Sets a specified page scale factor.
---   Parameters: 'PEmulationSetPageScaleFactor'
+--   Returns: 'PEmulationSetPageScaleFactor'
 emulationSetPageScaleFactor :: Handle -> PEmulationSetPageScaleFactor -> IO ()
-emulationSetPageScaleFactor handle params = sendReceiveCommand handle "Emulation.setPageScaleFactor" (Just params)
+emulationSetPageScaleFactor handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetPageScaleFactor where
+    type CommandResponse PEmulationSetPageScaleFactor = NoResponse
+    commandName _ = "Emulation.setPageScaleFactor"
 
 
 -- | Parameters of the 'emulationSetScriptExecutionDisabled' command.
@@ -2505,9 +2705,13 @@ instance FromJSON  PEmulationSetScriptExecutionDisabled where
 
 -- | Function for the 'Emulation.setScriptExecutionDisabled' command.
 --   Switches script execution in the page.
---   Parameters: 'PEmulationSetScriptExecutionDisabled'
+--   Returns: 'PEmulationSetScriptExecutionDisabled'
 emulationSetScriptExecutionDisabled :: Handle -> PEmulationSetScriptExecutionDisabled -> IO ()
-emulationSetScriptExecutionDisabled handle params = sendReceiveCommand handle "Emulation.setScriptExecutionDisabled" (Just params)
+emulationSetScriptExecutionDisabled handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetScriptExecutionDisabled where
+    type CommandResponse PEmulationSetScriptExecutionDisabled = NoResponse
+    commandName _ = "Emulation.setScriptExecutionDisabled"
 
 
 -- | Parameters of the 'emulationSetTouchEmulationEnabled' command.
@@ -2526,9 +2730,13 @@ instance FromJSON  PEmulationSetTouchEmulationEnabled where
 
 -- | Function for the 'Emulation.setTouchEmulationEnabled' command.
 --   Enables touch on platforms which do not support them.
---   Parameters: 'PEmulationSetTouchEmulationEnabled'
+--   Returns: 'PEmulationSetTouchEmulationEnabled'
 emulationSetTouchEmulationEnabled :: Handle -> PEmulationSetTouchEmulationEnabled -> IO ()
-emulationSetTouchEmulationEnabled handle params = sendReceiveCommand handle "Emulation.setTouchEmulationEnabled" (Just params)
+emulationSetTouchEmulationEnabled handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetTouchEmulationEnabled where
+    type CommandResponse PEmulationSetTouchEmulationEnabled = NoResponse
+    commandName _ = "Emulation.setTouchEmulationEnabled"
 
 
 -- | Parameters of the 'emulationSetVirtualTimePolicy' command.
@@ -2553,10 +2761,10 @@ instance FromJSON  PEmulationSetVirtualTimePolicy where
 -- | Function for the 'Emulation.setVirtualTimePolicy' command.
 --   Turns on virtual time for all frames (replacing real-time with a synthetic time source) and sets
 --   the current virtual time policy.  Note this supersedes any previous time budget.
---   Parameters: 'PEmulationSetVirtualTimePolicy'
+--   Returns: 'PEmulationSetVirtualTimePolicy'
 --   Returns: 'EmulationSetVirtualTimePolicy'
 emulationSetVirtualTimePolicy :: Handle -> PEmulationSetVirtualTimePolicy -> IO EmulationSetVirtualTimePolicy
-emulationSetVirtualTimePolicy handle params = sendReceiveCommandResult handle "Emulation.setVirtualTimePolicy" (Just params)
+emulationSetVirtualTimePolicy handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'emulationSetVirtualTimePolicy' command.
 data EmulationSetVirtualTimePolicy = EmulationSetVirtualTimePolicy {
@@ -2567,9 +2775,9 @@ data EmulationSetVirtualTimePolicy = EmulationSetVirtualTimePolicy {
 instance FromJSON  EmulationSetVirtualTimePolicy where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
-instance Command EmulationSetVirtualTimePolicy where
-   commandName _ = "Emulation.setVirtualTimePolicy"
-
+instance Command PEmulationSetVirtualTimePolicy where
+    type CommandResponse PEmulationSetVirtualTimePolicy = EmulationSetVirtualTimePolicy
+    commandName _ = "Emulation.setVirtualTimePolicy"
 
 
 -- | Parameters of the 'emulationSetLocaleOverride' command.
@@ -2587,9 +2795,13 @@ instance FromJSON  PEmulationSetLocaleOverride where
 
 -- | Function for the 'Emulation.setLocaleOverride' command.
 --   Overrides default host system locale with the specified one.
---   Parameters: 'PEmulationSetLocaleOverride'
+--   Returns: 'PEmulationSetLocaleOverride'
 emulationSetLocaleOverride :: Handle -> PEmulationSetLocaleOverride -> IO ()
-emulationSetLocaleOverride handle params = sendReceiveCommand handle "Emulation.setLocaleOverride" (Just params)
+emulationSetLocaleOverride handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetLocaleOverride where
+    type CommandResponse PEmulationSetLocaleOverride = NoResponse
+    commandName _ = "Emulation.setLocaleOverride"
 
 
 -- | Parameters of the 'emulationSetTimezoneOverride' command.
@@ -2607,9 +2819,13 @@ instance FromJSON  PEmulationSetTimezoneOverride where
 
 -- | Function for the 'Emulation.setTimezoneOverride' command.
 --   Overrides default host system timezone with the specified one.
---   Parameters: 'PEmulationSetTimezoneOverride'
+--   Returns: 'PEmulationSetTimezoneOverride'
 emulationSetTimezoneOverride :: Handle -> PEmulationSetTimezoneOverride -> IO ()
-emulationSetTimezoneOverride handle params = sendReceiveCommand handle "Emulation.setTimezoneOverride" (Just params)
+emulationSetTimezoneOverride handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetTimezoneOverride where
+    type CommandResponse PEmulationSetTimezoneOverride = NoResponse
+    commandName _ = "Emulation.setTimezoneOverride"
 
 
 -- | Parameters of the 'emulationSetDisabledImageTypes' command.
@@ -2626,9 +2842,13 @@ instance FromJSON  PEmulationSetDisabledImageTypes where
 
 -- | Function for the 'Emulation.setDisabledImageTypes' command.
 --   
---   Parameters: 'PEmulationSetDisabledImageTypes'
+--   Returns: 'PEmulationSetDisabledImageTypes'
 emulationSetDisabledImageTypes :: Handle -> PEmulationSetDisabledImageTypes -> IO ()
-emulationSetDisabledImageTypes handle params = sendReceiveCommand handle "Emulation.setDisabledImageTypes" (Just params)
+emulationSetDisabledImageTypes handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetDisabledImageTypes where
+    type CommandResponse PEmulationSetDisabledImageTypes = NoResponse
+    commandName _ = "Emulation.setDisabledImageTypes"
 
 
 -- | Parameters of the 'emulationSetHardwareConcurrencyOverride' command.
@@ -2645,9 +2865,13 @@ instance FromJSON  PEmulationSetHardwareConcurrencyOverride where
 
 -- | Function for the 'Emulation.setHardwareConcurrencyOverride' command.
 --   
---   Parameters: 'PEmulationSetHardwareConcurrencyOverride'
+--   Returns: 'PEmulationSetHardwareConcurrencyOverride'
 emulationSetHardwareConcurrencyOverride :: Handle -> PEmulationSetHardwareConcurrencyOverride -> IO ()
-emulationSetHardwareConcurrencyOverride handle params = sendReceiveCommand handle "Emulation.setHardwareConcurrencyOverride" (Just params)
+emulationSetHardwareConcurrencyOverride handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetHardwareConcurrencyOverride where
+    type CommandResponse PEmulationSetHardwareConcurrencyOverride = NoResponse
+    commandName _ = "Emulation.setHardwareConcurrencyOverride"
 
 
 -- | Parameters of the 'emulationSetUserAgentOverride' command.
@@ -2670,9 +2894,13 @@ instance FromJSON  PEmulationSetUserAgentOverride where
 
 -- | Function for the 'Emulation.setUserAgentOverride' command.
 --   Allows overriding user agent with the given string.
---   Parameters: 'PEmulationSetUserAgentOverride'
+--   Returns: 'PEmulationSetUserAgentOverride'
 emulationSetUserAgentOverride :: Handle -> PEmulationSetUserAgentOverride -> IO ()
-emulationSetUserAgentOverride handle params = sendReceiveCommand handle "Emulation.setUserAgentOverride" (Just params)
+emulationSetUserAgentOverride handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetUserAgentOverride where
+    type CommandResponse PEmulationSetUserAgentOverride = NoResponse
+    commandName _ = "Emulation.setUserAgentOverride"
 
 
 -- | Parameters of the 'emulationSetAutomationOverride' command.
@@ -2689,9 +2917,13 @@ instance FromJSON  PEmulationSetAutomationOverride where
 
 -- | Function for the 'Emulation.setAutomationOverride' command.
 --   Allows overriding the automation flag.
---   Parameters: 'PEmulationSetAutomationOverride'
+--   Returns: 'PEmulationSetAutomationOverride'
 emulationSetAutomationOverride :: Handle -> PEmulationSetAutomationOverride -> IO ()
-emulationSetAutomationOverride handle params = sendReceiveCommand handle "Emulation.setAutomationOverride" (Just params)
+emulationSetAutomationOverride handle params = sendReceiveCommand handle params
+
+instance Command PEmulationSetAutomationOverride where
+    type CommandResponse PEmulationSetAutomationOverride = NoResponse
+    commandName _ = "Emulation.setAutomationOverride"
 
 
 
@@ -4945,27 +5177,55 @@ instance FromJSON  PNetworkSetAcceptedEncodings where
 
 -- | Function for the 'Network.setAcceptedEncodings' command.
 --   Sets a list of content encodings that will be accepted. Empty list means no encoding is accepted.
---   Parameters: 'PNetworkSetAcceptedEncodings'
+--   Returns: 'PNetworkSetAcceptedEncodings'
 networkSetAcceptedEncodings :: Handle -> PNetworkSetAcceptedEncodings -> IO ()
-networkSetAcceptedEncodings handle params = sendReceiveCommand handle "Network.setAcceptedEncodings" (Just params)
+networkSetAcceptedEncodings handle params = sendReceiveCommand handle params
 
+instance Command PNetworkSetAcceptedEncodings where
+    type CommandResponse PNetworkSetAcceptedEncodings = NoResponse
+    commandName _ = "Network.setAcceptedEncodings"
+
+
+-- | Parameters of the 'networkClearAcceptedEncodingsOverride' command.
+data PNetworkClearAcceptedEncodingsOverride = PNetworkClearAcceptedEncodingsOverride
+instance ToJSON PNetworkClearAcceptedEncodingsOverride where toJSON _ = A.Null
 
 -- | Function for the 'Network.clearAcceptedEncodingsOverride' command.
 --   Clears accepted encodings set by setAcceptedEncodings
 networkClearAcceptedEncodingsOverride :: Handle -> IO ()
-networkClearAcceptedEncodingsOverride handle = sendReceiveCommand handle "Network.clearAcceptedEncodingsOverride" (Nothing :: Maybe ())
+networkClearAcceptedEncodingsOverride handle = sendReceiveCommand handle PNetworkClearAcceptedEncodingsOverride
 
+instance Command PNetworkClearAcceptedEncodingsOverride where
+    type CommandResponse PNetworkClearAcceptedEncodingsOverride = NoResponse
+    commandName _ = "Network.clearAcceptedEncodingsOverride"
+
+
+-- | Parameters of the 'networkClearBrowserCache' command.
+data PNetworkClearBrowserCache = PNetworkClearBrowserCache
+instance ToJSON PNetworkClearBrowserCache where toJSON _ = A.Null
 
 -- | Function for the 'Network.clearBrowserCache' command.
 --   Clears browser cache.
 networkClearBrowserCache :: Handle -> IO ()
-networkClearBrowserCache handle = sendReceiveCommand handle "Network.clearBrowserCache" (Nothing :: Maybe ())
+networkClearBrowserCache handle = sendReceiveCommand handle PNetworkClearBrowserCache
 
+instance Command PNetworkClearBrowserCache where
+    type CommandResponse PNetworkClearBrowserCache = NoResponse
+    commandName _ = "Network.clearBrowserCache"
+
+
+-- | Parameters of the 'networkClearBrowserCookies' command.
+data PNetworkClearBrowserCookies = PNetworkClearBrowserCookies
+instance ToJSON PNetworkClearBrowserCookies where toJSON _ = A.Null
 
 -- | Function for the 'Network.clearBrowserCookies' command.
 --   Clears browser cookies.
 networkClearBrowserCookies :: Handle -> IO ()
-networkClearBrowserCookies handle = sendReceiveCommand handle "Network.clearBrowserCookies" (Nothing :: Maybe ())
+networkClearBrowserCookies handle = sendReceiveCommand handle PNetworkClearBrowserCookies
+
+instance Command PNetworkClearBrowserCookies where
+    type CommandResponse PNetworkClearBrowserCookies = NoResponse
+    commandName _ = "Network.clearBrowserCookies"
 
 
 -- | Parameters of the 'networkDeleteCookies' command.
@@ -4989,15 +5249,27 @@ instance FromJSON  PNetworkDeleteCookies where
 
 -- | Function for the 'Network.deleteCookies' command.
 --   Deletes browser cookies with matching name and url or domain/path pair.
---   Parameters: 'PNetworkDeleteCookies'
+--   Returns: 'PNetworkDeleteCookies'
 networkDeleteCookies :: Handle -> PNetworkDeleteCookies -> IO ()
-networkDeleteCookies handle params = sendReceiveCommand handle "Network.deleteCookies" (Just params)
+networkDeleteCookies handle params = sendReceiveCommand handle params
 
+instance Command PNetworkDeleteCookies where
+    type CommandResponse PNetworkDeleteCookies = NoResponse
+    commandName _ = "Network.deleteCookies"
+
+
+-- | Parameters of the 'networkDisable' command.
+data PNetworkDisable = PNetworkDisable
+instance ToJSON PNetworkDisable where toJSON _ = A.Null
 
 -- | Function for the 'Network.disable' command.
 --   Disables network tracking, prevents network events from being sent to the client.
 networkDisable :: Handle -> IO ()
-networkDisable handle = sendReceiveCommand handle "Network.disable" (Nothing :: Maybe ())
+networkDisable handle = sendReceiveCommand handle PNetworkDisable
+
+instance Command PNetworkDisable where
+    type CommandResponse PNetworkDisable = NoResponse
+    commandName _ = "Network.disable"
 
 
 -- | Parameters of the 'networkEmulateNetworkConditions' command.
@@ -5022,9 +5294,13 @@ instance FromJSON  PNetworkEmulateNetworkConditions where
 
 -- | Function for the 'Network.emulateNetworkConditions' command.
 --   Activates emulation of network conditions.
---   Parameters: 'PNetworkEmulateNetworkConditions'
+--   Returns: 'PNetworkEmulateNetworkConditions'
 networkEmulateNetworkConditions :: Handle -> PNetworkEmulateNetworkConditions -> IO ()
-networkEmulateNetworkConditions handle params = sendReceiveCommand handle "Network.emulateNetworkConditions" (Just params)
+networkEmulateNetworkConditions handle params = sendReceiveCommand handle params
+
+instance Command PNetworkEmulateNetworkConditions where
+    type CommandResponse PNetworkEmulateNetworkConditions = NoResponse
+    commandName _ = "Network.emulateNetworkConditions"
 
 
 -- | Parameters of the 'networkEnable' command.
@@ -5045,17 +5321,25 @@ instance FromJSON  PNetworkEnable where
 
 -- | Function for the 'Network.enable' command.
 --   Enables network tracking, network events will now be delivered to the client.
---   Parameters: 'PNetworkEnable'
+--   Returns: 'PNetworkEnable'
 networkEnable :: Handle -> PNetworkEnable -> IO ()
-networkEnable handle params = sendReceiveCommand handle "Network.enable" (Just params)
+networkEnable handle params = sendReceiveCommand handle params
 
+instance Command PNetworkEnable where
+    type CommandResponse PNetworkEnable = NoResponse
+    commandName _ = "Network.enable"
+
+
+-- | Parameters of the 'networkGetAllCookies' command.
+data PNetworkGetAllCookies = PNetworkGetAllCookies
+instance ToJSON PNetworkGetAllCookies where toJSON _ = A.Null
 
 -- | Function for the 'Network.getAllCookies' command.
 --   Returns all browser cookies. Depending on the backend support, will return detailed cookie
 --   information in the `cookies` field.
 --   Returns: 'NetworkGetAllCookies'
 networkGetAllCookies :: Handle -> IO NetworkGetAllCookies
-networkGetAllCookies handle = sendReceiveCommandResult handle "Network.getAllCookies" (Nothing :: Maybe ())
+networkGetAllCookies handle = sendReceiveCommandResult handle PNetworkGetAllCookies
 
 -- | Return type of the 'networkGetAllCookies' command.
 data NetworkGetAllCookies = NetworkGetAllCookies {
@@ -5066,9 +5350,9 @@ data NetworkGetAllCookies = NetworkGetAllCookies {
 instance FromJSON  NetworkGetAllCookies where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command NetworkGetAllCookies where
-   commandName _ = "Network.getAllCookies"
-
+instance Command PNetworkGetAllCookies where
+    type CommandResponse PNetworkGetAllCookies = NetworkGetAllCookies
+    commandName _ = "Network.getAllCookies"
 
 
 -- | Parameters of the 'networkGetCertificate' command.
@@ -5085,10 +5369,10 @@ instance FromJSON  PNetworkGetCertificate where
 
 -- | Function for the 'Network.getCertificate' command.
 --   Returns the DER-encoded certificate.
---   Parameters: 'PNetworkGetCertificate'
+--   Returns: 'PNetworkGetCertificate'
 --   Returns: 'NetworkGetCertificate'
 networkGetCertificate :: Handle -> PNetworkGetCertificate -> IO NetworkGetCertificate
-networkGetCertificate handle params = sendReceiveCommandResult handle "Network.getCertificate" (Just params)
+networkGetCertificate handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'networkGetCertificate' command.
 data NetworkGetCertificate = NetworkGetCertificate {
@@ -5098,9 +5382,9 @@ data NetworkGetCertificate = NetworkGetCertificate {
 instance FromJSON  NetworkGetCertificate where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
-instance Command NetworkGetCertificate where
-   commandName _ = "Network.getCertificate"
-
+instance Command PNetworkGetCertificate where
+    type CommandResponse PNetworkGetCertificate = NetworkGetCertificate
+    commandName _ = "Network.getCertificate"
 
 
 -- | Parameters of the 'networkGetCookies' command.
@@ -5120,10 +5404,10 @@ instance FromJSON  PNetworkGetCookies where
 -- | Function for the 'Network.getCookies' command.
 --   Returns all browser cookies for the current URL. Depending on the backend support, will return
 --   detailed cookie information in the `cookies` field.
---   Parameters: 'PNetworkGetCookies'
+--   Returns: 'PNetworkGetCookies'
 --   Returns: 'NetworkGetCookies'
 networkGetCookies :: Handle -> PNetworkGetCookies -> IO NetworkGetCookies
-networkGetCookies handle params = sendReceiveCommandResult handle "Network.getCookies" (Just params)
+networkGetCookies handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'networkGetCookies' command.
 data NetworkGetCookies = NetworkGetCookies {
@@ -5134,9 +5418,9 @@ data NetworkGetCookies = NetworkGetCookies {
 instance FromJSON  NetworkGetCookies where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
-instance Command NetworkGetCookies where
-   commandName _ = "Network.getCookies"
-
+instance Command PNetworkGetCookies where
+    type CommandResponse PNetworkGetCookies = NetworkGetCookies
+    commandName _ = "Network.getCookies"
 
 
 -- | Parameters of the 'networkGetResponseBody' command.
@@ -5153,10 +5437,10 @@ instance FromJSON  PNetworkGetResponseBody where
 
 -- | Function for the 'Network.getResponseBody' command.
 --   Returns content served for the given request.
---   Parameters: 'PNetworkGetResponseBody'
+--   Returns: 'PNetworkGetResponseBody'
 --   Returns: 'NetworkGetResponseBody'
 networkGetResponseBody :: Handle -> PNetworkGetResponseBody -> IO NetworkGetResponseBody
-networkGetResponseBody handle params = sendReceiveCommandResult handle "Network.getResponseBody" (Just params)
+networkGetResponseBody handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'networkGetResponseBody' command.
 data NetworkGetResponseBody = NetworkGetResponseBody {
@@ -5169,9 +5453,9 @@ data NetworkGetResponseBody = NetworkGetResponseBody {
 instance FromJSON  NetworkGetResponseBody where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
-instance Command NetworkGetResponseBody where
-   commandName _ = "Network.getResponseBody"
-
+instance Command PNetworkGetResponseBody where
+    type CommandResponse PNetworkGetResponseBody = NetworkGetResponseBody
+    commandName _ = "Network.getResponseBody"
 
 
 -- | Parameters of the 'networkGetRequestPostData' command.
@@ -5188,10 +5472,10 @@ instance FromJSON  PNetworkGetRequestPostData where
 
 -- | Function for the 'Network.getRequestPostData' command.
 --   Returns post data sent with the request. Returns an error when no data was sent with the request.
---   Parameters: 'PNetworkGetRequestPostData'
+--   Returns: 'PNetworkGetRequestPostData'
 --   Returns: 'NetworkGetRequestPostData'
 networkGetRequestPostData :: Handle -> PNetworkGetRequestPostData -> IO NetworkGetRequestPostData
-networkGetRequestPostData handle params = sendReceiveCommandResult handle "Network.getRequestPostData" (Just params)
+networkGetRequestPostData handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'networkGetRequestPostData' command.
 data NetworkGetRequestPostData = NetworkGetRequestPostData {
@@ -5202,9 +5486,9 @@ data NetworkGetRequestPostData = NetworkGetRequestPostData {
 instance FromJSON  NetworkGetRequestPostData where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
-instance Command NetworkGetRequestPostData where
-   commandName _ = "Network.getRequestPostData"
-
+instance Command PNetworkGetRequestPostData where
+    type CommandResponse PNetworkGetRequestPostData = NetworkGetRequestPostData
+    commandName _ = "Network.getRequestPostData"
 
 
 -- | Parameters of the 'networkGetResponseBodyForInterception' command.
@@ -5221,10 +5505,10 @@ instance FromJSON  PNetworkGetResponseBodyForInterception where
 
 -- | Function for the 'Network.getResponseBodyForInterception' command.
 --   Returns content served for the given currently intercepted request.
---   Parameters: 'PNetworkGetResponseBodyForInterception'
+--   Returns: 'PNetworkGetResponseBodyForInterception'
 --   Returns: 'NetworkGetResponseBodyForInterception'
 networkGetResponseBodyForInterception :: Handle -> PNetworkGetResponseBodyForInterception -> IO NetworkGetResponseBodyForInterception
-networkGetResponseBodyForInterception handle params = sendReceiveCommandResult handle "Network.getResponseBodyForInterception" (Just params)
+networkGetResponseBodyForInterception handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'networkGetResponseBodyForInterception' command.
 data NetworkGetResponseBodyForInterception = NetworkGetResponseBodyForInterception {
@@ -5237,9 +5521,9 @@ data NetworkGetResponseBodyForInterception = NetworkGetResponseBodyForIntercepti
 instance FromJSON  NetworkGetResponseBodyForInterception where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 }
 
-instance Command NetworkGetResponseBodyForInterception where
-   commandName _ = "Network.getResponseBodyForInterception"
-
+instance Command PNetworkGetResponseBodyForInterception where
+    type CommandResponse PNetworkGetResponseBodyForInterception = NetworkGetResponseBodyForInterception
+    commandName _ = "Network.getResponseBodyForInterception"
 
 
 -- | Parameters of the 'networkTakeResponseBodyForInterceptionAsStream' command.
@@ -5258,10 +5542,10 @@ instance FromJSON  PNetworkTakeResponseBodyForInterceptionAsStream where
 --   the intercepted request can't be continued as is -- you either need to cancel it or to provide
 --   the response body. The stream only supports sequential read, IO.read will fail if the position
 --   is specified.
---   Parameters: 'PNetworkTakeResponseBodyForInterceptionAsStream'
+--   Returns: 'PNetworkTakeResponseBodyForInterceptionAsStream'
 --   Returns: 'NetworkTakeResponseBodyForInterceptionAsStream'
 networkTakeResponseBodyForInterceptionAsStream :: Handle -> PNetworkTakeResponseBodyForInterceptionAsStream -> IO NetworkTakeResponseBodyForInterceptionAsStream
-networkTakeResponseBodyForInterceptionAsStream handle params = sendReceiveCommandResult handle "Network.takeResponseBodyForInterceptionAsStream" (Just params)
+networkTakeResponseBodyForInterceptionAsStream handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'networkTakeResponseBodyForInterceptionAsStream' command.
 data NetworkTakeResponseBodyForInterceptionAsStream = NetworkTakeResponseBodyForInterceptionAsStream {
@@ -5271,9 +5555,9 @@ data NetworkTakeResponseBodyForInterceptionAsStream = NetworkTakeResponseBodyFor
 instance FromJSON  NetworkTakeResponseBodyForInterceptionAsStream where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 46 }
 
-instance Command NetworkTakeResponseBodyForInterceptionAsStream where
-   commandName _ = "Network.takeResponseBodyForInterceptionAsStream"
-
+instance Command PNetworkTakeResponseBodyForInterceptionAsStream where
+    type CommandResponse PNetworkTakeResponseBodyForInterceptionAsStream = NetworkTakeResponseBodyForInterceptionAsStream
+    commandName _ = "Network.takeResponseBodyForInterceptionAsStream"
 
 
 -- | Parameters of the 'networkReplayXHR' command.
@@ -5292,9 +5576,13 @@ instance FromJSON  PNetworkReplayXHR where
 --   This method sends a new XMLHttpRequest which is identical to the original one. The following
 --   parameters should be identical: method, url, async, request body, extra headers, withCredentials
 --   attribute, user, password.
---   Parameters: 'PNetworkReplayXHR'
+--   Returns: 'PNetworkReplayXHR'
 networkReplayXHR :: Handle -> PNetworkReplayXHR -> IO ()
-networkReplayXHR handle params = sendReceiveCommand handle "Network.replayXHR" (Just params)
+networkReplayXHR handle params = sendReceiveCommand handle params
+
+instance Command PNetworkReplayXHR where
+    type CommandResponse PNetworkReplayXHR = NoResponse
+    commandName _ = "Network.replayXHR"
 
 
 -- | Parameters of the 'networkSearchInResponseBody' command.
@@ -5317,10 +5605,10 @@ instance FromJSON  PNetworkSearchInResponseBody where
 
 -- | Function for the 'Network.searchInResponseBody' command.
 --   Searches for given string in response content.
---   Parameters: 'PNetworkSearchInResponseBody'
+--   Returns: 'PNetworkSearchInResponseBody'
 --   Returns: 'NetworkSearchInResponseBody'
 networkSearchInResponseBody :: Handle -> PNetworkSearchInResponseBody -> IO NetworkSearchInResponseBody
-networkSearchInResponseBody handle params = sendReceiveCommandResult handle "Network.searchInResponseBody" (Just params)
+networkSearchInResponseBody handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'networkSearchInResponseBody' command.
 data NetworkSearchInResponseBody = NetworkSearchInResponseBody {
@@ -5331,9 +5619,9 @@ data NetworkSearchInResponseBody = NetworkSearchInResponseBody {
 instance FromJSON  NetworkSearchInResponseBody where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
-instance Command NetworkSearchInResponseBody where
-   commandName _ = "Network.searchInResponseBody"
-
+instance Command PNetworkSearchInResponseBody where
+    type CommandResponse PNetworkSearchInResponseBody = NetworkSearchInResponseBody
+    commandName _ = "Network.searchInResponseBody"
 
 
 -- | Parameters of the 'networkSetBlockedURLs' command.
@@ -5350,9 +5638,13 @@ instance FromJSON  PNetworkSetBlockedURLs where
 
 -- | Function for the 'Network.setBlockedURLs' command.
 --   Blocks URLs from loading.
---   Parameters: 'PNetworkSetBlockedURLs'
+--   Returns: 'PNetworkSetBlockedURLs'
 networkSetBlockedURLs :: Handle -> PNetworkSetBlockedURLs -> IO ()
-networkSetBlockedURLs handle params = sendReceiveCommand handle "Network.setBlockedURLs" (Just params)
+networkSetBlockedURLs handle params = sendReceiveCommand handle params
+
+instance Command PNetworkSetBlockedURLs where
+    type CommandResponse PNetworkSetBlockedURLs = NoResponse
+    commandName _ = "Network.setBlockedURLs"
 
 
 -- | Parameters of the 'networkSetBypassServiceWorker' command.
@@ -5369,9 +5661,13 @@ instance FromJSON  PNetworkSetBypassServiceWorker where
 
 -- | Function for the 'Network.setBypassServiceWorker' command.
 --   Toggles ignoring of service worker for each request.
---   Parameters: 'PNetworkSetBypassServiceWorker'
+--   Returns: 'PNetworkSetBypassServiceWorker'
 networkSetBypassServiceWorker :: Handle -> PNetworkSetBypassServiceWorker -> IO ()
-networkSetBypassServiceWorker handle params = sendReceiveCommand handle "Network.setBypassServiceWorker" (Just params)
+networkSetBypassServiceWorker handle params = sendReceiveCommand handle params
+
+instance Command PNetworkSetBypassServiceWorker where
+    type CommandResponse PNetworkSetBypassServiceWorker = NoResponse
+    commandName _ = "Network.setBypassServiceWorker"
 
 
 -- | Parameters of the 'networkSetCacheDisabled' command.
@@ -5388,9 +5684,13 @@ instance FromJSON  PNetworkSetCacheDisabled where
 
 -- | Function for the 'Network.setCacheDisabled' command.
 --   Toggles ignoring cache for each request. If `true`, cache will not be used.
---   Parameters: 'PNetworkSetCacheDisabled'
+--   Returns: 'PNetworkSetCacheDisabled'
 networkSetCacheDisabled :: Handle -> PNetworkSetCacheDisabled -> IO ()
-networkSetCacheDisabled handle params = sendReceiveCommand handle "Network.setCacheDisabled" (Just params)
+networkSetCacheDisabled handle params = sendReceiveCommand handle params
+
+instance Command PNetworkSetCacheDisabled where
+    type CommandResponse PNetworkSetCacheDisabled = NoResponse
+    commandName _ = "Network.setCacheDisabled"
 
 
 -- | Parameters of the 'networkSetCookie' command.
@@ -5438,9 +5738,13 @@ instance FromJSON  PNetworkSetCookie where
 
 -- | Function for the 'Network.setCookie' command.
 --   Sets a cookie with the given cookie data; may overwrite equivalent cookies if they exist.
---   Parameters: 'PNetworkSetCookie'
+--   Returns: 'PNetworkSetCookie'
 networkSetCookie :: Handle -> PNetworkSetCookie -> IO ()
-networkSetCookie handle params = sendReceiveCommand handle "Network.setCookie" (Just params)
+networkSetCookie handle params = sendReceiveCommand handle params
+
+instance Command PNetworkSetCookie where
+    type CommandResponse PNetworkSetCookie = NoResponse
+    commandName _ = "Network.setCookie"
 
 
 -- | Parameters of the 'networkSetCookies' command.
@@ -5457,9 +5761,13 @@ instance FromJSON  PNetworkSetCookies where
 
 -- | Function for the 'Network.setCookies' command.
 --   Sets given cookies.
---   Parameters: 'PNetworkSetCookies'
+--   Returns: 'PNetworkSetCookies'
 networkSetCookies :: Handle -> PNetworkSetCookies -> IO ()
-networkSetCookies handle params = sendReceiveCommand handle "Network.setCookies" (Just params)
+networkSetCookies handle params = sendReceiveCommand handle params
+
+instance Command PNetworkSetCookies where
+    type CommandResponse PNetworkSetCookies = NoResponse
+    commandName _ = "Network.setCookies"
 
 
 -- | Parameters of the 'networkSetExtraHTTPHeaders' command.
@@ -5476,9 +5784,13 @@ instance FromJSON  PNetworkSetExtraHTTPHeaders where
 
 -- | Function for the 'Network.setExtraHTTPHeaders' command.
 --   Specifies whether to always send extra HTTP headers with the requests from this page.
---   Parameters: 'PNetworkSetExtraHTTPHeaders'
+--   Returns: 'PNetworkSetExtraHTTPHeaders'
 networkSetExtraHTTPHeaders :: Handle -> PNetworkSetExtraHTTPHeaders -> IO ()
-networkSetExtraHTTPHeaders handle params = sendReceiveCommand handle "Network.setExtraHTTPHeaders" (Just params)
+networkSetExtraHTTPHeaders handle params = sendReceiveCommand handle params
+
+instance Command PNetworkSetExtraHTTPHeaders where
+    type CommandResponse PNetworkSetExtraHTTPHeaders = NoResponse
+    commandName _ = "Network.setExtraHTTPHeaders"
 
 
 -- | Parameters of the 'networkSetAttachDebugStack' command.
@@ -5495,9 +5807,13 @@ instance FromJSON  PNetworkSetAttachDebugStack where
 
 -- | Function for the 'Network.setAttachDebugStack' command.
 --   Specifies whether to attach a page script stack id in requests
---   Parameters: 'PNetworkSetAttachDebugStack'
+--   Returns: 'PNetworkSetAttachDebugStack'
 networkSetAttachDebugStack :: Handle -> PNetworkSetAttachDebugStack -> IO ()
-networkSetAttachDebugStack handle params = sendReceiveCommand handle "Network.setAttachDebugStack" (Just params)
+networkSetAttachDebugStack handle params = sendReceiveCommand handle params
+
+instance Command PNetworkSetAttachDebugStack where
+    type CommandResponse PNetworkSetAttachDebugStack = NoResponse
+    commandName _ = "Network.setAttachDebugStack"
 
 
 -- | Parameters of the 'networkSetUserAgentOverride' command.
@@ -5520,9 +5836,13 @@ instance FromJSON  PNetworkSetUserAgentOverride where
 
 -- | Function for the 'Network.setUserAgentOverride' command.
 --   Allows overriding user agent with the given string.
---   Parameters: 'PNetworkSetUserAgentOverride'
+--   Returns: 'PNetworkSetUserAgentOverride'
 networkSetUserAgentOverride :: Handle -> PNetworkSetUserAgentOverride -> IO ()
-networkSetUserAgentOverride handle params = sendReceiveCommand handle "Network.setUserAgentOverride" (Just params)
+networkSetUserAgentOverride handle params = sendReceiveCommand handle params
+
+instance Command PNetworkSetUserAgentOverride where
+    type CommandResponse PNetworkSetUserAgentOverride = NoResponse
+    commandName _ = "Network.setUserAgentOverride"
 
 
 -- | Parameters of the 'networkGetSecurityIsolationStatus' command.
@@ -5539,10 +5859,10 @@ instance FromJSON  PNetworkGetSecurityIsolationStatus where
 
 -- | Function for the 'Network.getSecurityIsolationStatus' command.
 --   Returns information about the COEP/COOP isolation status.
---   Parameters: 'PNetworkGetSecurityIsolationStatus'
+--   Returns: 'PNetworkGetSecurityIsolationStatus'
 --   Returns: 'NetworkGetSecurityIsolationStatus'
 networkGetSecurityIsolationStatus :: Handle -> PNetworkGetSecurityIsolationStatus -> IO NetworkGetSecurityIsolationStatus
-networkGetSecurityIsolationStatus handle params = sendReceiveCommandResult handle "Network.getSecurityIsolationStatus" (Just params)
+networkGetSecurityIsolationStatus handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'networkGetSecurityIsolationStatus' command.
 data NetworkGetSecurityIsolationStatus = NetworkGetSecurityIsolationStatus {
@@ -5552,9 +5872,9 @@ data NetworkGetSecurityIsolationStatus = NetworkGetSecurityIsolationStatus {
 instance FromJSON  NetworkGetSecurityIsolationStatus where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 }
 
-instance Command NetworkGetSecurityIsolationStatus where
-   commandName _ = "Network.getSecurityIsolationStatus"
-
+instance Command PNetworkGetSecurityIsolationStatus where
+    type CommandResponse PNetworkGetSecurityIsolationStatus = NetworkGetSecurityIsolationStatus
+    commandName _ = "Network.getSecurityIsolationStatus"
 
 
 -- | Parameters of the 'networkEnableReportingApi' command.
@@ -5572,9 +5892,13 @@ instance FromJSON  PNetworkEnableReportingApi where
 -- | Function for the 'Network.enableReportingApi' command.
 --   Enables tracking for the Reporting API, events generated by the Reporting API will now be delivered to the client.
 --   Enabling triggers 'reportingApiReportAdded' for all existing reports.
---   Parameters: 'PNetworkEnableReportingApi'
+--   Returns: 'PNetworkEnableReportingApi'
 networkEnableReportingApi :: Handle -> PNetworkEnableReportingApi -> IO ()
-networkEnableReportingApi handle params = sendReceiveCommand handle "Network.enableReportingApi" (Just params)
+networkEnableReportingApi handle params = sendReceiveCommand handle params
+
+instance Command PNetworkEnableReportingApi where
+    type CommandResponse PNetworkEnableReportingApi = NoResponse
+    commandName _ = "Network.enableReportingApi"
 
 
 -- | Parameters of the 'networkLoadNetworkResource' command.
@@ -5596,10 +5920,10 @@ instance FromJSON  PNetworkLoadNetworkResource where
 
 -- | Function for the 'Network.loadNetworkResource' command.
 --   Fetches the resource and returns the content.
---   Parameters: 'PNetworkLoadNetworkResource'
+--   Returns: 'PNetworkLoadNetworkResource'
 --   Returns: 'NetworkLoadNetworkResource'
 networkLoadNetworkResource :: Handle -> PNetworkLoadNetworkResource -> IO NetworkLoadNetworkResource
-networkLoadNetworkResource handle params = sendReceiveCommandResult handle "Network.loadNetworkResource" (Just params)
+networkLoadNetworkResource handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'networkLoadNetworkResource' command.
 data NetworkLoadNetworkResource = NetworkLoadNetworkResource {
@@ -5609,9 +5933,9 @@ data NetworkLoadNetworkResource = NetworkLoadNetworkResource {
 instance FromJSON  NetworkLoadNetworkResource where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
-instance Command NetworkLoadNetworkResource where
-   commandName _ = "Network.loadNetworkResource"
-
+instance Command PNetworkLoadNetworkResource where
+    type CommandResponse PNetworkLoadNetworkResource = NetworkLoadNetworkResource
+    commandName _ = "Network.loadNetworkResource"
 
 
 
@@ -7446,10 +7770,10 @@ instance FromJSON  PPageAddScriptToEvaluateOnNewDocument where
 
 -- | Function for the 'Page.addScriptToEvaluateOnNewDocument' command.
 --   Evaluates given script in every frame upon creation (before loading frame's scripts).
---   Parameters: 'PPageAddScriptToEvaluateOnNewDocument'
+--   Returns: 'PPageAddScriptToEvaluateOnNewDocument'
 --   Returns: 'PageAddScriptToEvaluateOnNewDocument'
 pageAddScriptToEvaluateOnNewDocument :: Handle -> PPageAddScriptToEvaluateOnNewDocument -> IO PageAddScriptToEvaluateOnNewDocument
-pageAddScriptToEvaluateOnNewDocument handle params = sendReceiveCommandResult handle "Page.addScriptToEvaluateOnNewDocument" (Just params)
+pageAddScriptToEvaluateOnNewDocument handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'pageAddScriptToEvaluateOnNewDocument' command.
 data PageAddScriptToEvaluateOnNewDocument = PageAddScriptToEvaluateOnNewDocument {
@@ -7460,15 +7784,23 @@ data PageAddScriptToEvaluateOnNewDocument = PageAddScriptToEvaluateOnNewDocument
 instance FromJSON  PageAddScriptToEvaluateOnNewDocument where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 }
 
-instance Command PageAddScriptToEvaluateOnNewDocument where
-   commandName _ = "Page.addScriptToEvaluateOnNewDocument"
+instance Command PPageAddScriptToEvaluateOnNewDocument where
+    type CommandResponse PPageAddScriptToEvaluateOnNewDocument = PageAddScriptToEvaluateOnNewDocument
+    commandName _ = "Page.addScriptToEvaluateOnNewDocument"
 
 
+-- | Parameters of the 'pageBringToFront' command.
+data PPageBringToFront = PPageBringToFront
+instance ToJSON PPageBringToFront where toJSON _ = A.Null
 
 -- | Function for the 'Page.bringToFront' command.
 --   Brings page to front (activates tab).
 pageBringToFront :: Handle -> IO ()
-pageBringToFront handle = sendReceiveCommand handle "Page.bringToFront" (Nothing :: Maybe ())
+pageBringToFront handle = sendReceiveCommand handle PPageBringToFront
+
+instance Command PPageBringToFront where
+    type CommandResponse PPageBringToFront = NoResponse
+    commandName _ = "Page.bringToFront"
 
 
 -- | Parameters of the 'pageCaptureScreenshot' command.
@@ -7512,10 +7844,10 @@ instance FromJSON  PPageCaptureScreenshot where
 
 -- | Function for the 'Page.captureScreenshot' command.
 --   Capture page screenshot.
---   Parameters: 'PPageCaptureScreenshot'
+--   Returns: 'PPageCaptureScreenshot'
 --   Returns: 'PageCaptureScreenshot'
 pageCaptureScreenshot :: Handle -> PPageCaptureScreenshot -> IO PageCaptureScreenshot
-pageCaptureScreenshot handle params = sendReceiveCommandResult handle "Page.captureScreenshot" (Just params)
+pageCaptureScreenshot handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'pageCaptureScreenshot' command.
 data PageCaptureScreenshot = PageCaptureScreenshot {
@@ -7526,9 +7858,9 @@ data PageCaptureScreenshot = PageCaptureScreenshot {
 instance FromJSON  PageCaptureScreenshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
-instance Command PageCaptureScreenshot where
-   commandName _ = "Page.captureScreenshot"
-
+instance Command PPageCaptureScreenshot where
+    type CommandResponse PPageCaptureScreenshot = PageCaptureScreenshot
+    commandName _ = "Page.captureScreenshot"
 
 
 -- | Parameters of the 'pageCaptureSnapshot' command.
@@ -7561,10 +7893,10 @@ instance FromJSON  PPageCaptureSnapshot where
 -- | Function for the 'Page.captureSnapshot' command.
 --   Returns a snapshot of the page as a string. For MHTML format, the serialization includes
 --   iframes, shadow DOM, external resources, and element-inline styles.
---   Parameters: 'PPageCaptureSnapshot'
+--   Returns: 'PPageCaptureSnapshot'
 --   Returns: 'PageCaptureSnapshot'
 pageCaptureSnapshot :: Handle -> PPageCaptureSnapshot -> IO PageCaptureSnapshot
-pageCaptureSnapshot handle params = sendReceiveCommandResult handle "Page.captureSnapshot" (Just params)
+pageCaptureSnapshot handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'pageCaptureSnapshot' command.
 data PageCaptureSnapshot = PageCaptureSnapshot {
@@ -7575,9 +7907,9 @@ data PageCaptureSnapshot = PageCaptureSnapshot {
 instance FromJSON  PageCaptureSnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
-instance Command PageCaptureSnapshot where
-   commandName _ = "Page.captureSnapshot"
-
+instance Command PPageCaptureSnapshot where
+    type CommandResponse PPageCaptureSnapshot = PageCaptureSnapshot
+    commandName _ = "Page.captureSnapshot"
 
 
 -- | Parameters of the 'pageCreateIsolatedWorld' command.
@@ -7599,10 +7931,10 @@ instance FromJSON  PPageCreateIsolatedWorld where
 
 -- | Function for the 'Page.createIsolatedWorld' command.
 --   Creates an isolated world for the given frame.
---   Parameters: 'PPageCreateIsolatedWorld'
+--   Returns: 'PPageCreateIsolatedWorld'
 --   Returns: 'PageCreateIsolatedWorld'
 pageCreateIsolatedWorld :: Handle -> PPageCreateIsolatedWorld -> IO PageCreateIsolatedWorld
-pageCreateIsolatedWorld handle params = sendReceiveCommandResult handle "Page.createIsolatedWorld" (Just params)
+pageCreateIsolatedWorld handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'pageCreateIsolatedWorld' command.
 data PageCreateIsolatedWorld = PageCreateIsolatedWorld {
@@ -7613,28 +7945,48 @@ data PageCreateIsolatedWorld = PageCreateIsolatedWorld {
 instance FromJSON  PageCreateIsolatedWorld where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
-instance Command PageCreateIsolatedWorld where
-   commandName _ = "Page.createIsolatedWorld"
+instance Command PPageCreateIsolatedWorld where
+    type CommandResponse PPageCreateIsolatedWorld = PageCreateIsolatedWorld
+    commandName _ = "Page.createIsolatedWorld"
 
 
+-- | Parameters of the 'pageDisable' command.
+data PPageDisable = PPageDisable
+instance ToJSON PPageDisable where toJSON _ = A.Null
 
 -- | Function for the 'Page.disable' command.
 --   Disables page domain notifications.
 pageDisable :: Handle -> IO ()
-pageDisable handle = sendReceiveCommand handle "Page.disable" (Nothing :: Maybe ())
+pageDisable handle = sendReceiveCommand handle PPageDisable
 
+instance Command PPageDisable where
+    type CommandResponse PPageDisable = NoResponse
+    commandName _ = "Page.disable"
+
+
+-- | Parameters of the 'pageEnable' command.
+data PPageEnable = PPageEnable
+instance ToJSON PPageEnable where toJSON _ = A.Null
 
 -- | Function for the 'Page.enable' command.
 --   Enables page domain notifications.
 pageEnable :: Handle -> IO ()
-pageEnable handle = sendReceiveCommand handle "Page.enable" (Nothing :: Maybe ())
+pageEnable handle = sendReceiveCommand handle PPageEnable
 
+instance Command PPageEnable where
+    type CommandResponse PPageEnable = NoResponse
+    commandName _ = "Page.enable"
+
+
+-- | Parameters of the 'pageGetAppManifest' command.
+data PPageGetAppManifest = PPageGetAppManifest
+instance ToJSON PPageGetAppManifest where toJSON _ = A.Null
 
 -- | Function for the 'Page.getAppManifest' command.
 --   
 --   Returns: 'PageGetAppManifest'
 pageGetAppManifest :: Handle -> IO PageGetAppManifest
-pageGetAppManifest handle = sendReceiveCommandResult handle "Page.getAppManifest" (Nothing :: Maybe ())
+pageGetAppManifest handle = sendReceiveCommandResult handle PPageGetAppManifest
 
 -- | Return type of the 'pageGetAppManifest' command.
 data PageGetAppManifest = PageGetAppManifest {
@@ -7650,16 +8002,20 @@ data PageGetAppManifest = PageGetAppManifest {
 instance FromJSON  PageGetAppManifest where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
-instance Command PageGetAppManifest where
-   commandName _ = "Page.getAppManifest"
+instance Command PPageGetAppManifest where
+    type CommandResponse PPageGetAppManifest = PageGetAppManifest
+    commandName _ = "Page.getAppManifest"
 
 
+-- | Parameters of the 'pageGetInstallabilityErrors' command.
+data PPageGetInstallabilityErrors = PPageGetInstallabilityErrors
+instance ToJSON PPageGetInstallabilityErrors where toJSON _ = A.Null
 
 -- | Function for the 'Page.getInstallabilityErrors' command.
 --   
 --   Returns: 'PageGetInstallabilityErrors'
 pageGetInstallabilityErrors :: Handle -> IO PageGetInstallabilityErrors
-pageGetInstallabilityErrors handle = sendReceiveCommandResult handle "Page.getInstallabilityErrors" (Nothing :: Maybe ())
+pageGetInstallabilityErrors handle = sendReceiveCommandResult handle PPageGetInstallabilityErrors
 
 -- | Return type of the 'pageGetInstallabilityErrors' command.
 data PageGetInstallabilityErrors = PageGetInstallabilityErrors {
@@ -7669,16 +8025,20 @@ data PageGetInstallabilityErrors = PageGetInstallabilityErrors {
 instance FromJSON  PageGetInstallabilityErrors where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
-instance Command PageGetInstallabilityErrors where
-   commandName _ = "Page.getInstallabilityErrors"
+instance Command PPageGetInstallabilityErrors where
+    type CommandResponse PPageGetInstallabilityErrors = PageGetInstallabilityErrors
+    commandName _ = "Page.getInstallabilityErrors"
 
 
+-- | Parameters of the 'pageGetManifestIcons' command.
+data PPageGetManifestIcons = PPageGetManifestIcons
+instance ToJSON PPageGetManifestIcons where toJSON _ = A.Null
 
 -- | Function for the 'Page.getManifestIcons' command.
 --   
 --   Returns: 'PageGetManifestIcons'
 pageGetManifestIcons :: Handle -> IO PageGetManifestIcons
-pageGetManifestIcons handle = sendReceiveCommandResult handle "Page.getManifestIcons" (Nothing :: Maybe ())
+pageGetManifestIcons handle = sendReceiveCommandResult handle PPageGetManifestIcons
 
 -- | Return type of the 'pageGetManifestIcons' command.
 data PageGetManifestIcons = PageGetManifestIcons {
@@ -7688,17 +8048,21 @@ data PageGetManifestIcons = PageGetManifestIcons {
 instance FromJSON  PageGetManifestIcons where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command PageGetManifestIcons where
-   commandName _ = "Page.getManifestIcons"
+instance Command PPageGetManifestIcons where
+    type CommandResponse PPageGetManifestIcons = PageGetManifestIcons
+    commandName _ = "Page.getManifestIcons"
 
 
+-- | Parameters of the 'pageGetAppId' command.
+data PPageGetAppId = PPageGetAppId
+instance ToJSON PPageGetAppId where toJSON _ = A.Null
 
 -- | Function for the 'Page.getAppId' command.
 --   Returns the unique (PWA) app id.
 --   Only returns values if the feature flag 'WebAppEnableManifestId' is enabled
 --   Returns: 'PageGetAppId'
 pageGetAppId :: Handle -> IO PageGetAppId
-pageGetAppId handle = sendReceiveCommandResult handle "Page.getAppId" (Nothing :: Maybe ())
+pageGetAppId handle = sendReceiveCommandResult handle PPageGetAppId
 
 -- | Return type of the 'pageGetAppId' command.
 data PageGetAppId = PageGetAppId {
@@ -7711,16 +8075,20 @@ data PageGetAppId = PageGetAppId {
 instance FromJSON  PageGetAppId where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 }
 
-instance Command PageGetAppId where
-   commandName _ = "Page.getAppId"
+instance Command PPageGetAppId where
+    type CommandResponse PPageGetAppId = PageGetAppId
+    commandName _ = "Page.getAppId"
 
 
+-- | Parameters of the 'pageGetFrameTree' command.
+data PPageGetFrameTree = PPageGetFrameTree
+instance ToJSON PPageGetFrameTree where toJSON _ = A.Null
 
 -- | Function for the 'Page.getFrameTree' command.
 --   Returns present frame tree structure.
 --   Returns: 'PageGetFrameTree'
 pageGetFrameTree :: Handle -> IO PageGetFrameTree
-pageGetFrameTree handle = sendReceiveCommandResult handle "Page.getFrameTree" (Nothing :: Maybe ())
+pageGetFrameTree handle = sendReceiveCommandResult handle PPageGetFrameTree
 
 -- | Return type of the 'pageGetFrameTree' command.
 data PageGetFrameTree = PageGetFrameTree {
@@ -7731,16 +8099,20 @@ data PageGetFrameTree = PageGetFrameTree {
 instance FromJSON  PageGetFrameTree where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
-instance Command PageGetFrameTree where
-   commandName _ = "Page.getFrameTree"
+instance Command PPageGetFrameTree where
+    type CommandResponse PPageGetFrameTree = PageGetFrameTree
+    commandName _ = "Page.getFrameTree"
 
 
+-- | Parameters of the 'pageGetLayoutMetrics' command.
+data PPageGetLayoutMetrics = PPageGetLayoutMetrics
+instance ToJSON PPageGetLayoutMetrics where toJSON _ = A.Null
 
 -- | Function for the 'Page.getLayoutMetrics' command.
 --   Returns metrics relating to the layouting of the page, such as viewport bounds/scale.
 --   Returns: 'PageGetLayoutMetrics'
 pageGetLayoutMetrics :: Handle -> IO PageGetLayoutMetrics
-pageGetLayoutMetrics handle = sendReceiveCommandResult handle "Page.getLayoutMetrics" (Nothing :: Maybe ())
+pageGetLayoutMetrics handle = sendReceiveCommandResult handle PPageGetLayoutMetrics
 
 -- | Return type of the 'pageGetLayoutMetrics' command.
 data PageGetLayoutMetrics = PageGetLayoutMetrics {
@@ -7755,16 +8127,20 @@ data PageGetLayoutMetrics = PageGetLayoutMetrics {
 instance FromJSON  PageGetLayoutMetrics where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command PageGetLayoutMetrics where
-   commandName _ = "Page.getLayoutMetrics"
+instance Command PPageGetLayoutMetrics where
+    type CommandResponse PPageGetLayoutMetrics = PageGetLayoutMetrics
+    commandName _ = "Page.getLayoutMetrics"
 
 
+-- | Parameters of the 'pageGetNavigationHistory' command.
+data PPageGetNavigationHistory = PPageGetNavigationHistory
+instance ToJSON PPageGetNavigationHistory where toJSON _ = A.Null
 
 -- | Function for the 'Page.getNavigationHistory' command.
 --   Returns navigation history for the current page.
 --   Returns: 'PageGetNavigationHistory'
 pageGetNavigationHistory :: Handle -> IO PageGetNavigationHistory
-pageGetNavigationHistory handle = sendReceiveCommandResult handle "Page.getNavigationHistory" (Nothing :: Maybe ())
+pageGetNavigationHistory handle = sendReceiveCommandResult handle PPageGetNavigationHistory
 
 -- | Return type of the 'pageGetNavigationHistory' command.
 data PageGetNavigationHistory = PageGetNavigationHistory {
@@ -7777,15 +8153,23 @@ data PageGetNavigationHistory = PageGetNavigationHistory {
 instance FromJSON  PageGetNavigationHistory where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
-instance Command PageGetNavigationHistory where
-   commandName _ = "Page.getNavigationHistory"
+instance Command PPageGetNavigationHistory where
+    type CommandResponse PPageGetNavigationHistory = PageGetNavigationHistory
+    commandName _ = "Page.getNavigationHistory"
 
 
+-- | Parameters of the 'pageResetNavigationHistory' command.
+data PPageResetNavigationHistory = PPageResetNavigationHistory
+instance ToJSON PPageResetNavigationHistory where toJSON _ = A.Null
 
 -- | Function for the 'Page.resetNavigationHistory' command.
 --   Resets navigation history for the current page.
 pageResetNavigationHistory :: Handle -> IO ()
-pageResetNavigationHistory handle = sendReceiveCommand handle "Page.resetNavigationHistory" (Nothing :: Maybe ())
+pageResetNavigationHistory handle = sendReceiveCommand handle PPageResetNavigationHistory
+
+instance Command PPageResetNavigationHistory where
+    type CommandResponse PPageResetNavigationHistory = NoResponse
+    commandName _ = "Page.resetNavigationHistory"
 
 
 -- | Parameters of the 'pageGetResourceContent' command.
@@ -7804,10 +8188,10 @@ instance FromJSON  PPageGetResourceContent where
 
 -- | Function for the 'Page.getResourceContent' command.
 --   Returns content of the given resource.
---   Parameters: 'PPageGetResourceContent'
+--   Returns: 'PPageGetResourceContent'
 --   Returns: 'PageGetResourceContent'
 pageGetResourceContent :: Handle -> PPageGetResourceContent -> IO PageGetResourceContent
-pageGetResourceContent handle params = sendReceiveCommandResult handle "Page.getResourceContent" (Just params)
+pageGetResourceContent handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'pageGetResourceContent' command.
 data PageGetResourceContent = PageGetResourceContent {
@@ -7820,16 +8204,20 @@ data PageGetResourceContent = PageGetResourceContent {
 instance FromJSON  PageGetResourceContent where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
-instance Command PageGetResourceContent where
-   commandName _ = "Page.getResourceContent"
+instance Command PPageGetResourceContent where
+    type CommandResponse PPageGetResourceContent = PageGetResourceContent
+    commandName _ = "Page.getResourceContent"
 
 
+-- | Parameters of the 'pageGetResourceTree' command.
+data PPageGetResourceTree = PPageGetResourceTree
+instance ToJSON PPageGetResourceTree where toJSON _ = A.Null
 
 -- | Function for the 'Page.getResourceTree' command.
 --   Returns present frame / resource tree structure.
 --   Returns: 'PageGetResourceTree'
 pageGetResourceTree :: Handle -> IO PageGetResourceTree
-pageGetResourceTree handle = sendReceiveCommandResult handle "Page.getResourceTree" (Nothing :: Maybe ())
+pageGetResourceTree handle = sendReceiveCommandResult handle PPageGetResourceTree
 
 -- | Return type of the 'pageGetResourceTree' command.
 data PageGetResourceTree = PageGetResourceTree {
@@ -7840,9 +8228,9 @@ data PageGetResourceTree = PageGetResourceTree {
 instance FromJSON  PageGetResourceTree where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
-instance Command PageGetResourceTree where
-   commandName _ = "Page.getResourceTree"
-
+instance Command PPageGetResourceTree where
+    type CommandResponse PPageGetResourceTree = PageGetResourceTree
+    commandName _ = "Page.getResourceTree"
 
 
 -- | Parameters of the 'pageHandleJavaScriptDialog' command.
@@ -7862,9 +8250,13 @@ instance FromJSON  PPageHandleJavaScriptDialog where
 
 -- | Function for the 'Page.handleJavaScriptDialog' command.
 --   Accepts or dismisses a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload).
---   Parameters: 'PPageHandleJavaScriptDialog'
+--   Returns: 'PPageHandleJavaScriptDialog'
 pageHandleJavaScriptDialog :: Handle -> PPageHandleJavaScriptDialog -> IO ()
-pageHandleJavaScriptDialog handle params = sendReceiveCommand handle "Page.handleJavaScriptDialog" (Just params)
+pageHandleJavaScriptDialog handle params = sendReceiveCommand handle params
+
+instance Command PPageHandleJavaScriptDialog where
+    type CommandResponse PPageHandleJavaScriptDialog = NoResponse
+    commandName _ = "Page.handleJavaScriptDialog"
 
 
 -- | Parameters of the 'pageNavigate' command.
@@ -7889,10 +8281,10 @@ instance FromJSON  PPageNavigate where
 
 -- | Function for the 'Page.navigate' command.
 --   Navigates current page to the given URL.
---   Parameters: 'PPageNavigate'
+--   Returns: 'PPageNavigate'
 --   Returns: 'PageNavigate'
 pageNavigate :: Handle -> PPageNavigate -> IO PageNavigate
-pageNavigate handle params = sendReceiveCommandResult handle "Page.navigate" (Just params)
+pageNavigate handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'pageNavigate' command.
 data PageNavigate = PageNavigate {
@@ -7908,9 +8300,9 @@ data PageNavigate = PageNavigate {
 instance FromJSON  PageNavigate where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 }
 
-instance Command PageNavigate where
-   commandName _ = "Page.navigate"
-
+instance Command PPageNavigate where
+    type CommandResponse PPageNavigate = PageNavigate
+    commandName _ = "Page.navigate"
 
 
 -- | Parameters of the 'pageNavigateToHistoryEntry' command.
@@ -7927,9 +8319,13 @@ instance FromJSON  PPageNavigateToHistoryEntry where
 
 -- | Function for the 'Page.navigateToHistoryEntry' command.
 --   Navigates current page to the given history entry.
---   Parameters: 'PPageNavigateToHistoryEntry'
+--   Returns: 'PPageNavigateToHistoryEntry'
 pageNavigateToHistoryEntry :: Handle -> PPageNavigateToHistoryEntry -> IO ()
-pageNavigateToHistoryEntry handle params = sendReceiveCommand handle "Page.navigateToHistoryEntry" (Just params)
+pageNavigateToHistoryEntry handle params = sendReceiveCommand handle params
+
+instance Command PPageNavigateToHistoryEntry where
+    type CommandResponse PPageNavigateToHistoryEntry = NoResponse
+    commandName _ = "Page.navigateToHistoryEntry"
 
 
 -- | Parameters of the 'pagePrintToPDF' command.
@@ -8007,10 +8403,10 @@ instance FromJSON  PPagePrintToPDF where
 
 -- | Function for the 'Page.printToPDF' command.
 --   Print page as PDF.
---   Parameters: 'PPagePrintToPDF'
+--   Returns: 'PPagePrintToPDF'
 --   Returns: 'PagePrintToPDF'
 pagePrintToPDF :: Handle -> PPagePrintToPDF -> IO PagePrintToPDF
-pagePrintToPDF handle params = sendReceiveCommandResult handle "Page.printToPDF" (Just params)
+pagePrintToPDF handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'pagePrintToPDF' command.
 data PagePrintToPDF = PagePrintToPDF {
@@ -8023,9 +8419,9 @@ data PagePrintToPDF = PagePrintToPDF {
 instance FromJSON  PagePrintToPDF where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
-instance Command PagePrintToPDF where
-   commandName _ = "Page.printToPDF"
-
+instance Command PPagePrintToPDF where
+    type CommandResponse PPagePrintToPDF = PagePrintToPDF
+    commandName _ = "Page.printToPDF"
 
 
 -- | Parameters of the 'pageReload' command.
@@ -8045,9 +8441,13 @@ instance FromJSON  PPageReload where
 
 -- | Function for the 'Page.reload' command.
 --   Reloads given page optionally ignoring the cache.
---   Parameters: 'PPageReload'
+--   Returns: 'PPageReload'
 pageReload :: Handle -> PPageReload -> IO ()
-pageReload handle params = sendReceiveCommand handle "Page.reload" (Just params)
+pageReload handle params = sendReceiveCommand handle params
+
+instance Command PPageReload where
+    type CommandResponse PPageReload = NoResponse
+    commandName _ = "Page.reload"
 
 
 -- | Parameters of the 'pageRemoveScriptToEvaluateOnNewDocument' command.
@@ -8063,9 +8463,13 @@ instance FromJSON  PPageRemoveScriptToEvaluateOnNewDocument where
 
 -- | Function for the 'Page.removeScriptToEvaluateOnNewDocument' command.
 --   Removes given script from the list.
---   Parameters: 'PPageRemoveScriptToEvaluateOnNewDocument'
+--   Returns: 'PPageRemoveScriptToEvaluateOnNewDocument'
 pageRemoveScriptToEvaluateOnNewDocument :: Handle -> PPageRemoveScriptToEvaluateOnNewDocument -> IO ()
-pageRemoveScriptToEvaluateOnNewDocument handle params = sendReceiveCommand handle "Page.removeScriptToEvaluateOnNewDocument" (Just params)
+pageRemoveScriptToEvaluateOnNewDocument handle params = sendReceiveCommand handle params
+
+instance Command PPageRemoveScriptToEvaluateOnNewDocument where
+    type CommandResponse PPageRemoveScriptToEvaluateOnNewDocument = NoResponse
+    commandName _ = "Page.removeScriptToEvaluateOnNewDocument"
 
 
 -- | Parameters of the 'pageScreencastFrameAck' command.
@@ -8082,9 +8486,13 @@ instance FromJSON  PPageScreencastFrameAck where
 
 -- | Function for the 'Page.screencastFrameAck' command.
 --   Acknowledges that a screencast frame has been received by the frontend.
---   Parameters: 'PPageScreencastFrameAck'
+--   Returns: 'PPageScreencastFrameAck'
 pageScreencastFrameAck :: Handle -> PPageScreencastFrameAck -> IO ()
-pageScreencastFrameAck handle params = sendReceiveCommand handle "Page.screencastFrameAck" (Just params)
+pageScreencastFrameAck handle params = sendReceiveCommand handle params
+
+instance Command PPageScreencastFrameAck where
+    type CommandResponse PPageScreencastFrameAck = NoResponse
+    commandName _ = "Page.screencastFrameAck"
 
 
 -- | Parameters of the 'pageSearchInResource' command.
@@ -8109,10 +8517,10 @@ instance FromJSON  PPageSearchInResource where
 
 -- | Function for the 'Page.searchInResource' command.
 --   Searches for given string in resource content.
---   Parameters: 'PPageSearchInResource'
+--   Returns: 'PPageSearchInResource'
 --   Returns: 'PageSearchInResource'
 pageSearchInResource :: Handle -> PPageSearchInResource -> IO PageSearchInResource
-pageSearchInResource handle params = sendReceiveCommandResult handle "Page.searchInResource" (Just params)
+pageSearchInResource handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'pageSearchInResource' command.
 data PageSearchInResource = PageSearchInResource {
@@ -8123,9 +8531,9 @@ data PageSearchInResource = PageSearchInResource {
 instance FromJSON  PageSearchInResource where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command PageSearchInResource where
-   commandName _ = "Page.searchInResource"
-
+instance Command PPageSearchInResource where
+    type CommandResponse PPageSearchInResource = PageSearchInResource
+    commandName _ = "Page.searchInResource"
 
 
 -- | Parameters of the 'pageSetAdBlockingEnabled' command.
@@ -8142,9 +8550,13 @@ instance FromJSON  PPageSetAdBlockingEnabled where
 
 -- | Function for the 'Page.setAdBlockingEnabled' command.
 --   Enable Chrome's experimental ad filter on all sites.
---   Parameters: 'PPageSetAdBlockingEnabled'
+--   Returns: 'PPageSetAdBlockingEnabled'
 pageSetAdBlockingEnabled :: Handle -> PPageSetAdBlockingEnabled -> IO ()
-pageSetAdBlockingEnabled handle params = sendReceiveCommand handle "Page.setAdBlockingEnabled" (Just params)
+pageSetAdBlockingEnabled handle params = sendReceiveCommand handle params
+
+instance Command PPageSetAdBlockingEnabled where
+    type CommandResponse PPageSetAdBlockingEnabled = NoResponse
+    commandName _ = "Page.setAdBlockingEnabled"
 
 
 -- | Parameters of the 'pageSetBypassCSP' command.
@@ -8161,9 +8573,13 @@ instance FromJSON  PPageSetBypassCSP where
 
 -- | Function for the 'Page.setBypassCSP' command.
 --   Enable page Content Security Policy by-passing.
---   Parameters: 'PPageSetBypassCSP'
+--   Returns: 'PPageSetBypassCSP'
 pageSetBypassCSP :: Handle -> PPageSetBypassCSP -> IO ()
-pageSetBypassCSP handle params = sendReceiveCommand handle "Page.setBypassCSP" (Just params)
+pageSetBypassCSP handle params = sendReceiveCommand handle params
+
+instance Command PPageSetBypassCSP where
+    type CommandResponse PPageSetBypassCSP = NoResponse
+    commandName _ = "Page.setBypassCSP"
 
 
 -- | Parameters of the 'pageGetPermissionsPolicyState' command.
@@ -8179,10 +8595,10 @@ instance FromJSON  PPageGetPermissionsPolicyState where
 
 -- | Function for the 'Page.getPermissionsPolicyState' command.
 --   Get Permissions Policy state on given frame.
---   Parameters: 'PPageGetPermissionsPolicyState'
+--   Returns: 'PPageGetPermissionsPolicyState'
 --   Returns: 'PageGetPermissionsPolicyState'
 pageGetPermissionsPolicyState :: Handle -> PPageGetPermissionsPolicyState -> IO PageGetPermissionsPolicyState
-pageGetPermissionsPolicyState handle params = sendReceiveCommandResult handle "Page.getPermissionsPolicyState" (Just params)
+pageGetPermissionsPolicyState handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'pageGetPermissionsPolicyState' command.
 data PageGetPermissionsPolicyState = PageGetPermissionsPolicyState {
@@ -8192,9 +8608,9 @@ data PageGetPermissionsPolicyState = PageGetPermissionsPolicyState {
 instance FromJSON  PageGetPermissionsPolicyState where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
-instance Command PageGetPermissionsPolicyState where
-   commandName _ = "Page.getPermissionsPolicyState"
-
+instance Command PPageGetPermissionsPolicyState where
+    type CommandResponse PPageGetPermissionsPolicyState = PageGetPermissionsPolicyState
+    commandName _ = "Page.getPermissionsPolicyState"
 
 
 -- | Parameters of the 'pageGetOriginTrials' command.
@@ -8210,10 +8626,10 @@ instance FromJSON  PPageGetOriginTrials where
 
 -- | Function for the 'Page.getOriginTrials' command.
 --   Get Origin Trials on given frame.
---   Parameters: 'PPageGetOriginTrials'
+--   Returns: 'PPageGetOriginTrials'
 --   Returns: 'PageGetOriginTrials'
 pageGetOriginTrials :: Handle -> PPageGetOriginTrials -> IO PageGetOriginTrials
-pageGetOriginTrials handle params = sendReceiveCommandResult handle "Page.getOriginTrials" (Just params)
+pageGetOriginTrials handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'pageGetOriginTrials' command.
 data PageGetOriginTrials = PageGetOriginTrials {
@@ -8223,9 +8639,9 @@ data PageGetOriginTrials = PageGetOriginTrials {
 instance FromJSON  PageGetOriginTrials where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
-instance Command PageGetOriginTrials where
-   commandName _ = "Page.getOriginTrials"
-
+instance Command PPageGetOriginTrials where
+    type CommandResponse PPageGetOriginTrials = PageGetOriginTrials
+    commandName _ = "Page.getOriginTrials"
 
 
 -- | Parameters of the 'pageSetFontFamilies' command.
@@ -8244,9 +8660,13 @@ instance FromJSON  PPageSetFontFamilies where
 
 -- | Function for the 'Page.setFontFamilies' command.
 --   Set generic font families.
---   Parameters: 'PPageSetFontFamilies'
+--   Returns: 'PPageSetFontFamilies'
 pageSetFontFamilies :: Handle -> PPageSetFontFamilies -> IO ()
-pageSetFontFamilies handle params = sendReceiveCommand handle "Page.setFontFamilies" (Just params)
+pageSetFontFamilies handle params = sendReceiveCommand handle params
+
+instance Command PPageSetFontFamilies where
+    type CommandResponse PPageSetFontFamilies = NoResponse
+    commandName _ = "Page.setFontFamilies"
 
 
 -- | Parameters of the 'pageSetFontSizes' command.
@@ -8263,9 +8683,13 @@ instance FromJSON  PPageSetFontSizes where
 
 -- | Function for the 'Page.setFontSizes' command.
 --   Set default font sizes.
---   Parameters: 'PPageSetFontSizes'
+--   Returns: 'PPageSetFontSizes'
 pageSetFontSizes :: Handle -> PPageSetFontSizes -> IO ()
-pageSetFontSizes handle params = sendReceiveCommand handle "Page.setFontSizes" (Just params)
+pageSetFontSizes handle params = sendReceiveCommand handle params
+
+instance Command PPageSetFontSizes where
+    type CommandResponse PPageSetFontSizes = NoResponse
+    commandName _ = "Page.setFontSizes"
 
 
 -- | Parameters of the 'pageSetDocumentContent' command.
@@ -8284,9 +8708,13 @@ instance FromJSON  PPageSetDocumentContent where
 
 -- | Function for the 'Page.setDocumentContent' command.
 --   Sets given markup as the document's HTML.
---   Parameters: 'PPageSetDocumentContent'
+--   Returns: 'PPageSetDocumentContent'
 pageSetDocumentContent :: Handle -> PPageSetDocumentContent -> IO ()
-pageSetDocumentContent handle params = sendReceiveCommand handle "Page.setDocumentContent" (Just params)
+pageSetDocumentContent handle params = sendReceiveCommand handle params
+
+instance Command PPageSetDocumentContent where
+    type CommandResponse PPageSetDocumentContent = NoResponse
+    commandName _ = "Page.setDocumentContent"
 
 
 -- | Parameters of the 'pageSetLifecycleEventsEnabled' command.
@@ -8303,9 +8731,13 @@ instance FromJSON  PPageSetLifecycleEventsEnabled where
 
 -- | Function for the 'Page.setLifecycleEventsEnabled' command.
 --   Controls whether page will emit lifecycle events.
---   Parameters: 'PPageSetLifecycleEventsEnabled'
+--   Returns: 'PPageSetLifecycleEventsEnabled'
 pageSetLifecycleEventsEnabled :: Handle -> PPageSetLifecycleEventsEnabled -> IO ()
-pageSetLifecycleEventsEnabled handle params = sendReceiveCommand handle "Page.setLifecycleEventsEnabled" (Just params)
+pageSetLifecycleEventsEnabled handle params = sendReceiveCommand handle params
+
+instance Command PPageSetLifecycleEventsEnabled where
+    type CommandResponse PPageSetLifecycleEventsEnabled = NoResponse
+    commandName _ = "Page.setLifecycleEventsEnabled"
 
 
 -- | Parameters of the 'pageStartScreencast' command.
@@ -8347,27 +8779,55 @@ instance FromJSON  PPageStartScreencast where
 
 -- | Function for the 'Page.startScreencast' command.
 --   Starts sending each frame using the `screencastFrame` event.
---   Parameters: 'PPageStartScreencast'
+--   Returns: 'PPageStartScreencast'
 pageStartScreencast :: Handle -> PPageStartScreencast -> IO ()
-pageStartScreencast handle params = sendReceiveCommand handle "Page.startScreencast" (Just params)
+pageStartScreencast handle params = sendReceiveCommand handle params
 
+instance Command PPageStartScreencast where
+    type CommandResponse PPageStartScreencast = NoResponse
+    commandName _ = "Page.startScreencast"
+
+
+-- | Parameters of the 'pageStopLoading' command.
+data PPageStopLoading = PPageStopLoading
+instance ToJSON PPageStopLoading where toJSON _ = A.Null
 
 -- | Function for the 'Page.stopLoading' command.
 --   Force the page stop all navigations and pending resource fetches.
 pageStopLoading :: Handle -> IO ()
-pageStopLoading handle = sendReceiveCommand handle "Page.stopLoading" (Nothing :: Maybe ())
+pageStopLoading handle = sendReceiveCommand handle PPageStopLoading
 
+instance Command PPageStopLoading where
+    type CommandResponse PPageStopLoading = NoResponse
+    commandName _ = "Page.stopLoading"
+
+
+-- | Parameters of the 'pageCrash' command.
+data PPageCrash = PPageCrash
+instance ToJSON PPageCrash where toJSON _ = A.Null
 
 -- | Function for the 'Page.crash' command.
 --   Crashes renderer on the IO thread, generates minidumps.
 pageCrash :: Handle -> IO ()
-pageCrash handle = sendReceiveCommand handle "Page.crash" (Nothing :: Maybe ())
+pageCrash handle = sendReceiveCommand handle PPageCrash
 
+instance Command PPageCrash where
+    type CommandResponse PPageCrash = NoResponse
+    commandName _ = "Page.crash"
+
+
+-- | Parameters of the 'pageClose' command.
+data PPageClose = PPageClose
+instance ToJSON PPageClose where toJSON _ = A.Null
 
 -- | Function for the 'Page.close' command.
 --   Tries to close page, running its beforeunload hooks, if any.
 pageClose :: Handle -> IO ()
-pageClose handle = sendReceiveCommand handle "Page.close" (Nothing :: Maybe ())
+pageClose handle = sendReceiveCommand handle PPageClose
+
+instance Command PPageClose where
+    type CommandResponse PPageClose = NoResponse
+    commandName _ = "Page.close"
 
 
 -- | Parameters of the 'pageSetWebLifecycleState' command.
@@ -8403,15 +8863,27 @@ instance FromJSON  PPageSetWebLifecycleState where
 --   Tries to update the web lifecycle state of the page.
 --   It will transition the page to the given state according to:
 --   https://github.com/WICG/web-lifecycle/
---   Parameters: 'PPageSetWebLifecycleState'
+--   Returns: 'PPageSetWebLifecycleState'
 pageSetWebLifecycleState :: Handle -> PPageSetWebLifecycleState -> IO ()
-pageSetWebLifecycleState handle params = sendReceiveCommand handle "Page.setWebLifecycleState" (Just params)
+pageSetWebLifecycleState handle params = sendReceiveCommand handle params
 
+instance Command PPageSetWebLifecycleState where
+    type CommandResponse PPageSetWebLifecycleState = NoResponse
+    commandName _ = "Page.setWebLifecycleState"
+
+
+-- | Parameters of the 'pageStopScreencast' command.
+data PPageStopScreencast = PPageStopScreencast
+instance ToJSON PPageStopScreencast where toJSON _ = A.Null
 
 -- | Function for the 'Page.stopScreencast' command.
 --   Stops sending each frame in the `screencastFrame`.
 pageStopScreencast :: Handle -> IO ()
-pageStopScreencast handle = sendReceiveCommand handle "Page.stopScreencast" (Nothing :: Maybe ())
+pageStopScreencast handle = sendReceiveCommand handle PPageStopScreencast
+
+instance Command PPageStopScreencast where
+    type CommandResponse PPageStopScreencast = NoResponse
+    commandName _ = "Page.stopScreencast"
 
 
 -- | Parameters of the 'pageProduceCompilationCache' command.
@@ -8432,9 +8904,13 @@ instance FromJSON  PPageProduceCompilationCache where
 --   When script with a matching URL is encountered, the cache is optionally
 --   produced upon backend discretion, based on internal heuristics.
 --   See also: `Page.compilationCacheProduced`.
---   Parameters: 'PPageProduceCompilationCache'
+--   Returns: 'PPageProduceCompilationCache'
 pageProduceCompilationCache :: Handle -> PPageProduceCompilationCache -> IO ()
-pageProduceCompilationCache handle params = sendReceiveCommand handle "Page.produceCompilationCache" (Just params)
+pageProduceCompilationCache handle params = sendReceiveCommand handle params
+
+instance Command PPageProduceCompilationCache where
+    type CommandResponse PPageProduceCompilationCache = NoResponse
+    commandName _ = "Page.produceCompilationCache"
 
 
 -- | Parameters of the 'pageAddCompilationCache' command.
@@ -8453,15 +8929,27 @@ instance FromJSON  PPageAddCompilationCache where
 -- | Function for the 'Page.addCompilationCache' command.
 --   Seeds compilation cache for given url. Compilation cache does not survive
 --   cross-process navigation.
---   Parameters: 'PPageAddCompilationCache'
+--   Returns: 'PPageAddCompilationCache'
 pageAddCompilationCache :: Handle -> PPageAddCompilationCache -> IO ()
-pageAddCompilationCache handle params = sendReceiveCommand handle "Page.addCompilationCache" (Just params)
+pageAddCompilationCache handle params = sendReceiveCommand handle params
 
+instance Command PPageAddCompilationCache where
+    type CommandResponse PPageAddCompilationCache = NoResponse
+    commandName _ = "Page.addCompilationCache"
+
+
+-- | Parameters of the 'pageClearCompilationCache' command.
+data PPageClearCompilationCache = PPageClearCompilationCache
+instance ToJSON PPageClearCompilationCache where toJSON _ = A.Null
 
 -- | Function for the 'Page.clearCompilationCache' command.
 --   Clears seeded compilation cache.
 pageClearCompilationCache :: Handle -> IO ()
-pageClearCompilationCache handle = sendReceiveCommand handle "Page.clearCompilationCache" (Nothing :: Maybe ())
+pageClearCompilationCache handle = sendReceiveCommand handle PPageClearCompilationCache
+
+instance Command PPageClearCompilationCache where
+    type CommandResponse PPageClearCompilationCache = NoResponse
+    commandName _ = "Page.clearCompilationCache"
 
 
 -- | Parameters of the 'pageSetSPCTransactionMode' command.
@@ -8497,9 +8985,13 @@ instance FromJSON  PPageSetSPCTransactionMode where
 -- | Function for the 'Page.setSPCTransactionMode' command.
 --   Sets the Secure Payment Confirmation transaction mode.
 --   https://w3c.github.io/secure-payment-confirmation/#sctn-automation-set-spc-transaction-mode
---   Parameters: 'PPageSetSPCTransactionMode'
+--   Returns: 'PPageSetSPCTransactionMode'
 pageSetSPCTransactionMode :: Handle -> PPageSetSPCTransactionMode -> IO ()
-pageSetSPCTransactionMode handle params = sendReceiveCommand handle "Page.setSPCTransactionMode" (Just params)
+pageSetSPCTransactionMode handle params = sendReceiveCommand handle params
+
+instance Command PPageSetSPCTransactionMode where
+    type CommandResponse PPageSetSPCTransactionMode = NoResponse
+    commandName _ = "Page.setSPCTransactionMode"
 
 
 -- | Parameters of the 'pageGenerateTestReport' command.
@@ -8518,15 +9010,27 @@ instance FromJSON  PPageGenerateTestReport where
 
 -- | Function for the 'Page.generateTestReport' command.
 --   Generates a report for testing.
---   Parameters: 'PPageGenerateTestReport'
+--   Returns: 'PPageGenerateTestReport'
 pageGenerateTestReport :: Handle -> PPageGenerateTestReport -> IO ()
-pageGenerateTestReport handle params = sendReceiveCommand handle "Page.generateTestReport" (Just params)
+pageGenerateTestReport handle params = sendReceiveCommand handle params
 
+instance Command PPageGenerateTestReport where
+    type CommandResponse PPageGenerateTestReport = NoResponse
+    commandName _ = "Page.generateTestReport"
+
+
+-- | Parameters of the 'pageWaitForDebugger' command.
+data PPageWaitForDebugger = PPageWaitForDebugger
+instance ToJSON PPageWaitForDebugger where toJSON _ = A.Null
 
 -- | Function for the 'Page.waitForDebugger' command.
 --   Pauses page execution. Can be resumed using generic Runtime.runIfWaitingForDebugger.
 pageWaitForDebugger :: Handle -> IO ()
-pageWaitForDebugger handle = sendReceiveCommand handle "Page.waitForDebugger" (Nothing :: Maybe ())
+pageWaitForDebugger handle = sendReceiveCommand handle PPageWaitForDebugger
+
+instance Command PPageWaitForDebugger where
+    type CommandResponse PPageWaitForDebugger = NoResponse
+    commandName _ = "Page.waitForDebugger"
 
 
 -- | Parameters of the 'pageSetInterceptFileChooserDialog' command.
@@ -8544,9 +9048,13 @@ instance FromJSON  PPageSetInterceptFileChooserDialog where
 --   Intercept file chooser requests and transfer control to protocol clients.
 --   When file chooser interception is enabled, native file chooser dialog is not shown.
 --   Instead, a protocol event `Page.fileChooserOpened` is emitted.
---   Parameters: 'PPageSetInterceptFileChooserDialog'
+--   Returns: 'PPageSetInterceptFileChooserDialog'
 pageSetInterceptFileChooserDialog :: Handle -> PPageSetInterceptFileChooserDialog -> IO ()
-pageSetInterceptFileChooserDialog handle params = sendReceiveCommand handle "Page.setInterceptFileChooserDialog" (Just params)
+pageSetInterceptFileChooserDialog handle params = sendReceiveCommand handle params
+
+instance Command PPageSetInterceptFileChooserDialog where
+    type CommandResponse PPageSetInterceptFileChooserDialog = NoResponse
+    commandName _ = "Page.setInterceptFileChooserDialog"
 
 
 
@@ -8769,16 +9277,32 @@ instance Event SecurityVisibleSecurityStateChanged where
 
 
 
+-- | Parameters of the 'securityDisable' command.
+data PSecurityDisable = PSecurityDisable
+instance ToJSON PSecurityDisable where toJSON _ = A.Null
+
 -- | Function for the 'Security.disable' command.
 --   Disables tracking security state changes.
 securityDisable :: Handle -> IO ()
-securityDisable handle = sendReceiveCommand handle "Security.disable" (Nothing :: Maybe ())
+securityDisable handle = sendReceiveCommand handle PSecurityDisable
 
+instance Command PSecurityDisable where
+    type CommandResponse PSecurityDisable = NoResponse
+    commandName _ = "Security.disable"
+
+
+-- | Parameters of the 'securityEnable' command.
+data PSecurityEnable = PSecurityEnable
+instance ToJSON PSecurityEnable where toJSON _ = A.Null
 
 -- | Function for the 'Security.enable' command.
 --   Enables tracking security state changes.
 securityEnable :: Handle -> IO ()
-securityEnable handle = sendReceiveCommand handle "Security.enable" (Nothing :: Maybe ())
+securityEnable handle = sendReceiveCommand handle PSecurityEnable
+
+instance Command PSecurityEnable where
+    type CommandResponse PSecurityEnable = NoResponse
+    commandName _ = "Security.enable"
 
 
 -- | Parameters of the 'securitySetIgnoreCertificateErrors' command.
@@ -8795,9 +9319,13 @@ instance FromJSON  PSecuritySetIgnoreCertificateErrors where
 
 -- | Function for the 'Security.setIgnoreCertificateErrors' command.
 --   Enable/disable whether all certificate errors should be ignored.
---   Parameters: 'PSecuritySetIgnoreCertificateErrors'
+--   Returns: 'PSecuritySetIgnoreCertificateErrors'
 securitySetIgnoreCertificateErrors :: Handle -> PSecuritySetIgnoreCertificateErrors -> IO ()
-securitySetIgnoreCertificateErrors handle params = sendReceiveCommand handle "Security.setIgnoreCertificateErrors" (Just params)
+securitySetIgnoreCertificateErrors handle params = sendReceiveCommand handle params
+
+instance Command PSecuritySetIgnoreCertificateErrors where
+    type CommandResponse PSecuritySetIgnoreCertificateErrors = NoResponse
+    commandName _ = "Security.setIgnoreCertificateErrors"
 
 
 

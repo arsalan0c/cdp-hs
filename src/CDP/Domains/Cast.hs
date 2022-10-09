@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -44,7 +45,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 
@@ -114,15 +114,27 @@ instance FromJSON  PCastEnable where
 --   |sinksUpdated| event is fired.
 --   Also starts observing for issue messages. When an issue is added or removed,
 --   an |issueUpdated| event is fired.
---   Parameters: 'PCastEnable'
+--   Returns: 'PCastEnable'
 castEnable :: Handle -> PCastEnable -> IO ()
-castEnable handle params = sendReceiveCommand handle "Cast.enable" (Just params)
+castEnable handle params = sendReceiveCommand handle params
 
+instance Command PCastEnable where
+    type CommandResponse PCastEnable = NoResponse
+    commandName _ = "Cast.enable"
+
+
+-- | Parameters of the 'castDisable' command.
+data PCastDisable = PCastDisable
+instance ToJSON PCastDisable where toJSON _ = A.Null
 
 -- | Function for the 'Cast.disable' command.
 --   Stops observing for sinks and issues.
 castDisable :: Handle -> IO ()
-castDisable handle = sendReceiveCommand handle "Cast.disable" (Nothing :: Maybe ())
+castDisable handle = sendReceiveCommand handle PCastDisable
+
+instance Command PCastDisable where
+    type CommandResponse PCastDisable = NoResponse
+    commandName _ = "Cast.disable"
 
 
 -- | Parameters of the 'castSetSinkToUse' command.
@@ -139,9 +151,13 @@ instance FromJSON  PCastSetSinkToUse where
 -- | Function for the 'Cast.setSinkToUse' command.
 --   Sets a sink to be used when the web page requests the browser to choose a
 --   sink via Presentation API, Remote Playback API, or Cast SDK.
---   Parameters: 'PCastSetSinkToUse'
+--   Returns: 'PCastSetSinkToUse'
 castSetSinkToUse :: Handle -> PCastSetSinkToUse -> IO ()
-castSetSinkToUse handle params = sendReceiveCommand handle "Cast.setSinkToUse" (Just params)
+castSetSinkToUse handle params = sendReceiveCommand handle params
+
+instance Command PCastSetSinkToUse where
+    type CommandResponse PCastSetSinkToUse = NoResponse
+    commandName _ = "Cast.setSinkToUse"
 
 
 -- | Parameters of the 'castStartDesktopMirroring' command.
@@ -157,9 +173,13 @@ instance FromJSON  PCastStartDesktopMirroring where
 
 -- | Function for the 'Cast.startDesktopMirroring' command.
 --   Starts mirroring the desktop to the sink.
---   Parameters: 'PCastStartDesktopMirroring'
+--   Returns: 'PCastStartDesktopMirroring'
 castStartDesktopMirroring :: Handle -> PCastStartDesktopMirroring -> IO ()
-castStartDesktopMirroring handle params = sendReceiveCommand handle "Cast.startDesktopMirroring" (Just params)
+castStartDesktopMirroring handle params = sendReceiveCommand handle params
+
+instance Command PCastStartDesktopMirroring where
+    type CommandResponse PCastStartDesktopMirroring = NoResponse
+    commandName _ = "Cast.startDesktopMirroring"
 
 
 -- | Parameters of the 'castStartTabMirroring' command.
@@ -175,9 +195,13 @@ instance FromJSON  PCastStartTabMirroring where
 
 -- | Function for the 'Cast.startTabMirroring' command.
 --   Starts mirroring the tab to the sink.
---   Parameters: 'PCastStartTabMirroring'
+--   Returns: 'PCastStartTabMirroring'
 castStartTabMirroring :: Handle -> PCastStartTabMirroring -> IO ()
-castStartTabMirroring handle params = sendReceiveCommand handle "Cast.startTabMirroring" (Just params)
+castStartTabMirroring handle params = sendReceiveCommand handle params
+
+instance Command PCastStartTabMirroring where
+    type CommandResponse PCastStartTabMirroring = NoResponse
+    commandName _ = "Cast.startTabMirroring"
 
 
 -- | Parameters of the 'castStopCasting' command.
@@ -193,9 +217,13 @@ instance FromJSON  PCastStopCasting where
 
 -- | Function for the 'Cast.stopCasting' command.
 --   Stops the active Cast session on the sink.
---   Parameters: 'PCastStopCasting'
+--   Returns: 'PCastStopCasting'
 castStopCasting :: Handle -> PCastStopCasting -> IO ()
-castStopCasting handle params = sendReceiveCommand handle "Cast.stopCasting" (Just params)
+castStopCasting handle params = sendReceiveCommand handle params
+
+instance Command PCastStopCasting where
+    type CommandResponse PCastStopCasting = NoResponse
+    commandName _ = "Cast.stopCasting"
 
 
 

@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -41,7 +42,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 
@@ -104,16 +104,32 @@ instance Event DatabaseAddDatabase where
 
 
 
+-- | Parameters of the 'databaseDisable' command.
+data PDatabaseDisable = PDatabaseDisable
+instance ToJSON PDatabaseDisable where toJSON _ = A.Null
+
 -- | Function for the 'Database.disable' command.
 --   Disables database tracking, prevents database events from being sent to the client.
 databaseDisable :: Handle -> IO ()
-databaseDisable handle = sendReceiveCommand handle "Database.disable" (Nothing :: Maybe ())
+databaseDisable handle = sendReceiveCommand handle PDatabaseDisable
 
+instance Command PDatabaseDisable where
+    type CommandResponse PDatabaseDisable = NoResponse
+    commandName _ = "Database.disable"
+
+
+-- | Parameters of the 'databaseEnable' command.
+data PDatabaseEnable = PDatabaseEnable
+instance ToJSON PDatabaseEnable where toJSON _ = A.Null
 
 -- | Function for the 'Database.enable' command.
 --   Enables database tracking, database events will now be delivered to the client.
 databaseEnable :: Handle -> IO ()
-databaseEnable handle = sendReceiveCommand handle "Database.enable" (Nothing :: Maybe ())
+databaseEnable handle = sendReceiveCommand handle PDatabaseEnable
+
+instance Command PDatabaseEnable where
+    type CommandResponse PDatabaseEnable = NoResponse
+    commandName _ = "Database.enable"
 
 
 -- | Parameters of the 'databaseExecuteSQL' command.
@@ -130,10 +146,10 @@ instance FromJSON  PDatabaseExecuteSQL where
 
 -- | Function for the 'Database.executeSQL' command.
 --   
---   Parameters: 'PDatabaseExecuteSQL'
+--   Returns: 'PDatabaseExecuteSQL'
 --   Returns: 'DatabaseExecuteSQL'
 databaseExecuteSQL :: Handle -> PDatabaseExecuteSQL -> IO DatabaseExecuteSQL
-databaseExecuteSQL handle params = sendReceiveCommandResult handle "Database.executeSQL" (Just params)
+databaseExecuteSQL handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'databaseExecuteSQL' command.
 data DatabaseExecuteSQL = DatabaseExecuteSQL {
@@ -145,9 +161,9 @@ data DatabaseExecuteSQL = DatabaseExecuteSQL {
 instance FromJSON  DatabaseExecuteSQL where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
-instance Command DatabaseExecuteSQL where
-   commandName _ = "Database.executeSQL"
-
+instance Command PDatabaseExecuteSQL where
+    type CommandResponse PDatabaseExecuteSQL = DatabaseExecuteSQL
+    commandName _ = "Database.executeSQL"
 
 
 -- | Parameters of the 'databaseGetDatabaseTableNames' command.
@@ -163,10 +179,10 @@ instance FromJSON  PDatabaseGetDatabaseTableNames where
 
 -- | Function for the 'Database.getDatabaseTableNames' command.
 --   
---   Parameters: 'PDatabaseGetDatabaseTableNames'
+--   Returns: 'PDatabaseGetDatabaseTableNames'
 --   Returns: 'DatabaseGetDatabaseTableNames'
 databaseGetDatabaseTableNames :: Handle -> PDatabaseGetDatabaseTableNames -> IO DatabaseGetDatabaseTableNames
-databaseGetDatabaseTableNames handle params = sendReceiveCommandResult handle "Database.getDatabaseTableNames" (Just params)
+databaseGetDatabaseTableNames handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'databaseGetDatabaseTableNames' command.
 data DatabaseGetDatabaseTableNames = DatabaseGetDatabaseTableNames {
@@ -176,9 +192,9 @@ data DatabaseGetDatabaseTableNames = DatabaseGetDatabaseTableNames {
 instance FromJSON  DatabaseGetDatabaseTableNames where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
-instance Command DatabaseGetDatabaseTableNames where
-   commandName _ = "Database.getDatabaseTableNames"
-
+instance Command PDatabaseGetDatabaseTableNames where
+    type CommandResponse PDatabaseGetDatabaseTableNames = DatabaseGetDatabaseTableNames
+    commandName _ = "Database.getDatabaseTableNames"
 
 
 

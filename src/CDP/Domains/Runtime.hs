@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -47,7 +48,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 
@@ -928,10 +928,10 @@ instance FromJSON  PRuntimeAwaitPromise where
 
 -- | Function for the 'Runtime.awaitPromise' command.
 --   Add handler to promise with given promise object id.
---   Parameters: 'PRuntimeAwaitPromise'
+--   Returns: 'PRuntimeAwaitPromise'
 --   Returns: 'RuntimeAwaitPromise'
 runtimeAwaitPromise :: Handle -> PRuntimeAwaitPromise -> IO RuntimeAwaitPromise
-runtimeAwaitPromise handle params = sendReceiveCommandResult handle "Runtime.awaitPromise" (Just params)
+runtimeAwaitPromise handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'runtimeAwaitPromise' command.
 data RuntimeAwaitPromise = RuntimeAwaitPromise {
@@ -944,9 +944,9 @@ data RuntimeAwaitPromise = RuntimeAwaitPromise {
 instance FromJSON  RuntimeAwaitPromise where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
-instance Command RuntimeAwaitPromise where
-   commandName _ = "Runtime.awaitPromise"
-
+instance Command PRuntimeAwaitPromise where
+    type CommandResponse PRuntimeAwaitPromise = RuntimeAwaitPromise
+    commandName _ = "Runtime.awaitPromise"
 
 
 -- | Parameters of the 'runtimeCallFunctionOn' command.
@@ -994,10 +994,10 @@ instance FromJSON  PRuntimeCallFunctionOn where
 -- | Function for the 'Runtime.callFunctionOn' command.
 --   Calls function with given declaration on the given object. Object group of the result is
 --   inherited from the target object.
---   Parameters: 'PRuntimeCallFunctionOn'
+--   Returns: 'PRuntimeCallFunctionOn'
 --   Returns: 'RuntimeCallFunctionOn'
 runtimeCallFunctionOn :: Handle -> PRuntimeCallFunctionOn -> IO RuntimeCallFunctionOn
-runtimeCallFunctionOn handle params = sendReceiveCommandResult handle "Runtime.callFunctionOn" (Just params)
+runtimeCallFunctionOn handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'runtimeCallFunctionOn' command.
 data RuntimeCallFunctionOn = RuntimeCallFunctionOn {
@@ -1010,9 +1010,9 @@ data RuntimeCallFunctionOn = RuntimeCallFunctionOn {
 instance FromJSON  RuntimeCallFunctionOn where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
-instance Command RuntimeCallFunctionOn where
-   commandName _ = "Runtime.callFunctionOn"
-
+instance Command PRuntimeCallFunctionOn where
+    type CommandResponse PRuntimeCallFunctionOn = RuntimeCallFunctionOn
+    commandName _ = "Runtime.callFunctionOn"
 
 
 -- | Parameters of the 'runtimeCompileScript' command.
@@ -1036,10 +1036,10 @@ instance FromJSON  PRuntimeCompileScript where
 
 -- | Function for the 'Runtime.compileScript' command.
 --   Compiles expression.
---   Parameters: 'PRuntimeCompileScript'
+--   Returns: 'PRuntimeCompileScript'
 --   Returns: 'RuntimeCompileScript'
 runtimeCompileScript :: Handle -> PRuntimeCompileScript -> IO RuntimeCompileScript
-runtimeCompileScript handle params = sendReceiveCommandResult handle "Runtime.compileScript" (Just params)
+runtimeCompileScript handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'runtimeCompileScript' command.
 data RuntimeCompileScript = RuntimeCompileScript {
@@ -1052,29 +1052,53 @@ data RuntimeCompileScript = RuntimeCompileScript {
 instance FromJSON  RuntimeCompileScript where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command RuntimeCompileScript where
-   commandName _ = "Runtime.compileScript"
+instance Command PRuntimeCompileScript where
+    type CommandResponse PRuntimeCompileScript = RuntimeCompileScript
+    commandName _ = "Runtime.compileScript"
 
 
+-- | Parameters of the 'runtimeDisable' command.
+data PRuntimeDisable = PRuntimeDisable
+instance ToJSON PRuntimeDisable where toJSON _ = A.Null
 
 -- | Function for the 'Runtime.disable' command.
 --   Disables reporting of execution contexts creation.
 runtimeDisable :: Handle -> IO ()
-runtimeDisable handle = sendReceiveCommand handle "Runtime.disable" (Nothing :: Maybe ())
+runtimeDisable handle = sendReceiveCommand handle PRuntimeDisable
 
+instance Command PRuntimeDisable where
+    type CommandResponse PRuntimeDisable = NoResponse
+    commandName _ = "Runtime.disable"
+
+
+-- | Parameters of the 'runtimeDiscardConsoleEntries' command.
+data PRuntimeDiscardConsoleEntries = PRuntimeDiscardConsoleEntries
+instance ToJSON PRuntimeDiscardConsoleEntries where toJSON _ = A.Null
 
 -- | Function for the 'Runtime.discardConsoleEntries' command.
 --   Discards collected exceptions and console API calls.
 runtimeDiscardConsoleEntries :: Handle -> IO ()
-runtimeDiscardConsoleEntries handle = sendReceiveCommand handle "Runtime.discardConsoleEntries" (Nothing :: Maybe ())
+runtimeDiscardConsoleEntries handle = sendReceiveCommand handle PRuntimeDiscardConsoleEntries
 
+instance Command PRuntimeDiscardConsoleEntries where
+    type CommandResponse PRuntimeDiscardConsoleEntries = NoResponse
+    commandName _ = "Runtime.discardConsoleEntries"
+
+
+-- | Parameters of the 'runtimeEnable' command.
+data PRuntimeEnable = PRuntimeEnable
+instance ToJSON PRuntimeEnable where toJSON _ = A.Null
 
 -- | Function for the 'Runtime.enable' command.
 --   Enables reporting of execution contexts creation by means of `executionContextCreated` event.
 --   When the reporting gets enabled the event will be sent immediately for each existing execution
 --   context.
 runtimeEnable :: Handle -> IO ()
-runtimeEnable handle = sendReceiveCommand handle "Runtime.enable" (Nothing :: Maybe ())
+runtimeEnable handle = sendReceiveCommand handle PRuntimeEnable
+
+instance Command PRuntimeEnable where
+    type CommandResponse PRuntimeEnable = NoResponse
+    commandName _ = "Runtime.enable"
 
 
 -- | Parameters of the 'runtimeEvaluate' command.
@@ -1138,10 +1162,10 @@ instance FromJSON  PRuntimeEvaluate where
 
 -- | Function for the 'Runtime.evaluate' command.
 --   Evaluates expression on global object.
---   Parameters: 'PRuntimeEvaluate'
+--   Returns: 'PRuntimeEvaluate'
 --   Returns: 'RuntimeEvaluate'
 runtimeEvaluate :: Handle -> PRuntimeEvaluate -> IO RuntimeEvaluate
-runtimeEvaluate handle params = sendReceiveCommandResult handle "Runtime.evaluate" (Just params)
+runtimeEvaluate handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'runtimeEvaluate' command.
 data RuntimeEvaluate = RuntimeEvaluate {
@@ -1154,16 +1178,20 @@ data RuntimeEvaluate = RuntimeEvaluate {
 instance FromJSON  RuntimeEvaluate where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
-instance Command RuntimeEvaluate where
-   commandName _ = "Runtime.evaluate"
+instance Command PRuntimeEvaluate where
+    type CommandResponse PRuntimeEvaluate = RuntimeEvaluate
+    commandName _ = "Runtime.evaluate"
 
 
+-- | Parameters of the 'runtimeGetIsolateId' command.
+data PRuntimeGetIsolateId = PRuntimeGetIsolateId
+instance ToJSON PRuntimeGetIsolateId where toJSON _ = A.Null
 
 -- | Function for the 'Runtime.getIsolateId' command.
 --   Returns the isolate id.
 --   Returns: 'RuntimeGetIsolateId'
 runtimeGetIsolateId :: Handle -> IO RuntimeGetIsolateId
-runtimeGetIsolateId handle = sendReceiveCommandResult handle "Runtime.getIsolateId" (Nothing :: Maybe ())
+runtimeGetIsolateId handle = sendReceiveCommandResult handle PRuntimeGetIsolateId
 
 -- | Return type of the 'runtimeGetIsolateId' command.
 data RuntimeGetIsolateId = RuntimeGetIsolateId {
@@ -1174,17 +1202,21 @@ data RuntimeGetIsolateId = RuntimeGetIsolateId {
 instance FromJSON  RuntimeGetIsolateId where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
-instance Command RuntimeGetIsolateId where
-   commandName _ = "Runtime.getIsolateId"
+instance Command PRuntimeGetIsolateId where
+    type CommandResponse PRuntimeGetIsolateId = RuntimeGetIsolateId
+    commandName _ = "Runtime.getIsolateId"
 
 
+-- | Parameters of the 'runtimeGetHeapUsage' command.
+data PRuntimeGetHeapUsage = PRuntimeGetHeapUsage
+instance ToJSON PRuntimeGetHeapUsage where toJSON _ = A.Null
 
 -- | Function for the 'Runtime.getHeapUsage' command.
 --   Returns the JavaScript heap usage.
 --   It is the total usage of the corresponding isolate not scoped to a particular Runtime.
 --   Returns: 'RuntimeGetHeapUsage'
 runtimeGetHeapUsage :: Handle -> IO RuntimeGetHeapUsage
-runtimeGetHeapUsage handle = sendReceiveCommandResult handle "Runtime.getHeapUsage" (Nothing :: Maybe ())
+runtimeGetHeapUsage handle = sendReceiveCommandResult handle PRuntimeGetHeapUsage
 
 -- | Return type of the 'runtimeGetHeapUsage' command.
 data RuntimeGetHeapUsage = RuntimeGetHeapUsage {
@@ -1197,9 +1229,9 @@ data RuntimeGetHeapUsage = RuntimeGetHeapUsage {
 instance FromJSON  RuntimeGetHeapUsage where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
-instance Command RuntimeGetHeapUsage where
-   commandName _ = "Runtime.getHeapUsage"
-
+instance Command PRuntimeGetHeapUsage where
+    type CommandResponse PRuntimeGetHeapUsage = RuntimeGetHeapUsage
+    commandName _ = "Runtime.getHeapUsage"
 
 
 -- | Parameters of the 'runtimeGetProperties' command.
@@ -1227,10 +1259,10 @@ instance FromJSON  PRuntimeGetProperties where
 -- | Function for the 'Runtime.getProperties' command.
 --   Returns properties of a given object. Object group of the result is inherited from the target
 --   object.
---   Parameters: 'PRuntimeGetProperties'
+--   Returns: 'PRuntimeGetProperties'
 --   Returns: 'RuntimeGetProperties'
 runtimeGetProperties :: Handle -> PRuntimeGetProperties -> IO RuntimeGetProperties
-runtimeGetProperties handle params = sendReceiveCommandResult handle "Runtime.getProperties" (Just params)
+runtimeGetProperties handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'runtimeGetProperties' command.
 data RuntimeGetProperties = RuntimeGetProperties {
@@ -1247,9 +1279,9 @@ data RuntimeGetProperties = RuntimeGetProperties {
 instance FromJSON  RuntimeGetProperties where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command RuntimeGetProperties where
-   commandName _ = "Runtime.getProperties"
-
+instance Command PRuntimeGetProperties where
+    type CommandResponse PRuntimeGetProperties = RuntimeGetProperties
+    commandName _ = "Runtime.getProperties"
 
 
 -- | Parameters of the 'runtimeGlobalLexicalScopeNames' command.
@@ -1266,10 +1298,10 @@ instance FromJSON  PRuntimeGlobalLexicalScopeNames where
 
 -- | Function for the 'Runtime.globalLexicalScopeNames' command.
 --   Returns all let, const and class variables from global scope.
---   Parameters: 'PRuntimeGlobalLexicalScopeNames'
+--   Returns: 'PRuntimeGlobalLexicalScopeNames'
 --   Returns: 'RuntimeGlobalLexicalScopeNames'
 runtimeGlobalLexicalScopeNames :: Handle -> PRuntimeGlobalLexicalScopeNames -> IO RuntimeGlobalLexicalScopeNames
-runtimeGlobalLexicalScopeNames handle params = sendReceiveCommandResult handle "Runtime.globalLexicalScopeNames" (Just params)
+runtimeGlobalLexicalScopeNames handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'runtimeGlobalLexicalScopeNames' command.
 data RuntimeGlobalLexicalScopeNames = RuntimeGlobalLexicalScopeNames {
@@ -1279,9 +1311,9 @@ data RuntimeGlobalLexicalScopeNames = RuntimeGlobalLexicalScopeNames {
 instance FromJSON  RuntimeGlobalLexicalScopeNames where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
-instance Command RuntimeGlobalLexicalScopeNames where
-   commandName _ = "Runtime.globalLexicalScopeNames"
-
+instance Command PRuntimeGlobalLexicalScopeNames where
+    type CommandResponse PRuntimeGlobalLexicalScopeNames = RuntimeGlobalLexicalScopeNames
+    commandName _ = "Runtime.globalLexicalScopeNames"
 
 
 -- | Parameters of the 'runtimeQueryObjects' command.
@@ -1300,10 +1332,10 @@ instance FromJSON  PRuntimeQueryObjects where
 
 -- | Function for the 'Runtime.queryObjects' command.
 --   
---   Parameters: 'PRuntimeQueryObjects'
+--   Returns: 'PRuntimeQueryObjects'
 --   Returns: 'RuntimeQueryObjects'
 runtimeQueryObjects :: Handle -> PRuntimeQueryObjects -> IO RuntimeQueryObjects
-runtimeQueryObjects handle params = sendReceiveCommandResult handle "Runtime.queryObjects" (Just params)
+runtimeQueryObjects handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'runtimeQueryObjects' command.
 data RuntimeQueryObjects = RuntimeQueryObjects {
@@ -1314,9 +1346,9 @@ data RuntimeQueryObjects = RuntimeQueryObjects {
 instance FromJSON  RuntimeQueryObjects where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
-instance Command RuntimeQueryObjects where
-   commandName _ = "Runtime.queryObjects"
-
+instance Command PRuntimeQueryObjects where
+    type CommandResponse PRuntimeQueryObjects = RuntimeQueryObjects
+    commandName _ = "Runtime.queryObjects"
 
 
 -- | Parameters of the 'runtimeReleaseObject' command.
@@ -1333,9 +1365,13 @@ instance FromJSON  PRuntimeReleaseObject where
 
 -- | Function for the 'Runtime.releaseObject' command.
 --   Releases remote object with given id.
---   Parameters: 'PRuntimeReleaseObject'
+--   Returns: 'PRuntimeReleaseObject'
 runtimeReleaseObject :: Handle -> PRuntimeReleaseObject -> IO ()
-runtimeReleaseObject handle params = sendReceiveCommand handle "Runtime.releaseObject" (Just params)
+runtimeReleaseObject handle params = sendReceiveCommand handle params
+
+instance Command PRuntimeReleaseObject where
+    type CommandResponse PRuntimeReleaseObject = NoResponse
+    commandName _ = "Runtime.releaseObject"
 
 
 -- | Parameters of the 'runtimeReleaseObjectGroup' command.
@@ -1352,15 +1388,27 @@ instance FromJSON  PRuntimeReleaseObjectGroup where
 
 -- | Function for the 'Runtime.releaseObjectGroup' command.
 --   Releases all remote objects that belong to a given group.
---   Parameters: 'PRuntimeReleaseObjectGroup'
+--   Returns: 'PRuntimeReleaseObjectGroup'
 runtimeReleaseObjectGroup :: Handle -> PRuntimeReleaseObjectGroup -> IO ()
-runtimeReleaseObjectGroup handle params = sendReceiveCommand handle "Runtime.releaseObjectGroup" (Just params)
+runtimeReleaseObjectGroup handle params = sendReceiveCommand handle params
 
+instance Command PRuntimeReleaseObjectGroup where
+    type CommandResponse PRuntimeReleaseObjectGroup = NoResponse
+    commandName _ = "Runtime.releaseObjectGroup"
+
+
+-- | Parameters of the 'runtimeRunIfWaitingForDebugger' command.
+data PRuntimeRunIfWaitingForDebugger = PRuntimeRunIfWaitingForDebugger
+instance ToJSON PRuntimeRunIfWaitingForDebugger where toJSON _ = A.Null
 
 -- | Function for the 'Runtime.runIfWaitingForDebugger' command.
 --   Tells inspected instance to run if it was waiting for debugger to attach.
 runtimeRunIfWaitingForDebugger :: Handle -> IO ()
-runtimeRunIfWaitingForDebugger handle = sendReceiveCommand handle "Runtime.runIfWaitingForDebugger" (Nothing :: Maybe ())
+runtimeRunIfWaitingForDebugger handle = sendReceiveCommand handle PRuntimeRunIfWaitingForDebugger
+
+instance Command PRuntimeRunIfWaitingForDebugger where
+    type CommandResponse PRuntimeRunIfWaitingForDebugger = NoResponse
+    commandName _ = "Runtime.runIfWaitingForDebugger"
 
 
 -- | Parameters of the 'runtimeRunScript' command.
@@ -1394,10 +1442,10 @@ instance FromJSON  PRuntimeRunScript where
 
 -- | Function for the 'Runtime.runScript' command.
 --   Runs script with given id in a given context.
---   Parameters: 'PRuntimeRunScript'
+--   Returns: 'PRuntimeRunScript'
 --   Returns: 'RuntimeRunScript'
 runtimeRunScript :: Handle -> PRuntimeRunScript -> IO RuntimeRunScript
-runtimeRunScript handle params = sendReceiveCommandResult handle "Runtime.runScript" (Just params)
+runtimeRunScript handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'runtimeRunScript' command.
 data RuntimeRunScript = RuntimeRunScript {
@@ -1410,9 +1458,9 @@ data RuntimeRunScript = RuntimeRunScript {
 instance FromJSON  RuntimeRunScript where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
-instance Command RuntimeRunScript where
-   commandName _ = "Runtime.runScript"
-
+instance Command PRuntimeRunScript where
+    type CommandResponse PRuntimeRunScript = RuntimeRunScript
+    commandName _ = "Runtime.runScript"
 
 
 -- | Parameters of the 'runtimeSetAsyncCallStackDepth' command.
@@ -1430,9 +1478,13 @@ instance FromJSON  PRuntimeSetAsyncCallStackDepth where
 
 -- | Function for the 'Runtime.setAsyncCallStackDepth' command.
 --   Enables or disables async call stacks tracking.
---   Parameters: 'PRuntimeSetAsyncCallStackDepth'
+--   Returns: 'PRuntimeSetAsyncCallStackDepth'
 runtimeSetAsyncCallStackDepth :: Handle -> PRuntimeSetAsyncCallStackDepth -> IO ()
-runtimeSetAsyncCallStackDepth handle params = sendReceiveCommand handle "Runtime.setAsyncCallStackDepth" (Just params)
+runtimeSetAsyncCallStackDepth handle params = sendReceiveCommand handle params
+
+instance Command PRuntimeSetAsyncCallStackDepth where
+    type CommandResponse PRuntimeSetAsyncCallStackDepth = NoResponse
+    commandName _ = "Runtime.setAsyncCallStackDepth"
 
 
 -- | Parameters of the 'runtimeSetCustomObjectFormatterEnabled' command.
@@ -1448,9 +1500,13 @@ instance FromJSON  PRuntimeSetCustomObjectFormatterEnabled where
 
 -- | Function for the 'Runtime.setCustomObjectFormatterEnabled' command.
 --   
---   Parameters: 'PRuntimeSetCustomObjectFormatterEnabled'
+--   Returns: 'PRuntimeSetCustomObjectFormatterEnabled'
 runtimeSetCustomObjectFormatterEnabled :: Handle -> PRuntimeSetCustomObjectFormatterEnabled -> IO ()
-runtimeSetCustomObjectFormatterEnabled handle params = sendReceiveCommand handle "Runtime.setCustomObjectFormatterEnabled" (Just params)
+runtimeSetCustomObjectFormatterEnabled handle params = sendReceiveCommand handle params
+
+instance Command PRuntimeSetCustomObjectFormatterEnabled where
+    type CommandResponse PRuntimeSetCustomObjectFormatterEnabled = NoResponse
+    commandName _ = "Runtime.setCustomObjectFormatterEnabled"
 
 
 -- | Parameters of the 'runtimeSetMaxCallStackSizeToCapture' command.
@@ -1466,16 +1522,28 @@ instance FromJSON  PRuntimeSetMaxCallStackSizeToCapture where
 
 -- | Function for the 'Runtime.setMaxCallStackSizeToCapture' command.
 --   
---   Parameters: 'PRuntimeSetMaxCallStackSizeToCapture'
+--   Returns: 'PRuntimeSetMaxCallStackSizeToCapture'
 runtimeSetMaxCallStackSizeToCapture :: Handle -> PRuntimeSetMaxCallStackSizeToCapture -> IO ()
-runtimeSetMaxCallStackSizeToCapture handle params = sendReceiveCommand handle "Runtime.setMaxCallStackSizeToCapture" (Just params)
+runtimeSetMaxCallStackSizeToCapture handle params = sendReceiveCommand handle params
 
+instance Command PRuntimeSetMaxCallStackSizeToCapture where
+    type CommandResponse PRuntimeSetMaxCallStackSizeToCapture = NoResponse
+    commandName _ = "Runtime.setMaxCallStackSizeToCapture"
+
+
+-- | Parameters of the 'runtimeTerminateExecution' command.
+data PRuntimeTerminateExecution = PRuntimeTerminateExecution
+instance ToJSON PRuntimeTerminateExecution where toJSON _ = A.Null
 
 -- | Function for the 'Runtime.terminateExecution' command.
 --   Terminate current or next JavaScript execution.
 --   Will cancel the termination when the outer-most script execution ends.
 runtimeTerminateExecution :: Handle -> IO ()
-runtimeTerminateExecution handle = sendReceiveCommand handle "Runtime.terminateExecution" (Nothing :: Maybe ())
+runtimeTerminateExecution handle = sendReceiveCommand handle PRuntimeTerminateExecution
+
+instance Command PRuntimeTerminateExecution where
+    type CommandResponse PRuntimeTerminateExecution = NoResponse
+    commandName _ = "Runtime.terminateExecution"
 
 
 -- | Parameters of the 'runtimeAddBinding' command.
@@ -1502,9 +1570,13 @@ instance FromJSON  PRuntimeAddBinding where
 --   Binding function takes exactly one argument, this argument should be string,
 --   in case of any other input, function throws an exception.
 --   Each binding function call produces Runtime.bindingCalled notification.
---   Parameters: 'PRuntimeAddBinding'
+--   Returns: 'PRuntimeAddBinding'
 runtimeAddBinding :: Handle -> PRuntimeAddBinding -> IO ()
-runtimeAddBinding handle params = sendReceiveCommand handle "Runtime.addBinding" (Just params)
+runtimeAddBinding handle params = sendReceiveCommand handle params
+
+instance Command PRuntimeAddBinding where
+    type CommandResponse PRuntimeAddBinding = NoResponse
+    commandName _ = "Runtime.addBinding"
 
 
 -- | Parameters of the 'runtimeRemoveBinding' command.
@@ -1521,9 +1593,13 @@ instance FromJSON  PRuntimeRemoveBinding where
 -- | Function for the 'Runtime.removeBinding' command.
 --   This method does not remove binding function from global object but
 --   unsubscribes current runtime agent from Runtime.bindingCalled notifications.
---   Parameters: 'PRuntimeRemoveBinding'
+--   Returns: 'PRuntimeRemoveBinding'
 runtimeRemoveBinding :: Handle -> PRuntimeRemoveBinding -> IO ()
-runtimeRemoveBinding handle params = sendReceiveCommand handle "Runtime.removeBinding" (Just params)
+runtimeRemoveBinding handle params = sendReceiveCommand handle params
+
+instance Command PRuntimeRemoveBinding where
+    type CommandResponse PRuntimeRemoveBinding = NoResponse
+    commandName _ = "Runtime.removeBinding"
 
 
 -- | Parameters of the 'runtimeGetExceptionDetails' command.
@@ -1544,10 +1620,10 @@ instance FromJSON  PRuntimeGetExceptionDetails where
 --   Note that the stackTrace portion of the resulting exceptionDetails will
 --   only be populated if the Runtime domain was enabled at the time when the
 --   Error was thrown.
---   Parameters: 'PRuntimeGetExceptionDetails'
+--   Returns: 'PRuntimeGetExceptionDetails'
 --   Returns: 'RuntimeGetExceptionDetails'
 runtimeGetExceptionDetails :: Handle -> PRuntimeGetExceptionDetails -> IO RuntimeGetExceptionDetails
-runtimeGetExceptionDetails handle params = sendReceiveCommandResult handle "Runtime.getExceptionDetails" (Just params)
+runtimeGetExceptionDetails handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'runtimeGetExceptionDetails' command.
 data RuntimeGetExceptionDetails = RuntimeGetExceptionDetails {
@@ -1557,9 +1633,9 @@ data RuntimeGetExceptionDetails = RuntimeGetExceptionDetails {
 instance FromJSON  RuntimeGetExceptionDetails where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
-instance Command RuntimeGetExceptionDetails where
-   commandName _ = "Runtime.getExceptionDetails"
-
+instance Command PRuntimeGetExceptionDetails where
+    type CommandResponse PRuntimeGetExceptionDetails = RuntimeGetExceptionDetails
+    commandName _ = "Runtime.getExceptionDetails"
 
 
 

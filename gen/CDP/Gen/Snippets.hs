@@ -11,6 +11,7 @@ domainLanguageExtensions = T.unlines
     , "{-# LANGUAGE MultiParamTypeClasses #-}"
     , "{-# LANGUAGE FlexibleInstances #-}"
     , "{-# LANGUAGE DeriveGeneric #-}"
+    , "{-# LANGUAGE TypeFamilies #-}"
     ]
 
 domainImports :: T.Text
@@ -43,5 +44,4 @@ domainImports = T.unlines
     , "import Data.Default"
     , ""
     , "import CDP.Internal.Runtime"
-    , "import CDP.Handle"
     ]

@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -41,7 +42,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 
@@ -229,9 +229,13 @@ instance FromJSON  PInputDispatchDragEvent where
 
 -- | Function for the 'Input.dispatchDragEvent' command.
 --   Dispatches a drag event into the page.
---   Parameters: 'PInputDispatchDragEvent'
+--   Returns: 'PInputDispatchDragEvent'
 inputDispatchDragEvent :: Handle -> PInputDispatchDragEvent -> IO ()
-inputDispatchDragEvent handle params = sendReceiveCommand handle "Input.dispatchDragEvent" (Just params)
+inputDispatchDragEvent handle params = sendReceiveCommand handle params
+
+instance Command PInputDispatchDragEvent where
+    type CommandResponse PInputDispatchDragEvent = NoResponse
+    commandName _ = "Input.dispatchDragEvent"
 
 
 -- | Parameters of the 'inputDispatchKeyEvent' command.
@@ -304,9 +308,13 @@ instance FromJSON  PInputDispatchKeyEvent where
 
 -- | Function for the 'Input.dispatchKeyEvent' command.
 --   Dispatches a key event to the page.
---   Parameters: 'PInputDispatchKeyEvent'
+--   Returns: 'PInputDispatchKeyEvent'
 inputDispatchKeyEvent :: Handle -> PInputDispatchKeyEvent -> IO ()
-inputDispatchKeyEvent handle params = sendReceiveCommand handle "Input.dispatchKeyEvent" (Just params)
+inputDispatchKeyEvent handle params = sendReceiveCommand handle params
+
+instance Command PInputDispatchKeyEvent where
+    type CommandResponse PInputDispatchKeyEvent = NoResponse
+    commandName _ = "Input.dispatchKeyEvent"
 
 
 -- | Parameters of the 'inputInsertText' command.
@@ -324,9 +332,13 @@ instance FromJSON  PInputInsertText where
 -- | Function for the 'Input.insertText' command.
 --   This method emulates inserting text that doesn't come from a key press,
 --   for example an emoji keyboard or an IME.
---   Parameters: 'PInputInsertText'
+--   Returns: 'PInputInsertText'
 inputInsertText :: Handle -> PInputInsertText -> IO ()
-inputInsertText handle params = sendReceiveCommand handle "Input.insertText" (Just params)
+inputInsertText handle params = sendReceiveCommand handle params
+
+instance Command PInputInsertText where
+    type CommandResponse PInputInsertText = NoResponse
+    commandName _ = "Input.insertText"
 
 
 -- | Parameters of the 'inputImeSetComposition' command.
@@ -353,9 +365,13 @@ instance FromJSON  PInputImeSetComposition where
 --   This method sets the current candidate text for ime.
 --   Use imeCommitComposition to commit the final text.
 --   Use imeSetComposition with empty string as text to cancel composition.
---   Parameters: 'PInputImeSetComposition'
+--   Returns: 'PInputImeSetComposition'
 inputImeSetComposition :: Handle -> PInputImeSetComposition -> IO ()
-inputImeSetComposition handle params = sendReceiveCommand handle "Input.imeSetComposition" (Just params)
+inputImeSetComposition handle params = sendReceiveCommand handle params
+
+instance Command PInputImeSetComposition where
+    type CommandResponse PInputImeSetComposition = NoResponse
+    commandName _ = "Input.imeSetComposition"
 
 
 -- | Parameters of the 'inputDispatchMouseEvent' command.
@@ -442,9 +458,13 @@ instance FromJSON  PInputDispatchMouseEvent where
 
 -- | Function for the 'Input.dispatchMouseEvent' command.
 --   Dispatches a mouse event to the page.
---   Parameters: 'PInputDispatchMouseEvent'
+--   Returns: 'PInputDispatchMouseEvent'
 inputDispatchMouseEvent :: Handle -> PInputDispatchMouseEvent -> IO ()
-inputDispatchMouseEvent handle params = sendReceiveCommand handle "Input.dispatchMouseEvent" (Just params)
+inputDispatchMouseEvent handle params = sendReceiveCommand handle params
+
+instance Command PInputDispatchMouseEvent where
+    type CommandResponse PInputDispatchMouseEvent = NoResponse
+    commandName _ = "Input.dispatchMouseEvent"
 
 
 -- | Parameters of the 'inputDispatchTouchEvent' command.
@@ -492,9 +512,13 @@ instance FromJSON  PInputDispatchTouchEvent where
 
 -- | Function for the 'Input.dispatchTouchEvent' command.
 --   Dispatches a touch event to the page.
---   Parameters: 'PInputDispatchTouchEvent'
+--   Returns: 'PInputDispatchTouchEvent'
 inputDispatchTouchEvent :: Handle -> PInputDispatchTouchEvent -> IO ()
-inputDispatchTouchEvent handle params = sendReceiveCommand handle "Input.dispatchTouchEvent" (Just params)
+inputDispatchTouchEvent handle params = sendReceiveCommand handle params
+
+instance Command PInputDispatchTouchEvent where
+    type CommandResponse PInputDispatchTouchEvent = NoResponse
+    commandName _ = "Input.dispatchTouchEvent"
 
 
 -- | Parameters of the 'inputEmulateTouchFromMouseEvent' command.
@@ -549,9 +573,13 @@ instance FromJSON  PInputEmulateTouchFromMouseEvent where
 
 -- | Function for the 'Input.emulateTouchFromMouseEvent' command.
 --   Emulates touch event from the mouse event parameters.
---   Parameters: 'PInputEmulateTouchFromMouseEvent'
+--   Returns: 'PInputEmulateTouchFromMouseEvent'
 inputEmulateTouchFromMouseEvent :: Handle -> PInputEmulateTouchFromMouseEvent -> IO ()
-inputEmulateTouchFromMouseEvent handle params = sendReceiveCommand handle "Input.emulateTouchFromMouseEvent" (Just params)
+inputEmulateTouchFromMouseEvent handle params = sendReceiveCommand handle params
+
+instance Command PInputEmulateTouchFromMouseEvent where
+    type CommandResponse PInputEmulateTouchFromMouseEvent = NoResponse
+    commandName _ = "Input.emulateTouchFromMouseEvent"
 
 
 -- | Parameters of the 'inputSetIgnoreInputEvents' command.
@@ -568,9 +596,13 @@ instance FromJSON  PInputSetIgnoreInputEvents where
 
 -- | Function for the 'Input.setIgnoreInputEvents' command.
 --   Ignores input events (useful while auditing page).
---   Parameters: 'PInputSetIgnoreInputEvents'
+--   Returns: 'PInputSetIgnoreInputEvents'
 inputSetIgnoreInputEvents :: Handle -> PInputSetIgnoreInputEvents -> IO ()
-inputSetIgnoreInputEvents handle params = sendReceiveCommand handle "Input.setIgnoreInputEvents" (Just params)
+inputSetIgnoreInputEvents handle params = sendReceiveCommand handle params
+
+instance Command PInputSetIgnoreInputEvents where
+    type CommandResponse PInputSetIgnoreInputEvents = NoResponse
+    commandName _ = "Input.setIgnoreInputEvents"
 
 
 -- | Parameters of the 'inputSetInterceptDrags' command.
@@ -587,9 +619,13 @@ instance FromJSON  PInputSetInterceptDrags where
 -- | Function for the 'Input.setInterceptDrags' command.
 --   Prevents default drag and drop behavior and instead emits `Input.dragIntercepted` events.
 --   Drag and drop behavior can be directly controlled via `Input.dispatchDragEvent`.
---   Parameters: 'PInputSetInterceptDrags'
+--   Returns: 'PInputSetInterceptDrags'
 inputSetInterceptDrags :: Handle -> PInputSetInterceptDrags -> IO ()
-inputSetInterceptDrags handle params = sendReceiveCommand handle "Input.setInterceptDrags" (Just params)
+inputSetInterceptDrags handle params = sendReceiveCommand handle params
+
+instance Command PInputSetInterceptDrags where
+    type CommandResponse PInputSetInterceptDrags = NoResponse
+    commandName _ = "Input.setInterceptDrags"
 
 
 -- | Parameters of the 'inputSynthesizePinchGesture' command.
@@ -615,9 +651,13 @@ instance FromJSON  PInputSynthesizePinchGesture where
 
 -- | Function for the 'Input.synthesizePinchGesture' command.
 --   Synthesizes a pinch gesture over a time period by issuing appropriate touch events.
---   Parameters: 'PInputSynthesizePinchGesture'
+--   Returns: 'PInputSynthesizePinchGesture'
 inputSynthesizePinchGesture :: Handle -> PInputSynthesizePinchGesture -> IO ()
-inputSynthesizePinchGesture handle params = sendReceiveCommand handle "Input.synthesizePinchGesture" (Just params)
+inputSynthesizePinchGesture handle params = sendReceiveCommand handle params
+
+instance Command PInputSynthesizePinchGesture where
+    type CommandResponse PInputSynthesizePinchGesture = NoResponse
+    commandName _ = "Input.synthesizePinchGesture"
 
 
 -- | Parameters of the 'inputSynthesizeScrollGesture' command.
@@ -659,9 +699,13 @@ instance FromJSON  PInputSynthesizeScrollGesture where
 
 -- | Function for the 'Input.synthesizeScrollGesture' command.
 --   Synthesizes a scroll gesture over a time period by issuing appropriate touch events.
---   Parameters: 'PInputSynthesizeScrollGesture'
+--   Returns: 'PInputSynthesizeScrollGesture'
 inputSynthesizeScrollGesture :: Handle -> PInputSynthesizeScrollGesture -> IO ()
-inputSynthesizeScrollGesture handle params = sendReceiveCommand handle "Input.synthesizeScrollGesture" (Just params)
+inputSynthesizeScrollGesture handle params = sendReceiveCommand handle params
+
+instance Command PInputSynthesizeScrollGesture where
+    type CommandResponse PInputSynthesizeScrollGesture = NoResponse
+    commandName _ = "Input.synthesizeScrollGesture"
 
 
 -- | Parameters of the 'inputSynthesizeTapGesture' command.
@@ -687,9 +731,13 @@ instance FromJSON  PInputSynthesizeTapGesture where
 
 -- | Function for the 'Input.synthesizeTapGesture' command.
 --   Synthesizes a tap gesture over a time period by issuing appropriate touch events.
---   Parameters: 'PInputSynthesizeTapGesture'
+--   Returns: 'PInputSynthesizeTapGesture'
 inputSynthesizeTapGesture :: Handle -> PInputSynthesizeTapGesture -> IO ()
-inputSynthesizeTapGesture handle params = sendReceiveCommand handle "Input.synthesizeTapGesture" (Just params)
+inputSynthesizeTapGesture handle params = sendReceiveCommand handle params
+
+instance Command PInputSynthesizeTapGesture where
+    type CommandResponse PInputSynthesizeTapGesture = NoResponse
+    commandName _ = "Input.synthesizeTapGesture"
 
 
 

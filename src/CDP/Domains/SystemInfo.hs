@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -43,7 +44,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 
@@ -245,11 +245,15 @@ instance FromJSON  SystemInfoProcessInfo where
 
 
 
+-- | Parameters of the 'systemInfoGetInfo' command.
+data PSystemInfoGetInfo = PSystemInfoGetInfo
+instance ToJSON PSystemInfoGetInfo where toJSON _ = A.Null
+
 -- | Function for the 'SystemInfo.getInfo' command.
 --   Returns information about the system.
 --   Returns: 'SystemInfoGetInfo'
 systemInfoGetInfo :: Handle -> IO SystemInfoGetInfo
-systemInfoGetInfo handle = sendReceiveCommandResult handle "SystemInfo.getInfo" (Nothing :: Maybe ())
+systemInfoGetInfo handle = sendReceiveCommandResult handle PSystemInfoGetInfo
 
 -- | Return type of the 'systemInfoGetInfo' command.
 data SystemInfoGetInfo = SystemInfoGetInfo {
@@ -269,16 +273,20 @@ data SystemInfoGetInfo = SystemInfoGetInfo {
 instance FromJSON  SystemInfoGetInfo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
-instance Command SystemInfoGetInfo where
-   commandName _ = "SystemInfo.getInfo"
+instance Command PSystemInfoGetInfo where
+    type CommandResponse PSystemInfoGetInfo = SystemInfoGetInfo
+    commandName _ = "SystemInfo.getInfo"
 
 
+-- | Parameters of the 'systemInfoGetProcessInfo' command.
+data PSystemInfoGetProcessInfo = PSystemInfoGetProcessInfo
+instance ToJSON PSystemInfoGetProcessInfo where toJSON _ = A.Null
 
 -- | Function for the 'SystemInfo.getProcessInfo' command.
 --   Returns information about all running processes.
 --   Returns: 'SystemInfoGetProcessInfo'
 systemInfoGetProcessInfo :: Handle -> IO SystemInfoGetProcessInfo
-systemInfoGetProcessInfo handle = sendReceiveCommandResult handle "SystemInfo.getProcessInfo" (Nothing :: Maybe ())
+systemInfoGetProcessInfo handle = sendReceiveCommandResult handle PSystemInfoGetProcessInfo
 
 -- | Return type of the 'systemInfoGetProcessInfo' command.
 data SystemInfoGetProcessInfo = SystemInfoGetProcessInfo {
@@ -289,9 +297,9 @@ data SystemInfoGetProcessInfo = SystemInfoGetProcessInfo {
 instance FromJSON  SystemInfoGetProcessInfo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
-instance Command SystemInfoGetProcessInfo where
-   commandName _ = "SystemInfo.getProcessInfo"
-
+instance Command PSystemInfoGetProcessInfo where
+    type CommandResponse PSystemInfoGetProcessInfo = SystemInfoGetProcessInfo
+    commandName _ = "SystemInfo.getProcessInfo"
 
 
 

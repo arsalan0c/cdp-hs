@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -41,7 +42,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
@@ -227,10 +227,10 @@ instance FromJSON  PLayerTreeCompositingReasons where
 
 -- | Function for the 'LayerTree.compositingReasons' command.
 --   Provides the reasons why the given layer was composited.
---   Parameters: 'PLayerTreeCompositingReasons'
+--   Returns: 'PLayerTreeCompositingReasons'
 --   Returns: 'LayerTreeCompositingReasons'
 layerTreeCompositingReasons :: Handle -> PLayerTreeCompositingReasons -> IO LayerTreeCompositingReasons
-layerTreeCompositingReasons handle params = sendReceiveCommandResult handle "LayerTree.compositingReasons" (Just params)
+layerTreeCompositingReasons handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'layerTreeCompositingReasons' command.
 data LayerTreeCompositingReasons = LayerTreeCompositingReasons {
@@ -241,21 +241,37 @@ data LayerTreeCompositingReasons = LayerTreeCompositingReasons {
 instance FromJSON  LayerTreeCompositingReasons where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
-instance Command LayerTreeCompositingReasons where
-   commandName _ = "LayerTree.compositingReasons"
+instance Command PLayerTreeCompositingReasons where
+    type CommandResponse PLayerTreeCompositingReasons = LayerTreeCompositingReasons
+    commandName _ = "LayerTree.compositingReasons"
 
 
+-- | Parameters of the 'layerTreeDisable' command.
+data PLayerTreeDisable = PLayerTreeDisable
+instance ToJSON PLayerTreeDisable where toJSON _ = A.Null
 
 -- | Function for the 'LayerTree.disable' command.
 --   Disables compositing tree inspection.
 layerTreeDisable :: Handle -> IO ()
-layerTreeDisable handle = sendReceiveCommand handle "LayerTree.disable" (Nothing :: Maybe ())
+layerTreeDisable handle = sendReceiveCommand handle PLayerTreeDisable
 
+instance Command PLayerTreeDisable where
+    type CommandResponse PLayerTreeDisable = NoResponse
+    commandName _ = "LayerTree.disable"
+
+
+-- | Parameters of the 'layerTreeEnable' command.
+data PLayerTreeEnable = PLayerTreeEnable
+instance ToJSON PLayerTreeEnable where toJSON _ = A.Null
 
 -- | Function for the 'LayerTree.enable' command.
 --   Enables compositing tree inspection.
 layerTreeEnable :: Handle -> IO ()
-layerTreeEnable handle = sendReceiveCommand handle "LayerTree.enable" (Nothing :: Maybe ())
+layerTreeEnable handle = sendReceiveCommand handle PLayerTreeEnable
+
+instance Command PLayerTreeEnable where
+    type CommandResponse PLayerTreeEnable = NoResponse
+    commandName _ = "LayerTree.enable"
 
 
 -- | Parameters of the 'layerTreeLoadSnapshot' command.
@@ -272,10 +288,10 @@ instance FromJSON  PLayerTreeLoadSnapshot where
 
 -- | Function for the 'LayerTree.loadSnapshot' command.
 --   Returns the snapshot identifier.
---   Parameters: 'PLayerTreeLoadSnapshot'
+--   Returns: 'PLayerTreeLoadSnapshot'
 --   Returns: 'LayerTreeLoadSnapshot'
 layerTreeLoadSnapshot :: Handle -> PLayerTreeLoadSnapshot -> IO LayerTreeLoadSnapshot
-layerTreeLoadSnapshot handle params = sendReceiveCommandResult handle "LayerTree.loadSnapshot" (Just params)
+layerTreeLoadSnapshot handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'layerTreeLoadSnapshot' command.
 data LayerTreeLoadSnapshot = LayerTreeLoadSnapshot {
@@ -286,9 +302,9 @@ data LayerTreeLoadSnapshot = LayerTreeLoadSnapshot {
 instance FromJSON  LayerTreeLoadSnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
-instance Command LayerTreeLoadSnapshot where
-   commandName _ = "LayerTree.loadSnapshot"
-
+instance Command PLayerTreeLoadSnapshot where
+    type CommandResponse PLayerTreeLoadSnapshot = LayerTreeLoadSnapshot
+    commandName _ = "LayerTree.loadSnapshot"
 
 
 -- | Parameters of the 'layerTreeMakeSnapshot' command.
@@ -305,10 +321,10 @@ instance FromJSON  PLayerTreeMakeSnapshot where
 
 -- | Function for the 'LayerTree.makeSnapshot' command.
 --   Returns the layer snapshot identifier.
---   Parameters: 'PLayerTreeMakeSnapshot'
+--   Returns: 'PLayerTreeMakeSnapshot'
 --   Returns: 'LayerTreeMakeSnapshot'
 layerTreeMakeSnapshot :: Handle -> PLayerTreeMakeSnapshot -> IO LayerTreeMakeSnapshot
-layerTreeMakeSnapshot handle params = sendReceiveCommandResult handle "LayerTree.makeSnapshot" (Just params)
+layerTreeMakeSnapshot handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'layerTreeMakeSnapshot' command.
 data LayerTreeMakeSnapshot = LayerTreeMakeSnapshot {
@@ -319,9 +335,9 @@ data LayerTreeMakeSnapshot = LayerTreeMakeSnapshot {
 instance FromJSON  LayerTreeMakeSnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
-instance Command LayerTreeMakeSnapshot where
-   commandName _ = "LayerTree.makeSnapshot"
-
+instance Command PLayerTreeMakeSnapshot where
+    type CommandResponse PLayerTreeMakeSnapshot = LayerTreeMakeSnapshot
+    commandName _ = "LayerTree.makeSnapshot"
 
 
 -- | Parameters of the 'layerTreeProfileSnapshot' command.
@@ -344,10 +360,10 @@ instance FromJSON  PLayerTreeProfileSnapshot where
 
 -- | Function for the 'LayerTree.profileSnapshot' command.
 --   
---   Parameters: 'PLayerTreeProfileSnapshot'
+--   Returns: 'PLayerTreeProfileSnapshot'
 --   Returns: 'LayerTreeProfileSnapshot'
 layerTreeProfileSnapshot :: Handle -> PLayerTreeProfileSnapshot -> IO LayerTreeProfileSnapshot
-layerTreeProfileSnapshot handle params = sendReceiveCommandResult handle "LayerTree.profileSnapshot" (Just params)
+layerTreeProfileSnapshot handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'layerTreeProfileSnapshot' command.
 data LayerTreeProfileSnapshot = LayerTreeProfileSnapshot {
@@ -358,9 +374,9 @@ data LayerTreeProfileSnapshot = LayerTreeProfileSnapshot {
 instance FromJSON  LayerTreeProfileSnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
-instance Command LayerTreeProfileSnapshot where
-   commandName _ = "LayerTree.profileSnapshot"
-
+instance Command PLayerTreeProfileSnapshot where
+    type CommandResponse PLayerTreeProfileSnapshot = LayerTreeProfileSnapshot
+    commandName _ = "LayerTree.profileSnapshot"
 
 
 -- | Parameters of the 'layerTreeReleaseSnapshot' command.
@@ -377,9 +393,13 @@ instance FromJSON  PLayerTreeReleaseSnapshot where
 
 -- | Function for the 'LayerTree.releaseSnapshot' command.
 --   Releases layer snapshot captured by the back-end.
---   Parameters: 'PLayerTreeReleaseSnapshot'
+--   Returns: 'PLayerTreeReleaseSnapshot'
 layerTreeReleaseSnapshot :: Handle -> PLayerTreeReleaseSnapshot -> IO ()
-layerTreeReleaseSnapshot handle params = sendReceiveCommand handle "LayerTree.releaseSnapshot" (Just params)
+layerTreeReleaseSnapshot handle params = sendReceiveCommand handle params
+
+instance Command PLayerTreeReleaseSnapshot where
+    type CommandResponse PLayerTreeReleaseSnapshot = NoResponse
+    commandName _ = "LayerTree.releaseSnapshot"
 
 
 -- | Parameters of the 'layerTreeReplaySnapshot' command.
@@ -402,10 +422,10 @@ instance FromJSON  PLayerTreeReplaySnapshot where
 
 -- | Function for the 'LayerTree.replaySnapshot' command.
 --   Replays the layer snapshot and returns the resulting bitmap.
---   Parameters: 'PLayerTreeReplaySnapshot'
+--   Returns: 'PLayerTreeReplaySnapshot'
 --   Returns: 'LayerTreeReplaySnapshot'
 layerTreeReplaySnapshot :: Handle -> PLayerTreeReplaySnapshot -> IO LayerTreeReplaySnapshot
-layerTreeReplaySnapshot handle params = sendReceiveCommandResult handle "LayerTree.replaySnapshot" (Just params)
+layerTreeReplaySnapshot handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'layerTreeReplaySnapshot' command.
 data LayerTreeReplaySnapshot = LayerTreeReplaySnapshot {
@@ -416,9 +436,9 @@ data LayerTreeReplaySnapshot = LayerTreeReplaySnapshot {
 instance FromJSON  LayerTreeReplaySnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
-instance Command LayerTreeReplaySnapshot where
-   commandName _ = "LayerTree.replaySnapshot"
-
+instance Command PLayerTreeReplaySnapshot where
+    type CommandResponse PLayerTreeReplaySnapshot = LayerTreeReplaySnapshot
+    commandName _ = "LayerTree.replaySnapshot"
 
 
 -- | Parameters of the 'layerTreeSnapshotCommandLog' command.
@@ -435,10 +455,10 @@ instance FromJSON  PLayerTreeSnapshotCommandLog where
 
 -- | Function for the 'LayerTree.snapshotCommandLog' command.
 --   Replays the layer snapshot and returns canvas log.
---   Parameters: 'PLayerTreeSnapshotCommandLog'
+--   Returns: 'PLayerTreeSnapshotCommandLog'
 --   Returns: 'LayerTreeSnapshotCommandLog'
 layerTreeSnapshotCommandLog :: Handle -> PLayerTreeSnapshotCommandLog -> IO LayerTreeSnapshotCommandLog
-layerTreeSnapshotCommandLog handle params = sendReceiveCommandResult handle "LayerTree.snapshotCommandLog" (Just params)
+layerTreeSnapshotCommandLog handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'layerTreeSnapshotCommandLog' command.
 data LayerTreeSnapshotCommandLog = LayerTreeSnapshotCommandLog {
@@ -449,9 +469,9 @@ data LayerTreeSnapshotCommandLog = LayerTreeSnapshotCommandLog {
 instance FromJSON  LayerTreeSnapshotCommandLog where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
-instance Command LayerTreeSnapshotCommandLog where
-   commandName _ = "LayerTree.snapshotCommandLog"
-
+instance Command PLayerTreeSnapshotCommandLog where
+    type CommandResponse PLayerTreeSnapshotCommandLog = LayerTreeSnapshotCommandLog
+    commandName _ = "LayerTree.snapshotCommandLog"
 
 
 

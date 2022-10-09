@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -46,7 +47,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
@@ -350,9 +350,13 @@ instance FromJSON  PBrowserSetPermission where
 
 -- | Function for the 'Browser.setPermission' command.
 --   Set permission settings for given origin.
---   Parameters: 'PBrowserSetPermission'
+--   Returns: 'PBrowserSetPermission'
 browserSetPermission :: Handle -> PBrowserSetPermission -> IO ()
-browserSetPermission handle params = sendReceiveCommand handle "Browser.setPermission" (Just params)
+browserSetPermission handle params = sendReceiveCommand handle params
+
+instance Command PBrowserSetPermission where
+    type CommandResponse PBrowserSetPermission = NoResponse
+    commandName _ = "Browser.setPermission"
 
 
 -- | Parameters of the 'browserGrantPermissions' command.
@@ -372,9 +376,13 @@ instance FromJSON  PBrowserGrantPermissions where
 
 -- | Function for the 'Browser.grantPermissions' command.
 --   Grant specific permissions to the given origin and reject all others.
---   Parameters: 'PBrowserGrantPermissions'
+--   Returns: 'PBrowserGrantPermissions'
 browserGrantPermissions :: Handle -> PBrowserGrantPermissions -> IO ()
-browserGrantPermissions handle params = sendReceiveCommand handle "Browser.grantPermissions" (Just params)
+browserGrantPermissions handle params = sendReceiveCommand handle params
+
+instance Command PBrowserGrantPermissions where
+    type CommandResponse PBrowserGrantPermissions = NoResponse
+    commandName _ = "Browser.grantPermissions"
 
 
 -- | Parameters of the 'browserResetPermissions' command.
@@ -391,9 +399,13 @@ instance FromJSON  PBrowserResetPermissions where
 
 -- | Function for the 'Browser.resetPermissions' command.
 --   Reset all permission management for all origins.
---   Parameters: 'PBrowserResetPermissions'
+--   Returns: 'PBrowserResetPermissions'
 browserResetPermissions :: Handle -> PBrowserResetPermissions -> IO ()
-browserResetPermissions handle params = sendReceiveCommand handle "Browser.resetPermissions" (Just params)
+browserResetPermissions handle params = sendReceiveCommand handle params
+
+instance Command PBrowserResetPermissions where
+    type CommandResponse PBrowserResetPermissions = NoResponse
+    commandName _ = "Browser.resetPermissions"
 
 
 -- | Parameters of the 'browserSetDownloadBehavior' command.
@@ -440,9 +452,13 @@ instance FromJSON  PBrowserSetDownloadBehavior where
 
 -- | Function for the 'Browser.setDownloadBehavior' command.
 --   Set the behavior when downloading a file.
---   Parameters: 'PBrowserSetDownloadBehavior'
+--   Returns: 'PBrowserSetDownloadBehavior'
 browserSetDownloadBehavior :: Handle -> PBrowserSetDownloadBehavior -> IO ()
-browserSetDownloadBehavior handle params = sendReceiveCommand handle "Browser.setDownloadBehavior" (Just params)
+browserSetDownloadBehavior handle params = sendReceiveCommand handle params
+
+instance Command PBrowserSetDownloadBehavior where
+    type CommandResponse PBrowserSetDownloadBehavior = NoResponse
+    commandName _ = "Browser.setDownloadBehavior"
 
 
 -- | Parameters of the 'browserCancelDownload' command.
@@ -461,34 +477,66 @@ instance FromJSON  PBrowserCancelDownload where
 
 -- | Function for the 'Browser.cancelDownload' command.
 --   Cancel a download if in progress
---   Parameters: 'PBrowserCancelDownload'
+--   Returns: 'PBrowserCancelDownload'
 browserCancelDownload :: Handle -> PBrowserCancelDownload -> IO ()
-browserCancelDownload handle params = sendReceiveCommand handle "Browser.cancelDownload" (Just params)
+browserCancelDownload handle params = sendReceiveCommand handle params
 
+instance Command PBrowserCancelDownload where
+    type CommandResponse PBrowserCancelDownload = NoResponse
+    commandName _ = "Browser.cancelDownload"
+
+
+-- | Parameters of the 'browserClose' command.
+data PBrowserClose = PBrowserClose
+instance ToJSON PBrowserClose where toJSON _ = A.Null
 
 -- | Function for the 'Browser.close' command.
 --   Close browser gracefully.
 browserClose :: Handle -> IO ()
-browserClose handle = sendReceiveCommand handle "Browser.close" (Nothing :: Maybe ())
+browserClose handle = sendReceiveCommand handle PBrowserClose
 
+instance Command PBrowserClose where
+    type CommandResponse PBrowserClose = NoResponse
+    commandName _ = "Browser.close"
+
+
+-- | Parameters of the 'browserCrash' command.
+data PBrowserCrash = PBrowserCrash
+instance ToJSON PBrowserCrash where toJSON _ = A.Null
 
 -- | Function for the 'Browser.crash' command.
 --   Crashes browser on the main thread.
 browserCrash :: Handle -> IO ()
-browserCrash handle = sendReceiveCommand handle "Browser.crash" (Nothing :: Maybe ())
+browserCrash handle = sendReceiveCommand handle PBrowserCrash
 
+instance Command PBrowserCrash where
+    type CommandResponse PBrowserCrash = NoResponse
+    commandName _ = "Browser.crash"
+
+
+-- | Parameters of the 'browserCrashGpuProcess' command.
+data PBrowserCrashGpuProcess = PBrowserCrashGpuProcess
+instance ToJSON PBrowserCrashGpuProcess where toJSON _ = A.Null
 
 -- | Function for the 'Browser.crashGpuProcess' command.
 --   Crashes GPU process.
 browserCrashGpuProcess :: Handle -> IO ()
-browserCrashGpuProcess handle = sendReceiveCommand handle "Browser.crashGpuProcess" (Nothing :: Maybe ())
+browserCrashGpuProcess handle = sendReceiveCommand handle PBrowserCrashGpuProcess
 
+instance Command PBrowserCrashGpuProcess where
+    type CommandResponse PBrowserCrashGpuProcess = NoResponse
+    commandName _ = "Browser.crashGpuProcess"
+
+
+-- | Parameters of the 'browserGetVersion' command.
+data PBrowserGetVersion = PBrowserGetVersion
+instance ToJSON PBrowserGetVersion where toJSON _ = A.Null
 
 -- | Function for the 'Browser.getVersion' command.
 --   Returns version information.
 --   Returns: 'BrowserGetVersion'
 browserGetVersion :: Handle -> IO BrowserGetVersion
-browserGetVersion handle = sendReceiveCommandResult handle "Browser.getVersion" (Nothing :: Maybe ())
+browserGetVersion handle = sendReceiveCommandResult handle PBrowserGetVersion
 
 -- | Return type of the 'browserGetVersion' command.
 data BrowserGetVersion = BrowserGetVersion {
@@ -507,17 +555,21 @@ data BrowserGetVersion = BrowserGetVersion {
 instance FromJSON  BrowserGetVersion where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
-instance Command BrowserGetVersion where
-   commandName _ = "Browser.getVersion"
+instance Command PBrowserGetVersion where
+    type CommandResponse PBrowserGetVersion = BrowserGetVersion
+    commandName _ = "Browser.getVersion"
 
 
+-- | Parameters of the 'browserGetBrowserCommandLine' command.
+data PBrowserGetBrowserCommandLine = PBrowserGetBrowserCommandLine
+instance ToJSON PBrowserGetBrowserCommandLine where toJSON _ = A.Null
 
 -- | Function for the 'Browser.getBrowserCommandLine' command.
 --   Returns the command line switches for the browser process if, and only if
 --   --enable-automation is on the commandline.
 --   Returns: 'BrowserGetBrowserCommandLine'
 browserGetBrowserCommandLine :: Handle -> IO BrowserGetBrowserCommandLine
-browserGetBrowserCommandLine handle = sendReceiveCommandResult handle "Browser.getBrowserCommandLine" (Nothing :: Maybe ())
+browserGetBrowserCommandLine handle = sendReceiveCommandResult handle PBrowserGetBrowserCommandLine
 
 -- | Return type of the 'browserGetBrowserCommandLine' command.
 data BrowserGetBrowserCommandLine = BrowserGetBrowserCommandLine {
@@ -528,9 +580,9 @@ data BrowserGetBrowserCommandLine = BrowserGetBrowserCommandLine {
 instance FromJSON  BrowserGetBrowserCommandLine where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
-instance Command BrowserGetBrowserCommandLine where
-   commandName _ = "Browser.getBrowserCommandLine"
-
+instance Command PBrowserGetBrowserCommandLine where
+    type CommandResponse PBrowserGetBrowserCommandLine = BrowserGetBrowserCommandLine
+    commandName _ = "Browser.getBrowserCommandLine"
 
 
 -- | Parameters of the 'browserGetHistograms' command.
@@ -551,10 +603,10 @@ instance FromJSON  PBrowserGetHistograms where
 
 -- | Function for the 'Browser.getHistograms' command.
 --   Get Chrome histograms.
---   Parameters: 'PBrowserGetHistograms'
+--   Returns: 'PBrowserGetHistograms'
 --   Returns: 'BrowserGetHistograms'
 browserGetHistograms :: Handle -> PBrowserGetHistograms -> IO BrowserGetHistograms
-browserGetHistograms handle params = sendReceiveCommandResult handle "Browser.getHistograms" (Just params)
+browserGetHistograms handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'browserGetHistograms' command.
 data BrowserGetHistograms = BrowserGetHistograms {
@@ -565,9 +617,9 @@ data BrowserGetHistograms = BrowserGetHistograms {
 instance FromJSON  BrowserGetHistograms where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command BrowserGetHistograms where
-   commandName _ = "Browser.getHistograms"
-
+instance Command PBrowserGetHistograms where
+    type CommandResponse PBrowserGetHistograms = BrowserGetHistograms
+    commandName _ = "Browser.getHistograms"
 
 
 -- | Parameters of the 'browserGetHistogram' command.
@@ -586,10 +638,10 @@ instance FromJSON  PBrowserGetHistogram where
 
 -- | Function for the 'Browser.getHistogram' command.
 --   Get a Chrome histogram by name.
---   Parameters: 'PBrowserGetHistogram'
+--   Returns: 'PBrowserGetHistogram'
 --   Returns: 'BrowserGetHistogram'
 browserGetHistogram :: Handle -> PBrowserGetHistogram -> IO BrowserGetHistogram
-browserGetHistogram handle params = sendReceiveCommandResult handle "Browser.getHistogram" (Just params)
+browserGetHistogram handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'browserGetHistogram' command.
 data BrowserGetHistogram = BrowserGetHistogram {
@@ -600,9 +652,9 @@ data BrowserGetHistogram = BrowserGetHistogram {
 instance FromJSON  BrowserGetHistogram where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
-instance Command BrowserGetHistogram where
-   commandName _ = "Browser.getHistogram"
-
+instance Command PBrowserGetHistogram where
+    type CommandResponse PBrowserGetHistogram = BrowserGetHistogram
+    commandName _ = "Browser.getHistogram"
 
 
 -- | Parameters of the 'browserGetWindowBounds' command.
@@ -619,10 +671,10 @@ instance FromJSON  PBrowserGetWindowBounds where
 
 -- | Function for the 'Browser.getWindowBounds' command.
 --   Get position and size of the browser window.
---   Parameters: 'PBrowserGetWindowBounds'
+--   Returns: 'PBrowserGetWindowBounds'
 --   Returns: 'BrowserGetWindowBounds'
 browserGetWindowBounds :: Handle -> PBrowserGetWindowBounds -> IO BrowserGetWindowBounds
-browserGetWindowBounds handle params = sendReceiveCommandResult handle "Browser.getWindowBounds" (Just params)
+browserGetWindowBounds handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'browserGetWindowBounds' command.
 data BrowserGetWindowBounds = BrowserGetWindowBounds {
@@ -634,9 +686,9 @@ data BrowserGetWindowBounds = BrowserGetWindowBounds {
 instance FromJSON  BrowserGetWindowBounds where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
-instance Command BrowserGetWindowBounds where
-   commandName _ = "Browser.getWindowBounds"
-
+instance Command PBrowserGetWindowBounds where
+    type CommandResponse PBrowserGetWindowBounds = BrowserGetWindowBounds
+    commandName _ = "Browser.getWindowBounds"
 
 
 -- | Parameters of the 'browserGetWindowForTarget' command.
@@ -653,10 +705,10 @@ instance FromJSON  PBrowserGetWindowForTarget where
 
 -- | Function for the 'Browser.getWindowForTarget' command.
 --   Get the browser window that contains the devtools target.
---   Parameters: 'PBrowserGetWindowForTarget'
+--   Returns: 'PBrowserGetWindowForTarget'
 --   Returns: 'BrowserGetWindowForTarget'
 browserGetWindowForTarget :: Handle -> PBrowserGetWindowForTarget -> IO BrowserGetWindowForTarget
-browserGetWindowForTarget handle params = sendReceiveCommandResult handle "Browser.getWindowForTarget" (Just params)
+browserGetWindowForTarget handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'browserGetWindowForTarget' command.
 data BrowserGetWindowForTarget = BrowserGetWindowForTarget {
@@ -670,9 +722,9 @@ data BrowserGetWindowForTarget = BrowserGetWindowForTarget {
 instance FromJSON  BrowserGetWindowForTarget where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
-instance Command BrowserGetWindowForTarget where
-   commandName _ = "Browser.getWindowForTarget"
-
+instance Command PBrowserGetWindowForTarget where
+    type CommandResponse PBrowserGetWindowForTarget = BrowserGetWindowForTarget
+    commandName _ = "Browser.getWindowForTarget"
 
 
 -- | Parameters of the 'browserSetWindowBounds' command.
@@ -692,9 +744,13 @@ instance FromJSON  PBrowserSetWindowBounds where
 
 -- | Function for the 'Browser.setWindowBounds' command.
 --   Set position and/or size of the browser window.
---   Parameters: 'PBrowserSetWindowBounds'
+--   Returns: 'PBrowserSetWindowBounds'
 browserSetWindowBounds :: Handle -> PBrowserSetWindowBounds -> IO ()
-browserSetWindowBounds handle params = sendReceiveCommand handle "Browser.setWindowBounds" (Just params)
+browserSetWindowBounds handle params = sendReceiveCommand handle params
+
+instance Command PBrowserSetWindowBounds where
+    type CommandResponse PBrowserSetWindowBounds = NoResponse
+    commandName _ = "Browser.setWindowBounds"
 
 
 -- | Parameters of the 'browserSetDockTile' command.
@@ -712,9 +768,13 @@ instance FromJSON  PBrowserSetDockTile where
 
 -- | Function for the 'Browser.setDockTile' command.
 --   Set dock tile details, platform-specific.
---   Parameters: 'PBrowserSetDockTile'
+--   Returns: 'PBrowserSetDockTile'
 browserSetDockTile :: Handle -> PBrowserSetDockTile -> IO ()
-browserSetDockTile handle params = sendReceiveCommand handle "Browser.setDockTile" (Just params)
+browserSetDockTile handle params = sendReceiveCommand handle params
+
+instance Command PBrowserSetDockTile where
+    type CommandResponse PBrowserSetDockTile = NoResponse
+    commandName _ = "Browser.setDockTile"
 
 
 -- | Parameters of the 'browserExecuteBrowserCommand' command.
@@ -730,9 +790,13 @@ instance FromJSON  PBrowserExecuteBrowserCommand where
 
 -- | Function for the 'Browser.executeBrowserCommand' command.
 --   Invoke custom browser commands used by telemetry.
---   Parameters: 'PBrowserExecuteBrowserCommand'
+--   Returns: 'PBrowserExecuteBrowserCommand'
 browserExecuteBrowserCommand :: Handle -> PBrowserExecuteBrowserCommand -> IO ()
-browserExecuteBrowserCommand handle params = sendReceiveCommand handle "Browser.executeBrowserCommand" (Just params)
+browserExecuteBrowserCommand handle params = sendReceiveCommand handle params
+
+instance Command PBrowserExecuteBrowserCommand where
+    type CommandResponse PBrowserExecuteBrowserCommand = NoResponse
+    commandName _ = "Browser.executeBrowserCommand"
 
 
 
@@ -905,9 +969,13 @@ instance FromJSON  PTargetActivateTarget where
 
 -- | Function for the 'Target.activateTarget' command.
 --   Activates (focuses) the target.
---   Parameters: 'PTargetActivateTarget'
+--   Returns: 'PTargetActivateTarget'
 targetActivateTarget :: Handle -> PTargetActivateTarget -> IO ()
-targetActivateTarget handle params = sendReceiveCommand handle "Target.activateTarget" (Just params)
+targetActivateTarget handle params = sendReceiveCommand handle params
+
+instance Command PTargetActivateTarget where
+    type CommandResponse PTargetActivateTarget = NoResponse
+    commandName _ = "Target.activateTarget"
 
 
 -- | Parameters of the 'targetAttachToTarget' command.
@@ -927,10 +995,10 @@ instance FromJSON  PTargetAttachToTarget where
 
 -- | Function for the 'Target.attachToTarget' command.
 --   Attaches to the target with given id.
---   Parameters: 'PTargetAttachToTarget'
+--   Returns: 'PTargetAttachToTarget'
 --   Returns: 'TargetAttachToTarget'
 targetAttachToTarget :: Handle -> PTargetAttachToTarget -> IO TargetAttachToTarget
-targetAttachToTarget handle params = sendReceiveCommandResult handle "Target.attachToTarget" (Just params)
+targetAttachToTarget handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'targetAttachToTarget' command.
 data TargetAttachToTarget = TargetAttachToTarget {
@@ -941,16 +1009,20 @@ data TargetAttachToTarget = TargetAttachToTarget {
 instance FromJSON  TargetAttachToTarget where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command TargetAttachToTarget where
-   commandName _ = "Target.attachToTarget"
+instance Command PTargetAttachToTarget where
+    type CommandResponse PTargetAttachToTarget = TargetAttachToTarget
+    commandName _ = "Target.attachToTarget"
 
 
+-- | Parameters of the 'targetAttachToBrowserTarget' command.
+data PTargetAttachToBrowserTarget = PTargetAttachToBrowserTarget
+instance ToJSON PTargetAttachToBrowserTarget where toJSON _ = A.Null
 
 -- | Function for the 'Target.attachToBrowserTarget' command.
 --   Attaches to the browser target, only uses flat sessionId mode.
 --   Returns: 'TargetAttachToBrowserTarget'
 targetAttachToBrowserTarget :: Handle -> IO TargetAttachToBrowserTarget
-targetAttachToBrowserTarget handle = sendReceiveCommandResult handle "Target.attachToBrowserTarget" (Nothing :: Maybe ())
+targetAttachToBrowserTarget handle = sendReceiveCommandResult handle PTargetAttachToBrowserTarget
 
 -- | Return type of the 'targetAttachToBrowserTarget' command.
 data TargetAttachToBrowserTarget = TargetAttachToBrowserTarget {
@@ -961,9 +1033,9 @@ data TargetAttachToBrowserTarget = TargetAttachToBrowserTarget {
 instance FromJSON  TargetAttachToBrowserTarget where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
-instance Command TargetAttachToBrowserTarget where
-   commandName _ = "Target.attachToBrowserTarget"
-
+instance Command PTargetAttachToBrowserTarget where
+    type CommandResponse PTargetAttachToBrowserTarget = TargetAttachToBrowserTarget
+    commandName _ = "Target.attachToBrowserTarget"
 
 
 -- | Parameters of the 'targetCloseTarget' command.
@@ -979,9 +1051,13 @@ instance FromJSON  PTargetCloseTarget where
 
 -- | Function for the 'Target.closeTarget' command.
 --   Closes the target. If the target is a page that gets closed too.
---   Parameters: 'PTargetCloseTarget'
+--   Returns: 'PTargetCloseTarget'
 targetCloseTarget :: Handle -> PTargetCloseTarget -> IO ()
-targetCloseTarget handle params = sendReceiveCommand handle "Target.closeTarget" (Just params)
+targetCloseTarget handle params = sendReceiveCommand handle params
+
+instance Command PTargetCloseTarget where
+    type CommandResponse PTargetCloseTarget = NoResponse
+    commandName _ = "Target.closeTarget"
 
 
 -- | Parameters of the 'targetExposeDevToolsProtocol' command.
@@ -1006,9 +1082,13 @@ instance FromJSON  PTargetExposeDevToolsProtocol where
 --   The object has the follwing API:
 --   - `binding.send(json)` - a method to send messages over the remote debugging protocol
 --   - `binding.onmessage = json => handleMessage(json)` - a callback that will be called for the protocol notifications and command responses.
---   Parameters: 'PTargetExposeDevToolsProtocol'
+--   Returns: 'PTargetExposeDevToolsProtocol'
 targetExposeDevToolsProtocol :: Handle -> PTargetExposeDevToolsProtocol -> IO ()
-targetExposeDevToolsProtocol handle params = sendReceiveCommand handle "Target.exposeDevToolsProtocol" (Just params)
+targetExposeDevToolsProtocol handle params = sendReceiveCommand handle params
+
+instance Command PTargetExposeDevToolsProtocol where
+    type CommandResponse PTargetExposeDevToolsProtocol = NoResponse
+    commandName _ = "Target.exposeDevToolsProtocol"
 
 
 -- | Parameters of the 'targetCreateBrowserContext' command.
@@ -1033,10 +1113,10 @@ instance FromJSON  PTargetCreateBrowserContext where
 -- | Function for the 'Target.createBrowserContext' command.
 --   Creates a new empty BrowserContext. Similar to an incognito profile but you can have more than
 --   one.
---   Parameters: 'PTargetCreateBrowserContext'
+--   Returns: 'PTargetCreateBrowserContext'
 --   Returns: 'TargetCreateBrowserContext'
 targetCreateBrowserContext :: Handle -> PTargetCreateBrowserContext -> IO TargetCreateBrowserContext
-targetCreateBrowserContext handle params = sendReceiveCommandResult handle "Target.createBrowserContext" (Just params)
+targetCreateBrowserContext handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'targetCreateBrowserContext' command.
 data TargetCreateBrowserContext = TargetCreateBrowserContext {
@@ -1047,16 +1127,20 @@ data TargetCreateBrowserContext = TargetCreateBrowserContext {
 instance FromJSON  TargetCreateBrowserContext where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
-instance Command TargetCreateBrowserContext where
-   commandName _ = "Target.createBrowserContext"
+instance Command PTargetCreateBrowserContext where
+    type CommandResponse PTargetCreateBrowserContext = TargetCreateBrowserContext
+    commandName _ = "Target.createBrowserContext"
 
 
+-- | Parameters of the 'targetGetBrowserContexts' command.
+data PTargetGetBrowserContexts = PTargetGetBrowserContexts
+instance ToJSON PTargetGetBrowserContexts where toJSON _ = A.Null
 
 -- | Function for the 'Target.getBrowserContexts' command.
 --   Returns all browser contexts created with `Target.createBrowserContext` method.
 --   Returns: 'TargetGetBrowserContexts'
 targetGetBrowserContexts :: Handle -> IO TargetGetBrowserContexts
-targetGetBrowserContexts handle = sendReceiveCommandResult handle "Target.getBrowserContexts" (Nothing :: Maybe ())
+targetGetBrowserContexts handle = sendReceiveCommandResult handle PTargetGetBrowserContexts
 
 -- | Return type of the 'targetGetBrowserContexts' command.
 data TargetGetBrowserContexts = TargetGetBrowserContexts {
@@ -1067,9 +1151,9 @@ data TargetGetBrowserContexts = TargetGetBrowserContexts {
 instance FromJSON  TargetGetBrowserContexts where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
-instance Command TargetGetBrowserContexts where
-   commandName _ = "Target.getBrowserContexts"
-
+instance Command PTargetGetBrowserContexts where
+    type CommandResponse PTargetGetBrowserContexts = TargetGetBrowserContexts
+    commandName _ = "Target.getBrowserContexts"
 
 
 -- | Parameters of the 'targetCreateTarget' command.
@@ -1100,10 +1184,10 @@ instance FromJSON  PTargetCreateTarget where
 
 -- | Function for the 'Target.createTarget' command.
 --   Creates a new page.
---   Parameters: 'PTargetCreateTarget'
+--   Returns: 'PTargetCreateTarget'
 --   Returns: 'TargetCreateTarget'
 targetCreateTarget :: Handle -> PTargetCreateTarget -> IO TargetCreateTarget
-targetCreateTarget handle params = sendReceiveCommandResult handle "Target.createTarget" (Just params)
+targetCreateTarget handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'targetCreateTarget' command.
 data TargetCreateTarget = TargetCreateTarget {
@@ -1114,9 +1198,9 @@ data TargetCreateTarget = TargetCreateTarget {
 instance FromJSON  TargetCreateTarget where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
-instance Command TargetCreateTarget where
-   commandName _ = "Target.createTarget"
-
+instance Command PTargetCreateTarget where
+    type CommandResponse PTargetCreateTarget = TargetCreateTarget
+    commandName _ = "Target.createTarget"
 
 
 -- | Parameters of the 'targetDetachFromTarget' command.
@@ -1133,9 +1217,13 @@ instance FromJSON  PTargetDetachFromTarget where
 
 -- | Function for the 'Target.detachFromTarget' command.
 --   Detaches session with given id.
---   Parameters: 'PTargetDetachFromTarget'
+--   Returns: 'PTargetDetachFromTarget'
 targetDetachFromTarget :: Handle -> PTargetDetachFromTarget -> IO ()
-targetDetachFromTarget handle params = sendReceiveCommand handle "Target.detachFromTarget" (Just params)
+targetDetachFromTarget handle params = sendReceiveCommand handle params
+
+instance Command PTargetDetachFromTarget where
+    type CommandResponse PTargetDetachFromTarget = NoResponse
+    commandName _ = "Target.detachFromTarget"
 
 
 -- | Parameters of the 'targetDisposeBrowserContext' command.
@@ -1152,9 +1240,13 @@ instance FromJSON  PTargetDisposeBrowserContext where
 -- | Function for the 'Target.disposeBrowserContext' command.
 --   Deletes a BrowserContext. All the belonging pages will be closed without calling their
 --   beforeunload hooks.
---   Parameters: 'PTargetDisposeBrowserContext'
+--   Returns: 'PTargetDisposeBrowserContext'
 targetDisposeBrowserContext :: Handle -> PTargetDisposeBrowserContext -> IO ()
-targetDisposeBrowserContext handle params = sendReceiveCommand handle "Target.disposeBrowserContext" (Just params)
+targetDisposeBrowserContext handle params = sendReceiveCommand handle params
+
+instance Command PTargetDisposeBrowserContext where
+    type CommandResponse PTargetDisposeBrowserContext = NoResponse
+    commandName _ = "Target.disposeBrowserContext"
 
 
 -- | Parameters of the 'targetGetTargetInfo' command.
@@ -1170,10 +1262,10 @@ instance FromJSON  PTargetGetTargetInfo where
 
 -- | Function for the 'Target.getTargetInfo' command.
 --   Returns information about a target.
---   Parameters: 'PTargetGetTargetInfo'
+--   Returns: 'PTargetGetTargetInfo'
 --   Returns: 'TargetGetTargetInfo'
 targetGetTargetInfo :: Handle -> PTargetGetTargetInfo -> IO TargetGetTargetInfo
-targetGetTargetInfo handle params = sendReceiveCommandResult handle "Target.getTargetInfo" (Just params)
+targetGetTargetInfo handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'targetGetTargetInfo' command.
 data TargetGetTargetInfo = TargetGetTargetInfo {
@@ -1183,16 +1275,20 @@ data TargetGetTargetInfo = TargetGetTargetInfo {
 instance FromJSON  TargetGetTargetInfo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
-instance Command TargetGetTargetInfo where
-   commandName _ = "Target.getTargetInfo"
+instance Command PTargetGetTargetInfo where
+    type CommandResponse PTargetGetTargetInfo = TargetGetTargetInfo
+    commandName _ = "Target.getTargetInfo"
 
 
+-- | Parameters of the 'targetGetTargets' command.
+data PTargetGetTargets = PTargetGetTargets
+instance ToJSON PTargetGetTargets where toJSON _ = A.Null
 
 -- | Function for the 'Target.getTargets' command.
 --   Retrieves a list of available targets.
 --   Returns: 'TargetGetTargets'
 targetGetTargets :: Handle -> IO TargetGetTargets
-targetGetTargets handle = sendReceiveCommandResult handle "Target.getTargets" (Nothing :: Maybe ())
+targetGetTargets handle = sendReceiveCommandResult handle PTargetGetTargets
 
 -- | Return type of the 'targetGetTargets' command.
 data TargetGetTargets = TargetGetTargets {
@@ -1203,9 +1299,9 @@ data TargetGetTargets = TargetGetTargets {
 instance FromJSON  TargetGetTargets where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
-instance Command TargetGetTargets where
-   commandName _ = "Target.getTargets"
-
+instance Command PTargetGetTargets where
+    type CommandResponse PTargetGetTargets = TargetGetTargets
+    commandName _ = "Target.getTargets"
 
 
 -- | Parameters of the 'targetSetAutoAttach' command.
@@ -1233,9 +1329,13 @@ instance FromJSON  PTargetSetAutoAttach where
 --   automatically detaches from all currently attached targets.
 --   This also clears all targets added by `autoAttachRelated` from the list of targets to watch
 --   for creation of related targets.
---   Parameters: 'PTargetSetAutoAttach'
+--   Returns: 'PTargetSetAutoAttach'
 targetSetAutoAttach :: Handle -> PTargetSetAutoAttach -> IO ()
-targetSetAutoAttach handle params = sendReceiveCommand handle "Target.setAutoAttach" (Just params)
+targetSetAutoAttach handle params = sendReceiveCommand handle params
+
+instance Command PTargetSetAutoAttach where
+    type CommandResponse PTargetSetAutoAttach = NoResponse
+    commandName _ = "Target.setAutoAttach"
 
 
 -- | Parameters of the 'targetAutoAttachRelated' command.
@@ -1258,9 +1358,13 @@ instance FromJSON  PTargetAutoAttachRelated where
 --   through `attachedToTarget`. The specified target is also auto-attached.
 --   This cancels the effect of any previous `setAutoAttach` and is also cancelled by subsequent
 --   `setAutoAttach`. Only available at the Browser target.
---   Parameters: 'PTargetAutoAttachRelated'
+--   Returns: 'PTargetAutoAttachRelated'
 targetAutoAttachRelated :: Handle -> PTargetAutoAttachRelated -> IO ()
-targetAutoAttachRelated handle params = sendReceiveCommand handle "Target.autoAttachRelated" (Just params)
+targetAutoAttachRelated handle params = sendReceiveCommand handle params
+
+instance Command PTargetAutoAttachRelated where
+    type CommandResponse PTargetAutoAttachRelated = NoResponse
+    commandName _ = "Target.autoAttachRelated"
 
 
 -- | Parameters of the 'targetSetDiscoverTargets' command.
@@ -1278,9 +1382,13 @@ instance FromJSON  PTargetSetDiscoverTargets where
 -- | Function for the 'Target.setDiscoverTargets' command.
 --   Controls whether to discover available targets and notify via
 --   `targetCreated/targetInfoChanged/targetDestroyed` events.
---   Parameters: 'PTargetSetDiscoverTargets'
+--   Returns: 'PTargetSetDiscoverTargets'
 targetSetDiscoverTargets :: Handle -> PTargetSetDiscoverTargets -> IO ()
-targetSetDiscoverTargets handle params = sendReceiveCommand handle "Target.setDiscoverTargets" (Just params)
+targetSetDiscoverTargets handle params = sendReceiveCommand handle params
+
+instance Command PTargetSetDiscoverTargets where
+    type CommandResponse PTargetSetDiscoverTargets = NoResponse
+    commandName _ = "Target.setDiscoverTargets"
 
 
 -- | Parameters of the 'targetSetRemoteLocations' command.
@@ -1298,9 +1406,13 @@ instance FromJSON  PTargetSetRemoteLocations where
 -- | Function for the 'Target.setRemoteLocations' command.
 --   Enables target discovery for the specified locations, when `setDiscoverTargets` was set to
 --   `true`.
---   Parameters: 'PTargetSetRemoteLocations'
+--   Returns: 'PTargetSetRemoteLocations'
 targetSetRemoteLocations :: Handle -> PTargetSetRemoteLocations -> IO ()
-targetSetRemoteLocations handle params = sendReceiveCommand handle "Target.setRemoteLocations" (Just params)
+targetSetRemoteLocations handle params = sendReceiveCommand handle params
+
+instance Command PTargetSetRemoteLocations where
+    type CommandResponse PTargetSetRemoteLocations = NoResponse
+    commandName _ = "Target.setRemoteLocations"
 
 
 

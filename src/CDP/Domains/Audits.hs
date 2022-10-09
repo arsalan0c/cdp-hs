@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -43,7 +44,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
@@ -1094,10 +1094,10 @@ instance FromJSON  PAuditsGetEncodedResponse where
 -- | Function for the 'Audits.getEncodedResponse' command.
 --   Returns the response body and size if it were re-encoded with the specified settings. Only
 --   applies to images.
---   Parameters: 'PAuditsGetEncodedResponse'
+--   Returns: 'PAuditsGetEncodedResponse'
 --   Returns: 'AuditsGetEncodedResponse'
 auditsGetEncodedResponse :: Handle -> PAuditsGetEncodedResponse -> IO AuditsGetEncodedResponse
-auditsGetEncodedResponse handle params = sendReceiveCommandResult handle "Audits.getEncodedResponse" (Just params)
+auditsGetEncodedResponse handle params = sendReceiveCommandResult handle params
 
 -- | Return type of the 'auditsGetEncodedResponse' command.
 data AuditsGetEncodedResponse = AuditsGetEncodedResponse {
@@ -1112,22 +1112,38 @@ data AuditsGetEncodedResponse = AuditsGetEncodedResponse {
 instance FromJSON  AuditsGetEncodedResponse where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
-instance Command AuditsGetEncodedResponse where
-   commandName _ = "Audits.getEncodedResponse"
+instance Command PAuditsGetEncodedResponse where
+    type CommandResponse PAuditsGetEncodedResponse = AuditsGetEncodedResponse
+    commandName _ = "Audits.getEncodedResponse"
 
 
+-- | Parameters of the 'auditsDisable' command.
+data PAuditsDisable = PAuditsDisable
+instance ToJSON PAuditsDisable where toJSON _ = A.Null
 
 -- | Function for the 'Audits.disable' command.
 --   Disables issues domain, prevents further issues from being reported to the client.
 auditsDisable :: Handle -> IO ()
-auditsDisable handle = sendReceiveCommand handle "Audits.disable" (Nothing :: Maybe ())
+auditsDisable handle = sendReceiveCommand handle PAuditsDisable
 
+instance Command PAuditsDisable where
+    type CommandResponse PAuditsDisable = NoResponse
+    commandName _ = "Audits.disable"
+
+
+-- | Parameters of the 'auditsEnable' command.
+data PAuditsEnable = PAuditsEnable
+instance ToJSON PAuditsEnable where toJSON _ = A.Null
 
 -- | Function for the 'Audits.enable' command.
 --   Enables issues domain, sends the issues collected so far to the client by means of the
 --   `issueAdded` event.
 auditsEnable :: Handle -> IO ()
-auditsEnable handle = sendReceiveCommand handle "Audits.enable" (Nothing :: Maybe ())
+auditsEnable handle = sendReceiveCommand handle PAuditsEnable
+
+instance Command PAuditsEnable where
+    type CommandResponse PAuditsEnable = NoResponse
+    commandName _ = "Audits.enable"
 
 
 -- | Parameters of the 'auditsCheckContrast' command.
@@ -1145,9 +1161,13 @@ instance FromJSON  PAuditsCheckContrast where
 -- | Function for the 'Audits.checkContrast' command.
 --   Runs the contrast check for the target page. Found issues are reported
 --   using Audits.issueAdded event.
---   Parameters: 'PAuditsCheckContrast'
+--   Returns: 'PAuditsCheckContrast'
 auditsCheckContrast :: Handle -> PAuditsCheckContrast -> IO ()
-auditsCheckContrast handle params = sendReceiveCommand handle "Audits.checkContrast" (Just params)
+auditsCheckContrast handle params = sendReceiveCommand handle params
+
+instance Command PAuditsCheckContrast where
+    type CommandResponse PAuditsCheckContrast = NoResponse
+    commandName _ = "Audits.checkContrast"
 
 
 

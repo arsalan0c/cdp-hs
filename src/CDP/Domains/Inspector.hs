@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 
 {- |
@@ -41,7 +42,6 @@ import Data.Char
 import Data.Default
 
 import CDP.Internal.Runtime
-import CDP.Handle
 
 
 
@@ -91,16 +91,32 @@ instance Event InspectorTargetReloadedAfterCrash where
 
 
 
+-- | Parameters of the 'inspectorDisable' command.
+data PInspectorDisable = PInspectorDisable
+instance ToJSON PInspectorDisable where toJSON _ = A.Null
+
 -- | Function for the 'Inspector.disable' command.
 --   Disables inspector domain notifications.
 inspectorDisable :: Handle -> IO ()
-inspectorDisable handle = sendReceiveCommand handle "Inspector.disable" (Nothing :: Maybe ())
+inspectorDisable handle = sendReceiveCommand handle PInspectorDisable
 
+instance Command PInspectorDisable where
+    type CommandResponse PInspectorDisable = NoResponse
+    commandName _ = "Inspector.disable"
+
+
+-- | Parameters of the 'inspectorEnable' command.
+data PInspectorEnable = PInspectorEnable
+instance ToJSON PInspectorEnable where toJSON _ = A.Null
 
 -- | Function for the 'Inspector.enable' command.
 --   Enables inspector domain notifications.
 inspectorEnable :: Handle -> IO ()
-inspectorEnable handle = sendReceiveCommand handle "Inspector.enable" (Nothing :: Maybe ())
+inspectorEnable handle = sendReceiveCommand handle PInspectorEnable
+
+instance Command PInspectorEnable where
+    type CommandResponse PInspectorEnable = NoResponse
+    commandName _ = "Inspector.enable"
 
 
 

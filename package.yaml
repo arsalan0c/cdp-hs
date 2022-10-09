@@ -56,6 +56,12 @@ executables:
     dependencies:
       - cdp
 
+  cdp-example-open-twitter:
+    source-dirs: examples
+    main: open-twitter.hs
+    dependencies:
+      - cdp
+
 tests:
   cdp-test:
     source-dirs: test

@@ -73,7 +73,7 @@ instance FromJSON  PIOClose where
 -- | Function for the 'IO.close' command.
 --   Close the stream, discard any temporary backing storage.
 --   Parameters: 'PIOClose'
-iOClose :: Handle ev -> PIOClose -> IO ()
+iOClose :: Handle -> PIOClose -> IO ()
 iOClose handle params = sendReceiveCommand handle "IO.close" (Just params)
 
 
@@ -98,7 +98,7 @@ instance FromJSON  PIORead where
 --   Read a chunk of the stream
 --   Parameters: 'PIORead'
 --   Returns: 'IORead'
-iORead :: Handle ev -> PIORead -> IO IORead
+iORead :: Handle -> PIORead -> IO IORead
 iORead handle params = sendReceiveCommandResult handle "IO.read" (Just params)
 
 -- | Return type of the 'iORead' command.
@@ -135,7 +135,7 @@ instance FromJSON  PIOResolveBlob where
 --   Return UUID of Blob object specified by a remote object id.
 --   Parameters: 'PIOResolveBlob'
 --   Returns: 'IOResolveBlob'
-iOResolveBlob :: Handle ev -> PIOResolveBlob -> IO IOResolveBlob
+iOResolveBlob :: Handle -> PIOResolveBlob -> IO IOResolveBlob
 iOResolveBlob handle params = sendReceiveCommandResult handle "IO.resolveBlob" (Just params)
 
 -- | Return type of the 'iOResolveBlob' command.

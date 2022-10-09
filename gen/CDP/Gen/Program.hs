@@ -25,10 +25,9 @@ import qualified CDP.Gen.Snippets as Snippets
 
 ----------- Constants from the handwritten runtime of the CDP library ----------- 
 
-eventClassName, eventResponseName, handleType, commandClassName, sendCommandName, sendCommandResultName, emptyReturnSig :: T.Text
+eventClassName, eventResponseName, handleTypeName, commandClassName, sendCommandName, sendCommandResultName, emptyReturnSig :: T.Text
 eventClassName         = "FromEvent"
 eventResponseName      = "EventResponse"
-handleType             = "Handle ev" -- <> eventsSumTypeName
 handleTypeName         = "Handle"
 commandClassName       = "Command"
 sendCommandName        = "sendReceiveCommand"
@@ -204,7 +203,7 @@ genCommandFn _ isEmptyParams isEmptyReturn commandName paramsTypeName returnType
     fnType = T.unwords
         [ fnName
         , "::"
-        , T.intercalate " -> " $ [handleType] ++ 
+        , T.intercalate " -> " $ [handleTypeName] ++
             (if isEmptyParams then [] else [paramsTypeName]) ++ 
             [returnTypeSig]
         ]

@@ -930,7 +930,7 @@ instance FromJSON  PRuntimeAwaitPromise where
 --   Add handler to promise with given promise object id.
 --   Parameters: 'PRuntimeAwaitPromise'
 --   Returns: 'RuntimeAwaitPromise'
-runtimeAwaitPromise :: Handle ev -> PRuntimeAwaitPromise -> IO RuntimeAwaitPromise
+runtimeAwaitPromise :: Handle -> PRuntimeAwaitPromise -> IO RuntimeAwaitPromise
 runtimeAwaitPromise handle params = sendReceiveCommandResult handle "Runtime.awaitPromise" (Just params)
 
 -- | Return type of the 'runtimeAwaitPromise' command.
@@ -996,7 +996,7 @@ instance FromJSON  PRuntimeCallFunctionOn where
 --   inherited from the target object.
 --   Parameters: 'PRuntimeCallFunctionOn'
 --   Returns: 'RuntimeCallFunctionOn'
-runtimeCallFunctionOn :: Handle ev -> PRuntimeCallFunctionOn -> IO RuntimeCallFunctionOn
+runtimeCallFunctionOn :: Handle -> PRuntimeCallFunctionOn -> IO RuntimeCallFunctionOn
 runtimeCallFunctionOn handle params = sendReceiveCommandResult handle "Runtime.callFunctionOn" (Just params)
 
 -- | Return type of the 'runtimeCallFunctionOn' command.
@@ -1038,7 +1038,7 @@ instance FromJSON  PRuntimeCompileScript where
 --   Compiles expression.
 --   Parameters: 'PRuntimeCompileScript'
 --   Returns: 'RuntimeCompileScript'
-runtimeCompileScript :: Handle ev -> PRuntimeCompileScript -> IO RuntimeCompileScript
+runtimeCompileScript :: Handle -> PRuntimeCompileScript -> IO RuntimeCompileScript
 runtimeCompileScript handle params = sendReceiveCommandResult handle "Runtime.compileScript" (Just params)
 
 -- | Return type of the 'runtimeCompileScript' command.
@@ -1059,13 +1059,13 @@ instance Command RuntimeCompileScript where
 
 -- | Function for the 'Runtime.disable' command.
 --   Disables reporting of execution contexts creation.
-runtimeDisable :: Handle ev -> IO ()
+runtimeDisable :: Handle -> IO ()
 runtimeDisable handle = sendReceiveCommand handle "Runtime.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Runtime.discardConsoleEntries' command.
 --   Discards collected exceptions and console API calls.
-runtimeDiscardConsoleEntries :: Handle ev -> IO ()
+runtimeDiscardConsoleEntries :: Handle -> IO ()
 runtimeDiscardConsoleEntries handle = sendReceiveCommand handle "Runtime.discardConsoleEntries" (Nothing :: Maybe ())
 
 
@@ -1073,7 +1073,7 @@ runtimeDiscardConsoleEntries handle = sendReceiveCommand handle "Runtime.discard
 --   Enables reporting of execution contexts creation by means of `executionContextCreated` event.
 --   When the reporting gets enabled the event will be sent immediately for each existing execution
 --   context.
-runtimeEnable :: Handle ev -> IO ()
+runtimeEnable :: Handle -> IO ()
 runtimeEnable handle = sendReceiveCommand handle "Runtime.enable" (Nothing :: Maybe ())
 
 
@@ -1140,7 +1140,7 @@ instance FromJSON  PRuntimeEvaluate where
 --   Evaluates expression on global object.
 --   Parameters: 'PRuntimeEvaluate'
 --   Returns: 'RuntimeEvaluate'
-runtimeEvaluate :: Handle ev -> PRuntimeEvaluate -> IO RuntimeEvaluate
+runtimeEvaluate :: Handle -> PRuntimeEvaluate -> IO RuntimeEvaluate
 runtimeEvaluate handle params = sendReceiveCommandResult handle "Runtime.evaluate" (Just params)
 
 -- | Return type of the 'runtimeEvaluate' command.
@@ -1162,7 +1162,7 @@ instance Command RuntimeEvaluate where
 -- | Function for the 'Runtime.getIsolateId' command.
 --   Returns the isolate id.
 --   Returns: 'RuntimeGetIsolateId'
-runtimeGetIsolateId :: Handle ev -> IO RuntimeGetIsolateId
+runtimeGetIsolateId :: Handle -> IO RuntimeGetIsolateId
 runtimeGetIsolateId handle = sendReceiveCommandResult handle "Runtime.getIsolateId" (Nothing :: Maybe ())
 
 -- | Return type of the 'runtimeGetIsolateId' command.
@@ -1183,7 +1183,7 @@ instance Command RuntimeGetIsolateId where
 --   Returns the JavaScript heap usage.
 --   It is the total usage of the corresponding isolate not scoped to a particular Runtime.
 --   Returns: 'RuntimeGetHeapUsage'
-runtimeGetHeapUsage :: Handle ev -> IO RuntimeGetHeapUsage
+runtimeGetHeapUsage :: Handle -> IO RuntimeGetHeapUsage
 runtimeGetHeapUsage handle = sendReceiveCommandResult handle "Runtime.getHeapUsage" (Nothing :: Maybe ())
 
 -- | Return type of the 'runtimeGetHeapUsage' command.
@@ -1229,7 +1229,7 @@ instance FromJSON  PRuntimeGetProperties where
 --   object.
 --   Parameters: 'PRuntimeGetProperties'
 --   Returns: 'RuntimeGetProperties'
-runtimeGetProperties :: Handle ev -> PRuntimeGetProperties -> IO RuntimeGetProperties
+runtimeGetProperties :: Handle -> PRuntimeGetProperties -> IO RuntimeGetProperties
 runtimeGetProperties handle params = sendReceiveCommandResult handle "Runtime.getProperties" (Just params)
 
 -- | Return type of the 'runtimeGetProperties' command.
@@ -1268,7 +1268,7 @@ instance FromJSON  PRuntimeGlobalLexicalScopeNames where
 --   Returns all let, const and class variables from global scope.
 --   Parameters: 'PRuntimeGlobalLexicalScopeNames'
 --   Returns: 'RuntimeGlobalLexicalScopeNames'
-runtimeGlobalLexicalScopeNames :: Handle ev -> PRuntimeGlobalLexicalScopeNames -> IO RuntimeGlobalLexicalScopeNames
+runtimeGlobalLexicalScopeNames :: Handle -> PRuntimeGlobalLexicalScopeNames -> IO RuntimeGlobalLexicalScopeNames
 runtimeGlobalLexicalScopeNames handle params = sendReceiveCommandResult handle "Runtime.globalLexicalScopeNames" (Just params)
 
 -- | Return type of the 'runtimeGlobalLexicalScopeNames' command.
@@ -1302,7 +1302,7 @@ instance FromJSON  PRuntimeQueryObjects where
 --   
 --   Parameters: 'PRuntimeQueryObjects'
 --   Returns: 'RuntimeQueryObjects'
-runtimeQueryObjects :: Handle ev -> PRuntimeQueryObjects -> IO RuntimeQueryObjects
+runtimeQueryObjects :: Handle -> PRuntimeQueryObjects -> IO RuntimeQueryObjects
 runtimeQueryObjects handle params = sendReceiveCommandResult handle "Runtime.queryObjects" (Just params)
 
 -- | Return type of the 'runtimeQueryObjects' command.
@@ -1334,7 +1334,7 @@ instance FromJSON  PRuntimeReleaseObject where
 -- | Function for the 'Runtime.releaseObject' command.
 --   Releases remote object with given id.
 --   Parameters: 'PRuntimeReleaseObject'
-runtimeReleaseObject :: Handle ev -> PRuntimeReleaseObject -> IO ()
+runtimeReleaseObject :: Handle -> PRuntimeReleaseObject -> IO ()
 runtimeReleaseObject handle params = sendReceiveCommand handle "Runtime.releaseObject" (Just params)
 
 
@@ -1353,13 +1353,13 @@ instance FromJSON  PRuntimeReleaseObjectGroup where
 -- | Function for the 'Runtime.releaseObjectGroup' command.
 --   Releases all remote objects that belong to a given group.
 --   Parameters: 'PRuntimeReleaseObjectGroup'
-runtimeReleaseObjectGroup :: Handle ev -> PRuntimeReleaseObjectGroup -> IO ()
+runtimeReleaseObjectGroup :: Handle -> PRuntimeReleaseObjectGroup -> IO ()
 runtimeReleaseObjectGroup handle params = sendReceiveCommand handle "Runtime.releaseObjectGroup" (Just params)
 
 
 -- | Function for the 'Runtime.runIfWaitingForDebugger' command.
 --   Tells inspected instance to run if it was waiting for debugger to attach.
-runtimeRunIfWaitingForDebugger :: Handle ev -> IO ()
+runtimeRunIfWaitingForDebugger :: Handle -> IO ()
 runtimeRunIfWaitingForDebugger handle = sendReceiveCommand handle "Runtime.runIfWaitingForDebugger" (Nothing :: Maybe ())
 
 
@@ -1396,7 +1396,7 @@ instance FromJSON  PRuntimeRunScript where
 --   Runs script with given id in a given context.
 --   Parameters: 'PRuntimeRunScript'
 --   Returns: 'RuntimeRunScript'
-runtimeRunScript :: Handle ev -> PRuntimeRunScript -> IO RuntimeRunScript
+runtimeRunScript :: Handle -> PRuntimeRunScript -> IO RuntimeRunScript
 runtimeRunScript handle params = sendReceiveCommandResult handle "Runtime.runScript" (Just params)
 
 -- | Return type of the 'runtimeRunScript' command.
@@ -1431,7 +1431,7 @@ instance FromJSON  PRuntimeSetAsyncCallStackDepth where
 -- | Function for the 'Runtime.setAsyncCallStackDepth' command.
 --   Enables or disables async call stacks tracking.
 --   Parameters: 'PRuntimeSetAsyncCallStackDepth'
-runtimeSetAsyncCallStackDepth :: Handle ev -> PRuntimeSetAsyncCallStackDepth -> IO ()
+runtimeSetAsyncCallStackDepth :: Handle -> PRuntimeSetAsyncCallStackDepth -> IO ()
 runtimeSetAsyncCallStackDepth handle params = sendReceiveCommand handle "Runtime.setAsyncCallStackDepth" (Just params)
 
 
@@ -1449,7 +1449,7 @@ instance FromJSON  PRuntimeSetCustomObjectFormatterEnabled where
 -- | Function for the 'Runtime.setCustomObjectFormatterEnabled' command.
 --   
 --   Parameters: 'PRuntimeSetCustomObjectFormatterEnabled'
-runtimeSetCustomObjectFormatterEnabled :: Handle ev -> PRuntimeSetCustomObjectFormatterEnabled -> IO ()
+runtimeSetCustomObjectFormatterEnabled :: Handle -> PRuntimeSetCustomObjectFormatterEnabled -> IO ()
 runtimeSetCustomObjectFormatterEnabled handle params = sendReceiveCommand handle "Runtime.setCustomObjectFormatterEnabled" (Just params)
 
 
@@ -1467,14 +1467,14 @@ instance FromJSON  PRuntimeSetMaxCallStackSizeToCapture where
 -- | Function for the 'Runtime.setMaxCallStackSizeToCapture' command.
 --   
 --   Parameters: 'PRuntimeSetMaxCallStackSizeToCapture'
-runtimeSetMaxCallStackSizeToCapture :: Handle ev -> PRuntimeSetMaxCallStackSizeToCapture -> IO ()
+runtimeSetMaxCallStackSizeToCapture :: Handle -> PRuntimeSetMaxCallStackSizeToCapture -> IO ()
 runtimeSetMaxCallStackSizeToCapture handle params = sendReceiveCommand handle "Runtime.setMaxCallStackSizeToCapture" (Just params)
 
 
 -- | Function for the 'Runtime.terminateExecution' command.
 --   Terminate current or next JavaScript execution.
 --   Will cancel the termination when the outer-most script execution ends.
-runtimeTerminateExecution :: Handle ev -> IO ()
+runtimeTerminateExecution :: Handle -> IO ()
 runtimeTerminateExecution handle = sendReceiveCommand handle "Runtime.terminateExecution" (Nothing :: Maybe ())
 
 
@@ -1503,7 +1503,7 @@ instance FromJSON  PRuntimeAddBinding where
 --   in case of any other input, function throws an exception.
 --   Each binding function call produces Runtime.bindingCalled notification.
 --   Parameters: 'PRuntimeAddBinding'
-runtimeAddBinding :: Handle ev -> PRuntimeAddBinding -> IO ()
+runtimeAddBinding :: Handle -> PRuntimeAddBinding -> IO ()
 runtimeAddBinding handle params = sendReceiveCommand handle "Runtime.addBinding" (Just params)
 
 
@@ -1522,7 +1522,7 @@ instance FromJSON  PRuntimeRemoveBinding where
 --   This method does not remove binding function from global object but
 --   unsubscribes current runtime agent from Runtime.bindingCalled notifications.
 --   Parameters: 'PRuntimeRemoveBinding'
-runtimeRemoveBinding :: Handle ev -> PRuntimeRemoveBinding -> IO ()
+runtimeRemoveBinding :: Handle -> PRuntimeRemoveBinding -> IO ()
 runtimeRemoveBinding handle params = sendReceiveCommand handle "Runtime.removeBinding" (Just params)
 
 
@@ -1546,7 +1546,7 @@ instance FromJSON  PRuntimeGetExceptionDetails where
 --   Error was thrown.
 --   Parameters: 'PRuntimeGetExceptionDetails'
 --   Returns: 'RuntimeGetExceptionDetails'
-runtimeGetExceptionDetails :: Handle ev -> PRuntimeGetExceptionDetails -> IO RuntimeGetExceptionDetails
+runtimeGetExceptionDetails :: Handle -> PRuntimeGetExceptionDetails -> IO RuntimeGetExceptionDetails
 runtimeGetExceptionDetails handle params = sendReceiveCommandResult handle "Runtime.getExceptionDetails" (Just params)
 
 -- | Return type of the 'runtimeGetExceptionDetails' command.

@@ -248,7 +248,7 @@ instance Event FetchAuthRequired where
 
 -- | Function for the 'Fetch.disable' command.
 --   Disables the fetch domain.
-fetchDisable :: Handle ev -> IO ()
+fetchDisable :: Handle -> IO ()
 fetchDisable handle = sendReceiveCommand handle "Fetch.disable" (Nothing :: Maybe ())
 
 
@@ -273,7 +273,7 @@ instance FromJSON  PFetchEnable where
 --   Enables issuing of requestPaused events. A request will be paused until client
 --   calls one of failRequest, fulfillRequest or continueRequest/continueWithAuth.
 --   Parameters: 'PFetchEnable'
-fetchEnable :: Handle ev -> PFetchEnable -> IO ()
+fetchEnable :: Handle -> PFetchEnable -> IO ()
 fetchEnable handle params = sendReceiveCommand handle "Fetch.enable" (Just params)
 
 
@@ -294,7 +294,7 @@ instance FromJSON  PFetchFailRequest where
 -- | Function for the 'Fetch.failRequest' command.
 --   Causes the request to fail with specified reason.
 --   Parameters: 'PFetchFailRequest'
-fetchFailRequest :: Handle ev -> PFetchFailRequest -> IO ()
+fetchFailRequest :: Handle -> PFetchFailRequest -> IO ()
 fetchFailRequest handle params = sendReceiveCommand handle "Fetch.failRequest" (Just params)
 
 
@@ -329,7 +329,7 @@ instance FromJSON  PFetchFulfillRequest where
 -- | Function for the 'Fetch.fulfillRequest' command.
 --   Provides response to the request.
 --   Parameters: 'PFetchFulfillRequest'
-fetchFulfillRequest :: Handle ev -> PFetchFulfillRequest -> IO ()
+fetchFulfillRequest :: Handle -> PFetchFulfillRequest -> IO ()
 fetchFulfillRequest handle params = sendReceiveCommand handle "Fetch.fulfillRequest" (Just params)
 
 
@@ -358,7 +358,7 @@ instance FromJSON  PFetchContinueRequest where
 -- | Function for the 'Fetch.continueRequest' command.
 --   Continues the request, optionally modifying some of its parameters.
 --   Parameters: 'PFetchContinueRequest'
-fetchContinueRequest :: Handle ev -> PFetchContinueRequest -> IO ()
+fetchContinueRequest :: Handle -> PFetchContinueRequest -> IO ()
 fetchContinueRequest handle params = sendReceiveCommand handle "Fetch.continueRequest" (Just params)
 
 
@@ -379,7 +379,7 @@ instance FromJSON  PFetchContinueWithAuth where
 -- | Function for the 'Fetch.continueWithAuth' command.
 --   Continues a request supplying authChallengeResponse following authRequired event.
 --   Parameters: 'PFetchContinueWithAuth'
-fetchContinueWithAuth :: Handle ev -> PFetchContinueWithAuth -> IO ()
+fetchContinueWithAuth :: Handle -> PFetchContinueWithAuth -> IO ()
 fetchContinueWithAuth handle params = sendReceiveCommand handle "Fetch.continueWithAuth" (Just params)
 
 
@@ -412,7 +412,7 @@ instance FromJSON  PFetchContinueResponse where
 --   response headers. If either responseCode or headers are modified, all of them
 --   must be present.
 --   Parameters: 'PFetchContinueResponse'
-fetchContinueResponse :: Handle ev -> PFetchContinueResponse -> IO ()
+fetchContinueResponse :: Handle -> PFetchContinueResponse -> IO ()
 fetchContinueResponse handle params = sendReceiveCommand handle "Fetch.continueResponse" (Just params)
 
 
@@ -437,7 +437,7 @@ instance FromJSON  PFetchGetResponseBody where
 --   results in an undefined behavior.
 --   Parameters: 'PFetchGetResponseBody'
 --   Returns: 'FetchGetResponseBody'
-fetchGetResponseBody :: Handle ev -> PFetchGetResponseBody -> IO FetchGetResponseBody
+fetchGetResponseBody :: Handle -> PFetchGetResponseBody -> IO FetchGetResponseBody
 fetchGetResponseBody handle params = sendReceiveCommandResult handle "Fetch.getResponseBody" (Just params)
 
 -- | Return type of the 'fetchGetResponseBody' command.
@@ -480,7 +480,7 @@ instance FromJSON  PFetchTakeResponseBodyAsStream where
 --   domain before body is received results in an undefined behavior.
 --   Parameters: 'PFetchTakeResponseBodyAsStream'
 --   Returns: 'FetchTakeResponseBodyAsStream'
-fetchTakeResponseBodyAsStream :: Handle ev -> PFetchTakeResponseBodyAsStream -> IO FetchTakeResponseBodyAsStream
+fetchTakeResponseBodyAsStream :: Handle -> PFetchTakeResponseBodyAsStream -> IO FetchTakeResponseBodyAsStream
 fetchTakeResponseBodyAsStream handle params = sendReceiveCommandResult handle "Fetch.takeResponseBodyAsStream" (Just params)
 
 -- | Return type of the 'fetchTakeResponseBodyAsStream' command.

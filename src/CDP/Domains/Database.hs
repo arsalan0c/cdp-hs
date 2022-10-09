@@ -106,13 +106,13 @@ instance Event DatabaseAddDatabase where
 
 -- | Function for the 'Database.disable' command.
 --   Disables database tracking, prevents database events from being sent to the client.
-databaseDisable :: Handle ev -> IO ()
+databaseDisable :: Handle -> IO ()
 databaseDisable handle = sendReceiveCommand handle "Database.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Database.enable' command.
 --   Enables database tracking, database events will now be delivered to the client.
-databaseEnable :: Handle ev -> IO ()
+databaseEnable :: Handle -> IO ()
 databaseEnable handle = sendReceiveCommand handle "Database.enable" (Nothing :: Maybe ())
 
 
@@ -132,7 +132,7 @@ instance FromJSON  PDatabaseExecuteSQL where
 --   
 --   Parameters: 'PDatabaseExecuteSQL'
 --   Returns: 'DatabaseExecuteSQL'
-databaseExecuteSQL :: Handle ev -> PDatabaseExecuteSQL -> IO DatabaseExecuteSQL
+databaseExecuteSQL :: Handle -> PDatabaseExecuteSQL -> IO DatabaseExecuteSQL
 databaseExecuteSQL handle params = sendReceiveCommandResult handle "Database.executeSQL" (Just params)
 
 -- | Return type of the 'databaseExecuteSQL' command.
@@ -165,7 +165,7 @@ instance FromJSON  PDatabaseGetDatabaseTableNames where
 --   
 --   Parameters: 'PDatabaseGetDatabaseTableNames'
 --   Returns: 'DatabaseGetDatabaseTableNames'
-databaseGetDatabaseTableNames :: Handle ev -> PDatabaseGetDatabaseTableNames -> IO DatabaseGetDatabaseTableNames
+databaseGetDatabaseTableNames :: Handle -> PDatabaseGetDatabaseTableNames -> IO DatabaseGetDatabaseTableNames
 databaseGetDatabaseTableNames handle params = sendReceiveCommandResult handle "Database.getDatabaseTableNames" (Just params)
 
 -- | Return type of the 'databaseGetDatabaseTableNames' command.

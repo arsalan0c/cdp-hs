@@ -405,13 +405,13 @@ instance FromJSON  DOMSnapshotTextBoxSnapshot where
 
 -- | Function for the 'DOMSnapshot.disable' command.
 --   Disables DOM snapshot agent for the given page.
-dOMSnapshotDisable :: Handle ev -> IO ()
+dOMSnapshotDisable :: Handle -> IO ()
 dOMSnapshotDisable handle = sendReceiveCommand handle "DOMSnapshot.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'DOMSnapshot.enable' command.
 --   Enables DOM snapshot agent for the given page.
-dOMSnapshotEnable :: Handle ev -> IO ()
+dOMSnapshotEnable :: Handle -> IO ()
 dOMSnapshotEnable handle = sendReceiveCommand handle "DOMSnapshot.enable" (Nothing :: Maybe ())
 
 
@@ -446,7 +446,7 @@ instance FromJSON  PDOMSnapshotCaptureSnapshot where
 --   flattened.
 --   Parameters: 'PDOMSnapshotCaptureSnapshot'
 --   Returns: 'DOMSnapshotCaptureSnapshot'
-dOMSnapshotCaptureSnapshot :: Handle ev -> PDOMSnapshotCaptureSnapshot -> IO DOMSnapshotCaptureSnapshot
+dOMSnapshotCaptureSnapshot :: Handle -> PDOMSnapshotCaptureSnapshot -> IO DOMSnapshotCaptureSnapshot
 dOMSnapshotCaptureSnapshot handle params = sendReceiveCommandResult handle "DOMSnapshot.captureSnapshot" (Just params)
 
 -- | Return type of the 'dOMSnapshotCaptureSnapshot' command.

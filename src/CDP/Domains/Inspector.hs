@@ -93,13 +93,13 @@ instance Event InspectorTargetReloadedAfterCrash where
 
 -- | Function for the 'Inspector.disable' command.
 --   Disables inspector domain notifications.
-inspectorDisable :: Handle ev -> IO ()
+inspectorDisable :: Handle -> IO ()
 inspectorDisable handle = sendReceiveCommand handle "Inspector.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Inspector.enable' command.
 --   Enables inspector domain notifications.
-inspectorEnable :: Handle ev -> IO ()
+inspectorEnable :: Handle -> IO ()
 inspectorEnable handle = sendReceiveCommand handle "Inspector.enable" (Nothing :: Maybe ())
 
 

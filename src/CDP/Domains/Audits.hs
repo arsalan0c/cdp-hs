@@ -1096,7 +1096,7 @@ instance FromJSON  PAuditsGetEncodedResponse where
 --   applies to images.
 --   Parameters: 'PAuditsGetEncodedResponse'
 --   Returns: 'AuditsGetEncodedResponse'
-auditsGetEncodedResponse :: Handle ev -> PAuditsGetEncodedResponse -> IO AuditsGetEncodedResponse
+auditsGetEncodedResponse :: Handle -> PAuditsGetEncodedResponse -> IO AuditsGetEncodedResponse
 auditsGetEncodedResponse handle params = sendReceiveCommandResult handle "Audits.getEncodedResponse" (Just params)
 
 -- | Return type of the 'auditsGetEncodedResponse' command.
@@ -1119,14 +1119,14 @@ instance Command AuditsGetEncodedResponse where
 
 -- | Function for the 'Audits.disable' command.
 --   Disables issues domain, prevents further issues from being reported to the client.
-auditsDisable :: Handle ev -> IO ()
+auditsDisable :: Handle -> IO ()
 auditsDisable handle = sendReceiveCommand handle "Audits.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Audits.enable' command.
 --   Enables issues domain, sends the issues collected so far to the client by means of the
 --   `issueAdded` event.
-auditsEnable :: Handle ev -> IO ()
+auditsEnable :: Handle -> IO ()
 auditsEnable handle = sendReceiveCommand handle "Audits.enable" (Nothing :: Maybe ())
 
 
@@ -1146,7 +1146,7 @@ instance FromJSON  PAuditsCheckContrast where
 --   Runs the contrast check for the target page. Found issues are reported
 --   using Audits.issueAdded event.
 --   Parameters: 'PAuditsCheckContrast'
-auditsCheckContrast :: Handle ev -> PAuditsCheckContrast -> IO ()
+auditsCheckContrast :: Handle -> PAuditsCheckContrast -> IO ()
 auditsCheckContrast handle params = sendReceiveCommand handle "Audits.checkContrast" (Just params)
 
 

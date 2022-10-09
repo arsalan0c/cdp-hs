@@ -165,7 +165,7 @@ instance FromJSON  PBackgroundServiceStartObserving where
 -- | Function for the 'BackgroundService.startObserving' command.
 --   Enables event updates for the service.
 --   Parameters: 'PBackgroundServiceStartObserving'
-backgroundServiceStartObserving :: Handle ev -> PBackgroundServiceStartObserving -> IO ()
+backgroundServiceStartObserving :: Handle -> PBackgroundServiceStartObserving -> IO ()
 backgroundServiceStartObserving handle params = sendReceiveCommand handle "BackgroundService.startObserving" (Just params)
 
 
@@ -183,7 +183,7 @@ instance FromJSON  PBackgroundServiceStopObserving where
 -- | Function for the 'BackgroundService.stopObserving' command.
 --   Disables event updates for the service.
 --   Parameters: 'PBackgroundServiceStopObserving'
-backgroundServiceStopObserving :: Handle ev -> PBackgroundServiceStopObserving -> IO ()
+backgroundServiceStopObserving :: Handle -> PBackgroundServiceStopObserving -> IO ()
 backgroundServiceStopObserving handle params = sendReceiveCommand handle "BackgroundService.stopObserving" (Just params)
 
 
@@ -202,7 +202,7 @@ instance FromJSON  PBackgroundServiceSetRecording where
 -- | Function for the 'BackgroundService.setRecording' command.
 --   Set the recording state for the service.
 --   Parameters: 'PBackgroundServiceSetRecording'
-backgroundServiceSetRecording :: Handle ev -> PBackgroundServiceSetRecording -> IO ()
+backgroundServiceSetRecording :: Handle -> PBackgroundServiceSetRecording -> IO ()
 backgroundServiceSetRecording handle params = sendReceiveCommand handle "BackgroundService.setRecording" (Just params)
 
 
@@ -220,7 +220,7 @@ instance FromJSON  PBackgroundServiceClearEvents where
 -- | Function for the 'BackgroundService.clearEvents' command.
 --   Clears all stored data for the service.
 --   Parameters: 'PBackgroundServiceClearEvents'
-backgroundServiceClearEvents :: Handle ev -> PBackgroundServiceClearEvents -> IO ()
+backgroundServiceClearEvents :: Handle -> PBackgroundServiceClearEvents -> IO ()
 backgroundServiceClearEvents handle params = sendReceiveCommand handle "BackgroundService.clearEvents" (Just params)
 
 

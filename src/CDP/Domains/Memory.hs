@@ -125,7 +125,7 @@ instance FromJSON  MemoryModule where
 -- | Function for the 'Memory.getDOMCounters' command.
 --   
 --   Returns: 'MemoryGetDOMCounters'
-memoryGetDOMCounters :: Handle ev -> IO MemoryGetDOMCounters
+memoryGetDOMCounters :: Handle -> IO MemoryGetDOMCounters
 memoryGetDOMCounters handle = sendReceiveCommandResult handle "Memory.getDOMCounters" (Nothing :: Maybe ())
 
 -- | Return type of the 'memoryGetDOMCounters' command.
@@ -144,13 +144,13 @@ instance Command MemoryGetDOMCounters where
 
 
 -- | Function for the 'Memory.prepareForLeakDetection' command.
-memoryPrepareForLeakDetection :: Handle ev -> IO ()
+memoryPrepareForLeakDetection :: Handle -> IO ()
 memoryPrepareForLeakDetection handle = sendReceiveCommand handle "Memory.prepareForLeakDetection" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Memory.forciblyPurgeJavaScriptMemory' command.
 --   Simulate OomIntervention by purging V8 memory.
-memoryForciblyPurgeJavaScriptMemory :: Handle ev -> IO ()
+memoryForciblyPurgeJavaScriptMemory :: Handle -> IO ()
 memoryForciblyPurgeJavaScriptMemory handle = sendReceiveCommand handle "Memory.forciblyPurgeJavaScriptMemory" (Nothing :: Maybe ())
 
 
@@ -169,7 +169,7 @@ instance FromJSON  PMemorySetPressureNotificationsSuppressed where
 -- | Function for the 'Memory.setPressureNotificationsSuppressed' command.
 --   Enable/disable suppressing memory pressure notifications in all processes.
 --   Parameters: 'PMemorySetPressureNotificationsSuppressed'
-memorySetPressureNotificationsSuppressed :: Handle ev -> PMemorySetPressureNotificationsSuppressed -> IO ()
+memorySetPressureNotificationsSuppressed :: Handle -> PMemorySetPressureNotificationsSuppressed -> IO ()
 memorySetPressureNotificationsSuppressed handle params = sendReceiveCommand handle "Memory.setPressureNotificationsSuppressed" (Just params)
 
 
@@ -188,7 +188,7 @@ instance FromJSON  PMemorySimulatePressureNotification where
 -- | Function for the 'Memory.simulatePressureNotification' command.
 --   Simulate a memory pressure notification in all processes.
 --   Parameters: 'PMemorySimulatePressureNotification'
-memorySimulatePressureNotification :: Handle ev -> PMemorySimulatePressureNotification -> IO ()
+memorySimulatePressureNotification :: Handle -> PMemorySimulatePressureNotification -> IO ()
 memorySimulatePressureNotification handle params = sendReceiveCommand handle "Memory.simulatePressureNotification" (Just params)
 
 
@@ -209,13 +209,13 @@ instance FromJSON  PMemoryStartSampling where
 -- | Function for the 'Memory.startSampling' command.
 --   Start collecting native memory profile.
 --   Parameters: 'PMemoryStartSampling'
-memoryStartSampling :: Handle ev -> PMemoryStartSampling -> IO ()
+memoryStartSampling :: Handle -> PMemoryStartSampling -> IO ()
 memoryStartSampling handle params = sendReceiveCommand handle "Memory.startSampling" (Just params)
 
 
 -- | Function for the 'Memory.stopSampling' command.
 --   Stop collecting native memory profile.
-memoryStopSampling :: Handle ev -> IO ()
+memoryStopSampling :: Handle -> IO ()
 memoryStopSampling handle = sendReceiveCommand handle "Memory.stopSampling" (Nothing :: Maybe ())
 
 
@@ -223,7 +223,7 @@ memoryStopSampling handle = sendReceiveCommand handle "Memory.stopSampling" (Not
 --   Retrieve native memory allocations profile
 --   collected since renderer process startup.
 --   Returns: 'MemoryGetAllTimeSamplingProfile'
-memoryGetAllTimeSamplingProfile :: Handle ev -> IO MemoryGetAllTimeSamplingProfile
+memoryGetAllTimeSamplingProfile :: Handle -> IO MemoryGetAllTimeSamplingProfile
 memoryGetAllTimeSamplingProfile handle = sendReceiveCommandResult handle "Memory.getAllTimeSamplingProfile" (Nothing :: Maybe ())
 
 -- | Return type of the 'memoryGetAllTimeSamplingProfile' command.
@@ -243,7 +243,7 @@ instance Command MemoryGetAllTimeSamplingProfile where
 --   Retrieve native memory allocations profile
 --   collected since browser process startup.
 --   Returns: 'MemoryGetBrowserSamplingProfile'
-memoryGetBrowserSamplingProfile :: Handle ev -> IO MemoryGetBrowserSamplingProfile
+memoryGetBrowserSamplingProfile :: Handle -> IO MemoryGetBrowserSamplingProfile
 memoryGetBrowserSamplingProfile handle = sendReceiveCommandResult handle "Memory.getBrowserSamplingProfile" (Nothing :: Maybe ())
 
 -- | Return type of the 'memoryGetBrowserSamplingProfile' command.
@@ -263,7 +263,7 @@ instance Command MemoryGetBrowserSamplingProfile where
 --   Retrieve native memory allocations profile collected since last
 --   `startSampling` call.
 --   Returns: 'MemoryGetSamplingProfile'
-memoryGetSamplingProfile :: Handle ev -> IO MemoryGetSamplingProfile
+memoryGetSamplingProfile :: Handle -> IO MemoryGetSamplingProfile
 memoryGetSamplingProfile handle = sendReceiveCommandResult handle "Memory.getSamplingProfile" (Nothing :: Maybe ())
 
 -- | Return type of the 'memoryGetSamplingProfile' command.

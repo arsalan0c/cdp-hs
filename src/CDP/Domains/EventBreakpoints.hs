@@ -70,7 +70,7 @@ instance FromJSON  PEventBreakpointsSetInstrumentationBreakpoint where
 -- | Function for the 'EventBreakpoints.setInstrumentationBreakpoint' command.
 --   Sets breakpoint on particular native event.
 --   Parameters: 'PEventBreakpointsSetInstrumentationBreakpoint'
-eventBreakpointsSetInstrumentationBreakpoint :: Handle ev -> PEventBreakpointsSetInstrumentationBreakpoint -> IO ()
+eventBreakpointsSetInstrumentationBreakpoint :: Handle -> PEventBreakpointsSetInstrumentationBreakpoint -> IO ()
 eventBreakpointsSetInstrumentationBreakpoint handle params = sendReceiveCommand handle "EventBreakpoints.setInstrumentationBreakpoint" (Just params)
 
 
@@ -89,7 +89,7 @@ instance FromJSON  PEventBreakpointsRemoveInstrumentationBreakpoint where
 -- | Function for the 'EventBreakpoints.removeInstrumentationBreakpoint' command.
 --   Removes breakpoint on particular native event.
 --   Parameters: 'PEventBreakpointsRemoveInstrumentationBreakpoint'
-eventBreakpointsRemoveInstrumentationBreakpoint :: Handle ev -> PEventBreakpointsRemoveInstrumentationBreakpoint -> IO ()
+eventBreakpointsRemoveInstrumentationBreakpoint :: Handle -> PEventBreakpointsRemoveInstrumentationBreakpoint -> IO ()
 eventBreakpointsRemoveInstrumentationBreakpoint handle params = sendReceiveCommand handle "EventBreakpoints.removeInstrumentationBreakpoint" (Just params)
 
 

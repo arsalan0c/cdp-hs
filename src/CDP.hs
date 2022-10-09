@@ -16,13 +16,13 @@ import CDP.Domains
 import CDP.Handle
 import CDP.Internal.Runtime
 
-type ClientApp b = Handle () -> IO b
+type ClientApp b = Handle -> IO b
 
 runClient   :: Config -> ClientApp a -> IO a
-runClient config app = runClient' config (app . Handle)
+runClient config app = runClient' config app
 
-subscribe   :: forall a ev. Event a => Handle ev -> (a -> IO ()) -> IO ()
-subscribe (Handle handle) eventHandler = subscribe' handle eventHandler
+subscribe   :: Event a => Handle -> (a -> IO ()) -> IO ()
+subscribe handle eventHandler = subscribe' handle eventHandler
 
-unsubscribe :: forall a ev. Event a => Handle ev -> Proxy a -> IO ()
-unsubscribe (Handle handle) p = unsubscribe' handle p
+unsubscribe :: Event a => Handle -> Proxy a -> IO ()
+unsubscribe handle p = unsubscribe' handle p

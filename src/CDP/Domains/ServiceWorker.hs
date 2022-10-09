@@ -217,12 +217,12 @@ instance FromJSON  PServiceWorkerDeliverPushMessage where
 -- | Function for the 'ServiceWorker.deliverPushMessage' command.
 --   
 --   Parameters: 'PServiceWorkerDeliverPushMessage'
-serviceWorkerDeliverPushMessage :: Handle ev -> PServiceWorkerDeliverPushMessage -> IO ()
+serviceWorkerDeliverPushMessage :: Handle -> PServiceWorkerDeliverPushMessage -> IO ()
 serviceWorkerDeliverPushMessage handle params = sendReceiveCommand handle "ServiceWorker.deliverPushMessage" (Just params)
 
 
 -- | Function for the 'ServiceWorker.disable' command.
-serviceWorkerDisable :: Handle ev -> IO ()
+serviceWorkerDisable :: Handle -> IO ()
 serviceWorkerDisable handle = sendReceiveCommand handle "ServiceWorker.disable" (Nothing :: Maybe ())
 
 
@@ -243,7 +243,7 @@ instance FromJSON  PServiceWorkerDispatchSyncEvent where
 -- | Function for the 'ServiceWorker.dispatchSyncEvent' command.
 --   
 --   Parameters: 'PServiceWorkerDispatchSyncEvent'
-serviceWorkerDispatchSyncEvent :: Handle ev -> PServiceWorkerDispatchSyncEvent -> IO ()
+serviceWorkerDispatchSyncEvent :: Handle -> PServiceWorkerDispatchSyncEvent -> IO ()
 serviceWorkerDispatchSyncEvent handle params = sendReceiveCommand handle "ServiceWorker.dispatchSyncEvent" (Just params)
 
 
@@ -263,12 +263,12 @@ instance FromJSON  PServiceWorkerDispatchPeriodicSyncEvent where
 -- | Function for the 'ServiceWorker.dispatchPeriodicSyncEvent' command.
 --   
 --   Parameters: 'PServiceWorkerDispatchPeriodicSyncEvent'
-serviceWorkerDispatchPeriodicSyncEvent :: Handle ev -> PServiceWorkerDispatchPeriodicSyncEvent -> IO ()
+serviceWorkerDispatchPeriodicSyncEvent :: Handle -> PServiceWorkerDispatchPeriodicSyncEvent -> IO ()
 serviceWorkerDispatchPeriodicSyncEvent handle params = sendReceiveCommand handle "ServiceWorker.dispatchPeriodicSyncEvent" (Just params)
 
 
 -- | Function for the 'ServiceWorker.enable' command.
-serviceWorkerEnable :: Handle ev -> IO ()
+serviceWorkerEnable :: Handle -> IO ()
 serviceWorkerEnable handle = sendReceiveCommand handle "ServiceWorker.enable" (Nothing :: Maybe ())
 
 
@@ -286,7 +286,7 @@ instance FromJSON  PServiceWorkerInspectWorker where
 -- | Function for the 'ServiceWorker.inspectWorker' command.
 --   
 --   Parameters: 'PServiceWorkerInspectWorker'
-serviceWorkerInspectWorker :: Handle ev -> PServiceWorkerInspectWorker -> IO ()
+serviceWorkerInspectWorker :: Handle -> PServiceWorkerInspectWorker -> IO ()
 serviceWorkerInspectWorker handle params = sendReceiveCommand handle "ServiceWorker.inspectWorker" (Just params)
 
 
@@ -304,7 +304,7 @@ instance FromJSON  PServiceWorkerSetForceUpdateOnPageLoad where
 -- | Function for the 'ServiceWorker.setForceUpdateOnPageLoad' command.
 --   
 --   Parameters: 'PServiceWorkerSetForceUpdateOnPageLoad'
-serviceWorkerSetForceUpdateOnPageLoad :: Handle ev -> PServiceWorkerSetForceUpdateOnPageLoad -> IO ()
+serviceWorkerSetForceUpdateOnPageLoad :: Handle -> PServiceWorkerSetForceUpdateOnPageLoad -> IO ()
 serviceWorkerSetForceUpdateOnPageLoad handle params = sendReceiveCommand handle "ServiceWorker.setForceUpdateOnPageLoad" (Just params)
 
 
@@ -322,7 +322,7 @@ instance FromJSON  PServiceWorkerSkipWaiting where
 -- | Function for the 'ServiceWorker.skipWaiting' command.
 --   
 --   Parameters: 'PServiceWorkerSkipWaiting'
-serviceWorkerSkipWaiting :: Handle ev -> PServiceWorkerSkipWaiting -> IO ()
+serviceWorkerSkipWaiting :: Handle -> PServiceWorkerSkipWaiting -> IO ()
 serviceWorkerSkipWaiting handle params = sendReceiveCommand handle "ServiceWorker.skipWaiting" (Just params)
 
 
@@ -340,12 +340,12 @@ instance FromJSON  PServiceWorkerStartWorker where
 -- | Function for the 'ServiceWorker.startWorker' command.
 --   
 --   Parameters: 'PServiceWorkerStartWorker'
-serviceWorkerStartWorker :: Handle ev -> PServiceWorkerStartWorker -> IO ()
+serviceWorkerStartWorker :: Handle -> PServiceWorkerStartWorker -> IO ()
 serviceWorkerStartWorker handle params = sendReceiveCommand handle "ServiceWorker.startWorker" (Just params)
 
 
 -- | Function for the 'ServiceWorker.stopAllWorkers' command.
-serviceWorkerStopAllWorkers :: Handle ev -> IO ()
+serviceWorkerStopAllWorkers :: Handle -> IO ()
 serviceWorkerStopAllWorkers handle = sendReceiveCommand handle "ServiceWorker.stopAllWorkers" (Nothing :: Maybe ())
 
 
@@ -363,7 +363,7 @@ instance FromJSON  PServiceWorkerStopWorker where
 -- | Function for the 'ServiceWorker.stopWorker' command.
 --   
 --   Parameters: 'PServiceWorkerStopWorker'
-serviceWorkerStopWorker :: Handle ev -> PServiceWorkerStopWorker -> IO ()
+serviceWorkerStopWorker :: Handle -> PServiceWorkerStopWorker -> IO ()
 serviceWorkerStopWorker handle params = sendReceiveCommand handle "ServiceWorker.stopWorker" (Just params)
 
 
@@ -381,7 +381,7 @@ instance FromJSON  PServiceWorkerUnregister where
 -- | Function for the 'ServiceWorker.unregister' command.
 --   
 --   Parameters: 'PServiceWorkerUnregister'
-serviceWorkerUnregister :: Handle ev -> PServiceWorkerUnregister -> IO ()
+serviceWorkerUnregister :: Handle -> PServiceWorkerUnregister -> IO ()
 serviceWorkerUnregister handle params = sendReceiveCommand handle "ServiceWorker.unregister" (Just params)
 
 
@@ -399,7 +399,7 @@ instance FromJSON  PServiceWorkerUpdateRegistration where
 -- | Function for the 'ServiceWorker.updateRegistration' command.
 --   
 --   Parameters: 'PServiceWorkerUpdateRegistration'
-serviceWorkerUpdateRegistration :: Handle ev -> PServiceWorkerUpdateRegistration -> IO ()
+serviceWorkerUpdateRegistration :: Handle -> PServiceWorkerUpdateRegistration -> IO ()
 serviceWorkerUpdateRegistration handle params = sendReceiveCommand handle "ServiceWorker.updateRegistration" (Just params)
 
 

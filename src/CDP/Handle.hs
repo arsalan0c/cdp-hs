@@ -2,17 +2,18 @@
 {-# LANGUAGE ScopedTypeVariables    #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module CDP.Handle where
+module CDP.Handle
+    ( Handle
+    , sendReceiveCommandResult
+    , sendReceiveCommand
+    ) where
 
 import Data.Aeson (ToJSON)
 
 import CDP.Internal.Runtime
 
-data Handle ev where
-    Handle :: Handle' ev -> Handle ev
+sendReceiveCommandResult :: forall a b ev. (Show a, ToJSON a, Command b) => Handle -> String -> Maybe a -> IO b
+sendReceiveCommandResult = sendReceiveCommandResult'
 
-sendReceiveCommandResult :: forall a b ev. (Show a, ToJSON a, Command b) => Handle ev -> String -> Maybe a -> IO b
-sendReceiveCommandResult (Handle h) = sendReceiveCommandResult' h
-
-sendReceiveCommand :: (Show a, ToJSON a) => Handle ev -> String -> Maybe a -> IO ()
-sendReceiveCommand (Handle h) = sendReceiveCommand' h
+sendReceiveCommand :: (Show a, ToJSON a) => Handle -> String -> Maybe a -> IO ()
+sendReceiveCommand = sendReceiveCommand'

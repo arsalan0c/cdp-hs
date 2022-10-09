@@ -52,7 +52,7 @@ import CDP.Handle
 
 -- | Function for the 'DeviceOrientation.clearDeviceOrientationOverride' command.
 --   Clears the overridden Device Orientation.
-deviceOrientationClearDeviceOrientationOverride :: Handle ev -> IO ()
+deviceOrientationClearDeviceOrientationOverride :: Handle -> IO ()
 deviceOrientationClearDeviceOrientationOverride handle = sendReceiveCommand handle "DeviceOrientation.clearDeviceOrientationOverride" (Nothing :: Maybe ())
 
 
@@ -75,7 +75,7 @@ instance FromJSON  PDeviceOrientationSetDeviceOrientationOverride where
 -- | Function for the 'DeviceOrientation.setDeviceOrientationOverride' command.
 --   Overrides the Device Orientation.
 --   Parameters: 'PDeviceOrientationSetDeviceOrientationOverride'
-deviceOrientationSetDeviceOrientationOverride :: Handle ev -> PDeviceOrientationSetDeviceOrientationOverride -> IO ()
+deviceOrientationSetDeviceOrientationOverride :: Handle -> PDeviceOrientationSetDeviceOrientationOverride -> IO ()
 deviceOrientationSetDeviceOrientationOverride handle params = sendReceiveCommand handle "DeviceOrientation.setDeviceOrientationOverride" (Just params)
 
 

@@ -246,13 +246,13 @@ instance Event MediaPlayersCreated where
 
 -- | Function for the 'Media.enable' command.
 --   Enables the Media domain
-mediaEnable :: Handle ev -> IO ()
+mediaEnable :: Handle -> IO ()
 mediaEnable handle = sendReceiveCommand handle "Media.enable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Media.disable' command.
 --   Disables the Media domain.
-mediaDisable :: Handle ev -> IO ()
+mediaDisable :: Handle -> IO ()
 mediaDisable handle = sendReceiveCommand handle "Media.disable" (Nothing :: Maybe ())
 
 

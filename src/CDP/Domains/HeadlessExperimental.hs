@@ -116,7 +116,7 @@ instance FromJSON  PHeadlessExperimentalBeginFrame where
 --   https://goo.gle/chrome-headless-rendering for more background.
 --   Parameters: 'PHeadlessExperimentalBeginFrame'
 --   Returns: 'HeadlessExperimentalBeginFrame'
-headlessExperimentalBeginFrame :: Handle ev -> PHeadlessExperimentalBeginFrame -> IO HeadlessExperimentalBeginFrame
+headlessExperimentalBeginFrame :: Handle -> PHeadlessExperimentalBeginFrame -> IO HeadlessExperimentalBeginFrame
 headlessExperimentalBeginFrame handle params = sendReceiveCommandResult handle "HeadlessExperimental.beginFrame" (Just params)
 
 -- | Return type of the 'headlessExperimentalBeginFrame' command.
@@ -138,13 +138,13 @@ instance Command HeadlessExperimentalBeginFrame where
 
 -- | Function for the 'HeadlessExperimental.disable' command.
 --   Disables headless events for the target.
-headlessExperimentalDisable :: Handle ev -> IO ()
+headlessExperimentalDisable :: Handle -> IO ()
 headlessExperimentalDisable handle = sendReceiveCommand handle "HeadlessExperimental.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'HeadlessExperimental.enable' command.
 --   Enables headless events for the target.
-headlessExperimentalEnable :: Handle ev -> IO ()
+headlessExperimentalEnable :: Handle -> IO ()
 headlessExperimentalEnable handle = sendReceiveCommand handle "HeadlessExperimental.enable" (Nothing :: Maybe ())
 
 

@@ -776,7 +776,7 @@ instance FromJSON  PCSSAddRule where
 --   position specified by `location`.
 --   Parameters: 'PCSSAddRule'
 --   Returns: 'CSSAddRule'
-cSSAddRule :: Handle ev -> PCSSAddRule -> IO CSSAddRule
+cSSAddRule :: Handle -> PCSSAddRule -> IO CSSAddRule
 cSSAddRule handle params = sendReceiveCommandResult handle "CSS.addRule" (Just params)
 
 -- | Return type of the 'cSSAddRule' command.
@@ -808,7 +808,7 @@ instance FromJSON  PCSSCollectClassNames where
 --   Returns all class names from specified stylesheet.
 --   Parameters: 'PCSSCollectClassNames'
 --   Returns: 'CSSCollectClassNames'
-cSSCollectClassNames :: Handle ev -> PCSSCollectClassNames -> IO CSSCollectClassNames
+cSSCollectClassNames :: Handle -> PCSSCollectClassNames -> IO CSSCollectClassNames
 cSSCollectClassNames handle params = sendReceiveCommandResult handle "CSS.collectClassNames" (Just params)
 
 -- | Return type of the 'cSSCollectClassNames' command.
@@ -841,7 +841,7 @@ instance FromJSON  PCSSCreateStyleSheet where
 --   Creates a new special "via-inspector" stylesheet in the frame with given `frameId`.
 --   Parameters: 'PCSSCreateStyleSheet'
 --   Returns: 'CSSCreateStyleSheet'
-cSSCreateStyleSheet :: Handle ev -> PCSSCreateStyleSheet -> IO CSSCreateStyleSheet
+cSSCreateStyleSheet :: Handle -> PCSSCreateStyleSheet -> IO CSSCreateStyleSheet
 cSSCreateStyleSheet handle params = sendReceiveCommandResult handle "CSS.createStyleSheet" (Just params)
 
 -- | Return type of the 'cSSCreateStyleSheet' command.
@@ -860,14 +860,14 @@ instance Command CSSCreateStyleSheet where
 
 -- | Function for the 'CSS.disable' command.
 --   Disables the CSS agent for the given page.
-cSSDisable :: Handle ev -> IO ()
+cSSDisable :: Handle -> IO ()
 cSSDisable handle = sendReceiveCommand handle "CSS.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'CSS.enable' command.
 --   Enables the CSS agent for the given page. Clients should not assume that the CSS agent has been
 --   enabled until the result of this command is received.
-cSSEnable :: Handle ev -> IO ()
+cSSEnable :: Handle -> IO ()
 cSSEnable handle = sendReceiveCommand handle "CSS.enable" (Nothing :: Maybe ())
 
 
@@ -889,7 +889,7 @@ instance FromJSON  PCSSForcePseudoState where
 --   Ensures that the given node will have specified pseudo-classes whenever its style is computed by
 --   the browser.
 --   Parameters: 'PCSSForcePseudoState'
-cSSForcePseudoState :: Handle ev -> PCSSForcePseudoState -> IO ()
+cSSForcePseudoState :: Handle -> PCSSForcePseudoState -> IO ()
 cSSForcePseudoState handle params = sendReceiveCommand handle "CSS.forcePseudoState" (Just params)
 
 
@@ -909,7 +909,7 @@ instance FromJSON  PCSSGetBackgroundColors where
 --   
 --   Parameters: 'PCSSGetBackgroundColors'
 --   Returns: 'CSSGetBackgroundColors'
-cSSGetBackgroundColors :: Handle ev -> PCSSGetBackgroundColors -> IO CSSGetBackgroundColors
+cSSGetBackgroundColors :: Handle -> PCSSGetBackgroundColors -> IO CSSGetBackgroundColors
 cSSGetBackgroundColors handle params = sendReceiveCommandResult handle "CSS.getBackgroundColors" (Just params)
 
 -- | Return type of the 'cSSGetBackgroundColors' command.
@@ -950,7 +950,7 @@ instance FromJSON  PCSSGetComputedStyleForNode where
 --   Returns the computed style for a DOM node identified by `nodeId`.
 --   Parameters: 'PCSSGetComputedStyleForNode'
 --   Returns: 'CSSGetComputedStyleForNode'
-cSSGetComputedStyleForNode :: Handle ev -> PCSSGetComputedStyleForNode -> IO CSSGetComputedStyleForNode
+cSSGetComputedStyleForNode :: Handle -> PCSSGetComputedStyleForNode -> IO CSSGetComputedStyleForNode
 cSSGetComputedStyleForNode handle params = sendReceiveCommandResult handle "CSS.getComputedStyleForNode" (Just params)
 
 -- | Return type of the 'cSSGetComputedStyleForNode' command.
@@ -983,7 +983,7 @@ instance FromJSON  PCSSGetInlineStylesForNode where
 --   attributes) for a DOM node identified by `nodeId`.
 --   Parameters: 'PCSSGetInlineStylesForNode'
 --   Returns: 'CSSGetInlineStylesForNode'
-cSSGetInlineStylesForNode :: Handle ev -> PCSSGetInlineStylesForNode -> IO CSSGetInlineStylesForNode
+cSSGetInlineStylesForNode :: Handle -> PCSSGetInlineStylesForNode -> IO CSSGetInlineStylesForNode
 cSSGetInlineStylesForNode handle params = sendReceiveCommandResult handle "CSS.getInlineStylesForNode" (Just params)
 
 -- | Return type of the 'cSSGetInlineStylesForNode' command.
@@ -1017,7 +1017,7 @@ instance FromJSON  PCSSGetMatchedStylesForNode where
 --   Returns requested styles for a DOM node identified by `nodeId`.
 --   Parameters: 'PCSSGetMatchedStylesForNode'
 --   Returns: 'CSSGetMatchedStylesForNode'
-cSSGetMatchedStylesForNode :: Handle ev -> PCSSGetMatchedStylesForNode -> IO CSSGetMatchedStylesForNode
+cSSGetMatchedStylesForNode :: Handle -> PCSSGetMatchedStylesForNode -> IO CSSGetMatchedStylesForNode
 cSSGetMatchedStylesForNode handle params = sendReceiveCommandResult handle "CSS.getMatchedStylesForNode" (Just params)
 
 -- | Return type of the 'cSSGetMatchedStylesForNode' command.
@@ -1049,7 +1049,7 @@ instance Command CSSGetMatchedStylesForNode where
 -- | Function for the 'CSS.getMediaQueries' command.
 --   Returns all media queries parsed by the rendering engine.
 --   Returns: 'CSSGetMediaQueries'
-cSSGetMediaQueries :: Handle ev -> IO CSSGetMediaQueries
+cSSGetMediaQueries :: Handle -> IO CSSGetMediaQueries
 cSSGetMediaQueries handle = sendReceiveCommandResult handle "CSS.getMediaQueries" (Nothing :: Maybe ())
 
 -- | Return type of the 'cSSGetMediaQueries' command.
@@ -1081,7 +1081,7 @@ instance FromJSON  PCSSGetPlatformFontsForNode where
 --   node.
 --   Parameters: 'PCSSGetPlatformFontsForNode'
 --   Returns: 'CSSGetPlatformFontsForNode'
-cSSGetPlatformFontsForNode :: Handle ev -> PCSSGetPlatformFontsForNode -> IO CSSGetPlatformFontsForNode
+cSSGetPlatformFontsForNode :: Handle -> PCSSGetPlatformFontsForNode -> IO CSSGetPlatformFontsForNode
 cSSGetPlatformFontsForNode handle params = sendReceiveCommandResult handle "CSS.getPlatformFontsForNode" (Just params)
 
 -- | Return type of the 'cSSGetPlatformFontsForNode' command.
@@ -1113,7 +1113,7 @@ instance FromJSON  PCSSGetStyleSheetText where
 --   Returns the current textual content for a stylesheet.
 --   Parameters: 'PCSSGetStyleSheetText'
 --   Returns: 'CSSGetStyleSheetText'
-cSSGetStyleSheetText :: Handle ev -> PCSSGetStyleSheetText -> IO CSSGetStyleSheetText
+cSSGetStyleSheetText :: Handle -> PCSSGetStyleSheetText -> IO CSSGetStyleSheetText
 cSSGetStyleSheetText handle params = sendReceiveCommandResult handle "CSS.getStyleSheetText" (Just params)
 
 -- | Return type of the 'cSSGetStyleSheetText' command.
@@ -1148,7 +1148,7 @@ instance FromJSON  PCSSGetLayersForNode where
 --   the full layer tree for the tree scope and their ordering.
 --   Parameters: 'PCSSGetLayersForNode'
 --   Returns: 'CSSGetLayersForNode'
-cSSGetLayersForNode :: Handle ev -> PCSSGetLayersForNode -> IO CSSGetLayersForNode
+cSSGetLayersForNode :: Handle -> PCSSGetLayersForNode -> IO CSSGetLayersForNode
 cSSGetLayersForNode handle params = sendReceiveCommandResult handle "CSS.getLayersForNode" (Just params)
 
 -- | Return type of the 'cSSGetLayersForNode' command.
@@ -1183,14 +1183,14 @@ instance FromJSON  PCSSTrackComputedStyleUpdates where
 --   by the DOM agent. If no changes to the tracked properties occur after the node has been pushed
 --   to the front-end, no updates will be issued for the node.
 --   Parameters: 'PCSSTrackComputedStyleUpdates'
-cSSTrackComputedStyleUpdates :: Handle ev -> PCSSTrackComputedStyleUpdates -> IO ()
+cSSTrackComputedStyleUpdates :: Handle -> PCSSTrackComputedStyleUpdates -> IO ()
 cSSTrackComputedStyleUpdates handle params = sendReceiveCommand handle "CSS.trackComputedStyleUpdates" (Just params)
 
 
 -- | Function for the 'CSS.takeComputedStyleUpdates' command.
 --   Polls the next batch of computed style updates.
 --   Returns: 'CSSTakeComputedStyleUpdates'
-cSSTakeComputedStyleUpdates :: Handle ev -> IO CSSTakeComputedStyleUpdates
+cSSTakeComputedStyleUpdates :: Handle -> IO CSSTakeComputedStyleUpdates
 cSSTakeComputedStyleUpdates handle = sendReceiveCommandResult handle "CSS.takeComputedStyleUpdates" (Nothing :: Maybe ())
 
 -- | Return type of the 'cSSTakeComputedStyleUpdates' command.
@@ -1225,7 +1225,7 @@ instance FromJSON  PCSSSetEffectivePropertyValueForNode where
 --   Find a rule with the given active property for the given node and set the new value for this
 --   property
 --   Parameters: 'PCSSSetEffectivePropertyValueForNode'
-cSSSetEffectivePropertyValueForNode :: Handle ev -> PCSSSetEffectivePropertyValueForNode -> IO ()
+cSSSetEffectivePropertyValueForNode :: Handle -> PCSSSetEffectivePropertyValueForNode -> IO ()
 cSSSetEffectivePropertyValueForNode handle params = sendReceiveCommand handle "CSS.setEffectivePropertyValueForNode" (Just params)
 
 
@@ -1246,7 +1246,7 @@ instance FromJSON  PCSSSetKeyframeKey where
 --   Modifies the keyframe rule key text.
 --   Parameters: 'PCSSSetKeyframeKey'
 --   Returns: 'CSSSetKeyframeKey'
-cSSSetKeyframeKey :: Handle ev -> PCSSSetKeyframeKey -> IO CSSSetKeyframeKey
+cSSSetKeyframeKey :: Handle -> PCSSSetKeyframeKey -> IO CSSSetKeyframeKey
 cSSSetKeyframeKey handle params = sendReceiveCommandResult handle "CSS.setKeyframeKey" (Just params)
 
 -- | Return type of the 'cSSSetKeyframeKey' command.
@@ -1280,7 +1280,7 @@ instance FromJSON  PCSSSetMediaText where
 --   Modifies the rule selector.
 --   Parameters: 'PCSSSetMediaText'
 --   Returns: 'CSSSetMediaText'
-cSSSetMediaText :: Handle ev -> PCSSSetMediaText -> IO CSSSetMediaText
+cSSSetMediaText :: Handle -> PCSSSetMediaText -> IO CSSSetMediaText
 cSSSetMediaText handle params = sendReceiveCommandResult handle "CSS.setMediaText" (Just params)
 
 -- | Return type of the 'cSSSetMediaText' command.
@@ -1314,7 +1314,7 @@ instance FromJSON  PCSSSetContainerQueryText where
 --   Modifies the expression of a container query.
 --   Parameters: 'PCSSSetContainerQueryText'
 --   Returns: 'CSSSetContainerQueryText'
-cSSSetContainerQueryText :: Handle ev -> PCSSSetContainerQueryText -> IO CSSSetContainerQueryText
+cSSSetContainerQueryText :: Handle -> PCSSSetContainerQueryText -> IO CSSSetContainerQueryText
 cSSSetContainerQueryText handle params = sendReceiveCommandResult handle "CSS.setContainerQueryText" (Just params)
 
 -- | Return type of the 'cSSSetContainerQueryText' command.
@@ -1348,7 +1348,7 @@ instance FromJSON  PCSSSetSupportsText where
 --   Modifies the expression of a supports at-rule.
 --   Parameters: 'PCSSSetSupportsText'
 --   Returns: 'CSSSetSupportsText'
-cSSSetSupportsText :: Handle ev -> PCSSSetSupportsText -> IO CSSSetSupportsText
+cSSSetSupportsText :: Handle -> PCSSSetSupportsText -> IO CSSSetSupportsText
 cSSSetSupportsText handle params = sendReceiveCommandResult handle "CSS.setSupportsText" (Just params)
 
 -- | Return type of the 'cSSSetSupportsText' command.
@@ -1382,7 +1382,7 @@ instance FromJSON  PCSSSetRuleSelector where
 --   Modifies the rule selector.
 --   Parameters: 'PCSSSetRuleSelector'
 --   Returns: 'CSSSetRuleSelector'
-cSSSetRuleSelector :: Handle ev -> PCSSSetRuleSelector -> IO CSSSetRuleSelector
+cSSSetRuleSelector :: Handle -> PCSSSetRuleSelector -> IO CSSSetRuleSelector
 cSSSetRuleSelector handle params = sendReceiveCommandResult handle "CSS.setRuleSelector" (Just params)
 
 -- | Return type of the 'cSSSetRuleSelector' command.
@@ -1415,7 +1415,7 @@ instance FromJSON  PCSSSetStyleSheetText where
 --   Sets the new stylesheet text.
 --   Parameters: 'PCSSSetStyleSheetText'
 --   Returns: 'CSSSetStyleSheetText'
-cSSSetStyleSheetText :: Handle ev -> PCSSSetStyleSheetText -> IO CSSSetStyleSheetText
+cSSSetStyleSheetText :: Handle -> PCSSSetStyleSheetText -> IO CSSSetStyleSheetText
 cSSSetStyleSheetText handle params = sendReceiveCommandResult handle "CSS.setStyleSheetText" (Just params)
 
 -- | Return type of the 'cSSSetStyleSheetText' command.
@@ -1447,7 +1447,7 @@ instance FromJSON  PCSSSetStyleTexts where
 --   Applies specified style edits one after another in the given order.
 --   Parameters: 'PCSSSetStyleTexts'
 --   Returns: 'CSSSetStyleTexts'
-cSSSetStyleTexts :: Handle ev -> PCSSSetStyleTexts -> IO CSSSetStyleTexts
+cSSSetStyleTexts :: Handle -> PCSSSetStyleTexts -> IO CSSSetStyleTexts
 cSSSetStyleTexts handle params = sendReceiveCommandResult handle "CSS.setStyleTexts" (Just params)
 
 -- | Return type of the 'cSSSetStyleTexts' command.
@@ -1466,7 +1466,7 @@ instance Command CSSSetStyleTexts where
 
 -- | Function for the 'CSS.startRuleUsageTracking' command.
 --   Enables the selector recording.
-cSSStartRuleUsageTracking :: Handle ev -> IO ()
+cSSStartRuleUsageTracking :: Handle -> IO ()
 cSSStartRuleUsageTracking handle = sendReceiveCommand handle "CSS.startRuleUsageTracking" (Nothing :: Maybe ())
 
 
@@ -1474,7 +1474,7 @@ cSSStartRuleUsageTracking handle = sendReceiveCommand handle "CSS.startRuleUsage
 --   Stop tracking rule usage and return the list of rules that were used since last call to
 --   `takeCoverageDelta` (or since start of coverage instrumentation)
 --   Returns: 'CSSStopRuleUsageTracking'
-cSSStopRuleUsageTracking :: Handle ev -> IO CSSStopRuleUsageTracking
+cSSStopRuleUsageTracking :: Handle -> IO CSSStopRuleUsageTracking
 cSSStopRuleUsageTracking handle = sendReceiveCommandResult handle "CSS.stopRuleUsageTracking" (Nothing :: Maybe ())
 
 -- | Return type of the 'cSSStopRuleUsageTracking' command.
@@ -1494,7 +1494,7 @@ instance Command CSSStopRuleUsageTracking where
 --   Obtain list of rules that became used since last call to this method (or since start of coverage
 --   instrumentation)
 --   Returns: 'CSSTakeCoverageDelta'
-cSSTakeCoverageDelta :: Handle ev -> IO CSSTakeCoverageDelta
+cSSTakeCoverageDelta :: Handle -> IO CSSTakeCoverageDelta
 cSSTakeCoverageDelta handle = sendReceiveCommandResult handle "CSS.takeCoverageDelta" (Nothing :: Maybe ())
 
 -- | Return type of the 'cSSTakeCoverageDelta' command.
@@ -1527,7 +1527,7 @@ instance FromJSON  PCSSSetLocalFontsEnabled where
 -- | Function for the 'CSS.setLocalFontsEnabled' command.
 --   Enables/disables rendering of local CSS fonts (enabled by default).
 --   Parameters: 'PCSSSetLocalFontsEnabled'
-cSSSetLocalFontsEnabled :: Handle ev -> PCSSSetLocalFontsEnabled -> IO ()
+cSSSetLocalFontsEnabled :: Handle -> PCSSSetLocalFontsEnabled -> IO ()
 cSSSetLocalFontsEnabled handle params = sendReceiveCommand handle "CSS.setLocalFontsEnabled" (Just params)
 
 

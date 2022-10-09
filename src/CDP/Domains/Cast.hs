@@ -115,13 +115,13 @@ instance FromJSON  PCastEnable where
 --   Also starts observing for issue messages. When an issue is added or removed,
 --   an |issueUpdated| event is fired.
 --   Parameters: 'PCastEnable'
-castEnable :: Handle ev -> PCastEnable -> IO ()
+castEnable :: Handle -> PCastEnable -> IO ()
 castEnable handle params = sendReceiveCommand handle "Cast.enable" (Just params)
 
 
 -- | Function for the 'Cast.disable' command.
 --   Stops observing for sinks and issues.
-castDisable :: Handle ev -> IO ()
+castDisable :: Handle -> IO ()
 castDisable handle = sendReceiveCommand handle "Cast.disable" (Nothing :: Maybe ())
 
 
@@ -140,7 +140,7 @@ instance FromJSON  PCastSetSinkToUse where
 --   Sets a sink to be used when the web page requests the browser to choose a
 --   sink via Presentation API, Remote Playback API, or Cast SDK.
 --   Parameters: 'PCastSetSinkToUse'
-castSetSinkToUse :: Handle ev -> PCastSetSinkToUse -> IO ()
+castSetSinkToUse :: Handle -> PCastSetSinkToUse -> IO ()
 castSetSinkToUse handle params = sendReceiveCommand handle "Cast.setSinkToUse" (Just params)
 
 
@@ -158,7 +158,7 @@ instance FromJSON  PCastStartDesktopMirroring where
 -- | Function for the 'Cast.startDesktopMirroring' command.
 --   Starts mirroring the desktop to the sink.
 --   Parameters: 'PCastStartDesktopMirroring'
-castStartDesktopMirroring :: Handle ev -> PCastStartDesktopMirroring -> IO ()
+castStartDesktopMirroring :: Handle -> PCastStartDesktopMirroring -> IO ()
 castStartDesktopMirroring handle params = sendReceiveCommand handle "Cast.startDesktopMirroring" (Just params)
 
 
@@ -176,7 +176,7 @@ instance FromJSON  PCastStartTabMirroring where
 -- | Function for the 'Cast.startTabMirroring' command.
 --   Starts mirroring the tab to the sink.
 --   Parameters: 'PCastStartTabMirroring'
-castStartTabMirroring :: Handle ev -> PCastStartTabMirroring -> IO ()
+castStartTabMirroring :: Handle -> PCastStartTabMirroring -> IO ()
 castStartTabMirroring handle params = sendReceiveCommand handle "Cast.startTabMirroring" (Just params)
 
 
@@ -194,7 +194,7 @@ instance FromJSON  PCastStopCasting where
 -- | Function for the 'Cast.stopCasting' command.
 --   Stops the active Cast session on the sink.
 --   Parameters: 'PCastStopCasting'
-castStopCasting :: Handle ev -> PCastStopCasting -> IO ()
+castStopCasting :: Handle -> PCastStopCasting -> IO ()
 castStopCasting handle params = sendReceiveCommand handle "Cast.stopCasting" (Just params)
 
 

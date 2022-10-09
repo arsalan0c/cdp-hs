@@ -249,14 +249,14 @@ instance Event TracingTracingComplete where
 
 -- | Function for the 'Tracing.end' command.
 --   Stop trace events collection.
-tracingEnd :: Handle ev -> IO ()
+tracingEnd :: Handle -> IO ()
 tracingEnd handle = sendReceiveCommand handle "Tracing.end" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Tracing.getCategories' command.
 --   Gets supported tracing categories.
 --   Returns: 'TracingGetCategories'
-tracingGetCategories :: Handle ev -> IO TracingGetCategories
+tracingGetCategories :: Handle -> IO TracingGetCategories
 tracingGetCategories handle = sendReceiveCommandResult handle "Tracing.getCategories" (Nothing :: Maybe ())
 
 -- | Return type of the 'tracingGetCategories' command.
@@ -288,7 +288,7 @@ instance FromJSON  PTracingRecordClockSyncMarker where
 -- | Function for the 'Tracing.recordClockSyncMarker' command.
 --   Record a clock sync marker in the trace.
 --   Parameters: 'PTracingRecordClockSyncMarker'
-tracingRecordClockSyncMarker :: Handle ev -> PTracingRecordClockSyncMarker -> IO ()
+tracingRecordClockSyncMarker :: Handle -> PTracingRecordClockSyncMarker -> IO ()
 tracingRecordClockSyncMarker handle params = sendReceiveCommand handle "Tracing.recordClockSyncMarker" (Just params)
 
 
@@ -310,7 +310,7 @@ instance FromJSON  PTracingRequestMemoryDump where
 --   Request a global memory dump.
 --   Parameters: 'PTracingRequestMemoryDump'
 --   Returns: 'TracingRequestMemoryDump'
-tracingRequestMemoryDump :: Handle ev -> PTracingRequestMemoryDump -> IO TracingRequestMemoryDump
+tracingRequestMemoryDump :: Handle -> PTracingRequestMemoryDump -> IO TracingRequestMemoryDump
 tracingRequestMemoryDump handle params = sendReceiveCommandResult handle "Tracing.requestMemoryDump" (Just params)
 
 -- | Return type of the 'tracingRequestMemoryDump' command.
@@ -377,7 +377,7 @@ instance FromJSON  PTracingStart where
 -- | Function for the 'Tracing.start' command.
 --   Start trace events collection.
 --   Parameters: 'PTracingStart'
-tracingStart :: Handle ev -> PTracingStart -> IO ()
+tracingStart :: Handle -> PTracingStart -> IO ()
 tracingStart handle params = sendReceiveCommand handle "Tracing.start" (Just params)
 
 

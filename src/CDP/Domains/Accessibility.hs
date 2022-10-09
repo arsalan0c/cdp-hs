@@ -415,14 +415,14 @@ instance Event AccessibilityNodesUpdated where
 
 -- | Function for the 'Accessibility.disable' command.
 --   Disables the accessibility domain.
-accessibilityDisable :: Handle ev -> IO ()
+accessibilityDisable :: Handle -> IO ()
 accessibilityDisable handle = sendReceiveCommand handle "Accessibility.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'Accessibility.enable' command.
 --   Enables the accessibility domain which causes `AXNodeId`s to remain consistent between method calls.
 --   This turns on accessibility for the page, which can impact performance until accessibility is disabled.
-accessibilityEnable :: Handle ev -> IO ()
+accessibilityEnable :: Handle -> IO ()
 accessibilityEnable handle = sendReceiveCommand handle "Accessibility.enable" (Nothing :: Maybe ())
 
 
@@ -448,7 +448,7 @@ instance FromJSON  PAccessibilityGetPartialAXTree where
 --   Fetches the accessibility node and partial accessibility tree for this DOM node, if it exists.
 --   Parameters: 'PAccessibilityGetPartialAXTree'
 --   Returns: 'AccessibilityGetPartialAXTree'
-accessibilityGetPartialAXTree :: Handle ev -> PAccessibilityGetPartialAXTree -> IO AccessibilityGetPartialAXTree
+accessibilityGetPartialAXTree :: Handle -> PAccessibilityGetPartialAXTree -> IO AccessibilityGetPartialAXTree
 accessibilityGetPartialAXTree handle params = sendReceiveCommandResult handle "Accessibility.getPartialAXTree" (Just params)
 
 -- | Return type of the 'accessibilityGetPartialAXTree' command.
@@ -486,7 +486,7 @@ instance FromJSON  PAccessibilityGetFullAXTree where
 --   Fetches the entire accessibility tree for the root Document
 --   Parameters: 'PAccessibilityGetFullAXTree'
 --   Returns: 'AccessibilityGetFullAXTree'
-accessibilityGetFullAXTree :: Handle ev -> PAccessibilityGetFullAXTree -> IO AccessibilityGetFullAXTree
+accessibilityGetFullAXTree :: Handle -> PAccessibilityGetFullAXTree -> IO AccessibilityGetFullAXTree
 accessibilityGetFullAXTree handle params = sendReceiveCommandResult handle "Accessibility.getFullAXTree" (Just params)
 
 -- | Return type of the 'accessibilityGetFullAXTree' command.
@@ -520,7 +520,7 @@ instance FromJSON  PAccessibilityGetRootAXNode where
 --   Requires `enable()` to have been called previously.
 --   Parameters: 'PAccessibilityGetRootAXNode'
 --   Returns: 'AccessibilityGetRootAXNode'
-accessibilityGetRootAXNode :: Handle ev -> PAccessibilityGetRootAXNode -> IO AccessibilityGetRootAXNode
+accessibilityGetRootAXNode :: Handle -> PAccessibilityGetRootAXNode -> IO AccessibilityGetRootAXNode
 accessibilityGetRootAXNode handle params = sendReceiveCommandResult handle "Accessibility.getRootAXNode" (Just params)
 
 -- | Return type of the 'accessibilityGetRootAXNode' command.
@@ -557,7 +557,7 @@ instance FromJSON  PAccessibilityGetAXNodeAndAncestors where
 --   Requires `enable()` to have been called previously.
 --   Parameters: 'PAccessibilityGetAXNodeAndAncestors'
 --   Returns: 'AccessibilityGetAXNodeAndAncestors'
-accessibilityGetAXNodeAndAncestors :: Handle ev -> PAccessibilityGetAXNodeAndAncestors -> IO AccessibilityGetAXNodeAndAncestors
+accessibilityGetAXNodeAndAncestors :: Handle -> PAccessibilityGetAXNodeAndAncestors -> IO AccessibilityGetAXNodeAndAncestors
 accessibilityGetAXNodeAndAncestors handle params = sendReceiveCommandResult handle "Accessibility.getAXNodeAndAncestors" (Just params)
 
 -- | Return type of the 'accessibilityGetAXNodeAndAncestors' command.
@@ -592,7 +592,7 @@ instance FromJSON  PAccessibilityGetChildAXNodes where
 --   Requires `enable()` to have been called previously.
 --   Parameters: 'PAccessibilityGetChildAXNodes'
 --   Returns: 'AccessibilityGetChildAXNodes'
-accessibilityGetChildAXNodes :: Handle ev -> PAccessibilityGetChildAXNodes -> IO AccessibilityGetChildAXNodes
+accessibilityGetChildAXNodes :: Handle -> PAccessibilityGetChildAXNodes -> IO AccessibilityGetChildAXNodes
 accessibilityGetChildAXNodes handle params = sendReceiveCommandResult handle "Accessibility.getChildAXNodes" (Just params)
 
 -- | Return type of the 'accessibilityGetChildAXNodes' command.
@@ -636,7 +636,7 @@ instance FromJSON  PAccessibilityQueryAXTree where
 --   `accessibleName` or `role` is specified, it returns all the accessibility nodes in the subtree.
 --   Parameters: 'PAccessibilityQueryAXTree'
 --   Returns: 'AccessibilityQueryAXTree'
-accessibilityQueryAXTree :: Handle ev -> PAccessibilityQueryAXTree -> IO AccessibilityQueryAXTree
+accessibilityQueryAXTree :: Handle -> PAccessibilityQueryAXTree -> IO AccessibilityQueryAXTree
 accessibilityQueryAXTree handle params = sendReceiveCommandResult handle "Accessibility.queryAXTree" (Just params)
 
 -- | Return type of the 'accessibilityQueryAXTree' command.

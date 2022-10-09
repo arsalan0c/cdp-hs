@@ -34,7 +34,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -50,194 +49,194 @@ import CDP.Handle
 
 
 -- | Type 'DOMStorage.SerializedStorageKey'.
-type DomStorageSerializedStorageKey = String
+type DOMStorageSerializedStorageKey = String
 
 -- | Type 'DOMStorage.StorageId'.
 --   DOM Storage identifier.
-data DomStorageStorageId = DomStorageStorageId {
+data DOMStorageStorageId = DOMStorageStorageId {
   -- | Security origin for the storage.
-  domStorageStorageIdSecurityOrigin :: Maybe String,
+  dOMStorageStorageIdSecurityOrigin :: Maybe String,
   -- | Represents a key by which DOM Storage keys its CachedStorageAreas
-  domStorageStorageIdStorageKey :: Maybe DomStorageSerializedStorageKey,
+  dOMStorageStorageIdStorageKey :: Maybe DOMStorageSerializedStorageKey,
   -- | Whether the storage is local storage (not session storage).
-  domStorageStorageIdIsLocalStorage :: Bool
+  dOMStorageStorageIdIsLocalStorage :: Bool
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomStorageStorageId  where
+instance ToJSON DOMStorageStorageId  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
-instance FromJSON  DomStorageStorageId where
+instance FromJSON  DOMStorageStorageId where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
 
 -- | Type 'DOMStorage.Item'.
 --   DOM Storage item.
-type DomStorageItem = [String]
+type DOMStorageItem = [String]
 
 
 
 -- | Type of the 'DOMStorage.domStorageItemAdded' event.
-data DomStorageDomStorageItemAdded = DomStorageDomStorageItemAdded {
-  domStorageDomStorageItemAddedStorageId :: DomStorageStorageId,
-  domStorageDomStorageItemAddedKey :: String,
-  domStorageDomStorageItemAddedNewValue :: String
+data DOMStorageDomStorageItemAdded = DOMStorageDomStorageItemAdded {
+  dOMStorageDomStorageItemAddedStorageId :: DOMStorageStorageId,
+  dOMStorageDomStorageItemAddedKey :: String,
+  dOMStorageDomStorageItemAddedNewValue :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomStorageDomStorageItemAdded  where
+instance ToJSON DOMStorageDomStorageItemAdded  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
 
-instance FromJSON  DomStorageDomStorageItemAdded where
+instance FromJSON  DOMStorageDomStorageItemAdded where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
-instance Event DomStorageDomStorageItemAdded where
+instance Event DOMStorageDomStorageItemAdded where
     eventName _ = "DOMStorage.domStorageItemAdded"
 
 -- | Type of the 'DOMStorage.domStorageItemRemoved' event.
-data DomStorageDomStorageItemRemoved = DomStorageDomStorageItemRemoved {
-  domStorageDomStorageItemRemovedStorageId :: DomStorageStorageId,
-  domStorageDomStorageItemRemovedKey :: String
+data DOMStorageDomStorageItemRemoved = DOMStorageDomStorageItemRemoved {
+  dOMStorageDomStorageItemRemovedStorageId :: DOMStorageStorageId,
+  dOMStorageDomStorageItemRemovedKey :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomStorageDomStorageItemRemoved  where
+instance ToJSON DOMStorageDomStorageItemRemoved  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
 
-instance FromJSON  DomStorageDomStorageItemRemoved where
+instance FromJSON  DOMStorageDomStorageItemRemoved where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
-instance Event DomStorageDomStorageItemRemoved where
+instance Event DOMStorageDomStorageItemRemoved where
     eventName _ = "DOMStorage.domStorageItemRemoved"
 
 -- | Type of the 'DOMStorage.domStorageItemUpdated' event.
-data DomStorageDomStorageItemUpdated = DomStorageDomStorageItemUpdated {
-  domStorageDomStorageItemUpdatedStorageId :: DomStorageStorageId,
-  domStorageDomStorageItemUpdatedKey :: String,
-  domStorageDomStorageItemUpdatedOldValue :: String,
-  domStorageDomStorageItemUpdatedNewValue :: String
+data DOMStorageDomStorageItemUpdated = DOMStorageDomStorageItemUpdated {
+  dOMStorageDomStorageItemUpdatedStorageId :: DOMStorageStorageId,
+  dOMStorageDomStorageItemUpdatedKey :: String,
+  dOMStorageDomStorageItemUpdatedOldValue :: String,
+  dOMStorageDomStorageItemUpdatedNewValue :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomStorageDomStorageItemUpdated  where
+instance ToJSON DOMStorageDomStorageItemUpdated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
 
-instance FromJSON  DomStorageDomStorageItemUpdated where
+instance FromJSON  DOMStorageDomStorageItemUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
-instance Event DomStorageDomStorageItemUpdated where
+instance Event DOMStorageDomStorageItemUpdated where
     eventName _ = "DOMStorage.domStorageItemUpdated"
 
 -- | Type of the 'DOMStorage.domStorageItemsCleared' event.
-data DomStorageDomStorageItemsCleared = DomStorageDomStorageItemsCleared {
-  domStorageDomStorageItemsClearedStorageId :: DomStorageStorageId
+data DOMStorageDomStorageItemsCleared = DOMStorageDomStorageItemsCleared {
+  dOMStorageDomStorageItemsClearedStorageId :: DOMStorageStorageId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomStorageDomStorageItemsCleared  where
+instance ToJSON DOMStorageDomStorageItemsCleared  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
 
-instance FromJSON  DomStorageDomStorageItemsCleared where
+instance FromJSON  DOMStorageDomStorageItemsCleared where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
-instance Event DomStorageDomStorageItemsCleared where
+instance Event DOMStorageDomStorageItemsCleared where
     eventName _ = "DOMStorage.domStorageItemsCleared"
 
 
 
--- | Parameters of the 'domStorageClear' command.
-data PDomStorageClear = PDomStorageClear {
-  pDomStorageClearStorageId :: DomStorageStorageId
+-- | Parameters of the 'dOMStorageClear' command.
+data PDOMStorageClear = PDOMStorageClear {
+  pDOMStorageClearStorageId :: DOMStorageStorageId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomStorageClear  where
+instance ToJSON PDOMStorageClear  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
-instance FromJSON  PDomStorageClear where
+instance FromJSON  PDOMStorageClear where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
 -- | Function for the 'DOMStorage.clear' command.
 --   
---   Parameters: 'PDomStorageClear'
-domStorageClear :: Handle ev -> PDomStorageClear -> IO ()
-domStorageClear handle params = sendReceiveCommand handle "DOMStorage.clear" (Just params)
+--   Parameters: 'PDOMStorageClear'
+dOMStorageClear :: Handle ev -> PDOMStorageClear -> IO ()
+dOMStorageClear handle params = sendReceiveCommand handle "DOMStorage.clear" (Just params)
 
 
 -- | Function for the 'DOMStorage.disable' command.
 --   Disables storage tracking, prevents storage events from being sent to the client.
-domStorageDisable :: Handle ev -> IO ()
-domStorageDisable handle = sendReceiveCommand handle "DOMStorage.disable" (Nothing :: Maybe ())
+dOMStorageDisable :: Handle ev -> IO ()
+dOMStorageDisable handle = sendReceiveCommand handle "DOMStorage.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'DOMStorage.enable' command.
 --   Enables storage tracking, storage events will now be delivered to the client.
-domStorageEnable :: Handle ev -> IO ()
-domStorageEnable handle = sendReceiveCommand handle "DOMStorage.enable" (Nothing :: Maybe ())
+dOMStorageEnable :: Handle ev -> IO ()
+dOMStorageEnable handle = sendReceiveCommand handle "DOMStorage.enable" (Nothing :: Maybe ())
 
 
--- | Parameters of the 'domStorageGetDomStorageItems' command.
-data PDomStorageGetDomStorageItems = PDomStorageGetDomStorageItems {
-  pDomStorageGetDomStorageItemsStorageId :: DomStorageStorageId
+-- | Parameters of the 'dOMStorageGetDOMStorageItems' command.
+data PDOMStorageGetDOMStorageItems = PDOMStorageGetDOMStorageItems {
+  pDOMStorageGetDOMStorageItemsStorageId :: DOMStorageStorageId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomStorageGetDomStorageItems  where
+instance ToJSON PDOMStorageGetDOMStorageItems  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
 
-instance FromJSON  PDomStorageGetDomStorageItems where
+instance FromJSON  PDOMStorageGetDOMStorageItems where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
 -- | Function for the 'DOMStorage.getDOMStorageItems' command.
 --   
---   Parameters: 'PDomStorageGetDomStorageItems'
---   Returns: 'DomStorageGetDomStorageItems'
-domStorageGetDomStorageItems :: Handle ev -> PDomStorageGetDomStorageItems -> IO DomStorageGetDomStorageItems
-domStorageGetDomStorageItems handle params = sendReceiveCommandResult handle "DOMStorage.getDOMStorageItems" (Just params)
+--   Parameters: 'PDOMStorageGetDOMStorageItems'
+--   Returns: 'DOMStorageGetDOMStorageItems'
+dOMStorageGetDOMStorageItems :: Handle ev -> PDOMStorageGetDOMStorageItems -> IO DOMStorageGetDOMStorageItems
+dOMStorageGetDOMStorageItems handle params = sendReceiveCommandResult handle "DOMStorage.getDOMStorageItems" (Just params)
 
--- | Return type of the 'domStorageGetDomStorageItems' command.
-data DomStorageGetDomStorageItems = DomStorageGetDomStorageItems {
-  domStorageGetDomStorageItemsEntries :: [DomStorageItem]
+-- | Return type of the 'dOMStorageGetDOMStorageItems' command.
+data DOMStorageGetDOMStorageItems = DOMStorageGetDOMStorageItems {
+  dOMStorageGetDOMStorageItemsEntries :: [DOMStorageItem]
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomStorageGetDomStorageItems where
+instance FromJSON  DOMStorageGetDOMStorageItems where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
-instance Command DomStorageGetDomStorageItems where
+instance Command DOMStorageGetDOMStorageItems where
    commandName _ = "DOMStorage.getDOMStorageItems"
 
 
 
--- | Parameters of the 'domStorageRemoveDomStorageItem' command.
-data PDomStorageRemoveDomStorageItem = PDomStorageRemoveDomStorageItem {
-  pDomStorageRemoveDomStorageItemStorageId :: DomStorageStorageId,
-  pDomStorageRemoveDomStorageItemKey :: String
+-- | Parameters of the 'dOMStorageRemoveDOMStorageItem' command.
+data PDOMStorageRemoveDOMStorageItem = PDOMStorageRemoveDOMStorageItem {
+  pDOMStorageRemoveDOMStorageItemStorageId :: DOMStorageStorageId,
+  pDOMStorageRemoveDOMStorageItemKey :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomStorageRemoveDomStorageItem  where
+instance ToJSON PDOMStorageRemoveDOMStorageItem  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
 
-instance FromJSON  PDomStorageRemoveDomStorageItem where
+instance FromJSON  PDOMStorageRemoveDOMStorageItem where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
 -- | Function for the 'DOMStorage.removeDOMStorageItem' command.
 --   
---   Parameters: 'PDomStorageRemoveDomStorageItem'
-domStorageRemoveDomStorageItem :: Handle ev -> PDomStorageRemoveDomStorageItem -> IO ()
-domStorageRemoveDomStorageItem handle params = sendReceiveCommand handle "DOMStorage.removeDOMStorageItem" (Just params)
+--   Parameters: 'PDOMStorageRemoveDOMStorageItem'
+dOMStorageRemoveDOMStorageItem :: Handle ev -> PDOMStorageRemoveDOMStorageItem -> IO ()
+dOMStorageRemoveDOMStorageItem handle params = sendReceiveCommand handle "DOMStorage.removeDOMStorageItem" (Just params)
 
 
--- | Parameters of the 'domStorageSetDomStorageItem' command.
-data PDomStorageSetDomStorageItem = PDomStorageSetDomStorageItem {
-  pDomStorageSetDomStorageItemStorageId :: DomStorageStorageId,
-  pDomStorageSetDomStorageItemKey :: String,
-  pDomStorageSetDomStorageItemValue :: String
+-- | Parameters of the 'dOMStorageSetDOMStorageItem' command.
+data PDOMStorageSetDOMStorageItem = PDOMStorageSetDOMStorageItem {
+  pDOMStorageSetDOMStorageItemStorageId :: DOMStorageStorageId,
+  pDOMStorageSetDOMStorageItemKey :: String,
+  pDOMStorageSetDOMStorageItemValue :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomStorageSetDomStorageItem  where
+instance ToJSON PDOMStorageSetDOMStorageItem  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
 
-instance FromJSON  PDomStorageSetDomStorageItem where
+instance FromJSON  PDOMStorageSetDOMStorageItem where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
 -- | Function for the 'DOMStorage.setDOMStorageItem' command.
 --   
---   Parameters: 'PDomStorageSetDomStorageItem'
-domStorageSetDomStorageItem :: Handle ev -> PDomStorageSetDomStorageItem -> IO ()
-domStorageSetDomStorageItem handle params = sendReceiveCommand handle "DOMStorage.setDOMStorageItem" (Just params)
+--   Parameters: 'PDOMStorageSetDOMStorageItem'
+dOMStorageSetDOMStorageItem :: Handle ev -> PDOMStorageSetDOMStorageItem -> IO ()
+dOMStorageSetDOMStorageItem handle params = sendReceiveCommand handle "DOMStorage.setDOMStorageItem" (Just params)
 
 
 

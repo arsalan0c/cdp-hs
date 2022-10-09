@@ -34,7 +34,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -101,7 +100,7 @@ data BackgroundServiceBackgroundServiceEvent = BackgroundServiceBackgroundServic
   -- | The origin this event belongs to.
   backgroundServiceBackgroundServiceEventOrigin :: String,
   -- | The Service Worker ID that initiated the event.
-  backgroundServiceBackgroundServiceEventServiceWorkerRegistrationId :: ServiceWorker.ServiceWorkerRegistrationId,
+  backgroundServiceBackgroundServiceEventServiceWorkerRegistrationId :: ServiceWorker.ServiceWorkerRegistrationID,
   -- | The Background Service this event belongs to.
   backgroundServiceBackgroundServiceEventService :: BackgroundServiceServiceName,
   -- | A description of the event.

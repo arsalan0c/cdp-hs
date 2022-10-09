@@ -34,7 +34,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -159,7 +158,7 @@ instance FromJSON  LogLogEntry where
 
 -- | Type 'Log.ViolationSetting'.
 --   Violation configuration setting.
-data LogViolationSettingName = LogViolationSettingNameLongTask | LogViolationSettingNameLongLayout | LogViolationSettingNameBlockedEvent | LogViolationSettingNameBlockedParser | LogViolationSettingNameDiscouragedApiUse | LogViolationSettingNameHandler | LogViolationSettingNameRecurringHandler
+data LogViolationSettingName = LogViolationSettingNameLongTask | LogViolationSettingNameLongLayout | LogViolationSettingNameBlockedEvent | LogViolationSettingNameBlockedParser | LogViolationSettingNameDiscouragedAPIUse | LogViolationSettingNameHandler | LogViolationSettingNameRecurringHandler
    deriving (Ord, Eq, Show, Read)
 instance FromJSON LogViolationSettingName where
    parseJSON = A.withText  "LogViolationSettingName"  $ \v -> do
@@ -168,7 +167,7 @@ instance FromJSON LogViolationSettingName where
          "longLayout" -> pure LogViolationSettingNameLongLayout
          "blockedEvent" -> pure LogViolationSettingNameBlockedEvent
          "blockedParser" -> pure LogViolationSettingNameBlockedParser
-         "discouragedAPIUse" -> pure LogViolationSettingNameDiscouragedApiUse
+         "discouragedAPIUse" -> pure LogViolationSettingNameDiscouragedAPIUse
          "handler" -> pure LogViolationSettingNameHandler
          "recurringHandler" -> pure LogViolationSettingNameRecurringHandler
          _ -> fail "failed to parse LogViolationSettingName"
@@ -180,7 +179,7 @@ instance ToJSON LogViolationSettingName where
          LogViolationSettingNameLongLayout -> "longLayout"
          LogViolationSettingNameBlockedEvent -> "blockedEvent"
          LogViolationSettingNameBlockedParser -> "blockedParser"
-         LogViolationSettingNameDiscouragedApiUse -> "discouragedAPIUse"
+         LogViolationSettingNameDiscouragedAPIUse -> "discouragedAPIUse"
          LogViolationSettingNameHandler -> "handler"
          LogViolationSettingNameRecurringHandler -> "recurringHandler"
 

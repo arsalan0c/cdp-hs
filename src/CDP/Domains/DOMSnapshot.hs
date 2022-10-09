@@ -34,7 +34,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -53,73 +52,73 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 
 -- | Type 'DOMSnapshot.DOMNode'.
 --   A Node in the DOM tree.
-data DomSnapshotDomNode = DomSnapshotDomNode {
+data DOMSnapshotDOMNode = DOMSnapshotDOMNode {
   -- | `Node`'s nodeType.
-  domSnapshotDomNodeNodeType :: Int,
+  dOMSnapshotDOMNodeNodeType :: Int,
   -- | `Node`'s nodeName.
-  domSnapshotDomNodeNodeName :: String,
+  dOMSnapshotDOMNodeNodeName :: String,
   -- | `Node`'s nodeValue.
-  domSnapshotDomNodeNodeValue :: String,
+  dOMSnapshotDOMNodeNodeValue :: String,
   -- | Only set for textarea elements, contains the text value.
-  domSnapshotDomNodeTextValue :: Maybe String,
+  dOMSnapshotDOMNodeTextValue :: Maybe String,
   -- | Only set for input elements, contains the input's associated text value.
-  domSnapshotDomNodeInputValue :: Maybe String,
+  dOMSnapshotDOMNodeInputValue :: Maybe String,
   -- | Only set for radio and checkbox input elements, indicates if the element has been checked
-  domSnapshotDomNodeInputChecked :: Maybe Bool,
+  dOMSnapshotDOMNodeInputChecked :: Maybe Bool,
   -- | Only set for option elements, indicates if the element has been selected
-  domSnapshotDomNodeOptionSelected :: Maybe Bool,
+  dOMSnapshotDOMNodeOptionSelected :: Maybe Bool,
   -- | `Node`'s id, corresponds to DOM.Node.backendNodeId.
-  domSnapshotDomNodeBackendNodeId :: DOMPageNetworkEmulationSecurity.DomBackendNodeId,
+  dOMSnapshotDOMNodeBackendNodeId :: DOMPageNetworkEmulationSecurity.DOMBackendNodeId,
   -- | The indexes of the node's child nodes in the `domNodes` array returned by `getSnapshot`, if
   --   any.
-  domSnapshotDomNodeChildNodeIndexes :: Maybe [Int],
+  dOMSnapshotDOMNodeChildNodeIndexes :: Maybe [Int],
   -- | Attributes of an `Element` node.
-  domSnapshotDomNodeAttributes :: Maybe [DomSnapshotNameValue],
+  dOMSnapshotDOMNodeAttributes :: Maybe [DOMSnapshotNameValue],
   -- | Indexes of pseudo elements associated with this node in the `domNodes` array returned by
   --   `getSnapshot`, if any.
-  domSnapshotDomNodePseudoElementIndexes :: Maybe [Int],
+  dOMSnapshotDOMNodePseudoElementIndexes :: Maybe [Int],
   -- | The index of the node's related layout tree node in the `layoutTreeNodes` array returned by
   --   `getSnapshot`, if any.
-  domSnapshotDomNodeLayoutNodeIndex :: Maybe Int,
+  dOMSnapshotDOMNodeLayoutNodeIndex :: Maybe Int,
   -- | Document URL that `Document` or `FrameOwner` node points to.
-  domSnapshotDomNodeDocumentUrl :: Maybe String,
+  dOMSnapshotDOMNodeDocumentURL :: Maybe String,
   -- | Base URL that `Document` or `FrameOwner` node uses for URL completion.
-  domSnapshotDomNodeBaseUrl :: Maybe String,
+  dOMSnapshotDOMNodeBaseURL :: Maybe String,
   -- | Only set for documents, contains the document's content language.
-  domSnapshotDomNodeContentLanguage :: Maybe String,
+  dOMSnapshotDOMNodeContentLanguage :: Maybe String,
   -- | Only set for documents, contains the document's character set encoding.
-  domSnapshotDomNodeDocumentEncoding :: Maybe String,
+  dOMSnapshotDOMNodeDocumentEncoding :: Maybe String,
   -- | `DocumentType` node's publicId.
-  domSnapshotDomNodePublicId :: Maybe String,
+  dOMSnapshotDOMNodePublicId :: Maybe String,
   -- | `DocumentType` node's systemId.
-  domSnapshotDomNodeSystemId :: Maybe String,
+  dOMSnapshotDOMNodeSystemId :: Maybe String,
   -- | Frame ID for frame owner elements and also for the document node.
-  domSnapshotDomNodeFrameId :: Maybe DOMPageNetworkEmulationSecurity.PageFrameId,
+  dOMSnapshotDOMNodeFrameId :: Maybe DOMPageNetworkEmulationSecurity.PageFrameId,
   -- | The index of a frame owner element's content document in the `domNodes` array returned by
   --   `getSnapshot`, if any.
-  domSnapshotDomNodeContentDocumentIndex :: Maybe Int,
+  dOMSnapshotDOMNodeContentDocumentIndex :: Maybe Int,
   -- | Type of a pseudo element node.
-  domSnapshotDomNodePseudoType :: Maybe DOMPageNetworkEmulationSecurity.DomPseudoType,
+  dOMSnapshotDOMNodePseudoType :: Maybe DOMPageNetworkEmulationSecurity.DOMPseudoType,
   -- | Shadow root type.
-  domSnapshotDomNodeShadowRootType :: Maybe DOMPageNetworkEmulationSecurity.DomShadowRootType,
+  dOMSnapshotDOMNodeShadowRootType :: Maybe DOMPageNetworkEmulationSecurity.DOMShadowRootType,
   -- | Whether this DOM node responds to mouse clicks. This includes nodes that have had click
   --   event listeners attached via JavaScript as well as anchor tags that naturally navigate when
   --   clicked.
-  domSnapshotDomNodeIsClickable :: Maybe Bool,
+  dOMSnapshotDOMNodeIsClickable :: Maybe Bool,
   -- | Details of the node's event listeners, if any.
-  domSnapshotDomNodeEventListeners :: Maybe [DOMDebugger.DomDebuggerEventListener],
+  dOMSnapshotDOMNodeEventListeners :: Maybe [DOMDebugger.DOMDebuggerEventListener],
   -- | The selected url for nodes with a srcset attribute.
-  domSnapshotDomNodeCurrentSourceUrl :: Maybe String,
+  dOMSnapshotDOMNodeCurrentSourceURL :: Maybe String,
   -- | The url of the script (if any) that generates this node.
-  domSnapshotDomNodeOriginUrl :: Maybe String,
+  dOMSnapshotDOMNodeOriginURL :: Maybe String,
   -- | Scroll offsets, set when this node is a Document.
-  domSnapshotDomNodeScrollOffsetX :: Maybe Double,
-  domSnapshotDomNodeScrollOffsetY :: Maybe Double
+  dOMSnapshotDOMNodeScrollOffsetX :: Maybe Double,
+  dOMSnapshotDOMNodeScrollOffsetY :: Maybe Double
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomSnapshotDomNode  where
+instance ToJSON DOMSnapshotDOMNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
-instance FromJSON  DomSnapshotDomNode where
+instance FromJSON  DOMSnapshotDOMNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
@@ -127,252 +126,252 @@ instance FromJSON  DomSnapshotDomNode where
 -- | Type 'DOMSnapshot.InlineTextBox'.
 --   Details of post layout rendered text positions. The exact layout should not be regarded as
 --   stable and may change between versions.
-data DomSnapshotInlineTextBox = DomSnapshotInlineTextBox {
+data DOMSnapshotInlineTextBox = DOMSnapshotInlineTextBox {
   -- | The bounding box in document coordinates. Note that scroll offset of the document is ignored.
-  domSnapshotInlineTextBoxBoundingBox :: DOMPageNetworkEmulationSecurity.DomRect,
+  dOMSnapshotInlineTextBoxBoundingBox :: DOMPageNetworkEmulationSecurity.DOMRect,
   -- | The starting index in characters, for this post layout textbox substring. Characters that
   --   would be represented as a surrogate pair in UTF-16 have length 2.
-  domSnapshotInlineTextBoxStartCharacterIndex :: Int,
+  dOMSnapshotInlineTextBoxStartCharacterIndex :: Int,
   -- | The number of characters in this post layout textbox substring. Characters that would be
   --   represented as a surrogate pair in UTF-16 have length 2.
-  domSnapshotInlineTextBoxNumCharacters :: Int
+  dOMSnapshotInlineTextBoxNumCharacters :: Int
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomSnapshotInlineTextBox  where
+instance ToJSON DOMSnapshotInlineTextBox  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
-instance FromJSON  DomSnapshotInlineTextBox where
+instance FromJSON  DOMSnapshotInlineTextBox where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
 
 -- | Type 'DOMSnapshot.LayoutTreeNode'.
 --   Details of an element in the DOM tree with a LayoutObject.
-data DomSnapshotLayoutTreeNode = DomSnapshotLayoutTreeNode {
+data DOMSnapshotLayoutTreeNode = DOMSnapshotLayoutTreeNode {
   -- | The index of the related DOM node in the `domNodes` array returned by `getSnapshot`.
-  domSnapshotLayoutTreeNodeDomNodeIndex :: Int,
+  dOMSnapshotLayoutTreeNodeDomNodeIndex :: Int,
   -- | The bounding box in document coordinates. Note that scroll offset of the document is ignored.
-  domSnapshotLayoutTreeNodeBoundingBox :: DOMPageNetworkEmulationSecurity.DomRect,
+  dOMSnapshotLayoutTreeNodeBoundingBox :: DOMPageNetworkEmulationSecurity.DOMRect,
   -- | Contents of the LayoutText, if any.
-  domSnapshotLayoutTreeNodeLayoutText :: Maybe String,
+  dOMSnapshotLayoutTreeNodeLayoutText :: Maybe String,
   -- | The post-layout inline text nodes, if any.
-  domSnapshotLayoutTreeNodeInlineTextNodes :: Maybe [DomSnapshotInlineTextBox],
+  dOMSnapshotLayoutTreeNodeInlineTextNodes :: Maybe [DOMSnapshotInlineTextBox],
   -- | Index into the `computedStyles` array returned by `getSnapshot`.
-  domSnapshotLayoutTreeNodeStyleIndex :: Maybe Int,
+  dOMSnapshotLayoutTreeNodeStyleIndex :: Maybe Int,
   -- | Global paint order index, which is determined by the stacking order of the nodes. Nodes
   --   that are painted together will have the same index. Only provided if includePaintOrder in
   --   getSnapshot was true.
-  domSnapshotLayoutTreeNodePaintOrder :: Maybe Int,
+  dOMSnapshotLayoutTreeNodePaintOrder :: Maybe Int,
   -- | Set to true to indicate the element begins a new stacking context.
-  domSnapshotLayoutTreeNodeIsStackingContext :: Maybe Bool
+  dOMSnapshotLayoutTreeNodeIsStackingContext :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomSnapshotLayoutTreeNode  where
+instance ToJSON DOMSnapshotLayoutTreeNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
 
-instance FromJSON  DomSnapshotLayoutTreeNode where
+instance FromJSON  DOMSnapshotLayoutTreeNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
 
 -- | Type 'DOMSnapshot.ComputedStyle'.
 --   A subset of the full ComputedStyle as defined by the request whitelist.
-data DomSnapshotComputedStyle = DomSnapshotComputedStyle {
+data DOMSnapshotComputedStyle = DOMSnapshotComputedStyle {
   -- | Name/value pairs of computed style properties.
-  domSnapshotComputedStyleProperties :: [DomSnapshotNameValue]
+  dOMSnapshotComputedStyleProperties :: [DOMSnapshotNameValue]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomSnapshotComputedStyle  where
+instance ToJSON DOMSnapshotComputedStyle  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
-instance FromJSON  DomSnapshotComputedStyle where
+instance FromJSON  DOMSnapshotComputedStyle where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
 
 -- | Type 'DOMSnapshot.NameValue'.
 --   A name/value pair.
-data DomSnapshotNameValue = DomSnapshotNameValue {
+data DOMSnapshotNameValue = DOMSnapshotNameValue {
   -- | Attribute/property name.
-  domSnapshotNameValueName :: String,
+  dOMSnapshotNameValueName :: String,
   -- | Attribute/property value.
-  domSnapshotNameValueValue :: String
+  dOMSnapshotNameValueValue :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomSnapshotNameValue  where
+instance ToJSON DOMSnapshotNameValue  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
-instance FromJSON  DomSnapshotNameValue where
+instance FromJSON  DOMSnapshotNameValue where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
 
 -- | Type 'DOMSnapshot.StringIndex'.
 --   Index of the string in the strings table.
-type DomSnapshotStringIndex = Int
+type DOMSnapshotStringIndex = Int
 
 -- | Type 'DOMSnapshot.ArrayOfStrings'.
 --   Index of the string in the strings table.
-type DomSnapshotArrayOfStrings = [DomSnapshotStringIndex]
+type DOMSnapshotArrayOfStrings = [DOMSnapshotStringIndex]
 
 -- | Type 'DOMSnapshot.RareStringData'.
 --   Data that is only present on rare nodes.
-data DomSnapshotRareStringData = DomSnapshotRareStringData {
-  domSnapshotRareStringDataIndex :: [Int],
-  domSnapshotRareStringDataValue :: [DomSnapshotStringIndex]
+data DOMSnapshotRareStringData = DOMSnapshotRareStringData {
+  dOMSnapshotRareStringDataIndex :: [Int],
+  dOMSnapshotRareStringDataValue :: [DOMSnapshotStringIndex]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomSnapshotRareStringData  where
+instance ToJSON DOMSnapshotRareStringData  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
 
-instance FromJSON  DomSnapshotRareStringData where
+instance FromJSON  DOMSnapshotRareStringData where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
 
 -- | Type 'DOMSnapshot.RareBooleanData'.
-data DomSnapshotRareBooleanData = DomSnapshotRareBooleanData {
-  domSnapshotRareBooleanDataIndex :: [Int]
+data DOMSnapshotRareBooleanData = DOMSnapshotRareBooleanData {
+  dOMSnapshotRareBooleanDataIndex :: [Int]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomSnapshotRareBooleanData  where
+instance ToJSON DOMSnapshotRareBooleanData  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
-instance FromJSON  DomSnapshotRareBooleanData where
+instance FromJSON  DOMSnapshotRareBooleanData where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
 
 -- | Type 'DOMSnapshot.RareIntegerData'.
-data DomSnapshotRareIntegerData = DomSnapshotRareIntegerData {
-  domSnapshotRareIntegerDataIndex :: [Int],
-  domSnapshotRareIntegerDataValue :: [Int]
+data DOMSnapshotRareIntegerData = DOMSnapshotRareIntegerData {
+  dOMSnapshotRareIntegerDataIndex :: [Int],
+  dOMSnapshotRareIntegerDataValue :: [Int]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomSnapshotRareIntegerData  where
+instance ToJSON DOMSnapshotRareIntegerData  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
-instance FromJSON  DomSnapshotRareIntegerData where
+instance FromJSON  DOMSnapshotRareIntegerData where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
 
 -- | Type 'DOMSnapshot.Rectangle'.
-type DomSnapshotRectangle = [Double]
+type DOMSnapshotRectangle = [Double]
 
 -- | Type 'DOMSnapshot.DocumentSnapshot'.
 --   Document snapshot.
-data DomSnapshotDocumentSnapshot = DomSnapshotDocumentSnapshot {
+data DOMSnapshotDocumentSnapshot = DOMSnapshotDocumentSnapshot {
   -- | Document URL that `Document` or `FrameOwner` node points to.
-  domSnapshotDocumentSnapshotDocumentUrl :: DomSnapshotStringIndex,
+  dOMSnapshotDocumentSnapshotDocumentURL :: DOMSnapshotStringIndex,
   -- | Document title.
-  domSnapshotDocumentSnapshotTitle :: DomSnapshotStringIndex,
+  dOMSnapshotDocumentSnapshotTitle :: DOMSnapshotStringIndex,
   -- | Base URL that `Document` or `FrameOwner` node uses for URL completion.
-  domSnapshotDocumentSnapshotBaseUrl :: DomSnapshotStringIndex,
+  dOMSnapshotDocumentSnapshotBaseURL :: DOMSnapshotStringIndex,
   -- | Contains the document's content language.
-  domSnapshotDocumentSnapshotContentLanguage :: DomSnapshotStringIndex,
+  dOMSnapshotDocumentSnapshotContentLanguage :: DOMSnapshotStringIndex,
   -- | Contains the document's character set encoding.
-  domSnapshotDocumentSnapshotEncodingName :: DomSnapshotStringIndex,
+  dOMSnapshotDocumentSnapshotEncodingName :: DOMSnapshotStringIndex,
   -- | `DocumentType` node's publicId.
-  domSnapshotDocumentSnapshotPublicId :: DomSnapshotStringIndex,
+  dOMSnapshotDocumentSnapshotPublicId :: DOMSnapshotStringIndex,
   -- | `DocumentType` node's systemId.
-  domSnapshotDocumentSnapshotSystemId :: DomSnapshotStringIndex,
+  dOMSnapshotDocumentSnapshotSystemId :: DOMSnapshotStringIndex,
   -- | Frame ID for frame owner elements and also for the document node.
-  domSnapshotDocumentSnapshotFrameId :: DomSnapshotStringIndex,
+  dOMSnapshotDocumentSnapshotFrameId :: DOMSnapshotStringIndex,
   -- | A table with dom nodes.
-  domSnapshotDocumentSnapshotNodes :: DomSnapshotNodeTreeSnapshot,
+  dOMSnapshotDocumentSnapshotNodes :: DOMSnapshotNodeTreeSnapshot,
   -- | The nodes in the layout tree.
-  domSnapshotDocumentSnapshotLayout :: DomSnapshotLayoutTreeSnapshot,
+  dOMSnapshotDocumentSnapshotLayout :: DOMSnapshotLayoutTreeSnapshot,
   -- | The post-layout inline text nodes.
-  domSnapshotDocumentSnapshotTextBoxes :: DomSnapshotTextBoxSnapshot,
+  dOMSnapshotDocumentSnapshotTextBoxes :: DOMSnapshotTextBoxSnapshot,
   -- | Horizontal scroll offset.
-  domSnapshotDocumentSnapshotScrollOffsetX :: Maybe Double,
+  dOMSnapshotDocumentSnapshotScrollOffsetX :: Maybe Double,
   -- | Vertical scroll offset.
-  domSnapshotDocumentSnapshotScrollOffsetY :: Maybe Double,
+  dOMSnapshotDocumentSnapshotScrollOffsetY :: Maybe Double,
   -- | Document content width.
-  domSnapshotDocumentSnapshotContentWidth :: Maybe Double,
+  dOMSnapshotDocumentSnapshotContentWidth :: Maybe Double,
   -- | Document content height.
-  domSnapshotDocumentSnapshotContentHeight :: Maybe Double
+  dOMSnapshotDocumentSnapshotContentHeight :: Maybe Double
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomSnapshotDocumentSnapshot  where
+instance ToJSON DOMSnapshotDocumentSnapshot  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
-instance FromJSON  DomSnapshotDocumentSnapshot where
+instance FromJSON  DOMSnapshotDocumentSnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
 
 -- | Type 'DOMSnapshot.NodeTreeSnapshot'.
 --   Table containing nodes.
-data DomSnapshotNodeTreeSnapshot = DomSnapshotNodeTreeSnapshot {
+data DOMSnapshotNodeTreeSnapshot = DOMSnapshotNodeTreeSnapshot {
   -- | Parent node index.
-  domSnapshotNodeTreeSnapshotParentIndex :: Maybe [Int],
+  dOMSnapshotNodeTreeSnapshotParentIndex :: Maybe [Int],
   -- | `Node`'s nodeType.
-  domSnapshotNodeTreeSnapshotNodeType :: Maybe [Int],
+  dOMSnapshotNodeTreeSnapshotNodeType :: Maybe [Int],
   -- | Type of the shadow root the `Node` is in. String values are equal to the `ShadowRootType` enum.
-  domSnapshotNodeTreeSnapshotShadowRootType :: Maybe DomSnapshotRareStringData,
+  dOMSnapshotNodeTreeSnapshotShadowRootType :: Maybe DOMSnapshotRareStringData,
   -- | `Node`'s nodeName.
-  domSnapshotNodeTreeSnapshotNodeName :: Maybe [DomSnapshotStringIndex],
+  dOMSnapshotNodeTreeSnapshotNodeName :: Maybe [DOMSnapshotStringIndex],
   -- | `Node`'s nodeValue.
-  domSnapshotNodeTreeSnapshotNodeValue :: Maybe [DomSnapshotStringIndex],
+  dOMSnapshotNodeTreeSnapshotNodeValue :: Maybe [DOMSnapshotStringIndex],
   -- | `Node`'s id, corresponds to DOM.Node.backendNodeId.
-  domSnapshotNodeTreeSnapshotBackendNodeId :: Maybe [DOMPageNetworkEmulationSecurity.DomBackendNodeId],
+  dOMSnapshotNodeTreeSnapshotBackendNodeId :: Maybe [DOMPageNetworkEmulationSecurity.DOMBackendNodeId],
   -- | Attributes of an `Element` node. Flatten name, value pairs.
-  domSnapshotNodeTreeSnapshotAttributes :: Maybe [DomSnapshotArrayOfStrings],
+  dOMSnapshotNodeTreeSnapshotAttributes :: Maybe [DOMSnapshotArrayOfStrings],
   -- | Only set for textarea elements, contains the text value.
-  domSnapshotNodeTreeSnapshotTextValue :: Maybe DomSnapshotRareStringData,
+  dOMSnapshotNodeTreeSnapshotTextValue :: Maybe DOMSnapshotRareStringData,
   -- | Only set for input elements, contains the input's associated text value.
-  domSnapshotNodeTreeSnapshotInputValue :: Maybe DomSnapshotRareStringData,
+  dOMSnapshotNodeTreeSnapshotInputValue :: Maybe DOMSnapshotRareStringData,
   -- | Only set for radio and checkbox input elements, indicates if the element has been checked
-  domSnapshotNodeTreeSnapshotInputChecked :: Maybe DomSnapshotRareBooleanData,
+  dOMSnapshotNodeTreeSnapshotInputChecked :: Maybe DOMSnapshotRareBooleanData,
   -- | Only set for option elements, indicates if the element has been selected
-  domSnapshotNodeTreeSnapshotOptionSelected :: Maybe DomSnapshotRareBooleanData,
+  dOMSnapshotNodeTreeSnapshotOptionSelected :: Maybe DOMSnapshotRareBooleanData,
   -- | The index of the document in the list of the snapshot documents.
-  domSnapshotNodeTreeSnapshotContentDocumentIndex :: Maybe DomSnapshotRareIntegerData,
+  dOMSnapshotNodeTreeSnapshotContentDocumentIndex :: Maybe DOMSnapshotRareIntegerData,
   -- | Type of a pseudo element node.
-  domSnapshotNodeTreeSnapshotPseudoType :: Maybe DomSnapshotRareStringData,
+  dOMSnapshotNodeTreeSnapshotPseudoType :: Maybe DOMSnapshotRareStringData,
   -- | Whether this DOM node responds to mouse clicks. This includes nodes that have had click
   --   event listeners attached via JavaScript as well as anchor tags that naturally navigate when
   --   clicked.
-  domSnapshotNodeTreeSnapshotIsClickable :: Maybe DomSnapshotRareBooleanData,
+  dOMSnapshotNodeTreeSnapshotIsClickable :: Maybe DOMSnapshotRareBooleanData,
   -- | The selected url for nodes with a srcset attribute.
-  domSnapshotNodeTreeSnapshotCurrentSourceUrl :: Maybe DomSnapshotRareStringData,
+  dOMSnapshotNodeTreeSnapshotCurrentSourceURL :: Maybe DOMSnapshotRareStringData,
   -- | The url of the script (if any) that generates this node.
-  domSnapshotNodeTreeSnapshotOriginUrl :: Maybe DomSnapshotRareStringData
+  dOMSnapshotNodeTreeSnapshotOriginURL :: Maybe DOMSnapshotRareStringData
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomSnapshotNodeTreeSnapshot  where
+instance ToJSON DOMSnapshotNodeTreeSnapshot  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
-instance FromJSON  DomSnapshotNodeTreeSnapshot where
+instance FromJSON  DOMSnapshotNodeTreeSnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
 
 -- | Type 'DOMSnapshot.LayoutTreeSnapshot'.
 --   Table of details of an element in the DOM tree with a LayoutObject.
-data DomSnapshotLayoutTreeSnapshot = DomSnapshotLayoutTreeSnapshot {
+data DOMSnapshotLayoutTreeSnapshot = DOMSnapshotLayoutTreeSnapshot {
   -- | Index of the corresponding node in the `NodeTreeSnapshot` array returned by `captureSnapshot`.
-  domSnapshotLayoutTreeSnapshotNodeIndex :: [Int],
+  dOMSnapshotLayoutTreeSnapshotNodeIndex :: [Int],
   -- | Array of indexes specifying computed style strings, filtered according to the `computedStyles` parameter passed to `captureSnapshot`.
-  domSnapshotLayoutTreeSnapshotStyles :: [DomSnapshotArrayOfStrings],
+  dOMSnapshotLayoutTreeSnapshotStyles :: [DOMSnapshotArrayOfStrings],
   -- | The absolute position bounding box.
-  domSnapshotLayoutTreeSnapshotBounds :: [DomSnapshotRectangle],
+  dOMSnapshotLayoutTreeSnapshotBounds :: [DOMSnapshotRectangle],
   -- | Contents of the LayoutText, if any.
-  domSnapshotLayoutTreeSnapshotText :: [DomSnapshotStringIndex],
+  dOMSnapshotLayoutTreeSnapshotText :: [DOMSnapshotStringIndex],
   -- | Stacking context information.
-  domSnapshotLayoutTreeSnapshotStackingContexts :: DomSnapshotRareBooleanData,
+  dOMSnapshotLayoutTreeSnapshotStackingContexts :: DOMSnapshotRareBooleanData,
   -- | Global paint order index, which is determined by the stacking order of the nodes. Nodes
   --   that are painted together will have the same index. Only provided if includePaintOrder in
   --   captureSnapshot was true.
-  domSnapshotLayoutTreeSnapshotPaintOrders :: Maybe [Int],
+  dOMSnapshotLayoutTreeSnapshotPaintOrders :: Maybe [Int],
   -- | The offset rect of nodes. Only available when includeDOMRects is set to true
-  domSnapshotLayoutTreeSnapshotOffsetRects :: Maybe [DomSnapshotRectangle],
+  dOMSnapshotLayoutTreeSnapshotOffsetRects :: Maybe [DOMSnapshotRectangle],
   -- | The scroll rect of nodes. Only available when includeDOMRects is set to true
-  domSnapshotLayoutTreeSnapshotScrollRects :: Maybe [DomSnapshotRectangle],
+  dOMSnapshotLayoutTreeSnapshotScrollRects :: Maybe [DOMSnapshotRectangle],
   -- | The client rect of nodes. Only available when includeDOMRects is set to true
-  domSnapshotLayoutTreeSnapshotClientRects :: Maybe [DomSnapshotRectangle],
+  dOMSnapshotLayoutTreeSnapshotClientRects :: Maybe [DOMSnapshotRectangle],
   -- | The list of background colors that are blended with colors of overlapping elements.
-  domSnapshotLayoutTreeSnapshotBlendedBackgroundColors :: Maybe [DomSnapshotStringIndex],
+  dOMSnapshotLayoutTreeSnapshotBlendedBackgroundColors :: Maybe [DOMSnapshotStringIndex],
   -- | The list of computed text opacities.
-  domSnapshotLayoutTreeSnapshotTextColorOpacities :: Maybe [Double]
+  dOMSnapshotLayoutTreeSnapshotTextColorOpacities :: Maybe [Double]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomSnapshotLayoutTreeSnapshot  where
+instance ToJSON DOMSnapshotLayoutTreeSnapshot  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
 
-instance FromJSON  DomSnapshotLayoutTreeSnapshot where
+instance FromJSON  DOMSnapshotLayoutTreeSnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
@@ -380,22 +379,22 @@ instance FromJSON  DomSnapshotLayoutTreeSnapshot where
 -- | Type 'DOMSnapshot.TextBoxSnapshot'.
 --   Table of details of the post layout rendered text positions. The exact layout should not be regarded as
 --   stable and may change between versions.
-data DomSnapshotTextBoxSnapshot = DomSnapshotTextBoxSnapshot {
+data DOMSnapshotTextBoxSnapshot = DOMSnapshotTextBoxSnapshot {
   -- | Index of the layout tree node that owns this box collection.
-  domSnapshotTextBoxSnapshotLayoutIndex :: [Int],
+  dOMSnapshotTextBoxSnapshotLayoutIndex :: [Int],
   -- | The absolute position bounding box.
-  domSnapshotTextBoxSnapshotBounds :: [DomSnapshotRectangle],
+  dOMSnapshotTextBoxSnapshotBounds :: [DOMSnapshotRectangle],
   -- | The starting index in characters, for this post layout textbox substring. Characters that
   --   would be represented as a surrogate pair in UTF-16 have length 2.
-  domSnapshotTextBoxSnapshotStart :: [Int],
+  dOMSnapshotTextBoxSnapshotStart :: [Int],
   -- | The number of characters in this post layout textbox substring. Characters that would be
   --   represented as a surrogate pair in UTF-16 have length 2.
-  domSnapshotTextBoxSnapshotLength :: [Int]
+  dOMSnapshotTextBoxSnapshotLength :: [Int]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomSnapshotTextBoxSnapshot  where
+instance ToJSON DOMSnapshotTextBoxSnapshot  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
-instance FromJSON  DomSnapshotTextBoxSnapshot where
+instance FromJSON  DOMSnapshotTextBoxSnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
@@ -406,37 +405,37 @@ instance FromJSON  DomSnapshotTextBoxSnapshot where
 
 -- | Function for the 'DOMSnapshot.disable' command.
 --   Disables DOM snapshot agent for the given page.
-domSnapshotDisable :: Handle ev -> IO ()
-domSnapshotDisable handle = sendReceiveCommand handle "DOMSnapshot.disable" (Nothing :: Maybe ())
+dOMSnapshotDisable :: Handle ev -> IO ()
+dOMSnapshotDisable handle = sendReceiveCommand handle "DOMSnapshot.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'DOMSnapshot.enable' command.
 --   Enables DOM snapshot agent for the given page.
-domSnapshotEnable :: Handle ev -> IO ()
-domSnapshotEnable handle = sendReceiveCommand handle "DOMSnapshot.enable" (Nothing :: Maybe ())
+dOMSnapshotEnable :: Handle ev -> IO ()
+dOMSnapshotEnable handle = sendReceiveCommand handle "DOMSnapshot.enable" (Nothing :: Maybe ())
 
 
--- | Parameters of the 'domSnapshotCaptureSnapshot' command.
-data PDomSnapshotCaptureSnapshot = PDomSnapshotCaptureSnapshot {
+-- | Parameters of the 'dOMSnapshotCaptureSnapshot' command.
+data PDOMSnapshotCaptureSnapshot = PDOMSnapshotCaptureSnapshot {
   -- | Whitelist of computed styles to return.
-  pDomSnapshotCaptureSnapshotComputedStyles :: [String],
+  pDOMSnapshotCaptureSnapshotComputedStyles :: [String],
   -- | Whether to include layout object paint orders into the snapshot.
-  pDomSnapshotCaptureSnapshotIncludePaintOrder :: Maybe Bool,
+  pDOMSnapshotCaptureSnapshotIncludePaintOrder :: Maybe Bool,
   -- | Whether to include DOM rectangles (offsetRects, clientRects, scrollRects) into the snapshot
-  pDomSnapshotCaptureSnapshotIncludeDomRects :: Maybe Bool,
+  pDOMSnapshotCaptureSnapshotIncludeDOMRects :: Maybe Bool,
   -- | Whether to include blended background colors in the snapshot (default: false).
   --   Blended background color is achieved by blending background colors of all elements
   --   that overlap with the current element.
-  pDomSnapshotCaptureSnapshotIncludeBlendedBackgroundColors :: Maybe Bool,
+  pDOMSnapshotCaptureSnapshotIncludeBlendedBackgroundColors :: Maybe Bool,
   -- | Whether to include text color opacity in the snapshot (default: false).
   --   An element might have the opacity property set that affects the text color of the element.
   --   The final text color opacity is computed based on the opacity of all overlapping elements.
-  pDomSnapshotCaptureSnapshotIncludeTextColorOpacities :: Maybe Bool
+  pDOMSnapshotCaptureSnapshotIncludeTextColorOpacities :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomSnapshotCaptureSnapshot  where
+instance ToJSON PDOMSnapshotCaptureSnapshot  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
-instance FromJSON  PDomSnapshotCaptureSnapshot where
+instance FromJSON  PDOMSnapshotCaptureSnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
@@ -445,23 +444,23 @@ instance FromJSON  PDomSnapshotCaptureSnapshot where
 --   template contents, and imported documents) in a flattened array, as well as layout and
 --   white-listed computed style information for the nodes. Shadow DOM in the returned DOM tree is
 --   flattened.
---   Parameters: 'PDomSnapshotCaptureSnapshot'
---   Returns: 'DomSnapshotCaptureSnapshot'
-domSnapshotCaptureSnapshot :: Handle ev -> PDomSnapshotCaptureSnapshot -> IO DomSnapshotCaptureSnapshot
-domSnapshotCaptureSnapshot handle params = sendReceiveCommandResult handle "DOMSnapshot.captureSnapshot" (Just params)
+--   Parameters: 'PDOMSnapshotCaptureSnapshot'
+--   Returns: 'DOMSnapshotCaptureSnapshot'
+dOMSnapshotCaptureSnapshot :: Handle ev -> PDOMSnapshotCaptureSnapshot -> IO DOMSnapshotCaptureSnapshot
+dOMSnapshotCaptureSnapshot handle params = sendReceiveCommandResult handle "DOMSnapshot.captureSnapshot" (Just params)
 
--- | Return type of the 'domSnapshotCaptureSnapshot' command.
-data DomSnapshotCaptureSnapshot = DomSnapshotCaptureSnapshot {
+-- | Return type of the 'dOMSnapshotCaptureSnapshot' command.
+data DOMSnapshotCaptureSnapshot = DOMSnapshotCaptureSnapshot {
   -- | The nodes in the DOM tree. The DOMNode at index 0 corresponds to the root document.
-  domSnapshotCaptureSnapshotDocuments :: [DomSnapshotDocumentSnapshot],
+  dOMSnapshotCaptureSnapshotDocuments :: [DOMSnapshotDocumentSnapshot],
   -- | Shared string table that all string properties refer to with indexes.
-  domSnapshotCaptureSnapshotStrings :: [String]
+  dOMSnapshotCaptureSnapshotStrings :: [String]
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomSnapshotCaptureSnapshot where
+instance FromJSON  DOMSnapshotCaptureSnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
-instance Command DomSnapshotCaptureSnapshot where
+instance Command DOMSnapshotCaptureSnapshot where
    commandName _ = "DOMSnapshot.captureSnapshot"
 
 

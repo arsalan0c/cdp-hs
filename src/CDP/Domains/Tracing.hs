@@ -32,7 +32,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -230,7 +229,7 @@ data TracingTracingComplete = TracingTracingComplete {
   --   buffer wrapped around.
   tracingTracingCompleteDataLossOccurred :: Bool,
   -- | A handle of the stream that holds resulting trace data.
-  tracingTracingCompleteStream :: Maybe IO.IoStreamHandle,
+  tracingTracingCompleteStream :: Maybe IO.IOStreamHandle,
   -- | Trace data format of returned stream.
   tracingTracingCompleteTraceFormat :: Maybe TracingStreamFormat,
   -- | Compression format of returned stream.

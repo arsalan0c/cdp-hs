@@ -34,7 +34,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -51,28 +50,28 @@ import CDP.Handle
 
 -- | Type 'SystemInfo.GPUDevice'.
 --   Describes a single graphics processor (GPU).
-data SystemInfoGpuDevice = SystemInfoGpuDevice {
+data SystemInfoGPUDevice = SystemInfoGPUDevice {
   -- | PCI ID of the GPU vendor, if available; 0 otherwise.
-  systemInfoGpuDeviceVendorId :: Double,
+  systemInfoGPUDeviceVendorId :: Double,
   -- | PCI ID of the GPU device, if available; 0 otherwise.
-  systemInfoGpuDeviceDeviceId :: Double,
+  systemInfoGPUDeviceDeviceId :: Double,
   -- | Sub sys ID of the GPU, only available on Windows.
-  systemInfoGpuDeviceSubSysId :: Maybe Double,
+  systemInfoGPUDeviceSubSysId :: Maybe Double,
   -- | Revision of the GPU, only available on Windows.
-  systemInfoGpuDeviceRevision :: Maybe Double,
+  systemInfoGPUDeviceRevision :: Maybe Double,
   -- | String description of the GPU vendor, if the PCI ID is not available.
-  systemInfoGpuDeviceVendorString :: String,
+  systemInfoGPUDeviceVendorString :: String,
   -- | String description of the GPU device, if the PCI ID is not available.
-  systemInfoGpuDeviceDeviceString :: String,
+  systemInfoGPUDeviceDeviceString :: String,
   -- | String description of the GPU driver vendor.
-  systemInfoGpuDeviceDriverVendor :: String,
+  systemInfoGPUDeviceDriverVendor :: String,
   -- | String description of the GPU driver version.
-  systemInfoGpuDeviceDriverVersion :: String
+  systemInfoGPUDeviceDriverVersion :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON SystemInfoGpuDevice  where
+instance ToJSON SystemInfoGPUDevice  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
-instance FromJSON  SystemInfoGpuDevice where
+instance FromJSON  SystemInfoGPUDevice where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
@@ -199,26 +198,26 @@ instance FromJSON  SystemInfoImageDecodeAcceleratorCapability where
 
 -- | Type 'SystemInfo.GPUInfo'.
 --   Provides information about the GPU(s) on the system.
-data SystemInfoGpuInfo = SystemInfoGpuInfo {
+data SystemInfoGPUInfo = SystemInfoGPUInfo {
   -- | The graphics devices on the system. Element 0 is the primary GPU.
-  systemInfoGpuInfoDevices :: [SystemInfoGpuDevice],
+  systemInfoGPUInfoDevices :: [SystemInfoGPUDevice],
   -- | An optional dictionary of additional GPU related attributes.
-  systemInfoGpuInfoAuxAttributes :: Maybe [(String, String)],
+  systemInfoGPUInfoAuxAttributes :: Maybe [(String, String)],
   -- | An optional dictionary of graphics features and their status.
-  systemInfoGpuInfoFeatureStatus :: Maybe [(String, String)],
+  systemInfoGPUInfoFeatureStatus :: Maybe [(String, String)],
   -- | An optional array of GPU driver bug workarounds.
-  systemInfoGpuInfoDriverBugWorkarounds :: [String],
+  systemInfoGPUInfoDriverBugWorkarounds :: [String],
   -- | Supported accelerated video decoding capabilities.
-  systemInfoGpuInfoVideoDecoding :: [SystemInfoVideoDecodeAcceleratorCapability],
+  systemInfoGPUInfoVideoDecoding :: [SystemInfoVideoDecodeAcceleratorCapability],
   -- | Supported accelerated video encoding capabilities.
-  systemInfoGpuInfoVideoEncoding :: [SystemInfoVideoEncodeAcceleratorCapability],
+  systemInfoGPUInfoVideoEncoding :: [SystemInfoVideoEncodeAcceleratorCapability],
   -- | Supported accelerated image decoding capabilities.
-  systemInfoGpuInfoImageDecoding :: [SystemInfoImageDecodeAcceleratorCapability]
+  systemInfoGPUInfoImageDecoding :: [SystemInfoImageDecodeAcceleratorCapability]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON SystemInfoGpuInfo  where
+instance ToJSON SystemInfoGPUInfo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
-instance FromJSON  SystemInfoGpuInfo where
+instance FromJSON  SystemInfoGPUInfo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
@@ -255,7 +254,7 @@ systemInfoGetInfo handle = sendReceiveCommandResult handle "SystemInfo.getInfo" 
 -- | Return type of the 'systemInfoGetInfo' command.
 data SystemInfoGetInfo = SystemInfoGetInfo {
   -- | Information about the GPUs on the system.
-  systemInfoGetInfoGpu :: SystemInfoGpuInfo,
+  systemInfoGetInfoGpu :: SystemInfoGPUInfo,
   -- | A platform-dependent description of the model of the machine. On Mac OS, this is, for
   --   example, 'MacBookPro'. Will be the empty string if not supported.
   systemInfoGetInfoModelName :: String,

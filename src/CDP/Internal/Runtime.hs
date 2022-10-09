@@ -24,7 +24,6 @@ import           Data.Aeson           (FromJSON (..), ToJSON (..), (.:), (.:?), 
 import qualified Data.Aeson           as A
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -132,10 +131,13 @@ updateCommandBufferM = modifyMVar
 dispatchEvent :: Handle' ev -> String -> Maybe A.Value -> IO ()
 dispatchEvent handle method mbParams = do
     evs <- readMVar (eventHandlers handle)
-    let handlerM = Map.lookup method evs
-
-    let handler = fromMaybe print handlerM -- :CONFIG
-    maybe (pure ()) handler mbParams
+    case Map.lookup method evs of
+        Nothing -> IO.hPutStrLn IO.stderr $ "No handler for " ++ show method
+        Just f -> case mbParams of
+            Nothing -> IO.hPutStrLn IO.stderr $ "No params for " ++ show method
+            Just p -> do
+                IO.hPutStrLn IO.stderr $ "Calling handler for " ++ show method
+                f p
 
 updateEventHandlers :: forall ev. Handle' ev -> (Map.Map String (A.Value -> IO ()) -> Map.Map String (A.Value -> IO ())) -> IO ()
 updateEventHandlers handle f = ($ pure . f) . modifyMVar_ . eventHandlers $ handle
@@ -147,8 +149,10 @@ subscribe' handle h = updateEventHandlers handle $ Map.insert (eventName p) hand
 
     handler :: A.Value -> IO ()
     handler val = case A.fromJSON val :: A.Result a of
-        A.Error   _ -> pure () -- TODO: throw error?
-        A.Success x -> h x
+        A.Error   err -> do
+            IO.hPutStrLn IO.stderr $ "Error parsing JSON: " ++ err
+            IO.hPutStrLn IO.stderr $ "Value: " ++ show val
+        A.Success x   -> h x
 
 unsubscribe' :: forall ev a. Event a => Handle' ev -> Proxy a -> IO ()
 unsubscribe' handle proxy = updateEventHandlers handle (Map.delete (eventName proxy))

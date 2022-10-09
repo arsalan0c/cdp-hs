@@ -17,7 +17,6 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Graph as Graph
 import qualified Data.Text as T
-import qualified Text.Casing as C
 import qualified Data.Aeson as A
 
 import CDP.Definition ((:|:)(AltLeft, AltRight))
@@ -570,10 +569,11 @@ typeNameHS :: T.Text -> D.TypesElt -> T.Text
 typeNameHS domainName t = tyNameHS domainName (D.typesEltId t)
 
 tyNameHS :: T.Text -> T.Text -> T.Text
-tyNameHS prefix tyName = (T.pack . C.pascal . T.unpack $ prefix) <> (T.pack . C.pascal . T.unpack $ tyName)
+tyNameHS prefix tyName =
+    capitalizeFirst prefix <> capitalizeFirst (hyphensToCapitalize tyName)
 
 fieldNameHS :: T.Text -> T.Text -> T.Text
-fieldNameHS tyName fieldName = (uncapitalizeFirst tyName <>) . T.pack . C.pascal . T.unpack $ fieldName 
+fieldNameHS tyName fieldName = uncapitalizeFirst tyName <> capitalizeFirst fieldName
 
 paramsTypePrefix :: T.Text -> T.Text
 paramsTypePrefix = ("P" <>)
@@ -622,3 +622,12 @@ capitalizeFirst t = maybe t (\(first, rest) -> T.singleton (toUpper first) `T.ap
 
 uncapitalizeFirst :: T.Text -> T.Text
 uncapitalizeFirst t = maybe t (\(first, rest) -> T.singleton (toLower first) `T.append` rest) . T.uncons $ t
+
+-- | Changes things like "a-rate" to "aRate"
+hyphensToCapitalize :: T.Text -> T.Text
+hyphensToCapitalize txt
+    | T.null after = before
+    | otherwise    =
+        before <> capitalizeFirst (hyphensToCapitalize (T.drop 1 after))
+  where
+    (before, after) = T.break (== '-') txt

@@ -35,7 +35,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -267,15 +266,15 @@ instance ToJSON DebuggerScriptLanguage where
 
 -- | Type 'Debugger.DebugSymbols'.
 --   Debug symbols available for a wasm script.
-data DebuggerDebugSymbolsType = DebuggerDebugSymbolsTypeNone | DebuggerDebugSymbolsTypeSourceMap | DebuggerDebugSymbolsTypeEmbeddedDwarf | DebuggerDebugSymbolsTypeExternalDwarf
+data DebuggerDebugSymbolsType = DebuggerDebugSymbolsTypeNone | DebuggerDebugSymbolsTypeSourceMap | DebuggerDebugSymbolsTypeEmbeddedDWARF | DebuggerDebugSymbolsTypeExternalDWARF
    deriving (Ord, Eq, Show, Read)
 instance FromJSON DebuggerDebugSymbolsType where
    parseJSON = A.withText  "DebuggerDebugSymbolsType"  $ \v -> do
       case v of
          "None" -> pure DebuggerDebugSymbolsTypeNone
          "SourceMap" -> pure DebuggerDebugSymbolsTypeSourceMap
-         "EmbeddedDWARF" -> pure DebuggerDebugSymbolsTypeEmbeddedDwarf
-         "ExternalDWARF" -> pure DebuggerDebugSymbolsTypeExternalDwarf
+         "EmbeddedDWARF" -> pure DebuggerDebugSymbolsTypeEmbeddedDWARF
+         "ExternalDWARF" -> pure DebuggerDebugSymbolsTypeExternalDWARF
          _ -> fail "failed to parse DebuggerDebugSymbolsType"
 
 instance ToJSON DebuggerDebugSymbolsType where
@@ -283,8 +282,8 @@ instance ToJSON DebuggerDebugSymbolsType where
       case v of
          DebuggerDebugSymbolsTypeNone -> "None"
          DebuggerDebugSymbolsTypeSourceMap -> "SourceMap"
-         DebuggerDebugSymbolsTypeEmbeddedDwarf -> "EmbeddedDWARF"
-         DebuggerDebugSymbolsTypeExternalDwarf -> "ExternalDWARF"
+         DebuggerDebugSymbolsTypeEmbeddedDWARF -> "EmbeddedDWARF"
+         DebuggerDebugSymbolsTypeExternalDWARF -> "ExternalDWARF"
 
 
 
@@ -292,7 +291,7 @@ data DebuggerDebugSymbols = DebuggerDebugSymbols {
   -- | Type of the debug symbols.
   debuggerDebugSymbolsType :: DebuggerDebugSymbolsType,
   -- | URL of the external symbol source.
-  debuggerDebugSymbolsExternalUrl :: Maybe String
+  debuggerDebugSymbolsExternalURL :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON DebuggerDebugSymbols  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -322,23 +321,23 @@ instance Event DebuggerBreakpointResolved where
     eventName _ = "Debugger.breakpointResolved"
 
 -- | Type of the 'Debugger.paused' event.
-data DebuggerPausedReason = DebuggerPausedReasonAmbiguous | DebuggerPausedReasonAssert | DebuggerPausedReasonCspViolation | DebuggerPausedReasonDebugCommand | DebuggerPausedReasonDom | DebuggerPausedReasonEventListener | DebuggerPausedReasonException | DebuggerPausedReasonInstrumentation | DebuggerPausedReasonOom | DebuggerPausedReasonOther | DebuggerPausedReasonPromiseRejection | DebuggerPausedReasonXhr
+data DebuggerPausedReason = DebuggerPausedReasonAmbiguous | DebuggerPausedReasonAssert | DebuggerPausedReasonCSPViolation | DebuggerPausedReasonDebugCommand | DebuggerPausedReasonDOM | DebuggerPausedReasonEventListener | DebuggerPausedReasonException | DebuggerPausedReasonInstrumentation | DebuggerPausedReasonOOM | DebuggerPausedReasonOther | DebuggerPausedReasonPromiseRejection | DebuggerPausedReasonXHR
    deriving (Ord, Eq, Show, Read)
 instance FromJSON DebuggerPausedReason where
    parseJSON = A.withText  "DebuggerPausedReason"  $ \v -> do
       case v of
          "ambiguous" -> pure DebuggerPausedReasonAmbiguous
          "assert" -> pure DebuggerPausedReasonAssert
-         "CSPViolation" -> pure DebuggerPausedReasonCspViolation
+         "CSPViolation" -> pure DebuggerPausedReasonCSPViolation
          "debugCommand" -> pure DebuggerPausedReasonDebugCommand
-         "DOM" -> pure DebuggerPausedReasonDom
+         "DOM" -> pure DebuggerPausedReasonDOM
          "EventListener" -> pure DebuggerPausedReasonEventListener
          "exception" -> pure DebuggerPausedReasonException
          "instrumentation" -> pure DebuggerPausedReasonInstrumentation
-         "OOM" -> pure DebuggerPausedReasonOom
+         "OOM" -> pure DebuggerPausedReasonOOM
          "other" -> pure DebuggerPausedReasonOther
          "promiseRejection" -> pure DebuggerPausedReasonPromiseRejection
-         "XHR" -> pure DebuggerPausedReasonXhr
+         "XHR" -> pure DebuggerPausedReasonXHR
          _ -> fail "failed to parse DebuggerPausedReason"
 
 instance ToJSON DebuggerPausedReason where
@@ -346,16 +345,16 @@ instance ToJSON DebuggerPausedReason where
       case v of
          DebuggerPausedReasonAmbiguous -> "ambiguous"
          DebuggerPausedReasonAssert -> "assert"
-         DebuggerPausedReasonCspViolation -> "CSPViolation"
+         DebuggerPausedReasonCSPViolation -> "CSPViolation"
          DebuggerPausedReasonDebugCommand -> "debugCommand"
-         DebuggerPausedReasonDom -> "DOM"
+         DebuggerPausedReasonDOM -> "DOM"
          DebuggerPausedReasonEventListener -> "EventListener"
          DebuggerPausedReasonException -> "exception"
          DebuggerPausedReasonInstrumentation -> "instrumentation"
-         DebuggerPausedReasonOom -> "OOM"
+         DebuggerPausedReasonOOM -> "OOM"
          DebuggerPausedReasonOther -> "other"
          DebuggerPausedReasonPromiseRejection -> "promiseRejection"
-         DebuggerPausedReasonXhr -> "XHR"
+         DebuggerPausedReasonXHR -> "XHR"
 
 
 
@@ -417,9 +416,9 @@ data DebuggerScriptFailedToParse = DebuggerScriptFailedToParse {
   -- | Embedder-specific auxiliary data.
   debuggerScriptFailedToParseExecutionContextAuxData :: Maybe [(String, String)],
   -- | URL of source map associated with script (if any).
-  debuggerScriptFailedToParseSourceMapUrl :: Maybe String,
+  debuggerScriptFailedToParseSourceMapURL :: Maybe String,
   -- | True, if this script has sourceURL.
-  debuggerScriptFailedToParseHasSourceUrl :: Maybe Bool,
+  debuggerScriptFailedToParseHasSourceURL :: Maybe Bool,
   -- | True, if this script is ES6 module.
   debuggerScriptFailedToParseIsModule :: Maybe Bool,
   -- | This script length.
@@ -466,9 +465,9 @@ data DebuggerScriptParsed = DebuggerScriptParsed {
   -- | True, if this script is generated as a result of the live edit operation.
   debuggerScriptParsedIsLiveEdit :: Maybe Bool,
   -- | URL of source map associated with script (if any).
-  debuggerScriptParsedSourceMapUrl :: Maybe String,
+  debuggerScriptParsedSourceMapURL :: Maybe String,
   -- | True, if this script has sourceURL.
-  debuggerScriptParsedHasSourceUrl :: Maybe Bool,
+  debuggerScriptParsedHasSourceURL :: Maybe Bool,
   -- | True, if this script is ES6 module.
   debuggerScriptParsedIsModule :: Maybe Bool,
   -- | This script length.
@@ -585,7 +584,7 @@ data PDebuggerEvaluateOnCallFrame = PDebuggerEvaluateOnCallFrame {
   pDebuggerEvaluateOnCallFrameObjectGroup :: Maybe String,
   -- | Specifies whether command line API should be available to the evaluated expression, defaults
   --   to false.
-  pDebuggerEvaluateOnCallFrameIncludeCommandLineApi :: Maybe Bool,
+  pDebuggerEvaluateOnCallFrameIncludeCommandLineAPI :: Maybe Bool,
   -- | In silent mode exceptions thrown during evaluation are not reported and do not pause
   --   execution. Overrides `setPauseOnException` state.
   pDebuggerEvaluateOnCallFrameSilent :: Maybe Bool,

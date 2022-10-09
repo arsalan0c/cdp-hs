@@ -32,7 +32,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -117,36 +116,36 @@ databaseEnable :: Handle ev -> IO ()
 databaseEnable handle = sendReceiveCommand handle "Database.enable" (Nothing :: Maybe ())
 
 
--- | Parameters of the 'databaseExecuteSql' command.
-data PDatabaseExecuteSql = PDatabaseExecuteSql {
-  pDatabaseExecuteSqlDatabaseId :: DatabaseDatabaseId,
-  pDatabaseExecuteSqlQuery :: String
+-- | Parameters of the 'databaseExecuteSQL' command.
+data PDatabaseExecuteSQL = PDatabaseExecuteSQL {
+  pDatabaseExecuteSQLDatabaseId :: DatabaseDatabaseId,
+  pDatabaseExecuteSQLQuery :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDatabaseExecuteSql  where
+instance ToJSON PDatabaseExecuteSQL  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
-instance FromJSON  PDatabaseExecuteSql where
+instance FromJSON  PDatabaseExecuteSQL where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
 -- | Function for the 'Database.executeSQL' command.
 --   
---   Parameters: 'PDatabaseExecuteSql'
---   Returns: 'DatabaseExecuteSql'
-databaseExecuteSql :: Handle ev -> PDatabaseExecuteSql -> IO DatabaseExecuteSql
-databaseExecuteSql handle params = sendReceiveCommandResult handle "Database.executeSQL" (Just params)
+--   Parameters: 'PDatabaseExecuteSQL'
+--   Returns: 'DatabaseExecuteSQL'
+databaseExecuteSQL :: Handle ev -> PDatabaseExecuteSQL -> IO DatabaseExecuteSQL
+databaseExecuteSQL handle params = sendReceiveCommandResult handle "Database.executeSQL" (Just params)
 
--- | Return type of the 'databaseExecuteSql' command.
-data DatabaseExecuteSql = DatabaseExecuteSql {
-  databaseExecuteSqlColumnNames :: Maybe [String],
-  databaseExecuteSqlValues :: Maybe [Int],
-  databaseExecuteSqlSqlError :: Maybe DatabaseError
+-- | Return type of the 'databaseExecuteSQL' command.
+data DatabaseExecuteSQL = DatabaseExecuteSQL {
+  databaseExecuteSQLColumnNames :: Maybe [String],
+  databaseExecuteSQLValues :: Maybe [Int],
+  databaseExecuteSQLSqlError :: Maybe DatabaseError
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DatabaseExecuteSql where
+instance FromJSON  DatabaseExecuteSQL where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
-instance Command DatabaseExecuteSql where
+instance Command DatabaseExecuteSQL where
    commandName _ = "Database.executeSQL"
 
 

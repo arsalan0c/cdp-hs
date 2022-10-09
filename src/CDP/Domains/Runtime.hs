@@ -38,7 +38,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -739,81 +738,81 @@ instance Event RuntimeBindingCalled where
     eventName _ = "Runtime.bindingCalled"
 
 -- | Type of the 'Runtime.consoleAPICalled' event.
-data RuntimeConsoleApiCalledType = RuntimeConsoleApiCalledTypeLog | RuntimeConsoleApiCalledTypeDebug | RuntimeConsoleApiCalledTypeInfo | RuntimeConsoleApiCalledTypeError | RuntimeConsoleApiCalledTypeWarning | RuntimeConsoleApiCalledTypeDir | RuntimeConsoleApiCalledTypeDirxml | RuntimeConsoleApiCalledTypeTable | RuntimeConsoleApiCalledTypeTrace | RuntimeConsoleApiCalledTypeClear | RuntimeConsoleApiCalledTypeStartGroup | RuntimeConsoleApiCalledTypeStartGroupCollapsed | RuntimeConsoleApiCalledTypeEndGroup | RuntimeConsoleApiCalledTypeAssert | RuntimeConsoleApiCalledTypeProfile | RuntimeConsoleApiCalledTypeProfileEnd | RuntimeConsoleApiCalledTypeCount | RuntimeConsoleApiCalledTypeTimeEnd
+data RuntimeConsoleAPICalledType = RuntimeConsoleAPICalledTypeLog | RuntimeConsoleAPICalledTypeDebug | RuntimeConsoleAPICalledTypeInfo | RuntimeConsoleAPICalledTypeError | RuntimeConsoleAPICalledTypeWarning | RuntimeConsoleAPICalledTypeDir | RuntimeConsoleAPICalledTypeDirxml | RuntimeConsoleAPICalledTypeTable | RuntimeConsoleAPICalledTypeTrace | RuntimeConsoleAPICalledTypeClear | RuntimeConsoleAPICalledTypeStartGroup | RuntimeConsoleAPICalledTypeStartGroupCollapsed | RuntimeConsoleAPICalledTypeEndGroup | RuntimeConsoleAPICalledTypeAssert | RuntimeConsoleAPICalledTypeProfile | RuntimeConsoleAPICalledTypeProfileEnd | RuntimeConsoleAPICalledTypeCount | RuntimeConsoleAPICalledTypeTimeEnd
    deriving (Ord, Eq, Show, Read)
-instance FromJSON RuntimeConsoleApiCalledType where
-   parseJSON = A.withText  "RuntimeConsoleApiCalledType"  $ \v -> do
+instance FromJSON RuntimeConsoleAPICalledType where
+   parseJSON = A.withText  "RuntimeConsoleAPICalledType"  $ \v -> do
       case v of
-         "log" -> pure RuntimeConsoleApiCalledTypeLog
-         "debug" -> pure RuntimeConsoleApiCalledTypeDebug
-         "info" -> pure RuntimeConsoleApiCalledTypeInfo
-         "error" -> pure RuntimeConsoleApiCalledTypeError
-         "warning" -> pure RuntimeConsoleApiCalledTypeWarning
-         "dir" -> pure RuntimeConsoleApiCalledTypeDir
-         "dirxml" -> pure RuntimeConsoleApiCalledTypeDirxml
-         "table" -> pure RuntimeConsoleApiCalledTypeTable
-         "trace" -> pure RuntimeConsoleApiCalledTypeTrace
-         "clear" -> pure RuntimeConsoleApiCalledTypeClear
-         "startGroup" -> pure RuntimeConsoleApiCalledTypeStartGroup
-         "startGroupCollapsed" -> pure RuntimeConsoleApiCalledTypeStartGroupCollapsed
-         "endGroup" -> pure RuntimeConsoleApiCalledTypeEndGroup
-         "assert" -> pure RuntimeConsoleApiCalledTypeAssert
-         "profile" -> pure RuntimeConsoleApiCalledTypeProfile
-         "profileEnd" -> pure RuntimeConsoleApiCalledTypeProfileEnd
-         "count" -> pure RuntimeConsoleApiCalledTypeCount
-         "timeEnd" -> pure RuntimeConsoleApiCalledTypeTimeEnd
-         _ -> fail "failed to parse RuntimeConsoleApiCalledType"
+         "log" -> pure RuntimeConsoleAPICalledTypeLog
+         "debug" -> pure RuntimeConsoleAPICalledTypeDebug
+         "info" -> pure RuntimeConsoleAPICalledTypeInfo
+         "error" -> pure RuntimeConsoleAPICalledTypeError
+         "warning" -> pure RuntimeConsoleAPICalledTypeWarning
+         "dir" -> pure RuntimeConsoleAPICalledTypeDir
+         "dirxml" -> pure RuntimeConsoleAPICalledTypeDirxml
+         "table" -> pure RuntimeConsoleAPICalledTypeTable
+         "trace" -> pure RuntimeConsoleAPICalledTypeTrace
+         "clear" -> pure RuntimeConsoleAPICalledTypeClear
+         "startGroup" -> pure RuntimeConsoleAPICalledTypeStartGroup
+         "startGroupCollapsed" -> pure RuntimeConsoleAPICalledTypeStartGroupCollapsed
+         "endGroup" -> pure RuntimeConsoleAPICalledTypeEndGroup
+         "assert" -> pure RuntimeConsoleAPICalledTypeAssert
+         "profile" -> pure RuntimeConsoleAPICalledTypeProfile
+         "profileEnd" -> pure RuntimeConsoleAPICalledTypeProfileEnd
+         "count" -> pure RuntimeConsoleAPICalledTypeCount
+         "timeEnd" -> pure RuntimeConsoleAPICalledTypeTimeEnd
+         _ -> fail "failed to parse RuntimeConsoleAPICalledType"
 
-instance ToJSON RuntimeConsoleApiCalledType where
+instance ToJSON RuntimeConsoleAPICalledType where
    toJSON v = A.String $
       case v of
-         RuntimeConsoleApiCalledTypeLog -> "log"
-         RuntimeConsoleApiCalledTypeDebug -> "debug"
-         RuntimeConsoleApiCalledTypeInfo -> "info"
-         RuntimeConsoleApiCalledTypeError -> "error"
-         RuntimeConsoleApiCalledTypeWarning -> "warning"
-         RuntimeConsoleApiCalledTypeDir -> "dir"
-         RuntimeConsoleApiCalledTypeDirxml -> "dirxml"
-         RuntimeConsoleApiCalledTypeTable -> "table"
-         RuntimeConsoleApiCalledTypeTrace -> "trace"
-         RuntimeConsoleApiCalledTypeClear -> "clear"
-         RuntimeConsoleApiCalledTypeStartGroup -> "startGroup"
-         RuntimeConsoleApiCalledTypeStartGroupCollapsed -> "startGroupCollapsed"
-         RuntimeConsoleApiCalledTypeEndGroup -> "endGroup"
-         RuntimeConsoleApiCalledTypeAssert -> "assert"
-         RuntimeConsoleApiCalledTypeProfile -> "profile"
-         RuntimeConsoleApiCalledTypeProfileEnd -> "profileEnd"
-         RuntimeConsoleApiCalledTypeCount -> "count"
-         RuntimeConsoleApiCalledTypeTimeEnd -> "timeEnd"
+         RuntimeConsoleAPICalledTypeLog -> "log"
+         RuntimeConsoleAPICalledTypeDebug -> "debug"
+         RuntimeConsoleAPICalledTypeInfo -> "info"
+         RuntimeConsoleAPICalledTypeError -> "error"
+         RuntimeConsoleAPICalledTypeWarning -> "warning"
+         RuntimeConsoleAPICalledTypeDir -> "dir"
+         RuntimeConsoleAPICalledTypeDirxml -> "dirxml"
+         RuntimeConsoleAPICalledTypeTable -> "table"
+         RuntimeConsoleAPICalledTypeTrace -> "trace"
+         RuntimeConsoleAPICalledTypeClear -> "clear"
+         RuntimeConsoleAPICalledTypeStartGroup -> "startGroup"
+         RuntimeConsoleAPICalledTypeStartGroupCollapsed -> "startGroupCollapsed"
+         RuntimeConsoleAPICalledTypeEndGroup -> "endGroup"
+         RuntimeConsoleAPICalledTypeAssert -> "assert"
+         RuntimeConsoleAPICalledTypeProfile -> "profile"
+         RuntimeConsoleAPICalledTypeProfileEnd -> "profileEnd"
+         RuntimeConsoleAPICalledTypeCount -> "count"
+         RuntimeConsoleAPICalledTypeTimeEnd -> "timeEnd"
 
 
 
-data RuntimeConsoleApiCalled = RuntimeConsoleApiCalled {
+data RuntimeConsoleAPICalled = RuntimeConsoleAPICalled {
   -- | Type of the call.
-  runtimeConsoleApiCalledType :: RuntimeConsoleApiCalledType,
+  runtimeConsoleAPICalledType :: RuntimeConsoleAPICalledType,
   -- | Call arguments.
-  runtimeConsoleApiCalledArgs :: [RuntimeRemoteObject],
+  runtimeConsoleAPICalledArgs :: [RuntimeRemoteObject],
   -- | Identifier of the context where the call was made.
-  runtimeConsoleApiCalledExecutionContextId :: RuntimeExecutionContextId,
+  runtimeConsoleAPICalledExecutionContextId :: RuntimeExecutionContextId,
   -- | Call timestamp.
-  runtimeConsoleApiCalledTimestamp :: RuntimeTimestamp,
+  runtimeConsoleAPICalledTimestamp :: RuntimeTimestamp,
   -- | Stack trace captured when the call was made. The async stack chain is automatically reported for
   --   the following call types: `assert`, `error`, `trace`, `warning`. For other types the async call
   --   chain can be retrieved using `Debugger.getStackTrace` and `stackTrace.parentId` field.
-  runtimeConsoleApiCalledStackTrace :: Maybe RuntimeStackTrace,
+  runtimeConsoleAPICalledStackTrace :: Maybe RuntimeStackTrace,
   -- | Console context descriptor for calls on non-default console context (not console.*):
   --   'anonymous#unique-logger-id' for call on unnamed context, 'name#unique-logger-id' for call
   --   on named context.
-  runtimeConsoleApiCalledContext :: Maybe String
+  runtimeConsoleAPICalledContext :: Maybe String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON RuntimeConsoleApiCalled  where
+instance ToJSON RuntimeConsoleAPICalled  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
-instance FromJSON  RuntimeConsoleApiCalled where
+instance FromJSON  RuntimeConsoleAPICalled where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
-instance Event RuntimeConsoleApiCalled where
+instance Event RuntimeConsoleAPICalled where
     eventName _ = "Runtime.consoleAPICalled"
 
 -- | Type of the 'Runtime.exceptionRevoked' event.
@@ -1021,7 +1020,7 @@ data PRuntimeCompileScript = PRuntimeCompileScript {
   -- | Expression to compile.
   pRuntimeCompileScriptExpression :: String,
   -- | Source url to be set for the script.
-  pRuntimeCompileScriptSourceUrl :: String,
+  pRuntimeCompileScriptSourceURL :: String,
   -- | Specifies whether the compiled script should be persisted.
   pRuntimeCompileScriptPersistScript :: Bool,
   -- | Specifies in which execution context to perform script run. If the parameter is omitted the
@@ -1085,7 +1084,7 @@ data PRuntimeEvaluate = PRuntimeEvaluate {
   -- | Symbolic group name that can be used to release multiple objects.
   pRuntimeEvaluateObjectGroup :: Maybe String,
   -- | Determines whether Command Line API should be available during the evaluation.
-  pRuntimeEvaluateIncludeCommandLineApi :: Maybe Bool,
+  pRuntimeEvaluateIncludeCommandLineAPI :: Maybe Bool,
   -- | In silent mode exceptions thrown during evaluation are not reported and do not pause
   --   execution. Overrides `setPauseOnException` state.
   pRuntimeEvaluateSilent :: Maybe Bool,
@@ -1119,7 +1118,7 @@ data PRuntimeEvaluate = PRuntimeEvaluate {
   --   which includes eval(), Function(), setTimeout() and setInterval()
   --   when called with non-callable arguments. This flag bypasses CSP for this
   --   evaluation and allows unsafe-eval. Defaults to true.
-  pRuntimeEvaluateAllowUnsafeEvalBlockedByCsp :: Maybe Bool,
+  pRuntimeEvaluateAllowUnsafeEvalBlockedByCSP :: Maybe Bool,
   -- | An alternative way to specify the execution context to evaluate in.
   --   Compared to contextId that may be reused across processes, this is guaranteed to be
   --   system-unique, so it can be used to prevent accidental evaluation of the expression
@@ -1377,7 +1376,7 @@ data PRuntimeRunScript = PRuntimeRunScript {
   --   execution. Overrides `setPauseOnException` state.
   pRuntimeRunScriptSilent :: Maybe Bool,
   -- | Determines whether Command Line API should be available during the evaluation.
-  pRuntimeRunScriptIncludeCommandLineApi :: Maybe Bool,
+  pRuntimeRunScriptIncludeCommandLineAPI :: Maybe Bool,
   -- | Whether the result is expected to be a JSON object which should be sent by value.
   pRuntimeRunScriptReturnByValue :: Maybe Bool,
   -- | Whether preview should be generated for the result.

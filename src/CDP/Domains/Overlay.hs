@@ -34,7 +34,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -55,9 +54,9 @@ import CDP.Domains.Runtime as Runtime
 --   Configuration data for drawing the source order of an elements children.
 data OverlaySourceOrderConfig = OverlaySourceOrderConfig {
   -- | the color to outline the givent element in.
-  overlaySourceOrderConfigParentOutlineColor :: DOMPageNetworkEmulationSecurity.DomRgba,
+  overlaySourceOrderConfigParentOutlineColor :: DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | the color to outline the child elements in.
-  overlaySourceOrderConfigChildOutlineColor :: DOMPageNetworkEmulationSecurity.DomRgba
+  overlaySourceOrderConfigChildOutlineColor :: DOMPageNetworkEmulationSecurity.DOMRGBA
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON OverlaySourceOrderConfig  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -83,11 +82,11 @@ data OverlayGridHighlightConfig = OverlayGridHighlightConfig {
   -- | Show track size labels (default: false).
   overlayGridHighlightConfigShowTrackSizes :: Maybe Bool,
   -- | The grid container border highlight color (default: transparent).
-  overlayGridHighlightConfigGridBorderColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayGridHighlightConfigGridBorderColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The row line color (default: transparent).
-  overlayGridHighlightConfigRowLineColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayGridHighlightConfigRowLineColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The column line color (default: transparent).
-  overlayGridHighlightConfigColumnLineColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayGridHighlightConfigColumnLineColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | Whether the grid border is dashed (default: false).
   overlayGridHighlightConfigGridBorderDash :: Maybe Bool,
   -- | Whether row lines are dashed (default: false).
@@ -95,17 +94,17 @@ data OverlayGridHighlightConfig = OverlayGridHighlightConfig {
   -- | Whether column lines are dashed (default: false).
   overlayGridHighlightConfigColumnLineDash :: Maybe Bool,
   -- | The row gap highlight fill color (default: transparent).
-  overlayGridHighlightConfigRowGapColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayGridHighlightConfigRowGapColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The row gap hatching fill color (default: transparent).
-  overlayGridHighlightConfigRowHatchColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayGridHighlightConfigRowHatchColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The column gap highlight fill color (default: transparent).
-  overlayGridHighlightConfigColumnGapColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayGridHighlightConfigColumnGapColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The column gap hatching fill color (default: transparent).
-  overlayGridHighlightConfigColumnHatchColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayGridHighlightConfigColumnHatchColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The named grid areas border color (Default: transparent).
-  overlayGridHighlightConfigAreaBorderColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayGridHighlightConfigAreaBorderColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The grid container background color (Default: transparent).
-  overlayGridHighlightConfigGridBackgroundColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba
+  overlayGridHighlightConfigGridBackgroundColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON OverlayGridHighlightConfig  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -182,7 +181,7 @@ instance ToJSON OverlayLineStylePattern where
 
 data OverlayLineStyle = OverlayLineStyle {
   -- | The color of the line (default: transparent)
-  overlayLineStyleColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayLineStyleColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The line pattern (default: solid)
   overlayLineStylePattern :: OverlayLineStylePattern
 } deriving (Generic, Eq, Show, Read)
@@ -198,9 +197,9 @@ instance FromJSON  OverlayLineStyle where
 --   Style information for drawing a box.
 data OverlayBoxStyle = OverlayBoxStyle {
   -- | The background color for the box (default: transparent)
-  overlayBoxStyleFillColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayBoxStyleFillColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The hatching color for the box (default: transparent)
-  overlayBoxStyleHatchColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba
+  overlayBoxStyleHatchColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON OverlayBoxStyle  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
@@ -244,21 +243,21 @@ data OverlayHighlightConfig = OverlayHighlightConfig {
   -- | Whether the extension lines from node to the rulers should be shown (default: false).
   overlayHighlightConfigShowExtensionLines :: Maybe Bool,
   -- | The content box highlight fill color (default: transparent).
-  overlayHighlightConfigContentColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayHighlightConfigContentColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The padding highlight fill color (default: transparent).
-  overlayHighlightConfigPaddingColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayHighlightConfigPaddingColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The border highlight fill color (default: transparent).
-  overlayHighlightConfigBorderColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayHighlightConfigBorderColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The margin highlight fill color (default: transparent).
-  overlayHighlightConfigMarginColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayHighlightConfigMarginColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The event target element highlight fill color (default: transparent).
-  overlayHighlightConfigEventTargetColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayHighlightConfigEventTargetColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The shape outside fill color (default: transparent).
-  overlayHighlightConfigShapeColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayHighlightConfigShapeColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The shape margin fill color (default: transparent).
-  overlayHighlightConfigShapeMarginColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayHighlightConfigShapeMarginColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The grid layout color (default: transparent).
-  overlayHighlightConfigCssGridColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayHighlightConfigCssGridColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The color format used to format color styles (default: hex).
   overlayHighlightConfigColorFormat :: Maybe OverlayColorFormat,
   -- | The grid layout highlight configuration (default: all transparent).
@@ -308,7 +307,7 @@ data OverlayGridNodeHighlightConfig = OverlayGridNodeHighlightConfig {
   -- | A descriptor for the highlight appearance.
   overlayGridNodeHighlightConfigGridHighlightConfig :: OverlayGridHighlightConfig,
   -- | Identifier of the node to highlight.
-  overlayGridNodeHighlightConfigNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId
+  overlayGridNodeHighlightConfigNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON OverlayGridNodeHighlightConfig  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -323,7 +322,7 @@ data OverlayFlexNodeHighlightConfig = OverlayFlexNodeHighlightConfig {
   -- | A descriptor for the highlight appearance of flex containers.
   overlayFlexNodeHighlightConfigFlexContainerHighlightConfig :: OverlayFlexContainerHighlightConfig,
   -- | Identifier of the node to highlight.
-  overlayFlexNodeHighlightConfigNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId
+  overlayFlexNodeHighlightConfigNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON OverlayFlexNodeHighlightConfig  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
@@ -340,9 +339,9 @@ data OverlayScrollSnapContainerHighlightConfig = OverlayScrollSnapContainerHighl
   -- | The style of the snap area border (default: transparent)
   overlayScrollSnapContainerHighlightConfigSnapAreaBorder :: Maybe OverlayLineStyle,
   -- | The margin highlight fill color (default: transparent).
-  overlayScrollSnapContainerHighlightConfigScrollMarginColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayScrollSnapContainerHighlightConfigScrollMarginColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The padding highlight fill color (default: transparent).
-  overlayScrollSnapContainerHighlightConfigScrollPaddingColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba
+  overlayScrollSnapContainerHighlightConfigScrollPaddingColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON OverlayScrollSnapContainerHighlightConfig  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 41 , A.omitNothingFields = True}
@@ -357,7 +356,7 @@ data OverlayScrollSnapHighlightConfig = OverlayScrollSnapHighlightConfig {
   -- | A descriptor for the highlight appearance of scroll snap containers.
   overlayScrollSnapHighlightConfigScrollSnapContainerHighlightConfig :: OverlayScrollSnapContainerHighlightConfig,
   -- | Identifier of the node to highlight.
-  overlayScrollSnapHighlightConfigNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId
+  overlayScrollSnapHighlightConfigNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON OverlayScrollSnapHighlightConfig  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
@@ -371,11 +370,11 @@ instance FromJSON  OverlayScrollSnapHighlightConfig where
 --   Configuration for dual screen hinge
 data OverlayHingeConfig = OverlayHingeConfig {
   -- | A rectangle represent hinge
-  overlayHingeConfigRect :: DOMPageNetworkEmulationSecurity.DomRect,
+  overlayHingeConfigRect :: DOMPageNetworkEmulationSecurity.DOMRect,
   -- | The content box highlight fill color (default: a dark color).
-  overlayHingeConfigContentColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayHingeConfigContentColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The content box highlight outline color (default: transparent).
-  overlayHingeConfigOutlineColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba
+  overlayHingeConfigOutlineColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON OverlayHingeConfig  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -390,7 +389,7 @@ data OverlayContainerQueryHighlightConfig = OverlayContainerQueryHighlightConfig
   -- | A descriptor for the highlight appearance of container query containers.
   overlayContainerQueryHighlightConfigContainerQueryContainerHighlightConfig :: OverlayContainerQueryContainerHighlightConfig,
   -- | Identifier of the container node to highlight.
-  overlayContainerQueryHighlightConfigNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId
+  overlayContainerQueryHighlightConfigNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON OverlayContainerQueryHighlightConfig  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
@@ -420,7 +419,7 @@ data OverlayIsolatedElementHighlightConfig = OverlayIsolatedElementHighlightConf
   -- | A descriptor for the highlight appearance of an element in isolation mode.
   overlayIsolatedElementHighlightConfigIsolationModeHighlightConfig :: OverlayIsolationModeHighlightConfig,
   -- | Identifier of the isolated element to highlight.
-  overlayIsolatedElementHighlightConfigNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId
+  overlayIsolatedElementHighlightConfigNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON OverlayIsolatedElementHighlightConfig  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 , A.omitNothingFields = True}
@@ -433,11 +432,11 @@ instance FromJSON  OverlayIsolatedElementHighlightConfig where
 -- | Type 'Overlay.IsolationModeHighlightConfig'.
 data OverlayIsolationModeHighlightConfig = OverlayIsolationModeHighlightConfig {
   -- | The fill color of the resizers (default: transparent).
-  overlayIsolationModeHighlightConfigResizerColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayIsolationModeHighlightConfigResizerColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The fill color for resizer handles (default: transparent).
-  overlayIsolationModeHighlightConfigResizerHandleColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  overlayIsolationModeHighlightConfigResizerHandleColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The fill color for the mask covering non-isolated elements (default: transparent).
-  overlayIsolationModeHighlightConfigMaskColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba
+  overlayIsolationModeHighlightConfigMaskColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON OverlayIsolationModeHighlightConfig  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 , A.omitNothingFields = True}
@@ -448,13 +447,13 @@ instance FromJSON  OverlayIsolationModeHighlightConfig where
 
 
 -- | Type 'Overlay.InspectMode'.
-data OverlayInspectMode = OverlayInspectModeSearchForNode | OverlayInspectModeSearchForUaShadowDom | OverlayInspectModeCaptureAreaScreenshot | OverlayInspectModeShowDistances | OverlayInspectModeNone
+data OverlayInspectMode = OverlayInspectModeSearchForNode | OverlayInspectModeSearchForUAShadowDOM | OverlayInspectModeCaptureAreaScreenshot | OverlayInspectModeShowDistances | OverlayInspectModeNone
    deriving (Ord, Eq, Show, Read)
 instance FromJSON OverlayInspectMode where
    parseJSON = A.withText  "OverlayInspectMode"  $ \v -> do
       case v of
          "searchForNode" -> pure OverlayInspectModeSearchForNode
-         "searchForUAShadowDOM" -> pure OverlayInspectModeSearchForUaShadowDom
+         "searchForUAShadowDOM" -> pure OverlayInspectModeSearchForUAShadowDOM
          "captureAreaScreenshot" -> pure OverlayInspectModeCaptureAreaScreenshot
          "showDistances" -> pure OverlayInspectModeShowDistances
          "none" -> pure OverlayInspectModeNone
@@ -464,7 +463,7 @@ instance ToJSON OverlayInspectMode where
    toJSON v = A.String $
       case v of
          OverlayInspectModeSearchForNode -> "searchForNode"
-         OverlayInspectModeSearchForUaShadowDom -> "searchForUAShadowDOM"
+         OverlayInspectModeSearchForUAShadowDOM -> "searchForUAShadowDOM"
          OverlayInspectModeCaptureAreaScreenshot -> "captureAreaScreenshot"
          OverlayInspectModeShowDistances -> "showDistances"
          OverlayInspectModeNone -> "none"
@@ -476,7 +475,7 @@ instance ToJSON OverlayInspectMode where
 -- | Type of the 'Overlay.inspectNodeRequested' event.
 data OverlayInspectNodeRequested = OverlayInspectNodeRequested {
   -- | Id of the node to inspect.
-  overlayInspectNodeRequestedBackendNodeId :: DOMPageNetworkEmulationSecurity.DomBackendNodeId
+  overlayInspectNodeRequestedBackendNodeId :: DOMPageNetworkEmulationSecurity.DOMBackendNodeId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON OverlayInspectNodeRequested  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -490,7 +489,7 @@ instance Event OverlayInspectNodeRequested where
 
 -- | Type of the 'Overlay.nodeHighlightRequested' event.
 data OverlayNodeHighlightRequested = OverlayNodeHighlightRequested {
-  overlayNodeHighlightRequestedNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId
+  overlayNodeHighlightRequestedNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON OverlayNodeHighlightRequested  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -547,7 +546,7 @@ overlayEnable handle = sendReceiveCommand handle "Overlay.enable" (Nothing :: Ma
 -- | Parameters of the 'overlayGetHighlightObjectForTest' command.
 data POverlayGetHighlightObjectForTest = POverlayGetHighlightObjectForTest {
   -- | Id of the node to get highlight object for.
-  pOverlayGetHighlightObjectForTestNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId,
+  pOverlayGetHighlightObjectForTestNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId,
   -- | Whether to include distance info.
   pOverlayGetHighlightObjectForTestIncludeDistance :: Maybe Bool,
   -- | Whether to include style info.
@@ -588,7 +587,7 @@ instance Command OverlayGetHighlightObjectForTest where
 -- | Parameters of the 'overlayGetGridHighlightObjectsForTest' command.
 data POverlayGetGridHighlightObjectsForTest = POverlayGetGridHighlightObjectsForTest {
   -- | Ids of the node to get highlight object for.
-  pOverlayGetGridHighlightObjectsForTestNodeIds :: [DOMPageNetworkEmulationSecurity.DomNodeId]
+  pOverlayGetGridHighlightObjectsForTestNodeIds :: [DOMPageNetworkEmulationSecurity.DOMNodeId]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON POverlayGetGridHighlightObjectsForTest  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 , A.omitNothingFields = True}
@@ -621,7 +620,7 @@ instance Command OverlayGetGridHighlightObjectsForTest where
 -- | Parameters of the 'overlayGetSourceOrderHighlightObjectForTest' command.
 data POverlayGetSourceOrderHighlightObjectForTest = POverlayGetSourceOrderHighlightObjectForTest {
   -- | Id of the node to highlight.
-  pOverlayGetSourceOrderHighlightObjectForTestNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId
+  pOverlayGetSourceOrderHighlightObjectForTestNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON POverlayGetSourceOrderHighlightObjectForTest  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 44 , A.omitNothingFields = True}
@@ -662,9 +661,9 @@ data POverlayHighlightNode = POverlayHighlightNode {
   -- | A descriptor for the highlight appearance.
   pOverlayHighlightNodeHighlightConfig :: OverlayHighlightConfig,
   -- | Identifier of the node to highlight.
-  pOverlayHighlightNodeNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomNodeId,
+  pOverlayHighlightNodeNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMNodeId,
   -- | Identifier of the backend node to highlight.
-  pOverlayHighlightNodeBackendNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomBackendNodeId,
+  pOverlayHighlightNodeBackendNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMBackendNodeId,
   -- | JavaScript object id of the node to be highlighted.
   pOverlayHighlightNodeObjectId :: Maybe Runtime.RuntimeRemoteObjectId,
   -- | Selectors to highlight relevant nodes.
@@ -688,11 +687,11 @@ overlayHighlightNode handle params = sendReceiveCommand handle "Overlay.highligh
 -- | Parameters of the 'overlayHighlightQuad' command.
 data POverlayHighlightQuad = POverlayHighlightQuad {
   -- | Quad to highlight
-  pOverlayHighlightQuadQuad :: DOMPageNetworkEmulationSecurity.DomQuad,
+  pOverlayHighlightQuadQuad :: DOMPageNetworkEmulationSecurity.DOMQuad,
   -- | The highlight fill color (default: transparent).
-  pOverlayHighlightQuadColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  pOverlayHighlightQuadColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The highlight outline color (default: transparent).
-  pOverlayHighlightQuadOutlineColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba
+  pOverlayHighlightQuadOutlineColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON POverlayHighlightQuad  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -719,9 +718,9 @@ data POverlayHighlightRect = POverlayHighlightRect {
   -- | Rectangle height
   pOverlayHighlightRectHeight :: Int,
   -- | The highlight fill color (default: transparent).
-  pOverlayHighlightRectColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba,
+  pOverlayHighlightRectColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA,
   -- | The highlight outline color (default: transparent).
-  pOverlayHighlightRectOutlineColor :: Maybe DOMPageNetworkEmulationSecurity.DomRgba
+  pOverlayHighlightRectOutlineColor :: Maybe DOMPageNetworkEmulationSecurity.DOMRGBA
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON POverlayHighlightRect  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -742,9 +741,9 @@ data POverlayHighlightSourceOrder = POverlayHighlightSourceOrder {
   -- | A descriptor for the appearance of the overlay drawing.
   pOverlayHighlightSourceOrderSourceOrderConfig :: OverlaySourceOrderConfig,
   -- | Identifier of the node to highlight.
-  pOverlayHighlightSourceOrderNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomNodeId,
+  pOverlayHighlightSourceOrderNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMNodeId,
   -- | Identifier of the backend node to highlight.
-  pOverlayHighlightSourceOrderBackendNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomBackendNodeId,
+  pOverlayHighlightSourceOrderBackendNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMBackendNodeId,
   -- | JavaScript object id of the node to be highlighted.
   pOverlayHighlightSourceOrderObjectId :: Maybe Runtime.RuntimeRemoteObjectId
 } deriving (Generic, Eq, Show, Read)
@@ -843,23 +842,23 @@ overlaySetShowDebugBorders :: Handle ev -> POverlaySetShowDebugBorders -> IO ()
 overlaySetShowDebugBorders handle params = sendReceiveCommand handle "Overlay.setShowDebugBorders" (Just params)
 
 
--- | Parameters of the 'overlaySetShowFpsCounter' command.
-data POverlaySetShowFpsCounter = POverlaySetShowFpsCounter {
+-- | Parameters of the 'overlaySetShowFPSCounter' command.
+data POverlaySetShowFPSCounter = POverlaySetShowFPSCounter {
   -- | True for showing the FPS counter
-  pOverlaySetShowFpsCounterShow :: Bool
+  pOverlaySetShowFPSCounterShow :: Bool
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON POverlaySetShowFpsCounter  where
+instance ToJSON POverlaySetShowFPSCounter  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
 
-instance FromJSON  POverlaySetShowFpsCounter where
+instance FromJSON  POverlaySetShowFPSCounter where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
 -- | Function for the 'Overlay.setShowFPSCounter' command.
 --   Requests that backend shows the FPS counter
---   Parameters: 'POverlaySetShowFpsCounter'
-overlaySetShowFpsCounter :: Handle ev -> POverlaySetShowFpsCounter -> IO ()
-overlaySetShowFpsCounter handle params = sendReceiveCommand handle "Overlay.setShowFPSCounter" (Just params)
+--   Parameters: 'POverlaySetShowFPSCounter'
+overlaySetShowFPSCounter :: Handle ev -> POverlaySetShowFPSCounter -> IO ()
+overlaySetShowFPSCounter handle params = sendReceiveCommand handle "Overlay.setShowFPSCounter" (Just params)
 
 
 -- | Parameters of the 'overlaySetShowGridOverlays' command.

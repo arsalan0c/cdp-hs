@@ -39,7 +39,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -56,540 +55,540 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 
 
 -- | Type 'CSS.StyleSheetId'.
-type CssStyleSheetId = String
+type CSSStyleSheetId = String
 
 -- | Type 'CSS.StyleSheetOrigin'.
 --   Stylesheet type: "injected" for stylesheets injected via extension, "user-agent" for user-agent
 --   stylesheets, "inspector" for stylesheets created by the inspector (i.e. those holding the "via
 --   inspector" rules), "regular" for regular stylesheets.
-data CssStyleSheetOrigin = CssStyleSheetOriginInjected | CssStyleSheetOriginUserAgent | CssStyleSheetOriginInspector | CssStyleSheetOriginRegular
+data CSSStyleSheetOrigin = CSSStyleSheetOriginInjected | CSSStyleSheetOriginUserAgent | CSSStyleSheetOriginInspector | CSSStyleSheetOriginRegular
    deriving (Ord, Eq, Show, Read)
-instance FromJSON CssStyleSheetOrigin where
-   parseJSON = A.withText  "CssStyleSheetOrigin"  $ \v -> do
+instance FromJSON CSSStyleSheetOrigin where
+   parseJSON = A.withText  "CSSStyleSheetOrigin"  $ \v -> do
       case v of
-         "injected" -> pure CssStyleSheetOriginInjected
-         "user-agent" -> pure CssStyleSheetOriginUserAgent
-         "inspector" -> pure CssStyleSheetOriginInspector
-         "regular" -> pure CssStyleSheetOriginRegular
-         _ -> fail "failed to parse CssStyleSheetOrigin"
+         "injected" -> pure CSSStyleSheetOriginInjected
+         "user-agent" -> pure CSSStyleSheetOriginUserAgent
+         "inspector" -> pure CSSStyleSheetOriginInspector
+         "regular" -> pure CSSStyleSheetOriginRegular
+         _ -> fail "failed to parse CSSStyleSheetOrigin"
 
-instance ToJSON CssStyleSheetOrigin where
+instance ToJSON CSSStyleSheetOrigin where
    toJSON v = A.String $
       case v of
-         CssStyleSheetOriginInjected -> "injected"
-         CssStyleSheetOriginUserAgent -> "user-agent"
-         CssStyleSheetOriginInspector -> "inspector"
-         CssStyleSheetOriginRegular -> "regular"
+         CSSStyleSheetOriginInjected -> "injected"
+         CSSStyleSheetOriginUserAgent -> "user-agent"
+         CSSStyleSheetOriginInspector -> "inspector"
+         CSSStyleSheetOriginRegular -> "regular"
 
 
 
 -- | Type 'CSS.PseudoElementMatches'.
 --   CSS rule collection for a single pseudo style.
-data CssPseudoElementMatches = CssPseudoElementMatches {
+data CSSPseudoElementMatches = CSSPseudoElementMatches {
   -- | Pseudo element type.
-  cssPseudoElementMatchesPseudoType :: DOMPageNetworkEmulationSecurity.DomPseudoType,
+  cSSPseudoElementMatchesPseudoType :: DOMPageNetworkEmulationSecurity.DOMPseudoType,
   -- | Matches of CSS rules applicable to the pseudo style.
-  cssPseudoElementMatchesMatches :: [CssRuleMatch]
+  cSSPseudoElementMatchesMatches :: [CSSRuleMatch]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssPseudoElementMatches  where
+instance ToJSON CSSPseudoElementMatches  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
-instance FromJSON  CssPseudoElementMatches where
+instance FromJSON  CSSPseudoElementMatches where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
 
 -- | Type 'CSS.InheritedStyleEntry'.
 --   Inherited CSS rule collection from ancestor node.
-data CssInheritedStyleEntry = CssInheritedStyleEntry {
+data CSSInheritedStyleEntry = CSSInheritedStyleEntry {
   -- | The ancestor node's inline style, if any, in the style inheritance chain.
-  cssInheritedStyleEntryInlineStyle :: Maybe CssCssStyle,
+  cSSInheritedStyleEntryInlineStyle :: Maybe CSSCSSStyle,
   -- | Matches of CSS rules matching the ancestor node in the style inheritance chain.
-  cssInheritedStyleEntryMatchedCssRules :: [CssRuleMatch]
+  cSSInheritedStyleEntryMatchedCSSRules :: [CSSRuleMatch]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssInheritedStyleEntry  where
+instance ToJSON CSSInheritedStyleEntry  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
-instance FromJSON  CssInheritedStyleEntry where
+instance FromJSON  CSSInheritedStyleEntry where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
 
 -- | Type 'CSS.InheritedPseudoElementMatches'.
 --   Inherited pseudo element matches from pseudos of an ancestor node.
-data CssInheritedPseudoElementMatches = CssInheritedPseudoElementMatches {
+data CSSInheritedPseudoElementMatches = CSSInheritedPseudoElementMatches {
   -- | Matches of pseudo styles from the pseudos of an ancestor node.
-  cssInheritedPseudoElementMatchesPseudoElements :: [CssPseudoElementMatches]
+  cSSInheritedPseudoElementMatchesPseudoElements :: [CSSPseudoElementMatches]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssInheritedPseudoElementMatches  where
+instance ToJSON CSSInheritedPseudoElementMatches  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
 
-instance FromJSON  CssInheritedPseudoElementMatches where
+instance FromJSON  CSSInheritedPseudoElementMatches where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
 
 -- | Type 'CSS.RuleMatch'.
 --   Match data for a CSS rule.
-data CssRuleMatch = CssRuleMatch {
+data CSSRuleMatch = CSSRuleMatch {
   -- | CSS rule in the match.
-  cssRuleMatchRule :: CssCssRule,
+  cSSRuleMatchRule :: CSSCSSRule,
   -- | Matching selector indices in the rule's selectorList selectors (0-based).
-  cssRuleMatchMatchingSelectors :: [Int]
+  cSSRuleMatchMatchingSelectors :: [Int]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssRuleMatch  where
+instance ToJSON CSSRuleMatch  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 , A.omitNothingFields = True}
 
-instance FromJSON  CssRuleMatch where
+instance FromJSON  CSSRuleMatch where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 }
 
 
 
 -- | Type 'CSS.Value'.
 --   Data for a simple selector (these are delimited by commas in a selector list).
-data CssValue = CssValue {
+data CSSValue = CSSValue {
   -- | Value text.
-  cssValueText :: String,
+  cSSValueText :: String,
   -- | Value range in the underlying resource (if available).
-  cssValueRange :: Maybe CssSourceRange
+  cSSValueRange :: Maybe CSSSourceRange
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssValue  where
+instance ToJSON CSSValue  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 8 , A.omitNothingFields = True}
 
-instance FromJSON  CssValue where
+instance FromJSON  CSSValue where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 8 }
 
 
 
 -- | Type 'CSS.SelectorList'.
 --   Selector list data.
-data CssSelectorList = CssSelectorList {
+data CSSSelectorList = CSSSelectorList {
   -- | Selectors in the list.
-  cssSelectorListSelectors :: [CssValue],
+  cSSSelectorListSelectors :: [CSSValue],
   -- | Rule selector text.
-  cssSelectorListText :: String
+  cSSSelectorListText :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssSelectorList  where
+instance ToJSON CSSSelectorList  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
-instance FromJSON  CssSelectorList where
+instance FromJSON  CSSSelectorList where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
 
 -- | Type 'CSS.CSSStyleSheetHeader'.
 --   CSS stylesheet metainformation.
-data CssCssStyleSheetHeader = CssCssStyleSheetHeader {
+data CSSCSSStyleSheetHeader = CSSCSSStyleSheetHeader {
   -- | The stylesheet identifier.
-  cssCssStyleSheetHeaderStyleSheetId :: CssStyleSheetId,
+  cSSCSSStyleSheetHeaderStyleSheetId :: CSSStyleSheetId,
   -- | Owner frame identifier.
-  cssCssStyleSheetHeaderFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId,
+  cSSCSSStyleSheetHeaderFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId,
   -- | Stylesheet resource URL. Empty if this is a constructed stylesheet created using
   --   new CSSStyleSheet() (but non-empty if this is a constructed sylesheet imported
   --   as a CSS module script).
-  cssCssStyleSheetHeaderSourceUrl :: String,
+  cSSCSSStyleSheetHeaderSourceURL :: String,
   -- | URL of source map associated with the stylesheet (if any).
-  cssCssStyleSheetHeaderSourceMapUrl :: Maybe String,
+  cSSCSSStyleSheetHeaderSourceMapURL :: Maybe String,
   -- | Stylesheet origin.
-  cssCssStyleSheetHeaderOrigin :: CssStyleSheetOrigin,
+  cSSCSSStyleSheetHeaderOrigin :: CSSStyleSheetOrigin,
   -- | Stylesheet title.
-  cssCssStyleSheetHeaderTitle :: String,
+  cSSCSSStyleSheetHeaderTitle :: String,
   -- | The backend id for the owner node of the stylesheet.
-  cssCssStyleSheetHeaderOwnerNode :: Maybe DOMPageNetworkEmulationSecurity.DomBackendNodeId,
+  cSSCSSStyleSheetHeaderOwnerNode :: Maybe DOMPageNetworkEmulationSecurity.DOMBackendNodeId,
   -- | Denotes whether the stylesheet is disabled.
-  cssCssStyleSheetHeaderDisabled :: Bool,
+  cSSCSSStyleSheetHeaderDisabled :: Bool,
   -- | Whether the sourceURL field value comes from the sourceURL comment.
-  cssCssStyleSheetHeaderHasSourceUrl :: Maybe Bool,
+  cSSCSSStyleSheetHeaderHasSourceURL :: Maybe Bool,
   -- | Whether this stylesheet is created for STYLE tag by parser. This flag is not set for
   --   document.written STYLE tags.
-  cssCssStyleSheetHeaderIsInline :: Bool,
+  cSSCSSStyleSheetHeaderIsInline :: Bool,
   -- | Whether this stylesheet is mutable. Inline stylesheets become mutable
   --   after they have been modified via CSSOM API.
   --   <link> element's stylesheets become mutable only if DevTools modifies them.
   --   Constructed stylesheets (new CSSStyleSheet()) are mutable immediately after creation.
-  cssCssStyleSheetHeaderIsMutable :: Bool,
+  cSSCSSStyleSheetHeaderIsMutable :: Bool,
   -- | True if this stylesheet is created through new CSSStyleSheet() or imported as a
   --   CSS module script.
-  cssCssStyleSheetHeaderIsConstructed :: Bool,
+  cSSCSSStyleSheetHeaderIsConstructed :: Bool,
   -- | Line offset of the stylesheet within the resource (zero based).
-  cssCssStyleSheetHeaderStartLine :: Double,
+  cSSCSSStyleSheetHeaderStartLine :: Double,
   -- | Column offset of the stylesheet within the resource (zero based).
-  cssCssStyleSheetHeaderStartColumn :: Double,
+  cSSCSSStyleSheetHeaderStartColumn :: Double,
   -- | Size of the content (in characters).
-  cssCssStyleSheetHeaderLength :: Double,
+  cSSCSSStyleSheetHeaderLength :: Double,
   -- | Line offset of the end of the stylesheet within the resource (zero based).
-  cssCssStyleSheetHeaderEndLine :: Double,
+  cSSCSSStyleSheetHeaderEndLine :: Double,
   -- | Column offset of the end of the stylesheet within the resource (zero based).
-  cssCssStyleSheetHeaderEndColumn :: Double
+  cSSCSSStyleSheetHeaderEndColumn :: Double
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssCssStyleSheetHeader  where
+instance ToJSON CSSCSSStyleSheetHeader  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
-instance FromJSON  CssCssStyleSheetHeader where
+instance FromJSON  CSSCSSStyleSheetHeader where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
 
 -- | Type 'CSS.CSSRule'.
 --   CSS rule representation.
-data CssCssRule = CssCssRule {
+data CSSCSSRule = CSSCSSRule {
   -- | The css style sheet identifier (absent for user agent stylesheet and user-specified
   --   stylesheet rules) this rule came from.
-  cssCssRuleStyleSheetId :: Maybe CssStyleSheetId,
+  cSSCSSRuleStyleSheetId :: Maybe CSSStyleSheetId,
   -- | Rule selector data.
-  cssCssRuleSelectorList :: CssSelectorList,
+  cSSCSSRuleSelectorList :: CSSSelectorList,
   -- | Parent stylesheet's origin.
-  cssCssRuleOrigin :: CssStyleSheetOrigin,
+  cSSCSSRuleOrigin :: CSSStyleSheetOrigin,
   -- | Associated style declaration.
-  cssCssRuleStyle :: CssCssStyle,
+  cSSCSSRuleStyle :: CSSCSSStyle,
   -- | Media list array (for rules involving media queries). The array enumerates media queries
   --   starting with the innermost one, going outwards.
-  cssCssRuleMedia :: Maybe [CssCssMedia],
+  cSSCSSRuleMedia :: Maybe [CSSCSSMedia],
   -- | Container query list array (for rules involving container queries).
   --   The array enumerates container queries starting with the innermost one, going outwards.
-  cssCssRuleContainerQueries :: Maybe [CssCssContainerQuery],
+  cSSCSSRuleContainerQueries :: Maybe [CSSCSSContainerQuery],
   -- | @supports CSS at-rule array.
   --   The array enumerates @supports at-rules starting with the innermost one, going outwards.
-  cssCssRuleSupports :: Maybe [CssCssSupports],
+  cSSCSSRuleSupports :: Maybe [CSSCSSSupports],
   -- | Cascade layer array. Contains the layer hierarchy that this rule belongs to starting
   --   with the innermost layer and going outwards.
-  cssCssRuleLayers :: Maybe [CssCssLayer]
+  cSSCSSRuleLayers :: Maybe [CSSCSSLayer]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssCssRule  where
+instance ToJSON CSSCSSRule  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 , A.omitNothingFields = True}
 
-instance FromJSON  CssCssRule where
+instance FromJSON  CSSCSSRule where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 }
 
 
 
 -- | Type 'CSS.RuleUsage'.
 --   CSS coverage information.
-data CssRuleUsage = CssRuleUsage {
+data CSSRuleUsage = CSSRuleUsage {
   -- | The css style sheet identifier (absent for user agent stylesheet and user-specified
   --   stylesheet rules) this rule came from.
-  cssRuleUsageStyleSheetId :: CssStyleSheetId,
+  cSSRuleUsageStyleSheetId :: CSSStyleSheetId,
   -- | Offset of the start of the rule (including selector) from the beginning of the stylesheet.
-  cssRuleUsageStartOffset :: Double,
+  cSSRuleUsageStartOffset :: Double,
   -- | Offset of the end of the rule body from the beginning of the stylesheet.
-  cssRuleUsageEndOffset :: Double,
+  cSSRuleUsageEndOffset :: Double,
   -- | Indicates whether the rule was actually used by some element in the page.
-  cssRuleUsageUsed :: Bool
+  cSSRuleUsageUsed :: Bool
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssRuleUsage  where
+instance ToJSON CSSRuleUsage  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 , A.omitNothingFields = True}
 
-instance FromJSON  CssRuleUsage where
+instance FromJSON  CSSRuleUsage where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 }
 
 
 
 -- | Type 'CSS.SourceRange'.
 --   Text range within a resource. All numbers are zero-based.
-data CssSourceRange = CssSourceRange {
+data CSSSourceRange = CSSSourceRange {
   -- | Start line of range.
-  cssSourceRangeStartLine :: Int,
+  cSSSourceRangeStartLine :: Int,
   -- | Start column of range (inclusive).
-  cssSourceRangeStartColumn :: Int,
+  cSSSourceRangeStartColumn :: Int,
   -- | End line of range
-  cssSourceRangeEndLine :: Int,
+  cSSSourceRangeEndLine :: Int,
   -- | End column of range (exclusive).
-  cssSourceRangeEndColumn :: Int
+  cSSSourceRangeEndColumn :: Int
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssSourceRange  where
+instance ToJSON CSSSourceRange  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
 
-instance FromJSON  CssSourceRange where
+instance FromJSON  CSSSourceRange where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
 
 -- | Type 'CSS.ShorthandEntry'.
-data CssShorthandEntry = CssShorthandEntry {
+data CSSShorthandEntry = CSSShorthandEntry {
   -- | Shorthand name.
-  cssShorthandEntryName :: String,
+  cSSShorthandEntryName :: String,
   -- | Shorthand value.
-  cssShorthandEntryValue :: String,
+  cSSShorthandEntryValue :: String,
   -- | Whether the property has "!important" annotation (implies `false` if absent).
-  cssShorthandEntryImportant :: Maybe Bool
+  cSSShorthandEntryImportant :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssShorthandEntry  where
+instance ToJSON CSSShorthandEntry  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
-instance FromJSON  CssShorthandEntry where
+instance FromJSON  CSSShorthandEntry where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
 
 -- | Type 'CSS.CSSComputedStyleProperty'.
-data CssCssComputedStyleProperty = CssCssComputedStyleProperty {
+data CSSCSSComputedStyleProperty = CSSCSSComputedStyleProperty {
   -- | Computed style property name.
-  cssCssComputedStylePropertyName :: String,
+  cSSCSSComputedStylePropertyName :: String,
   -- | Computed style property value.
-  cssCssComputedStylePropertyValue :: String
+  cSSCSSComputedStylePropertyValue :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssCssComputedStyleProperty  where
+instance ToJSON CSSCSSComputedStyleProperty  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
-instance FromJSON  CssCssComputedStyleProperty where
+instance FromJSON  CSSCSSComputedStyleProperty where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
 
 -- | Type 'CSS.CSSStyle'.
 --   CSS style representation.
-data CssCssStyle = CssCssStyle {
+data CSSCSSStyle = CSSCSSStyle {
   -- | The css style sheet identifier (absent for user agent stylesheet and user-specified
   --   stylesheet rules) this rule came from.
-  cssCssStyleStyleSheetId :: Maybe CssStyleSheetId,
+  cSSCSSStyleStyleSheetId :: Maybe CSSStyleSheetId,
   -- | CSS properties in the style.
-  cssCssStyleCssProperties :: [CssCssProperty],
+  cSSCSSStyleCssProperties :: [CSSCSSProperty],
   -- | Computed values for all shorthands found in the style.
-  cssCssStyleShorthandEntries :: [CssShorthandEntry],
+  cSSCSSStyleShorthandEntries :: [CSSShorthandEntry],
   -- | Style declaration text (if available).
-  cssCssStyleCssText :: Maybe String,
+  cSSCSSStyleCssText :: Maybe String,
   -- | Style declaration range in the enclosing stylesheet (if available).
-  cssCssStyleRange :: Maybe CssSourceRange
+  cSSCSSStyleRange :: Maybe CSSSourceRange
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssCssStyle  where
+instance ToJSON CSSCSSStyle  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 , A.omitNothingFields = True}
 
-instance FromJSON  CssCssStyle where
+instance FromJSON  CSSCSSStyle where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 }
 
 
 
 -- | Type 'CSS.CSSProperty'.
 --   CSS property declaration data.
-data CssCssProperty = CssCssProperty {
+data CSSCSSProperty = CSSCSSProperty {
   -- | The property name.
-  cssCssPropertyName :: String,
+  cSSCSSPropertyName :: String,
   -- | The property value.
-  cssCssPropertyValue :: String,
+  cSSCSSPropertyValue :: String,
   -- | Whether the property has "!important" annotation (implies `false` if absent).
-  cssCssPropertyImportant :: Maybe Bool,
+  cSSCSSPropertyImportant :: Maybe Bool,
   -- | Whether the property is implicit (implies `false` if absent).
-  cssCssPropertyImplicit :: Maybe Bool,
+  cSSCSSPropertyImplicit :: Maybe Bool,
   -- | The full property text as specified in the style.
-  cssCssPropertyText :: Maybe String,
+  cSSCSSPropertyText :: Maybe String,
   -- | Whether the property is understood by the browser (implies `true` if absent).
-  cssCssPropertyParsedOk :: Maybe Bool,
+  cSSCSSPropertyParsedOk :: Maybe Bool,
   -- | Whether the property is disabled by the user (present for source-based properties only).
-  cssCssPropertyDisabled :: Maybe Bool,
+  cSSCSSPropertyDisabled :: Maybe Bool,
   -- | The entire property range in the enclosing style declaration (if available).
-  cssCssPropertyRange :: Maybe CssSourceRange
+  cSSCSSPropertyRange :: Maybe CSSSourceRange
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssCssProperty  where
+instance ToJSON CSSCSSProperty  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
 
-instance FromJSON  CssCssProperty where
+instance FromJSON  CSSCSSProperty where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
 
 -- | Type 'CSS.CSSMedia'.
 --   CSS media rule descriptor.
-data CssCssMediaSource = CssCssMediaSourceMediaRule | CssCssMediaSourceImportRule | CssCssMediaSourceLinkedSheet | CssCssMediaSourceInlineSheet
+data CSSCSSMediaSource = CSSCSSMediaSourceMediaRule | CSSCSSMediaSourceImportRule | CSSCSSMediaSourceLinkedSheet | CSSCSSMediaSourceInlineSheet
    deriving (Ord, Eq, Show, Read)
-instance FromJSON CssCssMediaSource where
-   parseJSON = A.withText  "CssCssMediaSource"  $ \v -> do
+instance FromJSON CSSCSSMediaSource where
+   parseJSON = A.withText  "CSSCSSMediaSource"  $ \v -> do
       case v of
-         "mediaRule" -> pure CssCssMediaSourceMediaRule
-         "importRule" -> pure CssCssMediaSourceImportRule
-         "linkedSheet" -> pure CssCssMediaSourceLinkedSheet
-         "inlineSheet" -> pure CssCssMediaSourceInlineSheet
-         _ -> fail "failed to parse CssCssMediaSource"
+         "mediaRule" -> pure CSSCSSMediaSourceMediaRule
+         "importRule" -> pure CSSCSSMediaSourceImportRule
+         "linkedSheet" -> pure CSSCSSMediaSourceLinkedSheet
+         "inlineSheet" -> pure CSSCSSMediaSourceInlineSheet
+         _ -> fail "failed to parse CSSCSSMediaSource"
 
-instance ToJSON CssCssMediaSource where
+instance ToJSON CSSCSSMediaSource where
    toJSON v = A.String $
       case v of
-         CssCssMediaSourceMediaRule -> "mediaRule"
-         CssCssMediaSourceImportRule -> "importRule"
-         CssCssMediaSourceLinkedSheet -> "linkedSheet"
-         CssCssMediaSourceInlineSheet -> "inlineSheet"
+         CSSCSSMediaSourceMediaRule -> "mediaRule"
+         CSSCSSMediaSourceImportRule -> "importRule"
+         CSSCSSMediaSourceLinkedSheet -> "linkedSheet"
+         CSSCSSMediaSourceInlineSheet -> "inlineSheet"
 
 
 
-data CssCssMedia = CssCssMedia {
+data CSSCSSMedia = CSSCSSMedia {
   -- | Media query text.
-  cssCssMediaText :: String,
+  cSSCSSMediaText :: String,
   -- | Source of the media query: "mediaRule" if specified by a @media rule, "importRule" if
   --   specified by an @import rule, "linkedSheet" if specified by a "media" attribute in a linked
   --   stylesheet's LINK tag, "inlineSheet" if specified by a "media" attribute in an inline
   --   stylesheet's STYLE tag.
-  cssCssMediaSource :: CssCssMediaSource,
+  cSSCSSMediaSource :: CSSCSSMediaSource,
   -- | URL of the document containing the media query description.
-  cssCssMediaSourceUrl :: Maybe String,
+  cSSCSSMediaSourceURL :: Maybe String,
   -- | The associated rule (@media or @import) header range in the enclosing stylesheet (if
   --   available).
-  cssCssMediaRange :: Maybe CssSourceRange,
+  cSSCSSMediaRange :: Maybe CSSSourceRange,
   -- | Identifier of the stylesheet containing this object (if exists).
-  cssCssMediaStyleSheetId :: Maybe CssStyleSheetId,
+  cSSCSSMediaStyleSheetId :: Maybe CSSStyleSheetId,
   -- | Array of media queries.
-  cssCssMediaMediaList :: Maybe [CssMediaQuery]
+  cSSCSSMediaMediaList :: Maybe [CSSMediaQuery]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssCssMedia  where
+instance ToJSON CSSCSSMedia  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 , A.omitNothingFields = True}
 
-instance FromJSON  CssCssMedia where
+instance FromJSON  CSSCSSMedia where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 }
 
 
 
 -- | Type 'CSS.MediaQuery'.
 --   Media query descriptor.
-data CssMediaQuery = CssMediaQuery {
+data CSSMediaQuery = CSSMediaQuery {
   -- | Array of media query expressions.
-  cssMediaQueryExpressions :: [CssMediaQueryExpression],
+  cSSMediaQueryExpressions :: [CSSMediaQueryExpression],
   -- | Whether the media query condition is satisfied.
-  cssMediaQueryActive :: Bool
+  cSSMediaQueryActive :: Bool
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssMediaQuery  where
+instance ToJSON CSSMediaQuery  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 , A.omitNothingFields = True}
 
-instance FromJSON  CssMediaQuery where
+instance FromJSON  CSSMediaQuery where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 }
 
 
 
 -- | Type 'CSS.MediaQueryExpression'.
 --   Media query expression descriptor.
-data CssMediaQueryExpression = CssMediaQueryExpression {
+data CSSMediaQueryExpression = CSSMediaQueryExpression {
   -- | Media query expression value.
-  cssMediaQueryExpressionValue :: Double,
+  cSSMediaQueryExpressionValue :: Double,
   -- | Media query expression units.
-  cssMediaQueryExpressionUnit :: String,
+  cSSMediaQueryExpressionUnit :: String,
   -- | Media query expression feature.
-  cssMediaQueryExpressionFeature :: String,
+  cSSMediaQueryExpressionFeature :: String,
   -- | The associated range of the value text in the enclosing stylesheet (if available).
-  cssMediaQueryExpressionValueRange :: Maybe CssSourceRange,
+  cSSMediaQueryExpressionValueRange :: Maybe CSSSourceRange,
   -- | Computed length of media query expression (if applicable).
-  cssMediaQueryExpressionComputedLength :: Maybe Double
+  cSSMediaQueryExpressionComputedLength :: Maybe Double
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssMediaQueryExpression  where
+instance ToJSON CSSMediaQueryExpression  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
-instance FromJSON  CssMediaQueryExpression where
+instance FromJSON  CSSMediaQueryExpression where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
 
 -- | Type 'CSS.CSSContainerQuery'.
 --   CSS container query rule descriptor.
-data CssCssContainerQuery = CssCssContainerQuery {
+data CSSCSSContainerQuery = CSSCSSContainerQuery {
   -- | Container query text.
-  cssCssContainerQueryText :: String,
+  cSSCSSContainerQueryText :: String,
   -- | The associated rule header range in the enclosing stylesheet (if
   --   available).
-  cssCssContainerQueryRange :: Maybe CssSourceRange,
+  cSSCSSContainerQueryRange :: Maybe CSSSourceRange,
   -- | Identifier of the stylesheet containing this object (if exists).
-  cssCssContainerQueryStyleSheetId :: Maybe CssStyleSheetId,
+  cSSCSSContainerQueryStyleSheetId :: Maybe CSSStyleSheetId,
   -- | Optional name for the container.
-  cssCssContainerQueryName :: Maybe String
+  cSSCSSContainerQueryName :: Maybe String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssCssContainerQuery  where
+instance ToJSON CSSCSSContainerQuery  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
-instance FromJSON  CssCssContainerQuery where
+instance FromJSON  CSSCSSContainerQuery where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
 
 -- | Type 'CSS.CSSSupports'.
 --   CSS Supports at-rule descriptor.
-data CssCssSupports = CssCssSupports {
+data CSSCSSSupports = CSSCSSSupports {
   -- | Supports rule text.
-  cssCssSupportsText :: String,
+  cSSCSSSupportsText :: String,
   -- | Whether the supports condition is satisfied.
-  cssCssSupportsActive :: Bool,
+  cSSCSSSupportsActive :: Bool,
   -- | The associated rule header range in the enclosing stylesheet (if
   --   available).
-  cssCssSupportsRange :: Maybe CssSourceRange,
+  cSSCSSSupportsRange :: Maybe CSSSourceRange,
   -- | Identifier of the stylesheet containing this object (if exists).
-  cssCssSupportsStyleSheetId :: Maybe CssStyleSheetId
+  cSSCSSSupportsStyleSheetId :: Maybe CSSStyleSheetId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssCssSupports  where
+instance ToJSON CSSCSSSupports  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
 
-instance FromJSON  CssCssSupports where
+instance FromJSON  CSSCSSSupports where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
 
 -- | Type 'CSS.CSSLayer'.
 --   CSS Layer at-rule descriptor.
-data CssCssLayer = CssCssLayer {
+data CSSCSSLayer = CSSCSSLayer {
   -- | Layer name.
-  cssCssLayerText :: String,
+  cSSCSSLayerText :: String,
   -- | The associated rule header range in the enclosing stylesheet (if
   --   available).
-  cssCssLayerRange :: Maybe CssSourceRange,
+  cSSCSSLayerRange :: Maybe CSSSourceRange,
   -- | Identifier of the stylesheet containing this object (if exists).
-  cssCssLayerStyleSheetId :: Maybe CssStyleSheetId
+  cSSCSSLayerStyleSheetId :: Maybe CSSStyleSheetId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssCssLayer  where
+instance ToJSON CSSCSSLayer  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 , A.omitNothingFields = True}
 
-instance FromJSON  CssCssLayer where
+instance FromJSON  CSSCSSLayer where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 }
 
 
 
 -- | Type 'CSS.CSSLayerData'.
 --   CSS Layer data.
-data CssCssLayerData = CssCssLayerData {
+data CSSCSSLayerData = CSSCSSLayerData {
   -- | Layer name.
-  cssCssLayerDataName :: String,
+  cSSCSSLayerDataName :: String,
   -- | Direct sub-layers
-  cssCssLayerDataSubLayers :: Maybe [CssCssLayerData],
+  cSSCSSLayerDataSubLayers :: Maybe [CSSCSSLayerData],
   -- | Layer order. The order determines the order of the layer in the cascade order.
   --   A higher number has higher priority in the cascade order.
-  cssCssLayerDataOrder :: Double
+  cSSCSSLayerDataOrder :: Double
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssCssLayerData  where
+instance ToJSON CSSCSSLayerData  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
-instance FromJSON  CssCssLayerData where
+instance FromJSON  CSSCSSLayerData where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
 
 -- | Type 'CSS.PlatformFontUsage'.
 --   Information about amount of glyphs that were rendered with given font.
-data CssPlatformFontUsage = CssPlatformFontUsage {
+data CSSPlatformFontUsage = CSSPlatformFontUsage {
   -- | Font's family name reported by platform.
-  cssPlatformFontUsageFamilyName :: String,
+  cSSPlatformFontUsageFamilyName :: String,
   -- | Indicates if the font was downloaded or resolved locally.
-  cssPlatformFontUsageIsCustomFont :: Bool,
+  cSSPlatformFontUsageIsCustomFont :: Bool,
   -- | Amount of glyphs that were rendered with this font.
-  cssPlatformFontUsageGlyphCount :: Double
+  cSSPlatformFontUsageGlyphCount :: Double
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssPlatformFontUsage  where
+instance ToJSON CSSPlatformFontUsage  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
-instance FromJSON  CssPlatformFontUsage where
+instance FromJSON  CSSPlatformFontUsage where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
 
 -- | Type 'CSS.FontVariationAxis'.
 --   Information about font variation axes for variable fonts
-data CssFontVariationAxis = CssFontVariationAxis {
+data CSSFontVariationAxis = CSSFontVariationAxis {
   -- | The font-variation-setting tag (a.k.a. "axis tag").
-  cssFontVariationAxisTag :: String,
+  cSSFontVariationAxisTag :: String,
   -- | Human-readable variation name in the default language (normally, "en").
-  cssFontVariationAxisName :: String,
+  cSSFontVariationAxisName :: String,
   -- | The minimum value (inclusive) the font supports for this tag.
-  cssFontVariationAxisMinValue :: Double,
+  cSSFontVariationAxisMinValue :: Double,
   -- | The maximum value (inclusive) the font supports for this tag.
-  cssFontVariationAxisMaxValue :: Double,
+  cSSFontVariationAxisMaxValue :: Double,
   -- | The default value.
-  cssFontVariationAxisDefaultValue :: Double
+  cSSFontVariationAxisDefaultValue :: Double
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssFontVariationAxis  where
+instance ToJSON CSSFontVariationAxis  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
-instance FromJSON  CssFontVariationAxis where
+instance FromJSON  CSSFontVariationAxis where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
@@ -597,85 +596,85 @@ instance FromJSON  CssFontVariationAxis where
 -- | Type 'CSS.FontFace'.
 --   Properties of a web font: https://www.w3.org/TR/2008/REC-CSS2-20080411/fonts.html#font-descriptions
 --   and additional information such as platformFontFamily and fontVariationAxes.
-data CssFontFace = CssFontFace {
+data CSSFontFace = CSSFontFace {
   -- | The font-family.
-  cssFontFaceFontFamily :: String,
+  cSSFontFaceFontFamily :: String,
   -- | The font-style.
-  cssFontFaceFontStyle :: String,
+  cSSFontFaceFontStyle :: String,
   -- | The font-variant.
-  cssFontFaceFontVariant :: String,
+  cSSFontFaceFontVariant :: String,
   -- | The font-weight.
-  cssFontFaceFontWeight :: String,
+  cSSFontFaceFontWeight :: String,
   -- | The font-stretch.
-  cssFontFaceFontStretch :: String,
+  cSSFontFaceFontStretch :: String,
   -- | The unicode-range.
-  cssFontFaceUnicodeRange :: String,
+  cSSFontFaceUnicodeRange :: String,
   -- | The src.
-  cssFontFaceSrc :: String,
+  cSSFontFaceSrc :: String,
   -- | The resolved platform font family
-  cssFontFacePlatformFontFamily :: String,
+  cSSFontFacePlatformFontFamily :: String,
   -- | Available variation settings (a.k.a. "axes").
-  cssFontFaceFontVariationAxes :: Maybe [CssFontVariationAxis]
+  cSSFontFaceFontVariationAxes :: Maybe [CSSFontVariationAxis]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssFontFace  where
+instance ToJSON CSSFontFace  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 , A.omitNothingFields = True}
 
-instance FromJSON  CssFontFace where
+instance FromJSON  CSSFontFace where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 }
 
 
 
 -- | Type 'CSS.CSSKeyframesRule'.
 --   CSS keyframes rule representation.
-data CssCssKeyframesRule = CssCssKeyframesRule {
+data CSSCSSKeyframesRule = CSSCSSKeyframesRule {
   -- | Animation name.
-  cssCssKeyframesRuleAnimationName :: CssValue,
+  cSSCSSKeyframesRuleAnimationName :: CSSValue,
   -- | List of keyframes.
-  cssCssKeyframesRuleKeyframes :: [CssCssKeyframeRule]
+  cSSCSSKeyframesRuleKeyframes :: [CSSCSSKeyframeRule]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssCssKeyframesRule  where
+instance ToJSON CSSCSSKeyframesRule  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
-instance FromJSON  CssCssKeyframesRule where
+instance FromJSON  CSSCSSKeyframesRule where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
 
 -- | Type 'CSS.CSSKeyframeRule'.
 --   CSS keyframe rule representation.
-data CssCssKeyframeRule = CssCssKeyframeRule {
+data CSSCSSKeyframeRule = CSSCSSKeyframeRule {
   -- | The css style sheet identifier (absent for user agent stylesheet and user-specified
   --   stylesheet rules) this rule came from.
-  cssCssKeyframeRuleStyleSheetId :: Maybe CssStyleSheetId,
+  cSSCSSKeyframeRuleStyleSheetId :: Maybe CSSStyleSheetId,
   -- | Parent stylesheet's origin.
-  cssCssKeyframeRuleOrigin :: CssStyleSheetOrigin,
+  cSSCSSKeyframeRuleOrigin :: CSSStyleSheetOrigin,
   -- | Associated key text.
-  cssCssKeyframeRuleKeyText :: CssValue,
+  cSSCSSKeyframeRuleKeyText :: CSSValue,
   -- | Associated style declaration.
-  cssCssKeyframeRuleStyle :: CssCssStyle
+  cSSCSSKeyframeRuleStyle :: CSSCSSStyle
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssCssKeyframeRule  where
+instance ToJSON CSSCSSKeyframeRule  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
-instance FromJSON  CssCssKeyframeRule where
+instance FromJSON  CSSCSSKeyframeRule where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
 
 -- | Type 'CSS.StyleDeclarationEdit'.
 --   A descriptor of operation to mutate style declaration text.
-data CssStyleDeclarationEdit = CssStyleDeclarationEdit {
+data CSSStyleDeclarationEdit = CSSStyleDeclarationEdit {
   -- | The css style sheet identifier.
-  cssStyleDeclarationEditStyleSheetId :: CssStyleSheetId,
+  cSSStyleDeclarationEditStyleSheetId :: CSSStyleSheetId,
   -- | The range of the style text in the enclosing stylesheet.
-  cssStyleDeclarationEditRange :: CssSourceRange,
+  cSSStyleDeclarationEditRange :: CSSSourceRange,
   -- | New style text.
-  cssStyleDeclarationEditText :: String
+  cSSStyleDeclarationEditText :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssStyleDeclarationEdit  where
+instance ToJSON CSSStyleDeclarationEdit  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
-instance FromJSON  CssStyleDeclarationEdit where
+instance FromJSON  CSSStyleDeclarationEdit where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
@@ -683,462 +682,462 @@ instance FromJSON  CssStyleDeclarationEdit where
 
 
 -- | Type of the 'CSS.fontsUpdated' event.
-data CssFontsUpdated = CssFontsUpdated {
+data CSSFontsUpdated = CSSFontsUpdated {
   -- | The web font that has loaded.
-  cssFontsUpdatedFont :: Maybe CssFontFace
+  cSSFontsUpdatedFont :: Maybe CSSFontFace
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssFontsUpdated  where
+instance ToJSON CSSFontsUpdated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
-instance FromJSON  CssFontsUpdated where
+instance FromJSON  CSSFontsUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
-instance Event CssFontsUpdated where
+instance Event CSSFontsUpdated where
     eventName _ = "CSS.fontsUpdated"
 
 -- | Type of the 'CSS.mediaQueryResultChanged' event.
-data CssMediaQueryResultChanged = CssMediaQueryResultChanged
+data CSSMediaQueryResultChanged = CSSMediaQueryResultChanged
    deriving (Eq, Show, Read)
-instance FromJSON CssMediaQueryResultChanged where
-   parseJSON = A.withText  "CssMediaQueryResultChanged"  $ \v -> do
+instance FromJSON CSSMediaQueryResultChanged where
+   parseJSON = A.withText  "CSSMediaQueryResultChanged"  $ \v -> do
       case v of
-         "CssMediaQueryResultChanged" -> pure CssMediaQueryResultChanged
-         _ -> fail "failed to parse CssMediaQueryResultChanged"
+         "CSSMediaQueryResultChanged" -> pure CSSMediaQueryResultChanged
+         _ -> fail "failed to parse CSSMediaQueryResultChanged"
 
 
-instance Event CssMediaQueryResultChanged where
+instance Event CSSMediaQueryResultChanged where
     eventName _ = "CSS.mediaQueryResultChanged"
 
 -- | Type of the 'CSS.styleSheetAdded' event.
-data CssStyleSheetAdded = CssStyleSheetAdded {
+data CSSStyleSheetAdded = CSSStyleSheetAdded {
   -- | Added stylesheet metainfo.
-  cssStyleSheetAddedHeader :: CssCssStyleSheetHeader
+  cSSStyleSheetAddedHeader :: CSSCSSStyleSheetHeader
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssStyleSheetAdded  where
+instance ToJSON CSSStyleSheetAdded  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
-instance FromJSON  CssStyleSheetAdded where
+instance FromJSON  CSSStyleSheetAdded where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
-instance Event CssStyleSheetAdded where
+instance Event CSSStyleSheetAdded where
     eventName _ = "CSS.styleSheetAdded"
 
 -- | Type of the 'CSS.styleSheetChanged' event.
-data CssStyleSheetChanged = CssStyleSheetChanged {
-  cssStyleSheetChangedStyleSheetId :: CssStyleSheetId
+data CSSStyleSheetChanged = CSSStyleSheetChanged {
+  cSSStyleSheetChangedStyleSheetId :: CSSStyleSheetId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssStyleSheetChanged  where
+instance ToJSON CSSStyleSheetChanged  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
-instance FromJSON  CssStyleSheetChanged where
+instance FromJSON  CSSStyleSheetChanged where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
-instance Event CssStyleSheetChanged where
+instance Event CSSStyleSheetChanged where
     eventName _ = "CSS.styleSheetChanged"
 
 -- | Type of the 'CSS.styleSheetRemoved' event.
-data CssStyleSheetRemoved = CssStyleSheetRemoved {
+data CSSStyleSheetRemoved = CSSStyleSheetRemoved {
   -- | Identifier of the removed stylesheet.
-  cssStyleSheetRemovedStyleSheetId :: CssStyleSheetId
+  cSSStyleSheetRemovedStyleSheetId :: CSSStyleSheetId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON CssStyleSheetRemoved  where
+instance ToJSON CSSStyleSheetRemoved  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
-instance FromJSON  CssStyleSheetRemoved where
+instance FromJSON  CSSStyleSheetRemoved where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
-instance Event CssStyleSheetRemoved where
+instance Event CSSStyleSheetRemoved where
     eventName _ = "CSS.styleSheetRemoved"
 
 
 
--- | Parameters of the 'cssAddRule' command.
-data PCssAddRule = PCssAddRule {
+-- | Parameters of the 'cSSAddRule' command.
+data PCSSAddRule = PCSSAddRule {
   -- | The css style sheet identifier where a new rule should be inserted.
-  pCssAddRuleStyleSheetId :: CssStyleSheetId,
+  pCSSAddRuleStyleSheetId :: CSSStyleSheetId,
   -- | The text of a new rule.
-  pCssAddRuleRuleText :: String,
+  pCSSAddRuleRuleText :: String,
   -- | Text position of a new rule in the target style sheet.
-  pCssAddRuleLocation :: CssSourceRange
+  pCSSAddRuleLocation :: CSSSourceRange
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssAddRule  where
+instance ToJSON PCSSAddRule  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 , A.omitNothingFields = True}
 
-instance FromJSON  PCssAddRule where
+instance FromJSON  PCSSAddRule where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 }
 
 
 -- | Function for the 'CSS.addRule' command.
 --   Inserts a new rule with the given `ruleText` in a stylesheet with given `styleSheetId`, at the
 --   position specified by `location`.
---   Parameters: 'PCssAddRule'
---   Returns: 'CssAddRule'
-cssAddRule :: Handle ev -> PCssAddRule -> IO CssAddRule
-cssAddRule handle params = sendReceiveCommandResult handle "CSS.addRule" (Just params)
+--   Parameters: 'PCSSAddRule'
+--   Returns: 'CSSAddRule'
+cSSAddRule :: Handle ev -> PCSSAddRule -> IO CSSAddRule
+cSSAddRule handle params = sendReceiveCommandResult handle "CSS.addRule" (Just params)
 
--- | Return type of the 'cssAddRule' command.
-data CssAddRule = CssAddRule {
+-- | Return type of the 'cSSAddRule' command.
+data CSSAddRule = CSSAddRule {
   -- | The newly created rule.
-  cssAddRuleRule :: CssCssRule
+  cSSAddRuleRule :: CSSCSSRule
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssAddRule where
+instance FromJSON  CSSAddRule where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 }
 
-instance Command CssAddRule where
+instance Command CSSAddRule where
    commandName _ = "CSS.addRule"
 
 
 
--- | Parameters of the 'cssCollectClassNames' command.
-data PCssCollectClassNames = PCssCollectClassNames {
-  pCssCollectClassNamesStyleSheetId :: CssStyleSheetId
+-- | Parameters of the 'cSSCollectClassNames' command.
+data PCSSCollectClassNames = PCSSCollectClassNames {
+  pCSSCollectClassNamesStyleSheetId :: CSSStyleSheetId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssCollectClassNames  where
+instance ToJSON PCSSCollectClassNames  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
-instance FromJSON  PCssCollectClassNames where
+instance FromJSON  PCSSCollectClassNames where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
 -- | Function for the 'CSS.collectClassNames' command.
 --   Returns all class names from specified stylesheet.
---   Parameters: 'PCssCollectClassNames'
---   Returns: 'CssCollectClassNames'
-cssCollectClassNames :: Handle ev -> PCssCollectClassNames -> IO CssCollectClassNames
-cssCollectClassNames handle params = sendReceiveCommandResult handle "CSS.collectClassNames" (Just params)
+--   Parameters: 'PCSSCollectClassNames'
+--   Returns: 'CSSCollectClassNames'
+cSSCollectClassNames :: Handle ev -> PCSSCollectClassNames -> IO CSSCollectClassNames
+cSSCollectClassNames handle params = sendReceiveCommandResult handle "CSS.collectClassNames" (Just params)
 
--- | Return type of the 'cssCollectClassNames' command.
-data CssCollectClassNames = CssCollectClassNames {
+-- | Return type of the 'cSSCollectClassNames' command.
+data CSSCollectClassNames = CSSCollectClassNames {
   -- | Class name list.
-  cssCollectClassNamesClassNames :: [String]
+  cSSCollectClassNamesClassNames :: [String]
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssCollectClassNames where
+instance FromJSON  CSSCollectClassNames where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command CssCollectClassNames where
+instance Command CSSCollectClassNames where
    commandName _ = "CSS.collectClassNames"
 
 
 
--- | Parameters of the 'cssCreateStyleSheet' command.
-data PCssCreateStyleSheet = PCssCreateStyleSheet {
+-- | Parameters of the 'cSSCreateStyleSheet' command.
+data PCSSCreateStyleSheet = PCSSCreateStyleSheet {
   -- | Identifier of the frame where "via-inspector" stylesheet should be created.
-  pCssCreateStyleSheetFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId
+  pCSSCreateStyleSheetFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssCreateStyleSheet  where
+instance ToJSON PCSSCreateStyleSheet  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
-instance FromJSON  PCssCreateStyleSheet where
+instance FromJSON  PCSSCreateStyleSheet where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
 -- | Function for the 'CSS.createStyleSheet' command.
 --   Creates a new special "via-inspector" stylesheet in the frame with given `frameId`.
---   Parameters: 'PCssCreateStyleSheet'
---   Returns: 'CssCreateStyleSheet'
-cssCreateStyleSheet :: Handle ev -> PCssCreateStyleSheet -> IO CssCreateStyleSheet
-cssCreateStyleSheet handle params = sendReceiveCommandResult handle "CSS.createStyleSheet" (Just params)
+--   Parameters: 'PCSSCreateStyleSheet'
+--   Returns: 'CSSCreateStyleSheet'
+cSSCreateStyleSheet :: Handle ev -> PCSSCreateStyleSheet -> IO CSSCreateStyleSheet
+cSSCreateStyleSheet handle params = sendReceiveCommandResult handle "CSS.createStyleSheet" (Just params)
 
--- | Return type of the 'cssCreateStyleSheet' command.
-data CssCreateStyleSheet = CssCreateStyleSheet {
+-- | Return type of the 'cSSCreateStyleSheet' command.
+data CSSCreateStyleSheet = CSSCreateStyleSheet {
   -- | Identifier of the created "via-inspector" stylesheet.
-  cssCreateStyleSheetStyleSheetId :: CssStyleSheetId
+  cSSCreateStyleSheetStyleSheetId :: CSSStyleSheetId
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssCreateStyleSheet where
+instance FromJSON  CSSCreateStyleSheet where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
-instance Command CssCreateStyleSheet where
+instance Command CSSCreateStyleSheet where
    commandName _ = "CSS.createStyleSheet"
 
 
 
 -- | Function for the 'CSS.disable' command.
 --   Disables the CSS agent for the given page.
-cssDisable :: Handle ev -> IO ()
-cssDisable handle = sendReceiveCommand handle "CSS.disable" (Nothing :: Maybe ())
+cSSDisable :: Handle ev -> IO ()
+cSSDisable handle = sendReceiveCommand handle "CSS.disable" (Nothing :: Maybe ())
 
 
 -- | Function for the 'CSS.enable' command.
 --   Enables the CSS agent for the given page. Clients should not assume that the CSS agent has been
 --   enabled until the result of this command is received.
-cssEnable :: Handle ev -> IO ()
-cssEnable handle = sendReceiveCommand handle "CSS.enable" (Nothing :: Maybe ())
+cSSEnable :: Handle ev -> IO ()
+cSSEnable handle = sendReceiveCommand handle "CSS.enable" (Nothing :: Maybe ())
 
 
--- | Parameters of the 'cssForcePseudoState' command.
-data PCssForcePseudoState = PCssForcePseudoState {
+-- | Parameters of the 'cSSForcePseudoState' command.
+data PCSSForcePseudoState = PCSSForcePseudoState {
   -- | The element id for which to force the pseudo state.
-  pCssForcePseudoStateNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId,
+  pCSSForcePseudoStateNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId,
   -- | Element pseudo classes to force when computing the element's style.
-  pCssForcePseudoStateForcedPseudoClasses :: [String]
+  pCSSForcePseudoStateForcedPseudoClasses :: [String]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssForcePseudoState  where
+instance ToJSON PCSSForcePseudoState  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
-instance FromJSON  PCssForcePseudoState where
+instance FromJSON  PCSSForcePseudoState where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
 -- | Function for the 'CSS.forcePseudoState' command.
 --   Ensures that the given node will have specified pseudo-classes whenever its style is computed by
 --   the browser.
---   Parameters: 'PCssForcePseudoState'
-cssForcePseudoState :: Handle ev -> PCssForcePseudoState -> IO ()
-cssForcePseudoState handle params = sendReceiveCommand handle "CSS.forcePseudoState" (Just params)
+--   Parameters: 'PCSSForcePseudoState'
+cSSForcePseudoState :: Handle ev -> PCSSForcePseudoState -> IO ()
+cSSForcePseudoState handle params = sendReceiveCommand handle "CSS.forcePseudoState" (Just params)
 
 
--- | Parameters of the 'cssGetBackgroundColors' command.
-data PCssGetBackgroundColors = PCssGetBackgroundColors {
+-- | Parameters of the 'cSSGetBackgroundColors' command.
+data PCSSGetBackgroundColors = PCSSGetBackgroundColors {
   -- | Id of the node to get background colors for.
-  pCssGetBackgroundColorsNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId
+  pCSSGetBackgroundColorsNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssGetBackgroundColors  where
+instance ToJSON PCSSGetBackgroundColors  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
-instance FromJSON  PCssGetBackgroundColors where
+instance FromJSON  PCSSGetBackgroundColors where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
 -- | Function for the 'CSS.getBackgroundColors' command.
 --   
---   Parameters: 'PCssGetBackgroundColors'
---   Returns: 'CssGetBackgroundColors'
-cssGetBackgroundColors :: Handle ev -> PCssGetBackgroundColors -> IO CssGetBackgroundColors
-cssGetBackgroundColors handle params = sendReceiveCommandResult handle "CSS.getBackgroundColors" (Just params)
+--   Parameters: 'PCSSGetBackgroundColors'
+--   Returns: 'CSSGetBackgroundColors'
+cSSGetBackgroundColors :: Handle ev -> PCSSGetBackgroundColors -> IO CSSGetBackgroundColors
+cSSGetBackgroundColors handle params = sendReceiveCommandResult handle "CSS.getBackgroundColors" (Just params)
 
--- | Return type of the 'cssGetBackgroundColors' command.
-data CssGetBackgroundColors = CssGetBackgroundColors {
+-- | Return type of the 'cSSGetBackgroundColors' command.
+data CSSGetBackgroundColors = CSSGetBackgroundColors {
   -- | The range of background colors behind this element, if it contains any visible text. If no
   --   visible text is present, this will be undefined. In the case of a flat background color,
   --   this will consist of simply that color. In the case of a gradient, this will consist of each
   --   of the color stops. For anything more complicated, this will be an empty array. Images will
   --   be ignored (as if the image had failed to load).
-  cssGetBackgroundColorsBackgroundColors :: Maybe [String],
+  cSSGetBackgroundColorsBackgroundColors :: Maybe [String],
   -- | The computed font size for this node, as a CSS computed value string (e.g. '12px').
-  cssGetBackgroundColorsComputedFontSize :: Maybe String,
+  cSSGetBackgroundColorsComputedFontSize :: Maybe String,
   -- | The computed font weight for this node, as a CSS computed value string (e.g. 'normal' or
   --   '100').
-  cssGetBackgroundColorsComputedFontWeight :: Maybe String
+  cSSGetBackgroundColorsComputedFontWeight :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssGetBackgroundColors where
+instance FromJSON  CSSGetBackgroundColors where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
-instance Command CssGetBackgroundColors where
+instance Command CSSGetBackgroundColors where
    commandName _ = "CSS.getBackgroundColors"
 
 
 
--- | Parameters of the 'cssGetComputedStyleForNode' command.
-data PCssGetComputedStyleForNode = PCssGetComputedStyleForNode {
-  pCssGetComputedStyleForNodeNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId
+-- | Parameters of the 'cSSGetComputedStyleForNode' command.
+data PCSSGetComputedStyleForNode = PCSSGetComputedStyleForNode {
+  pCSSGetComputedStyleForNodeNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssGetComputedStyleForNode  where
+instance ToJSON PCSSGetComputedStyleForNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
-instance FromJSON  PCssGetComputedStyleForNode where
+instance FromJSON  PCSSGetComputedStyleForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
 -- | Function for the 'CSS.getComputedStyleForNode' command.
 --   Returns the computed style for a DOM node identified by `nodeId`.
---   Parameters: 'PCssGetComputedStyleForNode'
---   Returns: 'CssGetComputedStyleForNode'
-cssGetComputedStyleForNode :: Handle ev -> PCssGetComputedStyleForNode -> IO CssGetComputedStyleForNode
-cssGetComputedStyleForNode handle params = sendReceiveCommandResult handle "CSS.getComputedStyleForNode" (Just params)
+--   Parameters: 'PCSSGetComputedStyleForNode'
+--   Returns: 'CSSGetComputedStyleForNode'
+cSSGetComputedStyleForNode :: Handle ev -> PCSSGetComputedStyleForNode -> IO CSSGetComputedStyleForNode
+cSSGetComputedStyleForNode handle params = sendReceiveCommandResult handle "CSS.getComputedStyleForNode" (Just params)
 
--- | Return type of the 'cssGetComputedStyleForNode' command.
-data CssGetComputedStyleForNode = CssGetComputedStyleForNode {
+-- | Return type of the 'cSSGetComputedStyleForNode' command.
+data CSSGetComputedStyleForNode = CSSGetComputedStyleForNode {
   -- | Computed style for the specified DOM node.
-  cssGetComputedStyleForNodeComputedStyle :: [CssCssComputedStyleProperty]
+  cSSGetComputedStyleForNodeComputedStyle :: [CSSCSSComputedStyleProperty]
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssGetComputedStyleForNode where
+instance FromJSON  CSSGetComputedStyleForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
-instance Command CssGetComputedStyleForNode where
+instance Command CSSGetComputedStyleForNode where
    commandName _ = "CSS.getComputedStyleForNode"
 
 
 
--- | Parameters of the 'cssGetInlineStylesForNode' command.
-data PCssGetInlineStylesForNode = PCssGetInlineStylesForNode {
-  pCssGetInlineStylesForNodeNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId
+-- | Parameters of the 'cSSGetInlineStylesForNode' command.
+data PCSSGetInlineStylesForNode = PCSSGetInlineStylesForNode {
+  pCSSGetInlineStylesForNodeNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssGetInlineStylesForNode  where
+instance ToJSON PCSSGetInlineStylesForNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
-instance FromJSON  PCssGetInlineStylesForNode where
+instance FromJSON  PCSSGetInlineStylesForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
 -- | Function for the 'CSS.getInlineStylesForNode' command.
 --   Returns the styles defined inline (explicitly in the "style" attribute and implicitly, using DOM
 --   attributes) for a DOM node identified by `nodeId`.
---   Parameters: 'PCssGetInlineStylesForNode'
---   Returns: 'CssGetInlineStylesForNode'
-cssGetInlineStylesForNode :: Handle ev -> PCssGetInlineStylesForNode -> IO CssGetInlineStylesForNode
-cssGetInlineStylesForNode handle params = sendReceiveCommandResult handle "CSS.getInlineStylesForNode" (Just params)
+--   Parameters: 'PCSSGetInlineStylesForNode'
+--   Returns: 'CSSGetInlineStylesForNode'
+cSSGetInlineStylesForNode :: Handle ev -> PCSSGetInlineStylesForNode -> IO CSSGetInlineStylesForNode
+cSSGetInlineStylesForNode handle params = sendReceiveCommandResult handle "CSS.getInlineStylesForNode" (Just params)
 
--- | Return type of the 'cssGetInlineStylesForNode' command.
-data CssGetInlineStylesForNode = CssGetInlineStylesForNode {
+-- | Return type of the 'cSSGetInlineStylesForNode' command.
+data CSSGetInlineStylesForNode = CSSGetInlineStylesForNode {
   -- | Inline style for the specified DOM node.
-  cssGetInlineStylesForNodeInlineStyle :: Maybe CssCssStyle,
+  cSSGetInlineStylesForNodeInlineStyle :: Maybe CSSCSSStyle,
   -- | Attribute-defined element style (e.g. resulting from "width=20 height=100%").
-  cssGetInlineStylesForNodeAttributesStyle :: Maybe CssCssStyle
+  cSSGetInlineStylesForNodeAttributesStyle :: Maybe CSSCSSStyle
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssGetInlineStylesForNode where
+instance FromJSON  CSSGetInlineStylesForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
-instance Command CssGetInlineStylesForNode where
+instance Command CSSGetInlineStylesForNode where
    commandName _ = "CSS.getInlineStylesForNode"
 
 
 
--- | Parameters of the 'cssGetMatchedStylesForNode' command.
-data PCssGetMatchedStylesForNode = PCssGetMatchedStylesForNode {
-  pCssGetMatchedStylesForNodeNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId
+-- | Parameters of the 'cSSGetMatchedStylesForNode' command.
+data PCSSGetMatchedStylesForNode = PCSSGetMatchedStylesForNode {
+  pCSSGetMatchedStylesForNodeNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssGetMatchedStylesForNode  where
+instance ToJSON PCSSGetMatchedStylesForNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
-instance FromJSON  PCssGetMatchedStylesForNode where
+instance FromJSON  PCSSGetMatchedStylesForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
 -- | Function for the 'CSS.getMatchedStylesForNode' command.
 --   Returns requested styles for a DOM node identified by `nodeId`.
---   Parameters: 'PCssGetMatchedStylesForNode'
---   Returns: 'CssGetMatchedStylesForNode'
-cssGetMatchedStylesForNode :: Handle ev -> PCssGetMatchedStylesForNode -> IO CssGetMatchedStylesForNode
-cssGetMatchedStylesForNode handle params = sendReceiveCommandResult handle "CSS.getMatchedStylesForNode" (Just params)
+--   Parameters: 'PCSSGetMatchedStylesForNode'
+--   Returns: 'CSSGetMatchedStylesForNode'
+cSSGetMatchedStylesForNode :: Handle ev -> PCSSGetMatchedStylesForNode -> IO CSSGetMatchedStylesForNode
+cSSGetMatchedStylesForNode handle params = sendReceiveCommandResult handle "CSS.getMatchedStylesForNode" (Just params)
 
--- | Return type of the 'cssGetMatchedStylesForNode' command.
-data CssGetMatchedStylesForNode = CssGetMatchedStylesForNode {
+-- | Return type of the 'cSSGetMatchedStylesForNode' command.
+data CSSGetMatchedStylesForNode = CSSGetMatchedStylesForNode {
   -- | Inline style for the specified DOM node.
-  cssGetMatchedStylesForNodeInlineStyle :: Maybe CssCssStyle,
+  cSSGetMatchedStylesForNodeInlineStyle :: Maybe CSSCSSStyle,
   -- | Attribute-defined element style (e.g. resulting from "width=20 height=100%").
-  cssGetMatchedStylesForNodeAttributesStyle :: Maybe CssCssStyle,
+  cSSGetMatchedStylesForNodeAttributesStyle :: Maybe CSSCSSStyle,
   -- | CSS rules matching this node, from all applicable stylesheets.
-  cssGetMatchedStylesForNodeMatchedCssRules :: Maybe [CssRuleMatch],
+  cSSGetMatchedStylesForNodeMatchedCSSRules :: Maybe [CSSRuleMatch],
   -- | Pseudo style matches for this node.
-  cssGetMatchedStylesForNodePseudoElements :: Maybe [CssPseudoElementMatches],
+  cSSGetMatchedStylesForNodePseudoElements :: Maybe [CSSPseudoElementMatches],
   -- | A chain of inherited styles (from the immediate node parent up to the DOM tree root).
-  cssGetMatchedStylesForNodeInherited :: Maybe [CssInheritedStyleEntry],
+  cSSGetMatchedStylesForNodeInherited :: Maybe [CSSInheritedStyleEntry],
   -- | A chain of inherited pseudo element styles (from the immediate node parent up to the DOM tree root).
-  cssGetMatchedStylesForNodeInheritedPseudoElements :: Maybe [CssInheritedPseudoElementMatches],
+  cSSGetMatchedStylesForNodeInheritedPseudoElements :: Maybe [CSSInheritedPseudoElementMatches],
   -- | A list of CSS keyframed animations matching this node.
-  cssGetMatchedStylesForNodeCssKeyframesRules :: Maybe [CssCssKeyframesRule]
+  cSSGetMatchedStylesForNodeCssKeyframesRules :: Maybe [CSSCSSKeyframesRule]
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssGetMatchedStylesForNode where
+instance FromJSON  CSSGetMatchedStylesForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
-instance Command CssGetMatchedStylesForNode where
+instance Command CSSGetMatchedStylesForNode where
    commandName _ = "CSS.getMatchedStylesForNode"
 
 
 
 -- | Function for the 'CSS.getMediaQueries' command.
 --   Returns all media queries parsed by the rendering engine.
---   Returns: 'CssGetMediaQueries'
-cssGetMediaQueries :: Handle ev -> IO CssGetMediaQueries
-cssGetMediaQueries handle = sendReceiveCommandResult handle "CSS.getMediaQueries" (Nothing :: Maybe ())
+--   Returns: 'CSSGetMediaQueries'
+cSSGetMediaQueries :: Handle ev -> IO CSSGetMediaQueries
+cSSGetMediaQueries handle = sendReceiveCommandResult handle "CSS.getMediaQueries" (Nothing :: Maybe ())
 
--- | Return type of the 'cssGetMediaQueries' command.
-data CssGetMediaQueries = CssGetMediaQueries {
-  cssGetMediaQueriesMedias :: [CssCssMedia]
+-- | Return type of the 'cSSGetMediaQueries' command.
+data CSSGetMediaQueries = CSSGetMediaQueries {
+  cSSGetMediaQueriesMedias :: [CSSCSSMedia]
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssGetMediaQueries where
+instance FromJSON  CSSGetMediaQueries where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
-instance Command CssGetMediaQueries where
+instance Command CSSGetMediaQueries where
    commandName _ = "CSS.getMediaQueries"
 
 
 
--- | Parameters of the 'cssGetPlatformFontsForNode' command.
-data PCssGetPlatformFontsForNode = PCssGetPlatformFontsForNode {
-  pCssGetPlatformFontsForNodeNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId
+-- | Parameters of the 'cSSGetPlatformFontsForNode' command.
+data PCSSGetPlatformFontsForNode = PCSSGetPlatformFontsForNode {
+  pCSSGetPlatformFontsForNodeNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssGetPlatformFontsForNode  where
+instance ToJSON PCSSGetPlatformFontsForNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
-instance FromJSON  PCssGetPlatformFontsForNode where
+instance FromJSON  PCSSGetPlatformFontsForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
 -- | Function for the 'CSS.getPlatformFontsForNode' command.
 --   Requests information about platform fonts which we used to render child TextNodes in the given
 --   node.
---   Parameters: 'PCssGetPlatformFontsForNode'
---   Returns: 'CssGetPlatformFontsForNode'
-cssGetPlatformFontsForNode :: Handle ev -> PCssGetPlatformFontsForNode -> IO CssGetPlatformFontsForNode
-cssGetPlatformFontsForNode handle params = sendReceiveCommandResult handle "CSS.getPlatformFontsForNode" (Just params)
+--   Parameters: 'PCSSGetPlatformFontsForNode'
+--   Returns: 'CSSGetPlatformFontsForNode'
+cSSGetPlatformFontsForNode :: Handle ev -> PCSSGetPlatformFontsForNode -> IO CSSGetPlatformFontsForNode
+cSSGetPlatformFontsForNode handle params = sendReceiveCommandResult handle "CSS.getPlatformFontsForNode" (Just params)
 
--- | Return type of the 'cssGetPlatformFontsForNode' command.
-data CssGetPlatformFontsForNode = CssGetPlatformFontsForNode {
+-- | Return type of the 'cSSGetPlatformFontsForNode' command.
+data CSSGetPlatformFontsForNode = CSSGetPlatformFontsForNode {
   -- | Usage statistics for every employed platform font.
-  cssGetPlatformFontsForNodeFonts :: [CssPlatformFontUsage]
+  cSSGetPlatformFontsForNodeFonts :: [CSSPlatformFontUsage]
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssGetPlatformFontsForNode where
+instance FromJSON  CSSGetPlatformFontsForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
-instance Command CssGetPlatformFontsForNode where
+instance Command CSSGetPlatformFontsForNode where
    commandName _ = "CSS.getPlatformFontsForNode"
 
 
 
--- | Parameters of the 'cssGetStyleSheetText' command.
-data PCssGetStyleSheetText = PCssGetStyleSheetText {
-  pCssGetStyleSheetTextStyleSheetId :: CssStyleSheetId
+-- | Parameters of the 'cSSGetStyleSheetText' command.
+data PCSSGetStyleSheetText = PCSSGetStyleSheetText {
+  pCSSGetStyleSheetTextStyleSheetId :: CSSStyleSheetId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssGetStyleSheetText  where
+instance ToJSON PCSSGetStyleSheetText  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
-instance FromJSON  PCssGetStyleSheetText where
+instance FromJSON  PCSSGetStyleSheetText where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
 -- | Function for the 'CSS.getStyleSheetText' command.
 --   Returns the current textual content for a stylesheet.
---   Parameters: 'PCssGetStyleSheetText'
---   Returns: 'CssGetStyleSheetText'
-cssGetStyleSheetText :: Handle ev -> PCssGetStyleSheetText -> IO CssGetStyleSheetText
-cssGetStyleSheetText handle params = sendReceiveCommandResult handle "CSS.getStyleSheetText" (Just params)
+--   Parameters: 'PCSSGetStyleSheetText'
+--   Returns: 'CSSGetStyleSheetText'
+cSSGetStyleSheetText :: Handle ev -> PCSSGetStyleSheetText -> IO CSSGetStyleSheetText
+cSSGetStyleSheetText handle params = sendReceiveCommandResult handle "CSS.getStyleSheetText" (Just params)
 
--- | Return type of the 'cssGetStyleSheetText' command.
-data CssGetStyleSheetText = CssGetStyleSheetText {
+-- | Return type of the 'cSSGetStyleSheetText' command.
+data CSSGetStyleSheetText = CSSGetStyleSheetText {
   -- | The stylesheet text.
-  cssGetStyleSheetTextText :: String
+  cSSGetStyleSheetTextText :: String
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssGetStyleSheetText where
+instance FromJSON  CSSGetStyleSheetText where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command CssGetStyleSheetText where
+instance Command CSSGetStyleSheetText where
    commandName _ = "CSS.getStyleSheetText"
 
 
 
--- | Parameters of the 'cssGetLayersForNode' command.
-data PCssGetLayersForNode = PCssGetLayersForNode {
-  pCssGetLayersForNodeNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId
+-- | Parameters of the 'cSSGetLayersForNode' command.
+data PCSSGetLayersForNode = PCSSGetLayersForNode {
+  pCSSGetLayersForNodeNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssGetLayersForNode  where
+instance ToJSON PCSSGetLayersForNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
-instance FromJSON  PCssGetLayersForNode where
+instance FromJSON  PCSSGetLayersForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
@@ -1147,32 +1146,32 @@ instance FromJSON  PCssGetLayersForNode where
 --   Given a DOM element identified by nodeId, getLayersForNode returns the root
 --   layer for the nearest ancestor document or shadow root. The layer root contains
 --   the full layer tree for the tree scope and their ordering.
---   Parameters: 'PCssGetLayersForNode'
---   Returns: 'CssGetLayersForNode'
-cssGetLayersForNode :: Handle ev -> PCssGetLayersForNode -> IO CssGetLayersForNode
-cssGetLayersForNode handle params = sendReceiveCommandResult handle "CSS.getLayersForNode" (Just params)
+--   Parameters: 'PCSSGetLayersForNode'
+--   Returns: 'CSSGetLayersForNode'
+cSSGetLayersForNode :: Handle ev -> PCSSGetLayersForNode -> IO CSSGetLayersForNode
+cSSGetLayersForNode handle params = sendReceiveCommandResult handle "CSS.getLayersForNode" (Just params)
 
--- | Return type of the 'cssGetLayersForNode' command.
-data CssGetLayersForNode = CssGetLayersForNode {
-  cssGetLayersForNodeRootLayer :: CssCssLayerData
+-- | Return type of the 'cSSGetLayersForNode' command.
+data CSSGetLayersForNode = CSSGetLayersForNode {
+  cSSGetLayersForNodeRootLayer :: CSSCSSLayerData
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssGetLayersForNode where
+instance FromJSON  CSSGetLayersForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
-instance Command CssGetLayersForNode where
+instance Command CSSGetLayersForNode where
    commandName _ = "CSS.getLayersForNode"
 
 
 
--- | Parameters of the 'cssTrackComputedStyleUpdates' command.
-data PCssTrackComputedStyleUpdates = PCssTrackComputedStyleUpdates {
-  pCssTrackComputedStyleUpdatesPropertiesToTrack :: [CssCssComputedStyleProperty]
+-- | Parameters of the 'cSSTrackComputedStyleUpdates' command.
+data PCSSTrackComputedStyleUpdates = PCSSTrackComputedStyleUpdates {
+  pCSSTrackComputedStyleUpdatesPropertiesToTrack :: [CSSCSSComputedStyleProperty]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssTrackComputedStyleUpdates  where
+instance ToJSON PCSSTrackComputedStyleUpdates  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
 
-instance FromJSON  PCssTrackComputedStyleUpdates where
+instance FromJSON  PCSSTrackComputedStyleUpdates where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
@@ -1183,310 +1182,310 @@ instance FromJSON  PCssTrackComputedStyleUpdates where
 --   The changes to computed style properties are only tracked for nodes pushed to the front-end
 --   by the DOM agent. If no changes to the tracked properties occur after the node has been pushed
 --   to the front-end, no updates will be issued for the node.
---   Parameters: 'PCssTrackComputedStyleUpdates'
-cssTrackComputedStyleUpdates :: Handle ev -> PCssTrackComputedStyleUpdates -> IO ()
-cssTrackComputedStyleUpdates handle params = sendReceiveCommand handle "CSS.trackComputedStyleUpdates" (Just params)
+--   Parameters: 'PCSSTrackComputedStyleUpdates'
+cSSTrackComputedStyleUpdates :: Handle ev -> PCSSTrackComputedStyleUpdates -> IO ()
+cSSTrackComputedStyleUpdates handle params = sendReceiveCommand handle "CSS.trackComputedStyleUpdates" (Just params)
 
 
 -- | Function for the 'CSS.takeComputedStyleUpdates' command.
 --   Polls the next batch of computed style updates.
---   Returns: 'CssTakeComputedStyleUpdates'
-cssTakeComputedStyleUpdates :: Handle ev -> IO CssTakeComputedStyleUpdates
-cssTakeComputedStyleUpdates handle = sendReceiveCommandResult handle "CSS.takeComputedStyleUpdates" (Nothing :: Maybe ())
+--   Returns: 'CSSTakeComputedStyleUpdates'
+cSSTakeComputedStyleUpdates :: Handle ev -> IO CSSTakeComputedStyleUpdates
+cSSTakeComputedStyleUpdates handle = sendReceiveCommandResult handle "CSS.takeComputedStyleUpdates" (Nothing :: Maybe ())
 
--- | Return type of the 'cssTakeComputedStyleUpdates' command.
-data CssTakeComputedStyleUpdates = CssTakeComputedStyleUpdates {
+-- | Return type of the 'cSSTakeComputedStyleUpdates' command.
+data CSSTakeComputedStyleUpdates = CSSTakeComputedStyleUpdates {
   -- | The list of node Ids that have their tracked computed styles updated
-  cssTakeComputedStyleUpdatesNodeIds :: [DOMPageNetworkEmulationSecurity.DomNodeId]
+  cSSTakeComputedStyleUpdatesNodeIds :: [DOMPageNetworkEmulationSecurity.DOMNodeId]
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssTakeComputedStyleUpdates where
+instance FromJSON  CSSTakeComputedStyleUpdates where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
-instance Command CssTakeComputedStyleUpdates where
+instance Command CSSTakeComputedStyleUpdates where
    commandName _ = "CSS.takeComputedStyleUpdates"
 
 
 
--- | Parameters of the 'cssSetEffectivePropertyValueForNode' command.
-data PCssSetEffectivePropertyValueForNode = PCssSetEffectivePropertyValueForNode {
+-- | Parameters of the 'cSSSetEffectivePropertyValueForNode' command.
+data PCSSSetEffectivePropertyValueForNode = PCSSSetEffectivePropertyValueForNode {
   -- | The element id for which to set property.
-  pCssSetEffectivePropertyValueForNodeNodeId :: DOMPageNetworkEmulationSecurity.DomNodeId,
-  pCssSetEffectivePropertyValueForNodePropertyName :: String,
-  pCssSetEffectivePropertyValueForNodeValue :: String
+  pCSSSetEffectivePropertyValueForNodeNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId,
+  pCSSSetEffectivePropertyValueForNodePropertyName :: String,
+  pCSSSetEffectivePropertyValueForNodeValue :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssSetEffectivePropertyValueForNode  where
+instance ToJSON PCSSSetEffectivePropertyValueForNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
 
-instance FromJSON  PCssSetEffectivePropertyValueForNode where
+instance FromJSON  PCSSSetEffectivePropertyValueForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 }
 
 
 -- | Function for the 'CSS.setEffectivePropertyValueForNode' command.
 --   Find a rule with the given active property for the given node and set the new value for this
 --   property
---   Parameters: 'PCssSetEffectivePropertyValueForNode'
-cssSetEffectivePropertyValueForNode :: Handle ev -> PCssSetEffectivePropertyValueForNode -> IO ()
-cssSetEffectivePropertyValueForNode handle params = sendReceiveCommand handle "CSS.setEffectivePropertyValueForNode" (Just params)
+--   Parameters: 'PCSSSetEffectivePropertyValueForNode'
+cSSSetEffectivePropertyValueForNode :: Handle ev -> PCSSSetEffectivePropertyValueForNode -> IO ()
+cSSSetEffectivePropertyValueForNode handle params = sendReceiveCommand handle "CSS.setEffectivePropertyValueForNode" (Just params)
 
 
--- | Parameters of the 'cssSetKeyframeKey' command.
-data PCssSetKeyframeKey = PCssSetKeyframeKey {
-  pCssSetKeyframeKeyStyleSheetId :: CssStyleSheetId,
-  pCssSetKeyframeKeyRange :: CssSourceRange,
-  pCssSetKeyframeKeyKeyText :: String
+-- | Parameters of the 'cSSSetKeyframeKey' command.
+data PCSSSetKeyframeKey = PCSSSetKeyframeKey {
+  pCSSSetKeyframeKeyStyleSheetId :: CSSStyleSheetId,
+  pCSSSetKeyframeKeyRange :: CSSSourceRange,
+  pCSSSetKeyframeKeyKeyText :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssSetKeyframeKey  where
+instance ToJSON PCSSSetKeyframeKey  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
 
-instance FromJSON  PCssSetKeyframeKey where
+instance FromJSON  PCSSSetKeyframeKey where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
 -- | Function for the 'CSS.setKeyframeKey' command.
 --   Modifies the keyframe rule key text.
---   Parameters: 'PCssSetKeyframeKey'
---   Returns: 'CssSetKeyframeKey'
-cssSetKeyframeKey :: Handle ev -> PCssSetKeyframeKey -> IO CssSetKeyframeKey
-cssSetKeyframeKey handle params = sendReceiveCommandResult handle "CSS.setKeyframeKey" (Just params)
+--   Parameters: 'PCSSSetKeyframeKey'
+--   Returns: 'CSSSetKeyframeKey'
+cSSSetKeyframeKey :: Handle ev -> PCSSSetKeyframeKey -> IO CSSSetKeyframeKey
+cSSSetKeyframeKey handle params = sendReceiveCommandResult handle "CSS.setKeyframeKey" (Just params)
 
--- | Return type of the 'cssSetKeyframeKey' command.
-data CssSetKeyframeKey = CssSetKeyframeKey {
+-- | Return type of the 'cSSSetKeyframeKey' command.
+data CSSSetKeyframeKey = CSSSetKeyframeKey {
   -- | The resulting key text after modification.
-  cssSetKeyframeKeyKeyText :: CssValue
+  cSSSetKeyframeKeyKeyText :: CSSValue
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssSetKeyframeKey where
+instance FromJSON  CSSSetKeyframeKey where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
-instance Command CssSetKeyframeKey where
+instance Command CSSSetKeyframeKey where
    commandName _ = "CSS.setKeyframeKey"
 
 
 
--- | Parameters of the 'cssSetMediaText' command.
-data PCssSetMediaText = PCssSetMediaText {
-  pCssSetMediaTextStyleSheetId :: CssStyleSheetId,
-  pCssSetMediaTextRange :: CssSourceRange,
-  pCssSetMediaTextText :: String
+-- | Parameters of the 'cSSSetMediaText' command.
+data PCSSSetMediaText = PCSSSetMediaText {
+  pCSSSetMediaTextStyleSheetId :: CSSStyleSheetId,
+  pCSSSetMediaTextRange :: CSSSourceRange,
+  pCSSSetMediaTextText :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssSetMediaText  where
+instance ToJSON PCSSSetMediaText  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
-instance FromJSON  PCssSetMediaText where
+instance FromJSON  PCSSSetMediaText where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
 -- | Function for the 'CSS.setMediaText' command.
 --   Modifies the rule selector.
---   Parameters: 'PCssSetMediaText'
---   Returns: 'CssSetMediaText'
-cssSetMediaText :: Handle ev -> PCssSetMediaText -> IO CssSetMediaText
-cssSetMediaText handle params = sendReceiveCommandResult handle "CSS.setMediaText" (Just params)
+--   Parameters: 'PCSSSetMediaText'
+--   Returns: 'CSSSetMediaText'
+cSSSetMediaText :: Handle ev -> PCSSSetMediaText -> IO CSSSetMediaText
+cSSSetMediaText handle params = sendReceiveCommandResult handle "CSS.setMediaText" (Just params)
 
--- | Return type of the 'cssSetMediaText' command.
-data CssSetMediaText = CssSetMediaText {
+-- | Return type of the 'cSSSetMediaText' command.
+data CSSSetMediaText = CSSSetMediaText {
   -- | The resulting CSS media rule after modification.
-  cssSetMediaTextMedia :: CssCssMedia
+  cSSSetMediaTextMedia :: CSSCSSMedia
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssSetMediaText where
+instance FromJSON  CSSSetMediaText where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
-instance Command CssSetMediaText where
+instance Command CSSSetMediaText where
    commandName _ = "CSS.setMediaText"
 
 
 
--- | Parameters of the 'cssSetContainerQueryText' command.
-data PCssSetContainerQueryText = PCssSetContainerQueryText {
-  pCssSetContainerQueryTextStyleSheetId :: CssStyleSheetId,
-  pCssSetContainerQueryTextRange :: CssSourceRange,
-  pCssSetContainerQueryTextText :: String
+-- | Parameters of the 'cSSSetContainerQueryText' command.
+data PCSSSetContainerQueryText = PCSSSetContainerQueryText {
+  pCSSSetContainerQueryTextStyleSheetId :: CSSStyleSheetId,
+  pCSSSetContainerQueryTextRange :: CSSSourceRange,
+  pCSSSetContainerQueryTextText :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssSetContainerQueryText  where
+instance ToJSON PCSSSetContainerQueryText  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
 
-instance FromJSON  PCssSetContainerQueryText where
+instance FromJSON  PCSSSetContainerQueryText where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
 -- | Function for the 'CSS.setContainerQueryText' command.
 --   Modifies the expression of a container query.
---   Parameters: 'PCssSetContainerQueryText'
---   Returns: 'CssSetContainerQueryText'
-cssSetContainerQueryText :: Handle ev -> PCssSetContainerQueryText -> IO CssSetContainerQueryText
-cssSetContainerQueryText handle params = sendReceiveCommandResult handle "CSS.setContainerQueryText" (Just params)
+--   Parameters: 'PCSSSetContainerQueryText'
+--   Returns: 'CSSSetContainerQueryText'
+cSSSetContainerQueryText :: Handle ev -> PCSSSetContainerQueryText -> IO CSSSetContainerQueryText
+cSSSetContainerQueryText handle params = sendReceiveCommandResult handle "CSS.setContainerQueryText" (Just params)
 
--- | Return type of the 'cssSetContainerQueryText' command.
-data CssSetContainerQueryText = CssSetContainerQueryText {
+-- | Return type of the 'cSSSetContainerQueryText' command.
+data CSSSetContainerQueryText = CSSSetContainerQueryText {
   -- | The resulting CSS container query rule after modification.
-  cssSetContainerQueryTextContainerQuery :: CssCssContainerQuery
+  cSSSetContainerQueryTextContainerQuery :: CSSCSSContainerQuery
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssSetContainerQueryText where
+instance FromJSON  CSSSetContainerQueryText where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
-instance Command CssSetContainerQueryText where
+instance Command CSSSetContainerQueryText where
    commandName _ = "CSS.setContainerQueryText"
 
 
 
--- | Parameters of the 'cssSetSupportsText' command.
-data PCssSetSupportsText = PCssSetSupportsText {
-  pCssSetSupportsTextStyleSheetId :: CssStyleSheetId,
-  pCssSetSupportsTextRange :: CssSourceRange,
-  pCssSetSupportsTextText :: String
+-- | Parameters of the 'cSSSetSupportsText' command.
+data PCSSSetSupportsText = PCSSSetSupportsText {
+  pCSSSetSupportsTextStyleSheetId :: CSSStyleSheetId,
+  pCSSSetSupportsTextRange :: CSSSourceRange,
+  pCSSSetSupportsTextText :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssSetSupportsText  where
+instance ToJSON PCSSSetSupportsText  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
-instance FromJSON  PCssSetSupportsText where
+instance FromJSON  PCSSSetSupportsText where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
 -- | Function for the 'CSS.setSupportsText' command.
 --   Modifies the expression of a supports at-rule.
---   Parameters: 'PCssSetSupportsText'
---   Returns: 'CssSetSupportsText'
-cssSetSupportsText :: Handle ev -> PCssSetSupportsText -> IO CssSetSupportsText
-cssSetSupportsText handle params = sendReceiveCommandResult handle "CSS.setSupportsText" (Just params)
+--   Parameters: 'PCSSSetSupportsText'
+--   Returns: 'CSSSetSupportsText'
+cSSSetSupportsText :: Handle ev -> PCSSSetSupportsText -> IO CSSSetSupportsText
+cSSSetSupportsText handle params = sendReceiveCommandResult handle "CSS.setSupportsText" (Just params)
 
--- | Return type of the 'cssSetSupportsText' command.
-data CssSetSupportsText = CssSetSupportsText {
+-- | Return type of the 'cSSSetSupportsText' command.
+data CSSSetSupportsText = CSSSetSupportsText {
   -- | The resulting CSS Supports rule after modification.
-  cssSetSupportsTextSupports :: CssCssSupports
+  cSSSetSupportsTextSupports :: CSSCSSSupports
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssSetSupportsText where
+instance FromJSON  CSSSetSupportsText where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
-instance Command CssSetSupportsText where
+instance Command CSSSetSupportsText where
    commandName _ = "CSS.setSupportsText"
 
 
 
--- | Parameters of the 'cssSetRuleSelector' command.
-data PCssSetRuleSelector = PCssSetRuleSelector {
-  pCssSetRuleSelectorStyleSheetId :: CssStyleSheetId,
-  pCssSetRuleSelectorRange :: CssSourceRange,
-  pCssSetRuleSelectorSelector :: String
+-- | Parameters of the 'cSSSetRuleSelector' command.
+data PCSSSetRuleSelector = PCSSSetRuleSelector {
+  pCSSSetRuleSelectorStyleSheetId :: CSSStyleSheetId,
+  pCSSSetRuleSelectorRange :: CSSSourceRange,
+  pCSSSetRuleSelectorSelector :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssSetRuleSelector  where
+instance ToJSON PCSSSetRuleSelector  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
-instance FromJSON  PCssSetRuleSelector where
+instance FromJSON  PCSSSetRuleSelector where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
 -- | Function for the 'CSS.setRuleSelector' command.
 --   Modifies the rule selector.
---   Parameters: 'PCssSetRuleSelector'
---   Returns: 'CssSetRuleSelector'
-cssSetRuleSelector :: Handle ev -> PCssSetRuleSelector -> IO CssSetRuleSelector
-cssSetRuleSelector handle params = sendReceiveCommandResult handle "CSS.setRuleSelector" (Just params)
+--   Parameters: 'PCSSSetRuleSelector'
+--   Returns: 'CSSSetRuleSelector'
+cSSSetRuleSelector :: Handle ev -> PCSSSetRuleSelector -> IO CSSSetRuleSelector
+cSSSetRuleSelector handle params = sendReceiveCommandResult handle "CSS.setRuleSelector" (Just params)
 
--- | Return type of the 'cssSetRuleSelector' command.
-data CssSetRuleSelector = CssSetRuleSelector {
+-- | Return type of the 'cSSSetRuleSelector' command.
+data CSSSetRuleSelector = CSSSetRuleSelector {
   -- | The resulting selector list after modification.
-  cssSetRuleSelectorSelectorList :: CssSelectorList
+  cSSSetRuleSelectorSelectorList :: CSSSelectorList
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssSetRuleSelector where
+instance FromJSON  CSSSetRuleSelector where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
-instance Command CssSetRuleSelector where
+instance Command CSSSetRuleSelector where
    commandName _ = "CSS.setRuleSelector"
 
 
 
--- | Parameters of the 'cssSetStyleSheetText' command.
-data PCssSetStyleSheetText = PCssSetStyleSheetText {
-  pCssSetStyleSheetTextStyleSheetId :: CssStyleSheetId,
-  pCssSetStyleSheetTextText :: String
+-- | Parameters of the 'cSSSetStyleSheetText' command.
+data PCSSSetStyleSheetText = PCSSSetStyleSheetText {
+  pCSSSetStyleSheetTextStyleSheetId :: CSSStyleSheetId,
+  pCSSSetStyleSheetTextText :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssSetStyleSheetText  where
+instance ToJSON PCSSSetStyleSheetText  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
-instance FromJSON  PCssSetStyleSheetText where
+instance FromJSON  PCSSSetStyleSheetText where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
 -- | Function for the 'CSS.setStyleSheetText' command.
 --   Sets the new stylesheet text.
---   Parameters: 'PCssSetStyleSheetText'
---   Returns: 'CssSetStyleSheetText'
-cssSetStyleSheetText :: Handle ev -> PCssSetStyleSheetText -> IO CssSetStyleSheetText
-cssSetStyleSheetText handle params = sendReceiveCommandResult handle "CSS.setStyleSheetText" (Just params)
+--   Parameters: 'PCSSSetStyleSheetText'
+--   Returns: 'CSSSetStyleSheetText'
+cSSSetStyleSheetText :: Handle ev -> PCSSSetStyleSheetText -> IO CSSSetStyleSheetText
+cSSSetStyleSheetText handle params = sendReceiveCommandResult handle "CSS.setStyleSheetText" (Just params)
 
--- | Return type of the 'cssSetStyleSheetText' command.
-data CssSetStyleSheetText = CssSetStyleSheetText {
+-- | Return type of the 'cSSSetStyleSheetText' command.
+data CSSSetStyleSheetText = CSSSetStyleSheetText {
   -- | URL of source map associated with script (if any).
-  cssSetStyleSheetTextSourceMapUrl :: Maybe String
+  cSSSetStyleSheetTextSourceMapURL :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssSetStyleSheetText where
+instance FromJSON  CSSSetStyleSheetText where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command CssSetStyleSheetText where
+instance Command CSSSetStyleSheetText where
    commandName _ = "CSS.setStyleSheetText"
 
 
 
--- | Parameters of the 'cssSetStyleTexts' command.
-data PCssSetStyleTexts = PCssSetStyleTexts {
-  pCssSetStyleTextsEdits :: [CssStyleDeclarationEdit]
+-- | Parameters of the 'cSSSetStyleTexts' command.
+data PCSSSetStyleTexts = PCSSSetStyleTexts {
+  pCSSSetStyleTextsEdits :: [CSSStyleDeclarationEdit]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssSetStyleTexts  where
+instance ToJSON PCSSSetStyleTexts  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
-instance FromJSON  PCssSetStyleTexts where
+instance FromJSON  PCSSSetStyleTexts where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
 -- | Function for the 'CSS.setStyleTexts' command.
 --   Applies specified style edits one after another in the given order.
---   Parameters: 'PCssSetStyleTexts'
---   Returns: 'CssSetStyleTexts'
-cssSetStyleTexts :: Handle ev -> PCssSetStyleTexts -> IO CssSetStyleTexts
-cssSetStyleTexts handle params = sendReceiveCommandResult handle "CSS.setStyleTexts" (Just params)
+--   Parameters: 'PCSSSetStyleTexts'
+--   Returns: 'CSSSetStyleTexts'
+cSSSetStyleTexts :: Handle ev -> PCSSSetStyleTexts -> IO CSSSetStyleTexts
+cSSSetStyleTexts handle params = sendReceiveCommandResult handle "CSS.setStyleTexts" (Just params)
 
--- | Return type of the 'cssSetStyleTexts' command.
-data CssSetStyleTexts = CssSetStyleTexts {
+-- | Return type of the 'cSSSetStyleTexts' command.
+data CSSSetStyleTexts = CSSSetStyleTexts {
   -- | The resulting styles after modification.
-  cssSetStyleTextsStyles :: [CssCssStyle]
+  cSSSetStyleTextsStyles :: [CSSCSSStyle]
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssSetStyleTexts where
+instance FromJSON  CSSSetStyleTexts where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
-instance Command CssSetStyleTexts where
+instance Command CSSSetStyleTexts where
    commandName _ = "CSS.setStyleTexts"
 
 
 
 -- | Function for the 'CSS.startRuleUsageTracking' command.
 --   Enables the selector recording.
-cssStartRuleUsageTracking :: Handle ev -> IO ()
-cssStartRuleUsageTracking handle = sendReceiveCommand handle "CSS.startRuleUsageTracking" (Nothing :: Maybe ())
+cSSStartRuleUsageTracking :: Handle ev -> IO ()
+cSSStartRuleUsageTracking handle = sendReceiveCommand handle "CSS.startRuleUsageTracking" (Nothing :: Maybe ())
 
 
 -- | Function for the 'CSS.stopRuleUsageTracking' command.
 --   Stop tracking rule usage and return the list of rules that were used since last call to
 --   `takeCoverageDelta` (or since start of coverage instrumentation)
---   Returns: 'CssStopRuleUsageTracking'
-cssStopRuleUsageTracking :: Handle ev -> IO CssStopRuleUsageTracking
-cssStopRuleUsageTracking handle = sendReceiveCommandResult handle "CSS.stopRuleUsageTracking" (Nothing :: Maybe ())
+--   Returns: 'CSSStopRuleUsageTracking'
+cSSStopRuleUsageTracking :: Handle ev -> IO CSSStopRuleUsageTracking
+cSSStopRuleUsageTracking handle = sendReceiveCommandResult handle "CSS.stopRuleUsageTracking" (Nothing :: Maybe ())
 
--- | Return type of the 'cssStopRuleUsageTracking' command.
-data CssStopRuleUsageTracking = CssStopRuleUsageTracking {
-  cssStopRuleUsageTrackingRuleUsage :: [CssRuleUsage]
+-- | Return type of the 'cSSStopRuleUsageTracking' command.
+data CSSStopRuleUsageTracking = CSSStopRuleUsageTracking {
+  cSSStopRuleUsageTrackingRuleUsage :: [CSSRuleUsage]
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssStopRuleUsageTracking where
+instance FromJSON  CSSStopRuleUsageTracking where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
-instance Command CssStopRuleUsageTracking where
+instance Command CSSStopRuleUsageTracking where
    commandName _ = "CSS.stopRuleUsageTracking"
 
 
@@ -1494,42 +1493,42 @@ instance Command CssStopRuleUsageTracking where
 -- | Function for the 'CSS.takeCoverageDelta' command.
 --   Obtain list of rules that became used since last call to this method (or since start of coverage
 --   instrumentation)
---   Returns: 'CssTakeCoverageDelta'
-cssTakeCoverageDelta :: Handle ev -> IO CssTakeCoverageDelta
-cssTakeCoverageDelta handle = sendReceiveCommandResult handle "CSS.takeCoverageDelta" (Nothing :: Maybe ())
+--   Returns: 'CSSTakeCoverageDelta'
+cSSTakeCoverageDelta :: Handle ev -> IO CSSTakeCoverageDelta
+cSSTakeCoverageDelta handle = sendReceiveCommandResult handle "CSS.takeCoverageDelta" (Nothing :: Maybe ())
 
--- | Return type of the 'cssTakeCoverageDelta' command.
-data CssTakeCoverageDelta = CssTakeCoverageDelta {
-  cssTakeCoverageDeltaCoverage :: [CssRuleUsage],
+-- | Return type of the 'cSSTakeCoverageDelta' command.
+data CSSTakeCoverageDelta = CSSTakeCoverageDelta {
+  cSSTakeCoverageDeltaCoverage :: [CSSRuleUsage],
   -- | Monotonically increasing time, in seconds.
-  cssTakeCoverageDeltaTimestamp :: Double
+  cSSTakeCoverageDeltaTimestamp :: Double
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  CssTakeCoverageDelta where
+instance FromJSON  CSSTakeCoverageDelta where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command CssTakeCoverageDelta where
+instance Command CSSTakeCoverageDelta where
    commandName _ = "CSS.takeCoverageDelta"
 
 
 
--- | Parameters of the 'cssSetLocalFontsEnabled' command.
-data PCssSetLocalFontsEnabled = PCssSetLocalFontsEnabled {
+-- | Parameters of the 'cSSSetLocalFontsEnabled' command.
+data PCSSSetLocalFontsEnabled = PCSSSetLocalFontsEnabled {
   -- | Whether rendering of local fonts is enabled.
-  pCssSetLocalFontsEnabledEnabled :: Bool
+  pCSSSetLocalFontsEnabledEnabled :: Bool
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PCssSetLocalFontsEnabled  where
+instance ToJSON PCSSSetLocalFontsEnabled  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
-instance FromJSON  PCssSetLocalFontsEnabled where
+instance FromJSON  PCSSSetLocalFontsEnabled where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
 -- | Function for the 'CSS.setLocalFontsEnabled' command.
 --   Enables/disables rendering of local CSS fonts (enabled by default).
---   Parameters: 'PCssSetLocalFontsEnabled'
-cssSetLocalFontsEnabled :: Handle ev -> PCssSetLocalFontsEnabled -> IO ()
-cssSetLocalFontsEnabled handle params = sendReceiveCommand handle "CSS.setLocalFontsEnabled" (Just params)
+--   Parameters: 'PCSSSetLocalFontsEnabled'
+cSSSetLocalFontsEnabled :: Handle ev -> PCSSSetLocalFontsEnabled -> IO ()
+cSSSetLocalFontsEnabled handle params = sendReceiveCommand handle "CSS.setLocalFontsEnabled" (Just params)
 
 
 

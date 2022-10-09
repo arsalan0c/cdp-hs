@@ -47,19 +47,19 @@ subUnsub handle = do
 printPDF :: CDP.Handle () -> IO ()
 printPDF handle = do
     -- send the Page.printToPDF command
-    r <- CDP.pagePrintToPdf handle $
-            CDP.PPagePrintToPdf Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing $
-                CDP.PPagePrintToPdfTransferModeReturnAsStream
+    r <- CDP.pagePrintToPDF handle $
+            CDP.PPagePrintToPDF Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing $
+                CDP.PPagePrintToPDFTransferModeReturnAsStream
 
     -- obtain stream handle from which to read pdf data
-    let streamHandle = fromJust . CDP.pagePrintToPdfStream $ r
+    let streamHandle = fromJust . CDP.pagePrintToPDFStream $ r
 
     -- read pdf data 24000 bytes at a time, this could be refactored to
     -- properly take the 'encoded' flag into account and produce a lazy
     -- bytestring
-    let params = CDP.PIoRead streamHandle Nothing $ Just 24000
-    reads <- whileTrue (not . CDP.ioReadEof) $ CDP.ioRead handle params
-    let dat = map (Base64.decodeLenient . T.encodeUtf8 . T.pack . CDP.ioReadData) reads
+    let params = CDP.PIORead streamHandle Nothing $ Just 24000
+    reads <- whileTrue (not . CDP.iOReadEof) $ CDP.iORead handle params
+    let dat = map (Base64.decodeLenient . T.encodeUtf8 . T.pack . CDP.iOReadData) reads
     B.writeFile "mypdfs.pdf" $ B.concat dat
 
 whileTrue :: Monad m => (a -> Bool) -> m a -> m [a]

@@ -17,7 +17,7 @@ prop_browser_get_version = property $ void .
 prop_dom_get_document :: Property
 prop_dom_get_document = property $ void . 
     evalIO $ CDP.runClient def $ \handle ->
-        CDP.domGetDocument handle $ CDP.PDomGetDocument Nothing Nothing
+        CDP.dOMGetDocument handle $ CDP.PDOMGetDocument Nothing Nothing
 
 prop_emulation_can_emulate :: Property
 prop_emulation_can_emulate = property $ void . 

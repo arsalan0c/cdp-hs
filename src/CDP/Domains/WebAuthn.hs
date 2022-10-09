@@ -35,7 +35,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -72,20 +71,20 @@ instance ToJSON WebAuthnAuthenticatorProtocol where
 
 
 -- | Type 'WebAuthn.Ctap2Version'.
-data WebAuthnCtap2Version = WebAuthnCtap2VersionCtap20 | WebAuthnCtap2VersionCtap21
+data WebAuthnCtap2Version = WebAuthnCtap2VersionCtap2_0 | WebAuthnCtap2VersionCtap2_1
    deriving (Ord, Eq, Show, Read)
 instance FromJSON WebAuthnCtap2Version where
    parseJSON = A.withText  "WebAuthnCtap2Version"  $ \v -> do
       case v of
-         "ctap2_0" -> pure WebAuthnCtap2VersionCtap20
-         "ctap2_1" -> pure WebAuthnCtap2VersionCtap21
+         "ctap2_0" -> pure WebAuthnCtap2VersionCtap2_0
+         "ctap2_1" -> pure WebAuthnCtap2VersionCtap2_1
          _ -> fail "failed to parse WebAuthnCtap2Version"
 
 instance ToJSON WebAuthnCtap2Version where
    toJSON v = A.String $
       case v of
-         WebAuthnCtap2VersionCtap20 -> "ctap2_0"
-         WebAuthnCtap2VersionCtap21 -> "ctap2_1"
+         WebAuthnCtap2VersionCtap2_0 -> "ctap2_0"
+         WebAuthnCtap2VersionCtap2_1 -> "ctap2_1"
 
 
 
@@ -189,7 +188,7 @@ data PWebAuthnEnable = PWebAuthnEnable {
   --   experience. Disabling the UI is recommended for automated testing.
   --   Supported at the embedder's discretion if UI is available.
   --   Defaults to false.
-  pWebAuthnEnableEnableUi :: Maybe Bool
+  pWebAuthnEnableEnableUI :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PWebAuthnEnable  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}

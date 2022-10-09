@@ -34,7 +34,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -53,102 +52,102 @@ import CDP.Domains.Runtime as Runtime
 -- | Type 'IO.StreamHandle'.
 --   This is either obtained from another method or specified as `blob:&lt;uuid&gt;` where
 --   `&lt;uuid&gt` is an UUID of a Blob.
-type IoStreamHandle = String
+type IOStreamHandle = String
 
 
 
 
 
--- | Parameters of the 'ioClose' command.
-data PIoClose = PIoClose {
+-- | Parameters of the 'iOClose' command.
+data PIOClose = PIOClose {
   -- | Handle of the stream to close.
-  pIoCloseHandle :: IoStreamHandle
+  pIOCloseHandle :: IOStreamHandle
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PIoClose  where
+instance ToJSON PIOClose  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 8 , A.omitNothingFields = True}
 
-instance FromJSON  PIoClose where
+instance FromJSON  PIOClose where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 8 }
 
 
 -- | Function for the 'IO.close' command.
 --   Close the stream, discard any temporary backing storage.
---   Parameters: 'PIoClose'
-ioClose :: Handle ev -> PIoClose -> IO ()
-ioClose handle params = sendReceiveCommand handle "IO.close" (Just params)
+--   Parameters: 'PIOClose'
+iOClose :: Handle ev -> PIOClose -> IO ()
+iOClose handle params = sendReceiveCommand handle "IO.close" (Just params)
 
 
--- | Parameters of the 'ioRead' command.
-data PIoRead = PIoRead {
+-- | Parameters of the 'iORead' command.
+data PIORead = PIORead {
   -- | Handle of the stream to read.
-  pIoReadHandle :: IoStreamHandle,
+  pIOReadHandle :: IOStreamHandle,
   -- | Seek to the specified offset before reading (if not specificed, proceed with offset
   --   following the last read). Some types of streams may only support sequential reads.
-  pIoReadOffset :: Maybe Int,
+  pIOReadOffset :: Maybe Int,
   -- | Maximum number of bytes to read (left upon the agent discretion if not specified).
-  pIoReadSize :: Maybe Int
+  pIOReadSize :: Maybe Int
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PIoRead  where
+instance ToJSON PIORead  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 , A.omitNothingFields = True}
 
-instance FromJSON  PIoRead where
+instance FromJSON  PIORead where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 }
 
 
 -- | Function for the 'IO.read' command.
 --   Read a chunk of the stream
---   Parameters: 'PIoRead'
---   Returns: 'IoRead'
-ioRead :: Handle ev -> PIoRead -> IO IoRead
-ioRead handle params = sendReceiveCommandResult handle "IO.read" (Just params)
+--   Parameters: 'PIORead'
+--   Returns: 'IORead'
+iORead :: Handle ev -> PIORead -> IO IORead
+iORead handle params = sendReceiveCommandResult handle "IO.read" (Just params)
 
--- | Return type of the 'ioRead' command.
-data IoRead = IoRead {
+-- | Return type of the 'iORead' command.
+data IORead = IORead {
   -- | Set if the data is base64-encoded
-  ioReadBase64Encoded :: Maybe Bool,
+  iOReadBase64Encoded :: Maybe Bool,
   -- | Data that were read.
-  ioReadData :: String,
+  iOReadData :: String,
   -- | Set if the end-of-file condition occurred while reading.
-  ioReadEof :: Bool
+  iOReadEof :: Bool
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  IoRead where
+instance FromJSON  IORead where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 6 }
 
-instance Command IoRead where
+instance Command IORead where
    commandName _ = "IO.read"
 
 
 
--- | Parameters of the 'ioResolveBlob' command.
-data PIoResolveBlob = PIoResolveBlob {
+-- | Parameters of the 'iOResolveBlob' command.
+data PIOResolveBlob = PIOResolveBlob {
   -- | Object id of a Blob object wrapper.
-  pIoResolveBlobObjectId :: Runtime.RuntimeRemoteObjectId
+  pIOResolveBlobObjectId :: Runtime.RuntimeRemoteObjectId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PIoResolveBlob  where
+instance ToJSON PIOResolveBlob  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
 
-instance FromJSON  PIoResolveBlob where
+instance FromJSON  PIOResolveBlob where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
 -- | Function for the 'IO.resolveBlob' command.
 --   Return UUID of Blob object specified by a remote object id.
---   Parameters: 'PIoResolveBlob'
---   Returns: 'IoResolveBlob'
-ioResolveBlob :: Handle ev -> PIoResolveBlob -> IO IoResolveBlob
-ioResolveBlob handle params = sendReceiveCommandResult handle "IO.resolveBlob" (Just params)
+--   Parameters: 'PIOResolveBlob'
+--   Returns: 'IOResolveBlob'
+iOResolveBlob :: Handle ev -> PIOResolveBlob -> IO IOResolveBlob
+iOResolveBlob handle params = sendReceiveCommandResult handle "IO.resolveBlob" (Just params)
 
--- | Return type of the 'ioResolveBlob' command.
-data IoResolveBlob = IoResolveBlob {
+-- | Return type of the 'iOResolveBlob' command.
+data IOResolveBlob = IOResolveBlob {
   -- | UUID of the specified Blob.
-  ioResolveBlobUuid :: String
+  iOResolveBlobUuid :: String
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  IoResolveBlob where
+instance FromJSON  IOResolveBlob where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 }
 
-instance Command IoResolveBlob where
+instance Command IOResolveBlob where
    commandName _ = "IO.resolveBlob"
 
 

@@ -32,7 +32,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -125,21 +124,21 @@ instance FromJSON  MemoryModule where
 
 -- | Function for the 'Memory.getDOMCounters' command.
 --   
---   Returns: 'MemoryGetDomCounters'
-memoryGetDomCounters :: Handle ev -> IO MemoryGetDomCounters
-memoryGetDomCounters handle = sendReceiveCommandResult handle "Memory.getDOMCounters" (Nothing :: Maybe ())
+--   Returns: 'MemoryGetDOMCounters'
+memoryGetDOMCounters :: Handle ev -> IO MemoryGetDOMCounters
+memoryGetDOMCounters handle = sendReceiveCommandResult handle "Memory.getDOMCounters" (Nothing :: Maybe ())
 
--- | Return type of the 'memoryGetDomCounters' command.
-data MemoryGetDomCounters = MemoryGetDomCounters {
-  memoryGetDomCountersDocuments :: Int,
-  memoryGetDomCountersNodes :: Int,
-  memoryGetDomCountersJsEventListeners :: Int
+-- | Return type of the 'memoryGetDOMCounters' command.
+data MemoryGetDOMCounters = MemoryGetDOMCounters {
+  memoryGetDOMCountersDocuments :: Int,
+  memoryGetDOMCountersNodes :: Int,
+  memoryGetDOMCountersJsEventListeners :: Int
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  MemoryGetDomCounters where
+instance FromJSON  MemoryGetDOMCounters where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
-instance Command MemoryGetDomCounters where
+instance Command MemoryGetDOMCounters where
    commandName _ = "Memory.getDOMCounters"
 
 

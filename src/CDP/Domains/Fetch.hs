@@ -34,7 +34,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -486,7 +485,7 @@ fetchTakeResponseBodyAsStream handle params = sendReceiveCommandResult handle "F
 
 -- | Return type of the 'fetchTakeResponseBodyAsStream' command.
 data FetchTakeResponseBodyAsStream = FetchTakeResponseBodyAsStream {
-  fetchTakeResponseBodyAsStreamStream :: IO.IoStreamHandle
+  fetchTakeResponseBodyAsStreamStream :: IO.IOStreamHandle
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  FetchTakeResponseBodyAsStream where

@@ -32,7 +32,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -54,21 +53,21 @@ type StorageSerializedStorageKey = String
 
 -- | Type 'Storage.StorageType'.
 --   Enum of possible storage types.
-data StorageStorageType = StorageStorageTypeAppcache | StorageStorageTypeCookies | StorageStorageTypeFileSystems | StorageStorageTypeIndexeddb | StorageStorageTypeLocalStorage | StorageStorageTypeShaderCache | StorageStorageTypeWebsql | StorageStorageTypeServiceWorkers | StorageStorageTypeCacheStorage | StorageStorageTypeInterestGroups | StorageStorageTypeAll | StorageStorageTypeOther
+data StorageStorageType = StorageStorageTypeAppcache | StorageStorageTypeCookies | StorageStorageTypeFile_systems | StorageStorageTypeIndexeddb | StorageStorageTypeLocal_storage | StorageStorageTypeShader_cache | StorageStorageTypeWebsql | StorageStorageTypeService_workers | StorageStorageTypeCache_storage | StorageStorageTypeInterest_groups | StorageStorageTypeAll | StorageStorageTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON StorageStorageType where
    parseJSON = A.withText  "StorageStorageType"  $ \v -> do
       case v of
          "appcache" -> pure StorageStorageTypeAppcache
          "cookies" -> pure StorageStorageTypeCookies
-         "file_systems" -> pure StorageStorageTypeFileSystems
+         "file_systems" -> pure StorageStorageTypeFile_systems
          "indexeddb" -> pure StorageStorageTypeIndexeddb
-         "local_storage" -> pure StorageStorageTypeLocalStorage
-         "shader_cache" -> pure StorageStorageTypeShaderCache
+         "local_storage" -> pure StorageStorageTypeLocal_storage
+         "shader_cache" -> pure StorageStorageTypeShader_cache
          "websql" -> pure StorageStorageTypeWebsql
-         "service_workers" -> pure StorageStorageTypeServiceWorkers
-         "cache_storage" -> pure StorageStorageTypeCacheStorage
-         "interest_groups" -> pure StorageStorageTypeInterestGroups
+         "service_workers" -> pure StorageStorageTypeService_workers
+         "cache_storage" -> pure StorageStorageTypeCache_storage
+         "interest_groups" -> pure StorageStorageTypeInterest_groups
          "all" -> pure StorageStorageTypeAll
          "other" -> pure StorageStorageTypeOther
          _ -> fail "failed to parse StorageStorageType"
@@ -78,14 +77,14 @@ instance ToJSON StorageStorageType where
       case v of
          StorageStorageTypeAppcache -> "appcache"
          StorageStorageTypeCookies -> "cookies"
-         StorageStorageTypeFileSystems -> "file_systems"
+         StorageStorageTypeFile_systems -> "file_systems"
          StorageStorageTypeIndexeddb -> "indexeddb"
-         StorageStorageTypeLocalStorage -> "local_storage"
-         StorageStorageTypeShaderCache -> "shader_cache"
+         StorageStorageTypeLocal_storage -> "local_storage"
+         StorageStorageTypeShader_cache -> "shader_cache"
          StorageStorageTypeWebsql -> "websql"
-         StorageStorageTypeServiceWorkers -> "service_workers"
-         StorageStorageTypeCacheStorage -> "cache_storage"
-         StorageStorageTypeInterestGroups -> "interest_groups"
+         StorageStorageTypeService_workers -> "service_workers"
+         StorageStorageTypeCache_storage -> "cache_storage"
+         StorageStorageTypeInterest_groups -> "interest_groups"
          StorageStorageTypeAll -> "all"
          StorageStorageTypeOther -> "other"
 
@@ -220,37 +219,37 @@ instance Event StorageCacheStorageListUpdated where
     eventName _ = "Storage.cacheStorageListUpdated"
 
 -- | Type of the 'Storage.indexedDBContentUpdated' event.
-data StorageIndexedDbContentUpdated = StorageIndexedDbContentUpdated {
+data StorageIndexedDBContentUpdated = StorageIndexedDBContentUpdated {
   -- | Origin to update.
-  storageIndexedDbContentUpdatedOrigin :: String,
+  storageIndexedDBContentUpdatedOrigin :: String,
   -- | Database to update.
-  storageIndexedDbContentUpdatedDatabaseName :: String,
+  storageIndexedDBContentUpdatedDatabaseName :: String,
   -- | ObjectStore to update.
-  storageIndexedDbContentUpdatedObjectStoreName :: String
+  storageIndexedDBContentUpdatedObjectStoreName :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON StorageIndexedDbContentUpdated  where
+instance ToJSON StorageIndexedDBContentUpdated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
 
-instance FromJSON  StorageIndexedDbContentUpdated where
+instance FromJSON  StorageIndexedDBContentUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
-instance Event StorageIndexedDbContentUpdated where
+instance Event StorageIndexedDBContentUpdated where
     eventName _ = "Storage.indexedDBContentUpdated"
 
 -- | Type of the 'Storage.indexedDBListUpdated' event.
-data StorageIndexedDbListUpdated = StorageIndexedDbListUpdated {
+data StorageIndexedDBListUpdated = StorageIndexedDBListUpdated {
   -- | Origin to update.
-  storageIndexedDbListUpdatedOrigin :: String
+  storageIndexedDBListUpdatedOrigin :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON StorageIndexedDbListUpdated  where
+instance ToJSON StorageIndexedDBListUpdated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
-instance FromJSON  StorageIndexedDbListUpdated where
+instance FromJSON  StorageIndexedDBListUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
-instance Event StorageIndexedDbListUpdated where
+instance Event StorageIndexedDBListUpdated where
     eventName _ = "Storage.indexedDBListUpdated"
 
 -- | Type of the 'Storage.interestGroupAccessed' event.
@@ -327,7 +326,7 @@ storageClearDataForOrigin handle params = sendReceiveCommand handle "Storage.cle
 -- | Parameters of the 'storageGetCookies' command.
 data PStorageGetCookies = PStorageGetCookies {
   -- | Browser context to use when called on the browser endpoint.
-  pStorageGetCookiesBrowserContextId :: Maybe BrowserTarget.BrowserBrowserContextId
+  pStorageGetCookiesBrowserContextId :: Maybe BrowserTarget.BrowserBrowserContextID
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PStorageGetCookies  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -362,7 +361,7 @@ data PStorageSetCookies = PStorageSetCookies {
   -- | Cookies to be set.
   pStorageSetCookiesCookies :: [DOMPageNetworkEmulationSecurity.NetworkCookieParam],
   -- | Browser context to use when called on the browser endpoint.
-  pStorageSetCookiesBrowserContextId :: Maybe BrowserTarget.BrowserBrowserContextId
+  pStorageSetCookiesBrowserContextId :: Maybe BrowserTarget.BrowserBrowserContextID
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PStorageSetCookies  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -381,7 +380,7 @@ storageSetCookies handle params = sendReceiveCommand handle "Storage.setCookies"
 -- | Parameters of the 'storageClearCookies' command.
 data PStorageClearCookies = PStorageClearCookies {
   -- | Browser context to use when called on the browser endpoint.
-  pStorageClearCookiesBrowserContextId :: Maybe BrowserTarget.BrowserBrowserContextId
+  pStorageClearCookiesBrowserContextId :: Maybe BrowserTarget.BrowserBrowserContextID
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PStorageClearCookies  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -482,23 +481,23 @@ storageTrackCacheStorageForOrigin :: Handle ev -> PStorageTrackCacheStorageForOr
 storageTrackCacheStorageForOrigin handle params = sendReceiveCommand handle "Storage.trackCacheStorageForOrigin" (Just params)
 
 
--- | Parameters of the 'storageTrackIndexedDbForOrigin' command.
-data PStorageTrackIndexedDbForOrigin = PStorageTrackIndexedDbForOrigin {
+-- | Parameters of the 'storageTrackIndexedDBForOrigin' command.
+data PStorageTrackIndexedDBForOrigin = PStorageTrackIndexedDBForOrigin {
   -- | Security origin.
-  pStorageTrackIndexedDbForOriginOrigin :: String
+  pStorageTrackIndexedDBForOriginOrigin :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PStorageTrackIndexedDbForOrigin  where
+instance ToJSON PStorageTrackIndexedDBForOrigin  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
 
-instance FromJSON  PStorageTrackIndexedDbForOrigin where
+instance FromJSON  PStorageTrackIndexedDBForOrigin where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
 -- | Function for the 'Storage.trackIndexedDBForOrigin' command.
 --   Registers origin to be notified when an update occurs to its IndexedDB.
---   Parameters: 'PStorageTrackIndexedDbForOrigin'
-storageTrackIndexedDbForOrigin :: Handle ev -> PStorageTrackIndexedDbForOrigin -> IO ()
-storageTrackIndexedDbForOrigin handle params = sendReceiveCommand handle "Storage.trackIndexedDBForOrigin" (Just params)
+--   Parameters: 'PStorageTrackIndexedDBForOrigin'
+storageTrackIndexedDBForOrigin :: Handle ev -> PStorageTrackIndexedDBForOrigin -> IO ()
+storageTrackIndexedDBForOrigin handle params = sendReceiveCommand handle "Storage.trackIndexedDBForOrigin" (Just params)
 
 
 -- | Parameters of the 'storageUntrackCacheStorageForOrigin' command.
@@ -520,23 +519,23 @@ storageUntrackCacheStorageForOrigin :: Handle ev -> PStorageUntrackCacheStorageF
 storageUntrackCacheStorageForOrigin handle params = sendReceiveCommand handle "Storage.untrackCacheStorageForOrigin" (Just params)
 
 
--- | Parameters of the 'storageUntrackIndexedDbForOrigin' command.
-data PStorageUntrackIndexedDbForOrigin = PStorageUntrackIndexedDbForOrigin {
+-- | Parameters of the 'storageUntrackIndexedDBForOrigin' command.
+data PStorageUntrackIndexedDBForOrigin = PStorageUntrackIndexedDBForOrigin {
   -- | Security origin.
-  pStorageUntrackIndexedDbForOriginOrigin :: String
+  pStorageUntrackIndexedDBForOriginOrigin :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PStorageUntrackIndexedDbForOrigin  where
+instance ToJSON PStorageUntrackIndexedDBForOrigin  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
 
-instance FromJSON  PStorageUntrackIndexedDbForOrigin where
+instance FromJSON  PStorageUntrackIndexedDBForOrigin where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 }
 
 
 -- | Function for the 'Storage.untrackIndexedDBForOrigin' command.
 --   Unregisters origin from receiving notifications for IndexedDB.
---   Parameters: 'PStorageUntrackIndexedDbForOrigin'
-storageUntrackIndexedDbForOrigin :: Handle ev -> PStorageUntrackIndexedDbForOrigin -> IO ()
-storageUntrackIndexedDbForOrigin handle params = sendReceiveCommand handle "Storage.untrackIndexedDBForOrigin" (Just params)
+--   Parameters: 'PStorageUntrackIndexedDBForOrigin'
+storageUntrackIndexedDBForOrigin :: Handle ev -> PStorageUntrackIndexedDBForOrigin -> IO ()
+storageUntrackIndexedDBForOrigin handle params = sendReceiveCommand handle "Storage.untrackIndexedDBForOrigin" (Just params)
 
 
 -- | Function for the 'Storage.getTrustTokens' command.

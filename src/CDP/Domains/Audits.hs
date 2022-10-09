@@ -34,7 +34,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -220,7 +219,7 @@ instance ToJSON AuditsMixedContentResolutionStatus where
 
 
 -- | Type 'Audits.MixedContentResourceType'.
-data AuditsMixedContentResourceType = AuditsMixedContentResourceTypeAttributionSrc | AuditsMixedContentResourceTypeAudio | AuditsMixedContentResourceTypeBeacon | AuditsMixedContentResourceTypeCspReport | AuditsMixedContentResourceTypeDownload | AuditsMixedContentResourceTypeEventSource | AuditsMixedContentResourceTypeFavicon | AuditsMixedContentResourceTypeFont | AuditsMixedContentResourceTypeForm | AuditsMixedContentResourceTypeFrame | AuditsMixedContentResourceTypeImage | AuditsMixedContentResourceTypeImport | AuditsMixedContentResourceTypeManifest | AuditsMixedContentResourceTypePing | AuditsMixedContentResourceTypePluginData | AuditsMixedContentResourceTypePluginResource | AuditsMixedContentResourceTypePrefetch | AuditsMixedContentResourceTypeResource | AuditsMixedContentResourceTypeScript | AuditsMixedContentResourceTypeServiceWorker | AuditsMixedContentResourceTypeSharedWorker | AuditsMixedContentResourceTypeStylesheet | AuditsMixedContentResourceTypeTrack | AuditsMixedContentResourceTypeVideo | AuditsMixedContentResourceTypeWorker | AuditsMixedContentResourceTypeXmlHttpRequest | AuditsMixedContentResourceTypeXslt
+data AuditsMixedContentResourceType = AuditsMixedContentResourceTypeAttributionSrc | AuditsMixedContentResourceTypeAudio | AuditsMixedContentResourceTypeBeacon | AuditsMixedContentResourceTypeCSPReport | AuditsMixedContentResourceTypeDownload | AuditsMixedContentResourceTypeEventSource | AuditsMixedContentResourceTypeFavicon | AuditsMixedContentResourceTypeFont | AuditsMixedContentResourceTypeForm | AuditsMixedContentResourceTypeFrame | AuditsMixedContentResourceTypeImage | AuditsMixedContentResourceTypeImport | AuditsMixedContentResourceTypeManifest | AuditsMixedContentResourceTypePing | AuditsMixedContentResourceTypePluginData | AuditsMixedContentResourceTypePluginResource | AuditsMixedContentResourceTypePrefetch | AuditsMixedContentResourceTypeResource | AuditsMixedContentResourceTypeScript | AuditsMixedContentResourceTypeServiceWorker | AuditsMixedContentResourceTypeSharedWorker | AuditsMixedContentResourceTypeStylesheet | AuditsMixedContentResourceTypeTrack | AuditsMixedContentResourceTypeVideo | AuditsMixedContentResourceTypeWorker | AuditsMixedContentResourceTypeXMLHttpRequest | AuditsMixedContentResourceTypeXSLT
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsMixedContentResourceType where
    parseJSON = A.withText  "AuditsMixedContentResourceType"  $ \v -> do
@@ -228,7 +227,7 @@ instance FromJSON AuditsMixedContentResourceType where
          "AttributionSrc" -> pure AuditsMixedContentResourceTypeAttributionSrc
          "Audio" -> pure AuditsMixedContentResourceTypeAudio
          "Beacon" -> pure AuditsMixedContentResourceTypeBeacon
-         "CSPReport" -> pure AuditsMixedContentResourceTypeCspReport
+         "CSPReport" -> pure AuditsMixedContentResourceTypeCSPReport
          "Download" -> pure AuditsMixedContentResourceTypeDownload
          "EventSource" -> pure AuditsMixedContentResourceTypeEventSource
          "Favicon" -> pure AuditsMixedContentResourceTypeFavicon
@@ -250,8 +249,8 @@ instance FromJSON AuditsMixedContentResourceType where
          "Track" -> pure AuditsMixedContentResourceTypeTrack
          "Video" -> pure AuditsMixedContentResourceTypeVideo
          "Worker" -> pure AuditsMixedContentResourceTypeWorker
-         "XMLHttpRequest" -> pure AuditsMixedContentResourceTypeXmlHttpRequest
-         "XSLT" -> pure AuditsMixedContentResourceTypeXslt
+         "XMLHttpRequest" -> pure AuditsMixedContentResourceTypeXMLHttpRequest
+         "XSLT" -> pure AuditsMixedContentResourceTypeXSLT
          _ -> fail "failed to parse AuditsMixedContentResourceType"
 
 instance ToJSON AuditsMixedContentResourceType where
@@ -260,7 +259,7 @@ instance ToJSON AuditsMixedContentResourceType where
          AuditsMixedContentResourceTypeAttributionSrc -> "AttributionSrc"
          AuditsMixedContentResourceTypeAudio -> "Audio"
          AuditsMixedContentResourceTypeBeacon -> "Beacon"
-         AuditsMixedContentResourceTypeCspReport -> "CSPReport"
+         AuditsMixedContentResourceTypeCSPReport -> "CSPReport"
          AuditsMixedContentResourceTypeDownload -> "Download"
          AuditsMixedContentResourceTypeEventSource -> "EventSource"
          AuditsMixedContentResourceTypeFavicon -> "Favicon"
@@ -282,8 +281,8 @@ instance ToJSON AuditsMixedContentResourceType where
          AuditsMixedContentResourceTypeTrack -> "Track"
          AuditsMixedContentResourceTypeVideo -> "Video"
          AuditsMixedContentResourceTypeWorker -> "Worker"
-         AuditsMixedContentResourceTypeXmlHttpRequest -> "XMLHttpRequest"
-         AuditsMixedContentResourceTypeXslt -> "XSLT"
+         AuditsMixedContentResourceTypeXMLHttpRequest -> "XMLHttpRequest"
+         AuditsMixedContentResourceTypeXSLT -> "XSLT"
 
 
 
@@ -297,9 +296,9 @@ data AuditsMixedContentIssueDetails = AuditsMixedContentIssueDetails {
   -- | The way the mixed content issue is being resolved.
   auditsMixedContentIssueDetailsResolutionStatus :: AuditsMixedContentResolutionStatus,
   -- | The unsafe http url causing the mixed content issue.
-  auditsMixedContentIssueDetailsInsecureUrl :: String,
+  auditsMixedContentIssueDetailsInsecureURL :: String,
   -- | The url responsible for the call to an unsafe url.
-  auditsMixedContentIssueDetailsMainResourceUrl :: String,
+  auditsMixedContentIssueDetailsMainResourceURL :: String,
   -- | The mixed content request.
   --   Does not always exist (e.g. for unsafe form submission urls).
   auditsMixedContentIssueDetailsRequest :: Maybe AuditsAffectedRequest,
@@ -414,14 +413,14 @@ instance FromJSON  AuditsHeavyAdIssueDetails where
 
 
 -- | Type 'Audits.ContentSecurityPolicyViolationType'.
-data AuditsContentSecurityPolicyViolationType = AuditsContentSecurityPolicyViolationTypeKInlineViolation | AuditsContentSecurityPolicyViolationTypeKEvalViolation | AuditsContentSecurityPolicyViolationTypeKUrlViolation | AuditsContentSecurityPolicyViolationTypeKTrustedTypesSinkViolation | AuditsContentSecurityPolicyViolationTypeKTrustedTypesPolicyViolation | AuditsContentSecurityPolicyViolationTypeKWasmEvalViolation
+data AuditsContentSecurityPolicyViolationType = AuditsContentSecurityPolicyViolationTypeKInlineViolation | AuditsContentSecurityPolicyViolationTypeKEvalViolation | AuditsContentSecurityPolicyViolationTypeKURLViolation | AuditsContentSecurityPolicyViolationTypeKTrustedTypesSinkViolation | AuditsContentSecurityPolicyViolationTypeKTrustedTypesPolicyViolation | AuditsContentSecurityPolicyViolationTypeKWasmEvalViolation
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsContentSecurityPolicyViolationType where
    parseJSON = A.withText  "AuditsContentSecurityPolicyViolationType"  $ \v -> do
       case v of
          "kInlineViolation" -> pure AuditsContentSecurityPolicyViolationTypeKInlineViolation
          "kEvalViolation" -> pure AuditsContentSecurityPolicyViolationTypeKEvalViolation
-         "kURLViolation" -> pure AuditsContentSecurityPolicyViolationTypeKUrlViolation
+         "kURLViolation" -> pure AuditsContentSecurityPolicyViolationTypeKURLViolation
          "kTrustedTypesSinkViolation" -> pure AuditsContentSecurityPolicyViolationTypeKTrustedTypesSinkViolation
          "kTrustedTypesPolicyViolation" -> pure AuditsContentSecurityPolicyViolationTypeKTrustedTypesPolicyViolation
          "kWasmEvalViolation" -> pure AuditsContentSecurityPolicyViolationTypeKWasmEvalViolation
@@ -432,7 +431,7 @@ instance ToJSON AuditsContentSecurityPolicyViolationType where
       case v of
          AuditsContentSecurityPolicyViolationTypeKInlineViolation -> "kInlineViolation"
          AuditsContentSecurityPolicyViolationTypeKEvalViolation -> "kEvalViolation"
-         AuditsContentSecurityPolicyViolationTypeKUrlViolation -> "kURLViolation"
+         AuditsContentSecurityPolicyViolationTypeKURLViolation -> "kURLViolation"
          AuditsContentSecurityPolicyViolationTypeKTrustedTypesSinkViolation -> "kTrustedTypesSinkViolation"
          AuditsContentSecurityPolicyViolationTypeKTrustedTypesPolicyViolation -> "kTrustedTypesPolicyViolation"
          AuditsContentSecurityPolicyViolationTypeKWasmEvalViolation -> "kWasmEvalViolation"
@@ -457,14 +456,14 @@ instance FromJSON  AuditsSourceCodeLocation where
 -- | Type 'Audits.ContentSecurityPolicyIssueDetails'.
 data AuditsContentSecurityPolicyIssueDetails = AuditsContentSecurityPolicyIssueDetails {
   -- | The url not included in allowed sources.
-  auditsContentSecurityPolicyIssueDetailsBlockedUrl :: Maybe String,
+  auditsContentSecurityPolicyIssueDetailsBlockedURL :: Maybe String,
   -- | Specific directive that is violated, causing the CSP issue.
   auditsContentSecurityPolicyIssueDetailsViolatedDirective :: String,
   auditsContentSecurityPolicyIssueDetailsIsReportOnly :: Bool,
   auditsContentSecurityPolicyIssueDetailsContentSecurityPolicyViolationType :: AuditsContentSecurityPolicyViolationType,
   auditsContentSecurityPolicyIssueDetailsFrameAncestor :: Maybe AuditsAffectedFrame,
   auditsContentSecurityPolicyIssueDetailsSourceCodeLocation :: Maybe AuditsSourceCodeLocation,
-  auditsContentSecurityPolicyIssueDetailsViolatingNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomBackendNodeId
+  auditsContentSecurityPolicyIssueDetailsViolatingNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMBackendNodeId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsContentSecurityPolicyIssueDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 39 , A.omitNothingFields = True}
@@ -551,11 +550,11 @@ instance FromJSON  AuditsTrustedWebActivityIssueDetails where
 
 -- | Type 'Audits.LowTextContrastIssueDetails'.
 data AuditsLowTextContrastIssueDetails = AuditsLowTextContrastIssueDetails {
-  auditsLowTextContrastIssueDetailsViolatingNodeId :: DOMPageNetworkEmulationSecurity.DomBackendNodeId,
+  auditsLowTextContrastIssueDetailsViolatingNodeId :: DOMPageNetworkEmulationSecurity.DOMBackendNodeId,
   auditsLowTextContrastIssueDetailsViolatingNodeSelector :: String,
   auditsLowTextContrastIssueDetailsContrastRatio :: Double,
-  auditsLowTextContrastIssueDetailsThresholdAa :: Double,
-  auditsLowTextContrastIssueDetailsThresholdAaa :: Double,
+  auditsLowTextContrastIssueDetailsThresholdAA :: Double,
+  auditsLowTextContrastIssueDetailsThresholdAAA :: Double,
   auditsLowTextContrastIssueDetailsFontSize :: String,
   auditsLowTextContrastIssueDetailsFontWeight :: String
 } deriving (Generic, Eq, Show, Read)
@@ -576,7 +575,7 @@ data AuditsCorsIssueDetails = AuditsCorsIssueDetails {
   auditsCorsIssueDetailsRequest :: AuditsAffectedRequest,
   auditsCorsIssueDetailsLocation :: Maybe AuditsSourceCodeLocation,
   auditsCorsIssueDetailsInitiatorOrigin :: Maybe String,
-  auditsCorsIssueDetailsResourceIpAddressSpace :: Maybe DOMPageNetworkEmulationSecurity.NetworkIpAddressSpace,
+  auditsCorsIssueDetailsResourceIPAddressSpace :: Maybe DOMPageNetworkEmulationSecurity.NetworkIPAddressSpace,
   auditsCorsIssueDetailsClientSecurityState :: Maybe DOMPageNetworkEmulationSecurity.NetworkClientSecurityState
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsCorsIssueDetails  where
@@ -616,7 +615,7 @@ data AuditsAttributionReportingIssueDetails = AuditsAttributionReportingIssueDet
   auditsAttributionReportingIssueDetailsViolationType :: AuditsAttributionReportingIssueType,
   auditsAttributionReportingIssueDetailsFrame :: Maybe AuditsAffectedFrame,
   auditsAttributionReportingIssueDetailsRequest :: Maybe AuditsAffectedRequest,
-  auditsAttributionReportingIssueDetailsViolatingNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomBackendNodeId,
+  auditsAttributionReportingIssueDetailsViolatingNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMBackendNodeId,
   auditsAttributionReportingIssueDetailsInvalidParameter :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON AuditsAttributionReportingIssueDetails  where
@@ -634,7 +633,7 @@ data AuditsQuirksModeIssueDetails = AuditsQuirksModeIssueDetails {
   -- | If false, it means the document's mode is "quirks"
   --   instead of "limited-quirks".
   auditsQuirksModeIssueDetailsIsLimitedQuirksMode :: Bool,
-  auditsQuirksModeIssueDetailsDocumentNodeId :: DOMPageNetworkEmulationSecurity.DomBackendNodeId,
+  auditsQuirksModeIssueDetailsDocumentNodeId :: DOMPageNetworkEmulationSecurity.DOMBackendNodeId,
   auditsQuirksModeIssueDetailsUrl :: String,
   auditsQuirksModeIssueDetailsFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId,
   auditsQuirksModeIssueDetailsLoaderId :: DOMPageNetworkEmulationSecurity.NetworkLoaderId
@@ -692,13 +691,13 @@ instance FromJSON  AuditsGenericIssueDetails where
 
 
 -- | Type 'Audits.DeprecationIssueType'.
-data AuditsDeprecationIssueType = AuditsDeprecationIssueTypeAuthorizationCoveredByWildcard | AuditsDeprecationIssueTypeCanRequestUrlhttpContainingNewline | AuditsDeprecationIssueTypeChromeLoadTimesConnectionInfo | AuditsDeprecationIssueTypeChromeLoadTimesFirstPaintAfterLoadTime | AuditsDeprecationIssueTypeChromeLoadTimesWasAlternateProtocolAvailable | AuditsDeprecationIssueTypeCookieWithTruncatingChar | AuditsDeprecationIssueTypeCrossOriginAccessBasedOnDocumentDomain | AuditsDeprecationIssueTypeCrossOriginWindowAlert | AuditsDeprecationIssueTypeCrossOriginWindowConfirm | AuditsDeprecationIssueTypeCssSelectorInternalMediaControlsOverlayCastButton | AuditsDeprecationIssueTypeDeprecationExample | AuditsDeprecationIssueTypeDocumentDomainSettingWithoutOriginAgentClusterHeader | AuditsDeprecationIssueTypeEventPath | AuditsDeprecationIssueTypeGeolocationInsecureOrigin | AuditsDeprecationIssueTypeGeolocationInsecureOriginDeprecatedNotRemoved | AuditsDeprecationIssueTypeGetUserMediaInsecureOrigin | AuditsDeprecationIssueTypeHostCandidateAttributeGetter | AuditsDeprecationIssueTypeInsecurePrivateNetworkSubresourceRequest | AuditsDeprecationIssueTypeLegacyConstraintGoogIPv6 | AuditsDeprecationIssueTypeLocalCssFileExtensionRejected | AuditsDeprecationIssueTypeMediaSourceAbortRemove | AuditsDeprecationIssueTypeMediaSourceDurationTruncatingBuffered | AuditsDeprecationIssueTypeNoSysexWebMidiWithoutPermission | AuditsDeprecationIssueTypeNotificationInsecureOrigin | AuditsDeprecationIssueTypeNotificationPermissionRequestedIframe | AuditsDeprecationIssueTypeObsoleteWebRtcCipherSuite | AuditsDeprecationIssueTypePaymentRequestBasicCard | AuditsDeprecationIssueTypePictureSourceSrc | AuditsDeprecationIssueTypePrefixedCancelAnimationFrame | AuditsDeprecationIssueTypePrefixedRequestAnimationFrame | AuditsDeprecationIssueTypePrefixedStorageInfo | AuditsDeprecationIssueTypePrefixedVideoDisplayingFullscreen | AuditsDeprecationIssueTypePrefixedVideoEnterFullscreen | AuditsDeprecationIssueTypePrefixedVideoEnterFullScreen | AuditsDeprecationIssueTypePrefixedVideoExitFullscreen | AuditsDeprecationIssueTypePrefixedVideoExitFullScreen | AuditsDeprecationIssueTypePrefixedVideoSupportsFullscreen | AuditsDeprecationIssueTypeRangeExpand | AuditsDeprecationIssueTypeRequestedSubresourceWithEmbeddedCredentials | AuditsDeprecationIssueTypeRtcConstraintEnableDtlsSrtpFalse | AuditsDeprecationIssueTypeRtcConstraintEnableDtlsSrtpTrue | AuditsDeprecationIssueTypeRtcPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics | AuditsDeprecationIssueTypeRtcPeerConnectionSdpSemanticsPlanB | AuditsDeprecationIssueTypeRtcpMuxPolicyNegotiate | AuditsDeprecationIssueTypeSharedArrayBufferConstructedWithoutIsolation | AuditsDeprecationIssueTypeTextToSpeechDisallowedByAutoplay | AuditsDeprecationIssueTypeV8SharedArrayBufferConstructedInExtensionWithoutIsolation | AuditsDeprecationIssueTypeXhrjsonEncodingDetection | AuditsDeprecationIssueTypeXmlHttpRequestSynchronousInNonWorkerOutsideBeforeUnload | AuditsDeprecationIssueTypeXrSupportsSession
+data AuditsDeprecationIssueType = AuditsDeprecationIssueTypeAuthorizationCoveredByWildcard | AuditsDeprecationIssueTypeCanRequestURLHTTPContainingNewline | AuditsDeprecationIssueTypeChromeLoadTimesConnectionInfo | AuditsDeprecationIssueTypeChromeLoadTimesFirstPaintAfterLoadTime | AuditsDeprecationIssueTypeChromeLoadTimesWasAlternateProtocolAvailable | AuditsDeprecationIssueTypeCookieWithTruncatingChar | AuditsDeprecationIssueTypeCrossOriginAccessBasedOnDocumentDomain | AuditsDeprecationIssueTypeCrossOriginWindowAlert | AuditsDeprecationIssueTypeCrossOriginWindowConfirm | AuditsDeprecationIssueTypeCSSSelectorInternalMediaControlsOverlayCastButton | AuditsDeprecationIssueTypeDeprecationExample | AuditsDeprecationIssueTypeDocumentDomainSettingWithoutOriginAgentClusterHeader | AuditsDeprecationIssueTypeEventPath | AuditsDeprecationIssueTypeGeolocationInsecureOrigin | AuditsDeprecationIssueTypeGeolocationInsecureOriginDeprecatedNotRemoved | AuditsDeprecationIssueTypeGetUserMediaInsecureOrigin | AuditsDeprecationIssueTypeHostCandidateAttributeGetter | AuditsDeprecationIssueTypeInsecurePrivateNetworkSubresourceRequest | AuditsDeprecationIssueTypeLegacyConstraintGoogIPv6 | AuditsDeprecationIssueTypeLocalCSSFileExtensionRejected | AuditsDeprecationIssueTypeMediaSourceAbortRemove | AuditsDeprecationIssueTypeMediaSourceDurationTruncatingBuffered | AuditsDeprecationIssueTypeNoSysexWebMIDIWithoutPermission | AuditsDeprecationIssueTypeNotificationInsecureOrigin | AuditsDeprecationIssueTypeNotificationPermissionRequestedIframe | AuditsDeprecationIssueTypeObsoleteWebRtcCipherSuite | AuditsDeprecationIssueTypePaymentRequestBasicCard | AuditsDeprecationIssueTypePictureSourceSrc | AuditsDeprecationIssueTypePrefixedCancelAnimationFrame | AuditsDeprecationIssueTypePrefixedRequestAnimationFrame | AuditsDeprecationIssueTypePrefixedStorageInfo | AuditsDeprecationIssueTypePrefixedVideoDisplayingFullscreen | AuditsDeprecationIssueTypePrefixedVideoEnterFullscreen | AuditsDeprecationIssueTypePrefixedVideoEnterFullScreen | AuditsDeprecationIssueTypePrefixedVideoExitFullscreen | AuditsDeprecationIssueTypePrefixedVideoExitFullScreen | AuditsDeprecationIssueTypePrefixedVideoSupportsFullscreen | AuditsDeprecationIssueTypeRangeExpand | AuditsDeprecationIssueTypeRequestedSubresourceWithEmbeddedCredentials | AuditsDeprecationIssueTypeRTCConstraintEnableDtlsSrtpFalse | AuditsDeprecationIssueTypeRTCConstraintEnableDtlsSrtpTrue | AuditsDeprecationIssueTypeRTCPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics | AuditsDeprecationIssueTypeRTCPeerConnectionSdpSemanticsPlanB | AuditsDeprecationIssueTypeRtcpMuxPolicyNegotiate | AuditsDeprecationIssueTypeSharedArrayBufferConstructedWithoutIsolation | AuditsDeprecationIssueTypeTextToSpeech_DisallowedByAutoplay | AuditsDeprecationIssueTypeV8SharedArrayBufferConstructedInExtensionWithoutIsolation | AuditsDeprecationIssueTypeXHRJSONEncodingDetection | AuditsDeprecationIssueTypeXMLHttpRequestSynchronousInNonWorkerOutsideBeforeUnload | AuditsDeprecationIssueTypeXRSupportsSession
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsDeprecationIssueType where
    parseJSON = A.withText  "AuditsDeprecationIssueType"  $ \v -> do
       case v of
          "AuthorizationCoveredByWildcard" -> pure AuditsDeprecationIssueTypeAuthorizationCoveredByWildcard
-         "CanRequestURLHTTPContainingNewline" -> pure AuditsDeprecationIssueTypeCanRequestUrlhttpContainingNewline
+         "CanRequestURLHTTPContainingNewline" -> pure AuditsDeprecationIssueTypeCanRequestURLHTTPContainingNewline
          "ChromeLoadTimesConnectionInfo" -> pure AuditsDeprecationIssueTypeChromeLoadTimesConnectionInfo
          "ChromeLoadTimesFirstPaintAfterLoadTime" -> pure AuditsDeprecationIssueTypeChromeLoadTimesFirstPaintAfterLoadTime
          "ChromeLoadTimesWasAlternateProtocolAvailable" -> pure AuditsDeprecationIssueTypeChromeLoadTimesWasAlternateProtocolAvailable
@@ -706,7 +705,7 @@ instance FromJSON AuditsDeprecationIssueType where
          "CrossOriginAccessBasedOnDocumentDomain" -> pure AuditsDeprecationIssueTypeCrossOriginAccessBasedOnDocumentDomain
          "CrossOriginWindowAlert" -> pure AuditsDeprecationIssueTypeCrossOriginWindowAlert
          "CrossOriginWindowConfirm" -> pure AuditsDeprecationIssueTypeCrossOriginWindowConfirm
-         "CSSSelectorInternalMediaControlsOverlayCastButton" -> pure AuditsDeprecationIssueTypeCssSelectorInternalMediaControlsOverlayCastButton
+         "CSSSelectorInternalMediaControlsOverlayCastButton" -> pure AuditsDeprecationIssueTypeCSSSelectorInternalMediaControlsOverlayCastButton
          "DeprecationExample" -> pure AuditsDeprecationIssueTypeDeprecationExample
          "DocumentDomainSettingWithoutOriginAgentClusterHeader" -> pure AuditsDeprecationIssueTypeDocumentDomainSettingWithoutOriginAgentClusterHeader
          "EventPath" -> pure AuditsDeprecationIssueTypeEventPath
@@ -716,10 +715,10 @@ instance FromJSON AuditsDeprecationIssueType where
          "HostCandidateAttributeGetter" -> pure AuditsDeprecationIssueTypeHostCandidateAttributeGetter
          "InsecurePrivateNetworkSubresourceRequest" -> pure AuditsDeprecationIssueTypeInsecurePrivateNetworkSubresourceRequest
          "LegacyConstraintGoogIPv6" -> pure AuditsDeprecationIssueTypeLegacyConstraintGoogIPv6
-         "LocalCSSFileExtensionRejected" -> pure AuditsDeprecationIssueTypeLocalCssFileExtensionRejected
+         "LocalCSSFileExtensionRejected" -> pure AuditsDeprecationIssueTypeLocalCSSFileExtensionRejected
          "MediaSourceAbortRemove" -> pure AuditsDeprecationIssueTypeMediaSourceAbortRemove
          "MediaSourceDurationTruncatingBuffered" -> pure AuditsDeprecationIssueTypeMediaSourceDurationTruncatingBuffered
-         "NoSysexWebMIDIWithoutPermission" -> pure AuditsDeprecationIssueTypeNoSysexWebMidiWithoutPermission
+         "NoSysexWebMIDIWithoutPermission" -> pure AuditsDeprecationIssueTypeNoSysexWebMIDIWithoutPermission
          "NotificationInsecureOrigin" -> pure AuditsDeprecationIssueTypeNotificationInsecureOrigin
          "NotificationPermissionRequestedIframe" -> pure AuditsDeprecationIssueTypeNotificationPermissionRequestedIframe
          "ObsoleteWebRtcCipherSuite" -> pure AuditsDeprecationIssueTypeObsoleteWebRtcCipherSuite
@@ -736,24 +735,24 @@ instance FromJSON AuditsDeprecationIssueType where
          "PrefixedVideoSupportsFullscreen" -> pure AuditsDeprecationIssueTypePrefixedVideoSupportsFullscreen
          "RangeExpand" -> pure AuditsDeprecationIssueTypeRangeExpand
          "RequestedSubresourceWithEmbeddedCredentials" -> pure AuditsDeprecationIssueTypeRequestedSubresourceWithEmbeddedCredentials
-         "RTCConstraintEnableDtlsSrtpFalse" -> pure AuditsDeprecationIssueTypeRtcConstraintEnableDtlsSrtpFalse
-         "RTCConstraintEnableDtlsSrtpTrue" -> pure AuditsDeprecationIssueTypeRtcConstraintEnableDtlsSrtpTrue
-         "RTCPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics" -> pure AuditsDeprecationIssueTypeRtcPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics
-         "RTCPeerConnectionSdpSemanticsPlanB" -> pure AuditsDeprecationIssueTypeRtcPeerConnectionSdpSemanticsPlanB
+         "RTCConstraintEnableDtlsSrtpFalse" -> pure AuditsDeprecationIssueTypeRTCConstraintEnableDtlsSrtpFalse
+         "RTCConstraintEnableDtlsSrtpTrue" -> pure AuditsDeprecationIssueTypeRTCConstraintEnableDtlsSrtpTrue
+         "RTCPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics" -> pure AuditsDeprecationIssueTypeRTCPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics
+         "RTCPeerConnectionSdpSemanticsPlanB" -> pure AuditsDeprecationIssueTypeRTCPeerConnectionSdpSemanticsPlanB
          "RtcpMuxPolicyNegotiate" -> pure AuditsDeprecationIssueTypeRtcpMuxPolicyNegotiate
          "SharedArrayBufferConstructedWithoutIsolation" -> pure AuditsDeprecationIssueTypeSharedArrayBufferConstructedWithoutIsolation
-         "TextToSpeech_DisallowedByAutoplay" -> pure AuditsDeprecationIssueTypeTextToSpeechDisallowedByAutoplay
+         "TextToSpeech_DisallowedByAutoplay" -> pure AuditsDeprecationIssueTypeTextToSpeech_DisallowedByAutoplay
          "V8SharedArrayBufferConstructedInExtensionWithoutIsolation" -> pure AuditsDeprecationIssueTypeV8SharedArrayBufferConstructedInExtensionWithoutIsolation
-         "XHRJSONEncodingDetection" -> pure AuditsDeprecationIssueTypeXhrjsonEncodingDetection
-         "XMLHttpRequestSynchronousInNonWorkerOutsideBeforeUnload" -> pure AuditsDeprecationIssueTypeXmlHttpRequestSynchronousInNonWorkerOutsideBeforeUnload
-         "XRSupportsSession" -> pure AuditsDeprecationIssueTypeXrSupportsSession
+         "XHRJSONEncodingDetection" -> pure AuditsDeprecationIssueTypeXHRJSONEncodingDetection
+         "XMLHttpRequestSynchronousInNonWorkerOutsideBeforeUnload" -> pure AuditsDeprecationIssueTypeXMLHttpRequestSynchronousInNonWorkerOutsideBeforeUnload
+         "XRSupportsSession" -> pure AuditsDeprecationIssueTypeXRSupportsSession
          _ -> fail "failed to parse AuditsDeprecationIssueType"
 
 instance ToJSON AuditsDeprecationIssueType where
    toJSON v = A.String $
       case v of
          AuditsDeprecationIssueTypeAuthorizationCoveredByWildcard -> "AuthorizationCoveredByWildcard"
-         AuditsDeprecationIssueTypeCanRequestUrlhttpContainingNewline -> "CanRequestURLHTTPContainingNewline"
+         AuditsDeprecationIssueTypeCanRequestURLHTTPContainingNewline -> "CanRequestURLHTTPContainingNewline"
          AuditsDeprecationIssueTypeChromeLoadTimesConnectionInfo -> "ChromeLoadTimesConnectionInfo"
          AuditsDeprecationIssueTypeChromeLoadTimesFirstPaintAfterLoadTime -> "ChromeLoadTimesFirstPaintAfterLoadTime"
          AuditsDeprecationIssueTypeChromeLoadTimesWasAlternateProtocolAvailable -> "ChromeLoadTimesWasAlternateProtocolAvailable"
@@ -761,7 +760,7 @@ instance ToJSON AuditsDeprecationIssueType where
          AuditsDeprecationIssueTypeCrossOriginAccessBasedOnDocumentDomain -> "CrossOriginAccessBasedOnDocumentDomain"
          AuditsDeprecationIssueTypeCrossOriginWindowAlert -> "CrossOriginWindowAlert"
          AuditsDeprecationIssueTypeCrossOriginWindowConfirm -> "CrossOriginWindowConfirm"
-         AuditsDeprecationIssueTypeCssSelectorInternalMediaControlsOverlayCastButton -> "CSSSelectorInternalMediaControlsOverlayCastButton"
+         AuditsDeprecationIssueTypeCSSSelectorInternalMediaControlsOverlayCastButton -> "CSSSelectorInternalMediaControlsOverlayCastButton"
          AuditsDeprecationIssueTypeDeprecationExample -> "DeprecationExample"
          AuditsDeprecationIssueTypeDocumentDomainSettingWithoutOriginAgentClusterHeader -> "DocumentDomainSettingWithoutOriginAgentClusterHeader"
          AuditsDeprecationIssueTypeEventPath -> "EventPath"
@@ -771,10 +770,10 @@ instance ToJSON AuditsDeprecationIssueType where
          AuditsDeprecationIssueTypeHostCandidateAttributeGetter -> "HostCandidateAttributeGetter"
          AuditsDeprecationIssueTypeInsecurePrivateNetworkSubresourceRequest -> "InsecurePrivateNetworkSubresourceRequest"
          AuditsDeprecationIssueTypeLegacyConstraintGoogIPv6 -> "LegacyConstraintGoogIPv6"
-         AuditsDeprecationIssueTypeLocalCssFileExtensionRejected -> "LocalCSSFileExtensionRejected"
+         AuditsDeprecationIssueTypeLocalCSSFileExtensionRejected -> "LocalCSSFileExtensionRejected"
          AuditsDeprecationIssueTypeMediaSourceAbortRemove -> "MediaSourceAbortRemove"
          AuditsDeprecationIssueTypeMediaSourceDurationTruncatingBuffered -> "MediaSourceDurationTruncatingBuffered"
-         AuditsDeprecationIssueTypeNoSysexWebMidiWithoutPermission -> "NoSysexWebMIDIWithoutPermission"
+         AuditsDeprecationIssueTypeNoSysexWebMIDIWithoutPermission -> "NoSysexWebMIDIWithoutPermission"
          AuditsDeprecationIssueTypeNotificationInsecureOrigin -> "NotificationInsecureOrigin"
          AuditsDeprecationIssueTypeNotificationPermissionRequestedIframe -> "NotificationPermissionRequestedIframe"
          AuditsDeprecationIssueTypeObsoleteWebRtcCipherSuite -> "ObsoleteWebRtcCipherSuite"
@@ -791,17 +790,17 @@ instance ToJSON AuditsDeprecationIssueType where
          AuditsDeprecationIssueTypePrefixedVideoSupportsFullscreen -> "PrefixedVideoSupportsFullscreen"
          AuditsDeprecationIssueTypeRangeExpand -> "RangeExpand"
          AuditsDeprecationIssueTypeRequestedSubresourceWithEmbeddedCredentials -> "RequestedSubresourceWithEmbeddedCredentials"
-         AuditsDeprecationIssueTypeRtcConstraintEnableDtlsSrtpFalse -> "RTCConstraintEnableDtlsSrtpFalse"
-         AuditsDeprecationIssueTypeRtcConstraintEnableDtlsSrtpTrue -> "RTCConstraintEnableDtlsSrtpTrue"
-         AuditsDeprecationIssueTypeRtcPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics -> "RTCPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics"
-         AuditsDeprecationIssueTypeRtcPeerConnectionSdpSemanticsPlanB -> "RTCPeerConnectionSdpSemanticsPlanB"
+         AuditsDeprecationIssueTypeRTCConstraintEnableDtlsSrtpFalse -> "RTCConstraintEnableDtlsSrtpFalse"
+         AuditsDeprecationIssueTypeRTCConstraintEnableDtlsSrtpTrue -> "RTCConstraintEnableDtlsSrtpTrue"
+         AuditsDeprecationIssueTypeRTCPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics -> "RTCPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics"
+         AuditsDeprecationIssueTypeRTCPeerConnectionSdpSemanticsPlanB -> "RTCPeerConnectionSdpSemanticsPlanB"
          AuditsDeprecationIssueTypeRtcpMuxPolicyNegotiate -> "RtcpMuxPolicyNegotiate"
          AuditsDeprecationIssueTypeSharedArrayBufferConstructedWithoutIsolation -> "SharedArrayBufferConstructedWithoutIsolation"
-         AuditsDeprecationIssueTypeTextToSpeechDisallowedByAutoplay -> "TextToSpeech_DisallowedByAutoplay"
+         AuditsDeprecationIssueTypeTextToSpeech_DisallowedByAutoplay -> "TextToSpeech_DisallowedByAutoplay"
          AuditsDeprecationIssueTypeV8SharedArrayBufferConstructedInExtensionWithoutIsolation -> "V8SharedArrayBufferConstructedInExtensionWithoutIsolation"
-         AuditsDeprecationIssueTypeXhrjsonEncodingDetection -> "XHRJSONEncodingDetection"
-         AuditsDeprecationIssueTypeXmlHttpRequestSynchronousInNonWorkerOutsideBeforeUnload -> "XMLHttpRequestSynchronousInNonWorkerOutsideBeforeUnload"
-         AuditsDeprecationIssueTypeXrSupportsSession -> "XRSupportsSession"
+         AuditsDeprecationIssueTypeXHRJSONEncodingDetection -> "XHRJSONEncodingDetection"
+         AuditsDeprecationIssueTypeXMLHttpRequestSynchronousInNonWorkerOutsideBeforeUnload -> "XMLHttpRequestSynchronousInNonWorkerOutsideBeforeUnload"
+         AuditsDeprecationIssueTypeXRSupportsSession -> "XRSupportsSession"
 
 
 
@@ -822,20 +821,20 @@ instance FromJSON  AuditsDeprecationIssueDetails where
 
 
 -- | Type 'Audits.ClientHintIssueReason'.
-data AuditsClientHintIssueReason = AuditsClientHintIssueReasonMetaTagAllowListInvalidOrigin | AuditsClientHintIssueReasonMetaTagModifiedHtml
+data AuditsClientHintIssueReason = AuditsClientHintIssueReasonMetaTagAllowListInvalidOrigin | AuditsClientHintIssueReasonMetaTagModifiedHTML
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsClientHintIssueReason where
    parseJSON = A.withText  "AuditsClientHintIssueReason"  $ \v -> do
       case v of
          "MetaTagAllowListInvalidOrigin" -> pure AuditsClientHintIssueReasonMetaTagAllowListInvalidOrigin
-         "MetaTagModifiedHTML" -> pure AuditsClientHintIssueReasonMetaTagModifiedHtml
+         "MetaTagModifiedHTML" -> pure AuditsClientHintIssueReasonMetaTagModifiedHTML
          _ -> fail "failed to parse AuditsClientHintIssueReason"
 
 instance ToJSON AuditsClientHintIssueReason where
    toJSON v = A.String $
       case v of
          AuditsClientHintIssueReasonMetaTagAllowListInvalidOrigin -> "MetaTagAllowListInvalidOrigin"
-         AuditsClientHintIssueReasonMetaTagModifiedHtml -> "MetaTagModifiedHTML"
+         AuditsClientHintIssueReasonMetaTagModifiedHTML -> "MetaTagModifiedHTML"
 
 
 
@@ -1134,7 +1133,7 @@ auditsEnable handle = sendReceiveCommand handle "Audits.enable" (Nothing :: Mayb
 -- | Parameters of the 'auditsCheckContrast' command.
 data PAuditsCheckContrast = PAuditsCheckContrast {
   -- | Whether to report WCAG AAA level issues. Default is false.
-  pAuditsCheckContrastReportAaa :: Maybe Bool
+  pAuditsCheckContrastReportAAA :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PAuditsCheckContrast  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}

@@ -32,7 +32,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -82,7 +81,7 @@ instance ToJSON CacheStorageCachedResponseType where
 --   Data entry.
 data CacheStorageDataEntry = CacheStorageDataEntry {
   -- | Request URL.
-  cacheStorageDataEntryRequestUrl :: String,
+  cacheStorageDataEntryRequestURL :: String,
   -- | Request method.
   cacheStorageDataEntryRequestMethod :: String,
   -- | Request headers
@@ -233,7 +232,7 @@ data PCacheStorageRequestCachedResponse = PCacheStorageRequestCachedResponse {
   -- | Id of cache that contains the entry.
   pCacheStorageRequestCachedResponseCacheId :: CacheStorageCacheId,
   -- | URL spec of the request.
-  pCacheStorageRequestCachedResponseRequestUrl :: String,
+  pCacheStorageRequestCachedResponseRequestURL :: String,
   -- | headers of the request.
   pCacheStorageRequestCachedResponseRequestHeaders :: [CacheStorageHeader]
 } deriving (Generic, Eq, Show, Read)

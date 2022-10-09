@@ -53,7 +53,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -73,307 +72,307 @@ import CDP.Domains.Runtime as Runtime
 
 -- | Type 'DOM.NodeId'.
 --   Unique DOM node identifier.
-type DomNodeId = Int
+type DOMNodeId = Int
 
 -- | Type 'DOM.BackendNodeId'.
 --   Unique DOM node identifier used to reference a node that may not have been pushed to the
 --   front-end.
-type DomBackendNodeId = Int
+type DOMBackendNodeId = Int
 
 -- | Type 'DOM.BackendNode'.
 --   Backend node with a friendly name.
-data DomBackendNode = DomBackendNode {
+data DOMBackendNode = DOMBackendNode {
   -- | `Node`'s nodeType.
-  domBackendNodeNodeType :: Int,
+  dOMBackendNodeNodeType :: Int,
   -- | `Node`'s nodeName.
-  domBackendNodeNodeName :: String,
-  domBackendNodeBackendNodeId :: DomBackendNodeId
+  dOMBackendNodeNodeName :: String,
+  dOMBackendNodeBackendNodeId :: DOMBackendNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomBackendNode  where
+instance ToJSON DOMBackendNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
 
-instance FromJSON  DomBackendNode where
+instance FromJSON  DOMBackendNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
 
 -- | Type 'DOM.PseudoType'.
 --   Pseudo element type.
-data DomPseudoType = DomPseudoTypeFirstLine | DomPseudoTypeFirstLetter | DomPseudoTypeBefore | DomPseudoTypeAfter | DomPseudoTypeMarker | DomPseudoTypeBackdrop | DomPseudoTypeSelection | DomPseudoTypeTargetText | DomPseudoTypeSpellingError | DomPseudoTypeGrammarError | DomPseudoTypeHighlight | DomPseudoTypeFirstLineInherited | DomPseudoTypeScrollbar | DomPseudoTypeScrollbarThumb | DomPseudoTypeScrollbarButton | DomPseudoTypeScrollbarTrack | DomPseudoTypeScrollbarTrackPiece | DomPseudoTypeScrollbarCorner | DomPseudoTypeResizer | DomPseudoTypeInputListButton | DomPseudoTypePageTransition | DomPseudoTypePageTransitionContainer | DomPseudoTypePageTransitionImageWrapper | DomPseudoTypePageTransitionOutgoingImage | DomPseudoTypePageTransitionIncomingImage
+data DOMPseudoType = DOMPseudoTypeFirstLine | DOMPseudoTypeFirstLetter | DOMPseudoTypeBefore | DOMPseudoTypeAfter | DOMPseudoTypeMarker | DOMPseudoTypeBackdrop | DOMPseudoTypeSelection | DOMPseudoTypeTargetText | DOMPseudoTypeSpellingError | DOMPseudoTypeGrammarError | DOMPseudoTypeHighlight | DOMPseudoTypeFirstLineInherited | DOMPseudoTypeScrollbar | DOMPseudoTypeScrollbarThumb | DOMPseudoTypeScrollbarButton | DOMPseudoTypeScrollbarTrack | DOMPseudoTypeScrollbarTrackPiece | DOMPseudoTypeScrollbarCorner | DOMPseudoTypeResizer | DOMPseudoTypeInputListButton | DOMPseudoTypePageTransition | DOMPseudoTypePageTransitionContainer | DOMPseudoTypePageTransitionImageWrapper | DOMPseudoTypePageTransitionOutgoingImage | DOMPseudoTypePageTransitionIncomingImage
    deriving (Ord, Eq, Show, Read)
-instance FromJSON DomPseudoType where
-   parseJSON = A.withText  "DomPseudoType"  $ \v -> do
+instance FromJSON DOMPseudoType where
+   parseJSON = A.withText  "DOMPseudoType"  $ \v -> do
       case v of
-         "first-line" -> pure DomPseudoTypeFirstLine
-         "first-letter" -> pure DomPseudoTypeFirstLetter
-         "before" -> pure DomPseudoTypeBefore
-         "after" -> pure DomPseudoTypeAfter
-         "marker" -> pure DomPseudoTypeMarker
-         "backdrop" -> pure DomPseudoTypeBackdrop
-         "selection" -> pure DomPseudoTypeSelection
-         "target-text" -> pure DomPseudoTypeTargetText
-         "spelling-error" -> pure DomPseudoTypeSpellingError
-         "grammar-error" -> pure DomPseudoTypeGrammarError
-         "highlight" -> pure DomPseudoTypeHighlight
-         "first-line-inherited" -> pure DomPseudoTypeFirstLineInherited
-         "scrollbar" -> pure DomPseudoTypeScrollbar
-         "scrollbar-thumb" -> pure DomPseudoTypeScrollbarThumb
-         "scrollbar-button" -> pure DomPseudoTypeScrollbarButton
-         "scrollbar-track" -> pure DomPseudoTypeScrollbarTrack
-         "scrollbar-track-piece" -> pure DomPseudoTypeScrollbarTrackPiece
-         "scrollbar-corner" -> pure DomPseudoTypeScrollbarCorner
-         "resizer" -> pure DomPseudoTypeResizer
-         "input-list-button" -> pure DomPseudoTypeInputListButton
-         "page-transition" -> pure DomPseudoTypePageTransition
-         "page-transition-container" -> pure DomPseudoTypePageTransitionContainer
-         "page-transition-image-wrapper" -> pure DomPseudoTypePageTransitionImageWrapper
-         "page-transition-outgoing-image" -> pure DomPseudoTypePageTransitionOutgoingImage
-         "page-transition-incoming-image" -> pure DomPseudoTypePageTransitionIncomingImage
-         _ -> fail "failed to parse DomPseudoType"
+         "first-line" -> pure DOMPseudoTypeFirstLine
+         "first-letter" -> pure DOMPseudoTypeFirstLetter
+         "before" -> pure DOMPseudoTypeBefore
+         "after" -> pure DOMPseudoTypeAfter
+         "marker" -> pure DOMPseudoTypeMarker
+         "backdrop" -> pure DOMPseudoTypeBackdrop
+         "selection" -> pure DOMPseudoTypeSelection
+         "target-text" -> pure DOMPseudoTypeTargetText
+         "spelling-error" -> pure DOMPseudoTypeSpellingError
+         "grammar-error" -> pure DOMPseudoTypeGrammarError
+         "highlight" -> pure DOMPseudoTypeHighlight
+         "first-line-inherited" -> pure DOMPseudoTypeFirstLineInherited
+         "scrollbar" -> pure DOMPseudoTypeScrollbar
+         "scrollbar-thumb" -> pure DOMPseudoTypeScrollbarThumb
+         "scrollbar-button" -> pure DOMPseudoTypeScrollbarButton
+         "scrollbar-track" -> pure DOMPseudoTypeScrollbarTrack
+         "scrollbar-track-piece" -> pure DOMPseudoTypeScrollbarTrackPiece
+         "scrollbar-corner" -> pure DOMPseudoTypeScrollbarCorner
+         "resizer" -> pure DOMPseudoTypeResizer
+         "input-list-button" -> pure DOMPseudoTypeInputListButton
+         "page-transition" -> pure DOMPseudoTypePageTransition
+         "page-transition-container" -> pure DOMPseudoTypePageTransitionContainer
+         "page-transition-image-wrapper" -> pure DOMPseudoTypePageTransitionImageWrapper
+         "page-transition-outgoing-image" -> pure DOMPseudoTypePageTransitionOutgoingImage
+         "page-transition-incoming-image" -> pure DOMPseudoTypePageTransitionIncomingImage
+         _ -> fail "failed to parse DOMPseudoType"
 
-instance ToJSON DomPseudoType where
+instance ToJSON DOMPseudoType where
    toJSON v = A.String $
       case v of
-         DomPseudoTypeFirstLine -> "first-line"
-         DomPseudoTypeFirstLetter -> "first-letter"
-         DomPseudoTypeBefore -> "before"
-         DomPseudoTypeAfter -> "after"
-         DomPseudoTypeMarker -> "marker"
-         DomPseudoTypeBackdrop -> "backdrop"
-         DomPseudoTypeSelection -> "selection"
-         DomPseudoTypeTargetText -> "target-text"
-         DomPseudoTypeSpellingError -> "spelling-error"
-         DomPseudoTypeGrammarError -> "grammar-error"
-         DomPseudoTypeHighlight -> "highlight"
-         DomPseudoTypeFirstLineInherited -> "first-line-inherited"
-         DomPseudoTypeScrollbar -> "scrollbar"
-         DomPseudoTypeScrollbarThumb -> "scrollbar-thumb"
-         DomPseudoTypeScrollbarButton -> "scrollbar-button"
-         DomPseudoTypeScrollbarTrack -> "scrollbar-track"
-         DomPseudoTypeScrollbarTrackPiece -> "scrollbar-track-piece"
-         DomPseudoTypeScrollbarCorner -> "scrollbar-corner"
-         DomPseudoTypeResizer -> "resizer"
-         DomPseudoTypeInputListButton -> "input-list-button"
-         DomPseudoTypePageTransition -> "page-transition"
-         DomPseudoTypePageTransitionContainer -> "page-transition-container"
-         DomPseudoTypePageTransitionImageWrapper -> "page-transition-image-wrapper"
-         DomPseudoTypePageTransitionOutgoingImage -> "page-transition-outgoing-image"
-         DomPseudoTypePageTransitionIncomingImage -> "page-transition-incoming-image"
+         DOMPseudoTypeFirstLine -> "first-line"
+         DOMPseudoTypeFirstLetter -> "first-letter"
+         DOMPseudoTypeBefore -> "before"
+         DOMPseudoTypeAfter -> "after"
+         DOMPseudoTypeMarker -> "marker"
+         DOMPseudoTypeBackdrop -> "backdrop"
+         DOMPseudoTypeSelection -> "selection"
+         DOMPseudoTypeTargetText -> "target-text"
+         DOMPseudoTypeSpellingError -> "spelling-error"
+         DOMPseudoTypeGrammarError -> "grammar-error"
+         DOMPseudoTypeHighlight -> "highlight"
+         DOMPseudoTypeFirstLineInherited -> "first-line-inherited"
+         DOMPseudoTypeScrollbar -> "scrollbar"
+         DOMPseudoTypeScrollbarThumb -> "scrollbar-thumb"
+         DOMPseudoTypeScrollbarButton -> "scrollbar-button"
+         DOMPseudoTypeScrollbarTrack -> "scrollbar-track"
+         DOMPseudoTypeScrollbarTrackPiece -> "scrollbar-track-piece"
+         DOMPseudoTypeScrollbarCorner -> "scrollbar-corner"
+         DOMPseudoTypeResizer -> "resizer"
+         DOMPseudoTypeInputListButton -> "input-list-button"
+         DOMPseudoTypePageTransition -> "page-transition"
+         DOMPseudoTypePageTransitionContainer -> "page-transition-container"
+         DOMPseudoTypePageTransitionImageWrapper -> "page-transition-image-wrapper"
+         DOMPseudoTypePageTransitionOutgoingImage -> "page-transition-outgoing-image"
+         DOMPseudoTypePageTransitionIncomingImage -> "page-transition-incoming-image"
 
 
 
 -- | Type 'DOM.ShadowRootType'.
 --   Shadow root type.
-data DomShadowRootType = DomShadowRootTypeUserAgent | DomShadowRootTypeOpen | DomShadowRootTypeClosed
+data DOMShadowRootType = DOMShadowRootTypeUserAgent | DOMShadowRootTypeOpen | DOMShadowRootTypeClosed
    deriving (Ord, Eq, Show, Read)
-instance FromJSON DomShadowRootType where
-   parseJSON = A.withText  "DomShadowRootType"  $ \v -> do
+instance FromJSON DOMShadowRootType where
+   parseJSON = A.withText  "DOMShadowRootType"  $ \v -> do
       case v of
-         "user-agent" -> pure DomShadowRootTypeUserAgent
-         "open" -> pure DomShadowRootTypeOpen
-         "closed" -> pure DomShadowRootTypeClosed
-         _ -> fail "failed to parse DomShadowRootType"
+         "user-agent" -> pure DOMShadowRootTypeUserAgent
+         "open" -> pure DOMShadowRootTypeOpen
+         "closed" -> pure DOMShadowRootTypeClosed
+         _ -> fail "failed to parse DOMShadowRootType"
 
-instance ToJSON DomShadowRootType where
+instance ToJSON DOMShadowRootType where
    toJSON v = A.String $
       case v of
-         DomShadowRootTypeUserAgent -> "user-agent"
-         DomShadowRootTypeOpen -> "open"
-         DomShadowRootTypeClosed -> "closed"
+         DOMShadowRootTypeUserAgent -> "user-agent"
+         DOMShadowRootTypeOpen -> "open"
+         DOMShadowRootTypeClosed -> "closed"
 
 
 
 -- | Type 'DOM.CompatibilityMode'.
 --   Document compatibility mode.
-data DomCompatibilityMode = DomCompatibilityModeQuirksMode | DomCompatibilityModeLimitedQuirksMode | DomCompatibilityModeNoQuirksMode
+data DOMCompatibilityMode = DOMCompatibilityModeQuirksMode | DOMCompatibilityModeLimitedQuirksMode | DOMCompatibilityModeNoQuirksMode
    deriving (Ord, Eq, Show, Read)
-instance FromJSON DomCompatibilityMode where
-   parseJSON = A.withText  "DomCompatibilityMode"  $ \v -> do
+instance FromJSON DOMCompatibilityMode where
+   parseJSON = A.withText  "DOMCompatibilityMode"  $ \v -> do
       case v of
-         "QuirksMode" -> pure DomCompatibilityModeQuirksMode
-         "LimitedQuirksMode" -> pure DomCompatibilityModeLimitedQuirksMode
-         "NoQuirksMode" -> pure DomCompatibilityModeNoQuirksMode
-         _ -> fail "failed to parse DomCompatibilityMode"
+         "QuirksMode" -> pure DOMCompatibilityModeQuirksMode
+         "LimitedQuirksMode" -> pure DOMCompatibilityModeLimitedQuirksMode
+         "NoQuirksMode" -> pure DOMCompatibilityModeNoQuirksMode
+         _ -> fail "failed to parse DOMCompatibilityMode"
 
-instance ToJSON DomCompatibilityMode where
+instance ToJSON DOMCompatibilityMode where
    toJSON v = A.String $
       case v of
-         DomCompatibilityModeQuirksMode -> "QuirksMode"
-         DomCompatibilityModeLimitedQuirksMode -> "LimitedQuirksMode"
-         DomCompatibilityModeNoQuirksMode -> "NoQuirksMode"
+         DOMCompatibilityModeQuirksMode -> "QuirksMode"
+         DOMCompatibilityModeLimitedQuirksMode -> "LimitedQuirksMode"
+         DOMCompatibilityModeNoQuirksMode -> "NoQuirksMode"
 
 
 
 -- | Type 'DOM.Node'.
 --   DOM interaction is implemented in terms of mirror objects that represent the actual DOM nodes.
 --   DOMNode is a base node mirror type.
-data DomNode = DomNode {
+data DOMNode = DOMNode {
   -- | Node identifier that is passed into the rest of the DOM messages as the `nodeId`. Backend
   --   will only push node with given `id` once. It is aware of all requested nodes and will only
   --   fire DOM events for nodes known to the client.
-  domNodeNodeId :: DomNodeId,
+  dOMNodeNodeId :: DOMNodeId,
   -- | The id of the parent node if any.
-  domNodeParentId :: Maybe DomNodeId,
+  dOMNodeParentId :: Maybe DOMNodeId,
   -- | The BackendNodeId for this node.
-  domNodeBackendNodeId :: DomBackendNodeId,
+  dOMNodeBackendNodeId :: DOMBackendNodeId,
   -- | `Node`'s nodeType.
-  domNodeNodeType :: Int,
+  dOMNodeNodeType :: Int,
   -- | `Node`'s nodeName.
-  domNodeNodeName :: String,
+  dOMNodeNodeName :: String,
   -- | `Node`'s localName.
-  domNodeLocalName :: String,
+  dOMNodeLocalName :: String,
   -- | `Node`'s nodeValue.
-  domNodeNodeValue :: String,
+  dOMNodeNodeValue :: String,
   -- | Child count for `Container` nodes.
-  domNodeChildNodeCount :: Maybe Int,
+  dOMNodeChildNodeCount :: Maybe Int,
   -- | Child nodes of this node when requested with children.
-  domNodeChildren :: Maybe [DomNode],
+  dOMNodeChildren :: Maybe [DOMNode],
   -- | Attributes of the `Element` node in the form of flat array `[name1, value1, name2, value2]`.
-  domNodeAttributes :: Maybe [String],
+  dOMNodeAttributes :: Maybe [String],
   -- | Document URL that `Document` or `FrameOwner` node points to.
-  domNodeDocumentUrl :: Maybe String,
+  dOMNodeDocumentURL :: Maybe String,
   -- | Base URL that `Document` or `FrameOwner` node uses for URL completion.
-  domNodeBaseUrl :: Maybe String,
+  dOMNodeBaseURL :: Maybe String,
   -- | `DocumentType`'s publicId.
-  domNodePublicId :: Maybe String,
+  dOMNodePublicId :: Maybe String,
   -- | `DocumentType`'s systemId.
-  domNodeSystemId :: Maybe String,
+  dOMNodeSystemId :: Maybe String,
   -- | `DocumentType`'s internalSubset.
-  domNodeInternalSubset :: Maybe String,
+  dOMNodeInternalSubset :: Maybe String,
   -- | `Document`'s XML version in case of XML documents.
-  domNodeXmlVersion :: Maybe String,
+  dOMNodeXmlVersion :: Maybe String,
   -- | `Attr`'s name.
-  domNodeName :: Maybe String,
+  dOMNodeName :: Maybe String,
   -- | `Attr`'s value.
-  domNodeValue :: Maybe String,
+  dOMNodeValue :: Maybe String,
   -- | Pseudo element type for this node.
-  domNodePseudoType :: Maybe DomPseudoType,
+  dOMNodePseudoType :: Maybe DOMPseudoType,
   -- | Shadow root type.
-  domNodeShadowRootType :: Maybe DomShadowRootType,
+  dOMNodeShadowRootType :: Maybe DOMShadowRootType,
   -- | Frame ID for frame owner elements.
-  domNodeFrameId :: Maybe PageFrameId,
+  dOMNodeFrameId :: Maybe PageFrameId,
   -- | Content document for frame owner elements.
-  domNodeContentDocument :: Maybe DomNode,
+  dOMNodeContentDocument :: Maybe DOMNode,
   -- | Shadow root list for given element host.
-  domNodeShadowRoots :: Maybe [DomNode],
+  dOMNodeShadowRoots :: Maybe [DOMNode],
   -- | Content document fragment for template elements.
-  domNodeTemplateContent :: Maybe DomNode,
+  dOMNodeTemplateContent :: Maybe DOMNode,
   -- | Pseudo elements associated with this node.
-  domNodePseudoElements :: Maybe [DomNode],
+  dOMNodePseudoElements :: Maybe [DOMNode],
   -- | Distributed nodes for given insertion point.
-  domNodeDistributedNodes :: Maybe [DomBackendNode],
+  dOMNodeDistributedNodes :: Maybe [DOMBackendNode],
   -- | Whether the node is SVG.
-  domNodeIsSvg :: Maybe Bool,
-  domNodeCompatibilityMode :: Maybe DomCompatibilityMode,
-  domNodeAssignedSlot :: Maybe DomBackendNode
+  dOMNodeIsSVG :: Maybe Bool,
+  dOMNodeCompatibilityMode :: Maybe DOMCompatibilityMode,
+  dOMNodeAssignedSlot :: Maybe DOMBackendNode
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomNode  where
+instance ToJSON DOMNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 , A.omitNothingFields = True}
 
-instance FromJSON  DomNode where
+instance FromJSON  DOMNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 }
 
 
 
 -- | Type 'DOM.RGBA'.
 --   A structure holding an RGBA color.
-data DomRgba = DomRgba {
+data DOMRGBA = DOMRGBA {
   -- | The red component, in the [0-255] range.
-  domRgbaR :: Int,
+  dOMRGBAR :: Int,
   -- | The green component, in the [0-255] range.
-  domRgbaG :: Int,
+  dOMRGBAG :: Int,
   -- | The blue component, in the [0-255] range.
-  domRgbaB :: Int,
+  dOMRGBAB :: Int,
   -- | The alpha component, in the [0-1] range (default: 1).
-  domRgbaA :: Maybe Double
+  dOMRGBAA :: Maybe Double
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomRgba  where
+instance ToJSON DOMRGBA  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 , A.omitNothingFields = True}
 
-instance FromJSON  DomRgba where
+instance FromJSON  DOMRGBA where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 }
 
 
 
 -- | Type 'DOM.Quad'.
 --   An array of quad vertices, x immediately followed by y for each point, points clock-wise.
-type DomQuad = [Double]
+type DOMQuad = [Double]
 
 -- | Type 'DOM.BoxModel'.
 --   Box model.
-data DomBoxModel = DomBoxModel {
+data DOMBoxModel = DOMBoxModel {
   -- | Content box
-  domBoxModelContent :: DomQuad,
+  dOMBoxModelContent :: DOMQuad,
   -- | Padding box
-  domBoxModelPadding :: DomQuad,
+  dOMBoxModelPadding :: DOMQuad,
   -- | Border box
-  domBoxModelBorder :: DomQuad,
+  dOMBoxModelBorder :: DOMQuad,
   -- | Margin box
-  domBoxModelMargin :: DomQuad,
+  dOMBoxModelMargin :: DOMQuad,
   -- | Node width
-  domBoxModelWidth :: Int,
+  dOMBoxModelWidth :: Int,
   -- | Node height
-  domBoxModelHeight :: Int,
+  dOMBoxModelHeight :: Int,
   -- | Shape outside coordinates
-  domBoxModelShapeOutside :: Maybe DomShapeOutsideInfo
+  dOMBoxModelShapeOutside :: Maybe DOMShapeOutsideInfo
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomBoxModel  where
+instance ToJSON DOMBoxModel  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 , A.omitNothingFields = True}
 
-instance FromJSON  DomBoxModel where
+instance FromJSON  DOMBoxModel where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 }
 
 
 
 -- | Type 'DOM.ShapeOutsideInfo'.
 --   CSS Shape Outside details.
-data DomShapeOutsideInfo = DomShapeOutsideInfo {
+data DOMShapeOutsideInfo = DOMShapeOutsideInfo {
   -- | Shape bounds
-  domShapeOutsideInfoBounds :: DomQuad,
+  dOMShapeOutsideInfoBounds :: DOMQuad,
   -- | Shape coordinate details
-  domShapeOutsideInfoShape :: [Int],
+  dOMShapeOutsideInfoShape :: [Int],
   -- | Margin shape bounds
-  domShapeOutsideInfoMarginShape :: [Int]
+  dOMShapeOutsideInfoMarginShape :: [Int]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomShapeOutsideInfo  where
+instance ToJSON DOMShapeOutsideInfo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
-instance FromJSON  DomShapeOutsideInfo where
+instance FromJSON  DOMShapeOutsideInfo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
 
 -- | Type 'DOM.Rect'.
 --   Rectangle.
-data DomRect = DomRect {
+data DOMRect = DOMRect {
   -- | X coordinate
-  domRectX :: Double,
+  dOMRectX :: Double,
   -- | Y coordinate
-  domRectY :: Double,
+  dOMRectY :: Double,
   -- | Rectangle width
-  domRectWidth :: Double,
+  dOMRectWidth :: Double,
   -- | Rectangle height
-  domRectHeight :: Double
+  dOMRectHeight :: Double
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomRect  where
+instance ToJSON DOMRect  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 , A.omitNothingFields = True}
 
-instance FromJSON  DomRect where
+instance FromJSON  DOMRect where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 }
 
 
 
 -- | Type 'DOM.CSSComputedStyleProperty'.
-data DomCssComputedStyleProperty = DomCssComputedStyleProperty {
+data DOMCSSComputedStyleProperty = DOMCSSComputedStyleProperty {
   -- | Computed style property name.
-  domCssComputedStylePropertyName :: String,
+  dOMCSSComputedStylePropertyName :: String,
   -- | Computed style property value.
-  domCssComputedStylePropertyValue :: String
+  dOMCSSComputedStylePropertyValue :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomCssComputedStyleProperty  where
+instance ToJSON DOMCSSComputedStyleProperty  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
-instance FromJSON  DomCssComputedStyleProperty where
+instance FromJSON  DOMCSSComputedStyleProperty where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
@@ -381,375 +380,375 @@ instance FromJSON  DomCssComputedStyleProperty where
 
 
 -- | Type of the 'DOM.attributeModified' event.
-data DomAttributeModified = DomAttributeModified {
+data DOMAttributeModified = DOMAttributeModified {
   -- | Id of the node that has changed.
-  domAttributeModifiedNodeId :: DomNodeId,
+  dOMAttributeModifiedNodeId :: DOMNodeId,
   -- | Attribute name.
-  domAttributeModifiedName :: String,
+  dOMAttributeModifiedName :: String,
   -- | Attribute value.
-  domAttributeModifiedValue :: String
+  dOMAttributeModifiedValue :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomAttributeModified  where
+instance ToJSON DOMAttributeModified  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
-instance FromJSON  DomAttributeModified where
+instance FromJSON  DOMAttributeModified where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
-instance Event DomAttributeModified where
+instance Event DOMAttributeModified where
     eventName _ = "DOM.attributeModified"
 
 -- | Type of the 'DOM.attributeRemoved' event.
-data DomAttributeRemoved = DomAttributeRemoved {
+data DOMAttributeRemoved = DOMAttributeRemoved {
   -- | Id of the node that has changed.
-  domAttributeRemovedNodeId :: DomNodeId,
+  dOMAttributeRemovedNodeId :: DOMNodeId,
   -- | A ttribute name.
-  domAttributeRemovedName :: String
+  dOMAttributeRemovedName :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomAttributeRemoved  where
+instance ToJSON DOMAttributeRemoved  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
-instance FromJSON  DomAttributeRemoved where
+instance FromJSON  DOMAttributeRemoved where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
-instance Event DomAttributeRemoved where
+instance Event DOMAttributeRemoved where
     eventName _ = "DOM.attributeRemoved"
 
 -- | Type of the 'DOM.characterDataModified' event.
-data DomCharacterDataModified = DomCharacterDataModified {
+data DOMCharacterDataModified = DOMCharacterDataModified {
   -- | Id of the node that has changed.
-  domCharacterDataModifiedNodeId :: DomNodeId,
+  dOMCharacterDataModifiedNodeId :: DOMNodeId,
   -- | New text value.
-  domCharacterDataModifiedCharacterData :: String
+  dOMCharacterDataModifiedCharacterData :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomCharacterDataModified  where
+instance ToJSON DOMCharacterDataModified  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
-instance FromJSON  DomCharacterDataModified where
+instance FromJSON  DOMCharacterDataModified where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
-instance Event DomCharacterDataModified where
+instance Event DOMCharacterDataModified where
     eventName _ = "DOM.characterDataModified"
 
 -- | Type of the 'DOM.childNodeCountUpdated' event.
-data DomChildNodeCountUpdated = DomChildNodeCountUpdated {
+data DOMChildNodeCountUpdated = DOMChildNodeCountUpdated {
   -- | Id of the node that has changed.
-  domChildNodeCountUpdatedNodeId :: DomNodeId,
+  dOMChildNodeCountUpdatedNodeId :: DOMNodeId,
   -- | New node count.
-  domChildNodeCountUpdatedChildNodeCount :: Int
+  dOMChildNodeCountUpdatedChildNodeCount :: Int
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomChildNodeCountUpdated  where
+instance ToJSON DOMChildNodeCountUpdated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
-instance FromJSON  DomChildNodeCountUpdated where
+instance FromJSON  DOMChildNodeCountUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
-instance Event DomChildNodeCountUpdated where
+instance Event DOMChildNodeCountUpdated where
     eventName _ = "DOM.childNodeCountUpdated"
 
 -- | Type of the 'DOM.childNodeInserted' event.
-data DomChildNodeInserted = DomChildNodeInserted {
+data DOMChildNodeInserted = DOMChildNodeInserted {
   -- | Id of the node that has changed.
-  domChildNodeInsertedParentNodeId :: DomNodeId,
+  dOMChildNodeInsertedParentNodeId :: DOMNodeId,
   -- | If of the previous siblint.
-  domChildNodeInsertedPreviousNodeId :: DomNodeId,
+  dOMChildNodeInsertedPreviousNodeId :: DOMNodeId,
   -- | Inserted node data.
-  domChildNodeInsertedNode :: DomNode
+  dOMChildNodeInsertedNode :: DOMNode
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomChildNodeInserted  where
+instance ToJSON DOMChildNodeInserted  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
-instance FromJSON  DomChildNodeInserted where
+instance FromJSON  DOMChildNodeInserted where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
-instance Event DomChildNodeInserted where
+instance Event DOMChildNodeInserted where
     eventName _ = "DOM.childNodeInserted"
 
 -- | Type of the 'DOM.childNodeRemoved' event.
-data DomChildNodeRemoved = DomChildNodeRemoved {
+data DOMChildNodeRemoved = DOMChildNodeRemoved {
   -- | Parent id.
-  domChildNodeRemovedParentNodeId :: DomNodeId,
+  dOMChildNodeRemovedParentNodeId :: DOMNodeId,
   -- | Id of the node that has been removed.
-  domChildNodeRemovedNodeId :: DomNodeId
+  dOMChildNodeRemovedNodeId :: DOMNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomChildNodeRemoved  where
+instance ToJSON DOMChildNodeRemoved  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
-instance FromJSON  DomChildNodeRemoved where
+instance FromJSON  DOMChildNodeRemoved where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
-instance Event DomChildNodeRemoved where
+instance Event DOMChildNodeRemoved where
     eventName _ = "DOM.childNodeRemoved"
 
 -- | Type of the 'DOM.distributedNodesUpdated' event.
-data DomDistributedNodesUpdated = DomDistributedNodesUpdated {
+data DOMDistributedNodesUpdated = DOMDistributedNodesUpdated {
   -- | Insertion point where distributed nodes were updated.
-  domDistributedNodesUpdatedInsertionPointId :: DomNodeId,
+  dOMDistributedNodesUpdatedInsertionPointId :: DOMNodeId,
   -- | Distributed nodes for given insertion point.
-  domDistributedNodesUpdatedDistributedNodes :: [DomBackendNode]
+  dOMDistributedNodesUpdatedDistributedNodes :: [DOMBackendNode]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomDistributedNodesUpdated  where
+instance ToJSON DOMDistributedNodesUpdated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
-instance FromJSON  DomDistributedNodesUpdated where
+instance FromJSON  DOMDistributedNodesUpdated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
-instance Event DomDistributedNodesUpdated where
+instance Event DOMDistributedNodesUpdated where
     eventName _ = "DOM.distributedNodesUpdated"
 
 -- | Type of the 'DOM.documentUpdated' event.
-data DomDocumentUpdated = DomDocumentUpdated
+data DOMDocumentUpdated = DOMDocumentUpdated
    deriving (Eq, Show, Read)
-instance FromJSON DomDocumentUpdated where
-   parseJSON = A.withText  "DomDocumentUpdated"  $ \v -> do
+instance FromJSON DOMDocumentUpdated where
+   parseJSON = A.withText  "DOMDocumentUpdated"  $ \v -> do
       case v of
-         "DomDocumentUpdated" -> pure DomDocumentUpdated
-         _ -> fail "failed to parse DomDocumentUpdated"
+         "DOMDocumentUpdated" -> pure DOMDocumentUpdated
+         _ -> fail "failed to parse DOMDocumentUpdated"
 
 
-instance Event DomDocumentUpdated where
+instance Event DOMDocumentUpdated where
     eventName _ = "DOM.documentUpdated"
 
 -- | Type of the 'DOM.inlineStyleInvalidated' event.
-data DomInlineStyleInvalidated = DomInlineStyleInvalidated {
+data DOMInlineStyleInvalidated = DOMInlineStyleInvalidated {
   -- | Ids of the nodes for which the inline styles have been invalidated.
-  domInlineStyleInvalidatedNodeIds :: [DomNodeId]
+  dOMInlineStyleInvalidatedNodeIds :: [DOMNodeId]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomInlineStyleInvalidated  where
+instance ToJSON DOMInlineStyleInvalidated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
 
-instance FromJSON  DomInlineStyleInvalidated where
+instance FromJSON  DOMInlineStyleInvalidated where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
-instance Event DomInlineStyleInvalidated where
+instance Event DOMInlineStyleInvalidated where
     eventName _ = "DOM.inlineStyleInvalidated"
 
 -- | Type of the 'DOM.pseudoElementAdded' event.
-data DomPseudoElementAdded = DomPseudoElementAdded {
+data DOMPseudoElementAdded = DOMPseudoElementAdded {
   -- | Pseudo element's parent element id.
-  domPseudoElementAddedParentId :: DomNodeId,
+  dOMPseudoElementAddedParentId :: DOMNodeId,
   -- | The added pseudo element.
-  domPseudoElementAddedPseudoElement :: DomNode
+  dOMPseudoElementAddedPseudoElement :: DOMNode
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomPseudoElementAdded  where
+instance ToJSON DOMPseudoElementAdded  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
-instance FromJSON  DomPseudoElementAdded where
+instance FromJSON  DOMPseudoElementAdded where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
-instance Event DomPseudoElementAdded where
+instance Event DOMPseudoElementAdded where
     eventName _ = "DOM.pseudoElementAdded"
 
 -- | Type of the 'DOM.pseudoElementRemoved' event.
-data DomPseudoElementRemoved = DomPseudoElementRemoved {
+data DOMPseudoElementRemoved = DOMPseudoElementRemoved {
   -- | Pseudo element's parent element id.
-  domPseudoElementRemovedParentId :: DomNodeId,
+  dOMPseudoElementRemovedParentId :: DOMNodeId,
   -- | The removed pseudo element id.
-  domPseudoElementRemovedPseudoElementId :: DomNodeId
+  dOMPseudoElementRemovedPseudoElementId :: DOMNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomPseudoElementRemoved  where
+instance ToJSON DOMPseudoElementRemoved  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
-instance FromJSON  DomPseudoElementRemoved where
+instance FromJSON  DOMPseudoElementRemoved where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
-instance Event DomPseudoElementRemoved where
+instance Event DOMPseudoElementRemoved where
     eventName _ = "DOM.pseudoElementRemoved"
 
 -- | Type of the 'DOM.setChildNodes' event.
-data DomSetChildNodes = DomSetChildNodes {
+data DOMSetChildNodes = DOMSetChildNodes {
   -- | Parent node id to populate with children.
-  domSetChildNodesParentId :: DomNodeId,
+  dOMSetChildNodesParentId :: DOMNodeId,
   -- | Child nodes array.
-  domSetChildNodesNodes :: [DomNode]
+  dOMSetChildNodesNodes :: [DOMNode]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomSetChildNodes  where
+instance ToJSON DOMSetChildNodes  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
-instance FromJSON  DomSetChildNodes where
+instance FromJSON  DOMSetChildNodes where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
-instance Event DomSetChildNodes where
+instance Event DOMSetChildNodes where
     eventName _ = "DOM.setChildNodes"
 
 -- | Type of the 'DOM.shadowRootPopped' event.
-data DomShadowRootPopped = DomShadowRootPopped {
+data DOMShadowRootPopped = DOMShadowRootPopped {
   -- | Host element id.
-  domShadowRootPoppedHostId :: DomNodeId,
+  dOMShadowRootPoppedHostId :: DOMNodeId,
   -- | Shadow root id.
-  domShadowRootPoppedRootId :: DomNodeId
+  dOMShadowRootPoppedRootId :: DOMNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomShadowRootPopped  where
+instance ToJSON DOMShadowRootPopped  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
-instance FromJSON  DomShadowRootPopped where
+instance FromJSON  DOMShadowRootPopped where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
-instance Event DomShadowRootPopped where
+instance Event DOMShadowRootPopped where
     eventName _ = "DOM.shadowRootPopped"
 
 -- | Type of the 'DOM.shadowRootPushed' event.
-data DomShadowRootPushed = DomShadowRootPushed {
+data DOMShadowRootPushed = DOMShadowRootPushed {
   -- | Host element id.
-  domShadowRootPushedHostId :: DomNodeId,
+  dOMShadowRootPushedHostId :: DOMNodeId,
   -- | Shadow root.
-  domShadowRootPushedRoot :: DomNode
+  dOMShadowRootPushedRoot :: DOMNode
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON DomShadowRootPushed  where
+instance ToJSON DOMShadowRootPushed  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
-instance FromJSON  DomShadowRootPushed where
+instance FromJSON  DOMShadowRootPushed where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
-instance Event DomShadowRootPushed where
+instance Event DOMShadowRootPushed where
     eventName _ = "DOM.shadowRootPushed"
 
 
 
--- | Parameters of the 'domCollectClassNamesFromSubtree' command.
-data PDomCollectClassNamesFromSubtree = PDomCollectClassNamesFromSubtree {
+-- | Parameters of the 'dOMCollectClassNamesFromSubtree' command.
+data PDOMCollectClassNamesFromSubtree = PDOMCollectClassNamesFromSubtree {
   -- | Id of the node to collect class names.
-  pDomCollectClassNamesFromSubtreeNodeId :: DomNodeId
+  pDOMCollectClassNamesFromSubtreeNodeId :: DOMNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomCollectClassNamesFromSubtree  where
+instance ToJSON PDOMCollectClassNamesFromSubtree  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
 
-instance FromJSON  PDomCollectClassNamesFromSubtree where
+instance FromJSON  PDOMCollectClassNamesFromSubtree where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
 -- | Function for the 'DOM.collectClassNamesFromSubtree' command.
 --   Collects class names for the node with given id and all of it's child nodes.
---   Parameters: 'PDomCollectClassNamesFromSubtree'
---   Returns: 'DomCollectClassNamesFromSubtree'
-domCollectClassNamesFromSubtree :: Handle ev -> PDomCollectClassNamesFromSubtree -> IO DomCollectClassNamesFromSubtree
-domCollectClassNamesFromSubtree handle params = sendReceiveCommandResult handle "DOM.collectClassNamesFromSubtree" (Just params)
+--   Parameters: 'PDOMCollectClassNamesFromSubtree'
+--   Returns: 'DOMCollectClassNamesFromSubtree'
+dOMCollectClassNamesFromSubtree :: Handle ev -> PDOMCollectClassNamesFromSubtree -> IO DOMCollectClassNamesFromSubtree
+dOMCollectClassNamesFromSubtree handle params = sendReceiveCommandResult handle "DOM.collectClassNamesFromSubtree" (Just params)
 
--- | Return type of the 'domCollectClassNamesFromSubtree' command.
-data DomCollectClassNamesFromSubtree = DomCollectClassNamesFromSubtree {
+-- | Return type of the 'dOMCollectClassNamesFromSubtree' command.
+data DOMCollectClassNamesFromSubtree = DOMCollectClassNamesFromSubtree {
   -- | Class name list.
-  domCollectClassNamesFromSubtreeClassNames :: [String]
+  dOMCollectClassNamesFromSubtreeClassNames :: [String]
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomCollectClassNamesFromSubtree where
+instance FromJSON  DOMCollectClassNamesFromSubtree where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
-instance Command DomCollectClassNamesFromSubtree where
+instance Command DOMCollectClassNamesFromSubtree where
    commandName _ = "DOM.collectClassNamesFromSubtree"
 
 
 
--- | Parameters of the 'domCopyTo' command.
-data PDomCopyTo = PDomCopyTo {
+-- | Parameters of the 'dOMCopyTo' command.
+data PDOMCopyTo = PDOMCopyTo {
   -- | Id of the node to copy.
-  pDomCopyToNodeId :: DomNodeId,
+  pDOMCopyToNodeId :: DOMNodeId,
   -- | Id of the element to drop the copy into.
-  pDomCopyToTargetNodeId :: DomNodeId,
+  pDOMCopyToTargetNodeId :: DOMNodeId,
   -- | Drop the copy before this node (if absent, the copy becomes the last child of
   --   `targetNodeId`).
-  pDomCopyToInsertBeforeNodeId :: Maybe DomNodeId
+  pDOMCopyToInsertBeforeNodeId :: Maybe DOMNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomCopyTo  where
+instance ToJSON PDOMCopyTo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 , A.omitNothingFields = True}
 
-instance FromJSON  PDomCopyTo where
+instance FromJSON  PDOMCopyTo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 }
 
 
 -- | Function for the 'DOM.copyTo' command.
 --   Creates a deep copy of the specified node and places it into the target container before the
 --   given anchor.
---   Parameters: 'PDomCopyTo'
---   Returns: 'DomCopyTo'
-domCopyTo :: Handle ev -> PDomCopyTo -> IO DomCopyTo
-domCopyTo handle params = sendReceiveCommandResult handle "DOM.copyTo" (Just params)
+--   Parameters: 'PDOMCopyTo'
+--   Returns: 'DOMCopyTo'
+dOMCopyTo :: Handle ev -> PDOMCopyTo -> IO DOMCopyTo
+dOMCopyTo handle params = sendReceiveCommandResult handle "DOM.copyTo" (Just params)
 
--- | Return type of the 'domCopyTo' command.
-data DomCopyTo = DomCopyTo {
+-- | Return type of the 'dOMCopyTo' command.
+data DOMCopyTo = DOMCopyTo {
   -- | Id of the node clone.
-  domCopyToNodeId :: DomNodeId
+  dOMCopyToNodeId :: DOMNodeId
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomCopyTo where
+instance FromJSON  DOMCopyTo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 9 }
 
-instance Command DomCopyTo where
+instance Command DOMCopyTo where
    commandName _ = "DOM.copyTo"
 
 
 
--- | Parameters of the 'domDescribeNode' command.
-data PDomDescribeNode = PDomDescribeNode {
+-- | Parameters of the 'dOMDescribeNode' command.
+data PDOMDescribeNode = PDOMDescribeNode {
   -- | Identifier of the node.
-  pDomDescribeNodeNodeId :: Maybe DomNodeId,
+  pDOMDescribeNodeNodeId :: Maybe DOMNodeId,
   -- | Identifier of the backend node.
-  pDomDescribeNodeBackendNodeId :: Maybe DomBackendNodeId,
+  pDOMDescribeNodeBackendNodeId :: Maybe DOMBackendNodeId,
   -- | JavaScript object id of the node wrapper.
-  pDomDescribeNodeObjectId :: Maybe Runtime.RuntimeRemoteObjectId,
+  pDOMDescribeNodeObjectId :: Maybe Runtime.RuntimeRemoteObjectId,
   -- | The maximum depth at which children should be retrieved, defaults to 1. Use -1 for the
   --   entire subtree or provide an integer larger than 0.
-  pDomDescribeNodeDepth :: Maybe Int,
+  pDOMDescribeNodeDepth :: Maybe Int,
   -- | Whether or not iframes and shadow roots should be traversed when returning the subtree
   --   (default is false).
-  pDomDescribeNodePierce :: Maybe Bool
+  pDOMDescribeNodePierce :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomDescribeNode  where
+instance ToJSON PDOMDescribeNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
-instance FromJSON  PDomDescribeNode where
+instance FromJSON  PDOMDescribeNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
 -- | Function for the 'DOM.describeNode' command.
 --   Describes node given its id, does not require domain to be enabled. Does not start tracking any
 --   objects, can be used for automation.
---   Parameters: 'PDomDescribeNode'
---   Returns: 'DomDescribeNode'
-domDescribeNode :: Handle ev -> PDomDescribeNode -> IO DomDescribeNode
-domDescribeNode handle params = sendReceiveCommandResult handle "DOM.describeNode" (Just params)
+--   Parameters: 'PDOMDescribeNode'
+--   Returns: 'DOMDescribeNode'
+dOMDescribeNode :: Handle ev -> PDOMDescribeNode -> IO DOMDescribeNode
+dOMDescribeNode handle params = sendReceiveCommandResult handle "DOM.describeNode" (Just params)
 
--- | Return type of the 'domDescribeNode' command.
-data DomDescribeNode = DomDescribeNode {
+-- | Return type of the 'dOMDescribeNode' command.
+data DOMDescribeNode = DOMDescribeNode {
   -- | Node description.
-  domDescribeNodeNode :: DomNode
+  dOMDescribeNodeNode :: DOMNode
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomDescribeNode where
+instance FromJSON  DOMDescribeNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
-instance Command DomDescribeNode where
+instance Command DOMDescribeNode where
    commandName _ = "DOM.describeNode"
 
 
 
--- | Parameters of the 'domScrollIntoViewIfNeeded' command.
-data PDomScrollIntoViewIfNeeded = PDomScrollIntoViewIfNeeded {
+-- | Parameters of the 'dOMScrollIntoViewIfNeeded' command.
+data PDOMScrollIntoViewIfNeeded = PDOMScrollIntoViewIfNeeded {
   -- | Identifier of the node.
-  pDomScrollIntoViewIfNeededNodeId :: Maybe DomNodeId,
+  pDOMScrollIntoViewIfNeededNodeId :: Maybe DOMNodeId,
   -- | Identifier of the backend node.
-  pDomScrollIntoViewIfNeededBackendNodeId :: Maybe DomBackendNodeId,
+  pDOMScrollIntoViewIfNeededBackendNodeId :: Maybe DOMBackendNodeId,
   -- | JavaScript object id of the node wrapper.
-  pDomScrollIntoViewIfNeededObjectId :: Maybe Runtime.RuntimeRemoteObjectId,
+  pDOMScrollIntoViewIfNeededObjectId :: Maybe Runtime.RuntimeRemoteObjectId,
   -- | The rect to be scrolled into view, relative to the node's border box, in CSS pixels.
   --   When omitted, center of the node will be used, similar to Element.scrollIntoView.
-  pDomScrollIntoViewIfNeededRect :: Maybe DomRect
+  pDOMScrollIntoViewIfNeededRect :: Maybe DOMRect
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomScrollIntoViewIfNeeded  where
+instance ToJSON PDOMScrollIntoViewIfNeeded  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
-instance FromJSON  PDomScrollIntoViewIfNeeded where
+instance FromJSON  PDOMScrollIntoViewIfNeeded where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
@@ -757,729 +756,729 @@ instance FromJSON  PDomScrollIntoViewIfNeeded where
 --   Scrolls the specified rect of the given node into view if not already visible.
 --   Note: exactly one between nodeId, backendNodeId and objectId should be passed
 --   to identify the node.
---   Parameters: 'PDomScrollIntoViewIfNeeded'
-domScrollIntoViewIfNeeded :: Handle ev -> PDomScrollIntoViewIfNeeded -> IO ()
-domScrollIntoViewIfNeeded handle params = sendReceiveCommand handle "DOM.scrollIntoViewIfNeeded" (Just params)
+--   Parameters: 'PDOMScrollIntoViewIfNeeded'
+dOMScrollIntoViewIfNeeded :: Handle ev -> PDOMScrollIntoViewIfNeeded -> IO ()
+dOMScrollIntoViewIfNeeded handle params = sendReceiveCommand handle "DOM.scrollIntoViewIfNeeded" (Just params)
 
 
 -- | Function for the 'DOM.disable' command.
 --   Disables DOM agent for the given page.
-domDisable :: Handle ev -> IO ()
-domDisable handle = sendReceiveCommand handle "DOM.disable" (Nothing :: Maybe ())
+dOMDisable :: Handle ev -> IO ()
+dOMDisable handle = sendReceiveCommand handle "DOM.disable" (Nothing :: Maybe ())
 
 
--- | Parameters of the 'domDiscardSearchResults' command.
-data PDomDiscardSearchResults = PDomDiscardSearchResults {
+-- | Parameters of the 'dOMDiscardSearchResults' command.
+data PDOMDiscardSearchResults = PDOMDiscardSearchResults {
   -- | Unique search session identifier.
-  pDomDiscardSearchResultsSearchId :: String
+  pDOMDiscardSearchResultsSearchId :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomDiscardSearchResults  where
+instance ToJSON PDOMDiscardSearchResults  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
 
-instance FromJSON  PDomDiscardSearchResults where
+instance FromJSON  PDOMDiscardSearchResults where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
 -- | Function for the 'DOM.discardSearchResults' command.
 --   Discards search results from the session with the given id. `getSearchResults` should no longer
 --   be called for that search.
---   Parameters: 'PDomDiscardSearchResults'
-domDiscardSearchResults :: Handle ev -> PDomDiscardSearchResults -> IO ()
-domDiscardSearchResults handle params = sendReceiveCommand handle "DOM.discardSearchResults" (Just params)
+--   Parameters: 'PDOMDiscardSearchResults'
+dOMDiscardSearchResults :: Handle ev -> PDOMDiscardSearchResults -> IO ()
+dOMDiscardSearchResults handle params = sendReceiveCommand handle "DOM.discardSearchResults" (Just params)
 
 
--- | Parameters of the 'domEnable' command.
-data PDomEnableIncludeWhitespace = PDomEnableIncludeWhitespaceNone | PDomEnableIncludeWhitespaceAll
+-- | Parameters of the 'dOMEnable' command.
+data PDOMEnableIncludeWhitespace = PDOMEnableIncludeWhitespaceNone | PDOMEnableIncludeWhitespaceAll
    deriving (Ord, Eq, Show, Read)
-instance FromJSON PDomEnableIncludeWhitespace where
-   parseJSON = A.withText  "PDomEnableIncludeWhitespace"  $ \v -> do
+instance FromJSON PDOMEnableIncludeWhitespace where
+   parseJSON = A.withText  "PDOMEnableIncludeWhitespace"  $ \v -> do
       case v of
-         "none" -> pure PDomEnableIncludeWhitespaceNone
-         "all" -> pure PDomEnableIncludeWhitespaceAll
-         _ -> fail "failed to parse PDomEnableIncludeWhitespace"
+         "none" -> pure PDOMEnableIncludeWhitespaceNone
+         "all" -> pure PDOMEnableIncludeWhitespaceAll
+         _ -> fail "failed to parse PDOMEnableIncludeWhitespace"
 
-instance ToJSON PDomEnableIncludeWhitespace where
+instance ToJSON PDOMEnableIncludeWhitespace where
    toJSON v = A.String $
       case v of
-         PDomEnableIncludeWhitespaceNone -> "none"
-         PDomEnableIncludeWhitespaceAll -> "all"
+         PDOMEnableIncludeWhitespaceNone -> "none"
+         PDOMEnableIncludeWhitespaceAll -> "all"
 
 
 
-data PDomEnable = PDomEnable {
+data PDOMEnable = PDOMEnable {
   -- | Whether to include whitespaces in the children array of returned Nodes.
-  pDomEnableIncludeWhitespace :: PDomEnableIncludeWhitespace
+  pDOMEnableIncludeWhitespace :: PDOMEnableIncludeWhitespace
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomEnable  where
+instance ToJSON PDOMEnable  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 , A.omitNothingFields = True}
 
-instance FromJSON  PDomEnable where
+instance FromJSON  PDOMEnable where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 }
 
 
 -- | Function for the 'DOM.enable' command.
 --   Enables DOM agent for the given page.
---   Parameters: 'PDomEnable'
-domEnable :: Handle ev -> PDomEnable -> IO ()
-domEnable handle params = sendReceiveCommand handle "DOM.enable" (Just params)
+--   Parameters: 'PDOMEnable'
+dOMEnable :: Handle ev -> PDOMEnable -> IO ()
+dOMEnable handle params = sendReceiveCommand handle "DOM.enable" (Just params)
 
 
--- | Parameters of the 'domFocus' command.
-data PDomFocus = PDomFocus {
+-- | Parameters of the 'dOMFocus' command.
+data PDOMFocus = PDOMFocus {
   -- | Identifier of the node.
-  pDomFocusNodeId :: Maybe DomNodeId,
+  pDOMFocusNodeId :: Maybe DOMNodeId,
   -- | Identifier of the backend node.
-  pDomFocusBackendNodeId :: Maybe DomBackendNodeId,
+  pDOMFocusBackendNodeId :: Maybe DOMBackendNodeId,
   -- | JavaScript object id of the node wrapper.
-  pDomFocusObjectId :: Maybe Runtime.RuntimeRemoteObjectId
+  pDOMFocusObjectId :: Maybe Runtime.RuntimeRemoteObjectId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomFocus  where
+instance ToJSON PDOMFocus  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 9 , A.omitNothingFields = True}
 
-instance FromJSON  PDomFocus where
+instance FromJSON  PDOMFocus where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 9 }
 
 
 -- | Function for the 'DOM.focus' command.
 --   Focuses the given element.
---   Parameters: 'PDomFocus'
-domFocus :: Handle ev -> PDomFocus -> IO ()
-domFocus handle params = sendReceiveCommand handle "DOM.focus" (Just params)
+--   Parameters: 'PDOMFocus'
+dOMFocus :: Handle ev -> PDOMFocus -> IO ()
+dOMFocus handle params = sendReceiveCommand handle "DOM.focus" (Just params)
 
 
--- | Parameters of the 'domGetAttributes' command.
-data PDomGetAttributes = PDomGetAttributes {
+-- | Parameters of the 'dOMGetAttributes' command.
+data PDOMGetAttributes = PDOMGetAttributes {
   -- | Id of the node to retrieve attibutes for.
-  pDomGetAttributesNodeId :: DomNodeId
+  pDOMGetAttributesNodeId :: DOMNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomGetAttributes  where
+instance ToJSON PDOMGetAttributes  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
-instance FromJSON  PDomGetAttributes where
+instance FromJSON  PDOMGetAttributes where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
 -- | Function for the 'DOM.getAttributes' command.
 --   Returns attributes for the specified node.
---   Parameters: 'PDomGetAttributes'
---   Returns: 'DomGetAttributes'
-domGetAttributes :: Handle ev -> PDomGetAttributes -> IO DomGetAttributes
-domGetAttributes handle params = sendReceiveCommandResult handle "DOM.getAttributes" (Just params)
+--   Parameters: 'PDOMGetAttributes'
+--   Returns: 'DOMGetAttributes'
+dOMGetAttributes :: Handle ev -> PDOMGetAttributes -> IO DOMGetAttributes
+dOMGetAttributes handle params = sendReceiveCommandResult handle "DOM.getAttributes" (Just params)
 
--- | Return type of the 'domGetAttributes' command.
-data DomGetAttributes = DomGetAttributes {
+-- | Return type of the 'dOMGetAttributes' command.
+data DOMGetAttributes = DOMGetAttributes {
   -- | An interleaved array of node attribute names and values.
-  domGetAttributesAttributes :: [String]
+  dOMGetAttributesAttributes :: [String]
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomGetAttributes where
+instance FromJSON  DOMGetAttributes where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
-instance Command DomGetAttributes where
+instance Command DOMGetAttributes where
    commandName _ = "DOM.getAttributes"
 
 
 
--- | Parameters of the 'domGetBoxModel' command.
-data PDomGetBoxModel = PDomGetBoxModel {
+-- | Parameters of the 'dOMGetBoxModel' command.
+data PDOMGetBoxModel = PDOMGetBoxModel {
   -- | Identifier of the node.
-  pDomGetBoxModelNodeId :: Maybe DomNodeId,
+  pDOMGetBoxModelNodeId :: Maybe DOMNodeId,
   -- | Identifier of the backend node.
-  pDomGetBoxModelBackendNodeId :: Maybe DomBackendNodeId,
+  pDOMGetBoxModelBackendNodeId :: Maybe DOMBackendNodeId,
   -- | JavaScript object id of the node wrapper.
-  pDomGetBoxModelObjectId :: Maybe Runtime.RuntimeRemoteObjectId
+  pDOMGetBoxModelObjectId :: Maybe Runtime.RuntimeRemoteObjectId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomGetBoxModel  where
+instance ToJSON PDOMGetBoxModel  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
-instance FromJSON  PDomGetBoxModel where
+instance FromJSON  PDOMGetBoxModel where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
 -- | Function for the 'DOM.getBoxModel' command.
 --   Returns boxes for the given node.
---   Parameters: 'PDomGetBoxModel'
---   Returns: 'DomGetBoxModel'
-domGetBoxModel :: Handle ev -> PDomGetBoxModel -> IO DomGetBoxModel
-domGetBoxModel handle params = sendReceiveCommandResult handle "DOM.getBoxModel" (Just params)
+--   Parameters: 'PDOMGetBoxModel'
+--   Returns: 'DOMGetBoxModel'
+dOMGetBoxModel :: Handle ev -> PDOMGetBoxModel -> IO DOMGetBoxModel
+dOMGetBoxModel handle params = sendReceiveCommandResult handle "DOM.getBoxModel" (Just params)
 
--- | Return type of the 'domGetBoxModel' command.
-data DomGetBoxModel = DomGetBoxModel {
+-- | Return type of the 'dOMGetBoxModel' command.
+data DOMGetBoxModel = DOMGetBoxModel {
   -- | Box model for the node.
-  domGetBoxModelModel :: DomBoxModel
+  dOMGetBoxModelModel :: DOMBoxModel
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomGetBoxModel where
+instance FromJSON  DOMGetBoxModel where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
-instance Command DomGetBoxModel where
+instance Command DOMGetBoxModel where
    commandName _ = "DOM.getBoxModel"
 
 
 
--- | Parameters of the 'domGetContentQuads' command.
-data PDomGetContentQuads = PDomGetContentQuads {
+-- | Parameters of the 'dOMGetContentQuads' command.
+data PDOMGetContentQuads = PDOMGetContentQuads {
   -- | Identifier of the node.
-  pDomGetContentQuadsNodeId :: Maybe DomNodeId,
+  pDOMGetContentQuadsNodeId :: Maybe DOMNodeId,
   -- | Identifier of the backend node.
-  pDomGetContentQuadsBackendNodeId :: Maybe DomBackendNodeId,
+  pDOMGetContentQuadsBackendNodeId :: Maybe DOMBackendNodeId,
   -- | JavaScript object id of the node wrapper.
-  pDomGetContentQuadsObjectId :: Maybe Runtime.RuntimeRemoteObjectId
+  pDOMGetContentQuadsObjectId :: Maybe Runtime.RuntimeRemoteObjectId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomGetContentQuads  where
+instance ToJSON PDOMGetContentQuads  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
-instance FromJSON  PDomGetContentQuads where
+instance FromJSON  PDOMGetContentQuads where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
 -- | Function for the 'DOM.getContentQuads' command.
 --   Returns quads that describe node position on the page. This method
 --   might return multiple quads for inline nodes.
---   Parameters: 'PDomGetContentQuads'
---   Returns: 'DomGetContentQuads'
-domGetContentQuads :: Handle ev -> PDomGetContentQuads -> IO DomGetContentQuads
-domGetContentQuads handle params = sendReceiveCommandResult handle "DOM.getContentQuads" (Just params)
+--   Parameters: 'PDOMGetContentQuads'
+--   Returns: 'DOMGetContentQuads'
+dOMGetContentQuads :: Handle ev -> PDOMGetContentQuads -> IO DOMGetContentQuads
+dOMGetContentQuads handle params = sendReceiveCommandResult handle "DOM.getContentQuads" (Just params)
 
--- | Return type of the 'domGetContentQuads' command.
-data DomGetContentQuads = DomGetContentQuads {
+-- | Return type of the 'dOMGetContentQuads' command.
+data DOMGetContentQuads = DOMGetContentQuads {
   -- | Quads that describe node layout relative to viewport.
-  domGetContentQuadsQuads :: [DomQuad]
+  dOMGetContentQuadsQuads :: [DOMQuad]
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomGetContentQuads where
+instance FromJSON  DOMGetContentQuads where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
-instance Command DomGetContentQuads where
+instance Command DOMGetContentQuads where
    commandName _ = "DOM.getContentQuads"
 
 
 
--- | Parameters of the 'domGetDocument' command.
-data PDomGetDocument = PDomGetDocument {
+-- | Parameters of the 'dOMGetDocument' command.
+data PDOMGetDocument = PDOMGetDocument {
   -- | The maximum depth at which children should be retrieved, defaults to 1. Use -1 for the
   --   entire subtree or provide an integer larger than 0.
-  pDomGetDocumentDepth :: Maybe Int,
+  pDOMGetDocumentDepth :: Maybe Int,
   -- | Whether or not iframes and shadow roots should be traversed when returning the subtree
   --   (default is false).
-  pDomGetDocumentPierce :: Maybe Bool
+  pDOMGetDocumentPierce :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomGetDocument  where
+instance ToJSON PDOMGetDocument  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
-instance FromJSON  PDomGetDocument where
+instance FromJSON  PDOMGetDocument where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
 -- | Function for the 'DOM.getDocument' command.
 --   Returns the root DOM node (and optionally the subtree) to the caller.
---   Parameters: 'PDomGetDocument'
---   Returns: 'DomGetDocument'
-domGetDocument :: Handle ev -> PDomGetDocument -> IO DomGetDocument
-domGetDocument handle params = sendReceiveCommandResult handle "DOM.getDocument" (Just params)
+--   Parameters: 'PDOMGetDocument'
+--   Returns: 'DOMGetDocument'
+dOMGetDocument :: Handle ev -> PDOMGetDocument -> IO DOMGetDocument
+dOMGetDocument handle params = sendReceiveCommandResult handle "DOM.getDocument" (Just params)
 
--- | Return type of the 'domGetDocument' command.
-data DomGetDocument = DomGetDocument {
+-- | Return type of the 'dOMGetDocument' command.
+data DOMGetDocument = DOMGetDocument {
   -- | Resulting node.
-  domGetDocumentRoot :: DomNode
+  dOMGetDocumentRoot :: DOMNode
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomGetDocument where
+instance FromJSON  DOMGetDocument where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
-instance Command DomGetDocument where
+instance Command DOMGetDocument where
    commandName _ = "DOM.getDocument"
 
 
 
--- | Parameters of the 'domGetNodesForSubtreeByStyle' command.
-data PDomGetNodesForSubtreeByStyle = PDomGetNodesForSubtreeByStyle {
+-- | Parameters of the 'dOMGetNodesForSubtreeByStyle' command.
+data PDOMGetNodesForSubtreeByStyle = PDOMGetNodesForSubtreeByStyle {
   -- | Node ID pointing to the root of a subtree.
-  pDomGetNodesForSubtreeByStyleNodeId :: DomNodeId,
+  pDOMGetNodesForSubtreeByStyleNodeId :: DOMNodeId,
   -- | The style to filter nodes by (includes nodes if any of properties matches).
-  pDomGetNodesForSubtreeByStyleComputedStyles :: [DomCssComputedStyleProperty],
+  pDOMGetNodesForSubtreeByStyleComputedStyles :: [DOMCSSComputedStyleProperty],
   -- | Whether or not iframes and shadow roots in the same target should be traversed when returning the
   --   results (default is false).
-  pDomGetNodesForSubtreeByStylePierce :: Maybe Bool
+  pDOMGetNodesForSubtreeByStylePierce :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomGetNodesForSubtreeByStyle  where
+instance ToJSON PDOMGetNodesForSubtreeByStyle  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
 
-instance FromJSON  PDomGetNodesForSubtreeByStyle where
+instance FromJSON  PDOMGetNodesForSubtreeByStyle where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
 -- | Function for the 'DOM.getNodesForSubtreeByStyle' command.
 --   Finds nodes with a given computed style in a subtree.
---   Parameters: 'PDomGetNodesForSubtreeByStyle'
---   Returns: 'DomGetNodesForSubtreeByStyle'
-domGetNodesForSubtreeByStyle :: Handle ev -> PDomGetNodesForSubtreeByStyle -> IO DomGetNodesForSubtreeByStyle
-domGetNodesForSubtreeByStyle handle params = sendReceiveCommandResult handle "DOM.getNodesForSubtreeByStyle" (Just params)
+--   Parameters: 'PDOMGetNodesForSubtreeByStyle'
+--   Returns: 'DOMGetNodesForSubtreeByStyle'
+dOMGetNodesForSubtreeByStyle :: Handle ev -> PDOMGetNodesForSubtreeByStyle -> IO DOMGetNodesForSubtreeByStyle
+dOMGetNodesForSubtreeByStyle handle params = sendReceiveCommandResult handle "DOM.getNodesForSubtreeByStyle" (Just params)
 
--- | Return type of the 'domGetNodesForSubtreeByStyle' command.
-data DomGetNodesForSubtreeByStyle = DomGetNodesForSubtreeByStyle {
+-- | Return type of the 'dOMGetNodesForSubtreeByStyle' command.
+data DOMGetNodesForSubtreeByStyle = DOMGetNodesForSubtreeByStyle {
   -- | Resulting nodes.
-  domGetNodesForSubtreeByStyleNodeIds :: [DomNodeId]
+  dOMGetNodesForSubtreeByStyleNodeIds :: [DOMNodeId]
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomGetNodesForSubtreeByStyle where
+instance FromJSON  DOMGetNodesForSubtreeByStyle where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
-instance Command DomGetNodesForSubtreeByStyle where
+instance Command DOMGetNodesForSubtreeByStyle where
    commandName _ = "DOM.getNodesForSubtreeByStyle"
 
 
 
--- | Parameters of the 'domGetNodeForLocation' command.
-data PDomGetNodeForLocation = PDomGetNodeForLocation {
+-- | Parameters of the 'dOMGetNodeForLocation' command.
+data PDOMGetNodeForLocation = PDOMGetNodeForLocation {
   -- | X coordinate.
-  pDomGetNodeForLocationX :: Int,
+  pDOMGetNodeForLocationX :: Int,
   -- | Y coordinate.
-  pDomGetNodeForLocationY :: Int,
+  pDOMGetNodeForLocationY :: Int,
   -- | False to skip to the nearest non-UA shadow root ancestor (default: false).
-  pDomGetNodeForLocationIncludeUserAgentShadowDom :: Maybe Bool,
+  pDOMGetNodeForLocationIncludeUserAgentShadowDOM :: Maybe Bool,
   -- | Whether to ignore pointer-events: none on elements and hit test them.
-  pDomGetNodeForLocationIgnorePointerEventsNone :: Maybe Bool
+  pDOMGetNodeForLocationIgnorePointerEventsNone :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomGetNodeForLocation  where
+instance ToJSON PDOMGetNodeForLocation  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
-instance FromJSON  PDomGetNodeForLocation where
+instance FromJSON  PDOMGetNodeForLocation where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
 -- | Function for the 'DOM.getNodeForLocation' command.
 --   Returns node id at given location. Depending on whether DOM domain is enabled, nodeId is
 --   either returned or not.
---   Parameters: 'PDomGetNodeForLocation'
---   Returns: 'DomGetNodeForLocation'
-domGetNodeForLocation :: Handle ev -> PDomGetNodeForLocation -> IO DomGetNodeForLocation
-domGetNodeForLocation handle params = sendReceiveCommandResult handle "DOM.getNodeForLocation" (Just params)
+--   Parameters: 'PDOMGetNodeForLocation'
+--   Returns: 'DOMGetNodeForLocation'
+dOMGetNodeForLocation :: Handle ev -> PDOMGetNodeForLocation -> IO DOMGetNodeForLocation
+dOMGetNodeForLocation handle params = sendReceiveCommandResult handle "DOM.getNodeForLocation" (Just params)
 
--- | Return type of the 'domGetNodeForLocation' command.
-data DomGetNodeForLocation = DomGetNodeForLocation {
+-- | Return type of the 'dOMGetNodeForLocation' command.
+data DOMGetNodeForLocation = DOMGetNodeForLocation {
   -- | Resulting node.
-  domGetNodeForLocationBackendNodeId :: DomBackendNodeId,
+  dOMGetNodeForLocationBackendNodeId :: DOMBackendNodeId,
   -- | Frame this node belongs to.
-  domGetNodeForLocationFrameId :: PageFrameId,
+  dOMGetNodeForLocationFrameId :: PageFrameId,
   -- | Id of the node at given coordinates, only when enabled and requested document.
-  domGetNodeForLocationNodeId :: Maybe DomNodeId
+  dOMGetNodeForLocationNodeId :: Maybe DOMNodeId
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomGetNodeForLocation where
+instance FromJSON  DOMGetNodeForLocation where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
-instance Command DomGetNodeForLocation where
+instance Command DOMGetNodeForLocation where
    commandName _ = "DOM.getNodeForLocation"
 
 
 
--- | Parameters of the 'domGetOuterHtml' command.
-data PDomGetOuterHtml = PDomGetOuterHtml {
+-- | Parameters of the 'dOMGetOuterHTML' command.
+data PDOMGetOuterHTML = PDOMGetOuterHTML {
   -- | Identifier of the node.
-  pDomGetOuterHtmlNodeId :: Maybe DomNodeId,
+  pDOMGetOuterHTMLNodeId :: Maybe DOMNodeId,
   -- | Identifier of the backend node.
-  pDomGetOuterHtmlBackendNodeId :: Maybe DomBackendNodeId,
+  pDOMGetOuterHTMLBackendNodeId :: Maybe DOMBackendNodeId,
   -- | JavaScript object id of the node wrapper.
-  pDomGetOuterHtmlObjectId :: Maybe Runtime.RuntimeRemoteObjectId
+  pDOMGetOuterHTMLObjectId :: Maybe Runtime.RuntimeRemoteObjectId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomGetOuterHtml  where
+instance ToJSON PDOMGetOuterHTML  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
-instance FromJSON  PDomGetOuterHtml where
+instance FromJSON  PDOMGetOuterHTML where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
 -- | Function for the 'DOM.getOuterHTML' command.
 --   Returns node's HTML markup.
---   Parameters: 'PDomGetOuterHtml'
---   Returns: 'DomGetOuterHtml'
-domGetOuterHtml :: Handle ev -> PDomGetOuterHtml -> IO DomGetOuterHtml
-domGetOuterHtml handle params = sendReceiveCommandResult handle "DOM.getOuterHTML" (Just params)
+--   Parameters: 'PDOMGetOuterHTML'
+--   Returns: 'DOMGetOuterHTML'
+dOMGetOuterHTML :: Handle ev -> PDOMGetOuterHTML -> IO DOMGetOuterHTML
+dOMGetOuterHTML handle params = sendReceiveCommandResult handle "DOM.getOuterHTML" (Just params)
 
--- | Return type of the 'domGetOuterHtml' command.
-data DomGetOuterHtml = DomGetOuterHtml {
+-- | Return type of the 'dOMGetOuterHTML' command.
+data DOMGetOuterHTML = DOMGetOuterHTML {
   -- | Outer HTML markup.
-  domGetOuterHtmlOuterHtml :: String
+  dOMGetOuterHTMLOuterHTML :: String
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomGetOuterHtml where
+instance FromJSON  DOMGetOuterHTML where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
-instance Command DomGetOuterHtml where
+instance Command DOMGetOuterHTML where
    commandName _ = "DOM.getOuterHTML"
 
 
 
--- | Parameters of the 'domGetRelayoutBoundary' command.
-data PDomGetRelayoutBoundary = PDomGetRelayoutBoundary {
+-- | Parameters of the 'dOMGetRelayoutBoundary' command.
+data PDOMGetRelayoutBoundary = PDOMGetRelayoutBoundary {
   -- | Id of the node.
-  pDomGetRelayoutBoundaryNodeId :: DomNodeId
+  pDOMGetRelayoutBoundaryNodeId :: DOMNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomGetRelayoutBoundary  where
+instance ToJSON PDOMGetRelayoutBoundary  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
-instance FromJSON  PDomGetRelayoutBoundary where
+instance FromJSON  PDOMGetRelayoutBoundary where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
 -- | Function for the 'DOM.getRelayoutBoundary' command.
 --   Returns the id of the nearest ancestor that is a relayout boundary.
---   Parameters: 'PDomGetRelayoutBoundary'
---   Returns: 'DomGetRelayoutBoundary'
-domGetRelayoutBoundary :: Handle ev -> PDomGetRelayoutBoundary -> IO DomGetRelayoutBoundary
-domGetRelayoutBoundary handle params = sendReceiveCommandResult handle "DOM.getRelayoutBoundary" (Just params)
+--   Parameters: 'PDOMGetRelayoutBoundary'
+--   Returns: 'DOMGetRelayoutBoundary'
+dOMGetRelayoutBoundary :: Handle ev -> PDOMGetRelayoutBoundary -> IO DOMGetRelayoutBoundary
+dOMGetRelayoutBoundary handle params = sendReceiveCommandResult handle "DOM.getRelayoutBoundary" (Just params)
 
--- | Return type of the 'domGetRelayoutBoundary' command.
-data DomGetRelayoutBoundary = DomGetRelayoutBoundary {
+-- | Return type of the 'dOMGetRelayoutBoundary' command.
+data DOMGetRelayoutBoundary = DOMGetRelayoutBoundary {
   -- | Relayout boundary node id for the given node.
-  domGetRelayoutBoundaryNodeId :: DomNodeId
+  dOMGetRelayoutBoundaryNodeId :: DOMNodeId
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomGetRelayoutBoundary where
+instance FromJSON  DOMGetRelayoutBoundary where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
-instance Command DomGetRelayoutBoundary where
+instance Command DOMGetRelayoutBoundary where
    commandName _ = "DOM.getRelayoutBoundary"
 
 
 
--- | Parameters of the 'domGetSearchResults' command.
-data PDomGetSearchResults = PDomGetSearchResults {
+-- | Parameters of the 'dOMGetSearchResults' command.
+data PDOMGetSearchResults = PDOMGetSearchResults {
   -- | Unique search session identifier.
-  pDomGetSearchResultsSearchId :: String,
+  pDOMGetSearchResultsSearchId :: String,
   -- | Start index of the search result to be returned.
-  pDomGetSearchResultsFromIndex :: Int,
+  pDOMGetSearchResultsFromIndex :: Int,
   -- | End index of the search result to be returned.
-  pDomGetSearchResultsToIndex :: Int
+  pDOMGetSearchResultsToIndex :: Int
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomGetSearchResults  where
+instance ToJSON PDOMGetSearchResults  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
-instance FromJSON  PDomGetSearchResults where
+instance FromJSON  PDOMGetSearchResults where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
 -- | Function for the 'DOM.getSearchResults' command.
 --   Returns search results from given `fromIndex` to given `toIndex` from the search with the given
 --   identifier.
---   Parameters: 'PDomGetSearchResults'
---   Returns: 'DomGetSearchResults'
-domGetSearchResults :: Handle ev -> PDomGetSearchResults -> IO DomGetSearchResults
-domGetSearchResults handle params = sendReceiveCommandResult handle "DOM.getSearchResults" (Just params)
+--   Parameters: 'PDOMGetSearchResults'
+--   Returns: 'DOMGetSearchResults'
+dOMGetSearchResults :: Handle ev -> PDOMGetSearchResults -> IO DOMGetSearchResults
+dOMGetSearchResults handle params = sendReceiveCommandResult handle "DOM.getSearchResults" (Just params)
 
--- | Return type of the 'domGetSearchResults' command.
-data DomGetSearchResults = DomGetSearchResults {
+-- | Return type of the 'dOMGetSearchResults' command.
+data DOMGetSearchResults = DOMGetSearchResults {
   -- | Ids of the search result nodes.
-  domGetSearchResultsNodeIds :: [DomNodeId]
+  dOMGetSearchResultsNodeIds :: [DOMNodeId]
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomGetSearchResults where
+instance FromJSON  DOMGetSearchResults where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
-instance Command DomGetSearchResults where
+instance Command DOMGetSearchResults where
    commandName _ = "DOM.getSearchResults"
 
 
 
 -- | Function for the 'DOM.hideHighlight' command.
 --   Hides any highlight.
-domHideHighlight :: Handle ev -> IO ()
-domHideHighlight handle = sendReceiveCommand handle "DOM.hideHighlight" (Nothing :: Maybe ())
+dOMHideHighlight :: Handle ev -> IO ()
+dOMHideHighlight handle = sendReceiveCommand handle "DOM.hideHighlight" (Nothing :: Maybe ())
 
 
 -- | Function for the 'DOM.highlightNode' command.
 --   Highlights DOM node.
-domHighlightNode :: Handle ev -> IO ()
-domHighlightNode handle = sendReceiveCommand handle "DOM.highlightNode" (Nothing :: Maybe ())
+dOMHighlightNode :: Handle ev -> IO ()
+dOMHighlightNode handle = sendReceiveCommand handle "DOM.highlightNode" (Nothing :: Maybe ())
 
 
 -- | Function for the 'DOM.highlightRect' command.
 --   Highlights given rectangle.
-domHighlightRect :: Handle ev -> IO ()
-domHighlightRect handle = sendReceiveCommand handle "DOM.highlightRect" (Nothing :: Maybe ())
+dOMHighlightRect :: Handle ev -> IO ()
+dOMHighlightRect handle = sendReceiveCommand handle "DOM.highlightRect" (Nothing :: Maybe ())
 
 
 -- | Function for the 'DOM.markUndoableState' command.
 --   Marks last undoable state.
-domMarkUndoableState :: Handle ev -> IO ()
-domMarkUndoableState handle = sendReceiveCommand handle "DOM.markUndoableState" (Nothing :: Maybe ())
+dOMMarkUndoableState :: Handle ev -> IO ()
+dOMMarkUndoableState handle = sendReceiveCommand handle "DOM.markUndoableState" (Nothing :: Maybe ())
 
 
--- | Parameters of the 'domMoveTo' command.
-data PDomMoveTo = PDomMoveTo {
+-- | Parameters of the 'dOMMoveTo' command.
+data PDOMMoveTo = PDOMMoveTo {
   -- | Id of the node to move.
-  pDomMoveToNodeId :: DomNodeId,
+  pDOMMoveToNodeId :: DOMNodeId,
   -- | Id of the element to drop the moved node into.
-  pDomMoveToTargetNodeId :: DomNodeId,
+  pDOMMoveToTargetNodeId :: DOMNodeId,
   -- | Drop node before this one (if absent, the moved node becomes the last child of
   --   `targetNodeId`).
-  pDomMoveToInsertBeforeNodeId :: Maybe DomNodeId
+  pDOMMoveToInsertBeforeNodeId :: Maybe DOMNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomMoveTo  where
+instance ToJSON PDOMMoveTo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 , A.omitNothingFields = True}
 
-instance FromJSON  PDomMoveTo where
+instance FromJSON  PDOMMoveTo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 }
 
 
 -- | Function for the 'DOM.moveTo' command.
 --   Moves node into the new container, places it before the given anchor.
---   Parameters: 'PDomMoveTo'
---   Returns: 'DomMoveTo'
-domMoveTo :: Handle ev -> PDomMoveTo -> IO DomMoveTo
-domMoveTo handle params = sendReceiveCommandResult handle "DOM.moveTo" (Just params)
+--   Parameters: 'PDOMMoveTo'
+--   Returns: 'DOMMoveTo'
+dOMMoveTo :: Handle ev -> PDOMMoveTo -> IO DOMMoveTo
+dOMMoveTo handle params = sendReceiveCommandResult handle "DOM.moveTo" (Just params)
 
--- | Return type of the 'domMoveTo' command.
-data DomMoveTo = DomMoveTo {
+-- | Return type of the 'dOMMoveTo' command.
+data DOMMoveTo = DOMMoveTo {
   -- | New id of the moved node.
-  domMoveToNodeId :: DomNodeId
+  dOMMoveToNodeId :: DOMNodeId
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomMoveTo where
+instance FromJSON  DOMMoveTo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 9 }
 
-instance Command DomMoveTo where
+instance Command DOMMoveTo where
    commandName _ = "DOM.moveTo"
 
 
 
--- | Parameters of the 'domPerformSearch' command.
-data PDomPerformSearch = PDomPerformSearch {
+-- | Parameters of the 'dOMPerformSearch' command.
+data PDOMPerformSearch = PDOMPerformSearch {
   -- | Plain text or query selector or XPath search query.
-  pDomPerformSearchQuery :: String,
+  pDOMPerformSearchQuery :: String,
   -- | True to search in user agent shadow DOM.
-  pDomPerformSearchIncludeUserAgentShadowDom :: Maybe Bool
+  pDOMPerformSearchIncludeUserAgentShadowDOM :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomPerformSearch  where
+instance ToJSON PDOMPerformSearch  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
-instance FromJSON  PDomPerformSearch where
+instance FromJSON  PDOMPerformSearch where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
 -- | Function for the 'DOM.performSearch' command.
 --   Searches for a given string in the DOM tree. Use `getSearchResults` to access search results or
 --   `cancelSearch` to end this search session.
---   Parameters: 'PDomPerformSearch'
---   Returns: 'DomPerformSearch'
-domPerformSearch :: Handle ev -> PDomPerformSearch -> IO DomPerformSearch
-domPerformSearch handle params = sendReceiveCommandResult handle "DOM.performSearch" (Just params)
+--   Parameters: 'PDOMPerformSearch'
+--   Returns: 'DOMPerformSearch'
+dOMPerformSearch :: Handle ev -> PDOMPerformSearch -> IO DOMPerformSearch
+dOMPerformSearch handle params = sendReceiveCommandResult handle "DOM.performSearch" (Just params)
 
--- | Return type of the 'domPerformSearch' command.
-data DomPerformSearch = DomPerformSearch {
+-- | Return type of the 'dOMPerformSearch' command.
+data DOMPerformSearch = DOMPerformSearch {
   -- | Unique search session identifier.
-  domPerformSearchSearchId :: String,
+  dOMPerformSearchSearchId :: String,
   -- | Number of search results.
-  domPerformSearchResultCount :: Int
+  dOMPerformSearchResultCount :: Int
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomPerformSearch where
+instance FromJSON  DOMPerformSearch where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
-instance Command DomPerformSearch where
+instance Command DOMPerformSearch where
    commandName _ = "DOM.performSearch"
 
 
 
--- | Parameters of the 'domPushNodeByPathToFrontend' command.
-data PDomPushNodeByPathToFrontend = PDomPushNodeByPathToFrontend {
+-- | Parameters of the 'dOMPushNodeByPathToFrontend' command.
+data PDOMPushNodeByPathToFrontend = PDOMPushNodeByPathToFrontend {
   -- | Path to node in the proprietary format.
-  pDomPushNodeByPathToFrontendPath :: String
+  pDOMPushNodeByPathToFrontendPath :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomPushNodeByPathToFrontend  where
+instance ToJSON PDOMPushNodeByPathToFrontend  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
 
-instance FromJSON  PDomPushNodeByPathToFrontend where
+instance FromJSON  PDOMPushNodeByPathToFrontend where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
 -- | Function for the 'DOM.pushNodeByPathToFrontend' command.
 --   Requests that the node is sent to the caller given its path. // FIXME, use XPath
---   Parameters: 'PDomPushNodeByPathToFrontend'
---   Returns: 'DomPushNodeByPathToFrontend'
-domPushNodeByPathToFrontend :: Handle ev -> PDomPushNodeByPathToFrontend -> IO DomPushNodeByPathToFrontend
-domPushNodeByPathToFrontend handle params = sendReceiveCommandResult handle "DOM.pushNodeByPathToFrontend" (Just params)
+--   Parameters: 'PDOMPushNodeByPathToFrontend'
+--   Returns: 'DOMPushNodeByPathToFrontend'
+dOMPushNodeByPathToFrontend :: Handle ev -> PDOMPushNodeByPathToFrontend -> IO DOMPushNodeByPathToFrontend
+dOMPushNodeByPathToFrontend handle params = sendReceiveCommandResult handle "DOM.pushNodeByPathToFrontend" (Just params)
 
--- | Return type of the 'domPushNodeByPathToFrontend' command.
-data DomPushNodeByPathToFrontend = DomPushNodeByPathToFrontend {
+-- | Return type of the 'dOMPushNodeByPathToFrontend' command.
+data DOMPushNodeByPathToFrontend = DOMPushNodeByPathToFrontend {
   -- | Id of the node for given path.
-  domPushNodeByPathToFrontendNodeId :: DomNodeId
+  dOMPushNodeByPathToFrontendNodeId :: DOMNodeId
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomPushNodeByPathToFrontend where
+instance FromJSON  DOMPushNodeByPathToFrontend where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
-instance Command DomPushNodeByPathToFrontend where
+instance Command DOMPushNodeByPathToFrontend where
    commandName _ = "DOM.pushNodeByPathToFrontend"
 
 
 
--- | Parameters of the 'domPushNodesByBackendIdsToFrontend' command.
-data PDomPushNodesByBackendIdsToFrontend = PDomPushNodesByBackendIdsToFrontend {
+-- | Parameters of the 'dOMPushNodesByBackendIdsToFrontend' command.
+data PDOMPushNodesByBackendIdsToFrontend = PDOMPushNodesByBackendIdsToFrontend {
   -- | The array of backend node ids.
-  pDomPushNodesByBackendIdsToFrontendBackendNodeIds :: [DomBackendNodeId]
+  pDOMPushNodesByBackendIdsToFrontendBackendNodeIds :: [DOMBackendNodeId]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomPushNodesByBackendIdsToFrontend  where
+instance ToJSON PDOMPushNodesByBackendIdsToFrontend  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 , A.omitNothingFields = True}
 
-instance FromJSON  PDomPushNodesByBackendIdsToFrontend where
+instance FromJSON  PDOMPushNodesByBackendIdsToFrontend where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 }
 
 
 -- | Function for the 'DOM.pushNodesByBackendIdsToFrontend' command.
 --   Requests that a batch of nodes is sent to the caller given their backend node ids.
---   Parameters: 'PDomPushNodesByBackendIdsToFrontend'
---   Returns: 'DomPushNodesByBackendIdsToFrontend'
-domPushNodesByBackendIdsToFrontend :: Handle ev -> PDomPushNodesByBackendIdsToFrontend -> IO DomPushNodesByBackendIdsToFrontend
-domPushNodesByBackendIdsToFrontend handle params = sendReceiveCommandResult handle "DOM.pushNodesByBackendIdsToFrontend" (Just params)
+--   Parameters: 'PDOMPushNodesByBackendIdsToFrontend'
+--   Returns: 'DOMPushNodesByBackendIdsToFrontend'
+dOMPushNodesByBackendIdsToFrontend :: Handle ev -> PDOMPushNodesByBackendIdsToFrontend -> IO DOMPushNodesByBackendIdsToFrontend
+dOMPushNodesByBackendIdsToFrontend handle params = sendReceiveCommandResult handle "DOM.pushNodesByBackendIdsToFrontend" (Just params)
 
--- | Return type of the 'domPushNodesByBackendIdsToFrontend' command.
-data DomPushNodesByBackendIdsToFrontend = DomPushNodesByBackendIdsToFrontend {
+-- | Return type of the 'dOMPushNodesByBackendIdsToFrontend' command.
+data DOMPushNodesByBackendIdsToFrontend = DOMPushNodesByBackendIdsToFrontend {
   -- | The array of ids of pushed nodes that correspond to the backend ids specified in
   --   backendNodeIds.
-  domPushNodesByBackendIdsToFrontendNodeIds :: [DomNodeId]
+  dOMPushNodesByBackendIdsToFrontendNodeIds :: [DOMNodeId]
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomPushNodesByBackendIdsToFrontend where
+instance FromJSON  DOMPushNodesByBackendIdsToFrontend where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
 
-instance Command DomPushNodesByBackendIdsToFrontend where
+instance Command DOMPushNodesByBackendIdsToFrontend where
    commandName _ = "DOM.pushNodesByBackendIdsToFrontend"
 
 
 
--- | Parameters of the 'domQuerySelector' command.
-data PDomQuerySelector = PDomQuerySelector {
+-- | Parameters of the 'dOMQuerySelector' command.
+data PDOMQuerySelector = PDOMQuerySelector {
   -- | Id of the node to query upon.
-  pDomQuerySelectorNodeId :: DomNodeId,
+  pDOMQuerySelectorNodeId :: DOMNodeId,
   -- | Selector string.
-  pDomQuerySelectorSelector :: String
+  pDOMQuerySelectorSelector :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomQuerySelector  where
+instance ToJSON PDOMQuerySelector  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
-instance FromJSON  PDomQuerySelector where
+instance FromJSON  PDOMQuerySelector where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
 -- | Function for the 'DOM.querySelector' command.
 --   Executes `querySelector` on a given node.
---   Parameters: 'PDomQuerySelector'
---   Returns: 'DomQuerySelector'
-domQuerySelector :: Handle ev -> PDomQuerySelector -> IO DomQuerySelector
-domQuerySelector handle params = sendReceiveCommandResult handle "DOM.querySelector" (Just params)
+--   Parameters: 'PDOMQuerySelector'
+--   Returns: 'DOMQuerySelector'
+dOMQuerySelector :: Handle ev -> PDOMQuerySelector -> IO DOMQuerySelector
+dOMQuerySelector handle params = sendReceiveCommandResult handle "DOM.querySelector" (Just params)
 
--- | Return type of the 'domQuerySelector' command.
-data DomQuerySelector = DomQuerySelector {
+-- | Return type of the 'dOMQuerySelector' command.
+data DOMQuerySelector = DOMQuerySelector {
   -- | Query selector result.
-  domQuerySelectorNodeId :: DomNodeId
+  dOMQuerySelectorNodeId :: DOMNodeId
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomQuerySelector where
+instance FromJSON  DOMQuerySelector where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
-instance Command DomQuerySelector where
+instance Command DOMQuerySelector where
    commandName _ = "DOM.querySelector"
 
 
 
--- | Parameters of the 'domQuerySelectorAll' command.
-data PDomQuerySelectorAll = PDomQuerySelectorAll {
+-- | Parameters of the 'dOMQuerySelectorAll' command.
+data PDOMQuerySelectorAll = PDOMQuerySelectorAll {
   -- | Id of the node to query upon.
-  pDomQuerySelectorAllNodeId :: DomNodeId,
+  pDOMQuerySelectorAllNodeId :: DOMNodeId,
   -- | Selector string.
-  pDomQuerySelectorAllSelector :: String
+  pDOMQuerySelectorAllSelector :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomQuerySelectorAll  where
+instance ToJSON PDOMQuerySelectorAll  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
-instance FromJSON  PDomQuerySelectorAll where
+instance FromJSON  PDOMQuerySelectorAll where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
 -- | Function for the 'DOM.querySelectorAll' command.
 --   Executes `querySelectorAll` on a given node.
---   Parameters: 'PDomQuerySelectorAll'
---   Returns: 'DomQuerySelectorAll'
-domQuerySelectorAll :: Handle ev -> PDomQuerySelectorAll -> IO DomQuerySelectorAll
-domQuerySelectorAll handle params = sendReceiveCommandResult handle "DOM.querySelectorAll" (Just params)
+--   Parameters: 'PDOMQuerySelectorAll'
+--   Returns: 'DOMQuerySelectorAll'
+dOMQuerySelectorAll :: Handle ev -> PDOMQuerySelectorAll -> IO DOMQuerySelectorAll
+dOMQuerySelectorAll handle params = sendReceiveCommandResult handle "DOM.querySelectorAll" (Just params)
 
--- | Return type of the 'domQuerySelectorAll' command.
-data DomQuerySelectorAll = DomQuerySelectorAll {
+-- | Return type of the 'dOMQuerySelectorAll' command.
+data DOMQuerySelectorAll = DOMQuerySelectorAll {
   -- | Query selector result.
-  domQuerySelectorAllNodeIds :: [DomNodeId]
+  dOMQuerySelectorAllNodeIds :: [DOMNodeId]
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomQuerySelectorAll where
+instance FromJSON  DOMQuerySelectorAll where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
-instance Command DomQuerySelectorAll where
+instance Command DOMQuerySelectorAll where
    commandName _ = "DOM.querySelectorAll"
 
 
 
 -- | Function for the 'DOM.redo' command.
 --   Re-does the last undone action.
-domRedo :: Handle ev -> IO ()
-domRedo handle = sendReceiveCommand handle "DOM.redo" (Nothing :: Maybe ())
+dOMRedo :: Handle ev -> IO ()
+dOMRedo handle = sendReceiveCommand handle "DOM.redo" (Nothing :: Maybe ())
 
 
--- | Parameters of the 'domRemoveAttribute' command.
-data PDomRemoveAttribute = PDomRemoveAttribute {
+-- | Parameters of the 'dOMRemoveAttribute' command.
+data PDOMRemoveAttribute = PDOMRemoveAttribute {
   -- | Id of the element to remove attribute from.
-  pDomRemoveAttributeNodeId :: DomNodeId,
+  pDOMRemoveAttributeNodeId :: DOMNodeId,
   -- | Name of the attribute to remove.
-  pDomRemoveAttributeName :: String
+  pDOMRemoveAttributeName :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomRemoveAttribute  where
+instance ToJSON PDOMRemoveAttribute  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
 
-instance FromJSON  PDomRemoveAttribute where
+instance FromJSON  PDOMRemoveAttribute where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
 -- | Function for the 'DOM.removeAttribute' command.
 --   Removes attribute with given name from an element with given id.
---   Parameters: 'PDomRemoveAttribute'
-domRemoveAttribute :: Handle ev -> PDomRemoveAttribute -> IO ()
-domRemoveAttribute handle params = sendReceiveCommand handle "DOM.removeAttribute" (Just params)
+--   Parameters: 'PDOMRemoveAttribute'
+dOMRemoveAttribute :: Handle ev -> PDOMRemoveAttribute -> IO ()
+dOMRemoveAttribute handle params = sendReceiveCommand handle "DOM.removeAttribute" (Just params)
 
 
--- | Parameters of the 'domRemoveNode' command.
-data PDomRemoveNode = PDomRemoveNode {
+-- | Parameters of the 'dOMRemoveNode' command.
+data PDOMRemoveNode = PDOMRemoveNode {
   -- | Id of the node to remove.
-  pDomRemoveNodeNodeId :: DomNodeId
+  pDOMRemoveNodeNodeId :: DOMNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomRemoveNode  where
+instance ToJSON PDOMRemoveNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
 
-instance FromJSON  PDomRemoveNode where
+instance FromJSON  PDOMRemoveNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
 -- | Function for the 'DOM.removeNode' command.
 --   Removes node with given id.
---   Parameters: 'PDomRemoveNode'
-domRemoveNode :: Handle ev -> PDomRemoveNode -> IO ()
-domRemoveNode handle params = sendReceiveCommand handle "DOM.removeNode" (Just params)
+--   Parameters: 'PDOMRemoveNode'
+dOMRemoveNode :: Handle ev -> PDOMRemoveNode -> IO ()
+dOMRemoveNode handle params = sendReceiveCommand handle "DOM.removeNode" (Just params)
 
 
--- | Parameters of the 'domRequestChildNodes' command.
-data PDomRequestChildNodes = PDomRequestChildNodes {
+-- | Parameters of the 'dOMRequestChildNodes' command.
+data PDOMRequestChildNodes = PDOMRequestChildNodes {
   -- | Id of the node to get children for.
-  pDomRequestChildNodesNodeId :: DomNodeId,
+  pDOMRequestChildNodesNodeId :: DOMNodeId,
   -- | The maximum depth at which children should be retrieved, defaults to 1. Use -1 for the
   --   entire subtree or provide an integer larger than 0.
-  pDomRequestChildNodesDepth :: Maybe Int,
+  pDOMRequestChildNodesDepth :: Maybe Int,
   -- | Whether or not iframes and shadow roots should be traversed when returning the sub-tree
   --   (default is false).
-  pDomRequestChildNodesPierce :: Maybe Bool
+  pDOMRequestChildNodesPierce :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomRequestChildNodes  where
+instance ToJSON PDOMRequestChildNodes  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
-instance FromJSON  PDomRequestChildNodes where
+instance FromJSON  PDOMRequestChildNodes where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
@@ -1487,20 +1486,20 @@ instance FromJSON  PDomRequestChildNodes where
 --   Requests that children of the node with given id are returned to the caller in form of
 --   `setChildNodes` events where not only immediate children are retrieved, but all children down to
 --   the specified depth.
---   Parameters: 'PDomRequestChildNodes'
-domRequestChildNodes :: Handle ev -> PDomRequestChildNodes -> IO ()
-domRequestChildNodes handle params = sendReceiveCommand handle "DOM.requestChildNodes" (Just params)
+--   Parameters: 'PDOMRequestChildNodes'
+dOMRequestChildNodes :: Handle ev -> PDOMRequestChildNodes -> IO ()
+dOMRequestChildNodes handle params = sendReceiveCommand handle "DOM.requestChildNodes" (Just params)
 
 
--- | Parameters of the 'domRequestNode' command.
-data PDomRequestNode = PDomRequestNode {
+-- | Parameters of the 'dOMRequestNode' command.
+data PDOMRequestNode = PDOMRequestNode {
   -- | JavaScript object id to convert into node.
-  pDomRequestNodeObjectId :: Runtime.RuntimeRemoteObjectId
+  pDOMRequestNodeObjectId :: Runtime.RuntimeRemoteObjectId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomRequestNode  where
+instance ToJSON PDOMRequestNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
-instance FromJSON  PDomRequestNode where
+instance FromJSON  PDOMRequestNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
@@ -1508,368 +1507,368 @@ instance FromJSON  PDomRequestNode where
 --   Requests that the node is sent to the caller given the JavaScript node object reference. All
 --   nodes that form the path from the node to the root are also sent to the client as a series of
 --   `setChildNodes` notifications.
---   Parameters: 'PDomRequestNode'
---   Returns: 'DomRequestNode'
-domRequestNode :: Handle ev -> PDomRequestNode -> IO DomRequestNode
-domRequestNode handle params = sendReceiveCommandResult handle "DOM.requestNode" (Just params)
+--   Parameters: 'PDOMRequestNode'
+--   Returns: 'DOMRequestNode'
+dOMRequestNode :: Handle ev -> PDOMRequestNode -> IO DOMRequestNode
+dOMRequestNode handle params = sendReceiveCommandResult handle "DOM.requestNode" (Just params)
 
--- | Return type of the 'domRequestNode' command.
-data DomRequestNode = DomRequestNode {
+-- | Return type of the 'dOMRequestNode' command.
+data DOMRequestNode = DOMRequestNode {
   -- | Node id for given object.
-  domRequestNodeNodeId :: DomNodeId
+  dOMRequestNodeNodeId :: DOMNodeId
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomRequestNode where
+instance FromJSON  DOMRequestNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
-instance Command DomRequestNode where
+instance Command DOMRequestNode where
    commandName _ = "DOM.requestNode"
 
 
 
--- | Parameters of the 'domResolveNode' command.
-data PDomResolveNode = PDomResolveNode {
+-- | Parameters of the 'dOMResolveNode' command.
+data PDOMResolveNode = PDOMResolveNode {
   -- | Id of the node to resolve.
-  pDomResolveNodeNodeId :: Maybe DomNodeId,
+  pDOMResolveNodeNodeId :: Maybe DOMNodeId,
   -- | Backend identifier of the node to resolve.
-  pDomResolveNodeBackendNodeId :: Maybe DomBackendNodeId,
+  pDOMResolveNodeBackendNodeId :: Maybe DOMBackendNodeId,
   -- | Symbolic group name that can be used to release multiple objects.
-  pDomResolveNodeObjectGroup :: Maybe String,
+  pDOMResolveNodeObjectGroup :: Maybe String,
   -- | Execution context in which to resolve the node.
-  pDomResolveNodeExecutionContextId :: Maybe Runtime.RuntimeExecutionContextId
+  pDOMResolveNodeExecutionContextId :: Maybe Runtime.RuntimeExecutionContextId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomResolveNode  where
+instance ToJSON PDOMResolveNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
-instance FromJSON  PDomResolveNode where
+instance FromJSON  PDOMResolveNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
 -- | Function for the 'DOM.resolveNode' command.
 --   Resolves the JavaScript node object for a given NodeId or BackendNodeId.
---   Parameters: 'PDomResolveNode'
---   Returns: 'DomResolveNode'
-domResolveNode :: Handle ev -> PDomResolveNode -> IO DomResolveNode
-domResolveNode handle params = sendReceiveCommandResult handle "DOM.resolveNode" (Just params)
+--   Parameters: 'PDOMResolveNode'
+--   Returns: 'DOMResolveNode'
+dOMResolveNode :: Handle ev -> PDOMResolveNode -> IO DOMResolveNode
+dOMResolveNode handle params = sendReceiveCommandResult handle "DOM.resolveNode" (Just params)
 
--- | Return type of the 'domResolveNode' command.
-data DomResolveNode = DomResolveNode {
+-- | Return type of the 'dOMResolveNode' command.
+data DOMResolveNode = DOMResolveNode {
   -- | JavaScript object wrapper for given node.
-  domResolveNodeObject :: Runtime.RuntimeRemoteObject
+  dOMResolveNodeObject :: Runtime.RuntimeRemoteObject
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomResolveNode where
+instance FromJSON  DOMResolveNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
-instance Command DomResolveNode where
+instance Command DOMResolveNode where
    commandName _ = "DOM.resolveNode"
 
 
 
--- | Parameters of the 'domSetAttributeValue' command.
-data PDomSetAttributeValue = PDomSetAttributeValue {
+-- | Parameters of the 'dOMSetAttributeValue' command.
+data PDOMSetAttributeValue = PDOMSetAttributeValue {
   -- | Id of the element to set attribute for.
-  pDomSetAttributeValueNodeId :: DomNodeId,
+  pDOMSetAttributeValueNodeId :: DOMNodeId,
   -- | Attribute name.
-  pDomSetAttributeValueName :: String,
+  pDOMSetAttributeValueName :: String,
   -- | Attribute value.
-  pDomSetAttributeValueValue :: String
+  pDOMSetAttributeValueValue :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomSetAttributeValue  where
+instance ToJSON PDOMSetAttributeValue  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
-instance FromJSON  PDomSetAttributeValue where
+instance FromJSON  PDOMSetAttributeValue where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
 -- | Function for the 'DOM.setAttributeValue' command.
 --   Sets attribute for an element with given id.
---   Parameters: 'PDomSetAttributeValue'
-domSetAttributeValue :: Handle ev -> PDomSetAttributeValue -> IO ()
-domSetAttributeValue handle params = sendReceiveCommand handle "DOM.setAttributeValue" (Just params)
+--   Parameters: 'PDOMSetAttributeValue'
+dOMSetAttributeValue :: Handle ev -> PDOMSetAttributeValue -> IO ()
+dOMSetAttributeValue handle params = sendReceiveCommand handle "DOM.setAttributeValue" (Just params)
 
 
--- | Parameters of the 'domSetAttributesAsText' command.
-data PDomSetAttributesAsText = PDomSetAttributesAsText {
+-- | Parameters of the 'dOMSetAttributesAsText' command.
+data PDOMSetAttributesAsText = PDOMSetAttributesAsText {
   -- | Id of the element to set attributes for.
-  pDomSetAttributesAsTextNodeId :: DomNodeId,
+  pDOMSetAttributesAsTextNodeId :: DOMNodeId,
   -- | Text with a number of attributes. Will parse this text using HTML parser.
-  pDomSetAttributesAsTextText :: String,
+  pDOMSetAttributesAsTextText :: String,
   -- | Attribute name to replace with new attributes derived from text in case text parsed
   --   successfully.
-  pDomSetAttributesAsTextName :: Maybe String
+  pDOMSetAttributesAsTextName :: Maybe String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomSetAttributesAsText  where
+instance ToJSON PDOMSetAttributesAsText  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
-instance FromJSON  PDomSetAttributesAsText where
+instance FromJSON  PDOMSetAttributesAsText where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
 -- | Function for the 'DOM.setAttributesAsText' command.
 --   Sets attributes on element with given id. This method is useful when user edits some existing
 --   attribute value and types in several attribute name/value pairs.
---   Parameters: 'PDomSetAttributesAsText'
-domSetAttributesAsText :: Handle ev -> PDomSetAttributesAsText -> IO ()
-domSetAttributesAsText handle params = sendReceiveCommand handle "DOM.setAttributesAsText" (Just params)
+--   Parameters: 'PDOMSetAttributesAsText'
+dOMSetAttributesAsText :: Handle ev -> PDOMSetAttributesAsText -> IO ()
+dOMSetAttributesAsText handle params = sendReceiveCommand handle "DOM.setAttributesAsText" (Just params)
 
 
--- | Parameters of the 'domSetFileInputFiles' command.
-data PDomSetFileInputFiles = PDomSetFileInputFiles {
+-- | Parameters of the 'dOMSetFileInputFiles' command.
+data PDOMSetFileInputFiles = PDOMSetFileInputFiles {
   -- | Array of file paths to set.
-  pDomSetFileInputFilesFiles :: [String],
+  pDOMSetFileInputFilesFiles :: [String],
   -- | Identifier of the node.
-  pDomSetFileInputFilesNodeId :: Maybe DomNodeId,
+  pDOMSetFileInputFilesNodeId :: Maybe DOMNodeId,
   -- | Identifier of the backend node.
-  pDomSetFileInputFilesBackendNodeId :: Maybe DomBackendNodeId,
+  pDOMSetFileInputFilesBackendNodeId :: Maybe DOMBackendNodeId,
   -- | JavaScript object id of the node wrapper.
-  pDomSetFileInputFilesObjectId :: Maybe Runtime.RuntimeRemoteObjectId
+  pDOMSetFileInputFilesObjectId :: Maybe Runtime.RuntimeRemoteObjectId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomSetFileInputFiles  where
+instance ToJSON PDOMSetFileInputFiles  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
 
-instance FromJSON  PDomSetFileInputFiles where
+instance FromJSON  PDOMSetFileInputFiles where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
 -- | Function for the 'DOM.setFileInputFiles' command.
 --   Sets files for the given file input element.
---   Parameters: 'PDomSetFileInputFiles'
-domSetFileInputFiles :: Handle ev -> PDomSetFileInputFiles -> IO ()
-domSetFileInputFiles handle params = sendReceiveCommand handle "DOM.setFileInputFiles" (Just params)
+--   Parameters: 'PDOMSetFileInputFiles'
+dOMSetFileInputFiles :: Handle ev -> PDOMSetFileInputFiles -> IO ()
+dOMSetFileInputFiles handle params = sendReceiveCommand handle "DOM.setFileInputFiles" (Just params)
 
 
--- | Parameters of the 'domSetNodeStackTracesEnabled' command.
-data PDomSetNodeStackTracesEnabled = PDomSetNodeStackTracesEnabled {
+-- | Parameters of the 'dOMSetNodeStackTracesEnabled' command.
+data PDOMSetNodeStackTracesEnabled = PDOMSetNodeStackTracesEnabled {
   -- | Enable or disable.
-  pDomSetNodeStackTracesEnabledEnable :: Bool
+  pDOMSetNodeStackTracesEnabledEnable :: Bool
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomSetNodeStackTracesEnabled  where
+instance ToJSON PDOMSetNodeStackTracesEnabled  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
 
-instance FromJSON  PDomSetNodeStackTracesEnabled where
+instance FromJSON  PDOMSetNodeStackTracesEnabled where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
 -- | Function for the 'DOM.setNodeStackTracesEnabled' command.
 --   Sets if stack traces should be captured for Nodes. See `Node.getNodeStackTraces`. Default is disabled.
---   Parameters: 'PDomSetNodeStackTracesEnabled'
-domSetNodeStackTracesEnabled :: Handle ev -> PDomSetNodeStackTracesEnabled -> IO ()
-domSetNodeStackTracesEnabled handle params = sendReceiveCommand handle "DOM.setNodeStackTracesEnabled" (Just params)
+--   Parameters: 'PDOMSetNodeStackTracesEnabled'
+dOMSetNodeStackTracesEnabled :: Handle ev -> PDOMSetNodeStackTracesEnabled -> IO ()
+dOMSetNodeStackTracesEnabled handle params = sendReceiveCommand handle "DOM.setNodeStackTracesEnabled" (Just params)
 
 
--- | Parameters of the 'domGetNodeStackTraces' command.
-data PDomGetNodeStackTraces = PDomGetNodeStackTraces {
+-- | Parameters of the 'dOMGetNodeStackTraces' command.
+data PDOMGetNodeStackTraces = PDOMGetNodeStackTraces {
   -- | Id of the node to get stack traces for.
-  pDomGetNodeStackTracesNodeId :: DomNodeId
+  pDOMGetNodeStackTracesNodeId :: DOMNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomGetNodeStackTraces  where
+instance ToJSON PDOMGetNodeStackTraces  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
-instance FromJSON  PDomGetNodeStackTraces where
+instance FromJSON  PDOMGetNodeStackTraces where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
 -- | Function for the 'DOM.getNodeStackTraces' command.
 --   Gets stack traces associated with a Node. As of now, only provides stack trace for Node creation.
---   Parameters: 'PDomGetNodeStackTraces'
---   Returns: 'DomGetNodeStackTraces'
-domGetNodeStackTraces :: Handle ev -> PDomGetNodeStackTraces -> IO DomGetNodeStackTraces
-domGetNodeStackTraces handle params = sendReceiveCommandResult handle "DOM.getNodeStackTraces" (Just params)
+--   Parameters: 'PDOMGetNodeStackTraces'
+--   Returns: 'DOMGetNodeStackTraces'
+dOMGetNodeStackTraces :: Handle ev -> PDOMGetNodeStackTraces -> IO DOMGetNodeStackTraces
+dOMGetNodeStackTraces handle params = sendReceiveCommandResult handle "DOM.getNodeStackTraces" (Just params)
 
--- | Return type of the 'domGetNodeStackTraces' command.
-data DomGetNodeStackTraces = DomGetNodeStackTraces {
+-- | Return type of the 'dOMGetNodeStackTraces' command.
+data DOMGetNodeStackTraces = DOMGetNodeStackTraces {
   -- | Creation stack trace, if available.
-  domGetNodeStackTracesCreation :: Maybe Runtime.RuntimeStackTrace
+  dOMGetNodeStackTracesCreation :: Maybe Runtime.RuntimeStackTrace
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomGetNodeStackTraces where
+instance FromJSON  DOMGetNodeStackTraces where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
-instance Command DomGetNodeStackTraces where
+instance Command DOMGetNodeStackTraces where
    commandName _ = "DOM.getNodeStackTraces"
 
 
 
--- | Parameters of the 'domGetFileInfo' command.
-data PDomGetFileInfo = PDomGetFileInfo {
+-- | Parameters of the 'dOMGetFileInfo' command.
+data PDOMGetFileInfo = PDOMGetFileInfo {
   -- | JavaScript object id of the node wrapper.
-  pDomGetFileInfoObjectId :: Runtime.RuntimeRemoteObjectId
+  pDOMGetFileInfoObjectId :: Runtime.RuntimeRemoteObjectId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomGetFileInfo  where
+instance ToJSON PDOMGetFileInfo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
-instance FromJSON  PDomGetFileInfo where
+instance FromJSON  PDOMGetFileInfo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
 -- | Function for the 'DOM.getFileInfo' command.
 --   Returns file information for the given
 --   File wrapper.
---   Parameters: 'PDomGetFileInfo'
---   Returns: 'DomGetFileInfo'
-domGetFileInfo :: Handle ev -> PDomGetFileInfo -> IO DomGetFileInfo
-domGetFileInfo handle params = sendReceiveCommandResult handle "DOM.getFileInfo" (Just params)
+--   Parameters: 'PDOMGetFileInfo'
+--   Returns: 'DOMGetFileInfo'
+dOMGetFileInfo :: Handle ev -> PDOMGetFileInfo -> IO DOMGetFileInfo
+dOMGetFileInfo handle params = sendReceiveCommandResult handle "DOM.getFileInfo" (Just params)
 
--- | Return type of the 'domGetFileInfo' command.
-data DomGetFileInfo = DomGetFileInfo {
-  domGetFileInfoPath :: String
+-- | Return type of the 'dOMGetFileInfo' command.
+data DOMGetFileInfo = DOMGetFileInfo {
+  dOMGetFileInfoPath :: String
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomGetFileInfo where
+instance FromJSON  DOMGetFileInfo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
-instance Command DomGetFileInfo where
+instance Command DOMGetFileInfo where
    commandName _ = "DOM.getFileInfo"
 
 
 
--- | Parameters of the 'domSetInspectedNode' command.
-data PDomSetInspectedNode = PDomSetInspectedNode {
+-- | Parameters of the 'dOMSetInspectedNode' command.
+data PDOMSetInspectedNode = PDOMSetInspectedNode {
   -- | DOM node id to be accessible by means of $x command line API.
-  pDomSetInspectedNodeNodeId :: DomNodeId
+  pDOMSetInspectedNodeNodeId :: DOMNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomSetInspectedNode  where
+instance ToJSON PDOMSetInspectedNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
 
-instance FromJSON  PDomSetInspectedNode where
+instance FromJSON  PDOMSetInspectedNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
 -- | Function for the 'DOM.setInspectedNode' command.
 --   Enables console to refer to the node with given id via $x (see Command Line API for more details
 --   $x functions).
---   Parameters: 'PDomSetInspectedNode'
-domSetInspectedNode :: Handle ev -> PDomSetInspectedNode -> IO ()
-domSetInspectedNode handle params = sendReceiveCommand handle "DOM.setInspectedNode" (Just params)
+--   Parameters: 'PDOMSetInspectedNode'
+dOMSetInspectedNode :: Handle ev -> PDOMSetInspectedNode -> IO ()
+dOMSetInspectedNode handle params = sendReceiveCommand handle "DOM.setInspectedNode" (Just params)
 
 
--- | Parameters of the 'domSetNodeName' command.
-data PDomSetNodeName = PDomSetNodeName {
+-- | Parameters of the 'dOMSetNodeName' command.
+data PDOMSetNodeName = PDOMSetNodeName {
   -- | Id of the node to set name for.
-  pDomSetNodeNameNodeId :: DomNodeId,
+  pDOMSetNodeNameNodeId :: DOMNodeId,
   -- | New node's name.
-  pDomSetNodeNameName :: String
+  pDOMSetNodeNameName :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomSetNodeName  where
+instance ToJSON PDOMSetNodeName  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
-instance FromJSON  PDomSetNodeName where
+instance FromJSON  PDOMSetNodeName where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
 -- | Function for the 'DOM.setNodeName' command.
 --   Sets node name for a node with given id.
---   Parameters: 'PDomSetNodeName'
---   Returns: 'DomSetNodeName'
-domSetNodeName :: Handle ev -> PDomSetNodeName -> IO DomSetNodeName
-domSetNodeName handle params = sendReceiveCommandResult handle "DOM.setNodeName" (Just params)
+--   Parameters: 'PDOMSetNodeName'
+--   Returns: 'DOMSetNodeName'
+dOMSetNodeName :: Handle ev -> PDOMSetNodeName -> IO DOMSetNodeName
+dOMSetNodeName handle params = sendReceiveCommandResult handle "DOM.setNodeName" (Just params)
 
--- | Return type of the 'domSetNodeName' command.
-data DomSetNodeName = DomSetNodeName {
+-- | Return type of the 'dOMSetNodeName' command.
+data DOMSetNodeName = DOMSetNodeName {
   -- | New node's id.
-  domSetNodeNameNodeId :: DomNodeId
+  dOMSetNodeNameNodeId :: DOMNodeId
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomSetNodeName where
+instance FromJSON  DOMSetNodeName where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
-instance Command DomSetNodeName where
+instance Command DOMSetNodeName where
    commandName _ = "DOM.setNodeName"
 
 
 
--- | Parameters of the 'domSetNodeValue' command.
-data PDomSetNodeValue = PDomSetNodeValue {
+-- | Parameters of the 'dOMSetNodeValue' command.
+data PDOMSetNodeValue = PDOMSetNodeValue {
   -- | Id of the node to set value for.
-  pDomSetNodeValueNodeId :: DomNodeId,
+  pDOMSetNodeValueNodeId :: DOMNodeId,
   -- | New node's value.
-  pDomSetNodeValueValue :: String
+  pDOMSetNodeValueValue :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomSetNodeValue  where
+instance ToJSON PDOMSetNodeValue  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
-instance FromJSON  PDomSetNodeValue where
+instance FromJSON  PDOMSetNodeValue where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
 -- | Function for the 'DOM.setNodeValue' command.
 --   Sets node value for a node with given id.
---   Parameters: 'PDomSetNodeValue'
-domSetNodeValue :: Handle ev -> PDomSetNodeValue -> IO ()
-domSetNodeValue handle params = sendReceiveCommand handle "DOM.setNodeValue" (Just params)
+--   Parameters: 'PDOMSetNodeValue'
+dOMSetNodeValue :: Handle ev -> PDOMSetNodeValue -> IO ()
+dOMSetNodeValue handle params = sendReceiveCommand handle "DOM.setNodeValue" (Just params)
 
 
--- | Parameters of the 'domSetOuterHtml' command.
-data PDomSetOuterHtml = PDomSetOuterHtml {
+-- | Parameters of the 'dOMSetOuterHTML' command.
+data PDOMSetOuterHTML = PDOMSetOuterHTML {
   -- | Id of the node to set markup for.
-  pDomSetOuterHtmlNodeId :: DomNodeId,
+  pDOMSetOuterHTMLNodeId :: DOMNodeId,
   -- | Outer HTML markup to set.
-  pDomSetOuterHtmlOuterHtml :: String
+  pDOMSetOuterHTMLOuterHTML :: String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomSetOuterHtml  where
+instance ToJSON PDOMSetOuterHTML  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
 
-instance FromJSON  PDomSetOuterHtml where
+instance FromJSON  PDOMSetOuterHTML where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
 -- | Function for the 'DOM.setOuterHTML' command.
 --   Sets node HTML markup, returns new node id.
---   Parameters: 'PDomSetOuterHtml'
-domSetOuterHtml :: Handle ev -> PDomSetOuterHtml -> IO ()
-domSetOuterHtml handle params = sendReceiveCommand handle "DOM.setOuterHTML" (Just params)
+--   Parameters: 'PDOMSetOuterHTML'
+dOMSetOuterHTML :: Handle ev -> PDOMSetOuterHTML -> IO ()
+dOMSetOuterHTML handle params = sendReceiveCommand handle "DOM.setOuterHTML" (Just params)
 
 
 -- | Function for the 'DOM.undo' command.
 --   Undoes the last performed action.
-domUndo :: Handle ev -> IO ()
-domUndo handle = sendReceiveCommand handle "DOM.undo" (Nothing :: Maybe ())
+dOMUndo :: Handle ev -> IO ()
+dOMUndo handle = sendReceiveCommand handle "DOM.undo" (Nothing :: Maybe ())
 
 
--- | Parameters of the 'domGetFrameOwner' command.
-data PDomGetFrameOwner = PDomGetFrameOwner {
-  pDomGetFrameOwnerFrameId :: PageFrameId
+-- | Parameters of the 'dOMGetFrameOwner' command.
+data PDOMGetFrameOwner = PDOMGetFrameOwner {
+  pDOMGetFrameOwnerFrameId :: PageFrameId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomGetFrameOwner  where
+instance ToJSON PDOMGetFrameOwner  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
-instance FromJSON  PDomGetFrameOwner where
+instance FromJSON  PDOMGetFrameOwner where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
 -- | Function for the 'DOM.getFrameOwner' command.
 --   Returns iframe node that owns iframe with the given domain.
---   Parameters: 'PDomGetFrameOwner'
---   Returns: 'DomGetFrameOwner'
-domGetFrameOwner :: Handle ev -> PDomGetFrameOwner -> IO DomGetFrameOwner
-domGetFrameOwner handle params = sendReceiveCommandResult handle "DOM.getFrameOwner" (Just params)
+--   Parameters: 'PDOMGetFrameOwner'
+--   Returns: 'DOMGetFrameOwner'
+dOMGetFrameOwner :: Handle ev -> PDOMGetFrameOwner -> IO DOMGetFrameOwner
+dOMGetFrameOwner handle params = sendReceiveCommandResult handle "DOM.getFrameOwner" (Just params)
 
--- | Return type of the 'domGetFrameOwner' command.
-data DomGetFrameOwner = DomGetFrameOwner {
+-- | Return type of the 'dOMGetFrameOwner' command.
+data DOMGetFrameOwner = DOMGetFrameOwner {
   -- | Resulting node.
-  domGetFrameOwnerBackendNodeId :: DomBackendNodeId,
+  dOMGetFrameOwnerBackendNodeId :: DOMBackendNodeId,
   -- | Id of the node at given coordinates, only when enabled and requested document.
-  domGetFrameOwnerNodeId :: Maybe DomNodeId
+  dOMGetFrameOwnerNodeId :: Maybe DOMNodeId
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomGetFrameOwner where
+instance FromJSON  DOMGetFrameOwner where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
-instance Command DomGetFrameOwner where
+instance Command DOMGetFrameOwner where
    commandName _ = "DOM.getFrameOwner"
 
 
 
--- | Parameters of the 'domGetContainerForNode' command.
-data PDomGetContainerForNode = PDomGetContainerForNode {
-  pDomGetContainerForNodeNodeId :: DomNodeId,
-  pDomGetContainerForNodeContainerName :: Maybe String
+-- | Parameters of the 'dOMGetContainerForNode' command.
+data PDOMGetContainerForNode = PDOMGetContainerForNode {
+  pDOMGetContainerForNodeNodeId :: DOMNodeId,
+  pDOMGetContainerForNodeContainerName :: Maybe String
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomGetContainerForNode  where
+instance ToJSON PDOMGetContainerForNode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
 
-instance FromJSON  PDomGetContainerForNode where
+instance FromJSON  PDOMGetContainerForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
@@ -1877,55 +1876,55 @@ instance FromJSON  PDomGetContainerForNode where
 --   Returns the container of the given node based on container query conditions.
 --   If containerName is given, it will find the nearest container with a matching name;
 --   otherwise it will find the nearest container regardless of its container name.
---   Parameters: 'PDomGetContainerForNode'
---   Returns: 'DomGetContainerForNode'
-domGetContainerForNode :: Handle ev -> PDomGetContainerForNode -> IO DomGetContainerForNode
-domGetContainerForNode handle params = sendReceiveCommandResult handle "DOM.getContainerForNode" (Just params)
+--   Parameters: 'PDOMGetContainerForNode'
+--   Returns: 'DOMGetContainerForNode'
+dOMGetContainerForNode :: Handle ev -> PDOMGetContainerForNode -> IO DOMGetContainerForNode
+dOMGetContainerForNode handle params = sendReceiveCommandResult handle "DOM.getContainerForNode" (Just params)
 
--- | Return type of the 'domGetContainerForNode' command.
-data DomGetContainerForNode = DomGetContainerForNode {
+-- | Return type of the 'dOMGetContainerForNode' command.
+data DOMGetContainerForNode = DOMGetContainerForNode {
   -- | The container node for the given node, or null if not found.
-  domGetContainerForNodeNodeId :: Maybe DomNodeId
+  dOMGetContainerForNodeNodeId :: Maybe DOMNodeId
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomGetContainerForNode where
+instance FromJSON  DOMGetContainerForNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
-instance Command DomGetContainerForNode where
+instance Command DOMGetContainerForNode where
    commandName _ = "DOM.getContainerForNode"
 
 
 
--- | Parameters of the 'domGetQueryingDescendantsForContainer' command.
-data PDomGetQueryingDescendantsForContainer = PDomGetQueryingDescendantsForContainer {
+-- | Parameters of the 'dOMGetQueryingDescendantsForContainer' command.
+data PDOMGetQueryingDescendantsForContainer = PDOMGetQueryingDescendantsForContainer {
   -- | Id of the container node to find querying descendants from.
-  pDomGetQueryingDescendantsForContainerNodeId :: DomNodeId
+  pDOMGetQueryingDescendantsForContainerNodeId :: DOMNodeId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PDomGetQueryingDescendantsForContainer  where
+instance ToJSON PDOMGetQueryingDescendantsForContainer  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 , A.omitNothingFields = True}
 
-instance FromJSON  PDomGetQueryingDescendantsForContainer where
+instance FromJSON  PDOMGetQueryingDescendantsForContainer where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 }
 
 
 -- | Function for the 'DOM.getQueryingDescendantsForContainer' command.
 --   Returns the descendants of a container query container that have
 --   container queries against this container.
---   Parameters: 'PDomGetQueryingDescendantsForContainer'
---   Returns: 'DomGetQueryingDescendantsForContainer'
-domGetQueryingDescendantsForContainer :: Handle ev -> PDomGetQueryingDescendantsForContainer -> IO DomGetQueryingDescendantsForContainer
-domGetQueryingDescendantsForContainer handle params = sendReceiveCommandResult handle "DOM.getQueryingDescendantsForContainer" (Just params)
+--   Parameters: 'PDOMGetQueryingDescendantsForContainer'
+--   Returns: 'DOMGetQueryingDescendantsForContainer'
+dOMGetQueryingDescendantsForContainer :: Handle ev -> PDOMGetQueryingDescendantsForContainer -> IO DOMGetQueryingDescendantsForContainer
+dOMGetQueryingDescendantsForContainer handle params = sendReceiveCommandResult handle "DOM.getQueryingDescendantsForContainer" (Just params)
 
--- | Return type of the 'domGetQueryingDescendantsForContainer' command.
-data DomGetQueryingDescendantsForContainer = DomGetQueryingDescendantsForContainer {
+-- | Return type of the 'dOMGetQueryingDescendantsForContainer' command.
+data DOMGetQueryingDescendantsForContainer = DOMGetQueryingDescendantsForContainer {
   -- | Descendant nodes with container queries against the given container.
-  domGetQueryingDescendantsForContainerNodeIds :: [DomNodeId]
+  dOMGetQueryingDescendantsForContainerNodeIds :: [DOMNodeId]
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  DomGetQueryingDescendantsForContainer where
+instance FromJSON  DOMGetQueryingDescendantsForContainer where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 }
 
-instance Command DomGetQueryingDescendantsForContainer where
+instance Command DOMGetQueryingDescendantsForContainer where
    commandName _ = "DOM.getQueryingDescendantsForContainer"
 
 
@@ -2193,30 +2192,30 @@ emulationSetAutoDarkModeOverride :: Handle ev -> PEmulationSetAutoDarkModeOverri
 emulationSetAutoDarkModeOverride handle params = sendReceiveCommand handle "Emulation.setAutoDarkModeOverride" (Just params)
 
 
--- | Parameters of the 'emulationSetCpuThrottlingRate' command.
-data PEmulationSetCpuThrottlingRate = PEmulationSetCpuThrottlingRate {
+-- | Parameters of the 'emulationSetCPUThrottlingRate' command.
+data PEmulationSetCPUThrottlingRate = PEmulationSetCPUThrottlingRate {
   -- | Throttling rate as a slowdown factor (1 is no throttle, 2 is 2x slowdown, etc).
-  pEmulationSetCpuThrottlingRateRate :: Double
+  pEmulationSetCPUThrottlingRateRate :: Double
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PEmulationSetCpuThrottlingRate  where
+instance ToJSON PEmulationSetCPUThrottlingRate  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
 
-instance FromJSON  PEmulationSetCpuThrottlingRate where
+instance FromJSON  PEmulationSetCPUThrottlingRate where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
 -- | Function for the 'Emulation.setCPUThrottlingRate' command.
 --   Enables CPU throttling to emulate slow CPUs.
---   Parameters: 'PEmulationSetCpuThrottlingRate'
-emulationSetCpuThrottlingRate :: Handle ev -> PEmulationSetCpuThrottlingRate -> IO ()
-emulationSetCpuThrottlingRate handle params = sendReceiveCommand handle "Emulation.setCPUThrottlingRate" (Just params)
+--   Parameters: 'PEmulationSetCPUThrottlingRate'
+emulationSetCPUThrottlingRate :: Handle ev -> PEmulationSetCPUThrottlingRate -> IO ()
+emulationSetCPUThrottlingRate handle params = sendReceiveCommand handle "Emulation.setCPUThrottlingRate" (Just params)
 
 
 -- | Parameters of the 'emulationSetDefaultBackgroundColorOverride' command.
 data PEmulationSetDefaultBackgroundColorOverride = PEmulationSetDefaultBackgroundColorOverride {
   -- | RGBA of the default background color. If not specified, any existing override will be
   --   cleared.
-  pEmulationSetDefaultBackgroundColorOverrideColor :: Maybe DomRgba
+  pEmulationSetDefaultBackgroundColorOverrideColor :: Maybe DOMRGBA
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PEmulationSetDefaultBackgroundColorOverride  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 43 , A.omitNothingFields = True}
@@ -2698,7 +2697,7 @@ emulationSetAutomationOverride handle params = sendReceiveCommand handle "Emulat
 
 -- | Type 'Network.ResourceType'.
 --   Resource type as it was perceived by the rendering engine.
-data NetworkResourceType = NetworkResourceTypeDocument | NetworkResourceTypeStylesheet | NetworkResourceTypeImage | NetworkResourceTypeMedia | NetworkResourceTypeFont | NetworkResourceTypeScript | NetworkResourceTypeTextTrack | NetworkResourceTypeXhr | NetworkResourceTypeFetch | NetworkResourceTypeEventSource | NetworkResourceTypeWebSocket | NetworkResourceTypeManifest | NetworkResourceTypeSignedExchange | NetworkResourceTypePing | NetworkResourceTypeCspViolationReport | NetworkResourceTypePreflight | NetworkResourceTypeOther
+data NetworkResourceType = NetworkResourceTypeDocument | NetworkResourceTypeStylesheet | NetworkResourceTypeImage | NetworkResourceTypeMedia | NetworkResourceTypeFont | NetworkResourceTypeScript | NetworkResourceTypeTextTrack | NetworkResourceTypeXHR | NetworkResourceTypeFetch | NetworkResourceTypeEventSource | NetworkResourceTypeWebSocket | NetworkResourceTypeManifest | NetworkResourceTypeSignedExchange | NetworkResourceTypePing | NetworkResourceTypeCSPViolationReport | NetworkResourceTypePreflight | NetworkResourceTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkResourceType where
    parseJSON = A.withText  "NetworkResourceType"  $ \v -> do
@@ -2710,14 +2709,14 @@ instance FromJSON NetworkResourceType where
          "Font" -> pure NetworkResourceTypeFont
          "Script" -> pure NetworkResourceTypeScript
          "TextTrack" -> pure NetworkResourceTypeTextTrack
-         "XHR" -> pure NetworkResourceTypeXhr
+         "XHR" -> pure NetworkResourceTypeXHR
          "Fetch" -> pure NetworkResourceTypeFetch
          "EventSource" -> pure NetworkResourceTypeEventSource
          "WebSocket" -> pure NetworkResourceTypeWebSocket
          "Manifest" -> pure NetworkResourceTypeManifest
          "SignedExchange" -> pure NetworkResourceTypeSignedExchange
          "Ping" -> pure NetworkResourceTypePing
-         "CSPViolationReport" -> pure NetworkResourceTypeCspViolationReport
+         "CSPViolationReport" -> pure NetworkResourceTypeCSPViolationReport
          "Preflight" -> pure NetworkResourceTypePreflight
          "Other" -> pure NetworkResourceTypeOther
          _ -> fail "failed to parse NetworkResourceType"
@@ -2732,14 +2731,14 @@ instance ToJSON NetworkResourceType where
          NetworkResourceTypeFont -> "Font"
          NetworkResourceTypeScript -> "Script"
          NetworkResourceTypeTextTrack -> "TextTrack"
-         NetworkResourceTypeXhr -> "XHR"
+         NetworkResourceTypeXHR -> "XHR"
          NetworkResourceTypeFetch -> "Fetch"
          NetworkResourceTypeEventSource -> "EventSource"
          NetworkResourceTypeWebSocket -> "WebSocket"
          NetworkResourceTypeManifest -> "Manifest"
          NetworkResourceTypeSignedExchange -> "SignedExchange"
          NetworkResourceTypePing -> "Ping"
-         NetworkResourceTypeCspViolationReport -> "CSPViolationReport"
+         NetworkResourceTypeCSPViolationReport -> "CSPViolationReport"
          NetworkResourceTypePreflight -> "Preflight"
          NetworkResourceTypeOther -> "Other"
 
@@ -3384,7 +3383,7 @@ data NetworkResponse = NetworkResponse {
   -- | Physical connection id that was actually used for this request.
   networkResponseConnectionId :: Double,
   -- | Remote IP address.
-  networkResponseRemoteIpAddress :: Maybe String,
+  networkResponseRemoteIPAddress :: Maybe String,
   -- | Remote port.
   networkResponseRemotePort :: Maybe Int,
   -- | Specifies that the request was served from the disk cache.
@@ -4052,24 +4051,24 @@ instance ToJSON NetworkPrivateNetworkRequestPolicy where
 
 
 -- | Type 'Network.IPAddressSpace'.
-data NetworkIpAddressSpace = NetworkIpAddressSpaceLocal | NetworkIpAddressSpacePrivate | NetworkIpAddressSpacePublic | NetworkIpAddressSpaceUnknown
+data NetworkIPAddressSpace = NetworkIPAddressSpaceLocal | NetworkIPAddressSpacePrivate | NetworkIPAddressSpacePublic | NetworkIPAddressSpaceUnknown
    deriving (Ord, Eq, Show, Read)
-instance FromJSON NetworkIpAddressSpace where
-   parseJSON = A.withText  "NetworkIpAddressSpace"  $ \v -> do
+instance FromJSON NetworkIPAddressSpace where
+   parseJSON = A.withText  "NetworkIPAddressSpace"  $ \v -> do
       case v of
-         "Local" -> pure NetworkIpAddressSpaceLocal
-         "Private" -> pure NetworkIpAddressSpacePrivate
-         "Public" -> pure NetworkIpAddressSpacePublic
-         "Unknown" -> pure NetworkIpAddressSpaceUnknown
-         _ -> fail "failed to parse NetworkIpAddressSpace"
+         "Local" -> pure NetworkIPAddressSpaceLocal
+         "Private" -> pure NetworkIPAddressSpacePrivate
+         "Public" -> pure NetworkIPAddressSpacePublic
+         "Unknown" -> pure NetworkIPAddressSpaceUnknown
+         _ -> fail "failed to parse NetworkIPAddressSpace"
 
-instance ToJSON NetworkIpAddressSpace where
+instance ToJSON NetworkIPAddressSpace where
    toJSON v = A.String $
       case v of
-         NetworkIpAddressSpaceLocal -> "Local"
-         NetworkIpAddressSpacePrivate -> "Private"
-         NetworkIpAddressSpacePublic -> "Public"
-         NetworkIpAddressSpaceUnknown -> "Unknown"
+         NetworkIPAddressSpaceLocal -> "Local"
+         NetworkIPAddressSpacePrivate -> "Private"
+         NetworkIPAddressSpacePublic -> "Public"
+         NetworkIPAddressSpaceUnknown -> "Unknown"
 
 
 
@@ -4091,7 +4090,7 @@ instance FromJSON  NetworkConnectTiming where
 -- | Type 'Network.ClientSecurityState'.
 data NetworkClientSecurityState = NetworkClientSecurityState {
   networkClientSecurityStateInitiatorIsSecureContext :: Bool,
-  networkClientSecurityStateInitiatorIpAddressSpace :: NetworkIpAddressSpace,
+  networkClientSecurityStateInitiatorIPAddressSpace :: NetworkIPAddressSpace,
   networkClientSecurityStatePrivateNetworkRequestPolicy :: NetworkPrivateNetworkRequestPolicy
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkClientSecurityState  where
@@ -4266,7 +4265,7 @@ data NetworkLoadNetworkResourcePageResult = NetworkLoadNetworkResourcePageResult
   networkLoadNetworkResourcePageResultNetErrorName :: Maybe String,
   networkLoadNetworkResourcePageResultHttpStatusCode :: Maybe Double,
   -- | If successful, one of the following two fields holds the result.
-  networkLoadNetworkResourcePageResultStream :: Maybe IO.IoStreamHandle,
+  networkLoadNetworkResourcePageResultStream :: Maybe IO.IOStreamHandle,
   -- | Response headers.
   networkLoadNetworkResourcePageResultHeaders :: Maybe NetworkHeaders
 } deriving (Generic, Eq, Show, Read)
@@ -4410,7 +4409,7 @@ data NetworkRequestWillBeSent = NetworkRequestWillBeSent {
   -- | Loader identifier. Empty string if the request is fetched from worker.
   networkRequestWillBeSentLoaderId :: NetworkLoaderId,
   -- | URL of the document this request is loaded for.
-  networkRequestWillBeSentDocumentUrl :: String,
+  networkRequestWillBeSentDocumentURL :: String,
   -- | Request data.
   networkRequestWillBeSentRequest :: NetworkRequest,
   -- | Timestamp.
@@ -4730,7 +4729,7 @@ data NetworkResponseReceivedExtraInfo = NetworkResponseReceivedExtraInfo {
   networkResponseReceivedExtraInfoHeaders :: NetworkHeaders,
   -- | The IP address space of the resource. The address space can only be determined once the transport
   --   established the connection, so we can't send it in `requestWillBeSentExtraInfo`.
-  networkResponseReceivedExtraInfoResourceIpAddressSpace :: NetworkIpAddressSpace,
+  networkResponseReceivedExtraInfoResourceIPAddressSpace :: NetworkIPAddressSpace,
   -- | The status code of the response. This is useful in cases the request failed and no responseReceived
   --   event is triggered, which is the case for, e.g., CORS errors. This is also the correct status code
   --   for cached requests, where the status in responseReceived is a 200 and this will be 304.
@@ -4847,7 +4846,7 @@ data NetworkSubresourceWebBundleInnerResponseParsed = NetworkSubresourceWebBundl
   -- | Request identifier of the subresource request
   networkSubresourceWebBundleInnerResponseParsedInnerRequestId :: NetworkRequestId,
   -- | URL of the subresource resource.
-  networkSubresourceWebBundleInnerResponseParsedInnerRequestUrl :: String,
+  networkSubresourceWebBundleInnerResponseParsedInnerRequestURL :: String,
   -- | Bundle request identifier. Used to match this information to another event.
   --   This made be absent in case when the instrumentation was enabled only
   --   after webbundle was parsed.
@@ -4868,7 +4867,7 @@ data NetworkSubresourceWebBundleInnerResponseError = NetworkSubresourceWebBundle
   -- | Request identifier of the subresource request
   networkSubresourceWebBundleInnerResponseErrorInnerRequestId :: NetworkRequestId,
   -- | URL of the subresource resource.
-  networkSubresourceWebBundleInnerResponseErrorInnerRequestUrl :: String,
+  networkSubresourceWebBundleInnerResponseErrorInnerRequestURL :: String,
   -- | Error message
   networkSubresourceWebBundleInnerResponseErrorErrorMessage :: String,
   -- | Bundle request identifier. Used to match this information to another event.
@@ -5266,7 +5265,7 @@ networkTakeResponseBodyForInterceptionAsStream handle params = sendReceiveComman
 
 -- | Return type of the 'networkTakeResponseBodyForInterceptionAsStream' command.
 data NetworkTakeResponseBodyForInterceptionAsStream = NetworkTakeResponseBodyForInterceptionAsStream {
-  networkTakeResponseBodyForInterceptionAsStreamStream :: IO.IoStreamHandle
+  networkTakeResponseBodyForInterceptionAsStreamStream :: IO.IOStreamHandle
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  NetworkTakeResponseBodyForInterceptionAsStream where
@@ -5277,15 +5276,15 @@ instance Command NetworkTakeResponseBodyForInterceptionAsStream where
 
 
 
--- | Parameters of the 'networkReplayXhr' command.
-data PNetworkReplayXhr = PNetworkReplayXhr {
+-- | Parameters of the 'networkReplayXHR' command.
+data PNetworkReplayXHR = PNetworkReplayXHR {
   -- | Identifier of XHR to replay.
-  pNetworkReplayXhrRequestId :: NetworkRequestId
+  pNetworkReplayXHRRequestId :: NetworkRequestId
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PNetworkReplayXhr  where
+instance ToJSON PNetworkReplayXHR  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
-instance FromJSON  PNetworkReplayXhr where
+instance FromJSON  PNetworkReplayXHR where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
@@ -5293,9 +5292,9 @@ instance FromJSON  PNetworkReplayXhr where
 --   This method sends a new XMLHttpRequest which is identical to the original one. The following
 --   parameters should be identical: method, url, async, request body, extra headers, withCredentials
 --   attribute, user, password.
---   Parameters: 'PNetworkReplayXhr'
-networkReplayXhr :: Handle ev -> PNetworkReplayXhr -> IO ()
-networkReplayXhr handle params = sendReceiveCommand handle "Network.replayXHR" (Just params)
+--   Parameters: 'PNetworkReplayXHR'
+networkReplayXHR :: Handle ev -> PNetworkReplayXHR -> IO ()
+networkReplayXHR handle params = sendReceiveCommand handle "Network.replayXHR" (Just params)
 
 
 -- | Parameters of the 'networkSearchInResponseBody' command.
@@ -5337,23 +5336,23 @@ instance Command NetworkSearchInResponseBody where
 
 
 
--- | Parameters of the 'networkSetBlockedUrLs' command.
-data PNetworkSetBlockedUrLs = PNetworkSetBlockedUrLs {
+-- | Parameters of the 'networkSetBlockedURLs' command.
+data PNetworkSetBlockedURLs = PNetworkSetBlockedURLs {
   -- | URL patterns to block. Wildcards ('*') are allowed.
-  pNetworkSetBlockedUrLsUrls :: [String]
+  pNetworkSetBlockedURLsUrls :: [String]
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PNetworkSetBlockedUrLs  where
+instance ToJSON PNetworkSetBlockedURLs  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
 
-instance FromJSON  PNetworkSetBlockedUrLs where
+instance FromJSON  PNetworkSetBlockedURLs where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
 -- | Function for the 'Network.setBlockedURLs' command.
 --   Blocks URLs from loading.
---   Parameters: 'PNetworkSetBlockedUrLs'
-networkSetBlockedUrLs :: Handle ev -> PNetworkSetBlockedUrLs -> IO ()
-networkSetBlockedUrLs handle params = sendReceiveCommand handle "Network.setBlockedURLs" (Just params)
+--   Parameters: 'PNetworkSetBlockedURLs'
+networkSetBlockedURLs :: Handle ev -> PNetworkSetBlockedURLs -> IO ()
+networkSetBlockedURLs handle params = sendReceiveCommand handle "Network.setBlockedURLs" (Just params)
 
 
 -- | Parameters of the 'networkSetBypassServiceWorker' command.
@@ -5463,23 +5462,23 @@ networkSetCookies :: Handle ev -> PNetworkSetCookies -> IO ()
 networkSetCookies handle params = sendReceiveCommand handle "Network.setCookies" (Just params)
 
 
--- | Parameters of the 'networkSetExtraHttpHeaders' command.
-data PNetworkSetExtraHttpHeaders = PNetworkSetExtraHttpHeaders {
+-- | Parameters of the 'networkSetExtraHTTPHeaders' command.
+data PNetworkSetExtraHTTPHeaders = PNetworkSetExtraHTTPHeaders {
   -- | Map with extra HTTP headers.
-  pNetworkSetExtraHttpHeadersHeaders :: NetworkHeaders
+  pNetworkSetExtraHTTPHeadersHeaders :: NetworkHeaders
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PNetworkSetExtraHttpHeaders  where
+instance ToJSON PNetworkSetExtraHTTPHeaders  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
 
-instance FromJSON  PNetworkSetExtraHttpHeaders where
+instance FromJSON  PNetworkSetExtraHTTPHeaders where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
 -- | Function for the 'Network.setExtraHTTPHeaders' command.
 --   Specifies whether to always send extra HTTP headers with the requests from this page.
---   Parameters: 'PNetworkSetExtraHttpHeaders'
-networkSetExtraHttpHeaders :: Handle ev -> PNetworkSetExtraHttpHeaders -> IO ()
-networkSetExtraHttpHeaders handle params = sendReceiveCommand handle "Network.setExtraHTTPHeaders" (Just params)
+--   Parameters: 'PNetworkSetExtraHTTPHeaders'
+networkSetExtraHTTPHeaders :: Handle ev -> PNetworkSetExtraHTTPHeaders -> IO ()
+networkSetExtraHTTPHeaders handle params = sendReceiveCommand handle "Network.setExtraHTTPHeaders" (Just params)
 
 
 -- | Parameters of the 'networkSetAttachDebugStack' command.
@@ -5720,24 +5719,24 @@ instance ToJSON PageCrossOriginIsolatedContextType where
 
 
 -- | Type 'Page.GatedAPIFeatures'.
-data PageGatedApiFeatures = PageGatedApiFeaturesSharedArrayBuffers | PageGatedApiFeaturesSharedArrayBuffersTransferAllowed | PageGatedApiFeaturesPerformanceMeasureMemory | PageGatedApiFeaturesPerformanceProfile
+data PageGatedAPIFeatures = PageGatedAPIFeaturesSharedArrayBuffers | PageGatedAPIFeaturesSharedArrayBuffersTransferAllowed | PageGatedAPIFeaturesPerformanceMeasureMemory | PageGatedAPIFeaturesPerformanceProfile
    deriving (Ord, Eq, Show, Read)
-instance FromJSON PageGatedApiFeatures where
-   parseJSON = A.withText  "PageGatedApiFeatures"  $ \v -> do
+instance FromJSON PageGatedAPIFeatures where
+   parseJSON = A.withText  "PageGatedAPIFeatures"  $ \v -> do
       case v of
-         "SharedArrayBuffers" -> pure PageGatedApiFeaturesSharedArrayBuffers
-         "SharedArrayBuffersTransferAllowed" -> pure PageGatedApiFeaturesSharedArrayBuffersTransferAllowed
-         "PerformanceMeasureMemory" -> pure PageGatedApiFeaturesPerformanceMeasureMemory
-         "PerformanceProfile" -> pure PageGatedApiFeaturesPerformanceProfile
-         _ -> fail "failed to parse PageGatedApiFeatures"
+         "SharedArrayBuffers" -> pure PageGatedAPIFeaturesSharedArrayBuffers
+         "SharedArrayBuffersTransferAllowed" -> pure PageGatedAPIFeaturesSharedArrayBuffersTransferAllowed
+         "PerformanceMeasureMemory" -> pure PageGatedAPIFeaturesPerformanceMeasureMemory
+         "PerformanceProfile" -> pure PageGatedAPIFeaturesPerformanceProfile
+         _ -> fail "failed to parse PageGatedAPIFeatures"
 
-instance ToJSON PageGatedApiFeatures where
+instance ToJSON PageGatedAPIFeatures where
    toJSON v = A.String $
       case v of
-         PageGatedApiFeaturesSharedArrayBuffers -> "SharedArrayBuffers"
-         PageGatedApiFeaturesSharedArrayBuffersTransferAllowed -> "SharedArrayBuffersTransferAllowed"
-         PageGatedApiFeaturesPerformanceMeasureMemory -> "PerformanceMeasureMemory"
-         PageGatedApiFeaturesPerformanceProfile -> "PerformanceProfile"
+         PageGatedAPIFeaturesSharedArrayBuffers -> "SharedArrayBuffers"
+         PageGatedAPIFeaturesSharedArrayBuffersTransferAllowed -> "SharedArrayBuffersTransferAllowed"
+         PageGatedAPIFeaturesPerformanceMeasureMemory -> "PerformanceMeasureMemory"
+         PageGatedAPIFeaturesPerformanceProfile -> "PerformanceProfile"
 
 
 
@@ -5985,14 +5984,14 @@ instance ToJSON PageOriginTrialTokenStatus where
 
 -- | Type 'Page.OriginTrialStatus'.
 --   Status for an Origin Trial.
-data PageOriginTrialStatus = PageOriginTrialStatusEnabled | PageOriginTrialStatusValidTokenNotProvided | PageOriginTrialStatusOsNotSupported | PageOriginTrialStatusTrialNotAllowed
+data PageOriginTrialStatus = PageOriginTrialStatusEnabled | PageOriginTrialStatusValidTokenNotProvided | PageOriginTrialStatusOSNotSupported | PageOriginTrialStatusTrialNotAllowed
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageOriginTrialStatus where
    parseJSON = A.withText  "PageOriginTrialStatus"  $ \v -> do
       case v of
          "Enabled" -> pure PageOriginTrialStatusEnabled
          "ValidTokenNotProvided" -> pure PageOriginTrialStatusValidTokenNotProvided
-         "OSNotSupported" -> pure PageOriginTrialStatusOsNotSupported
+         "OSNotSupported" -> pure PageOriginTrialStatusOSNotSupported
          "TrialNotAllowed" -> pure PageOriginTrialStatusTrialNotAllowed
          _ -> fail "failed to parse PageOriginTrialStatus"
 
@@ -6001,7 +6000,7 @@ instance ToJSON PageOriginTrialStatus where
       case v of
          PageOriginTrialStatusEnabled -> "Enabled"
          PageOriginTrialStatusValidTokenNotProvided -> "ValidTokenNotProvided"
-         PageOriginTrialStatusOsNotSupported -> "OSNotSupported"
+         PageOriginTrialStatusOSNotSupported -> "OSNotSupported"
          PageOriginTrialStatusTrialNotAllowed -> "TrialNotAllowed"
 
 
@@ -6104,7 +6103,7 @@ data PageFrame = PageFrame {
   -- | Indicates whether this is a cross origin isolated context.
   pageFrameCrossOriginIsolatedContextType :: PageCrossOriginIsolatedContextType,
   -- | Indicated which gated APIs / features are available.
-  pageFrameGatedApiFeatures :: [PageGatedApiFeatures]
+  pageFrameGatedAPIFeatures :: [PageGatedAPIFeatures]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageFrame  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 9 , A.omitNothingFields = True}
@@ -6180,23 +6179,23 @@ type PageScriptIdentifier = String
 
 -- | Type 'Page.TransitionType'.
 --   Transition type.
-data PageTransitionType = PageTransitionTypeLink | PageTransitionTypeTyped | PageTransitionTypeAddressBar | PageTransitionTypeAutoBookmark | PageTransitionTypeAutoSubframe | PageTransitionTypeManualSubframe | PageTransitionTypeGenerated | PageTransitionTypeAutoToplevel | PageTransitionTypeFormSubmit | PageTransitionTypeReload | PageTransitionTypeKeyword | PageTransitionTypeKeywordGenerated | PageTransitionTypeOther
+data PageTransitionType = PageTransitionTypeLink | PageTransitionTypeTyped | PageTransitionTypeAddress_bar | PageTransitionTypeAuto_bookmark | PageTransitionTypeAuto_subframe | PageTransitionTypeManual_subframe | PageTransitionTypeGenerated | PageTransitionTypeAuto_toplevel | PageTransitionTypeForm_submit | PageTransitionTypeReload | PageTransitionTypeKeyword | PageTransitionTypeKeyword_generated | PageTransitionTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageTransitionType where
    parseJSON = A.withText  "PageTransitionType"  $ \v -> do
       case v of
          "link" -> pure PageTransitionTypeLink
          "typed" -> pure PageTransitionTypeTyped
-         "address_bar" -> pure PageTransitionTypeAddressBar
-         "auto_bookmark" -> pure PageTransitionTypeAutoBookmark
-         "auto_subframe" -> pure PageTransitionTypeAutoSubframe
-         "manual_subframe" -> pure PageTransitionTypeManualSubframe
+         "address_bar" -> pure PageTransitionTypeAddress_bar
+         "auto_bookmark" -> pure PageTransitionTypeAuto_bookmark
+         "auto_subframe" -> pure PageTransitionTypeAuto_subframe
+         "manual_subframe" -> pure PageTransitionTypeManual_subframe
          "generated" -> pure PageTransitionTypeGenerated
-         "auto_toplevel" -> pure PageTransitionTypeAutoToplevel
-         "form_submit" -> pure PageTransitionTypeFormSubmit
+         "auto_toplevel" -> pure PageTransitionTypeAuto_toplevel
+         "form_submit" -> pure PageTransitionTypeForm_submit
          "reload" -> pure PageTransitionTypeReload
          "keyword" -> pure PageTransitionTypeKeyword
-         "keyword_generated" -> pure PageTransitionTypeKeywordGenerated
+         "keyword_generated" -> pure PageTransitionTypeKeyword_generated
          "other" -> pure PageTransitionTypeOther
          _ -> fail "failed to parse PageTransitionType"
 
@@ -6205,16 +6204,16 @@ instance ToJSON PageTransitionType where
       case v of
          PageTransitionTypeLink -> "link"
          PageTransitionTypeTyped -> "typed"
-         PageTransitionTypeAddressBar -> "address_bar"
-         PageTransitionTypeAutoBookmark -> "auto_bookmark"
-         PageTransitionTypeAutoSubframe -> "auto_subframe"
-         PageTransitionTypeManualSubframe -> "manual_subframe"
+         PageTransitionTypeAddress_bar -> "address_bar"
+         PageTransitionTypeAuto_bookmark -> "auto_bookmark"
+         PageTransitionTypeAuto_subframe -> "auto_subframe"
+         PageTransitionTypeManual_subframe -> "manual_subframe"
          PageTransitionTypeGenerated -> "generated"
-         PageTransitionTypeAutoToplevel -> "auto_toplevel"
-         PageTransitionTypeFormSubmit -> "form_submit"
+         PageTransitionTypeAuto_toplevel -> "auto_toplevel"
+         PageTransitionTypeForm_submit -> "form_submit"
          PageTransitionTypeReload -> "reload"
          PageTransitionTypeKeyword -> "keyword"
-         PageTransitionTypeKeywordGenerated -> "keyword_generated"
+         PageTransitionTypeKeyword_generated -> "keyword_generated"
          PageTransitionTypeOther -> "other"
 
 
@@ -6227,7 +6226,7 @@ data PageNavigationEntry = PageNavigationEntry {
   -- | URL of the navigation history entry.
   pageNavigationEntryUrl :: String,
   -- | URL that the user typed in the url bar.
-  pageNavigationEntryUserTypedUrl :: String,
+  pageNavigationEntryUserTypedURL :: String,
   -- | Title of the navigation history entry.
   pageNavigationEntryTitle :: String,
   -- | Transition type.
@@ -6604,7 +6603,7 @@ instance ToJSON PageNavigationType where
 
 -- | Type 'Page.BackForwardCacheNotRestoredReason'.
 --   List of not restored reasons for back-forward cache.
-data PageBackForwardCacheNotRestoredReason = PageBackForwardCacheNotRestoredReasonNotPrimaryMainFrame | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabled | PageBackForwardCacheNotRestoredReasonRelatedActiveContentsExist | PageBackForwardCacheNotRestoredReasonHttpStatusNotOk | PageBackForwardCacheNotRestoredReasonSchemeNotHttpOrHttps | PageBackForwardCacheNotRestoredReasonLoading | PageBackForwardCacheNotRestoredReasonWasGrantedMediaAccess | PageBackForwardCacheNotRestoredReasonDisableForRenderFrameHostCalled | PageBackForwardCacheNotRestoredReasonDomainNotAllowed | PageBackForwardCacheNotRestoredReasonHttpMethodNotGet | PageBackForwardCacheNotRestoredReasonSubframeIsNavigating | PageBackForwardCacheNotRestoredReasonTimeout | PageBackForwardCacheNotRestoredReasonCacheLimit | PageBackForwardCacheNotRestoredReasonJavaScriptExecution | PageBackForwardCacheNotRestoredReasonRendererProcessKilled | PageBackForwardCacheNotRestoredReasonRendererProcessCrashed | PageBackForwardCacheNotRestoredReasonSchedulerTrackedFeatureUsed | PageBackForwardCacheNotRestoredReasonConflictingBrowsingInstance | PageBackForwardCacheNotRestoredReasonCacheFlushed | PageBackForwardCacheNotRestoredReasonServiceWorkerVersionActivation | PageBackForwardCacheNotRestoredReasonSessionRestored | PageBackForwardCacheNotRestoredReasonServiceWorkerPostMessage | PageBackForwardCacheNotRestoredReasonEnteredBackForwardCacheBeforeServiceWorkerHostAdded | PageBackForwardCacheNotRestoredReasonRenderFrameHostReusedSameSite | PageBackForwardCacheNotRestoredReasonRenderFrameHostReusedCrossSite | PageBackForwardCacheNotRestoredReasonServiceWorkerClaim | PageBackForwardCacheNotRestoredReasonIgnoreEventAndEvict | PageBackForwardCacheNotRestoredReasonHaveInnerContents | PageBackForwardCacheNotRestoredReasonTimeoutPuttingInCache | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledByLowMemory | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledByCommandLine | PageBackForwardCacheNotRestoredReasonNetworkRequestDatapipeDrainedAsBytesConsumer | PageBackForwardCacheNotRestoredReasonNetworkRequestRedirected | PageBackForwardCacheNotRestoredReasonNetworkRequestTimeout | PageBackForwardCacheNotRestoredReasonNetworkExceedsBufferLimit | PageBackForwardCacheNotRestoredReasonNavigationCancelledWhileRestoring | PageBackForwardCacheNotRestoredReasonNotMostRecentNavigationEntry | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledForPrerender | PageBackForwardCacheNotRestoredReasonUserAgentOverrideDiffers | PageBackForwardCacheNotRestoredReasonForegroundCacheLimit | PageBackForwardCacheNotRestoredReasonBrowsingInstanceNotSwapped | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledForDelegate | PageBackForwardCacheNotRestoredReasonUnloadHandlerExistsInMainFrame | PageBackForwardCacheNotRestoredReasonUnloadHandlerExistsInSubFrame | PageBackForwardCacheNotRestoredReasonServiceWorkerUnregistration | PageBackForwardCacheNotRestoredReasonCacheControlNoStore | PageBackForwardCacheNotRestoredReasonCacheControlNoStoreCookieModified | PageBackForwardCacheNotRestoredReasonCacheControlNoStoreHttpOnlyCookieModified | PageBackForwardCacheNotRestoredReasonNoResponseHead | PageBackForwardCacheNotRestoredReasonUnknown | PageBackForwardCacheNotRestoredReasonActivationNavigationsDisallowedForBug1234857 | PageBackForwardCacheNotRestoredReasonErrorDocument | PageBackForwardCacheNotRestoredReasonFencedFramesEmbedder | PageBackForwardCacheNotRestoredReasonWebSocket | PageBackForwardCacheNotRestoredReasonWebTransport | PageBackForwardCacheNotRestoredReasonWebRtc | PageBackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoStore | PageBackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoCache | PageBackForwardCacheNotRestoredReasonSubresourceHasCacheControlNoStore | PageBackForwardCacheNotRestoredReasonSubresourceHasCacheControlNoCache | PageBackForwardCacheNotRestoredReasonContainsPlugins | PageBackForwardCacheNotRestoredReasonDocumentLoaded | PageBackForwardCacheNotRestoredReasonDedicatedWorkerOrWorklet | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestOthers | PageBackForwardCacheNotRestoredReasonOutstandingIndexedDbTransaction | PageBackForwardCacheNotRestoredReasonRequestedNotificationsPermission | PageBackForwardCacheNotRestoredReasonRequestedMidiPermission | PageBackForwardCacheNotRestoredReasonRequestedAudioCapturePermission | PageBackForwardCacheNotRestoredReasonRequestedVideoCapturePermission | PageBackForwardCacheNotRestoredReasonRequestedBackForwardCacheBlockedSensors | PageBackForwardCacheNotRestoredReasonRequestedBackgroundWorkPermission | PageBackForwardCacheNotRestoredReasonBroadcastChannel | PageBackForwardCacheNotRestoredReasonIndexedDbConnection | PageBackForwardCacheNotRestoredReasonWebXr | PageBackForwardCacheNotRestoredReasonSharedWorker | PageBackForwardCacheNotRestoredReasonWebLocks | PageBackForwardCacheNotRestoredReasonWebHid | PageBackForwardCacheNotRestoredReasonWebShare | PageBackForwardCacheNotRestoredReasonRequestedStorageAccessGrant | PageBackForwardCacheNotRestoredReasonWebNfc | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestFetch | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestXhr | PageBackForwardCacheNotRestoredReasonAppBanner | PageBackForwardCacheNotRestoredReasonPrinting | PageBackForwardCacheNotRestoredReasonWebDatabase | PageBackForwardCacheNotRestoredReasonPictureInPicture | PageBackForwardCacheNotRestoredReasonPortal | PageBackForwardCacheNotRestoredReasonSpeechRecognizer | PageBackForwardCacheNotRestoredReasonIdleManager | PageBackForwardCacheNotRestoredReasonPaymentManager | PageBackForwardCacheNotRestoredReasonSpeechSynthesis | PageBackForwardCacheNotRestoredReasonKeyboardLock | PageBackForwardCacheNotRestoredReasonWebOtpService | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestDirectSocket | PageBackForwardCacheNotRestoredReasonInjectedJavascript | PageBackForwardCacheNotRestoredReasonInjectedStyleSheet | PageBackForwardCacheNotRestoredReasonDummy | PageBackForwardCacheNotRestoredReasonContentSecurityHandler | PageBackForwardCacheNotRestoredReasonContentWebAuthenticationApi | PageBackForwardCacheNotRestoredReasonContentFileChooser | PageBackForwardCacheNotRestoredReasonContentSerial | PageBackForwardCacheNotRestoredReasonContentFileSystemAccess | PageBackForwardCacheNotRestoredReasonContentMediaDevicesDispatcherHost | PageBackForwardCacheNotRestoredReasonContentWebBluetooth | PageBackForwardCacheNotRestoredReasonContentWebUsb | PageBackForwardCacheNotRestoredReasonContentMediaSessionService | PageBackForwardCacheNotRestoredReasonContentScreenReader | PageBackForwardCacheNotRestoredReasonEmbedderPopupBlockerTabHelper | PageBackForwardCacheNotRestoredReasonEmbedderSafeBrowsingTriggeredPopupBlocker | PageBackForwardCacheNotRestoredReasonEmbedderSafeBrowsingThreatDetails | PageBackForwardCacheNotRestoredReasonEmbedderAppBannerManager | PageBackForwardCacheNotRestoredReasonEmbedderDomDistillerViewerSource | PageBackForwardCacheNotRestoredReasonEmbedderDomDistillerSelfDeletingRequestDelegate | PageBackForwardCacheNotRestoredReasonEmbedderOomInterventionTabHelper | PageBackForwardCacheNotRestoredReasonEmbedderOfflinePage | PageBackForwardCacheNotRestoredReasonEmbedderChromePasswordManagerClientBindCredentialManager | PageBackForwardCacheNotRestoredReasonEmbedderPermissionRequestManager | PageBackForwardCacheNotRestoredReasonEmbedderModalDialog | PageBackForwardCacheNotRestoredReasonEmbedderExtensions | PageBackForwardCacheNotRestoredReasonEmbedderExtensionMessaging | PageBackForwardCacheNotRestoredReasonEmbedderExtensionMessagingForOpenPort | PageBackForwardCacheNotRestoredReasonEmbedderExtensionSentMessageToCachedFrame
+data PageBackForwardCacheNotRestoredReason = PageBackForwardCacheNotRestoredReasonNotPrimaryMainFrame | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabled | PageBackForwardCacheNotRestoredReasonRelatedActiveContentsExist | PageBackForwardCacheNotRestoredReasonHTTPStatusNotOK | PageBackForwardCacheNotRestoredReasonSchemeNotHTTPOrHTTPS | PageBackForwardCacheNotRestoredReasonLoading | PageBackForwardCacheNotRestoredReasonWasGrantedMediaAccess | PageBackForwardCacheNotRestoredReasonDisableForRenderFrameHostCalled | PageBackForwardCacheNotRestoredReasonDomainNotAllowed | PageBackForwardCacheNotRestoredReasonHTTPMethodNotGET | PageBackForwardCacheNotRestoredReasonSubframeIsNavigating | PageBackForwardCacheNotRestoredReasonTimeout | PageBackForwardCacheNotRestoredReasonCacheLimit | PageBackForwardCacheNotRestoredReasonJavaScriptExecution | PageBackForwardCacheNotRestoredReasonRendererProcessKilled | PageBackForwardCacheNotRestoredReasonRendererProcessCrashed | PageBackForwardCacheNotRestoredReasonSchedulerTrackedFeatureUsed | PageBackForwardCacheNotRestoredReasonConflictingBrowsingInstance | PageBackForwardCacheNotRestoredReasonCacheFlushed | PageBackForwardCacheNotRestoredReasonServiceWorkerVersionActivation | PageBackForwardCacheNotRestoredReasonSessionRestored | PageBackForwardCacheNotRestoredReasonServiceWorkerPostMessage | PageBackForwardCacheNotRestoredReasonEnteredBackForwardCacheBeforeServiceWorkerHostAdded | PageBackForwardCacheNotRestoredReasonRenderFrameHostReused_SameSite | PageBackForwardCacheNotRestoredReasonRenderFrameHostReused_CrossSite | PageBackForwardCacheNotRestoredReasonServiceWorkerClaim | PageBackForwardCacheNotRestoredReasonIgnoreEventAndEvict | PageBackForwardCacheNotRestoredReasonHaveInnerContents | PageBackForwardCacheNotRestoredReasonTimeoutPuttingInCache | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledByLowMemory | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledByCommandLine | PageBackForwardCacheNotRestoredReasonNetworkRequestDatapipeDrainedAsBytesConsumer | PageBackForwardCacheNotRestoredReasonNetworkRequestRedirected | PageBackForwardCacheNotRestoredReasonNetworkRequestTimeout | PageBackForwardCacheNotRestoredReasonNetworkExceedsBufferLimit | PageBackForwardCacheNotRestoredReasonNavigationCancelledWhileRestoring | PageBackForwardCacheNotRestoredReasonNotMostRecentNavigationEntry | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledForPrerender | PageBackForwardCacheNotRestoredReasonUserAgentOverrideDiffers | PageBackForwardCacheNotRestoredReasonForegroundCacheLimit | PageBackForwardCacheNotRestoredReasonBrowsingInstanceNotSwapped | PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabledForDelegate | PageBackForwardCacheNotRestoredReasonUnloadHandlerExistsInMainFrame | PageBackForwardCacheNotRestoredReasonUnloadHandlerExistsInSubFrame | PageBackForwardCacheNotRestoredReasonServiceWorkerUnregistration | PageBackForwardCacheNotRestoredReasonCacheControlNoStore | PageBackForwardCacheNotRestoredReasonCacheControlNoStoreCookieModified | PageBackForwardCacheNotRestoredReasonCacheControlNoStoreHTTPOnlyCookieModified | PageBackForwardCacheNotRestoredReasonNoResponseHead | PageBackForwardCacheNotRestoredReasonUnknown | PageBackForwardCacheNotRestoredReasonActivationNavigationsDisallowedForBug1234857 | PageBackForwardCacheNotRestoredReasonErrorDocument | PageBackForwardCacheNotRestoredReasonFencedFramesEmbedder | PageBackForwardCacheNotRestoredReasonWebSocket | PageBackForwardCacheNotRestoredReasonWebTransport | PageBackForwardCacheNotRestoredReasonWebRTC | PageBackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoStore | PageBackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoCache | PageBackForwardCacheNotRestoredReasonSubresourceHasCacheControlNoStore | PageBackForwardCacheNotRestoredReasonSubresourceHasCacheControlNoCache | PageBackForwardCacheNotRestoredReasonContainsPlugins | PageBackForwardCacheNotRestoredReasonDocumentLoaded | PageBackForwardCacheNotRestoredReasonDedicatedWorkerOrWorklet | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestOthers | PageBackForwardCacheNotRestoredReasonOutstandingIndexedDBTransaction | PageBackForwardCacheNotRestoredReasonRequestedNotificationsPermission | PageBackForwardCacheNotRestoredReasonRequestedMIDIPermission | PageBackForwardCacheNotRestoredReasonRequestedAudioCapturePermission | PageBackForwardCacheNotRestoredReasonRequestedVideoCapturePermission | PageBackForwardCacheNotRestoredReasonRequestedBackForwardCacheBlockedSensors | PageBackForwardCacheNotRestoredReasonRequestedBackgroundWorkPermission | PageBackForwardCacheNotRestoredReasonBroadcastChannel | PageBackForwardCacheNotRestoredReasonIndexedDBConnection | PageBackForwardCacheNotRestoredReasonWebXR | PageBackForwardCacheNotRestoredReasonSharedWorker | PageBackForwardCacheNotRestoredReasonWebLocks | PageBackForwardCacheNotRestoredReasonWebHID | PageBackForwardCacheNotRestoredReasonWebShare | PageBackForwardCacheNotRestoredReasonRequestedStorageAccessGrant | PageBackForwardCacheNotRestoredReasonWebNfc | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestFetch | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestXHR | PageBackForwardCacheNotRestoredReasonAppBanner | PageBackForwardCacheNotRestoredReasonPrinting | PageBackForwardCacheNotRestoredReasonWebDatabase | PageBackForwardCacheNotRestoredReasonPictureInPicture | PageBackForwardCacheNotRestoredReasonPortal | PageBackForwardCacheNotRestoredReasonSpeechRecognizer | PageBackForwardCacheNotRestoredReasonIdleManager | PageBackForwardCacheNotRestoredReasonPaymentManager | PageBackForwardCacheNotRestoredReasonSpeechSynthesis | PageBackForwardCacheNotRestoredReasonKeyboardLock | PageBackForwardCacheNotRestoredReasonWebOTPService | PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestDirectSocket | PageBackForwardCacheNotRestoredReasonInjectedJavascript | PageBackForwardCacheNotRestoredReasonInjectedStyleSheet | PageBackForwardCacheNotRestoredReasonDummy | PageBackForwardCacheNotRestoredReasonContentSecurityHandler | PageBackForwardCacheNotRestoredReasonContentWebAuthenticationAPI | PageBackForwardCacheNotRestoredReasonContentFileChooser | PageBackForwardCacheNotRestoredReasonContentSerial | PageBackForwardCacheNotRestoredReasonContentFileSystemAccess | PageBackForwardCacheNotRestoredReasonContentMediaDevicesDispatcherHost | PageBackForwardCacheNotRestoredReasonContentWebBluetooth | PageBackForwardCacheNotRestoredReasonContentWebUSB | PageBackForwardCacheNotRestoredReasonContentMediaSessionService | PageBackForwardCacheNotRestoredReasonContentScreenReader | PageBackForwardCacheNotRestoredReasonEmbedderPopupBlockerTabHelper | PageBackForwardCacheNotRestoredReasonEmbedderSafeBrowsingTriggeredPopupBlocker | PageBackForwardCacheNotRestoredReasonEmbedderSafeBrowsingThreatDetails | PageBackForwardCacheNotRestoredReasonEmbedderAppBannerManager | PageBackForwardCacheNotRestoredReasonEmbedderDomDistillerViewerSource | PageBackForwardCacheNotRestoredReasonEmbedderDomDistillerSelfDeletingRequestDelegate | PageBackForwardCacheNotRestoredReasonEmbedderOomInterventionTabHelper | PageBackForwardCacheNotRestoredReasonEmbedderOfflinePage | PageBackForwardCacheNotRestoredReasonEmbedderChromePasswordManagerClientBindCredentialManager | PageBackForwardCacheNotRestoredReasonEmbedderPermissionRequestManager | PageBackForwardCacheNotRestoredReasonEmbedderModalDialog | PageBackForwardCacheNotRestoredReasonEmbedderExtensions | PageBackForwardCacheNotRestoredReasonEmbedderExtensionMessaging | PageBackForwardCacheNotRestoredReasonEmbedderExtensionMessagingForOpenPort | PageBackForwardCacheNotRestoredReasonEmbedderExtensionSentMessageToCachedFrame
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PageBackForwardCacheNotRestoredReason where
    parseJSON = A.withText  "PageBackForwardCacheNotRestoredReason"  $ \v -> do
@@ -6612,13 +6611,13 @@ instance FromJSON PageBackForwardCacheNotRestoredReason where
          "NotPrimaryMainFrame" -> pure PageBackForwardCacheNotRestoredReasonNotPrimaryMainFrame
          "BackForwardCacheDisabled" -> pure PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabled
          "RelatedActiveContentsExist" -> pure PageBackForwardCacheNotRestoredReasonRelatedActiveContentsExist
-         "HTTPStatusNotOK" -> pure PageBackForwardCacheNotRestoredReasonHttpStatusNotOk
-         "SchemeNotHTTPOrHTTPS" -> pure PageBackForwardCacheNotRestoredReasonSchemeNotHttpOrHttps
+         "HTTPStatusNotOK" -> pure PageBackForwardCacheNotRestoredReasonHTTPStatusNotOK
+         "SchemeNotHTTPOrHTTPS" -> pure PageBackForwardCacheNotRestoredReasonSchemeNotHTTPOrHTTPS
          "Loading" -> pure PageBackForwardCacheNotRestoredReasonLoading
          "WasGrantedMediaAccess" -> pure PageBackForwardCacheNotRestoredReasonWasGrantedMediaAccess
          "DisableForRenderFrameHostCalled" -> pure PageBackForwardCacheNotRestoredReasonDisableForRenderFrameHostCalled
          "DomainNotAllowed" -> pure PageBackForwardCacheNotRestoredReasonDomainNotAllowed
-         "HTTPMethodNotGET" -> pure PageBackForwardCacheNotRestoredReasonHttpMethodNotGet
+         "HTTPMethodNotGET" -> pure PageBackForwardCacheNotRestoredReasonHTTPMethodNotGET
          "SubframeIsNavigating" -> pure PageBackForwardCacheNotRestoredReasonSubframeIsNavigating
          "Timeout" -> pure PageBackForwardCacheNotRestoredReasonTimeout
          "CacheLimit" -> pure PageBackForwardCacheNotRestoredReasonCacheLimit
@@ -6632,8 +6631,8 @@ instance FromJSON PageBackForwardCacheNotRestoredReason where
          "SessionRestored" -> pure PageBackForwardCacheNotRestoredReasonSessionRestored
          "ServiceWorkerPostMessage" -> pure PageBackForwardCacheNotRestoredReasonServiceWorkerPostMessage
          "EnteredBackForwardCacheBeforeServiceWorkerHostAdded" -> pure PageBackForwardCacheNotRestoredReasonEnteredBackForwardCacheBeforeServiceWorkerHostAdded
-         "RenderFrameHostReused_SameSite" -> pure PageBackForwardCacheNotRestoredReasonRenderFrameHostReusedSameSite
-         "RenderFrameHostReused_CrossSite" -> pure PageBackForwardCacheNotRestoredReasonRenderFrameHostReusedCrossSite
+         "RenderFrameHostReused_SameSite" -> pure PageBackForwardCacheNotRestoredReasonRenderFrameHostReused_SameSite
+         "RenderFrameHostReused_CrossSite" -> pure PageBackForwardCacheNotRestoredReasonRenderFrameHostReused_CrossSite
          "ServiceWorkerClaim" -> pure PageBackForwardCacheNotRestoredReasonServiceWorkerClaim
          "IgnoreEventAndEvict" -> pure PageBackForwardCacheNotRestoredReasonIgnoreEventAndEvict
          "HaveInnerContents" -> pure PageBackForwardCacheNotRestoredReasonHaveInnerContents
@@ -6656,7 +6655,7 @@ instance FromJSON PageBackForwardCacheNotRestoredReason where
          "ServiceWorkerUnregistration" -> pure PageBackForwardCacheNotRestoredReasonServiceWorkerUnregistration
          "CacheControlNoStore" -> pure PageBackForwardCacheNotRestoredReasonCacheControlNoStore
          "CacheControlNoStoreCookieModified" -> pure PageBackForwardCacheNotRestoredReasonCacheControlNoStoreCookieModified
-         "CacheControlNoStoreHTTPOnlyCookieModified" -> pure PageBackForwardCacheNotRestoredReasonCacheControlNoStoreHttpOnlyCookieModified
+         "CacheControlNoStoreHTTPOnlyCookieModified" -> pure PageBackForwardCacheNotRestoredReasonCacheControlNoStoreHTTPOnlyCookieModified
          "NoResponseHead" -> pure PageBackForwardCacheNotRestoredReasonNoResponseHead
          "Unknown" -> pure PageBackForwardCacheNotRestoredReasonUnknown
          "ActivationNavigationsDisallowedForBug1234857" -> pure PageBackForwardCacheNotRestoredReasonActivationNavigationsDisallowedForBug1234857
@@ -6664,7 +6663,7 @@ instance FromJSON PageBackForwardCacheNotRestoredReason where
          "FencedFramesEmbedder" -> pure PageBackForwardCacheNotRestoredReasonFencedFramesEmbedder
          "WebSocket" -> pure PageBackForwardCacheNotRestoredReasonWebSocket
          "WebTransport" -> pure PageBackForwardCacheNotRestoredReasonWebTransport
-         "WebRTC" -> pure PageBackForwardCacheNotRestoredReasonWebRtc
+         "WebRTC" -> pure PageBackForwardCacheNotRestoredReasonWebRTC
          "MainResourceHasCacheControlNoStore" -> pure PageBackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoStore
          "MainResourceHasCacheControlNoCache" -> pure PageBackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoCache
          "SubresourceHasCacheControlNoStore" -> pure PageBackForwardCacheNotRestoredReasonSubresourceHasCacheControlNoStore
@@ -6673,24 +6672,24 @@ instance FromJSON PageBackForwardCacheNotRestoredReason where
          "DocumentLoaded" -> pure PageBackForwardCacheNotRestoredReasonDocumentLoaded
          "DedicatedWorkerOrWorklet" -> pure PageBackForwardCacheNotRestoredReasonDedicatedWorkerOrWorklet
          "OutstandingNetworkRequestOthers" -> pure PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestOthers
-         "OutstandingIndexedDBTransaction" -> pure PageBackForwardCacheNotRestoredReasonOutstandingIndexedDbTransaction
+         "OutstandingIndexedDBTransaction" -> pure PageBackForwardCacheNotRestoredReasonOutstandingIndexedDBTransaction
          "RequestedNotificationsPermission" -> pure PageBackForwardCacheNotRestoredReasonRequestedNotificationsPermission
-         "RequestedMIDIPermission" -> pure PageBackForwardCacheNotRestoredReasonRequestedMidiPermission
+         "RequestedMIDIPermission" -> pure PageBackForwardCacheNotRestoredReasonRequestedMIDIPermission
          "RequestedAudioCapturePermission" -> pure PageBackForwardCacheNotRestoredReasonRequestedAudioCapturePermission
          "RequestedVideoCapturePermission" -> pure PageBackForwardCacheNotRestoredReasonRequestedVideoCapturePermission
          "RequestedBackForwardCacheBlockedSensors" -> pure PageBackForwardCacheNotRestoredReasonRequestedBackForwardCacheBlockedSensors
          "RequestedBackgroundWorkPermission" -> pure PageBackForwardCacheNotRestoredReasonRequestedBackgroundWorkPermission
          "BroadcastChannel" -> pure PageBackForwardCacheNotRestoredReasonBroadcastChannel
-         "IndexedDBConnection" -> pure PageBackForwardCacheNotRestoredReasonIndexedDbConnection
-         "WebXR" -> pure PageBackForwardCacheNotRestoredReasonWebXr
+         "IndexedDBConnection" -> pure PageBackForwardCacheNotRestoredReasonIndexedDBConnection
+         "WebXR" -> pure PageBackForwardCacheNotRestoredReasonWebXR
          "SharedWorker" -> pure PageBackForwardCacheNotRestoredReasonSharedWorker
          "WebLocks" -> pure PageBackForwardCacheNotRestoredReasonWebLocks
-         "WebHID" -> pure PageBackForwardCacheNotRestoredReasonWebHid
+         "WebHID" -> pure PageBackForwardCacheNotRestoredReasonWebHID
          "WebShare" -> pure PageBackForwardCacheNotRestoredReasonWebShare
          "RequestedStorageAccessGrant" -> pure PageBackForwardCacheNotRestoredReasonRequestedStorageAccessGrant
          "WebNfc" -> pure PageBackForwardCacheNotRestoredReasonWebNfc
          "OutstandingNetworkRequestFetch" -> pure PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestFetch
-         "OutstandingNetworkRequestXHR" -> pure PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestXhr
+         "OutstandingNetworkRequestXHR" -> pure PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestXHR
          "AppBanner" -> pure PageBackForwardCacheNotRestoredReasonAppBanner
          "Printing" -> pure PageBackForwardCacheNotRestoredReasonPrinting
          "WebDatabase" -> pure PageBackForwardCacheNotRestoredReasonWebDatabase
@@ -6701,19 +6700,19 @@ instance FromJSON PageBackForwardCacheNotRestoredReason where
          "PaymentManager" -> pure PageBackForwardCacheNotRestoredReasonPaymentManager
          "SpeechSynthesis" -> pure PageBackForwardCacheNotRestoredReasonSpeechSynthesis
          "KeyboardLock" -> pure PageBackForwardCacheNotRestoredReasonKeyboardLock
-         "WebOTPService" -> pure PageBackForwardCacheNotRestoredReasonWebOtpService
+         "WebOTPService" -> pure PageBackForwardCacheNotRestoredReasonWebOTPService
          "OutstandingNetworkRequestDirectSocket" -> pure PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestDirectSocket
          "InjectedJavascript" -> pure PageBackForwardCacheNotRestoredReasonInjectedJavascript
          "InjectedStyleSheet" -> pure PageBackForwardCacheNotRestoredReasonInjectedStyleSheet
          "Dummy" -> pure PageBackForwardCacheNotRestoredReasonDummy
          "ContentSecurityHandler" -> pure PageBackForwardCacheNotRestoredReasonContentSecurityHandler
-         "ContentWebAuthenticationAPI" -> pure PageBackForwardCacheNotRestoredReasonContentWebAuthenticationApi
+         "ContentWebAuthenticationAPI" -> pure PageBackForwardCacheNotRestoredReasonContentWebAuthenticationAPI
          "ContentFileChooser" -> pure PageBackForwardCacheNotRestoredReasonContentFileChooser
          "ContentSerial" -> pure PageBackForwardCacheNotRestoredReasonContentSerial
          "ContentFileSystemAccess" -> pure PageBackForwardCacheNotRestoredReasonContentFileSystemAccess
          "ContentMediaDevicesDispatcherHost" -> pure PageBackForwardCacheNotRestoredReasonContentMediaDevicesDispatcherHost
          "ContentWebBluetooth" -> pure PageBackForwardCacheNotRestoredReasonContentWebBluetooth
-         "ContentWebUSB" -> pure PageBackForwardCacheNotRestoredReasonContentWebUsb
+         "ContentWebUSB" -> pure PageBackForwardCacheNotRestoredReasonContentWebUSB
          "ContentMediaSessionService" -> pure PageBackForwardCacheNotRestoredReasonContentMediaSessionService
          "ContentScreenReader" -> pure PageBackForwardCacheNotRestoredReasonContentScreenReader
          "EmbedderPopupBlockerTabHelper" -> pure PageBackForwardCacheNotRestoredReasonEmbedderPopupBlockerTabHelper
@@ -6739,13 +6738,13 @@ instance ToJSON PageBackForwardCacheNotRestoredReason where
          PageBackForwardCacheNotRestoredReasonNotPrimaryMainFrame -> "NotPrimaryMainFrame"
          PageBackForwardCacheNotRestoredReasonBackForwardCacheDisabled -> "BackForwardCacheDisabled"
          PageBackForwardCacheNotRestoredReasonRelatedActiveContentsExist -> "RelatedActiveContentsExist"
-         PageBackForwardCacheNotRestoredReasonHttpStatusNotOk -> "HTTPStatusNotOK"
-         PageBackForwardCacheNotRestoredReasonSchemeNotHttpOrHttps -> "SchemeNotHTTPOrHTTPS"
+         PageBackForwardCacheNotRestoredReasonHTTPStatusNotOK -> "HTTPStatusNotOK"
+         PageBackForwardCacheNotRestoredReasonSchemeNotHTTPOrHTTPS -> "SchemeNotHTTPOrHTTPS"
          PageBackForwardCacheNotRestoredReasonLoading -> "Loading"
          PageBackForwardCacheNotRestoredReasonWasGrantedMediaAccess -> "WasGrantedMediaAccess"
          PageBackForwardCacheNotRestoredReasonDisableForRenderFrameHostCalled -> "DisableForRenderFrameHostCalled"
          PageBackForwardCacheNotRestoredReasonDomainNotAllowed -> "DomainNotAllowed"
-         PageBackForwardCacheNotRestoredReasonHttpMethodNotGet -> "HTTPMethodNotGET"
+         PageBackForwardCacheNotRestoredReasonHTTPMethodNotGET -> "HTTPMethodNotGET"
          PageBackForwardCacheNotRestoredReasonSubframeIsNavigating -> "SubframeIsNavigating"
          PageBackForwardCacheNotRestoredReasonTimeout -> "Timeout"
          PageBackForwardCacheNotRestoredReasonCacheLimit -> "CacheLimit"
@@ -6759,8 +6758,8 @@ instance ToJSON PageBackForwardCacheNotRestoredReason where
          PageBackForwardCacheNotRestoredReasonSessionRestored -> "SessionRestored"
          PageBackForwardCacheNotRestoredReasonServiceWorkerPostMessage -> "ServiceWorkerPostMessage"
          PageBackForwardCacheNotRestoredReasonEnteredBackForwardCacheBeforeServiceWorkerHostAdded -> "EnteredBackForwardCacheBeforeServiceWorkerHostAdded"
-         PageBackForwardCacheNotRestoredReasonRenderFrameHostReusedSameSite -> "RenderFrameHostReused_SameSite"
-         PageBackForwardCacheNotRestoredReasonRenderFrameHostReusedCrossSite -> "RenderFrameHostReused_CrossSite"
+         PageBackForwardCacheNotRestoredReasonRenderFrameHostReused_SameSite -> "RenderFrameHostReused_SameSite"
+         PageBackForwardCacheNotRestoredReasonRenderFrameHostReused_CrossSite -> "RenderFrameHostReused_CrossSite"
          PageBackForwardCacheNotRestoredReasonServiceWorkerClaim -> "ServiceWorkerClaim"
          PageBackForwardCacheNotRestoredReasonIgnoreEventAndEvict -> "IgnoreEventAndEvict"
          PageBackForwardCacheNotRestoredReasonHaveInnerContents -> "HaveInnerContents"
@@ -6783,7 +6782,7 @@ instance ToJSON PageBackForwardCacheNotRestoredReason where
          PageBackForwardCacheNotRestoredReasonServiceWorkerUnregistration -> "ServiceWorkerUnregistration"
          PageBackForwardCacheNotRestoredReasonCacheControlNoStore -> "CacheControlNoStore"
          PageBackForwardCacheNotRestoredReasonCacheControlNoStoreCookieModified -> "CacheControlNoStoreCookieModified"
-         PageBackForwardCacheNotRestoredReasonCacheControlNoStoreHttpOnlyCookieModified -> "CacheControlNoStoreHTTPOnlyCookieModified"
+         PageBackForwardCacheNotRestoredReasonCacheControlNoStoreHTTPOnlyCookieModified -> "CacheControlNoStoreHTTPOnlyCookieModified"
          PageBackForwardCacheNotRestoredReasonNoResponseHead -> "NoResponseHead"
          PageBackForwardCacheNotRestoredReasonUnknown -> "Unknown"
          PageBackForwardCacheNotRestoredReasonActivationNavigationsDisallowedForBug1234857 -> "ActivationNavigationsDisallowedForBug1234857"
@@ -6791,7 +6790,7 @@ instance ToJSON PageBackForwardCacheNotRestoredReason where
          PageBackForwardCacheNotRestoredReasonFencedFramesEmbedder -> "FencedFramesEmbedder"
          PageBackForwardCacheNotRestoredReasonWebSocket -> "WebSocket"
          PageBackForwardCacheNotRestoredReasonWebTransport -> "WebTransport"
-         PageBackForwardCacheNotRestoredReasonWebRtc -> "WebRTC"
+         PageBackForwardCacheNotRestoredReasonWebRTC -> "WebRTC"
          PageBackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoStore -> "MainResourceHasCacheControlNoStore"
          PageBackForwardCacheNotRestoredReasonMainResourceHasCacheControlNoCache -> "MainResourceHasCacheControlNoCache"
          PageBackForwardCacheNotRestoredReasonSubresourceHasCacheControlNoStore -> "SubresourceHasCacheControlNoStore"
@@ -6800,24 +6799,24 @@ instance ToJSON PageBackForwardCacheNotRestoredReason where
          PageBackForwardCacheNotRestoredReasonDocumentLoaded -> "DocumentLoaded"
          PageBackForwardCacheNotRestoredReasonDedicatedWorkerOrWorklet -> "DedicatedWorkerOrWorklet"
          PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestOthers -> "OutstandingNetworkRequestOthers"
-         PageBackForwardCacheNotRestoredReasonOutstandingIndexedDbTransaction -> "OutstandingIndexedDBTransaction"
+         PageBackForwardCacheNotRestoredReasonOutstandingIndexedDBTransaction -> "OutstandingIndexedDBTransaction"
          PageBackForwardCacheNotRestoredReasonRequestedNotificationsPermission -> "RequestedNotificationsPermission"
-         PageBackForwardCacheNotRestoredReasonRequestedMidiPermission -> "RequestedMIDIPermission"
+         PageBackForwardCacheNotRestoredReasonRequestedMIDIPermission -> "RequestedMIDIPermission"
          PageBackForwardCacheNotRestoredReasonRequestedAudioCapturePermission -> "RequestedAudioCapturePermission"
          PageBackForwardCacheNotRestoredReasonRequestedVideoCapturePermission -> "RequestedVideoCapturePermission"
          PageBackForwardCacheNotRestoredReasonRequestedBackForwardCacheBlockedSensors -> "RequestedBackForwardCacheBlockedSensors"
          PageBackForwardCacheNotRestoredReasonRequestedBackgroundWorkPermission -> "RequestedBackgroundWorkPermission"
          PageBackForwardCacheNotRestoredReasonBroadcastChannel -> "BroadcastChannel"
-         PageBackForwardCacheNotRestoredReasonIndexedDbConnection -> "IndexedDBConnection"
-         PageBackForwardCacheNotRestoredReasonWebXr -> "WebXR"
+         PageBackForwardCacheNotRestoredReasonIndexedDBConnection -> "IndexedDBConnection"
+         PageBackForwardCacheNotRestoredReasonWebXR -> "WebXR"
          PageBackForwardCacheNotRestoredReasonSharedWorker -> "SharedWorker"
          PageBackForwardCacheNotRestoredReasonWebLocks -> "WebLocks"
-         PageBackForwardCacheNotRestoredReasonWebHid -> "WebHID"
+         PageBackForwardCacheNotRestoredReasonWebHID -> "WebHID"
          PageBackForwardCacheNotRestoredReasonWebShare -> "WebShare"
          PageBackForwardCacheNotRestoredReasonRequestedStorageAccessGrant -> "RequestedStorageAccessGrant"
          PageBackForwardCacheNotRestoredReasonWebNfc -> "WebNfc"
          PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestFetch -> "OutstandingNetworkRequestFetch"
-         PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestXhr -> "OutstandingNetworkRequestXHR"
+         PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestXHR -> "OutstandingNetworkRequestXHR"
          PageBackForwardCacheNotRestoredReasonAppBanner -> "AppBanner"
          PageBackForwardCacheNotRestoredReasonPrinting -> "Printing"
          PageBackForwardCacheNotRestoredReasonWebDatabase -> "WebDatabase"
@@ -6828,19 +6827,19 @@ instance ToJSON PageBackForwardCacheNotRestoredReason where
          PageBackForwardCacheNotRestoredReasonPaymentManager -> "PaymentManager"
          PageBackForwardCacheNotRestoredReasonSpeechSynthesis -> "SpeechSynthesis"
          PageBackForwardCacheNotRestoredReasonKeyboardLock -> "KeyboardLock"
-         PageBackForwardCacheNotRestoredReasonWebOtpService -> "WebOTPService"
+         PageBackForwardCacheNotRestoredReasonWebOTPService -> "WebOTPService"
          PageBackForwardCacheNotRestoredReasonOutstandingNetworkRequestDirectSocket -> "OutstandingNetworkRequestDirectSocket"
          PageBackForwardCacheNotRestoredReasonInjectedJavascript -> "InjectedJavascript"
          PageBackForwardCacheNotRestoredReasonInjectedStyleSheet -> "InjectedStyleSheet"
          PageBackForwardCacheNotRestoredReasonDummy -> "Dummy"
          PageBackForwardCacheNotRestoredReasonContentSecurityHandler -> "ContentSecurityHandler"
-         PageBackForwardCacheNotRestoredReasonContentWebAuthenticationApi -> "ContentWebAuthenticationAPI"
+         PageBackForwardCacheNotRestoredReasonContentWebAuthenticationAPI -> "ContentWebAuthenticationAPI"
          PageBackForwardCacheNotRestoredReasonContentFileChooser -> "ContentFileChooser"
          PageBackForwardCacheNotRestoredReasonContentSerial -> "ContentSerial"
          PageBackForwardCacheNotRestoredReasonContentFileSystemAccess -> "ContentFileSystemAccess"
          PageBackForwardCacheNotRestoredReasonContentMediaDevicesDispatcherHost -> "ContentMediaDevicesDispatcherHost"
          PageBackForwardCacheNotRestoredReasonContentWebBluetooth -> "ContentWebBluetooth"
-         PageBackForwardCacheNotRestoredReasonContentWebUsb -> "ContentWebUSB"
+         PageBackForwardCacheNotRestoredReasonContentWebUSB -> "ContentWebUSB"
          PageBackForwardCacheNotRestoredReasonContentMediaSessionService -> "ContentMediaSessionService"
          PageBackForwardCacheNotRestoredReasonContentScreenReader -> "ContentScreenReader"
          PageBackForwardCacheNotRestoredReasonEmbedderPopupBlockerTabHelper -> "EmbedderPopupBlockerTabHelper"
@@ -7037,7 +7036,7 @@ data PageFileChooserOpened = PageFileChooserOpened {
   -- | Id of the frame containing input node.
   pageFileChooserOpenedFrameId :: PageFrameId,
   -- | Input node id.
-  pageFileChooserOpenedBackendNodeId :: DomBackendNodeId,
+  pageFileChooserOpenedBackendNodeId :: DOMBackendNodeId,
   -- | Input mode.
   pageFileChooserOpenedMode :: PageFileChooserOpenedMode
 } deriving (Generic, Eq, Show, Read)
@@ -7436,7 +7435,7 @@ data PPageAddScriptToEvaluateOnNewDocument = PPageAddScriptToEvaluateOnNewDocume
   pPageAddScriptToEvaluateOnNewDocumentWorldName :: Maybe String,
   -- | Specifies whether command line API should be available to the script, defaults
   --   to false.
-  pPageAddScriptToEvaluateOnNewDocumentIncludeCommandLineApi :: Maybe Bool
+  pPageAddScriptToEvaluateOnNewDocumentIncludeCommandLineAPI :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PPageAddScriptToEvaluateOnNewDocument  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 , A.omitNothingFields = True}
@@ -7750,7 +7749,7 @@ data PageGetLayoutMetrics = PageGetLayoutMetrics {
   -- | Metrics relating to the visual viewport in CSS pixels.
   pageGetLayoutMetricsCssVisualViewport :: PageVisualViewport,
   -- | Size of scrollable area in CSS pixels.
-  pageGetLayoutMetricsCssContentSize :: DomRect
+  pageGetLayoutMetricsCssContentSize :: DOMRect
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  PageGetLayoutMetrics where
@@ -7933,45 +7932,45 @@ pageNavigateToHistoryEntry :: Handle ev -> PPageNavigateToHistoryEntry -> IO ()
 pageNavigateToHistoryEntry handle params = sendReceiveCommand handle "Page.navigateToHistoryEntry" (Just params)
 
 
--- | Parameters of the 'pagePrintToPdf' command.
-data PPagePrintToPdfTransferMode = PPagePrintToPdfTransferModeReturnAsBase64 | PPagePrintToPdfTransferModeReturnAsStream
+-- | Parameters of the 'pagePrintToPDF' command.
+data PPagePrintToPDFTransferMode = PPagePrintToPDFTransferModeReturnAsBase64 | PPagePrintToPDFTransferModeReturnAsStream
    deriving (Ord, Eq, Show, Read)
-instance FromJSON PPagePrintToPdfTransferMode where
-   parseJSON = A.withText  "PPagePrintToPdfTransferMode"  $ \v -> do
+instance FromJSON PPagePrintToPDFTransferMode where
+   parseJSON = A.withText  "PPagePrintToPDFTransferMode"  $ \v -> do
       case v of
-         "ReturnAsBase64" -> pure PPagePrintToPdfTransferModeReturnAsBase64
-         "ReturnAsStream" -> pure PPagePrintToPdfTransferModeReturnAsStream
-         _ -> fail "failed to parse PPagePrintToPdfTransferMode"
+         "ReturnAsBase64" -> pure PPagePrintToPDFTransferModeReturnAsBase64
+         "ReturnAsStream" -> pure PPagePrintToPDFTransferModeReturnAsStream
+         _ -> fail "failed to parse PPagePrintToPDFTransferMode"
 
-instance ToJSON PPagePrintToPdfTransferMode where
+instance ToJSON PPagePrintToPDFTransferMode where
    toJSON v = A.String $
       case v of
-         PPagePrintToPdfTransferModeReturnAsBase64 -> "ReturnAsBase64"
-         PPagePrintToPdfTransferModeReturnAsStream -> "ReturnAsStream"
+         PPagePrintToPDFTransferModeReturnAsBase64 -> "ReturnAsBase64"
+         PPagePrintToPDFTransferModeReturnAsStream -> "ReturnAsStream"
 
 
 
-data PPagePrintToPdf = PPagePrintToPdf {
+data PPagePrintToPDF = PPagePrintToPDF {
   -- | Paper orientation. Defaults to false.
-  pPagePrintToPdfLandscape :: Maybe Bool,
+  pPagePrintToPDFLandscape :: Maybe Bool,
   -- | Display header and footer. Defaults to false.
-  pPagePrintToPdfDisplayHeaderFooter :: Maybe Bool,
+  pPagePrintToPDFDisplayHeaderFooter :: Maybe Bool,
   -- | Print background graphics. Defaults to false.
-  pPagePrintToPdfPrintBackground :: Maybe Bool,
+  pPagePrintToPDFPrintBackground :: Maybe Bool,
   -- | Scale of the webpage rendering. Defaults to 1.
-  pPagePrintToPdfScale :: Maybe Double,
+  pPagePrintToPDFScale :: Maybe Double,
   -- | Paper width in inches. Defaults to 8.5 inches.
-  pPagePrintToPdfPaperWidth :: Maybe Double,
+  pPagePrintToPDFPaperWidth :: Maybe Double,
   -- | Paper height in inches. Defaults to 11 inches.
-  pPagePrintToPdfPaperHeight :: Maybe Double,
+  pPagePrintToPDFPaperHeight :: Maybe Double,
   -- | Top margin in inches. Defaults to 1cm (~0.4 inches).
-  pPagePrintToPdfMarginTop :: Maybe Double,
+  pPagePrintToPDFMarginTop :: Maybe Double,
   -- | Bottom margin in inches. Defaults to 1cm (~0.4 inches).
-  pPagePrintToPdfMarginBottom :: Maybe Double,
+  pPagePrintToPDFMarginBottom :: Maybe Double,
   -- | Left margin in inches. Defaults to 1cm (~0.4 inches).
-  pPagePrintToPdfMarginLeft :: Maybe Double,
+  pPagePrintToPDFMarginLeft :: Maybe Double,
   -- | Right margin in inches. Defaults to 1cm (~0.4 inches).
-  pPagePrintToPdfMarginRight :: Maybe Double,
+  pPagePrintToPDFMarginRight :: Maybe Double,
   -- | Paper ranges to print, one based, e.g., '1-5, 8, 11-13'. Pages are
   --   printed in the document order, not in the order specified, and no
   --   more than once.
@@ -7980,7 +7979,7 @@ data PPagePrintToPdf = PPagePrintToPdf {
   --   document, and ranges beyond the end of the document are ignored.
   --   If this results in no pages to print, an error is reported.
   --   It is an error to specify a range with start greater than end.
-  pPagePrintToPdfPageRanges :: Maybe String,
+  pPagePrintToPDFPageRanges :: Maybe String,
   -- | HTML template for the print header. Should be valid HTML markup with following
   --   classes used to inject printing values into them:
   --   - `date`: formatted print date
@@ -7990,41 +7989,41 @@ data PPagePrintToPdf = PPagePrintToPdf {
   --   - `totalPages`: total pages in the document
   --   
   --   For example, `<span class=title></span>` would generate span containing the title.
-  pPagePrintToPdfHeaderTemplate :: Maybe String,
+  pPagePrintToPDFHeaderTemplate :: Maybe String,
   -- | HTML template for the print footer. Should use the same format as the `headerTemplate`.
-  pPagePrintToPdfFooterTemplate :: Maybe String,
+  pPagePrintToPDFFooterTemplate :: Maybe String,
   -- | Whether or not to prefer page size as defined by css. Defaults to false,
   --   in which case the content will be scaled to fit the paper size.
-  pPagePrintToPdfPreferCssPageSize :: Maybe Bool,
+  pPagePrintToPDFPreferCSSPageSize :: Maybe Bool,
   -- | return as stream
-  pPagePrintToPdfTransferMode :: PPagePrintToPdfTransferMode
+  pPagePrintToPDFTransferMode :: PPagePrintToPDFTransferMode
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PPagePrintToPdf  where
+instance ToJSON PPagePrintToPDF  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 , A.omitNothingFields = True}
 
-instance FromJSON  PPagePrintToPdf where
+instance FromJSON  PPagePrintToPDF where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
 -- | Function for the 'Page.printToPDF' command.
 --   Print page as PDF.
---   Parameters: 'PPagePrintToPdf'
---   Returns: 'PagePrintToPdf'
-pagePrintToPdf :: Handle ev -> PPagePrintToPdf -> IO PagePrintToPdf
-pagePrintToPdf handle params = sendReceiveCommandResult handle "Page.printToPDF" (Just params)
+--   Parameters: 'PPagePrintToPDF'
+--   Returns: 'PagePrintToPDF'
+pagePrintToPDF :: Handle ev -> PPagePrintToPDF -> IO PagePrintToPDF
+pagePrintToPDF handle params = sendReceiveCommandResult handle "Page.printToPDF" (Just params)
 
--- | Return type of the 'pagePrintToPdf' command.
-data PagePrintToPdf = PagePrintToPdf {
+-- | Return type of the 'pagePrintToPDF' command.
+data PagePrintToPDF = PagePrintToPDF {
   -- | Base64-encoded pdf data. Empty if |returnAsStream| is specified. (Encoded as a base64 string when passed over JSON)
-  pagePrintToPdfData :: String,
+  pagePrintToPDFData :: String,
   -- | A handle of the stream that holds resulting PDF data.
-  pagePrintToPdfStream :: Maybe IO.IoStreamHandle
+  pagePrintToPDFStream :: Maybe IO.IOStreamHandle
 } deriving (Generic, Eq, Show, Read)
 
-instance FromJSON  PagePrintToPdf where
+instance FromJSON  PagePrintToPDF where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
-instance Command PagePrintToPdf where
+instance Command PagePrintToPDF where
    commandName _ = "Page.printToPDF"
 
 
@@ -8148,23 +8147,23 @@ pageSetAdBlockingEnabled :: Handle ev -> PPageSetAdBlockingEnabled -> IO ()
 pageSetAdBlockingEnabled handle params = sendReceiveCommand handle "Page.setAdBlockingEnabled" (Just params)
 
 
--- | Parameters of the 'pageSetBypassCsp' command.
-data PPageSetBypassCsp = PPageSetBypassCsp {
+-- | Parameters of the 'pageSetBypassCSP' command.
+data PPageSetBypassCSP = PPageSetBypassCSP {
   -- | Whether to bypass page CSP.
-  pPageSetBypassCspEnabled :: Bool
+  pPageSetBypassCSPEnabled :: Bool
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PPageSetBypassCsp  where
+instance ToJSON PPageSetBypassCSP  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
 
-instance FromJSON  PPageSetBypassCsp where
+instance FromJSON  PPageSetBypassCSP where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
 -- | Function for the 'Page.setBypassCSP' command.
 --   Enable page Content Security Policy by-passing.
---   Parameters: 'PPageSetBypassCsp'
-pageSetBypassCsp :: Handle ev -> PPageSetBypassCsp -> IO ()
-pageSetBypassCsp handle params = sendReceiveCommand handle "Page.setBypassCSP" (Just params)
+--   Parameters: 'PPageSetBypassCSP'
+pageSetBypassCSP :: Handle ev -> PPageSetBypassCSP -> IO ()
+pageSetBypassCSP handle params = sendReceiveCommand handle "Page.setBypassCSP" (Just params)
 
 
 -- | Parameters of the 'pageGetPermissionsPolicyState' command.
@@ -8465,42 +8464,42 @@ pageClearCompilationCache :: Handle ev -> IO ()
 pageClearCompilationCache handle = sendReceiveCommand handle "Page.clearCompilationCache" (Nothing :: Maybe ())
 
 
--- | Parameters of the 'pageSetSpcTransactionMode' command.
-data PPageSetSpcTransactionModeMode = PPageSetSpcTransactionModeModeNone | PPageSetSpcTransactionModeModeAutoaccept | PPageSetSpcTransactionModeModeAutoreject
+-- | Parameters of the 'pageSetSPCTransactionMode' command.
+data PPageSetSPCTransactionModeMode = PPageSetSPCTransactionModeModeNone | PPageSetSPCTransactionModeModeAutoaccept | PPageSetSPCTransactionModeModeAutoreject
    deriving (Ord, Eq, Show, Read)
-instance FromJSON PPageSetSpcTransactionModeMode where
-   parseJSON = A.withText  "PPageSetSpcTransactionModeMode"  $ \v -> do
+instance FromJSON PPageSetSPCTransactionModeMode where
+   parseJSON = A.withText  "PPageSetSPCTransactionModeMode"  $ \v -> do
       case v of
-         "none" -> pure PPageSetSpcTransactionModeModeNone
-         "autoaccept" -> pure PPageSetSpcTransactionModeModeAutoaccept
-         "autoreject" -> pure PPageSetSpcTransactionModeModeAutoreject
-         _ -> fail "failed to parse PPageSetSpcTransactionModeMode"
+         "none" -> pure PPageSetSPCTransactionModeModeNone
+         "autoaccept" -> pure PPageSetSPCTransactionModeModeAutoaccept
+         "autoreject" -> pure PPageSetSPCTransactionModeModeAutoreject
+         _ -> fail "failed to parse PPageSetSPCTransactionModeMode"
 
-instance ToJSON PPageSetSpcTransactionModeMode where
+instance ToJSON PPageSetSPCTransactionModeMode where
    toJSON v = A.String $
       case v of
-         PPageSetSpcTransactionModeModeNone -> "none"
-         PPageSetSpcTransactionModeModeAutoaccept -> "autoaccept"
-         PPageSetSpcTransactionModeModeAutoreject -> "autoreject"
+         PPageSetSPCTransactionModeModeNone -> "none"
+         PPageSetSPCTransactionModeModeAutoaccept -> "autoaccept"
+         PPageSetSPCTransactionModeModeAutoreject -> "autoreject"
 
 
 
-data PPageSetSpcTransactionMode = PPageSetSpcTransactionMode {
-  pPageSetSpcTransactionModeMode :: PPageSetSpcTransactionModeMode
+data PPageSetSPCTransactionMode = PPageSetSPCTransactionMode {
+  pPageSetSPCTransactionModeMode :: PPageSetSPCTransactionModeMode
 } deriving (Generic, Eq, Show, Read)
-instance ToJSON PPageSetSpcTransactionMode  where
+instance ToJSON PPageSetSPCTransactionMode  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
 
-instance FromJSON  PPageSetSpcTransactionMode where
+instance FromJSON  PPageSetSPCTransactionMode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
 -- | Function for the 'Page.setSPCTransactionMode' command.
 --   Sets the Secure Payment Confirmation transaction mode.
 --   https://w3c.github.io/secure-payment-confirmation/#sctn-automation-set-spc-transaction-mode
---   Parameters: 'PPageSetSpcTransactionMode'
-pageSetSpcTransactionMode :: Handle ev -> PPageSetSpcTransactionMode -> IO ()
-pageSetSpcTransactionMode handle params = sendReceiveCommand handle "Page.setSPCTransactionMode" (Just params)
+--   Parameters: 'PPageSetSPCTransactionMode'
+pageSetSPCTransactionMode :: Handle ev -> PPageSetSPCTransactionMode -> IO ()
+pageSetSPCTransactionMode handle params = sendReceiveCommand handle "Page.setSPCTransactionMode" (Just params)
 
 
 -- | Parameters of the 'pageGenerateTestReport' command.
@@ -8634,7 +8633,7 @@ data SecurityCertificateSecurityState = SecurityCertificateSecurityState {
   -- | True if the certificate has a SHA1 signature in the chain.
   securityCertificateSecurityStateCertificateHasSha1Signature :: Bool,
   -- | True if modern SSL
-  securityCertificateSecurityStateModernSsl :: Bool,
+  securityCertificateSecurityStateModernSSL :: Bool,
   -- | True if the connection is using an obsolete SSL protocol.
   securityCertificateSecurityStateObsoleteSslProtocol :: Bool,
   -- | True if the connection is using an obsolete SSL key exchange.

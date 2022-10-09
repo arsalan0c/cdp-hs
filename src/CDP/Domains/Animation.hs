@@ -32,7 +32,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -51,21 +50,21 @@ import CDP.Domains.Runtime as Runtime
 
 -- | Type 'Animation.Animation'.
 --   Animation instance.
-data AnimationAnimationType = AnimationAnimationTypeCssTransition | AnimationAnimationTypeCssAnimation | AnimationAnimationTypeWebAnimation
+data AnimationAnimationType = AnimationAnimationTypeCSSTransition | AnimationAnimationTypeCSSAnimation | AnimationAnimationTypeWebAnimation
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AnimationAnimationType where
    parseJSON = A.withText  "AnimationAnimationType"  $ \v -> do
       case v of
-         "CSSTransition" -> pure AnimationAnimationTypeCssTransition
-         "CSSAnimation" -> pure AnimationAnimationTypeCssAnimation
+         "CSSTransition" -> pure AnimationAnimationTypeCSSTransition
+         "CSSAnimation" -> pure AnimationAnimationTypeCSSAnimation
          "WebAnimation" -> pure AnimationAnimationTypeWebAnimation
          _ -> fail "failed to parse AnimationAnimationType"
 
 instance ToJSON AnimationAnimationType where
    toJSON v = A.String $
       case v of
-         AnimationAnimationTypeCssTransition -> "CSSTransition"
-         AnimationAnimationTypeCssAnimation -> "CSSAnimation"
+         AnimationAnimationTypeCSSTransition -> "CSSTransition"
+         AnimationAnimationTypeCSSAnimation -> "CSSAnimation"
          AnimationAnimationTypeWebAnimation -> "WebAnimation"
 
 
@@ -119,7 +118,7 @@ data AnimationAnimationEffect = AnimationAnimationEffect {
   -- | `AnimationEffect`'s fill mode.
   animationAnimationEffectFill :: String,
   -- | `AnimationEffect`'s target node.
-  animationAnimationEffectBackendNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomBackendNodeId,
+  animationAnimationEffectBackendNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMBackendNodeId,
   -- | `AnimationEffect`'s keyframes.
   animationAnimationEffectKeyframesRule :: Maybe AnimationKeyframesRule,
   -- | `AnimationEffect`'s timing function.

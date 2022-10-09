@@ -32,7 +32,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -142,7 +141,7 @@ data InputDragDataItem = InputDragDataItem {
   inputDragDataItemTitle :: Maybe String,
   -- | Stores the base URL for the contained markup. Only valid when `mimeType`
   --   == "text/html".
-  inputDragDataItemBaseUrl :: Maybe String
+  inputDragDataItemBaseURL :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON InputDragDataItem  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}

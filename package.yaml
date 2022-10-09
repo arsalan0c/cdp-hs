@@ -27,7 +27,6 @@ dependencies:
   - text
   - vector
   - websockets
-  - casing
   - random
   - monad-loops
   - data-default
@@ -41,7 +40,6 @@ executables:
       - Strict
     dependencies:
       - containers
-      - casing
       - filepath
       - directory
 

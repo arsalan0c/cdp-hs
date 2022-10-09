@@ -32,7 +32,6 @@ import qualified Network.HTTP.Simple as Http
 import qualified Network.URI          as Uri
 import qualified Network.WebSockets as WS
 import Control.Concurrent
-import qualified Text.Casing as C
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
@@ -79,7 +78,7 @@ instance ToJSON LayerTreeScrollRectType where
 
 data LayerTreeScrollRect = LayerTreeScrollRect {
   -- | Rectangle itself.
-  layerTreeScrollRectRect :: DOMPageNetworkEmulationSecurity.DomRect,
+  layerTreeScrollRectRect :: DOMPageNetworkEmulationSecurity.DOMRect,
   -- | Reason for rectangle to force scrolling on the main thread
   layerTreeScrollRectType :: LayerTreeScrollRectType
 } deriving (Generic, Eq, Show, Read)
@@ -95,9 +94,9 @@ instance FromJSON  LayerTreeScrollRect where
 --   Sticky position constraints.
 data LayerTreeStickyPositionConstraint = LayerTreeStickyPositionConstraint {
   -- | Layout rectangle of the sticky element before being shifted
-  layerTreeStickyPositionConstraintStickyBoxRect :: DOMPageNetworkEmulationSecurity.DomRect,
+  layerTreeStickyPositionConstraintStickyBoxRect :: DOMPageNetworkEmulationSecurity.DOMRect,
   -- | Layout rectangle of the containing block of the sticky element
-  layerTreeStickyPositionConstraintContainingBlockRect :: DOMPageNetworkEmulationSecurity.DomRect,
+  layerTreeStickyPositionConstraintContainingBlockRect :: DOMPageNetworkEmulationSecurity.DOMRect,
   -- | The nearest sticky layer that shifts the sticky box
   layerTreeStickyPositionConstraintNearestLayerShiftingStickyBox :: Maybe LayerTreeLayerId,
   -- | The nearest sticky layer that shifts the containing block
@@ -137,7 +136,7 @@ data LayerTreeLayer = LayerTreeLayer {
   -- | The id of parent (not present for root).
   layerTreeLayerParentLayerId :: Maybe LayerTreeLayerId,
   -- | The backend id for the node associated with this layer.
-  layerTreeLayerBackendNodeId :: Maybe DOMPageNetworkEmulationSecurity.DomBackendNodeId,
+  layerTreeLayerBackendNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMBackendNodeId,
   -- | Offset from parent layer, X coordinate.
   layerTreeLayerOffsetX :: Double,
   -- | Offset from parent layer, Y coordinate.
@@ -185,7 +184,7 @@ data LayerTreeLayerPainted = LayerTreeLayerPainted {
   -- | The id of the painted layer.
   layerTreeLayerPaintedLayerId :: LayerTreeLayerId,
   -- | Clip rectangle.
-  layerTreeLayerPaintedClip :: DOMPageNetworkEmulationSecurity.DomRect
+  layerTreeLayerPaintedClip :: DOMPageNetworkEmulationSecurity.DOMRect
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON LayerTreeLayerPainted  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -334,7 +333,7 @@ data PLayerTreeProfileSnapshot = PLayerTreeProfileSnapshot {
   -- | The minimum duration (in seconds) to replay the snapshot.
   pLayerTreeProfileSnapshotMinDuration :: Maybe Double,
   -- | The clip rectangle to apply when replaying the snapshot.
-  pLayerTreeProfileSnapshotClipRect :: Maybe DOMPageNetworkEmulationSecurity.DomRect
+  pLayerTreeProfileSnapshotClipRect :: Maybe DOMPageNetworkEmulationSecurity.DOMRect
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PLayerTreeProfileSnapshot  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
@@ -411,7 +410,7 @@ layerTreeReplaySnapshot handle params = sendReceiveCommandResult handle "LayerTr
 -- | Return type of the 'layerTreeReplaySnapshot' command.
 data LayerTreeReplaySnapshot = LayerTreeReplaySnapshot {
   -- | A data: URL for resulting image.
-  layerTreeReplaySnapshotDataUrl :: String
+  layerTreeReplaySnapshotDataURL :: String
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  LayerTreeReplaySnapshot where

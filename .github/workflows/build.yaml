@@ -27,7 +27,7 @@ jobs:
     - name: generate cdp library
       id: gc
       if: steps.cgb.outcome == 'success'
-      run: ./result/bin/gen-exe
+      run: ./result/bin/cdp-gen
     # Takes too long:
     # - name: cdp build
     #   if: steps.gc.outcome == 'success' && steps.filter.outputs.cdp == 'true'

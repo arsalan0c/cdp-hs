@@ -1,7 +1,7 @@
-name: cdp-gen
+name: cdp
 version: 0.0.1.0
 synopsis: Project synopsis
-description: See README at <https://github.com/arsalan0c/cdp-hs
+description: See README at <https://github.com/arsalan0c/cdp-hs>
 author: Arsalan Cheema
 github: arsalan0c/cdp-hs
 category: Package.Category
@@ -10,53 +10,65 @@ license: BSD-3-Clause
 extra-doc-files:
   - README.md
 
-data-files:
-  - cdp/prelude/**/*.hs
+library:
+  source-dirs: src
 
 dependencies:
   - base
+  - aeson
   - text
   - bytestring
   - containers
+  - data-default
+  - http-conduit
   - mtl
-  - casing
-  - filepath
-  - aeson
-  - directory
+  - network-uri
+  - extra
+  - text
+  - vector
+  - websockets
+  - random
+  - monad-loops
+  - data-default
+  - process
 
-internal-libraries:
-  json-alt-fork:
-    source-dirs: 
-      - json-autotype/json-alt
-    exposed-modules:
-      - Data.Aeson.AutoType.Alternative
-    
-library:
-  source-dirs: 
-    - src
-  exposed-modules:
-    - CDP.Gen.Program
-  generated-exposed-modules:
-    - CDP.Definition
-  dependencies:
-    - json-alt-fork
-  
 executables:
-  gen-exe:
-    source-dirs: app
+  cdp-gen:
+    source-dirs: gen
     main: Main.hs
     default-extensions:
       - Strict
     dependencies:
-      - cdp-gen
-  
+      - containers
+      - filepath
+      - directory
+
+  cdp-example-print-page:
+    source-dirs: examples
+    main: print-page.hs
+    dependencies:
+      - cdp
+      - base64-bytestring
+
+  cdp-example-subscribe:
+    source-dirs: examples
+    main: subscribe.hs
+    dependencies:
+      - cdp
+
+  cdp-example-open-twitter:
+    source-dirs: examples
+    main: open-twitter.hs
+    dependencies:
+      - cdp
+
 tests:
-  cdp-hs-test:
+  cdp-test:
     source-dirs: test
     main: Main.hs
     ghc-options:
       - -Wall
       - -threaded
     dependencies:
-      - cdp-gen
+      - cdp
       - hedgehog

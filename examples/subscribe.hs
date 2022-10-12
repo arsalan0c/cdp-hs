@@ -14,4 +14,5 @@ main = CDP.runClient def $ \handle -> do
         CDP.unsubscribe handle sub
     _ <- CDP.subscribe handle $ \e ->
         putStrLn $ "2: " ++ CDP.pageFrameUrl (CDP.pageFrameNavigatedFrame e)
+    print "starting subscribe"
     forever $ threadDelay 1000

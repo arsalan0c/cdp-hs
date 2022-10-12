@@ -33,11 +33,11 @@ let
     withHoogle = true;
   };
 
-  exe = pkgs.haskell.lib.justStaticExecutables (myHaskellPackages."cdp-gen");
+  exe = pkgs.haskell.lib.justStaticExecutables (myHaskellPackages."cdp");
 
   docker = pkgs.dockerTools.buildImage {
     name = "cdp";
-    config.Cmd = [ "${exe}/bin/cdp-gen" ];
+    config.Cmd = [ "${exe}/bin/cdp" ];
   };
 in
 {

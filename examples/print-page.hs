@@ -20,34 +20,12 @@ import qualified Data.Text as T
 import qualified CDP as CDP
 
 main :: IO ()
-main = do
-    putStrLn "Starting CDP example"
-    CDP.runClient def printPDF
-
-targets :: CDP.Handle -> IO ()
-targets handle = do
-    ti <- head . CDP.targetGetTargetsTargetInfos <$> CDP.targetGetTargets handle
-    let tid = CDP.targetTargetInfoTargetId ti
-    r <- CDP.targetAttachToTarget handle $ CDP.PTargetAttachToTarget tid (Just True)
-    print r
-    browser handle 
-
-browser :: CDP.Handle -> IO ()
-browser handle = print =<< CDP.browserGetVersion handle
-
-subUnsub :: CDP.Handle -> IO ()
-subUnsub handle = do
-    sub <- CDP.subscribe handle (print . CDP.pageWindowOpenUrl)
-    CDP.pageEnable handle
-    CDP.unsubscribe handle sub
-
-    forever $ do
-        threadDelay 1000
+main = CDP.runClient def printPDF
 
 printPDF :: CDP.Handle -> IO ()
 printPDF handle = do
     -- send the Page.printToPDF command
-    r <- CDP.pagePrintToPDF handle $
+    r <- CDP.sendCommandWait handle $
             CDP.PPagePrintToPDF Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing $
                 CDP.PPagePrintToPDFTransferModeReturnAsStream
 
@@ -58,9 +36,9 @@ printPDF handle = do
     -- properly take the 'encoded' flag into account and produce a lazy
     -- bytestring
     let params = CDP.PIORead streamHandle Nothing $ Just 24000
-    reads <- whileTrue (not . CDP.iOReadEof) $ CDP.iORead handle params
+    reads <- whileTrue (not . CDP.iOReadEof) $ CDP.sendCommandWait handle params
     let dat = map (Base64.decodeLenient . T.encodeUtf8 . T.pack . CDP.iOReadData) reads
-    B.writeFile "mypdfs.pdf" $ B.concat dat
+    B.writeFile "mypdf.pdf" $ B.concat dat
 
 whileTrue :: Monad m => (a -> Bool) -> m a -> m [a]
 whileTrue f act = do

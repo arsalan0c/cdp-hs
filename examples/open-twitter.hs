@@ -7,7 +7,7 @@ import Control.Monad (forever)
 
 main :: IO ()
 main = CDP.runClient def $ \handle -> forever $ do
-    targetCreateTarget handle PTargetCreateTarget
+    sendCommand handle PTargetCreateTarget
         { pTargetCreateTargetUrl = "https://twitter.com/GabriellaG439"
         , pTargetCreateTargetWidth = Nothing
         , pTargetCreateTargetHeight = Nothing

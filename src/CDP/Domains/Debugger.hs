@@ -44,7 +44,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 import CDP.Domains.Runtime as Runtime
@@ -495,7 +495,10 @@ instance Event DebuggerScriptParsed where
 
 
 
--- | Parameters of the 'debuggerContinueToLocation' command.
+-- | Debugger.continueToLocation
+--   Continues execution until specific location is reached.
+
+-- | Parameters of the 'Debugger.continueToLocation' command.
 data PDebuggerContinueToLocationTargetCallFrames = PDebuggerContinueToLocationTargetCallFramesAny | PDebuggerContinueToLocationTargetCallFramesCurrent
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PDebuggerContinueToLocationTargetCallFrames where
@@ -525,32 +528,30 @@ instance FromJSON  PDebuggerContinueToLocation where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
--- | Function for the 'Debugger.continueToLocation' command.
---   Continues execution until specific location is reached.
---   Returns: 'PDebuggerContinueToLocation'
-debuggerContinueToLocation :: Handle -> PDebuggerContinueToLocation -> IO ()
-debuggerContinueToLocation handle params = sendReceiveCommand handle params
-
 instance Command PDebuggerContinueToLocation where
-    type CommandResponse PDebuggerContinueToLocation = NoResponse
-    commandName _ = "Debugger.continueToLocation"
+   type CommandResponse PDebuggerContinueToLocation = ()
+   commandName _ = "Debugger.continueToLocation"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'debuggerDisable' command.
+-- | Debugger.disable
+--   Disables debugger for given page.
+
+-- | Parameters of the 'Debugger.disable' command.
 data PDebuggerDisable = PDebuggerDisable
 instance ToJSON PDebuggerDisable where toJSON _ = A.Null
 
--- | Function for the 'Debugger.disable' command.
---   Disables debugger for given page.
-debuggerDisable :: Handle -> IO ()
-debuggerDisable handle = sendReceiveCommand handle PDebuggerDisable
-
 instance Command PDebuggerDisable where
-    type CommandResponse PDebuggerDisable = NoResponse
-    commandName _ = "Debugger.disable"
+   type CommandResponse PDebuggerDisable = ()
+   commandName _ = "Debugger.disable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'debuggerEnable' command.
+-- | Debugger.enable
+--   Enables debugger for the given page. Clients should not assume that the debugging has been
+--   enabled until the result for this command is received.
+
+-- | Parameters of the 'Debugger.enable' command.
 data PDebuggerEnable = PDebuggerEnable {
   -- | The maximum size in bytes of collected scripts (not referenced by other heap objects)
   --   the debugger can hold. Puts no limit if parameter is omitted.
@@ -563,15 +564,7 @@ instance FromJSON  PDebuggerEnable where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
--- | Function for the 'Debugger.enable' command.
---   Enables debugger for the given page. Clients should not assume that the debugging has been
---   enabled until the result for this command is received.
---   Returns: 'PDebuggerEnable'
---   Returns: 'DebuggerEnable'
-debuggerEnable :: Handle -> PDebuggerEnable -> IO DebuggerEnable
-debuggerEnable handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'debuggerEnable' command.
+-- | Return type of the 'Debugger.enable' command.
 data DebuggerEnable = DebuggerEnable {
   -- | Unique identifier of the debugger.
   debuggerEnableDebuggerId :: Runtime.RuntimeUniqueDebuggerId
@@ -581,11 +574,15 @@ instance FromJSON  DebuggerEnable where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 instance Command PDebuggerEnable where
-    type CommandResponse PDebuggerEnable = DebuggerEnable
-    commandName _ = "Debugger.enable"
+   type CommandResponse PDebuggerEnable = DebuggerEnable
+   commandName _ = "Debugger.enable"
 
 
--- | Parameters of the 'debuggerEvaluateOnCallFrame' command.
+
+-- | Debugger.evaluateOnCallFrame
+--   Evaluates expression on a given call frame.
+
+-- | Parameters of the 'Debugger.evaluateOnCallFrame' command.
 data PDebuggerEvaluateOnCallFrame = PDebuggerEvaluateOnCallFrame {
   -- | Call frame identifier to evaluate on.
   pDebuggerEvaluateOnCallFrameCallFrameId :: DebuggerCallFrameId,
@@ -616,14 +613,7 @@ instance FromJSON  PDebuggerEvaluateOnCallFrame where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
--- | Function for the 'Debugger.evaluateOnCallFrame' command.
---   Evaluates expression on a given call frame.
---   Returns: 'PDebuggerEvaluateOnCallFrame'
---   Returns: 'DebuggerEvaluateOnCallFrame'
-debuggerEvaluateOnCallFrame :: Handle -> PDebuggerEvaluateOnCallFrame -> IO DebuggerEvaluateOnCallFrame
-debuggerEvaluateOnCallFrame handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'debuggerEvaluateOnCallFrame' command.
+-- | Return type of the 'Debugger.evaluateOnCallFrame' command.
 data DebuggerEvaluateOnCallFrame = DebuggerEvaluateOnCallFrame {
   -- | Object wrapper for the evaluation result.
   debuggerEvaluateOnCallFrameResult :: Runtime.RuntimeRemoteObject,
@@ -635,11 +625,16 @@ instance FromJSON  DebuggerEvaluateOnCallFrame where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 instance Command PDebuggerEvaluateOnCallFrame where
-    type CommandResponse PDebuggerEvaluateOnCallFrame = DebuggerEvaluateOnCallFrame
-    commandName _ = "Debugger.evaluateOnCallFrame"
+   type CommandResponse PDebuggerEvaluateOnCallFrame = DebuggerEvaluateOnCallFrame
+   commandName _ = "Debugger.evaluateOnCallFrame"
 
 
--- | Parameters of the 'debuggerGetPossibleBreakpoints' command.
+
+-- | Debugger.getPossibleBreakpoints
+--   Returns possible locations for breakpoint. scriptId in start and end range locations should be
+--   the same.
+
+-- | Parameters of the 'Debugger.getPossibleBreakpoints' command.
 data PDebuggerGetPossibleBreakpoints = PDebuggerGetPossibleBreakpoints {
   -- | Start of range to search possible breakpoint locations in.
   pDebuggerGetPossibleBreakpointsStart :: DebuggerLocation,
@@ -656,15 +651,7 @@ instance FromJSON  PDebuggerGetPossibleBreakpoints where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
--- | Function for the 'Debugger.getPossibleBreakpoints' command.
---   Returns possible locations for breakpoint. scriptId in start and end range locations should be
---   the same.
---   Returns: 'PDebuggerGetPossibleBreakpoints'
---   Returns: 'DebuggerGetPossibleBreakpoints'
-debuggerGetPossibleBreakpoints :: Handle -> PDebuggerGetPossibleBreakpoints -> IO DebuggerGetPossibleBreakpoints
-debuggerGetPossibleBreakpoints handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'debuggerGetPossibleBreakpoints' command.
+-- | Return type of the 'Debugger.getPossibleBreakpoints' command.
 data DebuggerGetPossibleBreakpoints = DebuggerGetPossibleBreakpoints {
   -- | List of the possible breakpoint locations.
   debuggerGetPossibleBreakpointsLocations :: [DebuggerBreakLocation]
@@ -674,11 +661,15 @@ instance FromJSON  DebuggerGetPossibleBreakpoints where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 instance Command PDebuggerGetPossibleBreakpoints where
-    type CommandResponse PDebuggerGetPossibleBreakpoints = DebuggerGetPossibleBreakpoints
-    commandName _ = "Debugger.getPossibleBreakpoints"
+   type CommandResponse PDebuggerGetPossibleBreakpoints = DebuggerGetPossibleBreakpoints
+   commandName _ = "Debugger.getPossibleBreakpoints"
 
 
--- | Parameters of the 'debuggerGetScriptSource' command.
+
+-- | Debugger.getScriptSource
+--   Returns source for the script with given id.
+
+-- | Parameters of the 'Debugger.getScriptSource' command.
 data PDebuggerGetScriptSource = PDebuggerGetScriptSource {
   -- | Id of the script to get source for.
   pDebuggerGetScriptSourceScriptId :: Runtime.RuntimeScriptId
@@ -690,14 +681,7 @@ instance FromJSON  PDebuggerGetScriptSource where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the 'Debugger.getScriptSource' command.
---   Returns source for the script with given id.
---   Returns: 'PDebuggerGetScriptSource'
---   Returns: 'DebuggerGetScriptSource'
-debuggerGetScriptSource :: Handle -> PDebuggerGetScriptSource -> IO DebuggerGetScriptSource
-debuggerGetScriptSource handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'debuggerGetScriptSource' command.
+-- | Return type of the 'Debugger.getScriptSource' command.
 data DebuggerGetScriptSource = DebuggerGetScriptSource {
   -- | Script source (empty in case of Wasm bytecode).
   debuggerGetScriptSourceScriptSource :: String,
@@ -709,11 +693,15 @@ instance FromJSON  DebuggerGetScriptSource where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 instance Command PDebuggerGetScriptSource where
-    type CommandResponse PDebuggerGetScriptSource = DebuggerGetScriptSource
-    commandName _ = "Debugger.getScriptSource"
+   type CommandResponse PDebuggerGetScriptSource = DebuggerGetScriptSource
+   commandName _ = "Debugger.getScriptSource"
 
 
--- | Parameters of the 'debuggerGetStackTrace' command.
+
+-- | Debugger.getStackTrace
+--   Returns stack trace with given `stackTraceId`.
+
+-- | Parameters of the 'Debugger.getStackTrace' command.
 data PDebuggerGetStackTrace = PDebuggerGetStackTrace {
   pDebuggerGetStackTraceStackTraceId :: Runtime.RuntimeStackTraceId
 } deriving (Generic, Eq, Show, Read)
@@ -724,14 +712,7 @@ instance FromJSON  PDebuggerGetStackTrace where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
--- | Function for the 'Debugger.getStackTrace' command.
---   Returns stack trace with given `stackTraceId`.
---   Returns: 'PDebuggerGetStackTrace'
---   Returns: 'DebuggerGetStackTrace'
-debuggerGetStackTrace :: Handle -> PDebuggerGetStackTrace -> IO DebuggerGetStackTrace
-debuggerGetStackTrace handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'debuggerGetStackTrace' command.
+-- | Return type of the 'Debugger.getStackTrace' command.
 data DebuggerGetStackTrace = DebuggerGetStackTrace {
   debuggerGetStackTraceStackTrace :: Runtime.RuntimeStackTrace
 } deriving (Generic, Eq, Show, Read)
@@ -740,25 +721,28 @@ instance FromJSON  DebuggerGetStackTrace where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance Command PDebuggerGetStackTrace where
-    type CommandResponse PDebuggerGetStackTrace = DebuggerGetStackTrace
-    commandName _ = "Debugger.getStackTrace"
+   type CommandResponse PDebuggerGetStackTrace = DebuggerGetStackTrace
+   commandName _ = "Debugger.getStackTrace"
 
 
--- | Parameters of the 'debuggerPause' command.
+
+-- | Debugger.pause
+--   Stops on the next JavaScript statement.
+
+-- | Parameters of the 'Debugger.pause' command.
 data PDebuggerPause = PDebuggerPause
 instance ToJSON PDebuggerPause where toJSON _ = A.Null
 
--- | Function for the 'Debugger.pause' command.
---   Stops on the next JavaScript statement.
-debuggerPause :: Handle -> IO ()
-debuggerPause handle = sendReceiveCommand handle PDebuggerPause
-
 instance Command PDebuggerPause where
-    type CommandResponse PDebuggerPause = NoResponse
-    commandName _ = "Debugger.pause"
+   type CommandResponse PDebuggerPause = ()
+   commandName _ = "Debugger.pause"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'debuggerRemoveBreakpoint' command.
+-- | Debugger.removeBreakpoint
+--   Removes JavaScript breakpoint.
+
+-- | Parameters of the 'Debugger.removeBreakpoint' command.
 data PDebuggerRemoveBreakpoint = PDebuggerRemoveBreakpoint {
   pDebuggerRemoveBreakpointBreakpointId :: DebuggerBreakpointId
 } deriving (Generic, Eq, Show, Read)
@@ -769,18 +753,16 @@ instance FromJSON  PDebuggerRemoveBreakpoint where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the 'Debugger.removeBreakpoint' command.
---   Removes JavaScript breakpoint.
---   Returns: 'PDebuggerRemoveBreakpoint'
-debuggerRemoveBreakpoint :: Handle -> PDebuggerRemoveBreakpoint -> IO ()
-debuggerRemoveBreakpoint handle params = sendReceiveCommand handle params
-
 instance Command PDebuggerRemoveBreakpoint where
-    type CommandResponse PDebuggerRemoveBreakpoint = NoResponse
-    commandName _ = "Debugger.removeBreakpoint"
+   type CommandResponse PDebuggerRemoveBreakpoint = ()
+   commandName _ = "Debugger.removeBreakpoint"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'debuggerResume' command.
+-- | Debugger.resume
+--   Resumes JavaScript execution.
+
+-- | Parameters of the 'Debugger.resume' command.
 data PDebuggerResume = PDebuggerResume {
   -- | Set to true to terminate execution upon resuming execution. In contrast
   --   to Runtime.terminateExecution, this will allows to execute further
@@ -796,18 +778,16 @@ instance FromJSON  PDebuggerResume where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
 
 
--- | Function for the 'Debugger.resume' command.
---   Resumes JavaScript execution.
---   Returns: 'PDebuggerResume'
-debuggerResume :: Handle -> PDebuggerResume -> IO ()
-debuggerResume handle params = sendReceiveCommand handle params
-
 instance Command PDebuggerResume where
-    type CommandResponse PDebuggerResume = NoResponse
-    commandName _ = "Debugger.resume"
+   type CommandResponse PDebuggerResume = ()
+   commandName _ = "Debugger.resume"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'debuggerSearchInContent' command.
+-- | Debugger.searchInContent
+--   Searches for given string in script content.
+
+-- | Parameters of the 'Debugger.searchInContent' command.
 data PDebuggerSearchInContent = PDebuggerSearchInContent {
   -- | Id of the script to search in.
   pDebuggerSearchInContentScriptId :: Runtime.RuntimeScriptId,
@@ -825,14 +805,7 @@ instance FromJSON  PDebuggerSearchInContent where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the 'Debugger.searchInContent' command.
---   Searches for given string in script content.
---   Returns: 'PDebuggerSearchInContent'
---   Returns: 'DebuggerSearchInContent'
-debuggerSearchInContent :: Handle -> PDebuggerSearchInContent -> IO DebuggerSearchInContent
-debuggerSearchInContent handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'debuggerSearchInContent' command.
+-- | Return type of the 'Debugger.searchInContent' command.
 data DebuggerSearchInContent = DebuggerSearchInContent {
   -- | List of search matches.
   debuggerSearchInContentResult :: [DebuggerSearchMatch]
@@ -842,11 +815,15 @@ instance FromJSON  DebuggerSearchInContent where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 instance Command PDebuggerSearchInContent where
-    type CommandResponse PDebuggerSearchInContent = DebuggerSearchInContent
-    commandName _ = "Debugger.searchInContent"
+   type CommandResponse PDebuggerSearchInContent = DebuggerSearchInContent
+   commandName _ = "Debugger.searchInContent"
 
 
--- | Parameters of the 'debuggerSetAsyncCallStackDepth' command.
+
+-- | Debugger.setAsyncCallStackDepth
+--   Enables or disables async call stacks tracking.
+
+-- | Parameters of the 'Debugger.setAsyncCallStackDepth' command.
 data PDebuggerSetAsyncCallStackDepth = PDebuggerSetAsyncCallStackDepth {
   -- | Maximum depth of async call stacks. Setting to `0` will effectively disable collecting async
   --   call stacks (default).
@@ -859,18 +836,18 @@ instance FromJSON  PDebuggerSetAsyncCallStackDepth where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
--- | Function for the 'Debugger.setAsyncCallStackDepth' command.
---   Enables or disables async call stacks tracking.
---   Returns: 'PDebuggerSetAsyncCallStackDepth'
-debuggerSetAsyncCallStackDepth :: Handle -> PDebuggerSetAsyncCallStackDepth -> IO ()
-debuggerSetAsyncCallStackDepth handle params = sendReceiveCommand handle params
-
 instance Command PDebuggerSetAsyncCallStackDepth where
-    type CommandResponse PDebuggerSetAsyncCallStackDepth = NoResponse
-    commandName _ = "Debugger.setAsyncCallStackDepth"
+   type CommandResponse PDebuggerSetAsyncCallStackDepth = ()
+   commandName _ = "Debugger.setAsyncCallStackDepth"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'debuggerSetBlackboxPatterns' command.
+-- | Debugger.setBlackboxPatterns
+--   Replace previous blackbox patterns with passed ones. Forces backend to skip stepping/pausing in
+--   scripts with url matching one of the patterns. VM will try to leave blackboxed script by
+--   performing 'step in' several times, finally resorting to 'step out' if unsuccessful.
+
+-- | Parameters of the 'Debugger.setBlackboxPatterns' command.
 data PDebuggerSetBlackboxPatterns = PDebuggerSetBlackboxPatterns {
   -- | Array of regexps that will be used to check script url for blackbox state.
   pDebuggerSetBlackboxPatternsPatterns :: [String]
@@ -882,20 +859,19 @@ instance FromJSON  PDebuggerSetBlackboxPatterns where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
--- | Function for the 'Debugger.setBlackboxPatterns' command.
---   Replace previous blackbox patterns with passed ones. Forces backend to skip stepping/pausing in
---   scripts with url matching one of the patterns. VM will try to leave blackboxed script by
---   performing 'step in' several times, finally resorting to 'step out' if unsuccessful.
---   Returns: 'PDebuggerSetBlackboxPatterns'
-debuggerSetBlackboxPatterns :: Handle -> PDebuggerSetBlackboxPatterns -> IO ()
-debuggerSetBlackboxPatterns handle params = sendReceiveCommand handle params
-
 instance Command PDebuggerSetBlackboxPatterns where
-    type CommandResponse PDebuggerSetBlackboxPatterns = NoResponse
-    commandName _ = "Debugger.setBlackboxPatterns"
+   type CommandResponse PDebuggerSetBlackboxPatterns = ()
+   commandName _ = "Debugger.setBlackboxPatterns"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'debuggerSetBlackboxedRanges' command.
+-- | Debugger.setBlackboxedRanges
+--   Makes backend skip steps in the script in blackboxed ranges. VM will try leave blacklisted
+--   scripts by performing 'step in' several times, finally resorting to 'step out' if unsuccessful.
+--   Positions array contains positions where blackbox state is changed. First interval isn't
+--   blackboxed. Array should be sorted.
+
+-- | Parameters of the 'Debugger.setBlackboxedRanges' command.
 data PDebuggerSetBlackboxedRanges = PDebuggerSetBlackboxedRanges {
   -- | Id of the script.
   pDebuggerSetBlackboxedRangesScriptId :: Runtime.RuntimeScriptId,
@@ -908,21 +884,16 @@ instance FromJSON  PDebuggerSetBlackboxedRanges where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
--- | Function for the 'Debugger.setBlackboxedRanges' command.
---   Makes backend skip steps in the script in blackboxed ranges. VM will try leave blacklisted
---   scripts by performing 'step in' several times, finally resorting to 'step out' if unsuccessful.
---   Positions array contains positions where blackbox state is changed. First interval isn't
---   blackboxed. Array should be sorted.
---   Returns: 'PDebuggerSetBlackboxedRanges'
-debuggerSetBlackboxedRanges :: Handle -> PDebuggerSetBlackboxedRanges -> IO ()
-debuggerSetBlackboxedRanges handle params = sendReceiveCommand handle params
-
 instance Command PDebuggerSetBlackboxedRanges where
-    type CommandResponse PDebuggerSetBlackboxedRanges = NoResponse
-    commandName _ = "Debugger.setBlackboxedRanges"
+   type CommandResponse PDebuggerSetBlackboxedRanges = ()
+   commandName _ = "Debugger.setBlackboxedRanges"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'debuggerSetBreakpoint' command.
+-- | Debugger.setBreakpoint
+--   Sets JavaScript breakpoint at a given location.
+
+-- | Parameters of the 'Debugger.setBreakpoint' command.
 data PDebuggerSetBreakpoint = PDebuggerSetBreakpoint {
   -- | Location to set breakpoint in.
   pDebuggerSetBreakpointLocation :: DebuggerLocation,
@@ -937,14 +908,7 @@ instance FromJSON  PDebuggerSetBreakpoint where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
--- | Function for the 'Debugger.setBreakpoint' command.
---   Sets JavaScript breakpoint at a given location.
---   Returns: 'PDebuggerSetBreakpoint'
---   Returns: 'DebuggerSetBreakpoint'
-debuggerSetBreakpoint :: Handle -> PDebuggerSetBreakpoint -> IO DebuggerSetBreakpoint
-debuggerSetBreakpoint handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'debuggerSetBreakpoint' command.
+-- | Return type of the 'Debugger.setBreakpoint' command.
 data DebuggerSetBreakpoint = DebuggerSetBreakpoint {
   -- | Id of the created breakpoint for further reference.
   debuggerSetBreakpointBreakpointId :: DebuggerBreakpointId,
@@ -956,11 +920,15 @@ instance FromJSON  DebuggerSetBreakpoint where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance Command PDebuggerSetBreakpoint where
-    type CommandResponse PDebuggerSetBreakpoint = DebuggerSetBreakpoint
-    commandName _ = "Debugger.setBreakpoint"
+   type CommandResponse PDebuggerSetBreakpoint = DebuggerSetBreakpoint
+   commandName _ = "Debugger.setBreakpoint"
 
 
--- | Parameters of the 'debuggerSetInstrumentationBreakpoint' command.
+
+-- | Debugger.setInstrumentationBreakpoint
+--   Sets instrumentation breakpoint.
+
+-- | Parameters of the 'Debugger.setInstrumentationBreakpoint' command.
 data PDebuggerSetInstrumentationBreakpointInstrumentation = PDebuggerSetInstrumentationBreakpointInstrumentationBeforeScriptExecution | PDebuggerSetInstrumentationBreakpointInstrumentationBeforeScriptWithSourceMapExecution
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PDebuggerSetInstrumentationBreakpointInstrumentation where
@@ -989,14 +957,7 @@ instance FromJSON  PDebuggerSetInstrumentationBreakpoint where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 }
 
 
--- | Function for the 'Debugger.setInstrumentationBreakpoint' command.
---   Sets instrumentation breakpoint.
---   Returns: 'PDebuggerSetInstrumentationBreakpoint'
---   Returns: 'DebuggerSetInstrumentationBreakpoint'
-debuggerSetInstrumentationBreakpoint :: Handle -> PDebuggerSetInstrumentationBreakpoint -> IO DebuggerSetInstrumentationBreakpoint
-debuggerSetInstrumentationBreakpoint handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'debuggerSetInstrumentationBreakpoint' command.
+-- | Return type of the 'Debugger.setInstrumentationBreakpoint' command.
 data DebuggerSetInstrumentationBreakpoint = DebuggerSetInstrumentationBreakpoint {
   -- | Id of the created breakpoint for further reference.
   debuggerSetInstrumentationBreakpointBreakpointId :: DebuggerBreakpointId
@@ -1006,11 +967,18 @@ instance FromJSON  DebuggerSetInstrumentationBreakpoint where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 }
 
 instance Command PDebuggerSetInstrumentationBreakpoint where
-    type CommandResponse PDebuggerSetInstrumentationBreakpoint = DebuggerSetInstrumentationBreakpoint
-    commandName _ = "Debugger.setInstrumentationBreakpoint"
+   type CommandResponse PDebuggerSetInstrumentationBreakpoint = DebuggerSetInstrumentationBreakpoint
+   commandName _ = "Debugger.setInstrumentationBreakpoint"
 
 
--- | Parameters of the 'debuggerSetBreakpointByUrl' command.
+
+-- | Debugger.setBreakpointByUrl
+--   Sets JavaScript breakpoint at given location specified either by URL or URL regex. Once this
+--   command is issued, all existing parsed scripts will have breakpoints resolved and returned in
+--   `locations` property. Further matching script parsing will result in subsequent
+--   `breakpointResolved` events issued. This logical breakpoint will survive page reloads.
+
+-- | Parameters of the 'Debugger.setBreakpointByUrl' command.
 data PDebuggerSetBreakpointByUrl = PDebuggerSetBreakpointByUrl {
   -- | Line number to set breakpoint at.
   pDebuggerSetBreakpointByUrlLineNumber :: Int,
@@ -1034,17 +1002,7 @@ instance FromJSON  PDebuggerSetBreakpointByUrl where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
--- | Function for the 'Debugger.setBreakpointByUrl' command.
---   Sets JavaScript breakpoint at given location specified either by URL or URL regex. Once this
---   command is issued, all existing parsed scripts will have breakpoints resolved and returned in
---   `locations` property. Further matching script parsing will result in subsequent
---   `breakpointResolved` events issued. This logical breakpoint will survive page reloads.
---   Returns: 'PDebuggerSetBreakpointByUrl'
---   Returns: 'DebuggerSetBreakpointByUrl'
-debuggerSetBreakpointByUrl :: Handle -> PDebuggerSetBreakpointByUrl -> IO DebuggerSetBreakpointByUrl
-debuggerSetBreakpointByUrl handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'debuggerSetBreakpointByUrl' command.
+-- | Return type of the 'Debugger.setBreakpointByUrl' command.
 data DebuggerSetBreakpointByUrl = DebuggerSetBreakpointByUrl {
   -- | Id of the created breakpoint for further reference.
   debuggerSetBreakpointByUrlBreakpointId :: DebuggerBreakpointId,
@@ -1056,11 +1014,17 @@ instance FromJSON  DebuggerSetBreakpointByUrl where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 instance Command PDebuggerSetBreakpointByUrl where
-    type CommandResponse PDebuggerSetBreakpointByUrl = DebuggerSetBreakpointByUrl
-    commandName _ = "Debugger.setBreakpointByUrl"
+   type CommandResponse PDebuggerSetBreakpointByUrl = DebuggerSetBreakpointByUrl
+   commandName _ = "Debugger.setBreakpointByUrl"
 
 
--- | Parameters of the 'debuggerSetBreakpointOnFunctionCall' command.
+
+-- | Debugger.setBreakpointOnFunctionCall
+--   Sets JavaScript breakpoint before each call to the given function.
+--   If another function was created from the same source as a given one,
+--   calling it will also trigger the breakpoint.
+
+-- | Parameters of the 'Debugger.setBreakpointOnFunctionCall' command.
 data PDebuggerSetBreakpointOnFunctionCall = PDebuggerSetBreakpointOnFunctionCall {
   -- | Function object id.
   pDebuggerSetBreakpointOnFunctionCallObjectId :: Runtime.RuntimeRemoteObjectId,
@@ -1075,16 +1039,7 @@ instance FromJSON  PDebuggerSetBreakpointOnFunctionCall where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 }
 
 
--- | Function for the 'Debugger.setBreakpointOnFunctionCall' command.
---   Sets JavaScript breakpoint before each call to the given function.
---   If another function was created from the same source as a given one,
---   calling it will also trigger the breakpoint.
---   Returns: 'PDebuggerSetBreakpointOnFunctionCall'
---   Returns: 'DebuggerSetBreakpointOnFunctionCall'
-debuggerSetBreakpointOnFunctionCall :: Handle -> PDebuggerSetBreakpointOnFunctionCall -> IO DebuggerSetBreakpointOnFunctionCall
-debuggerSetBreakpointOnFunctionCall handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'debuggerSetBreakpointOnFunctionCall' command.
+-- | Return type of the 'Debugger.setBreakpointOnFunctionCall' command.
 data DebuggerSetBreakpointOnFunctionCall = DebuggerSetBreakpointOnFunctionCall {
   -- | Id of the created breakpoint for further reference.
   debuggerSetBreakpointOnFunctionCallBreakpointId :: DebuggerBreakpointId
@@ -1094,11 +1049,15 @@ instance FromJSON  DebuggerSetBreakpointOnFunctionCall where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 }
 
 instance Command PDebuggerSetBreakpointOnFunctionCall where
-    type CommandResponse PDebuggerSetBreakpointOnFunctionCall = DebuggerSetBreakpointOnFunctionCall
-    commandName _ = "Debugger.setBreakpointOnFunctionCall"
+   type CommandResponse PDebuggerSetBreakpointOnFunctionCall = DebuggerSetBreakpointOnFunctionCall
+   commandName _ = "Debugger.setBreakpointOnFunctionCall"
 
 
--- | Parameters of the 'debuggerSetBreakpointsActive' command.
+
+-- | Debugger.setBreakpointsActive
+--   Activates / deactivates all breakpoints on the page.
+
+-- | Parameters of the 'Debugger.setBreakpointsActive' command.
 data PDebuggerSetBreakpointsActive = PDebuggerSetBreakpointsActive {
   -- | New value for breakpoints active state.
   pDebuggerSetBreakpointsActiveActive :: Bool
@@ -1110,18 +1069,17 @@ instance FromJSON  PDebuggerSetBreakpointsActive where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
--- | Function for the 'Debugger.setBreakpointsActive' command.
---   Activates / deactivates all breakpoints on the page.
---   Returns: 'PDebuggerSetBreakpointsActive'
-debuggerSetBreakpointsActive :: Handle -> PDebuggerSetBreakpointsActive -> IO ()
-debuggerSetBreakpointsActive handle params = sendReceiveCommand handle params
-
 instance Command PDebuggerSetBreakpointsActive where
-    type CommandResponse PDebuggerSetBreakpointsActive = NoResponse
-    commandName _ = "Debugger.setBreakpointsActive"
+   type CommandResponse PDebuggerSetBreakpointsActive = ()
+   commandName _ = "Debugger.setBreakpointsActive"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'debuggerSetPauseOnExceptions' command.
+-- | Debugger.setPauseOnExceptions
+--   Defines pause on exceptions state. Can be set to stop on all exceptions, uncaught exceptions or
+--   no exceptions. Initial pause on exceptions state is `none`.
+
+-- | Parameters of the 'Debugger.setPauseOnExceptions' command.
 data PDebuggerSetPauseOnExceptionsState = PDebuggerSetPauseOnExceptionsStateNone | PDebuggerSetPauseOnExceptionsStateUncaught | PDebuggerSetPauseOnExceptionsStateAll
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PDebuggerSetPauseOnExceptionsState where
@@ -1152,19 +1110,16 @@ instance FromJSON  PDebuggerSetPauseOnExceptions where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
--- | Function for the 'Debugger.setPauseOnExceptions' command.
---   Defines pause on exceptions state. Can be set to stop on all exceptions, uncaught exceptions or
---   no exceptions. Initial pause on exceptions state is `none`.
---   Returns: 'PDebuggerSetPauseOnExceptions'
-debuggerSetPauseOnExceptions :: Handle -> PDebuggerSetPauseOnExceptions -> IO ()
-debuggerSetPauseOnExceptions handle params = sendReceiveCommand handle params
-
 instance Command PDebuggerSetPauseOnExceptions where
-    type CommandResponse PDebuggerSetPauseOnExceptions = NoResponse
-    commandName _ = "Debugger.setPauseOnExceptions"
+   type CommandResponse PDebuggerSetPauseOnExceptions = ()
+   commandName _ = "Debugger.setPauseOnExceptions"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'debuggerSetReturnValue' command.
+-- | Debugger.setReturnValue
+--   Changes return value in top frame. Available only at return break position.
+
+-- | Parameters of the 'Debugger.setReturnValue' command.
 data PDebuggerSetReturnValue = PDebuggerSetReturnValue {
   -- | New return value.
   pDebuggerSetReturnValueNewValue :: Runtime.RuntimeCallArgument
@@ -1176,18 +1131,16 @@ instance FromJSON  PDebuggerSetReturnValue where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
--- | Function for the 'Debugger.setReturnValue' command.
---   Changes return value in top frame. Available only at return break position.
---   Returns: 'PDebuggerSetReturnValue'
-debuggerSetReturnValue :: Handle -> PDebuggerSetReturnValue -> IO ()
-debuggerSetReturnValue handle params = sendReceiveCommand handle params
-
 instance Command PDebuggerSetReturnValue where
-    type CommandResponse PDebuggerSetReturnValue = NoResponse
-    commandName _ = "Debugger.setReturnValue"
+   type CommandResponse PDebuggerSetReturnValue = ()
+   commandName _ = "Debugger.setReturnValue"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'debuggerSetScriptSource' command.
+-- | Debugger.setScriptSource
+--   Edits JavaScript source live.
+
+-- | Parameters of the 'Debugger.setScriptSource' command.
 data PDebuggerSetScriptSource = PDebuggerSetScriptSource {
   -- | Id of the script to edit.
   pDebuggerSetScriptSourceScriptId :: Runtime.RuntimeScriptId,
@@ -1204,14 +1157,7 @@ instance FromJSON  PDebuggerSetScriptSource where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the 'Debugger.setScriptSource' command.
---   Edits JavaScript source live.
---   Returns: 'PDebuggerSetScriptSource'
---   Returns: 'DebuggerSetScriptSource'
-debuggerSetScriptSource :: Handle -> PDebuggerSetScriptSource -> IO DebuggerSetScriptSource
-debuggerSetScriptSource handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'debuggerSetScriptSource' command.
+-- | Return type of the 'Debugger.setScriptSource' command.
 data DebuggerSetScriptSource = DebuggerSetScriptSource {
   -- | New stack trace in case editing has happened while VM was stopped.
   debuggerSetScriptSourceCallFrames :: Maybe [DebuggerCallFrame],
@@ -1229,11 +1175,15 @@ instance FromJSON  DebuggerSetScriptSource where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 instance Command PDebuggerSetScriptSource where
-    type CommandResponse PDebuggerSetScriptSource = DebuggerSetScriptSource
-    commandName _ = "Debugger.setScriptSource"
+   type CommandResponse PDebuggerSetScriptSource = DebuggerSetScriptSource
+   commandName _ = "Debugger.setScriptSource"
 
 
--- | Parameters of the 'debuggerSetSkipAllPauses' command.
+
+-- | Debugger.setSkipAllPauses
+--   Makes page not interrupt on any pauses (breakpoint, exception, dom exception etc).
+
+-- | Parameters of the 'Debugger.setSkipAllPauses' command.
 data PDebuggerSetSkipAllPauses = PDebuggerSetSkipAllPauses {
   -- | New value for skip pauses state.
   pDebuggerSetSkipAllPausesSkip :: Bool
@@ -1245,18 +1195,17 @@ instance FromJSON  PDebuggerSetSkipAllPauses where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the 'Debugger.setSkipAllPauses' command.
---   Makes page not interrupt on any pauses (breakpoint, exception, dom exception etc).
---   Returns: 'PDebuggerSetSkipAllPauses'
-debuggerSetSkipAllPauses :: Handle -> PDebuggerSetSkipAllPauses -> IO ()
-debuggerSetSkipAllPauses handle params = sendReceiveCommand handle params
-
 instance Command PDebuggerSetSkipAllPauses where
-    type CommandResponse PDebuggerSetSkipAllPauses = NoResponse
-    commandName _ = "Debugger.setSkipAllPauses"
+   type CommandResponse PDebuggerSetSkipAllPauses = ()
+   commandName _ = "Debugger.setSkipAllPauses"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'debuggerSetVariableValue' command.
+-- | Debugger.setVariableValue
+--   Changes value of variable in a callframe. Object-based scopes are not supported and must be
+--   mutated manually.
+
+-- | Parameters of the 'Debugger.setVariableValue' command.
 data PDebuggerSetVariableValue = PDebuggerSetVariableValue {
   -- | 0-based number of scope as was listed in scope chain. Only 'local', 'closure' and 'catch'
   --   scope types are allowed. Other scopes could be manipulated manually.
@@ -1275,19 +1224,16 @@ instance FromJSON  PDebuggerSetVariableValue where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the 'Debugger.setVariableValue' command.
---   Changes value of variable in a callframe. Object-based scopes are not supported and must be
---   mutated manually.
---   Returns: 'PDebuggerSetVariableValue'
-debuggerSetVariableValue :: Handle -> PDebuggerSetVariableValue -> IO ()
-debuggerSetVariableValue handle params = sendReceiveCommand handle params
-
 instance Command PDebuggerSetVariableValue where
-    type CommandResponse PDebuggerSetVariableValue = NoResponse
-    commandName _ = "Debugger.setVariableValue"
+   type CommandResponse PDebuggerSetVariableValue = ()
+   commandName _ = "Debugger.setVariableValue"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'debuggerStepInto' command.
+-- | Debugger.stepInto
+--   Steps into the function call.
+
+-- | Parameters of the 'Debugger.stepInto' command.
 data PDebuggerStepInto = PDebuggerStepInto {
   -- | Debugger will pause on the execution of the first async task which was scheduled
   --   before next pause.
@@ -1302,32 +1248,29 @@ instance FromJSON  PDebuggerStepInto where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
--- | Function for the 'Debugger.stepInto' command.
---   Steps into the function call.
---   Returns: 'PDebuggerStepInto'
-debuggerStepInto :: Handle -> PDebuggerStepInto -> IO ()
-debuggerStepInto handle params = sendReceiveCommand handle params
-
 instance Command PDebuggerStepInto where
-    type CommandResponse PDebuggerStepInto = NoResponse
-    commandName _ = "Debugger.stepInto"
+   type CommandResponse PDebuggerStepInto = ()
+   commandName _ = "Debugger.stepInto"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'debuggerStepOut' command.
+-- | Debugger.stepOut
+--   Steps out of the function call.
+
+-- | Parameters of the 'Debugger.stepOut' command.
 data PDebuggerStepOut = PDebuggerStepOut
 instance ToJSON PDebuggerStepOut where toJSON _ = A.Null
 
--- | Function for the 'Debugger.stepOut' command.
---   Steps out of the function call.
-debuggerStepOut :: Handle -> IO ()
-debuggerStepOut handle = sendReceiveCommand handle PDebuggerStepOut
-
 instance Command PDebuggerStepOut where
-    type CommandResponse PDebuggerStepOut = NoResponse
-    commandName _ = "Debugger.stepOut"
+   type CommandResponse PDebuggerStepOut = ()
+   commandName _ = "Debugger.stepOut"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'debuggerStepOver' command.
+-- | Debugger.stepOver
+--   Steps over the statement.
+
+-- | Parameters of the 'Debugger.stepOver' command.
 data PDebuggerStepOver = PDebuggerStepOver {
   -- | The skipList specifies location ranges that should be skipped on step over.
   pDebuggerStepOverSkipList :: Maybe [DebuggerLocationRange]
@@ -1339,15 +1282,10 @@ instance FromJSON  PDebuggerStepOver where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
--- | Function for the 'Debugger.stepOver' command.
---   Steps over the statement.
---   Returns: 'PDebuggerStepOver'
-debuggerStepOver :: Handle -> PDebuggerStepOver -> IO ()
-debuggerStepOver handle params = sendReceiveCommand handle params
-
 instance Command PDebuggerStepOver where
-    type CommandResponse PDebuggerStepOver = NoResponse
-    commandName _ = "Debugger.stepOver"
+   type CommandResponse PDebuggerStepOver = ()
+   commandName _ = "Debugger.stepOver"
+   fromJSON = const . A.Success . const ()
 
 
 

@@ -7,7 +7,7 @@ import Control.Monad (forever)
 
 main :: IO ()
 main = CDP.runClient def $ \handle -> do
-    CDP.pageEnable handle
+    CDP.sendCommand handle CDP.PPageEnable
     sub1 <- CDP.subscribe handle $ \e ->
         putStrLn $ "1: " ++ CDP.pageFrameUrl (CDP.pageFrameNavigatedFrame e)
     _ <- CDP.subscribe handle $ \e -> do

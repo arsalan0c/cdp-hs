@@ -43,7 +43,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 import CDP.Domains.Runtime as Runtime
@@ -58,7 +58,10 @@ type IOStreamHandle = String
 
 
 
--- | Parameters of the 'iOClose' command.
+-- | IO.close
+--   Close the stream, discard any temporary backing storage.
+
+-- | Parameters of the 'IO.close' command.
 data PIOClose = PIOClose {
   -- | Handle of the stream to close.
   pIOCloseHandle :: IOStreamHandle
@@ -70,18 +73,16 @@ instance FromJSON  PIOClose where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 8 }
 
 
--- | Function for the 'IO.close' command.
---   Close the stream, discard any temporary backing storage.
---   Returns: 'PIOClose'
-iOClose :: Handle -> PIOClose -> IO ()
-iOClose handle params = sendReceiveCommand handle params
-
 instance Command PIOClose where
-    type CommandResponse PIOClose = NoResponse
-    commandName _ = "IO.close"
+   type CommandResponse PIOClose = ()
+   commandName _ = "IO.close"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'iORead' command.
+-- | IO.read
+--   Read a chunk of the stream
+
+-- | Parameters of the 'IO.read' command.
 data PIORead = PIORead {
   -- | Handle of the stream to read.
   pIOReadHandle :: IOStreamHandle,
@@ -98,14 +99,7 @@ instance FromJSON  PIORead where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 }
 
 
--- | Function for the 'IO.read' command.
---   Read a chunk of the stream
---   Returns: 'PIORead'
---   Returns: 'IORead'
-iORead :: Handle -> PIORead -> IO IORead
-iORead handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'iORead' command.
+-- | Return type of the 'IO.read' command.
 data IORead = IORead {
   -- | Set if the data is base64-encoded
   iOReadBase64Encoded :: Maybe Bool,
@@ -119,11 +113,15 @@ instance FromJSON  IORead where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 6 }
 
 instance Command PIORead where
-    type CommandResponse PIORead = IORead
-    commandName _ = "IO.read"
+   type CommandResponse PIORead = IORead
+   commandName _ = "IO.read"
 
 
--- | Parameters of the 'iOResolveBlob' command.
+
+-- | IO.resolveBlob
+--   Return UUID of Blob object specified by a remote object id.
+
+-- | Parameters of the 'IO.resolveBlob' command.
 data PIOResolveBlob = PIOResolveBlob {
   -- | Object id of a Blob object wrapper.
   pIOResolveBlobObjectId :: Runtime.RuntimeRemoteObjectId
@@ -135,14 +133,7 @@ instance FromJSON  PIOResolveBlob where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
--- | Function for the 'IO.resolveBlob' command.
---   Return UUID of Blob object specified by a remote object id.
---   Returns: 'PIOResolveBlob'
---   Returns: 'IOResolveBlob'
-iOResolveBlob :: Handle -> PIOResolveBlob -> IO IOResolveBlob
-iOResolveBlob handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'iOResolveBlob' command.
+-- | Return type of the 'IO.resolveBlob' command.
 data IOResolveBlob = IOResolveBlob {
   -- | UUID of the specified Blob.
   iOResolveBlobUuid :: String
@@ -152,8 +143,9 @@ instance FromJSON  IOResolveBlob where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 }
 
 instance Command PIOResolveBlob where
-    type CommandResponse PIOResolveBlob = IOResolveBlob
-    commandName _ = "IO.resolveBlob"
+   type CommandResponse PIOResolveBlob = IOResolveBlob
+   commandName _ = "IO.resolveBlob"
+
 
 
 

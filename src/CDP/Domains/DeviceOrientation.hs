@@ -41,7 +41,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 
@@ -50,21 +50,23 @@ import CDP.Internal.Runtime
 
 
 
--- | Parameters of the 'deviceOrientationClearDeviceOrientationOverride' command.
+-- | DeviceOrientation.clearDeviceOrientationOverride
+--   Clears the overridden Device Orientation.
+
+-- | Parameters of the 'DeviceOrientation.clearDeviceOrientationOverride' command.
 data PDeviceOrientationClearDeviceOrientationOverride = PDeviceOrientationClearDeviceOrientationOverride
 instance ToJSON PDeviceOrientationClearDeviceOrientationOverride where toJSON _ = A.Null
 
--- | Function for the 'DeviceOrientation.clearDeviceOrientationOverride' command.
---   Clears the overridden Device Orientation.
-deviceOrientationClearDeviceOrientationOverride :: Handle -> IO ()
-deviceOrientationClearDeviceOrientationOverride handle = sendReceiveCommand handle PDeviceOrientationClearDeviceOrientationOverride
-
 instance Command PDeviceOrientationClearDeviceOrientationOverride where
-    type CommandResponse PDeviceOrientationClearDeviceOrientationOverride = NoResponse
-    commandName _ = "DeviceOrientation.clearDeviceOrientationOverride"
+   type CommandResponse PDeviceOrientationClearDeviceOrientationOverride = ()
+   commandName _ = "DeviceOrientation.clearDeviceOrientationOverride"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'deviceOrientationSetDeviceOrientationOverride' command.
+-- | DeviceOrientation.setDeviceOrientationOverride
+--   Overrides the Device Orientation.
+
+-- | Parameters of the 'DeviceOrientation.setDeviceOrientationOverride' command.
 data PDeviceOrientationSetDeviceOrientationOverride = PDeviceOrientationSetDeviceOrientationOverride {
   -- | Mock alpha
   pDeviceOrientationSetDeviceOrientationOverrideAlpha :: Double,
@@ -80,15 +82,10 @@ instance FromJSON  PDeviceOrientationSetDeviceOrientationOverride where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 46 }
 
 
--- | Function for the 'DeviceOrientation.setDeviceOrientationOverride' command.
---   Overrides the Device Orientation.
---   Returns: 'PDeviceOrientationSetDeviceOrientationOverride'
-deviceOrientationSetDeviceOrientationOverride :: Handle -> PDeviceOrientationSetDeviceOrientationOverride -> IO ()
-deviceOrientationSetDeviceOrientationOverride handle params = sendReceiveCommand handle params
-
 instance Command PDeviceOrientationSetDeviceOrientationOverride where
-    type CommandResponse PDeviceOrientationSetDeviceOrientationOverride = NoResponse
-    commandName _ = "DeviceOrientation.setDeviceOrientationOverride"
+   type CommandResponse PDeviceOrientationSetDeviceOrientationOverride = ()
+   commandName _ = "DeviceOrientation.setDeviceOrientationOverride"
+   fromJSON = const . A.Success . const ()
 
 
 

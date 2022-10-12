@@ -46,7 +46,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 
@@ -55,7 +55,10 @@ import CDP.Internal.Runtime
 
 
 
--- | Parameters of the 'eventBreakpointsSetInstrumentationBreakpoint' command.
+-- | EventBreakpoints.setInstrumentationBreakpoint
+--   Sets breakpoint on particular native event.
+
+-- | Parameters of the 'EventBreakpoints.setInstrumentationBreakpoint' command.
 data PEventBreakpointsSetInstrumentationBreakpoint = PEventBreakpointsSetInstrumentationBreakpoint {
   -- | Instrumentation name to stop on.
   pEventBreakpointsSetInstrumentationBreakpointEventName :: String
@@ -67,18 +70,16 @@ instance FromJSON  PEventBreakpointsSetInstrumentationBreakpoint where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 45 }
 
 
--- | Function for the 'EventBreakpoints.setInstrumentationBreakpoint' command.
---   Sets breakpoint on particular native event.
---   Returns: 'PEventBreakpointsSetInstrumentationBreakpoint'
-eventBreakpointsSetInstrumentationBreakpoint :: Handle -> PEventBreakpointsSetInstrumentationBreakpoint -> IO ()
-eventBreakpointsSetInstrumentationBreakpoint handle params = sendReceiveCommand handle params
-
 instance Command PEventBreakpointsSetInstrumentationBreakpoint where
-    type CommandResponse PEventBreakpointsSetInstrumentationBreakpoint = NoResponse
-    commandName _ = "EventBreakpoints.setInstrumentationBreakpoint"
+   type CommandResponse PEventBreakpointsSetInstrumentationBreakpoint = ()
+   commandName _ = "EventBreakpoints.setInstrumentationBreakpoint"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'eventBreakpointsRemoveInstrumentationBreakpoint' command.
+-- | EventBreakpoints.removeInstrumentationBreakpoint
+--   Removes breakpoint on particular native event.
+
+-- | Parameters of the 'EventBreakpoints.removeInstrumentationBreakpoint' command.
 data PEventBreakpointsRemoveInstrumentationBreakpoint = PEventBreakpointsRemoveInstrumentationBreakpoint {
   -- | Instrumentation name to stop on.
   pEventBreakpointsRemoveInstrumentationBreakpointEventName :: String
@@ -90,15 +91,10 @@ instance FromJSON  PEventBreakpointsRemoveInstrumentationBreakpoint where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 48 }
 
 
--- | Function for the 'EventBreakpoints.removeInstrumentationBreakpoint' command.
---   Removes breakpoint on particular native event.
---   Returns: 'PEventBreakpointsRemoveInstrumentationBreakpoint'
-eventBreakpointsRemoveInstrumentationBreakpoint :: Handle -> PEventBreakpointsRemoveInstrumentationBreakpoint -> IO ()
-eventBreakpointsRemoveInstrumentationBreakpoint handle params = sendReceiveCommand handle params
-
 instance Command PEventBreakpointsRemoveInstrumentationBreakpoint where
-    type CommandResponse PEventBreakpointsRemoveInstrumentationBreakpoint = NoResponse
-    commandName _ = "EventBreakpoints.removeInstrumentationBreakpoint"
+   type CommandResponse PEventBreakpointsRemoveInstrumentationBreakpoint = ()
+   commandName _ = "EventBreakpoints.removeInstrumentationBreakpoint"
+   fromJSON = const . A.Success . const ()
 
 
 

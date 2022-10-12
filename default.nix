@@ -8,9 +8,9 @@ let
 
   myHaskellPackages = pkgs.haskell.packages.${compiler}.override {
     overrides = hself: hsuper: {
-      "cdp-gen" =
+      "cdp" =
         hself.callCabal2nix
-          "cdp-gen"
+          "cdp"
           (gitignore ./.)
           {};
     };
@@ -18,7 +18,7 @@ let
 
   shell = myHaskellPackages.shellFor {
     packages = p: [
-      p."cdp-gen"
+      p."cdp"
     ];
     buildInputs = [
       myHaskellPackages.haskell-language-server
@@ -36,7 +36,7 @@ let
   exe = pkgs.haskell.lib.justStaticExecutables (myHaskellPackages."cdp-gen");
 
   docker = pkgs.dockerTools.buildImage {
-    name = "cdp-gen";
+    name = "cdp";
     config.Cmd = [ "${exe}/bin/cdp-gen" ];
   };
 in
@@ -45,5 +45,5 @@ in
   inherit exe;
   inherit docker;
   inherit myHaskellPackages;
-  "cdp-gen" = myHaskellPackages."cdp-gen";
+  "cdp" = myHaskellPackages."cdp";
 }

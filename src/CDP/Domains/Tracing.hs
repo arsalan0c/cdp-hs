@@ -41,7 +41,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 import CDP.Domains.IO as IO
@@ -247,31 +247,27 @@ instance Event TracingTracingComplete where
 
 
 
--- | Parameters of the 'tracingEnd' command.
+-- | Tracing.end
+--   Stop trace events collection.
+
+-- | Parameters of the 'Tracing.end' command.
 data PTracingEnd = PTracingEnd
 instance ToJSON PTracingEnd where toJSON _ = A.Null
 
--- | Function for the 'Tracing.end' command.
---   Stop trace events collection.
-tracingEnd :: Handle -> IO ()
-tracingEnd handle = sendReceiveCommand handle PTracingEnd
-
 instance Command PTracingEnd where
-    type CommandResponse PTracingEnd = NoResponse
-    commandName _ = "Tracing.end"
+   type CommandResponse PTracingEnd = ()
+   commandName _ = "Tracing.end"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'tracingGetCategories' command.
+-- | Tracing.getCategories
+--   Gets supported tracing categories.
+
+-- | Parameters of the 'Tracing.getCategories' command.
 data PTracingGetCategories = PTracingGetCategories
 instance ToJSON PTracingGetCategories where toJSON _ = A.Null
 
--- | Function for the 'Tracing.getCategories' command.
---   Gets supported tracing categories.
---   Returns: 'TracingGetCategories'
-tracingGetCategories :: Handle -> IO TracingGetCategories
-tracingGetCategories handle = sendReceiveCommandResult handle PTracingGetCategories
-
--- | Return type of the 'tracingGetCategories' command.
+-- | Return type of the 'Tracing.getCategories' command.
 data TracingGetCategories = TracingGetCategories {
   -- | A list of supported tracing categories.
   tracingGetCategoriesCategories :: [String]
@@ -281,11 +277,15 @@ instance FromJSON  TracingGetCategories where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 instance Command PTracingGetCategories where
-    type CommandResponse PTracingGetCategories = TracingGetCategories
-    commandName _ = "Tracing.getCategories"
+   type CommandResponse PTracingGetCategories = TracingGetCategories
+   commandName _ = "Tracing.getCategories"
 
 
--- | Parameters of the 'tracingRecordClockSyncMarker' command.
+
+-- | Tracing.recordClockSyncMarker
+--   Record a clock sync marker in the trace.
+
+-- | Parameters of the 'Tracing.recordClockSyncMarker' command.
 data PTracingRecordClockSyncMarker = PTracingRecordClockSyncMarker {
   -- | The ID of this clock sync marker
   pTracingRecordClockSyncMarkerSyncId :: String
@@ -297,18 +297,16 @@ instance FromJSON  PTracingRecordClockSyncMarker where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
--- | Function for the 'Tracing.recordClockSyncMarker' command.
---   Record a clock sync marker in the trace.
---   Returns: 'PTracingRecordClockSyncMarker'
-tracingRecordClockSyncMarker :: Handle -> PTracingRecordClockSyncMarker -> IO ()
-tracingRecordClockSyncMarker handle params = sendReceiveCommand handle params
-
 instance Command PTracingRecordClockSyncMarker where
-    type CommandResponse PTracingRecordClockSyncMarker = NoResponse
-    commandName _ = "Tracing.recordClockSyncMarker"
+   type CommandResponse PTracingRecordClockSyncMarker = ()
+   commandName _ = "Tracing.recordClockSyncMarker"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'tracingRequestMemoryDump' command.
+-- | Tracing.requestMemoryDump
+--   Request a global memory dump.
+
+-- | Parameters of the 'Tracing.requestMemoryDump' command.
 data PTracingRequestMemoryDump = PTracingRequestMemoryDump {
   -- | Enables more deterministic results by forcing garbage collection
   pTracingRequestMemoryDumpDeterministic :: Maybe Bool,
@@ -322,14 +320,7 @@ instance FromJSON  PTracingRequestMemoryDump where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the 'Tracing.requestMemoryDump' command.
---   Request a global memory dump.
---   Returns: 'PTracingRequestMemoryDump'
---   Returns: 'TracingRequestMemoryDump'
-tracingRequestMemoryDump :: Handle -> PTracingRequestMemoryDump -> IO TracingRequestMemoryDump
-tracingRequestMemoryDump handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'tracingRequestMemoryDump' command.
+-- | Return type of the 'Tracing.requestMemoryDump' command.
 data TracingRequestMemoryDump = TracingRequestMemoryDump {
   -- | GUID of the resulting global memory dump.
   tracingRequestMemoryDumpDumpGuid :: String,
@@ -341,11 +332,15 @@ instance FromJSON  TracingRequestMemoryDump where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance Command PTracingRequestMemoryDump where
-    type CommandResponse PTracingRequestMemoryDump = TracingRequestMemoryDump
-    commandName _ = "Tracing.requestMemoryDump"
+   type CommandResponse PTracingRequestMemoryDump = TracingRequestMemoryDump
+   commandName _ = "Tracing.requestMemoryDump"
 
 
--- | Parameters of the 'tracingStart' command.
+
+-- | Tracing.start
+--   Start trace events collection.
+
+-- | Parameters of the 'Tracing.start' command.
 data PTracingStartTransferMode = PTracingStartTransferModeReportEvents | PTracingStartTransferModeReturnAsStream
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PTracingStartTransferMode where
@@ -390,15 +385,10 @@ instance FromJSON  PTracingStart where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 }
 
 
--- | Function for the 'Tracing.start' command.
---   Start trace events collection.
---   Returns: 'PTracingStart'
-tracingStart :: Handle -> PTracingStart -> IO ()
-tracingStart handle params = sendReceiveCommand handle params
-
 instance Command PTracingStart where
-    type CommandResponse PTracingStart = NoResponse
-    commandName _ = "Tracing.start"
+   type CommandResponse PTracingStart = ()
+   commandName _ = "Tracing.start"
+   fromJSON = const . A.Success . const ()
 
 
 

@@ -43,7 +43,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
@@ -246,21 +246,24 @@ instance Event FetchAuthRequired where
 
 
 
--- | Parameters of the 'fetchDisable' command.
+-- | Fetch.disable
+--   Disables the fetch domain.
+
+-- | Parameters of the 'Fetch.disable' command.
 data PFetchDisable = PFetchDisable
 instance ToJSON PFetchDisable where toJSON _ = A.Null
 
--- | Function for the 'Fetch.disable' command.
---   Disables the fetch domain.
-fetchDisable :: Handle -> IO ()
-fetchDisable handle = sendReceiveCommand handle PFetchDisable
-
 instance Command PFetchDisable where
-    type CommandResponse PFetchDisable = NoResponse
-    commandName _ = "Fetch.disable"
+   type CommandResponse PFetchDisable = ()
+   commandName _ = "Fetch.disable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'fetchEnable' command.
+-- | Fetch.enable
+--   Enables issuing of requestPaused events. A request will be paused until client
+--   calls one of failRequest, fulfillRequest or continueRequest/continueWithAuth.
+
+-- | Parameters of the 'Fetch.enable' command.
 data PFetchEnable = PFetchEnable {
   -- | If specified, only requests matching any of these patterns will produce
   --   fetchRequested event and will be paused until clients response. If not set,
@@ -277,19 +280,16 @@ instance FromJSON  PFetchEnable where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 12 }
 
 
--- | Function for the 'Fetch.enable' command.
---   Enables issuing of requestPaused events. A request will be paused until client
---   calls one of failRequest, fulfillRequest or continueRequest/continueWithAuth.
---   Returns: 'PFetchEnable'
-fetchEnable :: Handle -> PFetchEnable -> IO ()
-fetchEnable handle params = sendReceiveCommand handle params
-
 instance Command PFetchEnable where
-    type CommandResponse PFetchEnable = NoResponse
-    commandName _ = "Fetch.enable"
+   type CommandResponse PFetchEnable = ()
+   commandName _ = "Fetch.enable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'fetchFailRequest' command.
+-- | Fetch.failRequest
+--   Causes the request to fail with specified reason.
+
+-- | Parameters of the 'Fetch.failRequest' command.
 data PFetchFailRequest = PFetchFailRequest {
   -- | An id the client received in requestPaused event.
   pFetchFailRequestRequestId :: FetchRequestId,
@@ -303,18 +303,16 @@ instance FromJSON  PFetchFailRequest where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
--- | Function for the 'Fetch.failRequest' command.
---   Causes the request to fail with specified reason.
---   Returns: 'PFetchFailRequest'
-fetchFailRequest :: Handle -> PFetchFailRequest -> IO ()
-fetchFailRequest handle params = sendReceiveCommand handle params
-
 instance Command PFetchFailRequest where
-    type CommandResponse PFetchFailRequest = NoResponse
-    commandName _ = "Fetch.failRequest"
+   type CommandResponse PFetchFailRequest = ()
+   commandName _ = "Fetch.failRequest"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'fetchFulfillRequest' command.
+-- | Fetch.fulfillRequest
+--   Provides response to the request.
+
+-- | Parameters of the 'Fetch.fulfillRequest' command.
 data PFetchFulfillRequest = PFetchFulfillRequest {
   -- | An id the client received in requestPaused event.
   pFetchFulfillRequestRequestId :: FetchRequestId,
@@ -342,18 +340,16 @@ instance FromJSON  PFetchFulfillRequest where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
--- | Function for the 'Fetch.fulfillRequest' command.
---   Provides response to the request.
---   Returns: 'PFetchFulfillRequest'
-fetchFulfillRequest :: Handle -> PFetchFulfillRequest -> IO ()
-fetchFulfillRequest handle params = sendReceiveCommand handle params
-
 instance Command PFetchFulfillRequest where
-    type CommandResponse PFetchFulfillRequest = NoResponse
-    commandName _ = "Fetch.fulfillRequest"
+   type CommandResponse PFetchFulfillRequest = ()
+   commandName _ = "Fetch.fulfillRequest"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'fetchContinueRequest' command.
+-- | Fetch.continueRequest
+--   Continues the request, optionally modifying some of its parameters.
+
+-- | Parameters of the 'Fetch.continueRequest' command.
 data PFetchContinueRequest = PFetchContinueRequest {
   -- | An id the client received in requestPaused event.
   pFetchContinueRequestRequestId :: FetchRequestId,
@@ -375,18 +371,16 @@ instance FromJSON  PFetchContinueRequest where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
--- | Function for the 'Fetch.continueRequest' command.
---   Continues the request, optionally modifying some of its parameters.
---   Returns: 'PFetchContinueRequest'
-fetchContinueRequest :: Handle -> PFetchContinueRequest -> IO ()
-fetchContinueRequest handle params = sendReceiveCommand handle params
-
 instance Command PFetchContinueRequest where
-    type CommandResponse PFetchContinueRequest = NoResponse
-    commandName _ = "Fetch.continueRequest"
+   type CommandResponse PFetchContinueRequest = ()
+   commandName _ = "Fetch.continueRequest"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'fetchContinueWithAuth' command.
+-- | Fetch.continueWithAuth
+--   Continues a request supplying authChallengeResponse following authRequired event.
+
+-- | Parameters of the 'Fetch.continueWithAuth' command.
 data PFetchContinueWithAuth = PFetchContinueWithAuth {
   -- | An id the client received in authRequired event.
   pFetchContinueWithAuthRequestId :: FetchRequestId,
@@ -400,18 +394,18 @@ instance FromJSON  PFetchContinueWithAuth where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
--- | Function for the 'Fetch.continueWithAuth' command.
---   Continues a request supplying authChallengeResponse following authRequired event.
---   Returns: 'PFetchContinueWithAuth'
-fetchContinueWithAuth :: Handle -> PFetchContinueWithAuth -> IO ()
-fetchContinueWithAuth handle params = sendReceiveCommand handle params
-
 instance Command PFetchContinueWithAuth where
-    type CommandResponse PFetchContinueWithAuth = NoResponse
-    commandName _ = "Fetch.continueWithAuth"
+   type CommandResponse PFetchContinueWithAuth = ()
+   commandName _ = "Fetch.continueWithAuth"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'fetchContinueResponse' command.
+-- | Fetch.continueResponse
+--   Continues loading of the paused response, optionally modifying the
+--   response headers. If either responseCode or headers are modified, all of them
+--   must be present.
+
+-- | Parameters of the 'Fetch.continueResponse' command.
 data PFetchContinueResponse = PFetchContinueResponse {
   -- | An id the client received in requestPaused event.
   pFetchContinueResponseRequestId :: FetchRequestId,
@@ -435,20 +429,21 @@ instance FromJSON  PFetchContinueResponse where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
--- | Function for the 'Fetch.continueResponse' command.
---   Continues loading of the paused response, optionally modifying the
---   response headers. If either responseCode or headers are modified, all of them
---   must be present.
---   Returns: 'PFetchContinueResponse'
-fetchContinueResponse :: Handle -> PFetchContinueResponse -> IO ()
-fetchContinueResponse handle params = sendReceiveCommand handle params
-
 instance Command PFetchContinueResponse where
-    type CommandResponse PFetchContinueResponse = NoResponse
-    commandName _ = "Fetch.continueResponse"
+   type CommandResponse PFetchContinueResponse = ()
+   commandName _ = "Fetch.continueResponse"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'fetchGetResponseBody' command.
+-- | Fetch.getResponseBody
+--   Causes the body of the response to be received from the server and
+--   returned as a single string. May only be issued for a request that
+--   is paused in the Response stage and is mutually exclusive with
+--   takeResponseBodyForInterceptionAsStream. Calling other methods that
+--   affect the request or disabling fetch domain before body is received
+--   results in an undefined behavior.
+
+-- | Parameters of the 'Fetch.getResponseBody' command.
 data PFetchGetResponseBody = PFetchGetResponseBody {
   -- | Identifier for the intercepted request to get body for.
   pFetchGetResponseBodyRequestId :: FetchRequestId
@@ -460,19 +455,7 @@ instance FromJSON  PFetchGetResponseBody where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
--- | Function for the 'Fetch.getResponseBody' command.
---   Causes the body of the response to be received from the server and
---   returned as a single string. May only be issued for a request that
---   is paused in the Response stage and is mutually exclusive with
---   takeResponseBodyForInterceptionAsStream. Calling other methods that
---   affect the request or disabling fetch domain before body is received
---   results in an undefined behavior.
---   Returns: 'PFetchGetResponseBody'
---   Returns: 'FetchGetResponseBody'
-fetchGetResponseBody :: Handle -> PFetchGetResponseBody -> IO FetchGetResponseBody
-fetchGetResponseBody handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'fetchGetResponseBody' command.
+-- | Return type of the 'Fetch.getResponseBody' command.
 data FetchGetResponseBody = FetchGetResponseBody {
   -- | Response body.
   fetchGetResponseBodyBody :: String,
@@ -484,22 +467,12 @@ instance FromJSON  FetchGetResponseBody where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 instance Command PFetchGetResponseBody where
-    type CommandResponse PFetchGetResponseBody = FetchGetResponseBody
-    commandName _ = "Fetch.getResponseBody"
+   type CommandResponse PFetchGetResponseBody = FetchGetResponseBody
+   commandName _ = "Fetch.getResponseBody"
 
 
--- | Parameters of the 'fetchTakeResponseBodyAsStream' command.
-data PFetchTakeResponseBodyAsStream = PFetchTakeResponseBodyAsStream {
-  pFetchTakeResponseBodyAsStreamRequestId :: FetchRequestId
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PFetchTakeResponseBodyAsStream  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
 
-instance FromJSON  PFetchTakeResponseBodyAsStream where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
-
-
--- | Function for the 'Fetch.takeResponseBodyAsStream' command.
+-- | Fetch.takeResponseBodyAsStream
 --   Returns a handle to the stream representing the response body.
 --   The request must be paused in the HeadersReceived stage.
 --   Note that after this command the request can't be continued
@@ -510,12 +483,19 @@ instance FromJSON  PFetchTakeResponseBodyAsStream where
 --   This method is mutually exclusive with getResponseBody.
 --   Calling other methods that affect the request or disabling fetch
 --   domain before body is received results in an undefined behavior.
---   Returns: 'PFetchTakeResponseBodyAsStream'
---   Returns: 'FetchTakeResponseBodyAsStream'
-fetchTakeResponseBodyAsStream :: Handle -> PFetchTakeResponseBodyAsStream -> IO FetchTakeResponseBodyAsStream
-fetchTakeResponseBodyAsStream handle params = sendReceiveCommandResult handle params
 
--- | Return type of the 'fetchTakeResponseBodyAsStream' command.
+-- | Parameters of the 'Fetch.takeResponseBodyAsStream' command.
+data PFetchTakeResponseBodyAsStream = PFetchTakeResponseBodyAsStream {
+  pFetchTakeResponseBodyAsStreamRequestId :: FetchRequestId
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PFetchTakeResponseBodyAsStream  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
+
+instance FromJSON  PFetchTakeResponseBodyAsStream where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
+
+
+-- | Return type of the 'Fetch.takeResponseBodyAsStream' command.
 data FetchTakeResponseBodyAsStream = FetchTakeResponseBodyAsStream {
   fetchTakeResponseBodyAsStreamStream :: IO.IOStreamHandle
 } deriving (Generic, Eq, Show, Read)
@@ -524,8 +504,9 @@ instance FromJSON  FetchTakeResponseBodyAsStream where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 instance Command PFetchTakeResponseBodyAsStream where
-    type CommandResponse PFetchTakeResponseBodyAsStream = FetchTakeResponseBodyAsStream
-    commandName _ = "Fetch.takeResponseBodyAsStream"
+   type CommandResponse PFetchTakeResponseBodyAsStream = FetchTakeResponseBodyAsStream
+   commandName _ = "Fetch.takeResponseBodyAsStream"
+
 
 
 

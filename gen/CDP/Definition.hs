@@ -20,12 +20,6 @@ import           Data.Monoid((<>))
 import           Data.Text (Text)
 import qualified GHC.Generics
 
-data a :|: b = AltLeft a | AltRight b
-    deriving (Eq, GHC.Generics.Generic, Show)
-
-instance (FromJSON a, FromJSON b) => FromJSON (a :|: b) where
-    parseJSON x = (AltLeft <$> parseJSON x) <|> (AltRight <$> parseJSON x)
-
 data Version = Version { 
     versionMinor :: Text,
     versionMajor :: Text
@@ -38,8 +32,8 @@ instance FromJSON Version where
 
 
 data Items = Items { 
-    itemsType :: (Maybe (Text:|:[(Maybe Value)])),
-    itemsRef :: (Maybe (Text:|:[(Maybe Value)]))
+    itemsType :: Maybe Text,
+    itemsRef :: Maybe Text
   } deriving (Show,Eq,GHC.Generics.Generic)
 
 
@@ -49,14 +43,14 @@ instance FromJSON Items where
 
 
 data ReturnsElt = ReturnsElt { 
-    returnsEltItems :: (Maybe (Items:|:[(Maybe Value)])),
-    returnsEltExperimental :: (Maybe (Bool:|:[(Maybe Value)])),
+    returnsEltItems :: Maybe Items,
+    returnsEltExperimental :: Maybe Bool,
     returnsEltName :: Text,
-    returnsEltType :: (Maybe (Text:|:[(Maybe Value)])),
-    returnsEltOptional :: (Maybe (Bool:|:[(Maybe Value)])),
-    returnsEltRef :: (Maybe (Text:|:[(Maybe Value)])),
-    returnsEltDescription :: (Maybe (Text:|:[(Maybe Value)])),
-    returnsEltDeprecated :: (Maybe (Bool:|:[(Maybe Value)]))
+    returnsEltType :: Maybe Text,
+    returnsEltOptional :: Maybe Bool,
+    returnsEltRef :: Maybe Text,
+    returnsEltDescription :: Maybe Text,
+    returnsEltDeprecated :: Maybe Bool
   } deriving (Show,Eq,GHC.Generics.Generic)
 
 
@@ -66,15 +60,15 @@ instance FromJSON ReturnsElt where
 
 
 data ParametersElt = ParametersElt { 
-    parametersEltItems :: (Maybe (Items:|:[(Maybe Value)])),
-    parametersEltExperimental :: (Maybe (Bool:|:[(Maybe Value)])),
+    parametersEltItems :: Maybe Items,
+    parametersEltExperimental :: Maybe Bool,
     parametersEltName :: Text,
-    parametersEltType :: (Maybe (Text:|:[(Maybe Value)])),
+    parametersEltType :: Maybe Text,
     parametersEltEnum :: (Maybe ([Text])),
-    parametersEltOptional :: (Maybe (Bool:|:[(Maybe Value)])),
-    parametersEltRef :: (Maybe (Text:|:[(Maybe Value)])),
-    parametersEltDescription :: (Maybe (Text:|:[(Maybe Value)])),
-    parametersEltDeprecated :: (Maybe (Bool:|:[(Maybe Value)]))
+    parametersEltOptional :: Maybe Bool,
+    parametersEltRef :: Maybe Text,
+    parametersEltDescription :: Maybe Text,
+    parametersEltDeprecated :: Maybe Bool
   } deriving (Show,Eq,GHC.Generics.Generic)
 
 
@@ -84,13 +78,13 @@ instance FromJSON ParametersElt where
 
 
 data CommandsElt = CommandsElt { 
-    commandsEltExperimental :: (Maybe (Bool:|:[(Maybe Value)])),
+    commandsEltExperimental :: Maybe Bool,
     commandsEltName :: Text,
     commandsEltReturns :: (Maybe ([ReturnsElt])),
     commandsEltParameters :: (Maybe ([ParametersElt])),
-    commandsEltRedirect :: (Maybe (Text:|:[(Maybe Value)])),
-    commandsEltDescription :: (Maybe (Text:|:[(Maybe Value)])),
-    commandsEltDeprecated :: (Maybe (Bool:|:[(Maybe Value)]))
+    commandsEltRedirect :: Maybe Text,
+    commandsEltDescription :: Maybe Text,
+    commandsEltDeprecated :: Maybe Bool
   } deriving (Show,Eq,GHC.Generics.Generic)
 
 
@@ -100,14 +94,14 @@ instance FromJSON CommandsElt where
 
 
 data TypesElt = TypesElt { 
-    typesEltItems :: (Maybe (Items:|:[(Maybe Value)])),
-    typesEltExperimental :: (Maybe (Bool:|:[(Maybe Value)])),
+    typesEltItems :: Maybe Items,
+    typesEltExperimental :: Maybe Bool,
     typesEltId :: Text,
     typesEltType :: Text,
     typesEltEnum :: (Maybe ([Text])),
     typesEltProperties :: (Maybe ([ParametersElt])),
-    typesEltDescription :: (Maybe (Text:|:[(Maybe Value)])),
-    typesEltDeprecated :: (Maybe (Bool:|:[(Maybe Value)]))
+    typesEltDescription :: Maybe Text,
+    typesEltDeprecated :: Maybe Bool
   } deriving (Show,Eq,GHC.Generics.Generic)
 
 
@@ -117,11 +111,11 @@ instance FromJSON TypesElt where
 
 
 data EventsElt = EventsElt { 
-    eventsEltExperimental :: (Maybe (Bool:|:[(Maybe Value)])),
+    eventsEltExperimental :: Maybe Bool,
     eventsEltName :: Text,
     eventsEltParameters :: (Maybe ([ParametersElt])),
-    eventsEltDescription :: (Maybe (Text:|:[(Maybe Value)])),
-    eventsEltDeprecated :: (Maybe (Bool:|:[(Maybe Value)]))
+    eventsEltDescription :: Maybe Text,
+    eventsEltDeprecated :: Maybe Bool
   } deriving (Show,Eq,GHC.Generics.Generic)
 
 
@@ -134,11 +128,11 @@ data DomainsElt = DomainsElt {
     domainsEltCommands :: [CommandsElt],
     domainsEltDomain :: Text,
     domainsEltDependencies :: (Maybe ([Text])),
-    domainsEltExperimental :: (Maybe (Bool:|:[(Maybe Value)])),
+    domainsEltExperimental :: Maybe Bool,
     domainsEltTypes :: (Maybe ([TypesElt])),
     domainsEltEvents :: (Maybe ([EventsElt])),
-    domainsEltDescription :: (Maybe (Text:|:[(Maybe Value)])),
-    domainsEltDeprecated :: (Maybe (Bool:|:[(Maybe Value)]))
+    domainsEltDescription :: Maybe Text,
+    domainsEltDeprecated :: Maybe Bool
   } deriving (Show,Eq,GHC.Generics.Generic)
 
 

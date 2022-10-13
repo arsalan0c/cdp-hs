@@ -8,12 +8,12 @@
 
 
 {- |
-  EventBreakpoints :
-     EventBreakpoints permits setting breakpoints on particular operations and
-     events in targets that run JavaScript but do not have a DOM.
-     JavaScript execution will stop on these operations as if there was a regular
-     breakpoint set.
+= EventBreakpoints
 
+EventBreakpoints permits setting breakpoints on particular operations and
+events in targets that run JavaScript but do not have a DOM.
+JavaScript execution will stop on these operations as if there was a regular
+breakpoint set.
 -}
 
 
@@ -51,50 +51,55 @@ import CDP.Internal.Utils
 
 
 
-
-
-
-
--- | EventBreakpoints.setInstrumentationBreakpoint
---   Sets breakpoint on particular native event.
+-- | Sets breakpoint on particular native event.
 
 -- | Parameters of the 'EventBreakpoints.setInstrumentationBreakpoint' command.
-data PEventBreakpointsSetInstrumentationBreakpoint = PEventBreakpointsSetInstrumentationBreakpoint {
+data PEventBreakpointsSetInstrumentationBreakpoint = PEventBreakpointsSetInstrumentationBreakpoint
+  {
+    -- | Instrumentation name to stop on.
+    pEventBreakpointsSetInstrumentationBreakpointEventName :: String
+  }
+  deriving (Eq, Show)
+pEventBreakpointsSetInstrumentationBreakpoint
   -- | Instrumentation name to stop on.
-  pEventBreakpointsSetInstrumentationBreakpointEventName :: String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PEventBreakpointsSetInstrumentationBreakpoint  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 45 , A.omitNothingFields = True}
-
-instance FromJSON  PEventBreakpointsSetInstrumentationBreakpoint where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 45 }
-
-
+  :: String
+  -> PEventBreakpointsSetInstrumentationBreakpoint
+pEventBreakpointsSetInstrumentationBreakpoint
+  arg_pEventBreakpointsSetInstrumentationBreakpointEventName
+  = PEventBreakpointsSetInstrumentationBreakpoint
+    arg_pEventBreakpointsSetInstrumentationBreakpointEventName
+instance ToJSON PEventBreakpointsSetInstrumentationBreakpoint where
+  toJSON p = A.object $ catMaybes [
+    ("eventName" A..=) <$> Just (pEventBreakpointsSetInstrumentationBreakpointEventName p)
+    ]
 instance Command PEventBreakpointsSetInstrumentationBreakpoint where
-   type CommandResponse PEventBreakpointsSetInstrumentationBreakpoint = ()
-   commandName _ = "EventBreakpoints.setInstrumentationBreakpoint"
-   fromJSON = const . A.Success . const ()
+  type CommandResponse PEventBreakpointsSetInstrumentationBreakpoint = ()
+  commandName _ = "EventBreakpoints.setInstrumentationBreakpoint"
+  fromJSON = const . A.Success . const ()
 
-
--- | EventBreakpoints.removeInstrumentationBreakpoint
---   Removes breakpoint on particular native event.
+-- | Removes breakpoint on particular native event.
 
 -- | Parameters of the 'EventBreakpoints.removeInstrumentationBreakpoint' command.
-data PEventBreakpointsRemoveInstrumentationBreakpoint = PEventBreakpointsRemoveInstrumentationBreakpoint {
+data PEventBreakpointsRemoveInstrumentationBreakpoint = PEventBreakpointsRemoveInstrumentationBreakpoint
+  {
+    -- | Instrumentation name to stop on.
+    pEventBreakpointsRemoveInstrumentationBreakpointEventName :: String
+  }
+  deriving (Eq, Show)
+pEventBreakpointsRemoveInstrumentationBreakpoint
   -- | Instrumentation name to stop on.
-  pEventBreakpointsRemoveInstrumentationBreakpointEventName :: String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PEventBreakpointsRemoveInstrumentationBreakpoint  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 48 , A.omitNothingFields = True}
-
-instance FromJSON  PEventBreakpointsRemoveInstrumentationBreakpoint where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 48 }
-
-
+  :: String
+  -> PEventBreakpointsRemoveInstrumentationBreakpoint
+pEventBreakpointsRemoveInstrumentationBreakpoint
+  arg_pEventBreakpointsRemoveInstrumentationBreakpointEventName
+  = PEventBreakpointsRemoveInstrumentationBreakpoint
+    arg_pEventBreakpointsRemoveInstrumentationBreakpointEventName
+instance ToJSON PEventBreakpointsRemoveInstrumentationBreakpoint where
+  toJSON p = A.object $ catMaybes [
+    ("eventName" A..=) <$> Just (pEventBreakpointsRemoveInstrumentationBreakpointEventName p)
+    ]
 instance Command PEventBreakpointsRemoveInstrumentationBreakpoint where
-   type CommandResponse PEventBreakpointsRemoveInstrumentationBreakpoint = ()
-   commandName _ = "EventBreakpoints.removeInstrumentationBreakpoint"
-   fromJSON = const . A.Success . const ()
-
-
+  type CommandResponse PEventBreakpointsRemoveInstrumentationBreakpoint = ()
+  commandName _ = "EventBreakpoints.removeInstrumentationBreakpoint"
+  fromJSON = const . A.Success . const ()
 

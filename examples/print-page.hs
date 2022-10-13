@@ -25,9 +25,9 @@ main = CDP.runClient def printPDF
 printPDF :: CDP.Handle -> IO ()
 printPDF handle = do
     -- send the Page.printToPDF command
-    r <- CDP.sendCommandWait handle $
-            CDP.PPagePrintToPDF Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing $
-                CDP.PPagePrintToPDFTransferModeReturnAsStream
+    r <- CDP.sendCommandWait handle $ CDP.pPagePrintToPDF
+        { CDP.pPagePrintToPDFTransferMode = Just CDP.PPagePrintToPDFTransferModeReturnAsStream
+        }
 
     -- obtain stream handle from which to read pdf data
     let streamHandle = fromJust . CDP.pagePrintToPDFStream $ r

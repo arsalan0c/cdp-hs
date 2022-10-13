@@ -12,10 +12,11 @@ import qualified System.IO as IO
 
 import qualified CDP.Definition as D
 import qualified CDP.Gen.Program as GP
+import CDP.Gen.Deprecated (removeDeprecated)
 
 main :: IO ()
 main = do
-    domains <- fmap concat . mapM (fmap D.topLevelDomains . D.parse) $ 
+    domains <- fmap concat . mapM (fmap D.topLevelDomains . fmap removeDeprecated . D.parse) $
         [ browserDefinitionPath
         , jsDefinitionPath 
         ] 

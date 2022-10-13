@@ -8,9 +8,9 @@
 
 
 {- |
-  Tethering :
-     The Tethering domain defines methods and events for browser port binding.
+= Tethering
 
+The Tethering domain defines methods and events for browser port binding.
 -}
 
 
@@ -48,67 +48,71 @@ import CDP.Internal.Utils
 
 
 
-
-
 -- | Type of the 'Tethering.accepted' event.
-data TetheringAccepted = TetheringAccepted {
-  -- | Port number that was successfully bound.
-  tetheringAcceptedPort :: Int,
-  -- | Connection id to be used.
-  tetheringAcceptedConnectionId :: String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON TetheringAccepted  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
-
-instance FromJSON  TetheringAccepted where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
-
-
+data TetheringAccepted = TetheringAccepted
+  {
+    -- | Port number that was successfully bound.
+    tetheringAcceptedPort :: Int,
+    -- | Connection id to be used.
+    tetheringAcceptedConnectionId :: String
+  }
+  deriving (Eq, Show)
+instance FromJSON TetheringAccepted where
+  parseJSON = A.withObject "TetheringAccepted" $ \o -> TetheringAccepted
+    <$> o A..: "port"
+    <*> o A..: "connectionId"
 instance Event TetheringAccepted where
-    eventName _ = "Tethering.accepted"
+  eventName _ = "Tethering.accepted"
 
-
-
--- | Tethering.bind
---   Request browser port binding.
+-- | Request browser port binding.
 
 -- | Parameters of the 'Tethering.bind' command.
-data PTetheringBind = PTetheringBind {
+data PTetheringBind = PTetheringBind
+  {
+    -- | Port number to bind.
+    pTetheringBindPort :: Int
+  }
+  deriving (Eq, Show)
+pTetheringBind
   -- | Port number to bind.
-  pTetheringBindPort :: Int
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PTetheringBind  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
-
-instance FromJSON  PTetheringBind where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
-
-
+  :: Int
+  -> PTetheringBind
+pTetheringBind
+  arg_pTetheringBindPort
+  = PTetheringBind
+    arg_pTetheringBindPort
+instance ToJSON PTetheringBind where
+  toJSON p = A.object $ catMaybes [
+    ("port" A..=) <$> Just (pTetheringBindPort p)
+    ]
 instance Command PTetheringBind where
-   type CommandResponse PTetheringBind = ()
-   commandName _ = "Tethering.bind"
-   fromJSON = const . A.Success . const ()
+  type CommandResponse PTetheringBind = ()
+  commandName _ = "Tethering.bind"
+  fromJSON = const . A.Success . const ()
 
-
--- | Tethering.unbind
---   Request browser port unbinding.
+-- | Request browser port unbinding.
 
 -- | Parameters of the 'Tethering.unbind' command.
-data PTetheringUnbind = PTetheringUnbind {
+data PTetheringUnbind = PTetheringUnbind
+  {
+    -- | Port number to unbind.
+    pTetheringUnbindPort :: Int
+  }
+  deriving (Eq, Show)
+pTetheringUnbind
   -- | Port number to unbind.
-  pTetheringUnbindPort :: Int
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PTetheringUnbind  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
-
-instance FromJSON  PTetheringUnbind where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
-
-
+  :: Int
+  -> PTetheringUnbind
+pTetheringUnbind
+  arg_pTetheringUnbindPort
+  = PTetheringUnbind
+    arg_pTetheringUnbindPort
+instance ToJSON PTetheringUnbind where
+  toJSON p = A.object $ catMaybes [
+    ("port" A..=) <$> Just (pTetheringUnbindPort p)
+    ]
 instance Command PTetheringUnbind where
-   type CommandResponse PTetheringUnbind = ()
-   commandName _ = "Tethering.unbind"
-   fromJSON = const . A.Success . const ()
-
-
+  type CommandResponse PTetheringUnbind = ()
+  commandName _ = "Tethering.unbind"
+  fromJSON = const . A.Success . const ()
 

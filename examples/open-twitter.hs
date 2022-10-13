@@ -7,14 +7,5 @@ import Control.Monad (forever)
 
 main :: IO ()
 main = CDP.runClient def $ \handle -> forever $ do
-    sendCommand handle PTargetCreateTarget
-        { pTargetCreateTargetUrl = "https://twitter.com/GabriellaG439"
-        , pTargetCreateTargetWidth = Nothing
-        , pTargetCreateTargetHeight = Nothing
-        , pTargetCreateTargetBrowserContextId = Nothing
-        , pTargetCreateTargetEnableBeginFrameControl = Nothing
-        , pTargetCreateTargetNewWindow = Just False
-        , pTargetCreateTargetBackground = Just False
-        }
-
+    sendCommand handle $ pTargetCreateTarget "https://twitter.com/GabriellaG439"
     threadDelay $ 10 * 1000 * 1000

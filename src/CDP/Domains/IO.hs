@@ -8,9 +8,9 @@
 
 
 {- |
-  IO :
-     Input/Output operations for streams produced by DevTools.
+= IO
 
+Input/Output operations for streams produced by DevTools.
 -}
 
 
@@ -54,98 +54,112 @@ import CDP.Domains.Runtime as Runtime
 --   `&lt;uuid&gt` is an UUID of a Blob.
 type IOStreamHandle = String
 
-
-
-
-
--- | IO.close
---   Close the stream, discard any temporary backing storage.
+-- | Close the stream, discard any temporary backing storage.
 
 -- | Parameters of the 'IO.close' command.
-data PIOClose = PIOClose {
+data PIOClose = PIOClose
+  {
+    -- | Handle of the stream to close.
+    pIOCloseHandle :: IOStreamHandle
+  }
+  deriving (Eq, Show)
+pIOClose
   -- | Handle of the stream to close.
-  pIOCloseHandle :: IOStreamHandle
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PIOClose  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 8 , A.omitNothingFields = True}
-
-instance FromJSON  PIOClose where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 8 }
-
-
+  :: IOStreamHandle
+  -> PIOClose
+pIOClose
+  arg_pIOCloseHandle
+  = PIOClose
+    arg_pIOCloseHandle
+instance ToJSON PIOClose where
+  toJSON p = A.object $ catMaybes [
+    ("handle" A..=) <$> Just (pIOCloseHandle p)
+    ]
 instance Command PIOClose where
-   type CommandResponse PIOClose = ()
-   commandName _ = "IO.close"
-   fromJSON = const . A.Success . const ()
+  type CommandResponse PIOClose = ()
+  commandName _ = "IO.close"
+  fromJSON = const . A.Success . const ()
 
-
--- | IO.read
---   Read a chunk of the stream
+-- | Read a chunk of the stream
 
 -- | Parameters of the 'IO.read' command.
-data PIORead = PIORead {
+data PIORead = PIORead
+  {
+    -- | Handle of the stream to read.
+    pIOReadHandle :: IOStreamHandle,
+    -- | Seek to the specified offset before reading (if not specificed, proceed with offset
+    --   following the last read). Some types of streams may only support sequential reads.
+    pIOReadOffset :: Maybe Int,
+    -- | Maximum number of bytes to read (left upon the agent discretion if not specified).
+    pIOReadSize :: Maybe Int
+  }
+  deriving (Eq, Show)
+pIORead
   -- | Handle of the stream to read.
-  pIOReadHandle :: IOStreamHandle,
-  -- | Seek to the specified offset before reading (if not specificed, proceed with offset
-  --   following the last read). Some types of streams may only support sequential reads.
-  pIOReadOffset :: Maybe Int,
-  -- | Maximum number of bytes to read (left upon the agent discretion if not specified).
-  pIOReadSize :: Maybe Int
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PIORead  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 , A.omitNothingFields = True}
-
-instance FromJSON  PIORead where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 7 }
-
-
--- | Return type of the 'IO.read' command.
-data IORead = IORead {
-  -- | Set if the data is base64-encoded
-  iOReadBase64Encoded :: Maybe Bool,
-  -- | Data that were read.
-  iOReadData :: String,
-  -- | Set if the end-of-file condition occurred while reading.
-  iOReadEof :: Bool
-} deriving (Generic, Eq, Show, Read)
-
-instance FromJSON  IORead where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 6 }
-
+  :: IOStreamHandle
+  -> PIORead
+pIORead
+  arg_pIOReadHandle
+  = PIORead
+    arg_pIOReadHandle
+    Nothing
+    Nothing
+instance ToJSON PIORead where
+  toJSON p = A.object $ catMaybes [
+    ("handle" A..=) <$> Just (pIOReadHandle p),
+    ("offset" A..=) <$> (pIOReadOffset p),
+    ("size" A..=) <$> (pIOReadSize p)
+    ]
+data IORead = IORead
+  {
+    -- | Set if the data is base64-encoded
+    iOReadBase64Encoded :: Maybe Bool,
+    -- | Data that were read.
+    iOReadData :: String,
+    -- | Set if the end-of-file condition occurred while reading.
+    iOReadEof :: Bool
+  }
+  deriving (Eq, Show)
+instance FromJSON IORead where
+  parseJSON = A.withObject "IORead" $ \o -> IORead
+    <$> o A..:? "base64Encoded"
+    <*> o A..: "data"
+    <*> o A..: "eof"
 instance Command PIORead where
-   type CommandResponse PIORead = IORead
-   commandName _ = "IO.read"
+  type CommandResponse PIORead = IORead
+  commandName _ = "IO.read"
 
-
-
--- | IO.resolveBlob
---   Return UUID of Blob object specified by a remote object id.
+-- | Return UUID of Blob object specified by a remote object id.
 
 -- | Parameters of the 'IO.resolveBlob' command.
-data PIOResolveBlob = PIOResolveBlob {
+data PIOResolveBlob = PIOResolveBlob
+  {
+    -- | Object id of a Blob object wrapper.
+    pIOResolveBlobObjectId :: Runtime.RuntimeRemoteObjectId
+  }
+  deriving (Eq, Show)
+pIOResolveBlob
   -- | Object id of a Blob object wrapper.
-  pIOResolveBlobObjectId :: Runtime.RuntimeRemoteObjectId
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PIOResolveBlob  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
-
-instance FromJSON  PIOResolveBlob where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
-
-
--- | Return type of the 'IO.resolveBlob' command.
-data IOResolveBlob = IOResolveBlob {
-  -- | UUID of the specified Blob.
-  iOResolveBlobUuid :: String
-} deriving (Generic, Eq, Show, Read)
-
-instance FromJSON  IOResolveBlob where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 13 }
-
+  :: Runtime.RuntimeRemoteObjectId
+  -> PIOResolveBlob
+pIOResolveBlob
+  arg_pIOResolveBlobObjectId
+  = PIOResolveBlob
+    arg_pIOResolveBlobObjectId
+instance ToJSON PIOResolveBlob where
+  toJSON p = A.object $ catMaybes [
+    ("objectId" A..=) <$> Just (pIOResolveBlobObjectId p)
+    ]
+data IOResolveBlob = IOResolveBlob
+  {
+    -- | UUID of the specified Blob.
+    iOResolveBlobUuid :: String
+  }
+  deriving (Eq, Show)
+instance FromJSON IOResolveBlob where
+  parseJSON = A.withObject "IOResolveBlob" $ \o -> IOResolveBlob
+    <$> o A..: "uuid"
 instance Command PIOResolveBlob where
-   type CommandResponse PIOResolveBlob = IOResolveBlob
-   commandName _ = "IO.resolveBlob"
-
-
-
+  type CommandResponse PIOResolveBlob = IOResolveBlob
+  commandName _ = "IO.resolveBlob"
 

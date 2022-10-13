@@ -8,7 +8,8 @@
 
 
 {- |
-  DeviceOrientation 
+= DeviceOrientation
+
 -}
 
 
@@ -46,46 +47,59 @@ import CDP.Internal.Utils
 
 
 
-
-
-
-
--- | DeviceOrientation.clearDeviceOrientationOverride
---   Clears the overridden Device Orientation.
+-- | Clears the overridden Device Orientation.
 
 -- | Parameters of the 'DeviceOrientation.clearDeviceOrientationOverride' command.
 data PDeviceOrientationClearDeviceOrientationOverride = PDeviceOrientationClearDeviceOrientationOverride
-instance ToJSON PDeviceOrientationClearDeviceOrientationOverride where toJSON _ = A.Null
-
+  deriving (Eq, Show)
+pDeviceOrientationClearDeviceOrientationOverride
+  :: PDeviceOrientationClearDeviceOrientationOverride
+pDeviceOrientationClearDeviceOrientationOverride
+  = PDeviceOrientationClearDeviceOrientationOverride
+instance ToJSON PDeviceOrientationClearDeviceOrientationOverride where
+  toJSON _ = A.Null
 instance Command PDeviceOrientationClearDeviceOrientationOverride where
-   type CommandResponse PDeviceOrientationClearDeviceOrientationOverride = ()
-   commandName _ = "DeviceOrientation.clearDeviceOrientationOverride"
-   fromJSON = const . A.Success . const ()
+  type CommandResponse PDeviceOrientationClearDeviceOrientationOverride = ()
+  commandName _ = "DeviceOrientation.clearDeviceOrientationOverride"
+  fromJSON = const . A.Success . const ()
 
-
--- | DeviceOrientation.setDeviceOrientationOverride
---   Overrides the Device Orientation.
+-- | Overrides the Device Orientation.
 
 -- | Parameters of the 'DeviceOrientation.setDeviceOrientationOverride' command.
-data PDeviceOrientationSetDeviceOrientationOverride = PDeviceOrientationSetDeviceOrientationOverride {
+data PDeviceOrientationSetDeviceOrientationOverride = PDeviceOrientationSetDeviceOrientationOverride
+  {
+    -- | Mock alpha
+    pDeviceOrientationSetDeviceOrientationOverrideAlpha :: Double,
+    -- | Mock beta
+    pDeviceOrientationSetDeviceOrientationOverrideBeta :: Double,
+    -- | Mock gamma
+    pDeviceOrientationSetDeviceOrientationOverrideGamma :: Double
+  }
+  deriving (Eq, Show)
+pDeviceOrientationSetDeviceOrientationOverride
   -- | Mock alpha
-  pDeviceOrientationSetDeviceOrientationOverrideAlpha :: Double,
+  :: Double
   -- | Mock beta
-  pDeviceOrientationSetDeviceOrientationOverrideBeta :: Double,
+  -> Double
   -- | Mock gamma
-  pDeviceOrientationSetDeviceOrientationOverrideGamma :: Double
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PDeviceOrientationSetDeviceOrientationOverride  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 46 , A.omitNothingFields = True}
-
-instance FromJSON  PDeviceOrientationSetDeviceOrientationOverride where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 46 }
-
-
+  -> Double
+  -> PDeviceOrientationSetDeviceOrientationOverride
+pDeviceOrientationSetDeviceOrientationOverride
+  arg_pDeviceOrientationSetDeviceOrientationOverrideAlpha
+  arg_pDeviceOrientationSetDeviceOrientationOverrideBeta
+  arg_pDeviceOrientationSetDeviceOrientationOverrideGamma
+  = PDeviceOrientationSetDeviceOrientationOverride
+    arg_pDeviceOrientationSetDeviceOrientationOverrideAlpha
+    arg_pDeviceOrientationSetDeviceOrientationOverrideBeta
+    arg_pDeviceOrientationSetDeviceOrientationOverrideGamma
+instance ToJSON PDeviceOrientationSetDeviceOrientationOverride where
+  toJSON p = A.object $ catMaybes [
+    ("alpha" A..=) <$> Just (pDeviceOrientationSetDeviceOrientationOverrideAlpha p),
+    ("beta" A..=) <$> Just (pDeviceOrientationSetDeviceOrientationOverrideBeta p),
+    ("gamma" A..=) <$> Just (pDeviceOrientationSetDeviceOrientationOverrideGamma p)
+    ]
 instance Command PDeviceOrientationSetDeviceOrientationOverride where
-   type CommandResponse PDeviceOrientationSetDeviceOrientationOverride = ()
-   commandName _ = "DeviceOrientation.setDeviceOrientationOverride"
-   fromJSON = const . A.Success . const ()
-
-
+  type CommandResponse PDeviceOrientationSetDeviceOrientationOverride = ()
+  commandName _ = "DeviceOrientation.setDeviceOrientationOverride"
+  fromJSON = const . A.Success . const ()
 

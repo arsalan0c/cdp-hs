@@ -8,9 +8,9 @@
 
 
 {- |
-  Media :
-     This domain allows detailed inspection of media elements
+= Media
 
+This domain allows detailed inspection of media elements
 -}
 
 
@@ -59,215 +59,230 @@ type MediaTimestamp = Double
 --   Have one type per entry in MediaLogRecord::Type
 --   Corresponds to kMessage
 data MediaPlayerMessageLevel = MediaPlayerMessageLevelError | MediaPlayerMessageLevelWarning | MediaPlayerMessageLevelInfo | MediaPlayerMessageLevelDebug
-   deriving (Ord, Eq, Show, Read)
+  deriving (Ord, Eq, Show, Read)
 instance FromJSON MediaPlayerMessageLevel where
-   parseJSON = A.withText  "MediaPlayerMessageLevel"  $ \v -> do
-      case v of
-         "error" -> pure MediaPlayerMessageLevelError
-         "warning" -> pure MediaPlayerMessageLevelWarning
-         "info" -> pure MediaPlayerMessageLevelInfo
-         "debug" -> pure MediaPlayerMessageLevelDebug
-         _ -> fail "failed to parse MediaPlayerMessageLevel"
-
+  parseJSON = A.withText "MediaPlayerMessageLevel" $ \v -> case v of
+    "error" -> pure MediaPlayerMessageLevelError
+    "warning" -> pure MediaPlayerMessageLevelWarning
+    "info" -> pure MediaPlayerMessageLevelInfo
+    "debug" -> pure MediaPlayerMessageLevelDebug
+    "_" -> fail "failed to parse MediaPlayerMessageLevel"
 instance ToJSON MediaPlayerMessageLevel where
-   toJSON v = A.String $
-      case v of
-         MediaPlayerMessageLevelError -> "error"
-         MediaPlayerMessageLevelWarning -> "warning"
-         MediaPlayerMessageLevelInfo -> "info"
-         MediaPlayerMessageLevelDebug -> "debug"
-
-
-
-data MediaPlayerMessage = MediaPlayerMessage {
-  -- | Keep in sync with MediaLogMessageLevel
-  --   We are currently keeping the message level 'error' separate from the
-  --   PlayerError type because right now they represent different things,
-  --   this one being a DVLOG(ERROR) style log message that gets printed
-  --   based on what log level is selected in the UI, and the other is a
-  --   representation of a media::PipelineStatus object. Soon however we're
-  --   going to be moving away from using PipelineStatus for errors and
-  --   introducing a new error type which should hopefully let us integrate
-  --   the error log level into the PlayerError type.
-  mediaPlayerMessageLevel :: MediaPlayerMessageLevel,
-  mediaPlayerMessageMessage :: String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON MediaPlayerMessage  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
-
-instance FromJSON  MediaPlayerMessage where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
-
-
+  toJSON v = A.String $ case v of
+    MediaPlayerMessageLevelError -> "error"
+    MediaPlayerMessageLevelWarning -> "warning"
+    MediaPlayerMessageLevelInfo -> "info"
+    MediaPlayerMessageLevelDebug -> "debug"
+data MediaPlayerMessage = MediaPlayerMessage
+  {
+    -- | Keep in sync with MediaLogMessageLevel
+    --   We are currently keeping the message level 'error' separate from the
+    --   PlayerError type because right now they represent different things,
+    --   this one being a DVLOG(ERROR) style log message that gets printed
+    --   based on what log level is selected in the UI, and the other is a
+    --   representation of a media::PipelineStatus object. Soon however we're
+    --   going to be moving away from using PipelineStatus for errors and
+    --   introducing a new error type which should hopefully let us integrate
+    --   the error log level into the PlayerError type.
+    mediaPlayerMessageLevel :: MediaPlayerMessageLevel,
+    mediaPlayerMessageMessage :: String
+  }
+  deriving (Eq, Show)
+instance FromJSON MediaPlayerMessage where
+  parseJSON = A.withObject "MediaPlayerMessage" $ \o -> MediaPlayerMessage
+    <$> o A..: "level"
+    <*> o A..: "message"
+instance ToJSON MediaPlayerMessage where
+  toJSON p = A.object $ catMaybes [
+    ("level" A..=) <$> Just (mediaPlayerMessageLevel p),
+    ("message" A..=) <$> Just (mediaPlayerMessageMessage p)
+    ]
 
 -- | Type 'Media.PlayerProperty'.
 --   Corresponds to kMediaPropertyChange
-data MediaPlayerProperty = MediaPlayerProperty {
-  mediaPlayerPropertyName :: String,
-  mediaPlayerPropertyValue :: String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON MediaPlayerProperty  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
-
-instance FromJSON  MediaPlayerProperty where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
-
-
+data MediaPlayerProperty = MediaPlayerProperty
+  {
+    mediaPlayerPropertyName :: String,
+    mediaPlayerPropertyValue :: String
+  }
+  deriving (Eq, Show)
+instance FromJSON MediaPlayerProperty where
+  parseJSON = A.withObject "MediaPlayerProperty" $ \o -> MediaPlayerProperty
+    <$> o A..: "name"
+    <*> o A..: "value"
+instance ToJSON MediaPlayerProperty where
+  toJSON p = A.object $ catMaybes [
+    ("name" A..=) <$> Just (mediaPlayerPropertyName p),
+    ("value" A..=) <$> Just (mediaPlayerPropertyValue p)
+    ]
 
 -- | Type 'Media.PlayerEvent'.
 --   Corresponds to kMediaEventTriggered
-data MediaPlayerEvent = MediaPlayerEvent {
-  mediaPlayerEventTimestamp :: MediaTimestamp,
-  mediaPlayerEventValue :: String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON MediaPlayerEvent  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
-
-instance FromJSON  MediaPlayerEvent where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
-
-
+data MediaPlayerEvent = MediaPlayerEvent
+  {
+    mediaPlayerEventTimestamp :: MediaTimestamp,
+    mediaPlayerEventValue :: String
+  }
+  deriving (Eq, Show)
+instance FromJSON MediaPlayerEvent where
+  parseJSON = A.withObject "MediaPlayerEvent" $ \o -> MediaPlayerEvent
+    <$> o A..: "timestamp"
+    <*> o A..: "value"
+instance ToJSON MediaPlayerEvent where
+  toJSON p = A.object $ catMaybes [
+    ("timestamp" A..=) <$> Just (mediaPlayerEventTimestamp p),
+    ("value" A..=) <$> Just (mediaPlayerEventValue p)
+    ]
 
 -- | Type 'Media.PlayerErrorSourceLocation'.
 --   Represents logged source line numbers reported in an error.
 --   NOTE: file and line are from chromium c++ implementation code, not js.
-data MediaPlayerErrorSourceLocation = MediaPlayerErrorSourceLocation {
-  mediaPlayerErrorSourceLocationFile :: String,
-  mediaPlayerErrorSourceLocationLine :: Int
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON MediaPlayerErrorSourceLocation  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
-
-instance FromJSON  MediaPlayerErrorSourceLocation where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
-
-
+data MediaPlayerErrorSourceLocation = MediaPlayerErrorSourceLocation
+  {
+    mediaPlayerErrorSourceLocationFile :: String,
+    mediaPlayerErrorSourceLocationLine :: Int
+  }
+  deriving (Eq, Show)
+instance FromJSON MediaPlayerErrorSourceLocation where
+  parseJSON = A.withObject "MediaPlayerErrorSourceLocation" $ \o -> MediaPlayerErrorSourceLocation
+    <$> o A..: "file"
+    <*> o A..: "line"
+instance ToJSON MediaPlayerErrorSourceLocation where
+  toJSON p = A.object $ catMaybes [
+    ("file" A..=) <$> Just (mediaPlayerErrorSourceLocationFile p),
+    ("line" A..=) <$> Just (mediaPlayerErrorSourceLocationLine p)
+    ]
 
 -- | Type 'Media.PlayerError'.
 --   Corresponds to kMediaError
-data MediaPlayerError = MediaPlayerError {
-  mediaPlayerErrorErrorType :: String,
-  -- | Code is the numeric enum entry for a specific set of error codes, such
-  --   as PipelineStatusCodes in media/base/pipeline_status.h
-  mediaPlayerErrorCode :: Int,
-  -- | A trace of where this error was caused / where it passed through.
-  mediaPlayerErrorStack :: [MediaPlayerErrorSourceLocation],
-  -- | Errors potentially have a root cause error, ie, a DecoderError might be
-  --   caused by an WindowsError
-  mediaPlayerErrorCause :: [MediaPlayerError],
-  -- | Extra data attached to an error, such as an HRESULT, Video Codec, etc.
-  mediaPlayerErrorData :: [(String, String)]
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON MediaPlayerError  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
-
-instance FromJSON  MediaPlayerError where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
-
-
-
-
+data MediaPlayerError = MediaPlayerError
+  {
+    mediaPlayerErrorErrorType :: String,
+    -- | Code is the numeric enum entry for a specific set of error codes, such
+    --   as PipelineStatusCodes in media/base/pipeline_status.h
+    mediaPlayerErrorCode :: Int,
+    -- | A trace of where this error was caused / where it passed through.
+    mediaPlayerErrorStack :: [MediaPlayerErrorSourceLocation],
+    -- | Errors potentially have a root cause error, ie, a DecoderError might be
+    --   caused by an WindowsError
+    mediaPlayerErrorCause :: [MediaPlayerError],
+    -- | Extra data attached to an error, such as an HRESULT, Video Codec, etc.
+    mediaPlayerErrorData :: [(String, String)]
+  }
+  deriving (Eq, Show)
+instance FromJSON MediaPlayerError where
+  parseJSON = A.withObject "MediaPlayerError" $ \o -> MediaPlayerError
+    <$> o A..: "errorType"
+    <*> o A..: "code"
+    <*> o A..: "stack"
+    <*> o A..: "cause"
+    <*> o A..: "data"
+instance ToJSON MediaPlayerError where
+  toJSON p = A.object $ catMaybes [
+    ("errorType" A..=) <$> Just (mediaPlayerErrorErrorType p),
+    ("code" A..=) <$> Just (mediaPlayerErrorCode p),
+    ("stack" A..=) <$> Just (mediaPlayerErrorStack p),
+    ("cause" A..=) <$> Just (mediaPlayerErrorCause p),
+    ("data" A..=) <$> Just (mediaPlayerErrorData p)
+    ]
 
 -- | Type of the 'Media.playerPropertiesChanged' event.
-data MediaPlayerPropertiesChanged = MediaPlayerPropertiesChanged {
-  mediaPlayerPropertiesChangedPlayerId :: MediaPlayerId,
-  mediaPlayerPropertiesChangedProperties :: [MediaPlayerProperty]
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON MediaPlayerPropertiesChanged  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
-
-instance FromJSON  MediaPlayerPropertiesChanged where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
-
-
+data MediaPlayerPropertiesChanged = MediaPlayerPropertiesChanged
+  {
+    mediaPlayerPropertiesChangedPlayerId :: MediaPlayerId,
+    mediaPlayerPropertiesChangedProperties :: [MediaPlayerProperty]
+  }
+  deriving (Eq, Show)
+instance FromJSON MediaPlayerPropertiesChanged where
+  parseJSON = A.withObject "MediaPlayerPropertiesChanged" $ \o -> MediaPlayerPropertiesChanged
+    <$> o A..: "playerId"
+    <*> o A..: "properties"
 instance Event MediaPlayerPropertiesChanged where
-    eventName _ = "Media.playerPropertiesChanged"
+  eventName _ = "Media.playerPropertiesChanged"
 
 -- | Type of the 'Media.playerEventsAdded' event.
-data MediaPlayerEventsAdded = MediaPlayerEventsAdded {
-  mediaPlayerEventsAddedPlayerId :: MediaPlayerId,
-  mediaPlayerEventsAddedEvents :: [MediaPlayerEvent]
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON MediaPlayerEventsAdded  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
-
-instance FromJSON  MediaPlayerEventsAdded where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
-
-
+data MediaPlayerEventsAdded = MediaPlayerEventsAdded
+  {
+    mediaPlayerEventsAddedPlayerId :: MediaPlayerId,
+    mediaPlayerEventsAddedEvents :: [MediaPlayerEvent]
+  }
+  deriving (Eq, Show)
+instance FromJSON MediaPlayerEventsAdded where
+  parseJSON = A.withObject "MediaPlayerEventsAdded" $ \o -> MediaPlayerEventsAdded
+    <$> o A..: "playerId"
+    <*> o A..: "events"
 instance Event MediaPlayerEventsAdded where
-    eventName _ = "Media.playerEventsAdded"
+  eventName _ = "Media.playerEventsAdded"
 
 -- | Type of the 'Media.playerMessagesLogged' event.
-data MediaPlayerMessagesLogged = MediaPlayerMessagesLogged {
-  mediaPlayerMessagesLoggedPlayerId :: MediaPlayerId,
-  mediaPlayerMessagesLoggedMessages :: [MediaPlayerMessage]
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON MediaPlayerMessagesLogged  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
-
-instance FromJSON  MediaPlayerMessagesLogged where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
-
-
+data MediaPlayerMessagesLogged = MediaPlayerMessagesLogged
+  {
+    mediaPlayerMessagesLoggedPlayerId :: MediaPlayerId,
+    mediaPlayerMessagesLoggedMessages :: [MediaPlayerMessage]
+  }
+  deriving (Eq, Show)
+instance FromJSON MediaPlayerMessagesLogged where
+  parseJSON = A.withObject "MediaPlayerMessagesLogged" $ \o -> MediaPlayerMessagesLogged
+    <$> o A..: "playerId"
+    <*> o A..: "messages"
 instance Event MediaPlayerMessagesLogged where
-    eventName _ = "Media.playerMessagesLogged"
+  eventName _ = "Media.playerMessagesLogged"
 
 -- | Type of the 'Media.playerErrorsRaised' event.
-data MediaPlayerErrorsRaised = MediaPlayerErrorsRaised {
-  mediaPlayerErrorsRaisedPlayerId :: MediaPlayerId,
-  mediaPlayerErrorsRaisedErrors :: [MediaPlayerError]
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON MediaPlayerErrorsRaised  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 , A.omitNothingFields = True}
-
-instance FromJSON  MediaPlayerErrorsRaised where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
-
-
+data MediaPlayerErrorsRaised = MediaPlayerErrorsRaised
+  {
+    mediaPlayerErrorsRaisedPlayerId :: MediaPlayerId,
+    mediaPlayerErrorsRaisedErrors :: [MediaPlayerError]
+  }
+  deriving (Eq, Show)
+instance FromJSON MediaPlayerErrorsRaised where
+  parseJSON = A.withObject "MediaPlayerErrorsRaised" $ \o -> MediaPlayerErrorsRaised
+    <$> o A..: "playerId"
+    <*> o A..: "errors"
 instance Event MediaPlayerErrorsRaised where
-    eventName _ = "Media.playerErrorsRaised"
+  eventName _ = "Media.playerErrorsRaised"
 
 -- | Type of the 'Media.playersCreated' event.
-data MediaPlayersCreated = MediaPlayersCreated {
-  mediaPlayersCreatedPlayers :: [MediaPlayerId]
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON MediaPlayersCreated  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 , A.omitNothingFields = True}
-
-instance FromJSON  MediaPlayersCreated where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
-
-
+data MediaPlayersCreated = MediaPlayersCreated
+  {
+    mediaPlayersCreatedPlayers :: [MediaPlayerId]
+  }
+  deriving (Eq, Show)
+instance FromJSON MediaPlayersCreated where
+  parseJSON = A.withObject "MediaPlayersCreated" $ \o -> MediaPlayersCreated
+    <$> o A..: "players"
 instance Event MediaPlayersCreated where
-    eventName _ = "Media.playersCreated"
+  eventName _ = "Media.playersCreated"
 
-
-
--- | Media.enable
---   Enables the Media domain
+-- | Enables the Media domain
 
 -- | Parameters of the 'Media.enable' command.
 data PMediaEnable = PMediaEnable
-instance ToJSON PMediaEnable where toJSON _ = A.Null
-
+  deriving (Eq, Show)
+pMediaEnable
+  :: PMediaEnable
+pMediaEnable
+  = PMediaEnable
+instance ToJSON PMediaEnable where
+  toJSON _ = A.Null
 instance Command PMediaEnable where
-   type CommandResponse PMediaEnable = ()
-   commandName _ = "Media.enable"
-   fromJSON = const . A.Success . const ()
+  type CommandResponse PMediaEnable = ()
+  commandName _ = "Media.enable"
+  fromJSON = const . A.Success . const ()
 
-
--- | Media.disable
---   Disables the Media domain.
+-- | Disables the Media domain.
 
 -- | Parameters of the 'Media.disable' command.
 data PMediaDisable = PMediaDisable
-instance ToJSON PMediaDisable where toJSON _ = A.Null
-
+  deriving (Eq, Show)
+pMediaDisable
+  :: PMediaDisable
+pMediaDisable
+  = PMediaDisable
+instance ToJSON PMediaDisable where
+  toJSON _ = A.Null
 instance Command PMediaDisable where
-   type CommandResponse PMediaDisable = ()
-   commandName _ = "Media.disable"
-   fromJSON = const . A.Success . const ()
-
-
+  type CommandResponse PMediaDisable = ()
+  commandName _ = "Media.disable"
+  fromJSON = const . A.Success . const ()
 

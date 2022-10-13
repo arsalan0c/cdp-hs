@@ -43,7 +43,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 
@@ -69,7 +69,10 @@ instance Event TetheringAccepted where
 
 
 
--- | Parameters of the 'tetheringBind' command.
+-- | Tethering.bind
+--   Request browser port binding.
+
+-- | Parameters of the 'Tethering.bind' command.
 data PTetheringBind = PTetheringBind {
   -- | Port number to bind.
   pTetheringBindPort :: Int
@@ -81,18 +84,16 @@ instance FromJSON  PTetheringBind where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
 
 
--- | Function for the 'Tethering.bind' command.
---   Request browser port binding.
---   Returns: 'PTetheringBind'
-tetheringBind :: Handle -> PTetheringBind -> IO ()
-tetheringBind handle params = sendReceiveCommand handle params
-
 instance Command PTetheringBind where
-    type CommandResponse PTetheringBind = NoResponse
-    commandName _ = "Tethering.bind"
+   type CommandResponse PTetheringBind = ()
+   commandName _ = "Tethering.bind"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'tetheringUnbind' command.
+-- | Tethering.unbind
+--   Request browser port unbinding.
+
+-- | Parameters of the 'Tethering.unbind' command.
 data PTetheringUnbind = PTetheringUnbind {
   -- | Port number to unbind.
   pTetheringUnbindPort :: Int
@@ -104,15 +105,10 @@ instance FromJSON  PTetheringUnbind where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
--- | Function for the 'Tethering.unbind' command.
---   Request browser port unbinding.
---   Returns: 'PTetheringUnbind'
-tetheringUnbind :: Handle -> PTetheringUnbind -> IO ()
-tetheringUnbind handle params = sendReceiveCommand handle params
-
 instance Command PTetheringUnbind where
-    type CommandResponse PTetheringUnbind = NoResponse
-    commandName _ = "Tethering.unbind"
+   type CommandResponse PTetheringUnbind = ()
+   commandName _ = "Tethering.unbind"
+   fromJSON = const . A.Success . const ()
 
 
 

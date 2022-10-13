@@ -44,7 +44,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 
@@ -462,35 +462,36 @@ instance Event WebAudioNodeParamDisconnected where
 
 
 
--- | Parameters of the 'webAudioEnable' command.
+-- | WebAudio.enable
+--   Enables the WebAudio domain and starts sending context lifetime events.
+
+-- | Parameters of the 'WebAudio.enable' command.
 data PWebAudioEnable = PWebAudioEnable
 instance ToJSON PWebAudioEnable where toJSON _ = A.Null
 
--- | Function for the 'WebAudio.enable' command.
---   Enables the WebAudio domain and starts sending context lifetime events.
-webAudioEnable :: Handle -> IO ()
-webAudioEnable handle = sendReceiveCommand handle PWebAudioEnable
-
 instance Command PWebAudioEnable where
-    type CommandResponse PWebAudioEnable = NoResponse
-    commandName _ = "WebAudio.enable"
+   type CommandResponse PWebAudioEnable = ()
+   commandName _ = "WebAudio.enable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'webAudioDisable' command.
+-- | WebAudio.disable
+--   Disables the WebAudio domain.
+
+-- | Parameters of the 'WebAudio.disable' command.
 data PWebAudioDisable = PWebAudioDisable
 instance ToJSON PWebAudioDisable where toJSON _ = A.Null
 
--- | Function for the 'WebAudio.disable' command.
---   Disables the WebAudio domain.
-webAudioDisable :: Handle -> IO ()
-webAudioDisable handle = sendReceiveCommand handle PWebAudioDisable
-
 instance Command PWebAudioDisable where
-    type CommandResponse PWebAudioDisable = NoResponse
-    commandName _ = "WebAudio.disable"
+   type CommandResponse PWebAudioDisable = ()
+   commandName _ = "WebAudio.disable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'webAudioGetRealtimeData' command.
+-- | WebAudio.getRealtimeData
+--   Fetch the realtime data from the registered contexts.
+
+-- | Parameters of the 'WebAudio.getRealtimeData' command.
 data PWebAudioGetRealtimeData = PWebAudioGetRealtimeData {
   pWebAudioGetRealtimeDataContextId :: WebAudioGraphObjectId
 } deriving (Generic, Eq, Show, Read)
@@ -501,14 +502,7 @@ instance FromJSON  PWebAudioGetRealtimeData where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the 'WebAudio.getRealtimeData' command.
---   Fetch the realtime data from the registered contexts.
---   Returns: 'PWebAudioGetRealtimeData'
---   Returns: 'WebAudioGetRealtimeData'
-webAudioGetRealtimeData :: Handle -> PWebAudioGetRealtimeData -> IO WebAudioGetRealtimeData
-webAudioGetRealtimeData handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'webAudioGetRealtimeData' command.
+-- | Return type of the 'WebAudio.getRealtimeData' command.
 data WebAudioGetRealtimeData = WebAudioGetRealtimeData {
   webAudioGetRealtimeDataRealtimeData :: WebAudioContextRealtimeData
 } deriving (Generic, Eq, Show, Read)
@@ -517,8 +511,9 @@ instance FromJSON  WebAudioGetRealtimeData where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 instance Command PWebAudioGetRealtimeData where
-    type CommandResponse PWebAudioGetRealtimeData = WebAudioGetRealtimeData
-    commandName _ = "WebAudio.getRealtimeData"
+   type CommandResponse PWebAudioGetRealtimeData = WebAudioGetRealtimeData
+   commandName _ = "WebAudio.getRealtimeData"
+
 
 
 

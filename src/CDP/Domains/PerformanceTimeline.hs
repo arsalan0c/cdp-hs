@@ -44,7 +44,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
@@ -144,7 +144,11 @@ instance Event PerformanceTimelineTimelineEventAdded where
 
 
 
--- | Parameters of the 'performanceTimelineEnable' command.
+-- | PerformanceTimeline.enable
+--   Previously buffered events would be reported before method returns.
+--   See also: timelineEventAdded
+
+-- | Parameters of the 'PerformanceTimeline.enable' command.
 data PPerformanceTimelineEnable = PPerformanceTimelineEnable {
   -- | The types of event to report, as specified in
   --   https://w3c.github.io/performance-timeline/#dom-performanceentry-entrytype
@@ -160,16 +164,10 @@ instance FromJSON  PPerformanceTimelineEnable where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
--- | Function for the 'PerformanceTimeline.enable' command.
---   Previously buffered events would be reported before method returns.
---   See also: timelineEventAdded
---   Returns: 'PPerformanceTimelineEnable'
-performanceTimelineEnable :: Handle -> PPerformanceTimelineEnable -> IO ()
-performanceTimelineEnable handle params = sendReceiveCommand handle params
-
 instance Command PPerformanceTimelineEnable where
-    type CommandResponse PPerformanceTimelineEnable = NoResponse
-    commandName _ = "PerformanceTimeline.enable"
+   type CommandResponse PPerformanceTimelineEnable = ()
+   commandName _ = "PerformanceTimeline.enable"
+   fromJSON = const . A.Success . const ()
 
 
 

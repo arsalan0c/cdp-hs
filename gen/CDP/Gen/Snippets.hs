@@ -43,5 +43,5 @@ domainImports = T.unlines
     , "import Data.Char"
     , "import Data.Default"
     , ""
-    , "import CDP.Internal.Runtime"
+    , "import CDP.Internal.Utils"
     ]

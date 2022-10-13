@@ -43,7 +43,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 
@@ -245,17 +245,14 @@ instance FromJSON  SystemInfoProcessInfo where
 
 
 
--- | Parameters of the 'systemInfoGetInfo' command.
+-- | SystemInfo.getInfo
+--   Returns information about the system.
+
+-- | Parameters of the 'SystemInfo.getInfo' command.
 data PSystemInfoGetInfo = PSystemInfoGetInfo
 instance ToJSON PSystemInfoGetInfo where toJSON _ = A.Null
 
--- | Function for the 'SystemInfo.getInfo' command.
---   Returns information about the system.
---   Returns: 'SystemInfoGetInfo'
-systemInfoGetInfo :: Handle -> IO SystemInfoGetInfo
-systemInfoGetInfo handle = sendReceiveCommandResult handle PSystemInfoGetInfo
-
--- | Return type of the 'systemInfoGetInfo' command.
+-- | Return type of the 'SystemInfo.getInfo' command.
 data SystemInfoGetInfo = SystemInfoGetInfo {
   -- | Information about the GPUs on the system.
   systemInfoGetInfoGpu :: SystemInfoGPUInfo,
@@ -274,21 +271,19 @@ instance FromJSON  SystemInfoGetInfo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 instance Command PSystemInfoGetInfo where
-    type CommandResponse PSystemInfoGetInfo = SystemInfoGetInfo
-    commandName _ = "SystemInfo.getInfo"
+   type CommandResponse PSystemInfoGetInfo = SystemInfoGetInfo
+   commandName _ = "SystemInfo.getInfo"
 
 
--- | Parameters of the 'systemInfoGetProcessInfo' command.
+
+-- | SystemInfo.getProcessInfo
+--   Returns information about all running processes.
+
+-- | Parameters of the 'SystemInfo.getProcessInfo' command.
 data PSystemInfoGetProcessInfo = PSystemInfoGetProcessInfo
 instance ToJSON PSystemInfoGetProcessInfo where toJSON _ = A.Null
 
--- | Function for the 'SystemInfo.getProcessInfo' command.
---   Returns information about all running processes.
---   Returns: 'SystemInfoGetProcessInfo'
-systemInfoGetProcessInfo :: Handle -> IO SystemInfoGetProcessInfo
-systemInfoGetProcessInfo handle = sendReceiveCommandResult handle PSystemInfoGetProcessInfo
-
--- | Return type of the 'systemInfoGetProcessInfo' command.
+-- | Return type of the 'SystemInfo.getProcessInfo' command.
 data SystemInfoGetProcessInfo = SystemInfoGetProcessInfo {
   -- | An array of process info blocks.
   systemInfoGetProcessInfoProcessInfo :: [SystemInfoProcessInfo]
@@ -298,8 +293,9 @@ instance FromJSON  SystemInfoGetProcessInfo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance Command PSystemInfoGetProcessInfo where
-    type CommandResponse PSystemInfoGetProcessInfo = SystemInfoGetProcessInfo
-    commandName _ = "SystemInfo.getProcessInfo"
+   type CommandResponse PSystemInfoGetProcessInfo = SystemInfoGetProcessInfo
+   commandName _ = "SystemInfo.getProcessInfo"
+
 
 
 

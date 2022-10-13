@@ -41,7 +41,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 import CDP.Domains.Runtime as Runtime
@@ -228,7 +228,10 @@ instance FromJSON  IndexedDBKeyPath where
 
 
 
--- | Parameters of the 'indexedDBClearObjectStore' command.
+-- | IndexedDB.clearObjectStore
+--   Clears all entries from an object store.
+
+-- | Parameters of the 'IndexedDB.clearObjectStore' command.
 data PIndexedDBClearObjectStore = PIndexedDBClearObjectStore {
   -- | Security origin.
   pIndexedDBClearObjectStoreSecurityOrigin :: String,
@@ -244,18 +247,16 @@ instance FromJSON  PIndexedDBClearObjectStore where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
--- | Function for the 'IndexedDB.clearObjectStore' command.
---   Clears all entries from an object store.
---   Returns: 'PIndexedDBClearObjectStore'
-indexedDBClearObjectStore :: Handle -> PIndexedDBClearObjectStore -> IO ()
-indexedDBClearObjectStore handle params = sendReceiveCommand handle params
-
 instance Command PIndexedDBClearObjectStore where
-    type CommandResponse PIndexedDBClearObjectStore = NoResponse
-    commandName _ = "IndexedDB.clearObjectStore"
+   type CommandResponse PIndexedDBClearObjectStore = ()
+   commandName _ = "IndexedDB.clearObjectStore"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'indexedDBDeleteDatabase' command.
+-- | IndexedDB.deleteDatabase
+--   Deletes a database.
+
+-- | Parameters of the 'IndexedDB.deleteDatabase' command.
 data PIndexedDBDeleteDatabase = PIndexedDBDeleteDatabase {
   -- | Security origin.
   pIndexedDBDeleteDatabaseSecurityOrigin :: String,
@@ -269,18 +270,16 @@ instance FromJSON  PIndexedDBDeleteDatabase where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the 'IndexedDB.deleteDatabase' command.
---   Deletes a database.
---   Returns: 'PIndexedDBDeleteDatabase'
-indexedDBDeleteDatabase :: Handle -> PIndexedDBDeleteDatabase -> IO ()
-indexedDBDeleteDatabase handle params = sendReceiveCommand handle params
-
 instance Command PIndexedDBDeleteDatabase where
-    type CommandResponse PIndexedDBDeleteDatabase = NoResponse
-    commandName _ = "IndexedDB.deleteDatabase"
+   type CommandResponse PIndexedDBDeleteDatabase = ()
+   commandName _ = "IndexedDB.deleteDatabase"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'indexedDBDeleteObjectStoreEntries' command.
+-- | IndexedDB.deleteObjectStoreEntries
+--   Delete a range of entries from an object store
+
+-- | Parameters of the 'IndexedDB.deleteObjectStoreEntries' command.
 data PIndexedDBDeleteObjectStoreEntries = PIndexedDBDeleteObjectStoreEntries {
   pIndexedDBDeleteObjectStoreEntriesSecurityOrigin :: String,
   pIndexedDBDeleteObjectStoreEntriesDatabaseName :: String,
@@ -295,46 +294,42 @@ instance FromJSON  PIndexedDBDeleteObjectStoreEntries where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
 
 
--- | Function for the 'IndexedDB.deleteObjectStoreEntries' command.
---   Delete a range of entries from an object store
---   Returns: 'PIndexedDBDeleteObjectStoreEntries'
-indexedDBDeleteObjectStoreEntries :: Handle -> PIndexedDBDeleteObjectStoreEntries -> IO ()
-indexedDBDeleteObjectStoreEntries handle params = sendReceiveCommand handle params
-
 instance Command PIndexedDBDeleteObjectStoreEntries where
-    type CommandResponse PIndexedDBDeleteObjectStoreEntries = NoResponse
-    commandName _ = "IndexedDB.deleteObjectStoreEntries"
+   type CommandResponse PIndexedDBDeleteObjectStoreEntries = ()
+   commandName _ = "IndexedDB.deleteObjectStoreEntries"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'indexedDBDisable' command.
+-- | IndexedDB.disable
+--   Disables events from backend.
+
+-- | Parameters of the 'IndexedDB.disable' command.
 data PIndexedDBDisable = PIndexedDBDisable
 instance ToJSON PIndexedDBDisable where toJSON _ = A.Null
 
--- | Function for the 'IndexedDB.disable' command.
---   Disables events from backend.
-indexedDBDisable :: Handle -> IO ()
-indexedDBDisable handle = sendReceiveCommand handle PIndexedDBDisable
-
 instance Command PIndexedDBDisable where
-    type CommandResponse PIndexedDBDisable = NoResponse
-    commandName _ = "IndexedDB.disable"
+   type CommandResponse PIndexedDBDisable = ()
+   commandName _ = "IndexedDB.disable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'indexedDBEnable' command.
+-- | IndexedDB.enable
+--   Enables events from backend.
+
+-- | Parameters of the 'IndexedDB.enable' command.
 data PIndexedDBEnable = PIndexedDBEnable
 instance ToJSON PIndexedDBEnable where toJSON _ = A.Null
 
--- | Function for the 'IndexedDB.enable' command.
---   Enables events from backend.
-indexedDBEnable :: Handle -> IO ()
-indexedDBEnable handle = sendReceiveCommand handle PIndexedDBEnable
-
 instance Command PIndexedDBEnable where
-    type CommandResponse PIndexedDBEnable = NoResponse
-    commandName _ = "IndexedDB.enable"
+   type CommandResponse PIndexedDBEnable = ()
+   commandName _ = "IndexedDB.enable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'indexedDBRequestData' command.
+-- | IndexedDB.requestData
+--   Requests data from object store or index.
+
+-- | Parameters of the 'IndexedDB.requestData' command.
 data PIndexedDBRequestData = PIndexedDBRequestData {
   -- | Security origin.
   pIndexedDBRequestDataSecurityOrigin :: String,
@@ -358,14 +353,7 @@ instance FromJSON  PIndexedDBRequestData where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
--- | Function for the 'IndexedDB.requestData' command.
---   Requests data from object store or index.
---   Returns: 'PIndexedDBRequestData'
---   Returns: 'IndexedDBRequestData'
-indexedDBRequestData :: Handle -> PIndexedDBRequestData -> IO IndexedDBRequestData
-indexedDBRequestData handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'indexedDBRequestData' command.
+-- | Return type of the 'IndexedDB.requestData' command.
 data IndexedDBRequestData = IndexedDBRequestData {
   -- | Array of object store data entries.
   indexedDBRequestDataObjectStoreDataEntries :: [IndexedDBDataEntry],
@@ -377,11 +365,15 @@ instance FromJSON  IndexedDBRequestData where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 instance Command PIndexedDBRequestData where
-    type CommandResponse PIndexedDBRequestData = IndexedDBRequestData
-    commandName _ = "IndexedDB.requestData"
+   type CommandResponse PIndexedDBRequestData = IndexedDBRequestData
+   commandName _ = "IndexedDB.requestData"
 
 
--- | Parameters of the 'indexedDBGetMetadata' command.
+
+-- | IndexedDB.getMetadata
+--   Gets metadata of an object store
+
+-- | Parameters of the 'IndexedDB.getMetadata' command.
 data PIndexedDBGetMetadata = PIndexedDBGetMetadata {
   -- | Security origin.
   pIndexedDBGetMetadataSecurityOrigin :: String,
@@ -397,14 +389,7 @@ instance FromJSON  PIndexedDBGetMetadata where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
--- | Function for the 'IndexedDB.getMetadata' command.
---   Gets metadata of an object store
---   Returns: 'PIndexedDBGetMetadata'
---   Returns: 'IndexedDBGetMetadata'
-indexedDBGetMetadata :: Handle -> PIndexedDBGetMetadata -> IO IndexedDBGetMetadata
-indexedDBGetMetadata handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'indexedDBGetMetadata' command.
+-- | Return type of the 'IndexedDB.getMetadata' command.
 data IndexedDBGetMetadata = IndexedDBGetMetadata {
   -- | the entries count
   indexedDBGetMetadataEntriesCount :: Double,
@@ -418,11 +403,15 @@ instance FromJSON  IndexedDBGetMetadata where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 instance Command PIndexedDBGetMetadata where
-    type CommandResponse PIndexedDBGetMetadata = IndexedDBGetMetadata
-    commandName _ = "IndexedDB.getMetadata"
+   type CommandResponse PIndexedDBGetMetadata = IndexedDBGetMetadata
+   commandName _ = "IndexedDB.getMetadata"
 
 
--- | Parameters of the 'indexedDBRequestDatabase' command.
+
+-- | IndexedDB.requestDatabase
+--   Requests database with given name in given frame.
+
+-- | Parameters of the 'IndexedDB.requestDatabase' command.
 data PIndexedDBRequestDatabase = PIndexedDBRequestDatabase {
   -- | Security origin.
   pIndexedDBRequestDatabaseSecurityOrigin :: String,
@@ -436,14 +425,7 @@ instance FromJSON  PIndexedDBRequestDatabase where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the 'IndexedDB.requestDatabase' command.
---   Requests database with given name in given frame.
---   Returns: 'PIndexedDBRequestDatabase'
---   Returns: 'IndexedDBRequestDatabase'
-indexedDBRequestDatabase :: Handle -> PIndexedDBRequestDatabase -> IO IndexedDBRequestDatabase
-indexedDBRequestDatabase handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'indexedDBRequestDatabase' command.
+-- | Return type of the 'IndexedDB.requestDatabase' command.
 data IndexedDBRequestDatabase = IndexedDBRequestDatabase {
   -- | Database with an array of object stores.
   indexedDBRequestDatabaseDatabaseWithObjectStores :: IndexedDBDatabaseWithObjectStores
@@ -453,11 +435,15 @@ instance FromJSON  IndexedDBRequestDatabase where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance Command PIndexedDBRequestDatabase where
-    type CommandResponse PIndexedDBRequestDatabase = IndexedDBRequestDatabase
-    commandName _ = "IndexedDB.requestDatabase"
+   type CommandResponse PIndexedDBRequestDatabase = IndexedDBRequestDatabase
+   commandName _ = "IndexedDB.requestDatabase"
 
 
--- | Parameters of the 'indexedDBRequestDatabaseNames' command.
+
+-- | IndexedDB.requestDatabaseNames
+--   Requests database names for given security origin.
+
+-- | Parameters of the 'IndexedDB.requestDatabaseNames' command.
 data PIndexedDBRequestDatabaseNames = PIndexedDBRequestDatabaseNames {
   -- | Security origin.
   pIndexedDBRequestDatabaseNamesSecurityOrigin :: String
@@ -469,14 +455,7 @@ instance FromJSON  PIndexedDBRequestDatabaseNames where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
--- | Function for the 'IndexedDB.requestDatabaseNames' command.
---   Requests database names for given security origin.
---   Returns: 'PIndexedDBRequestDatabaseNames'
---   Returns: 'IndexedDBRequestDatabaseNames'
-indexedDBRequestDatabaseNames :: Handle -> PIndexedDBRequestDatabaseNames -> IO IndexedDBRequestDatabaseNames
-indexedDBRequestDatabaseNames handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'indexedDBRequestDatabaseNames' command.
+-- | Return type of the 'IndexedDB.requestDatabaseNames' command.
 data IndexedDBRequestDatabaseNames = IndexedDBRequestDatabaseNames {
   -- | Database names for origin.
   indexedDBRequestDatabaseNamesDatabaseNames :: [String]
@@ -486,8 +465,9 @@ instance FromJSON  IndexedDBRequestDatabaseNames where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 instance Command PIndexedDBRequestDatabaseNames where
-    type CommandResponse PIndexedDBRequestDatabaseNames = IndexedDBRequestDatabaseNames
-    commandName _ = "IndexedDB.requestDatabaseNames"
+   type CommandResponse PIndexedDBRequestDatabaseNames = IndexedDBRequestDatabaseNames
+   commandName _ = "IndexedDB.requestDatabaseNames"
+
 
 
 

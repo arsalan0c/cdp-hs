@@ -43,7 +43,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
@@ -151,7 +151,10 @@ instance Event BackgroundServiceBackgroundServiceEventReceived where
 
 
 
--- | Parameters of the 'backgroundServiceStartObserving' command.
+-- | BackgroundService.startObserving
+--   Enables event updates for the service.
+
+-- | Parameters of the 'BackgroundService.startObserving' command.
 data PBackgroundServiceStartObserving = PBackgroundServiceStartObserving {
   pBackgroundServiceStartObservingService :: BackgroundServiceServiceName
 } deriving (Generic, Eq, Show, Read)
@@ -162,18 +165,16 @@ instance FromJSON  PBackgroundServiceStartObserving where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
--- | Function for the 'BackgroundService.startObserving' command.
---   Enables event updates for the service.
---   Returns: 'PBackgroundServiceStartObserving'
-backgroundServiceStartObserving :: Handle -> PBackgroundServiceStartObserving -> IO ()
-backgroundServiceStartObserving handle params = sendReceiveCommand handle params
-
 instance Command PBackgroundServiceStartObserving where
-    type CommandResponse PBackgroundServiceStartObserving = NoResponse
-    commandName _ = "BackgroundService.startObserving"
+   type CommandResponse PBackgroundServiceStartObserving = ()
+   commandName _ = "BackgroundService.startObserving"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'backgroundServiceStopObserving' command.
+-- | BackgroundService.stopObserving
+--   Disables event updates for the service.
+
+-- | Parameters of the 'BackgroundService.stopObserving' command.
 data PBackgroundServiceStopObserving = PBackgroundServiceStopObserving {
   pBackgroundServiceStopObservingService :: BackgroundServiceServiceName
 } deriving (Generic, Eq, Show, Read)
@@ -184,18 +185,16 @@ instance FromJSON  PBackgroundServiceStopObserving where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
--- | Function for the 'BackgroundService.stopObserving' command.
---   Disables event updates for the service.
---   Returns: 'PBackgroundServiceStopObserving'
-backgroundServiceStopObserving :: Handle -> PBackgroundServiceStopObserving -> IO ()
-backgroundServiceStopObserving handle params = sendReceiveCommand handle params
-
 instance Command PBackgroundServiceStopObserving where
-    type CommandResponse PBackgroundServiceStopObserving = NoResponse
-    commandName _ = "BackgroundService.stopObserving"
+   type CommandResponse PBackgroundServiceStopObserving = ()
+   commandName _ = "BackgroundService.stopObserving"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'backgroundServiceSetRecording' command.
+-- | BackgroundService.setRecording
+--   Set the recording state for the service.
+
+-- | Parameters of the 'BackgroundService.setRecording' command.
 data PBackgroundServiceSetRecording = PBackgroundServiceSetRecording {
   pBackgroundServiceSetRecordingShouldRecord :: Bool,
   pBackgroundServiceSetRecordingService :: BackgroundServiceServiceName
@@ -207,18 +206,16 @@ instance FromJSON  PBackgroundServiceSetRecording where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
--- | Function for the 'BackgroundService.setRecording' command.
---   Set the recording state for the service.
---   Returns: 'PBackgroundServiceSetRecording'
-backgroundServiceSetRecording :: Handle -> PBackgroundServiceSetRecording -> IO ()
-backgroundServiceSetRecording handle params = sendReceiveCommand handle params
-
 instance Command PBackgroundServiceSetRecording where
-    type CommandResponse PBackgroundServiceSetRecording = NoResponse
-    commandName _ = "BackgroundService.setRecording"
+   type CommandResponse PBackgroundServiceSetRecording = ()
+   commandName _ = "BackgroundService.setRecording"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'backgroundServiceClearEvents' command.
+-- | BackgroundService.clearEvents
+--   Clears all stored data for the service.
+
+-- | Parameters of the 'BackgroundService.clearEvents' command.
 data PBackgroundServiceClearEvents = PBackgroundServiceClearEvents {
   pBackgroundServiceClearEventsService :: BackgroundServiceServiceName
 } deriving (Generic, Eq, Show, Read)
@@ -229,15 +226,10 @@ instance FromJSON  PBackgroundServiceClearEvents where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
--- | Function for the 'BackgroundService.clearEvents' command.
---   Clears all stored data for the service.
---   Returns: 'PBackgroundServiceClearEvents'
-backgroundServiceClearEvents :: Handle -> PBackgroundServiceClearEvents -> IO ()
-backgroundServiceClearEvents handle params = sendReceiveCommand handle params
-
 instance Command PBackgroundServiceClearEvents where
-    type CommandResponse PBackgroundServiceClearEvents = NoResponse
-    commandName _ = "BackgroundService.clearEvents"
+   type CommandResponse PBackgroundServiceClearEvents = ()
+   commandName _ = "BackgroundService.clearEvents"
+   fromJSON = const . A.Success . const ()
 
 
 

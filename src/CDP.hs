@@ -10,8 +10,10 @@ module CDP
     , unsubscribe
 
     , Command (..)
-    , sendReceiveCommand
-    , sendReceiveCommandResult
+    , Promise (..)
+    , readPromise
+    , sendCommand
+    , sendCommandWait
 
     , module CDP.Domains
     ) where
@@ -19,4 +21,4 @@ module CDP
 import Data.Proxy (Proxy)
 
 import CDP.Domains
-import CDP.Internal.Runtime
+import CDP.Runtime

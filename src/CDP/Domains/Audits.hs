@@ -43,7 +43,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
@@ -1054,7 +1054,11 @@ instance Event AuditsIssueAdded where
 
 
 
--- | Parameters of the 'auditsGetEncodedResponse' command.
+-- | Audits.getEncodedResponse
+--   Returns the response body and size if it were re-encoded with the specified settings. Only
+--   applies to images.
+
+-- | Parameters of the 'Audits.getEncodedResponse' command.
 data PAuditsGetEncodedResponseEncoding = PAuditsGetEncodedResponseEncodingWebp | PAuditsGetEncodedResponseEncodingJpeg | PAuditsGetEncodedResponseEncodingPng
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PAuditsGetEncodedResponseEncoding where
@@ -1091,15 +1095,7 @@ instance FromJSON  PAuditsGetEncodedResponse where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the 'Audits.getEncodedResponse' command.
---   Returns the response body and size if it were re-encoded with the specified settings. Only
---   applies to images.
---   Returns: 'PAuditsGetEncodedResponse'
---   Returns: 'AuditsGetEncodedResponse'
-auditsGetEncodedResponse :: Handle -> PAuditsGetEncodedResponse -> IO AuditsGetEncodedResponse
-auditsGetEncodedResponse handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'auditsGetEncodedResponse' command.
+-- | Return type of the 'Audits.getEncodedResponse' command.
 data AuditsGetEncodedResponse = AuditsGetEncodedResponse {
   -- | The encoded body as a base64 string. Omitted if sizeOnly is true. (Encoded as a base64 string when passed over JSON)
   auditsGetEncodedResponseBody :: Maybe String,
@@ -1113,40 +1109,43 @@ instance FromJSON  AuditsGetEncodedResponse where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance Command PAuditsGetEncodedResponse where
-    type CommandResponse PAuditsGetEncodedResponse = AuditsGetEncodedResponse
-    commandName _ = "Audits.getEncodedResponse"
+   type CommandResponse PAuditsGetEncodedResponse = AuditsGetEncodedResponse
+   commandName _ = "Audits.getEncodedResponse"
 
 
--- | Parameters of the 'auditsDisable' command.
+
+-- | Audits.disable
+--   Disables issues domain, prevents further issues from being reported to the client.
+
+-- | Parameters of the 'Audits.disable' command.
 data PAuditsDisable = PAuditsDisable
 instance ToJSON PAuditsDisable where toJSON _ = A.Null
 
--- | Function for the 'Audits.disable' command.
---   Disables issues domain, prevents further issues from being reported to the client.
-auditsDisable :: Handle -> IO ()
-auditsDisable handle = sendReceiveCommand handle PAuditsDisable
-
 instance Command PAuditsDisable where
-    type CommandResponse PAuditsDisable = NoResponse
-    commandName _ = "Audits.disable"
+   type CommandResponse PAuditsDisable = ()
+   commandName _ = "Audits.disable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'auditsEnable' command.
+-- | Audits.enable
+--   Enables issues domain, sends the issues collected so far to the client by means of the
+--   `issueAdded` event.
+
+-- | Parameters of the 'Audits.enable' command.
 data PAuditsEnable = PAuditsEnable
 instance ToJSON PAuditsEnable where toJSON _ = A.Null
 
--- | Function for the 'Audits.enable' command.
---   Enables issues domain, sends the issues collected so far to the client by means of the
---   `issueAdded` event.
-auditsEnable :: Handle -> IO ()
-auditsEnable handle = sendReceiveCommand handle PAuditsEnable
-
 instance Command PAuditsEnable where
-    type CommandResponse PAuditsEnable = NoResponse
-    commandName _ = "Audits.enable"
+   type CommandResponse PAuditsEnable = ()
+   commandName _ = "Audits.enable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'auditsCheckContrast' command.
+-- | Audits.checkContrast
+--   Runs the contrast check for the target page. Found issues are reported
+--   using Audits.issueAdded event.
+
+-- | Parameters of the 'Audits.checkContrast' command.
 data PAuditsCheckContrast = PAuditsCheckContrast {
   -- | Whether to report WCAG AAA level issues. Default is false.
   pAuditsCheckContrastReportAAA :: Maybe Bool
@@ -1158,16 +1157,10 @@ instance FromJSON  PAuditsCheckContrast where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
--- | Function for the 'Audits.checkContrast' command.
---   Runs the contrast check for the target page. Found issues are reported
---   using Audits.issueAdded event.
---   Returns: 'PAuditsCheckContrast'
-auditsCheckContrast :: Handle -> PAuditsCheckContrast -> IO ()
-auditsCheckContrast handle params = sendReceiveCommand handle params
-
 instance Command PAuditsCheckContrast where
-    type CommandResponse PAuditsCheckContrast = NoResponse
-    commandName _ = "Audits.checkContrast"
+   type CommandResponse PAuditsCheckContrast = ()
+   commandName _ = "Audits.checkContrast"
+   fromJSON = const . A.Success . const ()
 
 
 

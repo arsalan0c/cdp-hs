@@ -43,7 +43,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 import CDP.Domains.DOMDebugger as DOMDebugger
@@ -403,35 +403,39 @@ instance FromJSON  DOMSnapshotTextBoxSnapshot where
 
 
 
--- | Parameters of the 'dOMSnapshotDisable' command.
+-- | DOMSnapshot.disable
+--   Disables DOM snapshot agent for the given page.
+
+-- | Parameters of the 'DOMSnapshot.disable' command.
 data PDOMSnapshotDisable = PDOMSnapshotDisable
 instance ToJSON PDOMSnapshotDisable where toJSON _ = A.Null
 
--- | Function for the 'DOMSnapshot.disable' command.
---   Disables DOM snapshot agent for the given page.
-dOMSnapshotDisable :: Handle -> IO ()
-dOMSnapshotDisable handle = sendReceiveCommand handle PDOMSnapshotDisable
-
 instance Command PDOMSnapshotDisable where
-    type CommandResponse PDOMSnapshotDisable = NoResponse
-    commandName _ = "DOMSnapshot.disable"
+   type CommandResponse PDOMSnapshotDisable = ()
+   commandName _ = "DOMSnapshot.disable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'dOMSnapshotEnable' command.
+-- | DOMSnapshot.enable
+--   Enables DOM snapshot agent for the given page.
+
+-- | Parameters of the 'DOMSnapshot.enable' command.
 data PDOMSnapshotEnable = PDOMSnapshotEnable
 instance ToJSON PDOMSnapshotEnable where toJSON _ = A.Null
 
--- | Function for the 'DOMSnapshot.enable' command.
---   Enables DOM snapshot agent for the given page.
-dOMSnapshotEnable :: Handle -> IO ()
-dOMSnapshotEnable handle = sendReceiveCommand handle PDOMSnapshotEnable
-
 instance Command PDOMSnapshotEnable where
-    type CommandResponse PDOMSnapshotEnable = NoResponse
-    commandName _ = "DOMSnapshot.enable"
+   type CommandResponse PDOMSnapshotEnable = ()
+   commandName _ = "DOMSnapshot.enable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'dOMSnapshotCaptureSnapshot' command.
+-- | DOMSnapshot.captureSnapshot
+--   Returns a document snapshot, including the full DOM tree of the root node (including iframes,
+--   template contents, and imported documents) in a flattened array, as well as layout and
+--   white-listed computed style information for the nodes. Shadow DOM in the returned DOM tree is
+--   flattened.
+
+-- | Parameters of the 'DOMSnapshot.captureSnapshot' command.
 data PDOMSnapshotCaptureSnapshot = PDOMSnapshotCaptureSnapshot {
   -- | Whitelist of computed styles to return.
   pDOMSnapshotCaptureSnapshotComputedStyles :: [String],
@@ -455,17 +459,7 @@ instance FromJSON  PDOMSnapshotCaptureSnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
--- | Function for the 'DOMSnapshot.captureSnapshot' command.
---   Returns a document snapshot, including the full DOM tree of the root node (including iframes,
---   template contents, and imported documents) in a flattened array, as well as layout and
---   white-listed computed style information for the nodes. Shadow DOM in the returned DOM tree is
---   flattened.
---   Returns: 'PDOMSnapshotCaptureSnapshot'
---   Returns: 'DOMSnapshotCaptureSnapshot'
-dOMSnapshotCaptureSnapshot :: Handle -> PDOMSnapshotCaptureSnapshot -> IO DOMSnapshotCaptureSnapshot
-dOMSnapshotCaptureSnapshot handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'dOMSnapshotCaptureSnapshot' command.
+-- | Return type of the 'DOMSnapshot.captureSnapshot' command.
 data DOMSnapshotCaptureSnapshot = DOMSnapshotCaptureSnapshot {
   -- | The nodes in the DOM tree. The DOMNode at index 0 corresponds to the root document.
   dOMSnapshotCaptureSnapshotDocuments :: [DOMSnapshotDocumentSnapshot],
@@ -477,8 +471,9 @@ instance FromJSON  DOMSnapshotCaptureSnapshot where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 instance Command PDOMSnapshotCaptureSnapshot where
-    type CommandResponse PDOMSnapshotCaptureSnapshot = DOMSnapshotCaptureSnapshot
-    commandName _ = "DOMSnapshot.captureSnapshot"
+   type CommandResponse PDOMSnapshotCaptureSnapshot = DOMSnapshotCaptureSnapshot
+   commandName _ = "DOMSnapshot.captureSnapshot"
+
 
 
 

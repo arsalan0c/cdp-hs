@@ -43,7 +43,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
@@ -531,35 +531,36 @@ instance Event OverlayInspectModeCanceled where
 
 
 
--- | Parameters of the 'overlayDisable' command.
+-- | Overlay.disable
+--   Disables domain notifications.
+
+-- | Parameters of the 'Overlay.disable' command.
 data POverlayDisable = POverlayDisable
 instance ToJSON POverlayDisable where toJSON _ = A.Null
 
--- | Function for the 'Overlay.disable' command.
---   Disables domain notifications.
-overlayDisable :: Handle -> IO ()
-overlayDisable handle = sendReceiveCommand handle POverlayDisable
-
 instance Command POverlayDisable where
-    type CommandResponse POverlayDisable = NoResponse
-    commandName _ = "Overlay.disable"
+   type CommandResponse POverlayDisable = ()
+   commandName _ = "Overlay.disable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlayEnable' command.
+-- | Overlay.enable
+--   Enables domain notifications.
+
+-- | Parameters of the 'Overlay.enable' command.
 data POverlayEnable = POverlayEnable
 instance ToJSON POverlayEnable where toJSON _ = A.Null
 
--- | Function for the 'Overlay.enable' command.
---   Enables domain notifications.
-overlayEnable :: Handle -> IO ()
-overlayEnable handle = sendReceiveCommand handle POverlayEnable
-
 instance Command POverlayEnable where
-    type CommandResponse POverlayEnable = NoResponse
-    commandName _ = "Overlay.enable"
+   type CommandResponse POverlayEnable = ()
+   commandName _ = "Overlay.enable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlayGetHighlightObjectForTest' command.
+-- | Overlay.getHighlightObjectForTest
+--   For testing.
+
+-- | Parameters of the 'Overlay.getHighlightObjectForTest' command.
 data POverlayGetHighlightObjectForTest = POverlayGetHighlightObjectForTest {
   -- | Id of the node to get highlight object for.
   pOverlayGetHighlightObjectForTestNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId,
@@ -579,14 +580,7 @@ instance FromJSON  POverlayGetHighlightObjectForTest where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 }
 
 
--- | Function for the 'Overlay.getHighlightObjectForTest' command.
---   For testing.
---   Returns: 'POverlayGetHighlightObjectForTest'
---   Returns: 'OverlayGetHighlightObjectForTest'
-overlayGetHighlightObjectForTest :: Handle -> POverlayGetHighlightObjectForTest -> IO OverlayGetHighlightObjectForTest
-overlayGetHighlightObjectForTest handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'overlayGetHighlightObjectForTest' command.
+-- | Return type of the 'Overlay.getHighlightObjectForTest' command.
 data OverlayGetHighlightObjectForTest = OverlayGetHighlightObjectForTest {
   -- | Highlight data for the node.
   overlayGetHighlightObjectForTestHighlight :: [(String, String)]
@@ -596,11 +590,15 @@ instance FromJSON  OverlayGetHighlightObjectForTest where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 instance Command POverlayGetHighlightObjectForTest where
-    type CommandResponse POverlayGetHighlightObjectForTest = OverlayGetHighlightObjectForTest
-    commandName _ = "Overlay.getHighlightObjectForTest"
+   type CommandResponse POverlayGetHighlightObjectForTest = OverlayGetHighlightObjectForTest
+   commandName _ = "Overlay.getHighlightObjectForTest"
 
 
--- | Parameters of the 'overlayGetGridHighlightObjectsForTest' command.
+
+-- | Overlay.getGridHighlightObjectsForTest
+--   For Persistent Grid testing.
+
+-- | Parameters of the 'Overlay.getGridHighlightObjectsForTest' command.
 data POverlayGetGridHighlightObjectsForTest = POverlayGetGridHighlightObjectsForTest {
   -- | Ids of the node to get highlight object for.
   pOverlayGetGridHighlightObjectsForTestNodeIds :: [DOMPageNetworkEmulationSecurity.DOMNodeId]
@@ -612,14 +610,7 @@ instance FromJSON  POverlayGetGridHighlightObjectsForTest where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 }
 
 
--- | Function for the 'Overlay.getGridHighlightObjectsForTest' command.
---   For Persistent Grid testing.
---   Returns: 'POverlayGetGridHighlightObjectsForTest'
---   Returns: 'OverlayGetGridHighlightObjectsForTest'
-overlayGetGridHighlightObjectsForTest :: Handle -> POverlayGetGridHighlightObjectsForTest -> IO OverlayGetGridHighlightObjectsForTest
-overlayGetGridHighlightObjectsForTest handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'overlayGetGridHighlightObjectsForTest' command.
+-- | Return type of the 'Overlay.getGridHighlightObjectsForTest' command.
 data OverlayGetGridHighlightObjectsForTest = OverlayGetGridHighlightObjectsForTest {
   -- | Grid Highlight data for the node ids provided.
   overlayGetGridHighlightObjectsForTestHighlights :: [(String, String)]
@@ -629,11 +620,15 @@ instance FromJSON  OverlayGetGridHighlightObjectsForTest where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 }
 
 instance Command POverlayGetGridHighlightObjectsForTest where
-    type CommandResponse POverlayGetGridHighlightObjectsForTest = OverlayGetGridHighlightObjectsForTest
-    commandName _ = "Overlay.getGridHighlightObjectsForTest"
+   type CommandResponse POverlayGetGridHighlightObjectsForTest = OverlayGetGridHighlightObjectsForTest
+   commandName _ = "Overlay.getGridHighlightObjectsForTest"
 
 
--- | Parameters of the 'overlayGetSourceOrderHighlightObjectForTest' command.
+
+-- | Overlay.getSourceOrderHighlightObjectForTest
+--   For Source Order Viewer testing.
+
+-- | Parameters of the 'Overlay.getSourceOrderHighlightObjectForTest' command.
 data POverlayGetSourceOrderHighlightObjectForTest = POverlayGetSourceOrderHighlightObjectForTest {
   -- | Id of the node to highlight.
   pOverlayGetSourceOrderHighlightObjectForTestNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId
@@ -645,14 +640,7 @@ instance FromJSON  POverlayGetSourceOrderHighlightObjectForTest where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 44 }
 
 
--- | Function for the 'Overlay.getSourceOrderHighlightObjectForTest' command.
---   For Source Order Viewer testing.
---   Returns: 'POverlayGetSourceOrderHighlightObjectForTest'
---   Returns: 'OverlayGetSourceOrderHighlightObjectForTest'
-overlayGetSourceOrderHighlightObjectForTest :: Handle -> POverlayGetSourceOrderHighlightObjectForTest -> IO OverlayGetSourceOrderHighlightObjectForTest
-overlayGetSourceOrderHighlightObjectForTest handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'overlayGetSourceOrderHighlightObjectForTest' command.
+-- | Return type of the 'Overlay.getSourceOrderHighlightObjectForTest' command.
 data OverlayGetSourceOrderHighlightObjectForTest = OverlayGetSourceOrderHighlightObjectForTest {
   -- | Source order highlight data for the node id provided.
   overlayGetSourceOrderHighlightObjectForTestHighlight :: [(String, String)]
@@ -662,25 +650,29 @@ instance FromJSON  OverlayGetSourceOrderHighlightObjectForTest where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 43 }
 
 instance Command POverlayGetSourceOrderHighlightObjectForTest where
-    type CommandResponse POverlayGetSourceOrderHighlightObjectForTest = OverlayGetSourceOrderHighlightObjectForTest
-    commandName _ = "Overlay.getSourceOrderHighlightObjectForTest"
+   type CommandResponse POverlayGetSourceOrderHighlightObjectForTest = OverlayGetSourceOrderHighlightObjectForTest
+   commandName _ = "Overlay.getSourceOrderHighlightObjectForTest"
 
 
--- | Parameters of the 'overlayHideHighlight' command.
+
+-- | Overlay.hideHighlight
+--   Hides any highlight.
+
+-- | Parameters of the 'Overlay.hideHighlight' command.
 data POverlayHideHighlight = POverlayHideHighlight
 instance ToJSON POverlayHideHighlight where toJSON _ = A.Null
 
--- | Function for the 'Overlay.hideHighlight' command.
---   Hides any highlight.
-overlayHideHighlight :: Handle -> IO ()
-overlayHideHighlight handle = sendReceiveCommand handle POverlayHideHighlight
-
 instance Command POverlayHideHighlight where
-    type CommandResponse POverlayHideHighlight = NoResponse
-    commandName _ = "Overlay.hideHighlight"
+   type CommandResponse POverlayHideHighlight = ()
+   commandName _ = "Overlay.hideHighlight"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlayHighlightNode' command.
+-- | Overlay.highlightNode
+--   Highlights DOM node with given id or with the given JavaScript object wrapper. Either nodeId or
+--   objectId must be specified.
+
+-- | Parameters of the 'Overlay.highlightNode' command.
 data POverlayHighlightNode = POverlayHighlightNode {
   -- | A descriptor for the highlight appearance.
   pOverlayHighlightNodeHighlightConfig :: OverlayHighlightConfig,
@@ -700,19 +692,16 @@ instance FromJSON  POverlayHighlightNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
--- | Function for the 'Overlay.highlightNode' command.
---   Highlights DOM node with given id or with the given JavaScript object wrapper. Either nodeId or
---   objectId must be specified.
---   Returns: 'POverlayHighlightNode'
-overlayHighlightNode :: Handle -> POverlayHighlightNode -> IO ()
-overlayHighlightNode handle params = sendReceiveCommand handle params
-
 instance Command POverlayHighlightNode where
-    type CommandResponse POverlayHighlightNode = NoResponse
-    commandName _ = "Overlay.highlightNode"
+   type CommandResponse POverlayHighlightNode = ()
+   commandName _ = "Overlay.highlightNode"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlayHighlightQuad' command.
+-- | Overlay.highlightQuad
+--   Highlights given quad. Coordinates are absolute with respect to the main frame viewport.
+
+-- | Parameters of the 'Overlay.highlightQuad' command.
 data POverlayHighlightQuad = POverlayHighlightQuad {
   -- | Quad to highlight
   pOverlayHighlightQuadQuad :: DOMPageNetworkEmulationSecurity.DOMQuad,
@@ -728,18 +717,16 @@ instance FromJSON  POverlayHighlightQuad where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
--- | Function for the 'Overlay.highlightQuad' command.
---   Highlights given quad. Coordinates are absolute with respect to the main frame viewport.
---   Returns: 'POverlayHighlightQuad'
-overlayHighlightQuad :: Handle -> POverlayHighlightQuad -> IO ()
-overlayHighlightQuad handle params = sendReceiveCommand handle params
-
 instance Command POverlayHighlightQuad where
-    type CommandResponse POverlayHighlightQuad = NoResponse
-    commandName _ = "Overlay.highlightQuad"
+   type CommandResponse POverlayHighlightQuad = ()
+   commandName _ = "Overlay.highlightQuad"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlayHighlightRect' command.
+-- | Overlay.highlightRect
+--   Highlights given rectangle. Coordinates are absolute with respect to the main frame viewport.
+
+-- | Parameters of the 'Overlay.highlightRect' command.
 data POverlayHighlightRect = POverlayHighlightRect {
   -- | X coordinate
   pOverlayHighlightRectX :: Int,
@@ -761,18 +748,17 @@ instance FromJSON  POverlayHighlightRect where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 
--- | Function for the 'Overlay.highlightRect' command.
---   Highlights given rectangle. Coordinates are absolute with respect to the main frame viewport.
---   Returns: 'POverlayHighlightRect'
-overlayHighlightRect :: Handle -> POverlayHighlightRect -> IO ()
-overlayHighlightRect handle params = sendReceiveCommand handle params
-
 instance Command POverlayHighlightRect where
-    type CommandResponse POverlayHighlightRect = NoResponse
-    commandName _ = "Overlay.highlightRect"
+   type CommandResponse POverlayHighlightRect = ()
+   commandName _ = "Overlay.highlightRect"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlayHighlightSourceOrder' command.
+-- | Overlay.highlightSourceOrder
+--   Highlights the source order of the children of the DOM node with given id or with the given
+--   JavaScript object wrapper. Either nodeId or objectId must be specified.
+
+-- | Parameters of the 'Overlay.highlightSourceOrder' command.
 data POverlayHighlightSourceOrder = POverlayHighlightSourceOrder {
   -- | A descriptor for the appearance of the overlay drawing.
   pOverlayHighlightSourceOrderSourceOrderConfig :: OverlaySourceOrderConfig,
@@ -790,19 +776,17 @@ instance FromJSON  POverlayHighlightSourceOrder where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
--- | Function for the 'Overlay.highlightSourceOrder' command.
---   Highlights the source order of the children of the DOM node with given id or with the given
---   JavaScript object wrapper. Either nodeId or objectId must be specified.
---   Returns: 'POverlayHighlightSourceOrder'
-overlayHighlightSourceOrder :: Handle -> POverlayHighlightSourceOrder -> IO ()
-overlayHighlightSourceOrder handle params = sendReceiveCommand handle params
-
 instance Command POverlayHighlightSourceOrder where
-    type CommandResponse POverlayHighlightSourceOrder = NoResponse
-    commandName _ = "Overlay.highlightSourceOrder"
+   type CommandResponse POverlayHighlightSourceOrder = ()
+   commandName _ = "Overlay.highlightSourceOrder"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlaySetInspectMode' command.
+-- | Overlay.setInspectMode
+--   Enters the 'inspect' mode. In this mode, elements that user is hovering over are highlighted.
+--   Backend then generates 'inspectNodeRequested' event upon element selection.
+
+-- | Parameters of the 'Overlay.setInspectMode' command.
 data POverlaySetInspectMode = POverlaySetInspectMode {
   -- | Set an inspection mode.
   pOverlaySetInspectModeMode :: OverlayInspectMode,
@@ -817,19 +801,16 @@ instance FromJSON  POverlaySetInspectMode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
--- | Function for the 'Overlay.setInspectMode' command.
---   Enters the 'inspect' mode. In this mode, elements that user is hovering over are highlighted.
---   Backend then generates 'inspectNodeRequested' event upon element selection.
---   Returns: 'POverlaySetInspectMode'
-overlaySetInspectMode :: Handle -> POverlaySetInspectMode -> IO ()
-overlaySetInspectMode handle params = sendReceiveCommand handle params
-
 instance Command POverlaySetInspectMode where
-    type CommandResponse POverlaySetInspectMode = NoResponse
-    commandName _ = "Overlay.setInspectMode"
+   type CommandResponse POverlaySetInspectMode = ()
+   commandName _ = "Overlay.setInspectMode"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlaySetShowAdHighlights' command.
+-- | Overlay.setShowAdHighlights
+--   Highlights owner element of all frames detected to be ads.
+
+-- | Parameters of the 'Overlay.setShowAdHighlights' command.
 data POverlaySetShowAdHighlights = POverlaySetShowAdHighlights {
   -- | True for showing ad highlights
   pOverlaySetShowAdHighlightsShow :: Bool
@@ -841,18 +822,15 @@ instance FromJSON  POverlaySetShowAdHighlights where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
--- | Function for the 'Overlay.setShowAdHighlights' command.
---   Highlights owner element of all frames detected to be ads.
---   Returns: 'POverlaySetShowAdHighlights'
-overlaySetShowAdHighlights :: Handle -> POverlaySetShowAdHighlights -> IO ()
-overlaySetShowAdHighlights handle params = sendReceiveCommand handle params
-
 instance Command POverlaySetShowAdHighlights where
-    type CommandResponse POverlaySetShowAdHighlights = NoResponse
-    commandName _ = "Overlay.setShowAdHighlights"
+   type CommandResponse POverlaySetShowAdHighlights = ()
+   commandName _ = "Overlay.setShowAdHighlights"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlaySetPausedInDebuggerMessage' command.
+-- | Overlay.setPausedInDebuggerMessage
+
+-- | Parameters of the 'Overlay.setPausedInDebuggerMessage' command.
 data POverlaySetPausedInDebuggerMessage = POverlaySetPausedInDebuggerMessage {
   -- | The message to display, also triggers resume and step over controls.
   pOverlaySetPausedInDebuggerMessageMessage :: Maybe String
@@ -864,18 +842,16 @@ instance FromJSON  POverlaySetPausedInDebuggerMessage where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
 
 
--- | Function for the 'Overlay.setPausedInDebuggerMessage' command.
---   
---   Returns: 'POverlaySetPausedInDebuggerMessage'
-overlaySetPausedInDebuggerMessage :: Handle -> POverlaySetPausedInDebuggerMessage -> IO ()
-overlaySetPausedInDebuggerMessage handle params = sendReceiveCommand handle params
-
 instance Command POverlaySetPausedInDebuggerMessage where
-    type CommandResponse POverlaySetPausedInDebuggerMessage = NoResponse
-    commandName _ = "Overlay.setPausedInDebuggerMessage"
+   type CommandResponse POverlaySetPausedInDebuggerMessage = ()
+   commandName _ = "Overlay.setPausedInDebuggerMessage"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlaySetShowDebugBorders' command.
+-- | Overlay.setShowDebugBorders
+--   Requests that backend shows debug borders on layers
+
+-- | Parameters of the 'Overlay.setShowDebugBorders' command.
 data POverlaySetShowDebugBorders = POverlaySetShowDebugBorders {
   -- | True for showing debug borders
   pOverlaySetShowDebugBordersShow :: Bool
@@ -887,18 +863,16 @@ instance FromJSON  POverlaySetShowDebugBorders where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
--- | Function for the 'Overlay.setShowDebugBorders' command.
---   Requests that backend shows debug borders on layers
---   Returns: 'POverlaySetShowDebugBorders'
-overlaySetShowDebugBorders :: Handle -> POverlaySetShowDebugBorders -> IO ()
-overlaySetShowDebugBorders handle params = sendReceiveCommand handle params
-
 instance Command POverlaySetShowDebugBorders where
-    type CommandResponse POverlaySetShowDebugBorders = NoResponse
-    commandName _ = "Overlay.setShowDebugBorders"
+   type CommandResponse POverlaySetShowDebugBorders = ()
+   commandName _ = "Overlay.setShowDebugBorders"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlaySetShowFPSCounter' command.
+-- | Overlay.setShowFPSCounter
+--   Requests that backend shows the FPS counter
+
+-- | Parameters of the 'Overlay.setShowFPSCounter' command.
 data POverlaySetShowFPSCounter = POverlaySetShowFPSCounter {
   -- | True for showing the FPS counter
   pOverlaySetShowFPSCounterShow :: Bool
@@ -910,18 +884,16 @@ instance FromJSON  POverlaySetShowFPSCounter where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the 'Overlay.setShowFPSCounter' command.
---   Requests that backend shows the FPS counter
---   Returns: 'POverlaySetShowFPSCounter'
-overlaySetShowFPSCounter :: Handle -> POverlaySetShowFPSCounter -> IO ()
-overlaySetShowFPSCounter handle params = sendReceiveCommand handle params
-
 instance Command POverlaySetShowFPSCounter where
-    type CommandResponse POverlaySetShowFPSCounter = NoResponse
-    commandName _ = "Overlay.setShowFPSCounter"
+   type CommandResponse POverlaySetShowFPSCounter = ()
+   commandName _ = "Overlay.setShowFPSCounter"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlaySetShowGridOverlays' command.
+-- | Overlay.setShowGridOverlays
+--   Highlight multiple elements with the CSS Grid overlay.
+
+-- | Parameters of the 'Overlay.setShowGridOverlays' command.
 data POverlaySetShowGridOverlays = POverlaySetShowGridOverlays {
   -- | An array of node identifiers and descriptors for the highlight appearance.
   pOverlaySetShowGridOverlaysGridNodeHighlightConfigs :: [OverlayGridNodeHighlightConfig]
@@ -933,18 +905,15 @@ instance FromJSON  POverlaySetShowGridOverlays where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
--- | Function for the 'Overlay.setShowGridOverlays' command.
---   Highlight multiple elements with the CSS Grid overlay.
---   Returns: 'POverlaySetShowGridOverlays'
-overlaySetShowGridOverlays :: Handle -> POverlaySetShowGridOverlays -> IO ()
-overlaySetShowGridOverlays handle params = sendReceiveCommand handle params
-
 instance Command POverlaySetShowGridOverlays where
-    type CommandResponse POverlaySetShowGridOverlays = NoResponse
-    commandName _ = "Overlay.setShowGridOverlays"
+   type CommandResponse POverlaySetShowGridOverlays = ()
+   commandName _ = "Overlay.setShowGridOverlays"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlaySetShowFlexOverlays' command.
+-- | Overlay.setShowFlexOverlays
+
+-- | Parameters of the 'Overlay.setShowFlexOverlays' command.
 data POverlaySetShowFlexOverlays = POverlaySetShowFlexOverlays {
   -- | An array of node identifiers and descriptors for the highlight appearance.
   pOverlaySetShowFlexOverlaysFlexNodeHighlightConfigs :: [OverlayFlexNodeHighlightConfig]
@@ -956,18 +925,15 @@ instance FromJSON  POverlaySetShowFlexOverlays where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
--- | Function for the 'Overlay.setShowFlexOverlays' command.
---   
---   Returns: 'POverlaySetShowFlexOverlays'
-overlaySetShowFlexOverlays :: Handle -> POverlaySetShowFlexOverlays -> IO ()
-overlaySetShowFlexOverlays handle params = sendReceiveCommand handle params
-
 instance Command POverlaySetShowFlexOverlays where
-    type CommandResponse POverlaySetShowFlexOverlays = NoResponse
-    commandName _ = "Overlay.setShowFlexOverlays"
+   type CommandResponse POverlaySetShowFlexOverlays = ()
+   commandName _ = "Overlay.setShowFlexOverlays"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlaySetShowScrollSnapOverlays' command.
+-- | Overlay.setShowScrollSnapOverlays
+
+-- | Parameters of the 'Overlay.setShowScrollSnapOverlays' command.
 data POverlaySetShowScrollSnapOverlays = POverlaySetShowScrollSnapOverlays {
   -- | An array of node identifiers and descriptors for the highlight appearance.
   pOverlaySetShowScrollSnapOverlaysScrollSnapHighlightConfigs :: [OverlayScrollSnapHighlightConfig]
@@ -979,18 +945,15 @@ instance FromJSON  POverlaySetShowScrollSnapOverlays where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 }
 
 
--- | Function for the 'Overlay.setShowScrollSnapOverlays' command.
---   
---   Returns: 'POverlaySetShowScrollSnapOverlays'
-overlaySetShowScrollSnapOverlays :: Handle -> POverlaySetShowScrollSnapOverlays -> IO ()
-overlaySetShowScrollSnapOverlays handle params = sendReceiveCommand handle params
-
 instance Command POverlaySetShowScrollSnapOverlays where
-    type CommandResponse POverlaySetShowScrollSnapOverlays = NoResponse
-    commandName _ = "Overlay.setShowScrollSnapOverlays"
+   type CommandResponse POverlaySetShowScrollSnapOverlays = ()
+   commandName _ = "Overlay.setShowScrollSnapOverlays"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlaySetShowContainerQueryOverlays' command.
+-- | Overlay.setShowContainerQueryOverlays
+
+-- | Parameters of the 'Overlay.setShowContainerQueryOverlays' command.
 data POverlaySetShowContainerQueryOverlays = POverlaySetShowContainerQueryOverlays {
   -- | An array of node identifiers and descriptors for the highlight appearance.
   pOverlaySetShowContainerQueryOverlaysContainerQueryHighlightConfigs :: [OverlayContainerQueryHighlightConfig]
@@ -1002,18 +965,16 @@ instance FromJSON  POverlaySetShowContainerQueryOverlays where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 }
 
 
--- | Function for the 'Overlay.setShowContainerQueryOverlays' command.
---   
---   Returns: 'POverlaySetShowContainerQueryOverlays'
-overlaySetShowContainerQueryOverlays :: Handle -> POverlaySetShowContainerQueryOverlays -> IO ()
-overlaySetShowContainerQueryOverlays handle params = sendReceiveCommand handle params
-
 instance Command POverlaySetShowContainerQueryOverlays where
-    type CommandResponse POverlaySetShowContainerQueryOverlays = NoResponse
-    commandName _ = "Overlay.setShowContainerQueryOverlays"
+   type CommandResponse POverlaySetShowContainerQueryOverlays = ()
+   commandName _ = "Overlay.setShowContainerQueryOverlays"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlaySetShowPaintRects' command.
+-- | Overlay.setShowPaintRects
+--   Requests that backend shows paint rectangles
+
+-- | Parameters of the 'Overlay.setShowPaintRects' command.
 data POverlaySetShowPaintRects = POverlaySetShowPaintRects {
   -- | True for showing paint rectangles
   pOverlaySetShowPaintRectsResult :: Bool
@@ -1025,18 +986,16 @@ instance FromJSON  POverlaySetShowPaintRects where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the 'Overlay.setShowPaintRects' command.
---   Requests that backend shows paint rectangles
---   Returns: 'POverlaySetShowPaintRects'
-overlaySetShowPaintRects :: Handle -> POverlaySetShowPaintRects -> IO ()
-overlaySetShowPaintRects handle params = sendReceiveCommand handle params
-
 instance Command POverlaySetShowPaintRects where
-    type CommandResponse POverlaySetShowPaintRects = NoResponse
-    commandName _ = "Overlay.setShowPaintRects"
+   type CommandResponse POverlaySetShowPaintRects = ()
+   commandName _ = "Overlay.setShowPaintRects"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlaySetShowLayoutShiftRegions' command.
+-- | Overlay.setShowLayoutShiftRegions
+--   Requests that backend shows layout shift regions
+
+-- | Parameters of the 'Overlay.setShowLayoutShiftRegions' command.
 data POverlaySetShowLayoutShiftRegions = POverlaySetShowLayoutShiftRegions {
   -- | True for showing layout shift regions
   pOverlaySetShowLayoutShiftRegionsResult :: Bool
@@ -1048,18 +1007,16 @@ instance FromJSON  POverlaySetShowLayoutShiftRegions where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 }
 
 
--- | Function for the 'Overlay.setShowLayoutShiftRegions' command.
---   Requests that backend shows layout shift regions
---   Returns: 'POverlaySetShowLayoutShiftRegions'
-overlaySetShowLayoutShiftRegions :: Handle -> POverlaySetShowLayoutShiftRegions -> IO ()
-overlaySetShowLayoutShiftRegions handle params = sendReceiveCommand handle params
-
 instance Command POverlaySetShowLayoutShiftRegions where
-    type CommandResponse POverlaySetShowLayoutShiftRegions = NoResponse
-    commandName _ = "Overlay.setShowLayoutShiftRegions"
+   type CommandResponse POverlaySetShowLayoutShiftRegions = ()
+   commandName _ = "Overlay.setShowLayoutShiftRegions"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlaySetShowScrollBottleneckRects' command.
+-- | Overlay.setShowScrollBottleneckRects
+--   Requests that backend shows scroll bottleneck rects
+
+-- | Parameters of the 'Overlay.setShowScrollBottleneckRects' command.
 data POverlaySetShowScrollBottleneckRects = POverlaySetShowScrollBottleneckRects {
   -- | True for showing scroll bottleneck rects
   pOverlaySetShowScrollBottleneckRectsShow :: Bool
@@ -1071,18 +1028,16 @@ instance FromJSON  POverlaySetShowScrollBottleneckRects where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 }
 
 
--- | Function for the 'Overlay.setShowScrollBottleneckRects' command.
---   Requests that backend shows scroll bottleneck rects
---   Returns: 'POverlaySetShowScrollBottleneckRects'
-overlaySetShowScrollBottleneckRects :: Handle -> POverlaySetShowScrollBottleneckRects -> IO ()
-overlaySetShowScrollBottleneckRects handle params = sendReceiveCommand handle params
-
 instance Command POverlaySetShowScrollBottleneckRects where
-    type CommandResponse POverlaySetShowScrollBottleneckRects = NoResponse
-    commandName _ = "Overlay.setShowScrollBottleneckRects"
+   type CommandResponse POverlaySetShowScrollBottleneckRects = ()
+   commandName _ = "Overlay.setShowScrollBottleneckRects"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlaySetShowWebVitals' command.
+-- | Overlay.setShowWebVitals
+--   Request that backend shows an overlay with web vital metrics.
+
+-- | Parameters of the 'Overlay.setShowWebVitals' command.
 data POverlaySetShowWebVitals = POverlaySetShowWebVitals {
   pOverlaySetShowWebVitalsShow :: Bool
 } deriving (Generic, Eq, Show, Read)
@@ -1093,18 +1048,16 @@ instance FromJSON  POverlaySetShowWebVitals where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the 'Overlay.setShowWebVitals' command.
---   Request that backend shows an overlay with web vital metrics.
---   Returns: 'POverlaySetShowWebVitals'
-overlaySetShowWebVitals :: Handle -> POverlaySetShowWebVitals -> IO ()
-overlaySetShowWebVitals handle params = sendReceiveCommand handle params
-
 instance Command POverlaySetShowWebVitals where
-    type CommandResponse POverlaySetShowWebVitals = NoResponse
-    commandName _ = "Overlay.setShowWebVitals"
+   type CommandResponse POverlaySetShowWebVitals = ()
+   commandName _ = "Overlay.setShowWebVitals"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlaySetShowViewportSizeOnResize' command.
+-- | Overlay.setShowViewportSizeOnResize
+--   Paints viewport size upon main frame resize.
+
+-- | Parameters of the 'Overlay.setShowViewportSizeOnResize' command.
 data POverlaySetShowViewportSizeOnResize = POverlaySetShowViewportSizeOnResize {
   -- | Whether to paint size or not.
   pOverlaySetShowViewportSizeOnResizeShow :: Bool
@@ -1116,18 +1069,16 @@ instance FromJSON  POverlaySetShowViewportSizeOnResize where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 }
 
 
--- | Function for the 'Overlay.setShowViewportSizeOnResize' command.
---   Paints viewport size upon main frame resize.
---   Returns: 'POverlaySetShowViewportSizeOnResize'
-overlaySetShowViewportSizeOnResize :: Handle -> POverlaySetShowViewportSizeOnResize -> IO ()
-overlaySetShowViewportSizeOnResize handle params = sendReceiveCommand handle params
-
 instance Command POverlaySetShowViewportSizeOnResize where
-    type CommandResponse POverlaySetShowViewportSizeOnResize = NoResponse
-    commandName _ = "Overlay.setShowViewportSizeOnResize"
+   type CommandResponse POverlaySetShowViewportSizeOnResize = ()
+   commandName _ = "Overlay.setShowViewportSizeOnResize"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlaySetShowHinge' command.
+-- | Overlay.setShowHinge
+--   Add a dual screen device hinge
+
+-- | Parameters of the 'Overlay.setShowHinge' command.
 data POverlaySetShowHinge = POverlaySetShowHinge {
   -- | hinge data, null means hideHinge
   pOverlaySetShowHingeHingeConfig :: Maybe OverlayHingeConfig
@@ -1139,18 +1090,16 @@ instance FromJSON  POverlaySetShowHinge where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 }
 
 
--- | Function for the 'Overlay.setShowHinge' command.
---   Add a dual screen device hinge
---   Returns: 'POverlaySetShowHinge'
-overlaySetShowHinge :: Handle -> POverlaySetShowHinge -> IO ()
-overlaySetShowHinge handle params = sendReceiveCommand handle params
-
 instance Command POverlaySetShowHinge where
-    type CommandResponse POverlaySetShowHinge = NoResponse
-    commandName _ = "Overlay.setShowHinge"
+   type CommandResponse POverlaySetShowHinge = ()
+   commandName _ = "Overlay.setShowHinge"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'overlaySetShowIsolatedElements' command.
+-- | Overlay.setShowIsolatedElements
+--   Show elements in isolation mode with overlays.
+
+-- | Parameters of the 'Overlay.setShowIsolatedElements' command.
 data POverlaySetShowIsolatedElements = POverlaySetShowIsolatedElements {
   -- | An array of node identifiers and descriptors for the highlight appearance.
   pOverlaySetShowIsolatedElementsIsolatedElementHighlightConfigs :: [OverlayIsolatedElementHighlightConfig]
@@ -1162,15 +1111,10 @@ instance FromJSON  POverlaySetShowIsolatedElements where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
--- | Function for the 'Overlay.setShowIsolatedElements' command.
---   Show elements in isolation mode with overlays.
---   Returns: 'POverlaySetShowIsolatedElements'
-overlaySetShowIsolatedElements :: Handle -> POverlaySetShowIsolatedElements -> IO ()
-overlaySetShowIsolatedElements handle params = sendReceiveCommand handle params
-
 instance Command POverlaySetShowIsolatedElements where
-    type CommandResponse POverlaySetShowIsolatedElements = NoResponse
-    commandName _ = "Overlay.setShowIsolatedElements"
+   type CommandResponse POverlaySetShowIsolatedElements = ()
+   commandName _ = "Overlay.setShowIsolatedElements"
+   fromJSON = const . A.Success . const ()
 
 
 

@@ -41,7 +41,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 
@@ -185,7 +185,10 @@ instance Event InputDragIntercepted where
 
 
 
--- | Parameters of the 'inputDispatchDragEvent' command.
+-- | Input.dispatchDragEvent
+--   Dispatches a drag event into the page.
+
+-- | Parameters of the 'Input.dispatchDragEvent' command.
 data PInputDispatchDragEventType = PInputDispatchDragEventTypeDragEnter | PInputDispatchDragEventTypeDragOver | PInputDispatchDragEventTypeDrop | PInputDispatchDragEventTypeDragCancel
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PInputDispatchDragEventType where
@@ -227,18 +230,16 @@ instance FromJSON  PInputDispatchDragEvent where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
--- | Function for the 'Input.dispatchDragEvent' command.
---   Dispatches a drag event into the page.
---   Returns: 'PInputDispatchDragEvent'
-inputDispatchDragEvent :: Handle -> PInputDispatchDragEvent -> IO ()
-inputDispatchDragEvent handle params = sendReceiveCommand handle params
-
 instance Command PInputDispatchDragEvent where
-    type CommandResponse PInputDispatchDragEvent = NoResponse
-    commandName _ = "Input.dispatchDragEvent"
+   type CommandResponse PInputDispatchDragEvent = ()
+   commandName _ = "Input.dispatchDragEvent"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'inputDispatchKeyEvent' command.
+-- | Input.dispatchKeyEvent
+--   Dispatches a key event to the page.
+
+-- | Parameters of the 'Input.dispatchKeyEvent' command.
 data PInputDispatchKeyEventType = PInputDispatchKeyEventTypeKeyDown | PInputDispatchKeyEventTypeKeyUp | PInputDispatchKeyEventTypeRawKeyDown | PInputDispatchKeyEventTypeChar
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PInputDispatchKeyEventType where
@@ -306,18 +307,17 @@ instance FromJSON  PInputDispatchKeyEvent where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
--- | Function for the 'Input.dispatchKeyEvent' command.
---   Dispatches a key event to the page.
---   Returns: 'PInputDispatchKeyEvent'
-inputDispatchKeyEvent :: Handle -> PInputDispatchKeyEvent -> IO ()
-inputDispatchKeyEvent handle params = sendReceiveCommand handle params
-
 instance Command PInputDispatchKeyEvent where
-    type CommandResponse PInputDispatchKeyEvent = NoResponse
-    commandName _ = "Input.dispatchKeyEvent"
+   type CommandResponse PInputDispatchKeyEvent = ()
+   commandName _ = "Input.dispatchKeyEvent"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'inputInsertText' command.
+-- | Input.insertText
+--   This method emulates inserting text that doesn't come from a key press,
+--   for example an emoji keyboard or an IME.
+
+-- | Parameters of the 'Input.insertText' command.
 data PInputInsertText = PInputInsertText {
   -- | The text to insert.
   pInputInsertTextText :: String
@@ -329,19 +329,18 @@ instance FromJSON  PInputInsertText where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
--- | Function for the 'Input.insertText' command.
---   This method emulates inserting text that doesn't come from a key press,
---   for example an emoji keyboard or an IME.
---   Returns: 'PInputInsertText'
-inputInsertText :: Handle -> PInputInsertText -> IO ()
-inputInsertText handle params = sendReceiveCommand handle params
-
 instance Command PInputInsertText where
-    type CommandResponse PInputInsertText = NoResponse
-    commandName _ = "Input.insertText"
+   type CommandResponse PInputInsertText = ()
+   commandName _ = "Input.insertText"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'inputImeSetComposition' command.
+-- | Input.imeSetComposition
+--   This method sets the current candidate text for ime.
+--   Use imeCommitComposition to commit the final text.
+--   Use imeSetComposition with empty string as text to cancel composition.
+
+-- | Parameters of the 'Input.imeSetComposition' command.
 data PInputImeSetComposition = PInputImeSetComposition {
   -- | The text to insert
   pInputImeSetCompositionText :: String,
@@ -361,20 +360,16 @@ instance FromJSON  PInputImeSetComposition where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
--- | Function for the 'Input.imeSetComposition' command.
---   This method sets the current candidate text for ime.
---   Use imeCommitComposition to commit the final text.
---   Use imeSetComposition with empty string as text to cancel composition.
---   Returns: 'PInputImeSetComposition'
-inputImeSetComposition :: Handle -> PInputImeSetComposition -> IO ()
-inputImeSetComposition handle params = sendReceiveCommand handle params
-
 instance Command PInputImeSetComposition where
-    type CommandResponse PInputImeSetComposition = NoResponse
-    commandName _ = "Input.imeSetComposition"
+   type CommandResponse PInputImeSetComposition = ()
+   commandName _ = "Input.imeSetComposition"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'inputDispatchMouseEvent' command.
+-- | Input.dispatchMouseEvent
+--   Dispatches a mouse event to the page.
+
+-- | Parameters of the 'Input.dispatchMouseEvent' command.
 data PInputDispatchMouseEventType = PInputDispatchMouseEventTypeMousePressed | PInputDispatchMouseEventTypeMouseReleased | PInputDispatchMouseEventTypeMouseMoved | PInputDispatchMouseEventTypeMouseWheel
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PInputDispatchMouseEventType where
@@ -456,18 +451,16 @@ instance FromJSON  PInputDispatchMouseEvent where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the 'Input.dispatchMouseEvent' command.
---   Dispatches a mouse event to the page.
---   Returns: 'PInputDispatchMouseEvent'
-inputDispatchMouseEvent :: Handle -> PInputDispatchMouseEvent -> IO ()
-inputDispatchMouseEvent handle params = sendReceiveCommand handle params
-
 instance Command PInputDispatchMouseEvent where
-    type CommandResponse PInputDispatchMouseEvent = NoResponse
-    commandName _ = "Input.dispatchMouseEvent"
+   type CommandResponse PInputDispatchMouseEvent = ()
+   commandName _ = "Input.dispatchMouseEvent"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'inputDispatchTouchEvent' command.
+-- | Input.dispatchTouchEvent
+--   Dispatches a touch event to the page.
+
+-- | Parameters of the 'Input.dispatchTouchEvent' command.
 data PInputDispatchTouchEventType = PInputDispatchTouchEventTypeTouchStart | PInputDispatchTouchEventTypeTouchEnd | PInputDispatchTouchEventTypeTouchMove | PInputDispatchTouchEventTypeTouchCancel
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PInputDispatchTouchEventType where
@@ -510,18 +503,16 @@ instance FromJSON  PInputDispatchTouchEvent where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the 'Input.dispatchTouchEvent' command.
---   Dispatches a touch event to the page.
---   Returns: 'PInputDispatchTouchEvent'
-inputDispatchTouchEvent :: Handle -> PInputDispatchTouchEvent -> IO ()
-inputDispatchTouchEvent handle params = sendReceiveCommand handle params
-
 instance Command PInputDispatchTouchEvent where
-    type CommandResponse PInputDispatchTouchEvent = NoResponse
-    commandName _ = "Input.dispatchTouchEvent"
+   type CommandResponse PInputDispatchTouchEvent = ()
+   commandName _ = "Input.dispatchTouchEvent"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'inputEmulateTouchFromMouseEvent' command.
+-- | Input.emulateTouchFromMouseEvent
+--   Emulates touch event from the mouse event parameters.
+
+-- | Parameters of the 'Input.emulateTouchFromMouseEvent' command.
 data PInputEmulateTouchFromMouseEventType = PInputEmulateTouchFromMouseEventTypeMousePressed | PInputEmulateTouchFromMouseEventTypeMouseReleased | PInputEmulateTouchFromMouseEventTypeMouseMoved | PInputEmulateTouchFromMouseEventTypeMouseWheel
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PInputEmulateTouchFromMouseEventType where
@@ -571,18 +562,16 @@ instance FromJSON  PInputEmulateTouchFromMouseEvent where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
--- | Function for the 'Input.emulateTouchFromMouseEvent' command.
---   Emulates touch event from the mouse event parameters.
---   Returns: 'PInputEmulateTouchFromMouseEvent'
-inputEmulateTouchFromMouseEvent :: Handle -> PInputEmulateTouchFromMouseEvent -> IO ()
-inputEmulateTouchFromMouseEvent handle params = sendReceiveCommand handle params
-
 instance Command PInputEmulateTouchFromMouseEvent where
-    type CommandResponse PInputEmulateTouchFromMouseEvent = NoResponse
-    commandName _ = "Input.emulateTouchFromMouseEvent"
+   type CommandResponse PInputEmulateTouchFromMouseEvent = ()
+   commandName _ = "Input.emulateTouchFromMouseEvent"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'inputSetIgnoreInputEvents' command.
+-- | Input.setIgnoreInputEvents
+--   Ignores input events (useful while auditing page).
+
+-- | Parameters of the 'Input.setIgnoreInputEvents' command.
 data PInputSetIgnoreInputEvents = PInputSetIgnoreInputEvents {
   -- | Ignores input events processing when set to true.
   pInputSetIgnoreInputEventsIgnore :: Bool
@@ -594,18 +583,17 @@ instance FromJSON  PInputSetIgnoreInputEvents where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
--- | Function for the 'Input.setIgnoreInputEvents' command.
---   Ignores input events (useful while auditing page).
---   Returns: 'PInputSetIgnoreInputEvents'
-inputSetIgnoreInputEvents :: Handle -> PInputSetIgnoreInputEvents -> IO ()
-inputSetIgnoreInputEvents handle params = sendReceiveCommand handle params
-
 instance Command PInputSetIgnoreInputEvents where
-    type CommandResponse PInputSetIgnoreInputEvents = NoResponse
-    commandName _ = "Input.setIgnoreInputEvents"
+   type CommandResponse PInputSetIgnoreInputEvents = ()
+   commandName _ = "Input.setIgnoreInputEvents"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'inputSetInterceptDrags' command.
+-- | Input.setInterceptDrags
+--   Prevents default drag and drop behavior and instead emits `Input.dragIntercepted` events.
+--   Drag and drop behavior can be directly controlled via `Input.dispatchDragEvent`.
+
+-- | Parameters of the 'Input.setInterceptDrags' command.
 data PInputSetInterceptDrags = PInputSetInterceptDrags {
   pInputSetInterceptDragsEnabled :: Bool
 } deriving (Generic, Eq, Show, Read)
@@ -616,19 +604,16 @@ instance FromJSON  PInputSetInterceptDrags where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
 
 
--- | Function for the 'Input.setInterceptDrags' command.
---   Prevents default drag and drop behavior and instead emits `Input.dragIntercepted` events.
---   Drag and drop behavior can be directly controlled via `Input.dispatchDragEvent`.
---   Returns: 'PInputSetInterceptDrags'
-inputSetInterceptDrags :: Handle -> PInputSetInterceptDrags -> IO ()
-inputSetInterceptDrags handle params = sendReceiveCommand handle params
-
 instance Command PInputSetInterceptDrags where
-    type CommandResponse PInputSetInterceptDrags = NoResponse
-    commandName _ = "Input.setInterceptDrags"
+   type CommandResponse PInputSetInterceptDrags = ()
+   commandName _ = "Input.setInterceptDrags"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'inputSynthesizePinchGesture' command.
+-- | Input.synthesizePinchGesture
+--   Synthesizes a pinch gesture over a time period by issuing appropriate touch events.
+
+-- | Parameters of the 'Input.synthesizePinchGesture' command.
 data PInputSynthesizePinchGesture = PInputSynthesizePinchGesture {
   -- | X coordinate of the start of the gesture in CSS pixels.
   pInputSynthesizePinchGestureX :: Double,
@@ -649,18 +634,16 @@ instance FromJSON  PInputSynthesizePinchGesture where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
--- | Function for the 'Input.synthesizePinchGesture' command.
---   Synthesizes a pinch gesture over a time period by issuing appropriate touch events.
---   Returns: 'PInputSynthesizePinchGesture'
-inputSynthesizePinchGesture :: Handle -> PInputSynthesizePinchGesture -> IO ()
-inputSynthesizePinchGesture handle params = sendReceiveCommand handle params
-
 instance Command PInputSynthesizePinchGesture where
-    type CommandResponse PInputSynthesizePinchGesture = NoResponse
-    commandName _ = "Input.synthesizePinchGesture"
+   type CommandResponse PInputSynthesizePinchGesture = ()
+   commandName _ = "Input.synthesizePinchGesture"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'inputSynthesizeScrollGesture' command.
+-- | Input.synthesizeScrollGesture
+--   Synthesizes a scroll gesture over a time period by issuing appropriate touch events.
+
+-- | Parameters of the 'Input.synthesizeScrollGesture' command.
 data PInputSynthesizeScrollGesture = PInputSynthesizeScrollGesture {
   -- | X coordinate of the start of the gesture in CSS pixels.
   pInputSynthesizeScrollGestureX :: Double,
@@ -697,18 +680,16 @@ instance FromJSON  PInputSynthesizeScrollGesture where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
--- | Function for the 'Input.synthesizeScrollGesture' command.
---   Synthesizes a scroll gesture over a time period by issuing appropriate touch events.
---   Returns: 'PInputSynthesizeScrollGesture'
-inputSynthesizeScrollGesture :: Handle -> PInputSynthesizeScrollGesture -> IO ()
-inputSynthesizeScrollGesture handle params = sendReceiveCommand handle params
-
 instance Command PInputSynthesizeScrollGesture where
-    type CommandResponse PInputSynthesizeScrollGesture = NoResponse
-    commandName _ = "Input.synthesizeScrollGesture"
+   type CommandResponse PInputSynthesizeScrollGesture = ()
+   commandName _ = "Input.synthesizeScrollGesture"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'inputSynthesizeTapGesture' command.
+-- | Input.synthesizeTapGesture
+--   Synthesizes a tap gesture over a time period by issuing appropriate touch events.
+
+-- | Parameters of the 'Input.synthesizeTapGesture' command.
 data PInputSynthesizeTapGesture = PInputSynthesizeTapGesture {
   -- | X coordinate of the start of the gesture in CSS pixels.
   pInputSynthesizeTapGestureX :: Double,
@@ -729,15 +710,10 @@ instance FromJSON  PInputSynthesizeTapGesture where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
--- | Function for the 'Input.synthesizeTapGesture' command.
---   Synthesizes a tap gesture over a time period by issuing appropriate touch events.
---   Returns: 'PInputSynthesizeTapGesture'
-inputSynthesizeTapGesture :: Handle -> PInputSynthesizeTapGesture -> IO ()
-inputSynthesizeTapGesture handle params = sendReceiveCommand handle params
-
 instance Command PInputSynthesizeTapGesture where
-    type CommandResponse PInputSynthesizeTapGesture = NoResponse
-    commandName _ = "Input.synthesizeTapGesture"
+   type CommandResponse PInputSynthesizeTapGesture = ()
+   commandName _ = "Input.synthesizeTapGesture"
+   fromJSON = const . A.Success . const ()
 
 
 

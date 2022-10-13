@@ -43,7 +43,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 
@@ -244,32 +244,30 @@ instance Event MediaPlayersCreated where
 
 
 
--- | Parameters of the 'mediaEnable' command.
+-- | Media.enable
+--   Enables the Media domain
+
+-- | Parameters of the 'Media.enable' command.
 data PMediaEnable = PMediaEnable
 instance ToJSON PMediaEnable where toJSON _ = A.Null
 
--- | Function for the 'Media.enable' command.
---   Enables the Media domain
-mediaEnable :: Handle -> IO ()
-mediaEnable handle = sendReceiveCommand handle PMediaEnable
-
 instance Command PMediaEnable where
-    type CommandResponse PMediaEnable = NoResponse
-    commandName _ = "Media.enable"
+   type CommandResponse PMediaEnable = ()
+   commandName _ = "Media.enable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'mediaDisable' command.
+-- | Media.disable
+--   Disables the Media domain.
+
+-- | Parameters of the 'Media.disable' command.
 data PMediaDisable = PMediaDisable
 instance ToJSON PMediaDisable where toJSON _ = A.Null
 
--- | Function for the 'Media.disable' command.
---   Disables the Media domain.
-mediaDisable :: Handle -> IO ()
-mediaDisable handle = sendReceiveCommand handle PMediaDisable
-
 instance Command PMediaDisable where
-    type CommandResponse PMediaDisable = NoResponse
-    commandName _ = "Media.disable"
+   type CommandResponse PMediaDisable = ()
+   commandName _ = "Media.disable"
+   fromJSON = const . A.Success . const ()
 
 
 

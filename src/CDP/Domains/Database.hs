@@ -41,7 +41,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 
@@ -104,35 +104,35 @@ instance Event DatabaseAddDatabase where
 
 
 
--- | Parameters of the 'databaseDisable' command.
+-- | Database.disable
+--   Disables database tracking, prevents database events from being sent to the client.
+
+-- | Parameters of the 'Database.disable' command.
 data PDatabaseDisable = PDatabaseDisable
 instance ToJSON PDatabaseDisable where toJSON _ = A.Null
 
--- | Function for the 'Database.disable' command.
---   Disables database tracking, prevents database events from being sent to the client.
-databaseDisable :: Handle -> IO ()
-databaseDisable handle = sendReceiveCommand handle PDatabaseDisable
-
 instance Command PDatabaseDisable where
-    type CommandResponse PDatabaseDisable = NoResponse
-    commandName _ = "Database.disable"
+   type CommandResponse PDatabaseDisable = ()
+   commandName _ = "Database.disable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'databaseEnable' command.
+-- | Database.enable
+--   Enables database tracking, database events will now be delivered to the client.
+
+-- | Parameters of the 'Database.enable' command.
 data PDatabaseEnable = PDatabaseEnable
 instance ToJSON PDatabaseEnable where toJSON _ = A.Null
 
--- | Function for the 'Database.enable' command.
---   Enables database tracking, database events will now be delivered to the client.
-databaseEnable :: Handle -> IO ()
-databaseEnable handle = sendReceiveCommand handle PDatabaseEnable
-
 instance Command PDatabaseEnable where
-    type CommandResponse PDatabaseEnable = NoResponse
-    commandName _ = "Database.enable"
+   type CommandResponse PDatabaseEnable = ()
+   commandName _ = "Database.enable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'databaseExecuteSQL' command.
+-- | Database.executeSQL
+
+-- | Parameters of the 'Database.executeSQL' command.
 data PDatabaseExecuteSQL = PDatabaseExecuteSQL {
   pDatabaseExecuteSQLDatabaseId :: DatabaseDatabaseId,
   pDatabaseExecuteSQLQuery :: String
@@ -144,14 +144,7 @@ instance FromJSON  PDatabaseExecuteSQL where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 19 }
 
 
--- | Function for the 'Database.executeSQL' command.
---   
---   Returns: 'PDatabaseExecuteSQL'
---   Returns: 'DatabaseExecuteSQL'
-databaseExecuteSQL :: Handle -> PDatabaseExecuteSQL -> IO DatabaseExecuteSQL
-databaseExecuteSQL handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'databaseExecuteSQL' command.
+-- | Return type of the 'Database.executeSQL' command.
 data DatabaseExecuteSQL = DatabaseExecuteSQL {
   databaseExecuteSQLColumnNames :: Maybe [String],
   databaseExecuteSQLValues :: Maybe [Int],
@@ -162,11 +155,14 @@ instance FromJSON  DatabaseExecuteSQL where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 instance Command PDatabaseExecuteSQL where
-    type CommandResponse PDatabaseExecuteSQL = DatabaseExecuteSQL
-    commandName _ = "Database.executeSQL"
+   type CommandResponse PDatabaseExecuteSQL = DatabaseExecuteSQL
+   commandName _ = "Database.executeSQL"
 
 
--- | Parameters of the 'databaseGetDatabaseTableNames' command.
+
+-- | Database.getDatabaseTableNames
+
+-- | Parameters of the 'Database.getDatabaseTableNames' command.
 data PDatabaseGetDatabaseTableNames = PDatabaseGetDatabaseTableNames {
   pDatabaseGetDatabaseTableNamesDatabaseId :: DatabaseDatabaseId
 } deriving (Generic, Eq, Show, Read)
@@ -177,14 +173,7 @@ instance FromJSON  PDatabaseGetDatabaseTableNames where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
--- | Function for the 'Database.getDatabaseTableNames' command.
---   
---   Returns: 'PDatabaseGetDatabaseTableNames'
---   Returns: 'DatabaseGetDatabaseTableNames'
-databaseGetDatabaseTableNames :: Handle -> PDatabaseGetDatabaseTableNames -> IO DatabaseGetDatabaseTableNames
-databaseGetDatabaseTableNames handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'databaseGetDatabaseTableNames' command.
+-- | Return type of the 'Database.getDatabaseTableNames' command.
 data DatabaseGetDatabaseTableNames = DatabaseGetDatabaseTableNames {
   databaseGetDatabaseTableNamesTableNames :: [String]
 } deriving (Generic, Eq, Show, Read)
@@ -193,8 +182,9 @@ instance FromJSON  DatabaseGetDatabaseTableNames where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 instance Command PDatabaseGetDatabaseTableNames where
-    type CommandResponse PDatabaseGetDatabaseTableNames = DatabaseGetDatabaseTableNames
-    commandName _ = "Database.getDatabaseTableNames"
+   type CommandResponse PDatabaseGetDatabaseTableNames = DatabaseGetDatabaseTableNames
+   commandName _ = "Database.getDatabaseTableNames"
+
 
 
 

@@ -43,7 +43,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 
@@ -85,7 +85,13 @@ instance FromJSON  HeadlessExperimentalScreenshotParams where
 
 
 
--- | Parameters of the 'headlessExperimentalBeginFrame' command.
+-- | HeadlessExperimental.beginFrame
+--   Sends a BeginFrame to the target and returns when the frame was completed. Optionally captures a
+--   screenshot from the resulting frame. Requires that the target was created with enabled
+--   BeginFrameControl. Designed for use with --run-all-compositor-stages-before-draw, see also
+--   https://goo.gle/chrome-headless-rendering for more background.
+
+-- | Parameters of the 'HeadlessExperimental.beginFrame' command.
 data PHeadlessExperimentalBeginFrame = PHeadlessExperimentalBeginFrame {
   -- | Timestamp of this BeginFrame in Renderer TimeTicks (milliseconds of uptime). If not set,
   --   the current time will be used.
@@ -109,17 +115,7 @@ instance FromJSON  PHeadlessExperimentalBeginFrame where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
--- | Function for the 'HeadlessExperimental.beginFrame' command.
---   Sends a BeginFrame to the target and returns when the frame was completed. Optionally captures a
---   screenshot from the resulting frame. Requires that the target was created with enabled
---   BeginFrameControl. Designed for use with --run-all-compositor-stages-before-draw, see also
---   https://goo.gle/chrome-headless-rendering for more background.
---   Returns: 'PHeadlessExperimentalBeginFrame'
---   Returns: 'HeadlessExperimentalBeginFrame'
-headlessExperimentalBeginFrame :: Handle -> PHeadlessExperimentalBeginFrame -> IO HeadlessExperimentalBeginFrame
-headlessExperimentalBeginFrame handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'headlessExperimentalBeginFrame' command.
+-- | Return type of the 'HeadlessExperimental.beginFrame' command.
 data HeadlessExperimentalBeginFrame = HeadlessExperimentalBeginFrame {
   -- | Whether the BeginFrame resulted in damage and, thus, a new frame was committed to the
   --   display. Reported for diagnostic uses, may be removed in the future.
@@ -132,36 +128,35 @@ instance FromJSON  HeadlessExperimentalBeginFrame where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 instance Command PHeadlessExperimentalBeginFrame where
-    type CommandResponse PHeadlessExperimentalBeginFrame = HeadlessExperimentalBeginFrame
-    commandName _ = "HeadlessExperimental.beginFrame"
+   type CommandResponse PHeadlessExperimentalBeginFrame = HeadlessExperimentalBeginFrame
+   commandName _ = "HeadlessExperimental.beginFrame"
 
 
--- | Parameters of the 'headlessExperimentalDisable' command.
+
+-- | HeadlessExperimental.disable
+--   Disables headless events for the target.
+
+-- | Parameters of the 'HeadlessExperimental.disable' command.
 data PHeadlessExperimentalDisable = PHeadlessExperimentalDisable
 instance ToJSON PHeadlessExperimentalDisable where toJSON _ = A.Null
 
--- | Function for the 'HeadlessExperimental.disable' command.
---   Disables headless events for the target.
-headlessExperimentalDisable :: Handle -> IO ()
-headlessExperimentalDisable handle = sendReceiveCommand handle PHeadlessExperimentalDisable
-
 instance Command PHeadlessExperimentalDisable where
-    type CommandResponse PHeadlessExperimentalDisable = NoResponse
-    commandName _ = "HeadlessExperimental.disable"
+   type CommandResponse PHeadlessExperimentalDisable = ()
+   commandName _ = "HeadlessExperimental.disable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'headlessExperimentalEnable' command.
+-- | HeadlessExperimental.enable
+--   Enables headless events for the target.
+
+-- | Parameters of the 'HeadlessExperimental.enable' command.
 data PHeadlessExperimentalEnable = PHeadlessExperimentalEnable
 instance ToJSON PHeadlessExperimentalEnable where toJSON _ = A.Null
 
--- | Function for the 'HeadlessExperimental.enable' command.
---   Enables headless events for the target.
-headlessExperimentalEnable :: Handle -> IO ()
-headlessExperimentalEnable handle = sendReceiveCommand handle PHeadlessExperimentalEnable
-
 instance Command PHeadlessExperimentalEnable where
-    type CommandResponse PHeadlessExperimentalEnable = NoResponse
-    commandName _ = "HeadlessExperimental.enable"
+   type CommandResponse PHeadlessExperimentalEnable = ()
+   commandName _ = "HeadlessExperimental.enable"
+   fromJSON = const . A.Success . const ()
 
 
 

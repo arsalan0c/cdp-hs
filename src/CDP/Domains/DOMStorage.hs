@@ -43,7 +43,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 
@@ -139,7 +139,9 @@ instance Event DOMStorageDomStorageItemsCleared where
 
 
 
--- | Parameters of the 'dOMStorageClear' command.
+-- | DOMStorage.clear
+
+-- | Parameters of the 'DOMStorage.clear' command.
 data PDOMStorageClear = PDOMStorageClear {
   pDOMStorageClearStorageId :: DOMStorageStorageId
 } deriving (Generic, Eq, Show, Read)
@@ -150,46 +152,41 @@ instance FromJSON  PDOMStorageClear where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
--- | Function for the 'DOMStorage.clear' command.
---   
---   Returns: 'PDOMStorageClear'
-dOMStorageClear :: Handle -> PDOMStorageClear -> IO ()
-dOMStorageClear handle params = sendReceiveCommand handle params
-
 instance Command PDOMStorageClear where
-    type CommandResponse PDOMStorageClear = NoResponse
-    commandName _ = "DOMStorage.clear"
+   type CommandResponse PDOMStorageClear = ()
+   commandName _ = "DOMStorage.clear"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'dOMStorageDisable' command.
+-- | DOMStorage.disable
+--   Disables storage tracking, prevents storage events from being sent to the client.
+
+-- | Parameters of the 'DOMStorage.disable' command.
 data PDOMStorageDisable = PDOMStorageDisable
 instance ToJSON PDOMStorageDisable where toJSON _ = A.Null
 
--- | Function for the 'DOMStorage.disable' command.
---   Disables storage tracking, prevents storage events from being sent to the client.
-dOMStorageDisable :: Handle -> IO ()
-dOMStorageDisable handle = sendReceiveCommand handle PDOMStorageDisable
-
 instance Command PDOMStorageDisable where
-    type CommandResponse PDOMStorageDisable = NoResponse
-    commandName _ = "DOMStorage.disable"
+   type CommandResponse PDOMStorageDisable = ()
+   commandName _ = "DOMStorage.disable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'dOMStorageEnable' command.
+-- | DOMStorage.enable
+--   Enables storage tracking, storage events will now be delivered to the client.
+
+-- | Parameters of the 'DOMStorage.enable' command.
 data PDOMStorageEnable = PDOMStorageEnable
 instance ToJSON PDOMStorageEnable where toJSON _ = A.Null
 
--- | Function for the 'DOMStorage.enable' command.
---   Enables storage tracking, storage events will now be delivered to the client.
-dOMStorageEnable :: Handle -> IO ()
-dOMStorageEnable handle = sendReceiveCommand handle PDOMStorageEnable
-
 instance Command PDOMStorageEnable where
-    type CommandResponse PDOMStorageEnable = NoResponse
-    commandName _ = "DOMStorage.enable"
+   type CommandResponse PDOMStorageEnable = ()
+   commandName _ = "DOMStorage.enable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'dOMStorageGetDOMStorageItems' command.
+-- | DOMStorage.getDOMStorageItems
+
+-- | Parameters of the 'DOMStorage.getDOMStorageItems' command.
 data PDOMStorageGetDOMStorageItems = PDOMStorageGetDOMStorageItems {
   pDOMStorageGetDOMStorageItemsStorageId :: DOMStorageStorageId
 } deriving (Generic, Eq, Show, Read)
@@ -200,14 +197,7 @@ instance FromJSON  PDOMStorageGetDOMStorageItems where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
--- | Function for the 'DOMStorage.getDOMStorageItems' command.
---   
---   Returns: 'PDOMStorageGetDOMStorageItems'
---   Returns: 'DOMStorageGetDOMStorageItems'
-dOMStorageGetDOMStorageItems :: Handle -> PDOMStorageGetDOMStorageItems -> IO DOMStorageGetDOMStorageItems
-dOMStorageGetDOMStorageItems handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'dOMStorageGetDOMStorageItems' command.
+-- | Return type of the 'DOMStorage.getDOMStorageItems' command.
 data DOMStorageGetDOMStorageItems = DOMStorageGetDOMStorageItems {
   dOMStorageGetDOMStorageItemsEntries :: [DOMStorageItem]
 } deriving (Generic, Eq, Show, Read)
@@ -216,11 +206,14 @@ instance FromJSON  DOMStorageGetDOMStorageItems where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 instance Command PDOMStorageGetDOMStorageItems where
-    type CommandResponse PDOMStorageGetDOMStorageItems = DOMStorageGetDOMStorageItems
-    commandName _ = "DOMStorage.getDOMStorageItems"
+   type CommandResponse PDOMStorageGetDOMStorageItems = DOMStorageGetDOMStorageItems
+   commandName _ = "DOMStorage.getDOMStorageItems"
 
 
--- | Parameters of the 'dOMStorageRemoveDOMStorageItem' command.
+
+-- | DOMStorage.removeDOMStorageItem
+
+-- | Parameters of the 'DOMStorage.removeDOMStorageItem' command.
 data PDOMStorageRemoveDOMStorageItem = PDOMStorageRemoveDOMStorageItem {
   pDOMStorageRemoveDOMStorageItemStorageId :: DOMStorageStorageId,
   pDOMStorageRemoveDOMStorageItemKey :: String
@@ -232,18 +225,15 @@ instance FromJSON  PDOMStorageRemoveDOMStorageItem where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
--- | Function for the 'DOMStorage.removeDOMStorageItem' command.
---   
---   Returns: 'PDOMStorageRemoveDOMStorageItem'
-dOMStorageRemoveDOMStorageItem :: Handle -> PDOMStorageRemoveDOMStorageItem -> IO ()
-dOMStorageRemoveDOMStorageItem handle params = sendReceiveCommand handle params
-
 instance Command PDOMStorageRemoveDOMStorageItem where
-    type CommandResponse PDOMStorageRemoveDOMStorageItem = NoResponse
-    commandName _ = "DOMStorage.removeDOMStorageItem"
+   type CommandResponse PDOMStorageRemoveDOMStorageItem = ()
+   commandName _ = "DOMStorage.removeDOMStorageItem"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'dOMStorageSetDOMStorageItem' command.
+-- | DOMStorage.setDOMStorageItem
+
+-- | Parameters of the 'DOMStorage.setDOMStorageItem' command.
 data PDOMStorageSetDOMStorageItem = PDOMStorageSetDOMStorageItem {
   pDOMStorageSetDOMStorageItemStorageId :: DOMStorageStorageId,
   pDOMStorageSetDOMStorageItemKey :: String,
@@ -256,15 +246,10 @@ instance FromJSON  PDOMStorageSetDOMStorageItem where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 
--- | Function for the 'DOMStorage.setDOMStorageItem' command.
---   
---   Returns: 'PDOMStorageSetDOMStorageItem'
-dOMStorageSetDOMStorageItem :: Handle -> PDOMStorageSetDOMStorageItem -> IO ()
-dOMStorageSetDOMStorageItem handle params = sendReceiveCommand handle params
-
 instance Command PDOMStorageSetDOMStorageItem where
-    type CommandResponse PDOMStorageSetDOMStorageItem = NoResponse
-    commandName _ = "DOMStorage.setDOMStorageItem"
+   type CommandResponse PDOMStorageSetDOMStorageItem = ()
+   commandName _ = "DOMStorage.setDOMStorageItem"
+   fromJSON = const . A.Success . const ()
 
 
 

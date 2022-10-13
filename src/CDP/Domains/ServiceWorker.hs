@@ -41,7 +41,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 import CDP.Domains.BrowserTarget as BrowserTarget
@@ -201,7 +201,9 @@ instance Event ServiceWorkerWorkerVersionUpdated where
 
 
 
--- | Parameters of the 'serviceWorkerDeliverPushMessage' command.
+-- | ServiceWorker.deliverPushMessage
+
+-- | Parameters of the 'ServiceWorker.deliverPushMessage' command.
 data PServiceWorkerDeliverPushMessage = PServiceWorkerDeliverPushMessage {
   pServiceWorkerDeliverPushMessageOrigin :: String,
   pServiceWorkerDeliverPushMessageRegistrationId :: ServiceWorkerRegistrationID,
@@ -214,31 +216,27 @@ instance FromJSON  PServiceWorkerDeliverPushMessage where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
--- | Function for the 'ServiceWorker.deliverPushMessage' command.
---   
---   Returns: 'PServiceWorkerDeliverPushMessage'
-serviceWorkerDeliverPushMessage :: Handle -> PServiceWorkerDeliverPushMessage -> IO ()
-serviceWorkerDeliverPushMessage handle params = sendReceiveCommand handle params
-
 instance Command PServiceWorkerDeliverPushMessage where
-    type CommandResponse PServiceWorkerDeliverPushMessage = NoResponse
-    commandName _ = "ServiceWorker.deliverPushMessage"
+   type CommandResponse PServiceWorkerDeliverPushMessage = ()
+   commandName _ = "ServiceWorker.deliverPushMessage"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'serviceWorkerDisable' command.
+-- | ServiceWorker.disable
+
+-- | Parameters of the 'ServiceWorker.disable' command.
 data PServiceWorkerDisable = PServiceWorkerDisable
 instance ToJSON PServiceWorkerDisable where toJSON _ = A.Null
 
--- | Function for the 'ServiceWorker.disable' command.
-serviceWorkerDisable :: Handle -> IO ()
-serviceWorkerDisable handle = sendReceiveCommand handle PServiceWorkerDisable
-
 instance Command PServiceWorkerDisable where
-    type CommandResponse PServiceWorkerDisable = NoResponse
-    commandName _ = "ServiceWorker.disable"
+   type CommandResponse PServiceWorkerDisable = ()
+   commandName _ = "ServiceWorker.disable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'serviceWorkerDispatchSyncEvent' command.
+-- | ServiceWorker.dispatchSyncEvent
+
+-- | Parameters of the 'ServiceWorker.dispatchSyncEvent' command.
 data PServiceWorkerDispatchSyncEvent = PServiceWorkerDispatchSyncEvent {
   pServiceWorkerDispatchSyncEventOrigin :: String,
   pServiceWorkerDispatchSyncEventRegistrationId :: ServiceWorkerRegistrationID,
@@ -252,18 +250,15 @@ instance FromJSON  PServiceWorkerDispatchSyncEvent where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
 
 
--- | Function for the 'ServiceWorker.dispatchSyncEvent' command.
---   
---   Returns: 'PServiceWorkerDispatchSyncEvent'
-serviceWorkerDispatchSyncEvent :: Handle -> PServiceWorkerDispatchSyncEvent -> IO ()
-serviceWorkerDispatchSyncEvent handle params = sendReceiveCommand handle params
-
 instance Command PServiceWorkerDispatchSyncEvent where
-    type CommandResponse PServiceWorkerDispatchSyncEvent = NoResponse
-    commandName _ = "ServiceWorker.dispatchSyncEvent"
+   type CommandResponse PServiceWorkerDispatchSyncEvent = ()
+   commandName _ = "ServiceWorker.dispatchSyncEvent"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'serviceWorkerDispatchPeriodicSyncEvent' command.
+-- | ServiceWorker.dispatchPeriodicSyncEvent
+
+-- | Parameters of the 'ServiceWorker.dispatchPeriodicSyncEvent' command.
 data PServiceWorkerDispatchPeriodicSyncEvent = PServiceWorkerDispatchPeriodicSyncEvent {
   pServiceWorkerDispatchPeriodicSyncEventOrigin :: String,
   pServiceWorkerDispatchPeriodicSyncEventRegistrationId :: ServiceWorkerRegistrationID,
@@ -276,31 +271,27 @@ instance FromJSON  PServiceWorkerDispatchPeriodicSyncEvent where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 39 }
 
 
--- | Function for the 'ServiceWorker.dispatchPeriodicSyncEvent' command.
---   
---   Returns: 'PServiceWorkerDispatchPeriodicSyncEvent'
-serviceWorkerDispatchPeriodicSyncEvent :: Handle -> PServiceWorkerDispatchPeriodicSyncEvent -> IO ()
-serviceWorkerDispatchPeriodicSyncEvent handle params = sendReceiveCommand handle params
-
 instance Command PServiceWorkerDispatchPeriodicSyncEvent where
-    type CommandResponse PServiceWorkerDispatchPeriodicSyncEvent = NoResponse
-    commandName _ = "ServiceWorker.dispatchPeriodicSyncEvent"
+   type CommandResponse PServiceWorkerDispatchPeriodicSyncEvent = ()
+   commandName _ = "ServiceWorker.dispatchPeriodicSyncEvent"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'serviceWorkerEnable' command.
+-- | ServiceWorker.enable
+
+-- | Parameters of the 'ServiceWorker.enable' command.
 data PServiceWorkerEnable = PServiceWorkerEnable
 instance ToJSON PServiceWorkerEnable where toJSON _ = A.Null
 
--- | Function for the 'ServiceWorker.enable' command.
-serviceWorkerEnable :: Handle -> IO ()
-serviceWorkerEnable handle = sendReceiveCommand handle PServiceWorkerEnable
-
 instance Command PServiceWorkerEnable where
-    type CommandResponse PServiceWorkerEnable = NoResponse
-    commandName _ = "ServiceWorker.enable"
+   type CommandResponse PServiceWorkerEnable = ()
+   commandName _ = "ServiceWorker.enable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'serviceWorkerInspectWorker' command.
+-- | ServiceWorker.inspectWorker
+
+-- | Parameters of the 'ServiceWorker.inspectWorker' command.
 data PServiceWorkerInspectWorker = PServiceWorkerInspectWorker {
   pServiceWorkerInspectWorkerVersionId :: String
 } deriving (Generic, Eq, Show, Read)
@@ -311,18 +302,15 @@ instance FromJSON  PServiceWorkerInspectWorker where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
--- | Function for the 'ServiceWorker.inspectWorker' command.
---   
---   Returns: 'PServiceWorkerInspectWorker'
-serviceWorkerInspectWorker :: Handle -> PServiceWorkerInspectWorker -> IO ()
-serviceWorkerInspectWorker handle params = sendReceiveCommand handle params
-
 instance Command PServiceWorkerInspectWorker where
-    type CommandResponse PServiceWorkerInspectWorker = NoResponse
-    commandName _ = "ServiceWorker.inspectWorker"
+   type CommandResponse PServiceWorkerInspectWorker = ()
+   commandName _ = "ServiceWorker.inspectWorker"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'serviceWorkerSetForceUpdateOnPageLoad' command.
+-- | ServiceWorker.setForceUpdateOnPageLoad
+
+-- | Parameters of the 'ServiceWorker.setForceUpdateOnPageLoad' command.
 data PServiceWorkerSetForceUpdateOnPageLoad = PServiceWorkerSetForceUpdateOnPageLoad {
   pServiceWorkerSetForceUpdateOnPageLoadForceUpdateOnPageLoad :: Bool
 } deriving (Generic, Eq, Show, Read)
@@ -333,18 +321,15 @@ instance FromJSON  PServiceWorkerSetForceUpdateOnPageLoad where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 }
 
 
--- | Function for the 'ServiceWorker.setForceUpdateOnPageLoad' command.
---   
---   Returns: 'PServiceWorkerSetForceUpdateOnPageLoad'
-serviceWorkerSetForceUpdateOnPageLoad :: Handle -> PServiceWorkerSetForceUpdateOnPageLoad -> IO ()
-serviceWorkerSetForceUpdateOnPageLoad handle params = sendReceiveCommand handle params
-
 instance Command PServiceWorkerSetForceUpdateOnPageLoad where
-    type CommandResponse PServiceWorkerSetForceUpdateOnPageLoad = NoResponse
-    commandName _ = "ServiceWorker.setForceUpdateOnPageLoad"
+   type CommandResponse PServiceWorkerSetForceUpdateOnPageLoad = ()
+   commandName _ = "ServiceWorker.setForceUpdateOnPageLoad"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'serviceWorkerSkipWaiting' command.
+-- | ServiceWorker.skipWaiting
+
+-- | Parameters of the 'ServiceWorker.skipWaiting' command.
 data PServiceWorkerSkipWaiting = PServiceWorkerSkipWaiting {
   pServiceWorkerSkipWaitingScopeURL :: String
 } deriving (Generic, Eq, Show, Read)
@@ -355,18 +340,15 @@ instance FromJSON  PServiceWorkerSkipWaiting where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the 'ServiceWorker.skipWaiting' command.
---   
---   Returns: 'PServiceWorkerSkipWaiting'
-serviceWorkerSkipWaiting :: Handle -> PServiceWorkerSkipWaiting -> IO ()
-serviceWorkerSkipWaiting handle params = sendReceiveCommand handle params
-
 instance Command PServiceWorkerSkipWaiting where
-    type CommandResponse PServiceWorkerSkipWaiting = NoResponse
-    commandName _ = "ServiceWorker.skipWaiting"
+   type CommandResponse PServiceWorkerSkipWaiting = ()
+   commandName _ = "ServiceWorker.skipWaiting"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'serviceWorkerStartWorker' command.
+-- | ServiceWorker.startWorker
+
+-- | Parameters of the 'ServiceWorker.startWorker' command.
 data PServiceWorkerStartWorker = PServiceWorkerStartWorker {
   pServiceWorkerStartWorkerScopeURL :: String
 } deriving (Generic, Eq, Show, Read)
@@ -377,31 +359,27 @@ instance FromJSON  PServiceWorkerStartWorker where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the 'ServiceWorker.startWorker' command.
---   
---   Returns: 'PServiceWorkerStartWorker'
-serviceWorkerStartWorker :: Handle -> PServiceWorkerStartWorker -> IO ()
-serviceWorkerStartWorker handle params = sendReceiveCommand handle params
-
 instance Command PServiceWorkerStartWorker where
-    type CommandResponse PServiceWorkerStartWorker = NoResponse
-    commandName _ = "ServiceWorker.startWorker"
+   type CommandResponse PServiceWorkerStartWorker = ()
+   commandName _ = "ServiceWorker.startWorker"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'serviceWorkerStopAllWorkers' command.
+-- | ServiceWorker.stopAllWorkers
+
+-- | Parameters of the 'ServiceWorker.stopAllWorkers' command.
 data PServiceWorkerStopAllWorkers = PServiceWorkerStopAllWorkers
 instance ToJSON PServiceWorkerStopAllWorkers where toJSON _ = A.Null
 
--- | Function for the 'ServiceWorker.stopAllWorkers' command.
-serviceWorkerStopAllWorkers :: Handle -> IO ()
-serviceWorkerStopAllWorkers handle = sendReceiveCommand handle PServiceWorkerStopAllWorkers
-
 instance Command PServiceWorkerStopAllWorkers where
-    type CommandResponse PServiceWorkerStopAllWorkers = NoResponse
-    commandName _ = "ServiceWorker.stopAllWorkers"
+   type CommandResponse PServiceWorkerStopAllWorkers = ()
+   commandName _ = "ServiceWorker.stopAllWorkers"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'serviceWorkerStopWorker' command.
+-- | ServiceWorker.stopWorker
+
+-- | Parameters of the 'ServiceWorker.stopWorker' command.
 data PServiceWorkerStopWorker = PServiceWorkerStopWorker {
   pServiceWorkerStopWorkerVersionId :: String
 } deriving (Generic, Eq, Show, Read)
@@ -412,18 +390,15 @@ instance FromJSON  PServiceWorkerStopWorker where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the 'ServiceWorker.stopWorker' command.
---   
---   Returns: 'PServiceWorkerStopWorker'
-serviceWorkerStopWorker :: Handle -> PServiceWorkerStopWorker -> IO ()
-serviceWorkerStopWorker handle params = sendReceiveCommand handle params
-
 instance Command PServiceWorkerStopWorker where
-    type CommandResponse PServiceWorkerStopWorker = NoResponse
-    commandName _ = "ServiceWorker.stopWorker"
+   type CommandResponse PServiceWorkerStopWorker = ()
+   commandName _ = "ServiceWorker.stopWorker"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'serviceWorkerUnregister' command.
+-- | ServiceWorker.unregister
+
+-- | Parameters of the 'ServiceWorker.unregister' command.
 data PServiceWorkerUnregister = PServiceWorkerUnregister {
   pServiceWorkerUnregisterScopeURL :: String
 } deriving (Generic, Eq, Show, Read)
@@ -434,18 +409,15 @@ instance FromJSON  PServiceWorkerUnregister where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the 'ServiceWorker.unregister' command.
---   
---   Returns: 'PServiceWorkerUnregister'
-serviceWorkerUnregister :: Handle -> PServiceWorkerUnregister -> IO ()
-serviceWorkerUnregister handle params = sendReceiveCommand handle params
-
 instance Command PServiceWorkerUnregister where
-    type CommandResponse PServiceWorkerUnregister = NoResponse
-    commandName _ = "ServiceWorker.unregister"
+   type CommandResponse PServiceWorkerUnregister = ()
+   commandName _ = "ServiceWorker.unregister"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'serviceWorkerUpdateRegistration' command.
+-- | ServiceWorker.updateRegistration
+
+-- | Parameters of the 'ServiceWorker.updateRegistration' command.
 data PServiceWorkerUpdateRegistration = PServiceWorkerUpdateRegistration {
   pServiceWorkerUpdateRegistrationScopeURL :: String
 } deriving (Generic, Eq, Show, Read)
@@ -456,15 +428,10 @@ instance FromJSON  PServiceWorkerUpdateRegistration where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
 
 
--- | Function for the 'ServiceWorker.updateRegistration' command.
---   
---   Returns: 'PServiceWorkerUpdateRegistration'
-serviceWorkerUpdateRegistration :: Handle -> PServiceWorkerUpdateRegistration -> IO ()
-serviceWorkerUpdateRegistration handle params = sendReceiveCommand handle params
-
 instance Command PServiceWorkerUpdateRegistration where
-    type CommandResponse PServiceWorkerUpdateRegistration = NoResponse
-    commandName _ = "ServiceWorker.updateRegistration"
+   type CommandResponse PServiceWorkerUpdateRegistration = ()
+   commandName _ = "ServiceWorker.updateRegistration"
+   fromJSON = const . A.Success . const ()
 
 
 

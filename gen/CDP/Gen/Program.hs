@@ -155,23 +155,17 @@ genEventReturnType ctx domainName eventElt = T.unlines
 
 genCommand :: Context -> T.Text -> D.CommandsElt -> T.Text
 genCommand ctx domainName commandElt = T.unlines $
-    [ pdesc <> "\n" <> paramsTypeDef
-    , desc
-    , genCommandFn ctx (null pelts) (null relts) cn ptn rtn
+    [ desc
+    , ""
+    , pdesc
+    , paramsTypeDef
     , returns
     ]
   where
-    pdesc = formatDescription 0 $ "Parameters of the '" <> (commandFnName rtn) <> "' command."
-    desc = let td = "Function for the '" <> cn <> "' command." in
-        formatDescription 0 . T.intercalate "\n" . catMaybes $ 
-            [ Just $ ((td <> "\n") <>) . fromMaybe "" $ D.commandsEltDescription commandElt
-            , do
-                guard . not $ null pelts
-                pure ("Returns: '" <> ptn <> "'")
-            , do
-                guard . not $ null relts
-                pure ("Returns: '" <> rtn <> "'")
-            ]
+    pdesc = formatDescription 0 $ "Parameters of the '" <> cn <> "' command."
+    desc  = formatDescription 0 . ((cn <> "\n") <>) . maybe "" fromAltLeft $ 
+        D.commandsEltDescription commandElt
+    
     cn   = commandName domainName commandElt 
     ptn  = commandParamsNameHS domainName commandElt
     rtn  = commandNameHS domainName commandElt
@@ -180,40 +174,21 @@ genCommand ctx domainName commandElt = T.unlines $
     pelts = filter isValidParam $ fromMaybe [] $ D.commandsEltParameters commandElt
 
     returns = T.unlines $
-        [ genReturnType ctx domainName rtn relts | not (null relts) ] <>
+        [ genReturnType ctx domainName cn rtn relts | not (null relts) ] <>
         [ genFromJSONInstance rtn | not (null relts) ] <>
         commandInstance
 
     relts = filter isValidReturn $ fromMaybe [] $ D.commandsEltReturns commandElt
 
-    commandAssociatedType = if null relts then "NoResponse" else rtn
+    commandAssociatedType = if null relts then "()" else rtn
     commandInstance =
         [ "instance " <> commandClassName <> " " <> ptn <> " where"
-        , "    type CommandResponse " <> ptn <> " = " <> commandAssociatedType
-        , "    commandName _ = \"" <> cn <> "\""
+        , T.unwords [space 3, "type CommandResponse", ptn, "=", commandAssociatedType]
+        , T.unwords [space 3, "commandName _ = \"" <> cn <> "\""]
+        , if null relts 
+            then T.unwords [space 3, "fromJSON = const . A.Success . const", commandAssociatedType] 
+            else ""
         ]
-
-genCommandFn :: Context -> Bool -> Bool -> T.Text -> T.Text -> T.Text -> T.Text
-genCommandFn _ isEmptyParams isEmptyReturn commandName paramsTypeName returnTypeName = T.unlines
-    [ fnType
-    , T.unwords [fnHeader, fnBody]
-    ]
-  where
-    fnType = T.unwords
-        [ fnName
-        , "::"
-        , T.intercalate " -> " $ [handleTypeName] ++
-            (if isEmptyParams then [] else [paramsTypeName]) ++ 
-            [returnTypeSig]
-        ]
-    fnHeader = T.unwords [fnName, "handle", if isEmptyParams then "=" else "params ="]
-    fnBody   = T.unwords 
-        [ if isEmptyReturn then sendCommandName else sendCommandResultName
-        , "handle"
-        , if isEmptyParams then paramsTypeName else "params"
-        ]
-    returnTypeSig  = if isEmptyReturn then emptyReturnSig else resultReturnSig returnTypeName
-    fnName         = commandFnName returnTypeName
 
 genParamsType :: Context -> T.Text -> T.Text -> [D.ParametersElt] -> T.Text
 genParamsType ctx domainName paramsTypeName [] = T.unlines
@@ -248,16 +223,15 @@ genParamsType ctx domainName paramsTypeName paramElts = T.unlines . filter ((> 0
 genTypeSynonynm :: Context -> T.Text -> T.Text -> T.Text
 genTypeSynonynm ctx domainName typeName = T.unwords ["type", typeName, "=", typeCDPToHS ctx domainName "object" Nothing]
 
-genReturnType :: Context -> T.Text -> T.Text -> [D.ReturnsElt] -> T.Text
-genReturnType ctx domainName returnTypeName returnElts = T.unlines
+genReturnType :: Context -> T.Text -> T.Text -> T.Text -> [D.ReturnsElt] -> T.Text
+genReturnType ctx domainName commandName returnTypeName returnElts = T.unlines
     [ desc
     , T.unwords ["data", returnTypeName, "=", returnTypeName, "{"]
     , T.intercalate ",\n" fields
     , "} " <> derivingGeneric
     ]
   where
-    desc = formatDescription 0 $ "Return type of the '" <> 
-        (commandFnName returnTypeName) <> "' command."
+    desc  = formatDescription 0 $ "Return type of the '" <> commandName <> "' command."
     fields = formatFieldDescription . 
         map (reltToField &&& D.returnsEltDescription) $ returnElts
     reltToField relt = T.unwords

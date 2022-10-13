@@ -41,7 +41,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
@@ -413,36 +413,37 @@ instance Event AccessibilityNodesUpdated where
 
 
 
--- | Parameters of the 'accessibilityDisable' command.
+-- | Accessibility.disable
+--   Disables the accessibility domain.
+
+-- | Parameters of the 'Accessibility.disable' command.
 data PAccessibilityDisable = PAccessibilityDisable
 instance ToJSON PAccessibilityDisable where toJSON _ = A.Null
 
--- | Function for the 'Accessibility.disable' command.
---   Disables the accessibility domain.
-accessibilityDisable :: Handle -> IO ()
-accessibilityDisable handle = sendReceiveCommand handle PAccessibilityDisable
-
 instance Command PAccessibilityDisable where
-    type CommandResponse PAccessibilityDisable = NoResponse
-    commandName _ = "Accessibility.disable"
+   type CommandResponse PAccessibilityDisable = ()
+   commandName _ = "Accessibility.disable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'accessibilityEnable' command.
+-- | Accessibility.enable
+--   Enables the accessibility domain which causes `AXNodeId`s to remain consistent between method calls.
+--   This turns on accessibility for the page, which can impact performance until accessibility is disabled.
+
+-- | Parameters of the 'Accessibility.enable' command.
 data PAccessibilityEnable = PAccessibilityEnable
 instance ToJSON PAccessibilityEnable where toJSON _ = A.Null
 
--- | Function for the 'Accessibility.enable' command.
---   Enables the accessibility domain which causes `AXNodeId`s to remain consistent between method calls.
---   This turns on accessibility for the page, which can impact performance until accessibility is disabled.
-accessibilityEnable :: Handle -> IO ()
-accessibilityEnable handle = sendReceiveCommand handle PAccessibilityEnable
-
 instance Command PAccessibilityEnable where
-    type CommandResponse PAccessibilityEnable = NoResponse
-    commandName _ = "Accessibility.enable"
+   type CommandResponse PAccessibilityEnable = ()
+   commandName _ = "Accessibility.enable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'accessibilityGetPartialAXTree' command.
+-- | Accessibility.getPartialAXTree
+--   Fetches the accessibility node and partial accessibility tree for this DOM node, if it exists.
+
+-- | Parameters of the 'Accessibility.getPartialAXTree' command.
 data PAccessibilityGetPartialAXTree = PAccessibilityGetPartialAXTree {
   -- | Identifier of the node to get the partial accessibility tree for.
   pAccessibilityGetPartialAXTreeNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMNodeId,
@@ -460,14 +461,7 @@ instance FromJSON  PAccessibilityGetPartialAXTree where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
--- | Function for the 'Accessibility.getPartialAXTree' command.
---   Fetches the accessibility node and partial accessibility tree for this DOM node, if it exists.
---   Returns: 'PAccessibilityGetPartialAXTree'
---   Returns: 'AccessibilityGetPartialAXTree'
-accessibilityGetPartialAXTree :: Handle -> PAccessibilityGetPartialAXTree -> IO AccessibilityGetPartialAXTree
-accessibilityGetPartialAXTree handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'accessibilityGetPartialAXTree' command.
+-- | Return type of the 'Accessibility.getPartialAXTree' command.
 data AccessibilityGetPartialAXTree = AccessibilityGetPartialAXTree {
   -- | The `Accessibility.AXNode` for this DOM node, if it exists, plus its ancestors, siblings and
   --   children, if requested.
@@ -478,11 +472,15 @@ instance FromJSON  AccessibilityGetPartialAXTree where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 instance Command PAccessibilityGetPartialAXTree where
-    type CommandResponse PAccessibilityGetPartialAXTree = AccessibilityGetPartialAXTree
-    commandName _ = "Accessibility.getPartialAXTree"
+   type CommandResponse PAccessibilityGetPartialAXTree = AccessibilityGetPartialAXTree
+   commandName _ = "Accessibility.getPartialAXTree"
 
 
--- | Parameters of the 'accessibilityGetFullAXTree' command.
+
+-- | Accessibility.getFullAXTree
+--   Fetches the entire accessibility tree for the root Document
+
+-- | Parameters of the 'Accessibility.getFullAXTree' command.
 data PAccessibilityGetFullAXTree = PAccessibilityGetFullAXTree {
   -- | The maximum depth at which descendants of the root node should be retrieved.
   --   If omitted, the full tree is returned.
@@ -498,14 +496,7 @@ instance FromJSON  PAccessibilityGetFullAXTree where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
--- | Function for the 'Accessibility.getFullAXTree' command.
---   Fetches the entire accessibility tree for the root Document
---   Returns: 'PAccessibilityGetFullAXTree'
---   Returns: 'AccessibilityGetFullAXTree'
-accessibilityGetFullAXTree :: Handle -> PAccessibilityGetFullAXTree -> IO AccessibilityGetFullAXTree
-accessibilityGetFullAXTree handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'accessibilityGetFullAXTree' command.
+-- | Return type of the 'Accessibility.getFullAXTree' command.
 data AccessibilityGetFullAXTree = AccessibilityGetFullAXTree {
   accessibilityGetFullAXTreeNodes :: [AccessibilityAXNode]
 } deriving (Generic, Eq, Show, Read)
@@ -514,11 +505,16 @@ instance FromJSON  AccessibilityGetFullAXTree where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 instance Command PAccessibilityGetFullAXTree where
-    type CommandResponse PAccessibilityGetFullAXTree = AccessibilityGetFullAXTree
-    commandName _ = "Accessibility.getFullAXTree"
+   type CommandResponse PAccessibilityGetFullAXTree = AccessibilityGetFullAXTree
+   commandName _ = "Accessibility.getFullAXTree"
 
 
--- | Parameters of the 'accessibilityGetRootAXNode' command.
+
+-- | Accessibility.getRootAXNode
+--   Fetches the root node.
+--   Requires `enable()` to have been called previously.
+
+-- | Parameters of the 'Accessibility.getRootAXNode' command.
 data PAccessibilityGetRootAXNode = PAccessibilityGetRootAXNode {
   -- | The frame in whose document the node resides.
   --   If omitted, the root frame is used.
@@ -531,15 +527,7 @@ instance FromJSON  PAccessibilityGetRootAXNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
--- | Function for the 'Accessibility.getRootAXNode' command.
---   Fetches the root node.
---   Requires `enable()` to have been called previously.
---   Returns: 'PAccessibilityGetRootAXNode'
---   Returns: 'AccessibilityGetRootAXNode'
-accessibilityGetRootAXNode :: Handle -> PAccessibilityGetRootAXNode -> IO AccessibilityGetRootAXNode
-accessibilityGetRootAXNode handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'accessibilityGetRootAXNode' command.
+-- | Return type of the 'Accessibility.getRootAXNode' command.
 data AccessibilityGetRootAXNode = AccessibilityGetRootAXNode {
   accessibilityGetRootAXNodeNode :: AccessibilityAXNode
 } deriving (Generic, Eq, Show, Read)
@@ -548,11 +536,16 @@ instance FromJSON  AccessibilityGetRootAXNode where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 instance Command PAccessibilityGetRootAXNode where
-    type CommandResponse PAccessibilityGetRootAXNode = AccessibilityGetRootAXNode
-    commandName _ = "Accessibility.getRootAXNode"
+   type CommandResponse PAccessibilityGetRootAXNode = AccessibilityGetRootAXNode
+   commandName _ = "Accessibility.getRootAXNode"
 
 
--- | Parameters of the 'accessibilityGetAXNodeAndAncestors' command.
+
+-- | Accessibility.getAXNodeAndAncestors
+--   Fetches a node and all ancestors up to and including the root.
+--   Requires `enable()` to have been called previously.
+
+-- | Parameters of the 'Accessibility.getAXNodeAndAncestors' command.
 data PAccessibilityGetAXNodeAndAncestors = PAccessibilityGetAXNodeAndAncestors {
   -- | Identifier of the node to get.
   pAccessibilityGetAXNodeAndAncestorsNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMNodeId,
@@ -568,15 +561,7 @@ instance FromJSON  PAccessibilityGetAXNodeAndAncestors where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 }
 
 
--- | Function for the 'Accessibility.getAXNodeAndAncestors' command.
---   Fetches a node and all ancestors up to and including the root.
---   Requires `enable()` to have been called previously.
---   Returns: 'PAccessibilityGetAXNodeAndAncestors'
---   Returns: 'AccessibilityGetAXNodeAndAncestors'
-accessibilityGetAXNodeAndAncestors :: Handle -> PAccessibilityGetAXNodeAndAncestors -> IO AccessibilityGetAXNodeAndAncestors
-accessibilityGetAXNodeAndAncestors handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'accessibilityGetAXNodeAndAncestors' command.
+-- | Return type of the 'Accessibility.getAXNodeAndAncestors' command.
 data AccessibilityGetAXNodeAndAncestors = AccessibilityGetAXNodeAndAncestors {
   accessibilityGetAXNodeAndAncestorsNodes :: [AccessibilityAXNode]
 } deriving (Generic, Eq, Show, Read)
@@ -585,11 +570,16 @@ instance FromJSON  AccessibilityGetAXNodeAndAncestors where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
 
 instance Command PAccessibilityGetAXNodeAndAncestors where
-    type CommandResponse PAccessibilityGetAXNodeAndAncestors = AccessibilityGetAXNodeAndAncestors
-    commandName _ = "Accessibility.getAXNodeAndAncestors"
+   type CommandResponse PAccessibilityGetAXNodeAndAncestors = AccessibilityGetAXNodeAndAncestors
+   commandName _ = "Accessibility.getAXNodeAndAncestors"
 
 
--- | Parameters of the 'accessibilityGetChildAXNodes' command.
+
+-- | Accessibility.getChildAXNodes
+--   Fetches a particular accessibility node by AXNodeId.
+--   Requires `enable()` to have been called previously.
+
+-- | Parameters of the 'Accessibility.getChildAXNodes' command.
 data PAccessibilityGetChildAXNodes = PAccessibilityGetChildAXNodes {
   pAccessibilityGetChildAXNodesId :: AccessibilityAXNodeId,
   -- | The frame in whose document the node resides.
@@ -603,15 +593,7 @@ instance FromJSON  PAccessibilityGetChildAXNodes where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 
--- | Function for the 'Accessibility.getChildAXNodes' command.
---   Fetches a particular accessibility node by AXNodeId.
---   Requires `enable()` to have been called previously.
---   Returns: 'PAccessibilityGetChildAXNodes'
---   Returns: 'AccessibilityGetChildAXNodes'
-accessibilityGetChildAXNodes :: Handle -> PAccessibilityGetChildAXNodes -> IO AccessibilityGetChildAXNodes
-accessibilityGetChildAXNodes handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'accessibilityGetChildAXNodes' command.
+-- | Return type of the 'Accessibility.getChildAXNodes' command.
 data AccessibilityGetChildAXNodes = AccessibilityGetChildAXNodes {
   accessibilityGetChildAXNodesNodes :: [AccessibilityAXNode]
 } deriving (Generic, Eq, Show, Read)
@@ -620,11 +602,19 @@ instance FromJSON  AccessibilityGetChildAXNodes where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
 
 instance Command PAccessibilityGetChildAXNodes where
-    type CommandResponse PAccessibilityGetChildAXNodes = AccessibilityGetChildAXNodes
-    commandName _ = "Accessibility.getChildAXNodes"
+   type CommandResponse PAccessibilityGetChildAXNodes = AccessibilityGetChildAXNodes
+   commandName _ = "Accessibility.getChildAXNodes"
 
 
--- | Parameters of the 'accessibilityQueryAXTree' command.
+
+-- | Accessibility.queryAXTree
+--   Query a DOM node's accessibility subtree for accessible name and role.
+--   This command computes the name and role for all nodes in the subtree, including those that are
+--   ignored for accessibility, and returns those that mactch the specified name and role. If no DOM
+--   node is specified, or the DOM node does not exist, the command returns an error. If neither
+--   `accessibleName` or `role` is specified, it returns all the accessibility nodes in the subtree.
+
+-- | Parameters of the 'Accessibility.queryAXTree' command.
 data PAccessibilityQueryAXTree = PAccessibilityQueryAXTree {
   -- | Identifier of the node for the root to query.
   pAccessibilityQueryAXTreeNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMNodeId,
@@ -644,18 +634,7 @@ instance FromJSON  PAccessibilityQueryAXTree where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the 'Accessibility.queryAXTree' command.
---   Query a DOM node's accessibility subtree for accessible name and role.
---   This command computes the name and role for all nodes in the subtree, including those that are
---   ignored for accessibility, and returns those that mactch the specified name and role. If no DOM
---   node is specified, or the DOM node does not exist, the command returns an error. If neither
---   `accessibleName` or `role` is specified, it returns all the accessibility nodes in the subtree.
---   Returns: 'PAccessibilityQueryAXTree'
---   Returns: 'AccessibilityQueryAXTree'
-accessibilityQueryAXTree :: Handle -> PAccessibilityQueryAXTree -> IO AccessibilityQueryAXTree
-accessibilityQueryAXTree handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'accessibilityQueryAXTree' command.
+-- | Return type of the 'Accessibility.queryAXTree' command.
 data AccessibilityQueryAXTree = AccessibilityQueryAXTree {
   -- | A list of `Accessibility.AXNode` matching the specified attributes,
   --   including nodes that are ignored for accessibility.
@@ -666,8 +645,9 @@ instance FromJSON  AccessibilityQueryAXTree where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 instance Command PAccessibilityQueryAXTree where
-    type CommandResponse PAccessibilityQueryAXTree = AccessibilityQueryAXTree
-    commandName _ = "Accessibility.queryAXTree"
+   type CommandResponse PAccessibilityQueryAXTree = AccessibilityQueryAXTree
+   commandName _ = "Accessibility.queryAXTree"
+
 
 
 

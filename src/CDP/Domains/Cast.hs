@@ -44,7 +44,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 
@@ -97,7 +97,14 @@ instance Event CastIssueUpdated where
 
 
 
--- | Parameters of the 'castEnable' command.
+-- | Cast.enable
+--   Starts observing for sinks that can be used for tab mirroring, and if set,
+--   sinks compatible with |presentationUrl| as well. When sinks are found, a
+--   |sinksUpdated| event is fired.
+--   Also starts observing for issue messages. When an issue is added or removed,
+--   an |issueUpdated| event is fired.
+
+-- | Parameters of the 'Cast.enable' command.
 data PCastEnable = PCastEnable {
   pCastEnablePresentationUrl :: Maybe String
 } deriving (Generic, Eq, Show, Read)
@@ -108,36 +115,30 @@ instance FromJSON  PCastEnable where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 }
 
 
--- | Function for the 'Cast.enable' command.
---   Starts observing for sinks that can be used for tab mirroring, and if set,
---   sinks compatible with |presentationUrl| as well. When sinks are found, a
---   |sinksUpdated| event is fired.
---   Also starts observing for issue messages. When an issue is added or removed,
---   an |issueUpdated| event is fired.
---   Returns: 'PCastEnable'
-castEnable :: Handle -> PCastEnable -> IO ()
-castEnable handle params = sendReceiveCommand handle params
-
 instance Command PCastEnable where
-    type CommandResponse PCastEnable = NoResponse
-    commandName _ = "Cast.enable"
+   type CommandResponse PCastEnable = ()
+   commandName _ = "Cast.enable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'castDisable' command.
+-- | Cast.disable
+--   Stops observing for sinks and issues.
+
+-- | Parameters of the 'Cast.disable' command.
 data PCastDisable = PCastDisable
 instance ToJSON PCastDisable where toJSON _ = A.Null
 
--- | Function for the 'Cast.disable' command.
---   Stops observing for sinks and issues.
-castDisable :: Handle -> IO ()
-castDisable handle = sendReceiveCommand handle PCastDisable
-
 instance Command PCastDisable where
-    type CommandResponse PCastDisable = NoResponse
-    commandName _ = "Cast.disable"
+   type CommandResponse PCastDisable = ()
+   commandName _ = "Cast.disable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'castSetSinkToUse' command.
+-- | Cast.setSinkToUse
+--   Sets a sink to be used when the web page requests the browser to choose a
+--   sink via Presentation API, Remote Playback API, or Cast SDK.
+
+-- | Parameters of the 'Cast.setSinkToUse' command.
 data PCastSetSinkToUse = PCastSetSinkToUse {
   pCastSetSinkToUseSinkName :: String
 } deriving (Generic, Eq, Show, Read)
@@ -148,19 +149,16 @@ instance FromJSON  PCastSetSinkToUse where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
 
 
--- | Function for the 'Cast.setSinkToUse' command.
---   Sets a sink to be used when the web page requests the browser to choose a
---   sink via Presentation API, Remote Playback API, or Cast SDK.
---   Returns: 'PCastSetSinkToUse'
-castSetSinkToUse :: Handle -> PCastSetSinkToUse -> IO ()
-castSetSinkToUse handle params = sendReceiveCommand handle params
-
 instance Command PCastSetSinkToUse where
-    type CommandResponse PCastSetSinkToUse = NoResponse
-    commandName _ = "Cast.setSinkToUse"
+   type CommandResponse PCastSetSinkToUse = ()
+   commandName _ = "Cast.setSinkToUse"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'castStartDesktopMirroring' command.
+-- | Cast.startDesktopMirroring
+--   Starts mirroring the desktop to the sink.
+
+-- | Parameters of the 'Cast.startDesktopMirroring' command.
 data PCastStartDesktopMirroring = PCastStartDesktopMirroring {
   pCastStartDesktopMirroringSinkName :: String
 } deriving (Generic, Eq, Show, Read)
@@ -171,18 +169,16 @@ instance FromJSON  PCastStartDesktopMirroring where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 
--- | Function for the 'Cast.startDesktopMirroring' command.
---   Starts mirroring the desktop to the sink.
---   Returns: 'PCastStartDesktopMirroring'
-castStartDesktopMirroring :: Handle -> PCastStartDesktopMirroring -> IO ()
-castStartDesktopMirroring handle params = sendReceiveCommand handle params
-
 instance Command PCastStartDesktopMirroring where
-    type CommandResponse PCastStartDesktopMirroring = NoResponse
-    commandName _ = "Cast.startDesktopMirroring"
+   type CommandResponse PCastStartDesktopMirroring = ()
+   commandName _ = "Cast.startDesktopMirroring"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'castStartTabMirroring' command.
+-- | Cast.startTabMirroring
+--   Starts mirroring the tab to the sink.
+
+-- | Parameters of the 'Cast.startTabMirroring' command.
 data PCastStartTabMirroring = PCastStartTabMirroring {
   pCastStartTabMirroringSinkName :: String
 } deriving (Generic, Eq, Show, Read)
@@ -193,18 +189,16 @@ instance FromJSON  PCastStartTabMirroring where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
 
 
--- | Function for the 'Cast.startTabMirroring' command.
---   Starts mirroring the tab to the sink.
---   Returns: 'PCastStartTabMirroring'
-castStartTabMirroring :: Handle -> PCastStartTabMirroring -> IO ()
-castStartTabMirroring handle params = sendReceiveCommand handle params
-
 instance Command PCastStartTabMirroring where
-    type CommandResponse PCastStartTabMirroring = NoResponse
-    commandName _ = "Cast.startTabMirroring"
+   type CommandResponse PCastStartTabMirroring = ()
+   commandName _ = "Cast.startTabMirroring"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'castStopCasting' command.
+-- | Cast.stopCasting
+--   Stops the active Cast session on the sink.
+
+-- | Parameters of the 'Cast.stopCasting' command.
 data PCastStopCasting = PCastStopCasting {
   pCastStopCastingSinkName :: String
 } deriving (Generic, Eq, Show, Read)
@@ -215,15 +209,10 @@ instance FromJSON  PCastStopCasting where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
--- | Function for the 'Cast.stopCasting' command.
---   Stops the active Cast session on the sink.
---   Returns: 'PCastStopCasting'
-castStopCasting :: Handle -> PCastStopCasting -> IO ()
-castStopCasting handle params = sendReceiveCommand handle params
-
 instance Command PCastStopCasting where
-    type CommandResponse PCastStopCasting = NoResponse
-    commandName _ = "Cast.stopCasting"
+   type CommandResponse PCastStopCasting = ()
+   commandName _ = "Cast.stopCasting"
+   fromJSON = const . A.Success . const ()
 
 
 

@@ -43,7 +43,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSecurity
@@ -218,50 +218,50 @@ instance Event LogEntryAdded where
 
 
 
--- | Parameters of the 'logClear' command.
+-- | Log.clear
+--   Clears the log.
+
+-- | Parameters of the 'Log.clear' command.
 data PLogClear = PLogClear
 instance ToJSON PLogClear where toJSON _ = A.Null
 
--- | Function for the 'Log.clear' command.
---   Clears the log.
-logClear :: Handle -> IO ()
-logClear handle = sendReceiveCommand handle PLogClear
-
 instance Command PLogClear where
-    type CommandResponse PLogClear = NoResponse
-    commandName _ = "Log.clear"
+   type CommandResponse PLogClear = ()
+   commandName _ = "Log.clear"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'logDisable' command.
+-- | Log.disable
+--   Disables log domain, prevents further log entries from being reported to the client.
+
+-- | Parameters of the 'Log.disable' command.
 data PLogDisable = PLogDisable
 instance ToJSON PLogDisable where toJSON _ = A.Null
 
--- | Function for the 'Log.disable' command.
---   Disables log domain, prevents further log entries from being reported to the client.
-logDisable :: Handle -> IO ()
-logDisable handle = sendReceiveCommand handle PLogDisable
-
 instance Command PLogDisable where
-    type CommandResponse PLogDisable = NoResponse
-    commandName _ = "Log.disable"
+   type CommandResponse PLogDisable = ()
+   commandName _ = "Log.disable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'logEnable' command.
+-- | Log.enable
+--   Enables log domain, sends the entries collected so far to the client by means of the
+--   `entryAdded` notification.
+
+-- | Parameters of the 'Log.enable' command.
 data PLogEnable = PLogEnable
 instance ToJSON PLogEnable where toJSON _ = A.Null
 
--- | Function for the 'Log.enable' command.
---   Enables log domain, sends the entries collected so far to the client by means of the
---   `entryAdded` notification.
-logEnable :: Handle -> IO ()
-logEnable handle = sendReceiveCommand handle PLogEnable
-
 instance Command PLogEnable where
-    type CommandResponse PLogEnable = NoResponse
-    commandName _ = "Log.enable"
+   type CommandResponse PLogEnable = ()
+   commandName _ = "Log.enable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'logStartViolationsReport' command.
+-- | Log.startViolationsReport
+--   start violation reporting.
+
+-- | Parameters of the 'Log.startViolationsReport' command.
 data PLogStartViolationsReport = PLogStartViolationsReport {
   -- | Configuration for violations.
   pLogStartViolationsReportConfig :: [LogViolationSetting]
@@ -273,29 +273,23 @@ instance FromJSON  PLogStartViolationsReport where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
 
 
--- | Function for the 'Log.startViolationsReport' command.
---   start violation reporting.
---   Returns: 'PLogStartViolationsReport'
-logStartViolationsReport :: Handle -> PLogStartViolationsReport -> IO ()
-logStartViolationsReport handle params = sendReceiveCommand handle params
-
 instance Command PLogStartViolationsReport where
-    type CommandResponse PLogStartViolationsReport = NoResponse
-    commandName _ = "Log.startViolationsReport"
+   type CommandResponse PLogStartViolationsReport = ()
+   commandName _ = "Log.startViolationsReport"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'logStopViolationsReport' command.
+-- | Log.stopViolationsReport
+--   Stop violation reporting.
+
+-- | Parameters of the 'Log.stopViolationsReport' command.
 data PLogStopViolationsReport = PLogStopViolationsReport
 instance ToJSON PLogStopViolationsReport where toJSON _ = A.Null
 
--- | Function for the 'Log.stopViolationsReport' command.
---   Stop violation reporting.
-logStopViolationsReport :: Handle -> IO ()
-logStopViolationsReport handle = sendReceiveCommand handle PLogStopViolationsReport
-
 instance Command PLogStopViolationsReport where
-    type CommandResponse PLogStopViolationsReport = NoResponse
-    commandName _ = "Log.stopViolationsReport"
+   type CommandResponse PLogStopViolationsReport = ()
+   commandName _ = "Log.stopViolationsReport"
+   fromJSON = const . A.Success . const ()
 
 
 

@@ -41,7 +41,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 
@@ -83,21 +83,23 @@ instance Event PerformanceMetrics where
 
 
 
--- | Parameters of the 'performanceDisable' command.
+-- | Performance.disable
+--   Disable collecting and reporting metrics.
+
+-- | Parameters of the 'Performance.disable' command.
 data PPerformanceDisable = PPerformanceDisable
 instance ToJSON PPerformanceDisable where toJSON _ = A.Null
 
--- | Function for the 'Performance.disable' command.
---   Disable collecting and reporting metrics.
-performanceDisable :: Handle -> IO ()
-performanceDisable handle = sendReceiveCommand handle PPerformanceDisable
-
 instance Command PPerformanceDisable where
-    type CommandResponse PPerformanceDisable = NoResponse
-    commandName _ = "Performance.disable"
+   type CommandResponse PPerformanceDisable = ()
+   commandName _ = "Performance.disable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'performanceEnable' command.
+-- | Performance.enable
+--   Enable collecting and reporting metrics.
+
+-- | Parameters of the 'Performance.enable' command.
 data PPerformanceEnableTimeDomain = PPerformanceEnableTimeDomainTimeTicks | PPerformanceEnableTimeDomainThreadTicks
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PPerformanceEnableTimeDomain where
@@ -126,28 +128,20 @@ instance FromJSON  PPerformanceEnable where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
 
 
--- | Function for the 'Performance.enable' command.
---   Enable collecting and reporting metrics.
---   Returns: 'PPerformanceEnable'
-performanceEnable :: Handle -> PPerformanceEnable -> IO ()
-performanceEnable handle params = sendReceiveCommand handle params
-
 instance Command PPerformanceEnable where
-    type CommandResponse PPerformanceEnable = NoResponse
-    commandName _ = "Performance.enable"
+   type CommandResponse PPerformanceEnable = ()
+   commandName _ = "Performance.enable"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'performanceGetMetrics' command.
+-- | Performance.getMetrics
+--   Retrieve current values of run-time metrics.
+
+-- | Parameters of the 'Performance.getMetrics' command.
 data PPerformanceGetMetrics = PPerformanceGetMetrics
 instance ToJSON PPerformanceGetMetrics where toJSON _ = A.Null
 
--- | Function for the 'Performance.getMetrics' command.
---   Retrieve current values of run-time metrics.
---   Returns: 'PerformanceGetMetrics'
-performanceGetMetrics :: Handle -> IO PerformanceGetMetrics
-performanceGetMetrics handle = sendReceiveCommandResult handle PPerformanceGetMetrics
-
--- | Return type of the 'performanceGetMetrics' command.
+-- | Return type of the 'Performance.getMetrics' command.
 data PerformanceGetMetrics = PerformanceGetMetrics {
   -- | Current values for run-time metrics.
   performanceGetMetricsMetrics :: [PerformanceMetric]
@@ -157,8 +151,9 @@ instance FromJSON  PerformanceGetMetrics where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
 
 instance Command PPerformanceGetMetrics where
-    type CommandResponse PPerformanceGetMetrics = PerformanceGetMetrics
-    commandName _ = "Performance.getMetrics"
+   type CommandResponse PPerformanceGetMetrics = PerformanceGetMetrics
+   commandName _ = "Performance.getMetrics"
+
 
 
 

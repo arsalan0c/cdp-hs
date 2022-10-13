@@ -10,7 +10,7 @@ import Control.Concurrent
 import Data.Default
 
 import CDP as CDP
-import CDP.Internal.Runtime
+import CDP.Runtime
 
 -- Takes too long
 -- prop_page_frame :: Property
@@ -21,9 +21,9 @@ import CDP.Internal.Runtime
 --         CDP.subscribe handle $ \frameNavigated -> do
 --             print $ CDP.pageFrameId . CDP.pageFrameNavigatedFrame $ frameNavigated
 --         -- enable events
---         enabled  <- CDP.pageEnable handle
+--         enabled  <- CDP.sendCommandWait handle CDP.PPageEnable
 --         -- navigate to page
---         nav     <- CDP.pageNavigate handle $
+--         nav     <- CDP.sendCommandWait handle $
 --             CDP.PPageNavigate "http://wikipedia.com" Nothing Nothing Nothing Nothing
 --         -- wait for events
 --         threadDelay 2000000

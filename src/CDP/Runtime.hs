@@ -6,7 +6,10 @@
 {-# LANGUAGE ScopedTypeVariables    #-}
 {-# LANGUAGE TypeFamilies           #-}
 
-module CDP.Internal.Runtime (module CDP.Internal.Runtime) where
+module CDP.Runtime 
+    ( module CDP.Runtime
+    , module CDP.Internal.Utils
+    ) where
 
 import           Control.Applicative  ((<$>))
 import           Control.Monad
@@ -39,41 +42,7 @@ import qualified System.IO as IO
 import qualified Data.IORef as IORef
 
 import CDP.Internal.Endpoints
-
-class FromJSON a => Event a where
-    eventName :: Proxy a -> String
-
-type CommandResponseBuffer =
-    Map.Map CommandId (MVar (Either ProtocolError A.Value))
-
-data Subscriptions = Subscriptions
-    { subscriptionsHandlers :: Map.Map String (Map.Map Int (A.Value -> IO ()))
-    , subscriptionsNextId   :: Int
-    }
-
-data Handle = Handle
-    { config           :: Config
-    , randomGen        :: MVar StdGen
-    , subscriptions    :: IORef.IORef Subscriptions
-    , commandBuffer    :: IORef.IORef CommandResponseBuffer
-    , conn             :: WS.Connection
-    , listenThread     :: ThreadId
-    , responseBuffer   :: MVar [(String, BS.ByteString)]
-    }
-
-data Config = Config
-    { hostPort              :: (String, Int)
-    , doLogResponses        :: Bool
-    , commandTimeout        :: Maybe Int
-        -- ^ number of microseconds to wait for a command response.
-        --   waits forever if Nothing 
-    } deriving Show
-instance Default Config where
-    def = Config{..}
-      where
-        hostPort       = ("http://127.0.0.1", 9222) 
-        doLogResponses = False
-        commandTimeout = def
+import CDP.Internal.Utils
 
 type ClientApp b  = Handle -> IO b
 
@@ -102,12 +71,7 @@ runClient config app = do
                         Just im | Just id' <- imId im ->
                             dispatchCommandResponse Handle {..} id'
                             (imError im) (imResult im)
-                            {-
-                    if isCommand bs
-                        then dispatchCommandResponse commandBuffer bs
-                        else dispatchEventResponse MkHandle{..} bs
-                        -}
-
+          
         bracket listen killThread (\listenThread -> app Handle{..})
 
 -- | A message from the browser.  We don't know yet if this is a command
@@ -159,6 +123,7 @@ data Subscription = Subscription
     , subscriptionId        :: Int
     }
 
+-- | Subscribes to an event
 subscribe :: forall a. Event a => Handle -> (a -> IO ()) -> IO Subscription
 subscribe handle f = do
     id' <- IORef.atomicModifyIORef' (subscriptions handle) $ \s ->
@@ -184,6 +149,7 @@ subscribe handle f = do
             IO.hPutStrLn IO.stderr $ "Value: " ++ show val
         A.Success x   -> f x
 
+-- | Unsubscribes to an event
 unsubscribe :: Handle -> Subscription -> IO ()
 unsubscribe handle (Subscription ename id') =
     IORef.atomicModifyIORef' (subscriptions handle) $ \s ->
@@ -193,8 +159,19 @@ unsubscribe handle (Subscription ename id') =
         , ()
         )
 
-newtype CommandId = CommandId { unCommandId :: Int }
-    deriving (Eq, Ord, Show, FromJSON, ToJSON)
+data Promise a where
+    Promise :: MVar tmp -> (tmp -> Either Error a) -> Promise a
+
+-- | Resolves a promise to its value 
+readPromise :: Promise a -> IO a
+readPromise (Promise mv f) = do
+    x <- readMVar mv
+    either throwIO pure $ f x
+
+randomCommandId :: Handle -> IO CommandId
+randomCommandId handle = modifyMVar (randomGen handle) $ \g -> do
+    let (id, g2) = uniformR (0 :: Int, 1000 :: Int) g
+    pure (g2, CommandId id)
 
 data CommandObj a = CommandObj
     { coId     :: CommandId
@@ -203,7 +180,7 @@ data CommandObj a = CommandObj
     } deriving Show
 
 instance (ToJSON a) => ToJSON (CommandObj a) where
-   toJSON cmd = A.object . concat $
+    toJSON cmd = A.object . concat $
         [ [ "id"     .= coId cmd ]
         , [ "method" .= coMethod cmd ]
         , case toJSON (coParams cmd) of
@@ -211,107 +188,45 @@ instance (ToJSON a) => ToJSON (CommandObj a) where
             params -> [ "params" .= params ]
         ]
 
-randomCommandId :: Handle -> IO CommandId
-randomCommandId handle = modifyMVar (randomGen handle) $ \g -> do
-    let (id, g2) = uniformR (0 :: Int, 1000 :: Int) g
-    pure (g2, CommandId id)
+-- | Sends a command to the browser and waits until a response is received,
+--   for timeout duration configured
+sendCommandWait
+    :: forall cmd. Command cmd
+    => Handle -> cmd -> IO (CommandResponse cmd)
+sendCommandWait handle params = do
+    promise <- sendCommand handle params
+    let r = readPromise promise
+    mbRes <- maybe (fmap Just r) (flip timeout r) (commandTimeout . config $ handle)
+    maybe (throwIO ERRNoResponse) pure mbRes
+  where
+    proxy = Proxy :: Proxy cmd
 
-class (ToJSON cmd, FromJSON (CommandResponse cmd)) => Command cmd where
-    type CommandResponse cmd :: *
-    commandName :: Proxy cmd -> String
-
-data NoResponse = NoResponse
-
-instance FromJSON NoResponse where
-    parseJSON _ = pure NoResponse
-
-data ProtocolError = 
-    PEParse          String      -- ^ Invalid JSON was received by the server. An error occurred on the server while parsing the JSON text
-  | PEInvalidRequest String      -- ^ The JSON sent is not a valid Request object
-  | PEMethodNotFound String      -- ^ The method does not exist / is not available
-  | PEInvalidParams  String      -- ^ Invalid method parameter (s)
-  | PEInternalError  String      -- ^ Internal JSON-RPC error
-  | PEServerError    String      -- ^ Server error
-  | PEOther          String      -- ^ An uncategorized error
-  deriving Eq
-
-instance Exception ProtocolError
-
-instance Show ProtocolError where
-    show (PEParse msg)            = msg 
-    show (PEInvalidRequest msg)   = msg
-    show (PEMethodNotFound msg)   = msg
-    show (PEInvalidParams msg)    = msg
-    show (PEInternalError msg)    = msg
-    show (PEServerError msg)      = msg
-    show (PEOther msg)            = msg
-
-instance FromJSON ProtocolError where
-    parseJSON = A.withObject "ProtocolError" $ \obj -> do
-        code <- obj .: "code"
-        msg  <- obj .: "message"
-        pure $ case (code :: Double) of
-            -32700 -> PEParse          msg
-            -32600 -> PEInvalidRequest msg
-            -32601 -> PEMethodNotFound msg
-            -32602 -> PEInvalidParams  msg
-            -32603 -> PEInternalError  msg
-            _      -> if code > -32099 && code < -32000 then PEServerError msg else PEOther msg
+-- | Sends a command to the browser
+sendCommand
+    :: forall cmd. Command cmd
+    => Handle -> cmd -> IO (Promise (CommandResponse cmd))
+sendCommand handle params = do
+    id <- randomCommandId handle
+    let co = CommandObj id (commandName proxy) params
+    mv <- newEmptyMVar
+    IORef.atomicModifyIORef' (commandBuffer handle) $ \buffer ->
+        (M.insert id mv buffer, ())
+    WS.sendTextData (conn handle) . A.encode $ co
+    pure $ Promise mv $ \entry -> case entry of
+        Left err -> Left $ ERRProtocol err
+        Right v  -> case (fromJSON (Proxy :: Proxy cmd) v) of
+            A.Error   err -> Left $ ERRParse err
+            A.Success x   -> Right x
+  where
+    proxy = Proxy :: Proxy cmd
 
 data Error = 
       ERRNoResponse
     | ERRParse String
     | ERRProtocol ProtocolError
     deriving Eq
-
 instance Exception Error
-
 instance Show Error where
     show ERRNoResponse      = "no response received from the protocol"
     show (ERRParse msg)     = unlines ["error in parsing a message received from the protocol:", msg]
     show (ERRProtocol pe)   = show pe 
-
-data Promise a where
-    Promise :: MVar tmp -> (tmp -> Either Error a) -> Promise a
-
--- TODO: timeout here?
-readPromise :: Promise a -> IO a
-readPromise (Promise mv f) = do
-    x <- readMVar mv
-    either throwIO pure $ f x
-
-sendCommand
-    :: forall cmd. Command cmd
-    => Handle -> CommandId -> cmd -> IO (Promise (CommandResponse cmd))
-sendCommand h id params = do
-    let co = CommandObj id (commandName proxy) params
-    mv <- newEmptyMVar
-    IORef.atomicModifyIORef' (commandBuffer h) $ \buffer ->
-        (M.insert id mv buffer, ())
-    WS.sendTextData (conn h) . A.encode $ co
-    pure $ Promise mv $ \entry -> case entry of
-        Left err -> Left $ ERRProtocol err
-        Right v  -> case A.fromJSON v :: A.Result (CommandResponse cmd) of
-            A.Error   err -> Left $ ERRParse err
-            A.Success x   -> Right x
-  where
-    proxy = Proxy :: Proxy cmd
-
-sendReceiveCommandResult
-    :: forall cmd. Command cmd
-    => Handle -> cmd -> IO (CommandResponse cmd)
-sendReceiveCommandResult handle params = do
-    cid <- randomCommandId handle
-    promise <- sendCommand handle cid params
-    readPromise promise
-  where
-    proxy = Proxy :: Proxy cmd
-
-sendReceiveCommand
-    :: forall cmd. (Command cmd, CommandResponse cmd ~ NoResponse)
-    => Handle -> cmd -> IO ()
-sendReceiveCommand handle params = () <$ sendReceiveCommandResult handle params
-
-uncapitalizeFirst :: String -> String
-uncapitalizeFirst [] = []
-uncapitalizeFirst (hd:tl) = toLower hd : tl

@@ -41,7 +41,7 @@ import GHC.Generics
 import Data.Char
 import Data.Default
 
-import CDP.Internal.Runtime
+import CDP.Internal.Utils
 
 
 
@@ -154,7 +154,10 @@ instance FromJSON  CacheStorageCachedResponse where
 
 
 
--- | Parameters of the 'cacheStorageDeleteCache' command.
+-- | CacheStorage.deleteCache
+--   Deletes a cache.
+
+-- | Parameters of the 'CacheStorage.deleteCache' command.
 data PCacheStorageDeleteCache = PCacheStorageDeleteCache {
   -- | Id of cache for deletion.
   pCacheStorageDeleteCacheCacheId :: CacheStorageCacheId
@@ -166,18 +169,16 @@ instance FromJSON  PCacheStorageDeleteCache where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the 'CacheStorage.deleteCache' command.
---   Deletes a cache.
---   Returns: 'PCacheStorageDeleteCache'
-cacheStorageDeleteCache :: Handle -> PCacheStorageDeleteCache -> IO ()
-cacheStorageDeleteCache handle params = sendReceiveCommand handle params
-
 instance Command PCacheStorageDeleteCache where
-    type CommandResponse PCacheStorageDeleteCache = NoResponse
-    commandName _ = "CacheStorage.deleteCache"
+   type CommandResponse PCacheStorageDeleteCache = ()
+   commandName _ = "CacheStorage.deleteCache"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'cacheStorageDeleteEntry' command.
+-- | CacheStorage.deleteEntry
+--   Deletes a cache entry.
+
+-- | Parameters of the 'CacheStorage.deleteEntry' command.
 data PCacheStorageDeleteEntry = PCacheStorageDeleteEntry {
   -- | Id of cache where the entry will be deleted.
   pCacheStorageDeleteEntryCacheId :: CacheStorageCacheId,
@@ -191,18 +192,16 @@ instance FromJSON  PCacheStorageDeleteEntry where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
 
 
--- | Function for the 'CacheStorage.deleteEntry' command.
---   Deletes a cache entry.
---   Returns: 'PCacheStorageDeleteEntry'
-cacheStorageDeleteEntry :: Handle -> PCacheStorageDeleteEntry -> IO ()
-cacheStorageDeleteEntry handle params = sendReceiveCommand handle params
-
 instance Command PCacheStorageDeleteEntry where
-    type CommandResponse PCacheStorageDeleteEntry = NoResponse
-    commandName _ = "CacheStorage.deleteEntry"
+   type CommandResponse PCacheStorageDeleteEntry = ()
+   commandName _ = "CacheStorage.deleteEntry"
+   fromJSON = const . A.Success . const ()
 
 
--- | Parameters of the 'cacheStorageRequestCacheNames' command.
+-- | CacheStorage.requestCacheNames
+--   Requests cache names.
+
+-- | Parameters of the 'CacheStorage.requestCacheNames' command.
 data PCacheStorageRequestCacheNames = PCacheStorageRequestCacheNames {
   -- | Security origin.
   pCacheStorageRequestCacheNamesSecurityOrigin :: String
@@ -214,14 +213,7 @@ instance FromJSON  PCacheStorageRequestCacheNames where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
 
 
--- | Function for the 'CacheStorage.requestCacheNames' command.
---   Requests cache names.
---   Returns: 'PCacheStorageRequestCacheNames'
---   Returns: 'CacheStorageRequestCacheNames'
-cacheStorageRequestCacheNames :: Handle -> PCacheStorageRequestCacheNames -> IO CacheStorageRequestCacheNames
-cacheStorageRequestCacheNames handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'cacheStorageRequestCacheNames' command.
+-- | Return type of the 'CacheStorage.requestCacheNames' command.
 data CacheStorageRequestCacheNames = CacheStorageRequestCacheNames {
   -- | Caches for the security origin.
   cacheStorageRequestCacheNamesCaches :: [CacheStorageCache]
@@ -231,11 +223,15 @@ instance FromJSON  CacheStorageRequestCacheNames where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
 
 instance Command PCacheStorageRequestCacheNames where
-    type CommandResponse PCacheStorageRequestCacheNames = CacheStorageRequestCacheNames
-    commandName _ = "CacheStorage.requestCacheNames"
+   type CommandResponse PCacheStorageRequestCacheNames = CacheStorageRequestCacheNames
+   commandName _ = "CacheStorage.requestCacheNames"
 
 
--- | Parameters of the 'cacheStorageRequestCachedResponse' command.
+
+-- | CacheStorage.requestCachedResponse
+--   Fetches cache entry.
+
+-- | Parameters of the 'CacheStorage.requestCachedResponse' command.
 data PCacheStorageRequestCachedResponse = PCacheStorageRequestCachedResponse {
   -- | Id of cache that contains the entry.
   pCacheStorageRequestCachedResponseCacheId :: CacheStorageCacheId,
@@ -251,14 +247,7 @@ instance FromJSON  PCacheStorageRequestCachedResponse where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
 
 
--- | Function for the 'CacheStorage.requestCachedResponse' command.
---   Fetches cache entry.
---   Returns: 'PCacheStorageRequestCachedResponse'
---   Returns: 'CacheStorageRequestCachedResponse'
-cacheStorageRequestCachedResponse :: Handle -> PCacheStorageRequestCachedResponse -> IO CacheStorageRequestCachedResponse
-cacheStorageRequestCachedResponse handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'cacheStorageRequestCachedResponse' command.
+-- | Return type of the 'CacheStorage.requestCachedResponse' command.
 data CacheStorageRequestCachedResponse = CacheStorageRequestCachedResponse {
   -- | Response read from the cache.
   cacheStorageRequestCachedResponseResponse :: CacheStorageCachedResponse
@@ -268,11 +257,15 @@ instance FromJSON  CacheStorageRequestCachedResponse where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 }
 
 instance Command PCacheStorageRequestCachedResponse where
-    type CommandResponse PCacheStorageRequestCachedResponse = CacheStorageRequestCachedResponse
-    commandName _ = "CacheStorage.requestCachedResponse"
+   type CommandResponse PCacheStorageRequestCachedResponse = CacheStorageRequestCachedResponse
+   commandName _ = "CacheStorage.requestCachedResponse"
 
 
--- | Parameters of the 'cacheStorageRequestEntries' command.
+
+-- | CacheStorage.requestEntries
+--   Requests data from cache.
+
+-- | Parameters of the 'CacheStorage.requestEntries' command.
 data PCacheStorageRequestEntries = PCacheStorageRequestEntries {
   -- | ID of cache to get entries from.
   pCacheStorageRequestEntriesCacheId :: CacheStorageCacheId,
@@ -290,14 +283,7 @@ instance FromJSON  PCacheStorageRequestEntries where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 }
 
 
--- | Function for the 'CacheStorage.requestEntries' command.
---   Requests data from cache.
---   Returns: 'PCacheStorageRequestEntries'
---   Returns: 'CacheStorageRequestEntries'
-cacheStorageRequestEntries :: Handle -> PCacheStorageRequestEntries -> IO CacheStorageRequestEntries
-cacheStorageRequestEntries handle params = sendReceiveCommandResult handle params
-
--- | Return type of the 'cacheStorageRequestEntries' command.
+-- | Return type of the 'CacheStorage.requestEntries' command.
 data CacheStorageRequestEntries = CacheStorageRequestEntries {
   -- | Array of object store data entries.
   cacheStorageRequestEntriesCacheDataEntries :: [CacheStorageDataEntry],
@@ -310,8 +296,9 @@ instance FromJSON  CacheStorageRequestEntries where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
 
 instance Command PCacheStorageRequestEntries where
-    type CommandResponse PCacheStorageRequestEntries = CacheStorageRequestEntries
-    commandName _ = "CacheStorage.requestEntries"
+   type CommandResponse PCacheStorageRequestEntries = CacheStorageRequestEntries
+   commandName _ = "CacheStorage.requestEntries"
+
 
 
 

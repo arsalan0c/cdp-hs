@@ -19,7 +19,6 @@ import qualified Data.Graph as Graph
 import qualified Data.Text as T
 import qualified Data.Aeson as A
 
-import CDP.Definition ((:|:)(AltLeft, AltRight))
 import qualified CDP.Definition as D
 import qualified CDP.Gen.Snippets as Snippets
 
@@ -119,8 +118,8 @@ genType ctx domainName telt = T.unlines . (desc :) . pure $ case D.typesEltEnum 
             ty       ->  T.unwords ["type", tn, "=", lty]                 
   where
     desc     = let td = "Type '" <> (domainName <> "." <> D.typesEltId telt) <> "'." in 
-        formatDescription 0 . ((td <> "\n") <>) . maybe "" fromAltLeft $ D.typesEltDescription telt
-    lty      = leftType ctx domainName (Just . AltLeft $ tytelt) Nothing (D.typesEltItems telt)
+        formatDescription 0 . ((td <> "\n") <>) . fromMaybe "" $ D.typesEltDescription telt
+    lty      = leftType ctx domainName (Just tytelt) Nothing (D.typesEltItems telt)
     tytelt   = D.typesEltType telt
     tpeltsM  = guardEmptyList isValidParam $ D.typesEltProperties telt
     tn       = typeNameHS domainName telt 
@@ -206,14 +205,14 @@ genParamsType ctx domainName paramsTypeName paramElts = T.unlines . filter ((> 0
     ]
   where
     fields = formatFieldDescription . map toField $ fieldSigDecls
-    toField ((fn,ftn,_),descM) = (T.unwords [fn, "::", ftn], fmap fromAltLeft descM)
+    toField ((fn,ftn,_),descM) = (T.unwords [fn, "::", ftn], descM)
 
     enumDecls    = catMaybes . map (\((_,_,d),_) -> d) $ fieldSigDecls
     fieldSigDecls = map (peltToFieldSigDecl &&& D.parametersEltDescription) paramElts
 
     peltToFieldSigDecl pelt = case D.parametersEltEnum pelt of
         Just enumValues -> (fn, ftn, ) . Just $ genTypeEnum ctx ftn enumValues
-        Nothing         -> (fn, , Nothing) $ genEltType ctx domainName (isTrue . D.parametersEltOptional $ pelt)
+        Nothing         -> (fn, , Nothing) $ genEltType ctx domainName (D.parametersEltOptional pelt == Just True)
                 (D.parametersEltType pelt)
                 (D.parametersEltRef pelt) 
                 (D.parametersEltItems pelt)
@@ -234,14 +233,14 @@ genReturnType ctx domainName commandName returnTypeName returnElts = T.unlines
   where
     desc  = formatDescription 0 $ "Return type of the '" <> commandName <> "' command."
     fields = formatFieldDescription . 
-        map (reltToField &&& fmap fromAltLeft . D.returnsEltDescription) $ returnElts
+        map (reltToField &&& D.returnsEltDescription) $ returnElts
     reltToField relt = T.unwords
         [ fieldNameHS returnTypeName . D.returnsEltName $ relt
         , "::"
         , reltToTypeSig relt
         ]
 
-    reltToTypeSig relt = genEltType ctx domainName (isTrue . D.returnsEltOptional $ relt) 
+    reltToTypeSig relt = genEltType ctx domainName (D.returnsEltOptional relt == Just True)
             (D.returnsEltType relt)
             (D.returnsEltRef relt) 
             (D.returnsEltItems relt)
@@ -260,7 +259,6 @@ formatComponentDescription component = T.unlines
         , domainName delt
         , flip (maybe "") (D.domainsEltDescription delt) $ \descAltM -> 
                 (":\n" <>) . T.unlines . map (space 6 <>) . T.lines $ 
-                fromAltLeft $
                 descAltM
         ]
     delts  = map fst . Map.elems . cDomDeps $ component
@@ -347,19 +345,19 @@ fromJSONOpts :: Int -> T.Text
 fromJSONOpts n    = T.unwords ["A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop", ((T.pack . show) n), "}"]
 
 ----- Types -----
-genEltType :: Context -> T.Text -> Bool -> (Maybe (T.Text:|:[(Maybe A.Value)])) -> (Maybe (T.Text:|:[(Maybe A.Value)])) -> (Maybe (D.Items:|:[(Maybe A.Value)])) -> T.Text
+genEltType :: Context -> T.Text -> Bool -> Maybe T.Text -> Maybe T.Text -> Maybe D.Items -> T.Text
 genEltType ctx name isOptional t1 t2 items = (if isOptional then "Maybe " else "") <> (leftType ctx name t1 t2 items)
 
-leftType :: Context -> T.Text -> (Maybe (T.Text:|:[(Maybe A.Value)])) -> (Maybe (T.Text:|:[(Maybe A.Value)])) -> (Maybe (D.Items:|:[(Maybe A.Value)])) -> T.Text
-leftType ctx _ (Just (AltLeft ty1)) (Just (AltLeft ty2)) _ = error "impossible"
-leftType ctx domain (Just (AltLeft ty)) _ itemsElt = typeCDPToHS ctx domain ty itemsElt
-leftType ctx domain _ (Just (AltLeft ty)) itemsElt = typeCDPToHS ctx domain ty itemsElt
+leftType :: Context -> T.Text -> Maybe T.Text -> Maybe T.Text -> Maybe D.Items -> T.Text
+leftType ctx _ (Just ty1) (Just ty2) _ = error "impossible"
+leftType ctx domain (Just ty) _ itemsElt = typeCDPToHS ctx domain ty itemsElt
+leftType ctx domain _ (Just ty) itemsElt = typeCDPToHS ctx domain ty itemsElt
 leftType ctx _ _ _ _ = error "no type found"
 
-typeCDPToHS :: Context -> T.Text -> T.Text -> (Maybe (D.Items:|:[(Maybe A.Value)])) -> T.Text
+typeCDPToHS :: Context -> T.Text -> T.Text -> Maybe D.Items -> T.Text
 typeCDPToHS ctx _ "object" _ = "[(String, String)]"
-typeCDPToHS ctx domain "array" (Just (AltLeft items)) = "[" <> (leftType ctx domain (D.itemsType items) (D.itemsRef items) Nothing) <> "]"
-typeCDPToHS ctx _ ty (Just (AltLeft items)) = error . T.unpack $ "non-array type with items: " <> ty
+typeCDPToHS ctx domain "array" (Just items) = "[" <> (leftType ctx domain (D.itemsType items) (D.itemsRef items) Nothing) <> "]"
+typeCDPToHS ctx _ ty (Just items) = error . T.unpack $ "non-array type with items: " <> ty
 typeCDPToHS ctx domain ty Nothing = convertType ctx domain ty
 typeCDPToHS ctx _ _ _ = error "no matching type"
 
@@ -454,7 +452,7 @@ typeDependencies telt = if not (isValidType telt) then [] else
     case D.typesEltEnum telt of 
         Just _  -> []
         Nothing -> case D.typesEltType telt of
-            "array"  -> maybe [] pure . join $ itemDependencies . fromAltLeft <$> D.typesEltItems telt
+            "array"  -> maybe [] pure . join $ itemDependencies <$> D.typesEltItems telt
             "object" -> fromMaybe [] $ catMaybes . map paramDependencies <$> D.typesEltProperties telt
             s -> maybe [] pure $ refTypeToDomain s
 
@@ -474,47 +472,47 @@ paramDependencies pelt = if not (isValidParam pelt) then Nothing else
     case D.parametersEltEnum pelt of 
         Just _  -> Nothing
         Nothing -> case D.parametersEltRef pelt of
-            Just r  -> refTypeToDomain . fromAltLeft $ r
-            Nothing -> case fromAltLeft <$> D.parametersEltType pelt of
+            Just r  -> refTypeToDomain r
+            Nothing -> case D.parametersEltType pelt of
                 Just "object" -> Nothing
-                Just "array"  -> itemDependencies =<< fromAltLeft <$> D.parametersEltItems pelt
+                Just "array"  -> itemDependencies =<< D.parametersEltItems pelt
                 Just s -> refTypeToDomain s
                 _      -> Nothing
 
 returnDependencies :: D.ReturnsElt -> Maybe T.Text
 returnDependencies relt = if not (isValidReturn relt) then Nothing else
     case D.returnsEltRef relt of
-        Just r  -> refTypeToDomain . fromAltLeft $ r
-        Nothing -> case fromAltLeft <$> D.returnsEltType relt of
+        Just r  -> refTypeToDomain r
+        Nothing -> case D.returnsEltType relt of
             Just "object" -> Nothing
-            Just "array"  -> itemDependencies =<< fromAltLeft <$> D.returnsEltItems relt
+            Just "array"  -> itemDependencies =<< D.returnsEltItems relt
             Just s -> refTypeToDomain s
             _     -> Nothing
 
 itemDependencies :: D.Items -> Maybe T.Text
-itemDependencies itelt = refTypeToDomain =<< fromAltLeft <$> D.itemsRef itelt
+itemDependencies itelt = refTypeToDomain =<< D.itemsRef itelt
 
 ----- Validity -----
 validDomains :: [D.DomainsElt] -> [D.DomainsElt]
 validDomains ds = filter isValidDomain $ ds
   
 isValidDomain :: D.DomainsElt -> Bool
-isValidDomain delt = (not . isTrue . D.domainsEltDeprecated $ delt)
+isValidDomain delt = D.domainsEltDeprecated delt /= Just True
 
 isValidType :: D.TypesElt -> Bool
-isValidType telt = (not . isTrue . D.typesEltDeprecated $ telt)
+isValidType telt = D.typesEltDeprecated telt /= Just True
 
 isValidEvent :: D.EventsElt -> Bool
-isValidEvent evelt = (not . isTrue . D.eventsEltDeprecated $ evelt)
+isValidEvent evelt = D.eventsEltDeprecated evelt /= Just True
 
 isValidCommand :: D.CommandsElt -> Bool
-isValidCommand celt = (not . isTrue . D.commandsEltDeprecated $ celt)
+isValidCommand celt = D.commandsEltDeprecated celt /= Just True
 
 isValidParam :: D.ParametersElt -> Bool
-isValidParam pelt = (not . isTrue . D.parametersEltDeprecated $ pelt)
+isValidParam pelt = D.parametersEltDeprecated pelt /= Just True
 
 isValidReturn :: D.ReturnsElt -> Bool
-isValidReturn relt = (not . isTrue . D.returnsEltDeprecated $ relt)
+isValidReturn relt = D.returnsEltDeprecated relt /= Just True
 
 validTypes :: D.DomainsElt -> [D.TypesElt]
 validTypes = filter isValidType . fromMaybe [] . D.domainsEltTypes
@@ -582,15 +580,6 @@ guardEmptyList f v = go =<< (filter f <$> v)
 
 space :: Int -> T.Text
 space n = T.unwords $ replicate n ""
-
-fromMaybeAltLeft :: Maybe (a :|: b) -> a
-fromMaybeAltLeft (Just al) = fromAltLeft al 
-
-fromAltLeft :: a :|: b -> a
-fromAltLeft (AltLeft a) = a
-
-isTrue :: Eq a => Maybe (Bool:|:a) -> Bool
-isTrue = (== (Just $ AltLeft True))
 
 capitalizeFirst :: T.Text -> T.Text
 capitalizeFirst t = maybe t (\(first, rest) -> T.singleton (toUpper first) `T.append` rest) . T.uncons $ t

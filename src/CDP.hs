@@ -3,6 +3,7 @@
 module CDP
     ( ClientApp
     , Handle
+    , Config(..)
     , runClient
 
     , Subscription

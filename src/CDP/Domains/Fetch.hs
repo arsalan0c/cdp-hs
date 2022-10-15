@@ -207,7 +207,10 @@ data FetchRequestPaused = FetchRequestPaused {
   fetchRequestPausedResponseHeaders :: Maybe [FetchHeaderEntry],
   -- | If the intercepted request had a corresponding Network.requestWillBeSent event fired for it,
   --   then this networkId will be the same as the requestId present in the requestWillBeSent event.
-  fetchRequestPausedNetworkId :: Maybe FetchRequestId
+  fetchRequestPausedNetworkId :: Maybe DOMPageNetworkEmulationSecurity.NetworkRequestId,
+  -- | If the request is due to a redirect response from the server, the id of the request that
+  --   has caused the redirect.
+  fetchRequestPausedRedirectedRequestId :: Maybe FetchRequestId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON FetchRequestPaused  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
@@ -359,7 +362,9 @@ data PFetchContinueRequest = PFetchContinueRequest {
   pFetchContinueRequestMethod :: Maybe String,
   -- | If set, overrides the post data in the request. (Encoded as a base64 string when passed over JSON)
   pFetchContinueRequestPostData :: Maybe String,
-  -- | If set, overrides the request headers.
+  -- | If set, overrides the request headers. Note that the overrides do not
+  --   extend to subsequent redirect hops, if a redirect happens. Another override
+  --   may be applied to a different request produced by a redirect.
   pFetchContinueRequestHeaders :: Maybe [FetchHeaderEntry],
   -- | If set, overrides response interception behavior for this request.
   pFetchContinueRequestInterceptResponse :: Maybe Bool

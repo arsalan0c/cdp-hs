@@ -233,8 +233,11 @@ instance FromJSON  IndexedDBKeyPath where
 
 -- | Parameters of the 'IndexedDB.clearObjectStore' command.
 data PIndexedDBClearObjectStore = PIndexedDBClearObjectStore {
-  -- | Security origin.
-  pIndexedDBClearObjectStoreSecurityOrigin :: String,
+  -- | At least and at most one of securityOrigin, storageKey must be specified.
+  --   Security origin.
+  pIndexedDBClearObjectStoreSecurityOrigin :: Maybe String,
+  -- | Storage key.
+  pIndexedDBClearObjectStoreStorageKey :: Maybe String,
   -- | Database name.
   pIndexedDBClearObjectStoreDatabaseName :: String,
   -- | Object store name.
@@ -258,8 +261,11 @@ instance Command PIndexedDBClearObjectStore where
 
 -- | Parameters of the 'IndexedDB.deleteDatabase' command.
 data PIndexedDBDeleteDatabase = PIndexedDBDeleteDatabase {
-  -- | Security origin.
-  pIndexedDBDeleteDatabaseSecurityOrigin :: String,
+  -- | At least and at most one of securityOrigin, storageKey must be specified.
+  --   Security origin.
+  pIndexedDBDeleteDatabaseSecurityOrigin :: Maybe String,
+  -- | Storage key.
+  pIndexedDBDeleteDatabaseStorageKey :: Maybe String,
   -- | Database name.
   pIndexedDBDeleteDatabaseDatabaseName :: String
 } deriving (Generic, Eq, Show, Read)
@@ -281,7 +287,11 @@ instance Command PIndexedDBDeleteDatabase where
 
 -- | Parameters of the 'IndexedDB.deleteObjectStoreEntries' command.
 data PIndexedDBDeleteObjectStoreEntries = PIndexedDBDeleteObjectStoreEntries {
-  pIndexedDBDeleteObjectStoreEntriesSecurityOrigin :: String,
+  -- | At least and at most one of securityOrigin, storageKey must be specified.
+  --   Security origin.
+  pIndexedDBDeleteObjectStoreEntriesSecurityOrigin :: Maybe String,
+  -- | Storage key.
+  pIndexedDBDeleteObjectStoreEntriesStorageKey :: Maybe String,
   pIndexedDBDeleteObjectStoreEntriesDatabaseName :: String,
   pIndexedDBDeleteObjectStoreEntriesObjectStoreName :: String,
   -- | Range of entry keys to delete
@@ -331,8 +341,11 @@ instance Command PIndexedDBEnable where
 
 -- | Parameters of the 'IndexedDB.requestData' command.
 data PIndexedDBRequestData = PIndexedDBRequestData {
-  -- | Security origin.
-  pIndexedDBRequestDataSecurityOrigin :: String,
+  -- | At least and at most one of securityOrigin, storageKey must be specified.
+  --   Security origin.
+  pIndexedDBRequestDataSecurityOrigin :: Maybe String,
+  -- | Storage key.
+  pIndexedDBRequestDataStorageKey :: Maybe String,
   -- | Database name.
   pIndexedDBRequestDataDatabaseName :: String,
   -- | Object store name.
@@ -375,8 +388,11 @@ instance Command PIndexedDBRequestData where
 
 -- | Parameters of the 'IndexedDB.getMetadata' command.
 data PIndexedDBGetMetadata = PIndexedDBGetMetadata {
-  -- | Security origin.
-  pIndexedDBGetMetadataSecurityOrigin :: String,
+  -- | At least and at most one of securityOrigin, storageKey must be specified.
+  --   Security origin.
+  pIndexedDBGetMetadataSecurityOrigin :: Maybe String,
+  -- | Storage key.
+  pIndexedDBGetMetadataStorageKey :: Maybe String,
   -- | Database name.
   pIndexedDBGetMetadataDatabaseName :: String,
   -- | Object store name.
@@ -413,8 +429,11 @@ instance Command PIndexedDBGetMetadata where
 
 -- | Parameters of the 'IndexedDB.requestDatabase' command.
 data PIndexedDBRequestDatabase = PIndexedDBRequestDatabase {
-  -- | Security origin.
-  pIndexedDBRequestDatabaseSecurityOrigin :: String,
+  -- | At least and at most one of securityOrigin, storageKey must be specified.
+  --   Security origin.
+  pIndexedDBRequestDatabaseSecurityOrigin :: Maybe String,
+  -- | Storage key.
+  pIndexedDBRequestDatabaseStorageKey :: Maybe String,
   -- | Database name.
   pIndexedDBRequestDatabaseDatabaseName :: String
 } deriving (Generic, Eq, Show, Read)
@@ -445,8 +464,11 @@ instance Command PIndexedDBRequestDatabase where
 
 -- | Parameters of the 'IndexedDB.requestDatabaseNames' command.
 data PIndexedDBRequestDatabaseNames = PIndexedDBRequestDatabaseNames {
-  -- | Security origin.
-  pIndexedDBRequestDatabaseNamesSecurityOrigin :: String
+  -- | At least and at most one of securityOrigin, storageKey must be specified.
+  --   Security origin.
+  pIndexedDBRequestDatabaseNamesSecurityOrigin :: Maybe String,
+  -- | Storage key.
+  pIndexedDBRequestDatabaseNamesStorageKey :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PIndexedDBRequestDatabaseNames  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}

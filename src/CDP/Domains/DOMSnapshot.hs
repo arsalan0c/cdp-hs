@@ -323,6 +323,9 @@ data DOMSnapshotNodeTreeSnapshot = DOMSnapshotNodeTreeSnapshot {
   dOMSnapshotNodeTreeSnapshotContentDocumentIndex :: Maybe DOMSnapshotRareIntegerData,
   -- | Type of a pseudo element node.
   dOMSnapshotNodeTreeSnapshotPseudoType :: Maybe DOMSnapshotRareStringData,
+  -- | Pseudo element identifier for this node. Only present if there is a
+  --   valid pseudoType.
+  dOMSnapshotNodeTreeSnapshotPseudoIdentifier :: Maybe DOMSnapshotRareStringData,
   -- | Whether this DOM node responds to mouse clicks. This includes nodes that have had click
   --   event listeners attached via JavaScript as well as anchor tags that naturally navigate when
   --   clicked.

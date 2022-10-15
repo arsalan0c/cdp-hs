@@ -36,5 +36,5 @@ main = do
     domainPath dn         = domainDir FP.</> FP.addExtension dn "hs"
     domainDir             = "src/CDP/Domains"
     protocolModulePath    = "src/CDP/Domains.hs"
-    jsDefinitionPath      = "protocol/js_protocol.json"
-    browserDefinitionPath = "protocol/browser_protocol.json"
+    jsDefinitionPath       = "devtools-protocol/json/js_protocol.json"
+    browserDefinitionPath  = "devtools-protocol/json/browser_protocol.json"

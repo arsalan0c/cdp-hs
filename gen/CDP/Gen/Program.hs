@@ -163,7 +163,7 @@ genCommand ctx domainName commandElt = T.unlines $
     ]
   where
     pdesc = formatDescription 0 $ "Parameters of the '" <> cn <> "' command."
-    desc  = formatDescription 0 . ((cn <> "\n") <>) . maybe "" fromAltLeft $ 
+    desc  = formatDescription 0 . ((cn <> "\n") <>) . fromMaybe "" $ 
         D.commandsEltDescription commandElt
     
     cn   = commandName domainName commandElt 

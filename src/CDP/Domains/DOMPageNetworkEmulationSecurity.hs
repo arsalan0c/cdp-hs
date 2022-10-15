@@ -247,6 +247,9 @@ data DOMNode = DOMNode {
   dOMNodeValue :: Maybe String,
   -- | Pseudo element type for this node.
   dOMNodePseudoType :: Maybe DOMPseudoType,
+  -- | Pseudo element identifier for this node. Only present if there is a
+  --   valid pseudoType.
+  dOMNodePseudoIdentifier :: Maybe String,
   -- | Shadow root type.
   dOMNodeShadowRootType :: Maybe DOMShadowRootType,
   -- | Frame ID for frame owner elements.
@@ -453,7 +456,7 @@ instance Event DOMChildNodeCountUpdated where
 data DOMChildNodeInserted = DOMChildNodeInserted {
   -- | Id of the node that has changed.
   dOMChildNodeInsertedParentNodeId :: DOMNodeId,
-  -- | If of the previous siblint.
+  -- | Id of the previous sibling.
   dOMChildNodeInsertedPreviousNodeId :: DOMNodeId,
   -- | Inserted node data.
   dOMChildNodeInsertedNode :: DOMNode
@@ -546,6 +549,19 @@ instance FromJSON  DOMPseudoElementAdded where
 
 instance Event DOMPseudoElementAdded where
     eventName _ = "DOM.pseudoElementAdded"
+
+-- | Type of the 'DOM.topLayerElementsUpdated' event.
+data DOMTopLayerElementsUpdated = DOMTopLayerElementsUpdated
+   deriving (Eq, Show, Read)
+instance FromJSON DOMTopLayerElementsUpdated where
+   parseJSON = A.withText  "DOMTopLayerElementsUpdated"  $ \v -> do
+      case v of
+         "DOMTopLayerElementsUpdated" -> pure DOMTopLayerElementsUpdated
+         _ -> fail "failed to parse DOMTopLayerElementsUpdated"
+
+
+instance Event DOMTopLayerElementsUpdated where
+    eventName _ = "DOM.topLayerElementsUpdated"
 
 -- | Type of the 'DOM.pseudoElementRemoved' event.
 data DOMPseudoElementRemoved = DOMPseudoElementRemoved {
@@ -1404,6 +1420,30 @@ instance FromJSON  DOMQuerySelectorAll where
 instance Command PDOMQuerySelectorAll where
    type CommandResponse PDOMQuerySelectorAll = DOMQuerySelectorAll
    commandName _ = "DOM.querySelectorAll"
+
+
+
+-- | DOM.getTopLayerElements
+--   Returns NodeIds of current top layer elements.
+--   Top layer is rendered closest to the user within a viewport, therefore its elements always
+--   appear on top of all other content.
+
+-- | Parameters of the 'DOM.getTopLayerElements' command.
+data PDOMGetTopLayerElements = PDOMGetTopLayerElements
+instance ToJSON PDOMGetTopLayerElements where toJSON _ = A.Null
+
+-- | Return type of the 'DOM.getTopLayerElements' command.
+data DOMGetTopLayerElements = DOMGetTopLayerElements {
+  -- | NodeIds of top layer elements
+  dOMGetTopLayerElementsNodeIds :: [DOMNodeId]
+} deriving (Generic, Eq, Show, Read)
+
+instance FromJSON  DOMGetTopLayerElements where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
+
+instance Command PDOMGetTopLayerElements where
+   type CommandResponse PDOMGetTopLayerElements = DOMGetTopLayerElements
+   commandName _ = "DOM.getTopLayerElements"
 
 
 
@@ -2760,7 +2800,7 @@ instance Command PEmulationSetAutomationOverride where
 
 -- | Type 'Network.ResourceType'.
 --   Resource type as it was perceived by the rendering engine.
-data NetworkResourceType = NetworkResourceTypeDocument | NetworkResourceTypeStylesheet | NetworkResourceTypeImage | NetworkResourceTypeMedia | NetworkResourceTypeFont | NetworkResourceTypeScript | NetworkResourceTypeTextTrack | NetworkResourceTypeXHR | NetworkResourceTypeFetch | NetworkResourceTypeEventSource | NetworkResourceTypeWebSocket | NetworkResourceTypeManifest | NetworkResourceTypeSignedExchange | NetworkResourceTypePing | NetworkResourceTypeCSPViolationReport | NetworkResourceTypePreflight | NetworkResourceTypeOther
+data NetworkResourceType = NetworkResourceTypeDocument | NetworkResourceTypeStylesheet | NetworkResourceTypeImage | NetworkResourceTypeMedia | NetworkResourceTypeFont | NetworkResourceTypeScript | NetworkResourceTypeTextTrack | NetworkResourceTypeXHR | NetworkResourceTypeFetch | NetworkResourceTypePrefetch | NetworkResourceTypeEventSource | NetworkResourceTypeWebSocket | NetworkResourceTypeManifest | NetworkResourceTypeSignedExchange | NetworkResourceTypePing | NetworkResourceTypeCSPViolationReport | NetworkResourceTypePreflight | NetworkResourceTypeOther
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkResourceType where
    parseJSON = A.withText  "NetworkResourceType"  $ \v -> do
@@ -2774,6 +2814,7 @@ instance FromJSON NetworkResourceType where
          "TextTrack" -> pure NetworkResourceTypeTextTrack
          "XHR" -> pure NetworkResourceTypeXHR
          "Fetch" -> pure NetworkResourceTypeFetch
+         "Prefetch" -> pure NetworkResourceTypePrefetch
          "EventSource" -> pure NetworkResourceTypeEventSource
          "WebSocket" -> pure NetworkResourceTypeWebSocket
          "Manifest" -> pure NetworkResourceTypeManifest
@@ -2796,6 +2837,7 @@ instance ToJSON NetworkResourceType where
          NetworkResourceTypeTextTrack -> "TextTrack"
          NetworkResourceTypeXHR -> "XHR"
          NetworkResourceTypeFetch -> "Fetch"
+         NetworkResourceTypePrefetch -> "Prefetch"
          NetworkResourceTypeEventSource -> "EventSource"
          NetworkResourceTypeWebSocket -> "WebSocket"
          NetworkResourceTypeManifest -> "Manifest"
@@ -3187,7 +3229,13 @@ data NetworkSecurityDetails = NetworkSecurityDetails {
   -- | List of signed certificate timestamps (SCTs).
   networkSecurityDetailsSignedCertificateTimestampList :: [NetworkSignedCertificateTimestamp],
   -- | Whether the request complied with Certificate Transparency policy
-  networkSecurityDetailsCertificateTransparencyCompliance :: NetworkCertificateTransparencyCompliance
+  networkSecurityDetailsCertificateTransparencyCompliance :: NetworkCertificateTransparencyCompliance,
+  -- | The signature algorithm used by the server in the TLS server signature,
+  --   represented as a TLS SignatureScheme code point. Omitted if not
+  --   applicable or not known.
+  networkSecurityDetailsServerSignatureAlgorithm :: Maybe Int,
+  -- | Whether the connection used Encrypted ClientHello
+  networkSecurityDetailsEncryptedClientHello :: Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON NetworkSecurityDetails  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
@@ -3426,6 +3474,37 @@ instance ToJSON NetworkTrustTokenOperationType where
 
 
 
+-- | Type 'Network.AlternateProtocolUsage'.
+--   The reason why Chrome uses a specific transport protocol for HTTP semantics.
+data NetworkAlternateProtocolUsage = NetworkAlternateProtocolUsageAlternativeJobWonWithoutRace | NetworkAlternateProtocolUsageAlternativeJobWonRace | NetworkAlternateProtocolUsageMainJobWonRace | NetworkAlternateProtocolUsageMappingMissing | NetworkAlternateProtocolUsageBroken | NetworkAlternateProtocolUsageDnsAlpnH3JobWonWithoutRace | NetworkAlternateProtocolUsageDnsAlpnH3JobWonRace | NetworkAlternateProtocolUsageUnspecifiedReason
+   deriving (Ord, Eq, Show, Read)
+instance FromJSON NetworkAlternateProtocolUsage where
+   parseJSON = A.withText  "NetworkAlternateProtocolUsage"  $ \v -> do
+      case v of
+         "alternativeJobWonWithoutRace" -> pure NetworkAlternateProtocolUsageAlternativeJobWonWithoutRace
+         "alternativeJobWonRace" -> pure NetworkAlternateProtocolUsageAlternativeJobWonRace
+         "mainJobWonRace" -> pure NetworkAlternateProtocolUsageMainJobWonRace
+         "mappingMissing" -> pure NetworkAlternateProtocolUsageMappingMissing
+         "broken" -> pure NetworkAlternateProtocolUsageBroken
+         "dnsAlpnH3JobWonWithoutRace" -> pure NetworkAlternateProtocolUsageDnsAlpnH3JobWonWithoutRace
+         "dnsAlpnH3JobWonRace" -> pure NetworkAlternateProtocolUsageDnsAlpnH3JobWonRace
+         "unspecifiedReason" -> pure NetworkAlternateProtocolUsageUnspecifiedReason
+         _ -> fail "failed to parse NetworkAlternateProtocolUsage"
+
+instance ToJSON NetworkAlternateProtocolUsage where
+   toJSON v = A.String $
+      case v of
+         NetworkAlternateProtocolUsageAlternativeJobWonWithoutRace -> "alternativeJobWonWithoutRace"
+         NetworkAlternateProtocolUsageAlternativeJobWonRace -> "alternativeJobWonRace"
+         NetworkAlternateProtocolUsageMainJobWonRace -> "mainJobWonRace"
+         NetworkAlternateProtocolUsageMappingMissing -> "mappingMissing"
+         NetworkAlternateProtocolUsageBroken -> "broken"
+         NetworkAlternateProtocolUsageDnsAlpnH3JobWonWithoutRace -> "dnsAlpnH3JobWonWithoutRace"
+         NetworkAlternateProtocolUsageDnsAlpnH3JobWonRace -> "dnsAlpnH3JobWonRace"
+         NetworkAlternateProtocolUsageUnspecifiedReason -> "unspecifiedReason"
+
+
+
 -- | Type 'Network.Response'.
 --   HTTP response data.
 data NetworkResponse = NetworkResponse {
@@ -3467,6 +3546,8 @@ data NetworkResponse = NetworkResponse {
   networkResponseCacheStorageCacheName :: Maybe String,
   -- | Protocol used to fetch this request.
   networkResponseProtocol :: Maybe String,
+  -- | The reason why Chrome uses a specific transport protocol for HTTP semantics.
+  networkResponseAlternateProtocolUsage :: Maybe NetworkAlternateProtocolUsage,
   -- | Security state of the request resource.
   networkResponseSecurityState :: SecuritySecurityState,
   -- | Security details for the request.
@@ -4165,16 +4246,17 @@ instance FromJSON  NetworkClientSecurityState where
 
 
 -- | Type 'Network.CrossOriginOpenerPolicyValue'.
-data NetworkCrossOriginOpenerPolicyValue = NetworkCrossOriginOpenerPolicyValueSameOrigin | NetworkCrossOriginOpenerPolicyValueSameOriginAllowPopups | NetworkCrossOriginOpenerPolicyValueUnsafeNone | NetworkCrossOriginOpenerPolicyValueSameOriginPlusCoep | NetworkCrossOriginOpenerPolicyValueSameOriginAllowPopupsPlusCoep
+data NetworkCrossOriginOpenerPolicyValue = NetworkCrossOriginOpenerPolicyValueSameOrigin | NetworkCrossOriginOpenerPolicyValueSameOriginAllowPopups | NetworkCrossOriginOpenerPolicyValueRestrictProperties | NetworkCrossOriginOpenerPolicyValueUnsafeNone | NetworkCrossOriginOpenerPolicyValueSameOriginPlusCoep | NetworkCrossOriginOpenerPolicyValueRestrictPropertiesPlusCoep
    deriving (Ord, Eq, Show, Read)
 instance FromJSON NetworkCrossOriginOpenerPolicyValue where
    parseJSON = A.withText  "NetworkCrossOriginOpenerPolicyValue"  $ \v -> do
       case v of
          "SameOrigin" -> pure NetworkCrossOriginOpenerPolicyValueSameOrigin
          "SameOriginAllowPopups" -> pure NetworkCrossOriginOpenerPolicyValueSameOriginAllowPopups
+         "RestrictProperties" -> pure NetworkCrossOriginOpenerPolicyValueRestrictProperties
          "UnsafeNone" -> pure NetworkCrossOriginOpenerPolicyValueUnsafeNone
          "SameOriginPlusCoep" -> pure NetworkCrossOriginOpenerPolicyValueSameOriginPlusCoep
-         "SameOriginAllowPopupsPlusCoep" -> pure NetworkCrossOriginOpenerPolicyValueSameOriginAllowPopupsPlusCoep
+         "RestrictPropertiesPlusCoep" -> pure NetworkCrossOriginOpenerPolicyValueRestrictPropertiesPlusCoep
          _ -> fail "failed to parse NetworkCrossOriginOpenerPolicyValue"
 
 instance ToJSON NetworkCrossOriginOpenerPolicyValue where
@@ -4182,9 +4264,10 @@ instance ToJSON NetworkCrossOriginOpenerPolicyValue where
       case v of
          NetworkCrossOriginOpenerPolicyValueSameOrigin -> "SameOrigin"
          NetworkCrossOriginOpenerPolicyValueSameOriginAllowPopups -> "SameOriginAllowPopups"
+         NetworkCrossOriginOpenerPolicyValueRestrictProperties -> "RestrictProperties"
          NetworkCrossOriginOpenerPolicyValueUnsafeNone -> "UnsafeNone"
          NetworkCrossOriginOpenerPolicyValueSameOriginPlusCoep -> "SameOriginPlusCoep"
-         NetworkCrossOriginOpenerPolicyValueSameOriginAllowPopupsPlusCoep -> "SameOriginAllowPopupsPlusCoep"
+         NetworkCrossOriginOpenerPolicyValueRestrictPropertiesPlusCoep -> "RestrictPropertiesPlusCoep"
 
 
 
@@ -5768,6 +5851,24 @@ instance FromJSON  PageAdFrameStatus where
 
 
 
+-- | Type 'Page.AdScriptId'.
+--   Identifies the bottom-most script which caused the frame to be labelled
+--   as an ad.
+data PageAdScriptId = PageAdScriptId {
+  -- | Script Id of the bottom-most script which caused the frame to be labelled
+  --   as an ad.
+  pageAdScriptIdScriptId :: Runtime.RuntimeScriptId,
+  -- | Id of adScriptId's debugger.
+  pageAdScriptIdDebuggerId :: Runtime.RuntimeUniqueDebuggerId
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PageAdScriptId  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
+
+instance FromJSON  PageAdScriptId where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 }
+
+
+
 -- | Type 'Page.SecureContextType'.
 --   Indicates whether the frame is a secure context and why it is the case.
 data PageSecureContextType = PageSecureContextTypeSecure | PageSecureContextTypeSecureLocalhost | PageSecureContextTypeInsecureScheme | PageSecureContextTypeInsecureAncestor
@@ -5837,7 +5938,7 @@ instance ToJSON PageGatedAPIFeatures where
 -- | Type 'Page.PermissionsPolicyFeature'.
 --   All Permissions Policy features. This enum should match the one defined
 --   in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
-data PagePermissionsPolicyFeature = PagePermissionsPolicyFeatureAccelerometer | PagePermissionsPolicyFeatureAmbientLightSensor | PagePermissionsPolicyFeatureAttributionReporting | PagePermissionsPolicyFeatureAutoplay | PagePermissionsPolicyFeatureBluetooth | PagePermissionsPolicyFeatureBrowsingTopics | PagePermissionsPolicyFeatureCamera | PagePermissionsPolicyFeatureChDpr | PagePermissionsPolicyFeatureChDeviceMemory | PagePermissionsPolicyFeatureChDownlink | PagePermissionsPolicyFeatureChEct | PagePermissionsPolicyFeatureChPrefersColorScheme | PagePermissionsPolicyFeatureChRtt | PagePermissionsPolicyFeatureChSaveData | PagePermissionsPolicyFeatureChUa | PagePermissionsPolicyFeatureChUaArch | PagePermissionsPolicyFeatureChUaBitness | PagePermissionsPolicyFeatureChUaPlatform | PagePermissionsPolicyFeatureChUaModel | PagePermissionsPolicyFeatureChUaMobile | PagePermissionsPolicyFeatureChUaFull | PagePermissionsPolicyFeatureChUaFullVersion | PagePermissionsPolicyFeatureChUaFullVersionList | PagePermissionsPolicyFeatureChUaPlatformVersion | PagePermissionsPolicyFeatureChUaReduced | PagePermissionsPolicyFeatureChUaWow64 | PagePermissionsPolicyFeatureChViewportHeight | PagePermissionsPolicyFeatureChViewportWidth | PagePermissionsPolicyFeatureChWidth | PagePermissionsPolicyFeatureClipboardRead | PagePermissionsPolicyFeatureClipboardWrite | PagePermissionsPolicyFeatureCrossOriginIsolated | PagePermissionsPolicyFeatureDirectSockets | PagePermissionsPolicyFeatureDisplayCapture | PagePermissionsPolicyFeatureDocumentDomain | PagePermissionsPolicyFeatureEncryptedMedia | PagePermissionsPolicyFeatureExecutionWhileOutOfViewport | PagePermissionsPolicyFeatureExecutionWhileNotRendered | PagePermissionsPolicyFeatureFocusWithoutUserActivation | PagePermissionsPolicyFeatureFullscreen | PagePermissionsPolicyFeatureFrobulate | PagePermissionsPolicyFeatureGamepad | PagePermissionsPolicyFeatureGeolocation | PagePermissionsPolicyFeatureGyroscope | PagePermissionsPolicyFeatureHid | PagePermissionsPolicyFeatureIdleDetection | PagePermissionsPolicyFeatureInterestCohort | PagePermissionsPolicyFeatureJoinAdInterestGroup | PagePermissionsPolicyFeatureKeyboardMap | PagePermissionsPolicyFeatureLocalFonts | PagePermissionsPolicyFeatureMagnetometer | PagePermissionsPolicyFeatureMicrophone | PagePermissionsPolicyFeatureMidi | PagePermissionsPolicyFeatureOtpCredentials | PagePermissionsPolicyFeaturePayment | PagePermissionsPolicyFeaturePictureInPicture | PagePermissionsPolicyFeaturePublickeyCredentialsGet | PagePermissionsPolicyFeatureRunAdAuction | PagePermissionsPolicyFeatureScreenWakeLock | PagePermissionsPolicyFeatureSerial | PagePermissionsPolicyFeatureSharedAutofill | PagePermissionsPolicyFeatureStorageAccessApi | PagePermissionsPolicyFeatureSyncXhr | PagePermissionsPolicyFeatureTrustTokenRedemption | PagePermissionsPolicyFeatureUsb | PagePermissionsPolicyFeatureVerticalScroll | PagePermissionsPolicyFeatureWebShare | PagePermissionsPolicyFeatureWindowPlacement | PagePermissionsPolicyFeatureXrSpatialTracking
+data PagePermissionsPolicyFeature = PagePermissionsPolicyFeatureAccelerometer | PagePermissionsPolicyFeatureAmbientLightSensor | PagePermissionsPolicyFeatureAttributionReporting | PagePermissionsPolicyFeatureAutoplay | PagePermissionsPolicyFeatureBluetooth | PagePermissionsPolicyFeatureBrowsingTopics | PagePermissionsPolicyFeatureCamera | PagePermissionsPolicyFeatureChDpr | PagePermissionsPolicyFeatureChDeviceMemory | PagePermissionsPolicyFeatureChDownlink | PagePermissionsPolicyFeatureChEct | PagePermissionsPolicyFeatureChPrefersColorScheme | PagePermissionsPolicyFeatureChPrefersReducedMotion | PagePermissionsPolicyFeatureChRtt | PagePermissionsPolicyFeatureChSaveData | PagePermissionsPolicyFeatureChUa | PagePermissionsPolicyFeatureChUaArch | PagePermissionsPolicyFeatureChUaBitness | PagePermissionsPolicyFeatureChUaPlatform | PagePermissionsPolicyFeatureChUaModel | PagePermissionsPolicyFeatureChUaMobile | PagePermissionsPolicyFeatureChUaFull | PagePermissionsPolicyFeatureChUaFullVersion | PagePermissionsPolicyFeatureChUaFullVersionList | PagePermissionsPolicyFeatureChUaPlatformVersion | PagePermissionsPolicyFeatureChUaReduced | PagePermissionsPolicyFeatureChUaWow64 | PagePermissionsPolicyFeatureChViewportHeight | PagePermissionsPolicyFeatureChViewportWidth | PagePermissionsPolicyFeatureChWidth | PagePermissionsPolicyFeatureClipboardRead | PagePermissionsPolicyFeatureClipboardWrite | PagePermissionsPolicyFeatureCrossOriginIsolated | PagePermissionsPolicyFeatureDirectSockets | PagePermissionsPolicyFeatureDisplayCapture | PagePermissionsPolicyFeatureDocumentDomain | PagePermissionsPolicyFeatureEncryptedMedia | PagePermissionsPolicyFeatureExecutionWhileOutOfViewport | PagePermissionsPolicyFeatureExecutionWhileNotRendered | PagePermissionsPolicyFeatureFocusWithoutUserActivation | PagePermissionsPolicyFeatureFullscreen | PagePermissionsPolicyFeatureFrobulate | PagePermissionsPolicyFeatureGamepad | PagePermissionsPolicyFeatureGeolocation | PagePermissionsPolicyFeatureGyroscope | PagePermissionsPolicyFeatureHid | PagePermissionsPolicyFeatureIdentityCredentialsGet | PagePermissionsPolicyFeatureIdleDetection | PagePermissionsPolicyFeatureInterestCohort | PagePermissionsPolicyFeatureJoinAdInterestGroup | PagePermissionsPolicyFeatureKeyboardMap | PagePermissionsPolicyFeatureLocalFonts | PagePermissionsPolicyFeatureMagnetometer | PagePermissionsPolicyFeatureMicrophone | PagePermissionsPolicyFeatureMidi | PagePermissionsPolicyFeatureOtpCredentials | PagePermissionsPolicyFeaturePayment | PagePermissionsPolicyFeaturePictureInPicture | PagePermissionsPolicyFeaturePublickeyCredentialsGet | PagePermissionsPolicyFeatureRunAdAuction | PagePermissionsPolicyFeatureScreenWakeLock | PagePermissionsPolicyFeatureSerial | PagePermissionsPolicyFeatureSharedAutofill | PagePermissionsPolicyFeatureSharedStorage | PagePermissionsPolicyFeatureStorageAccess | PagePermissionsPolicyFeatureSyncXhr | PagePermissionsPolicyFeatureTrustTokenRedemption | PagePermissionsPolicyFeatureUnload | PagePermissionsPolicyFeatureUsb | PagePermissionsPolicyFeatureVerticalScroll | PagePermissionsPolicyFeatureWebShare | PagePermissionsPolicyFeatureWindowPlacement | PagePermissionsPolicyFeatureXrSpatialTracking
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PagePermissionsPolicyFeature where
    parseJSON = A.withText  "PagePermissionsPolicyFeature"  $ \v -> do
@@ -5854,6 +5955,7 @@ instance FromJSON PagePermissionsPolicyFeature where
          "ch-downlink" -> pure PagePermissionsPolicyFeatureChDownlink
          "ch-ect" -> pure PagePermissionsPolicyFeatureChEct
          "ch-prefers-color-scheme" -> pure PagePermissionsPolicyFeatureChPrefersColorScheme
+         "ch-prefers-reduced-motion" -> pure PagePermissionsPolicyFeatureChPrefersReducedMotion
          "ch-rtt" -> pure PagePermissionsPolicyFeatureChRtt
          "ch-save-data" -> pure PagePermissionsPolicyFeatureChSaveData
          "ch-ua" -> pure PagePermissionsPolicyFeatureChUa
@@ -5887,6 +5989,7 @@ instance FromJSON PagePermissionsPolicyFeature where
          "geolocation" -> pure PagePermissionsPolicyFeatureGeolocation
          "gyroscope" -> pure PagePermissionsPolicyFeatureGyroscope
          "hid" -> pure PagePermissionsPolicyFeatureHid
+         "identity-credentials-get" -> pure PagePermissionsPolicyFeatureIdentityCredentialsGet
          "idle-detection" -> pure PagePermissionsPolicyFeatureIdleDetection
          "interest-cohort" -> pure PagePermissionsPolicyFeatureInterestCohort
          "join-ad-interest-group" -> pure PagePermissionsPolicyFeatureJoinAdInterestGroup
@@ -5903,9 +6006,11 @@ instance FromJSON PagePermissionsPolicyFeature where
          "screen-wake-lock" -> pure PagePermissionsPolicyFeatureScreenWakeLock
          "serial" -> pure PagePermissionsPolicyFeatureSerial
          "shared-autofill" -> pure PagePermissionsPolicyFeatureSharedAutofill
-         "storage-access-api" -> pure PagePermissionsPolicyFeatureStorageAccessApi
+         "shared-storage" -> pure PagePermissionsPolicyFeatureSharedStorage
+         "storage-access" -> pure PagePermissionsPolicyFeatureStorageAccess
          "sync-xhr" -> pure PagePermissionsPolicyFeatureSyncXhr
          "trust-token-redemption" -> pure PagePermissionsPolicyFeatureTrustTokenRedemption
+         "unload" -> pure PagePermissionsPolicyFeatureUnload
          "usb" -> pure PagePermissionsPolicyFeatureUsb
          "vertical-scroll" -> pure PagePermissionsPolicyFeatureVerticalScroll
          "web-share" -> pure PagePermissionsPolicyFeatureWebShare
@@ -5928,6 +6033,7 @@ instance ToJSON PagePermissionsPolicyFeature where
          PagePermissionsPolicyFeatureChDownlink -> "ch-downlink"
          PagePermissionsPolicyFeatureChEct -> "ch-ect"
          PagePermissionsPolicyFeatureChPrefersColorScheme -> "ch-prefers-color-scheme"
+         PagePermissionsPolicyFeatureChPrefersReducedMotion -> "ch-prefers-reduced-motion"
          PagePermissionsPolicyFeatureChRtt -> "ch-rtt"
          PagePermissionsPolicyFeatureChSaveData -> "ch-save-data"
          PagePermissionsPolicyFeatureChUa -> "ch-ua"
@@ -5961,6 +6067,7 @@ instance ToJSON PagePermissionsPolicyFeature where
          PagePermissionsPolicyFeatureGeolocation -> "geolocation"
          PagePermissionsPolicyFeatureGyroscope -> "gyroscope"
          PagePermissionsPolicyFeatureHid -> "hid"
+         PagePermissionsPolicyFeatureIdentityCredentialsGet -> "identity-credentials-get"
          PagePermissionsPolicyFeatureIdleDetection -> "idle-detection"
          PagePermissionsPolicyFeatureInterestCohort -> "interest-cohort"
          PagePermissionsPolicyFeatureJoinAdInterestGroup -> "join-ad-interest-group"
@@ -5977,9 +6084,11 @@ instance ToJSON PagePermissionsPolicyFeature where
          PagePermissionsPolicyFeatureScreenWakeLock -> "screen-wake-lock"
          PagePermissionsPolicyFeatureSerial -> "serial"
          PagePermissionsPolicyFeatureSharedAutofill -> "shared-autofill"
-         PagePermissionsPolicyFeatureStorageAccessApi -> "storage-access-api"
+         PagePermissionsPolicyFeatureSharedStorage -> "shared-storage"
+         PagePermissionsPolicyFeatureStorageAccess -> "storage-access"
          PagePermissionsPolicyFeatureSyncXhr -> "sync-xhr"
          PagePermissionsPolicyFeatureTrustTokenRedemption -> "trust-token-redemption"
+         PagePermissionsPolicyFeatureUnload -> "unload"
          PagePermissionsPolicyFeatureUsb -> "usb"
          PagePermissionsPolicyFeatureVerticalScroll -> "vertical-scroll"
          PagePermissionsPolicyFeatureWebShare -> "web-share"
@@ -5990,7 +6099,7 @@ instance ToJSON PagePermissionsPolicyFeature where
 
 -- | Type 'Page.PermissionsPolicyBlockReason'.
 --   Reason for a permissions policy feature to be disabled.
-data PagePermissionsPolicyBlockReason = PagePermissionsPolicyBlockReasonHeader | PagePermissionsPolicyBlockReasonIframeAttribute | PagePermissionsPolicyBlockReasonInFencedFrameTree
+data PagePermissionsPolicyBlockReason = PagePermissionsPolicyBlockReasonHeader | PagePermissionsPolicyBlockReasonIframeAttribute | PagePermissionsPolicyBlockReasonInFencedFrameTree | PagePermissionsPolicyBlockReasonInIsolatedApp
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PagePermissionsPolicyBlockReason where
    parseJSON = A.withText  "PagePermissionsPolicyBlockReason"  $ \v -> do
@@ -5998,6 +6107,7 @@ instance FromJSON PagePermissionsPolicyBlockReason where
          "Header" -> pure PagePermissionsPolicyBlockReasonHeader
          "IframeAttribute" -> pure PagePermissionsPolicyBlockReasonIframeAttribute
          "InFencedFrameTree" -> pure PagePermissionsPolicyBlockReasonInFencedFrameTree
+         "InIsolatedApp" -> pure PagePermissionsPolicyBlockReasonInIsolatedApp
          _ -> fail "failed to parse PagePermissionsPolicyBlockReason"
 
 instance ToJSON PagePermissionsPolicyBlockReason where
@@ -6006,6 +6116,7 @@ instance ToJSON PagePermissionsPolicyBlockReason where
          PagePermissionsPolicyBlockReasonHeader -> "Header"
          PagePermissionsPolicyBlockReasonIframeAttribute -> "IframeAttribute"
          PagePermissionsPolicyBlockReasonInFencedFrameTree -> "InFencedFrameTree"
+         PagePermissionsPolicyBlockReasonInIsolatedApp -> "InIsolatedApp"
 
 
 
@@ -7013,7 +7124,7 @@ instance FromJSON  PageBackForwardCacheNotRestoredExplanationTree where
 
 -- | Type 'Page.PrerenderFinalStatus'.
 --   List of FinalStatus reasons for Prerender2.
-data PagePrerenderFinalStatus = PagePrerenderFinalStatusActivated | PagePrerenderFinalStatusDestroyed | PagePrerenderFinalStatusLowEndDevice | PagePrerenderFinalStatusCrossOriginRedirect | PagePrerenderFinalStatusCrossOriginNavigation | PagePrerenderFinalStatusInvalidSchemeRedirect | PagePrerenderFinalStatusInvalidSchemeNavigation | PagePrerenderFinalStatusInProgressNavigation | PagePrerenderFinalStatusNavigationRequestBlockedByCsp | PagePrerenderFinalStatusMainFrameNavigation | PagePrerenderFinalStatusMojoBinderPolicy | PagePrerenderFinalStatusRendererProcessCrashed | PagePrerenderFinalStatusRendererProcessKilled | PagePrerenderFinalStatusDownload | PagePrerenderFinalStatusTriggerDestroyed | PagePrerenderFinalStatusNavigationNotCommitted | PagePrerenderFinalStatusNavigationBadHttpStatus | PagePrerenderFinalStatusClientCertRequested | PagePrerenderFinalStatusNavigationRequestNetworkError | PagePrerenderFinalStatusMaxNumOfRunningPrerendersExceeded | PagePrerenderFinalStatusCancelAllHostsForTesting | PagePrerenderFinalStatusDidFailLoad | PagePrerenderFinalStatusStop | PagePrerenderFinalStatusSslCertificateError | PagePrerenderFinalStatusLoginAuthRequested | PagePrerenderFinalStatusUaChangeRequiresReload | PagePrerenderFinalStatusBlockedByClient | PagePrerenderFinalStatusAudioOutputDeviceRequested | PagePrerenderFinalStatusMixedContent | PagePrerenderFinalStatusTriggerBackgrounded | PagePrerenderFinalStatusEmbedderTriggeredAndSameOriginRedirected | PagePrerenderFinalStatusEmbedderTriggeredAndCrossOriginRedirected | PagePrerenderFinalStatusEmbedderTriggeredAndDestroyed
+data PagePrerenderFinalStatus = PagePrerenderFinalStatusActivated | PagePrerenderFinalStatusDestroyed | PagePrerenderFinalStatusLowEndDevice | PagePrerenderFinalStatusCrossOriginRedirect | PagePrerenderFinalStatusCrossOriginNavigation | PagePrerenderFinalStatusInvalidSchemeRedirect | PagePrerenderFinalStatusInvalidSchemeNavigation | PagePrerenderFinalStatusInProgressNavigation | PagePrerenderFinalStatusNavigationRequestBlockedByCsp | PagePrerenderFinalStatusMainFrameNavigation | PagePrerenderFinalStatusMojoBinderPolicy | PagePrerenderFinalStatusRendererProcessCrashed | PagePrerenderFinalStatusRendererProcessKilled | PagePrerenderFinalStatusDownload | PagePrerenderFinalStatusTriggerDestroyed | PagePrerenderFinalStatusNavigationNotCommitted | PagePrerenderFinalStatusNavigationBadHttpStatus | PagePrerenderFinalStatusClientCertRequested | PagePrerenderFinalStatusNavigationRequestNetworkError | PagePrerenderFinalStatusMaxNumOfRunningPrerendersExceeded | PagePrerenderFinalStatusCancelAllHostsForTesting | PagePrerenderFinalStatusDidFailLoad | PagePrerenderFinalStatusStop | PagePrerenderFinalStatusSslCertificateError | PagePrerenderFinalStatusLoginAuthRequested | PagePrerenderFinalStatusUaChangeRequiresReload | PagePrerenderFinalStatusBlockedByClient | PagePrerenderFinalStatusAudioOutputDeviceRequested | PagePrerenderFinalStatusMixedContent | PagePrerenderFinalStatusTriggerBackgrounded | PagePrerenderFinalStatusEmbedderTriggeredAndCrossOriginRedirected | PagePrerenderFinalStatusMemoryLimitExceeded | PagePrerenderFinalStatusFailToGetMemoryUsage | PagePrerenderFinalStatusDataSaverEnabled | PagePrerenderFinalStatusHasEffectiveUrl | PagePrerenderFinalStatusActivatedBeforeStarted | PagePrerenderFinalStatusInactivePageRestriction | PagePrerenderFinalStatusStartFailed | PagePrerenderFinalStatusTimeoutBackgrounded
    deriving (Ord, Eq, Show, Read)
 instance FromJSON PagePrerenderFinalStatus where
    parseJSON = A.withText  "PagePrerenderFinalStatus"  $ \v -> do
@@ -7048,9 +7159,15 @@ instance FromJSON PagePrerenderFinalStatus where
          "AudioOutputDeviceRequested" -> pure PagePrerenderFinalStatusAudioOutputDeviceRequested
          "MixedContent" -> pure PagePrerenderFinalStatusMixedContent
          "TriggerBackgrounded" -> pure PagePrerenderFinalStatusTriggerBackgrounded
-         "EmbedderTriggeredAndSameOriginRedirected" -> pure PagePrerenderFinalStatusEmbedderTriggeredAndSameOriginRedirected
          "EmbedderTriggeredAndCrossOriginRedirected" -> pure PagePrerenderFinalStatusEmbedderTriggeredAndCrossOriginRedirected
-         "EmbedderTriggeredAndDestroyed" -> pure PagePrerenderFinalStatusEmbedderTriggeredAndDestroyed
+         "MemoryLimitExceeded" -> pure PagePrerenderFinalStatusMemoryLimitExceeded
+         "FailToGetMemoryUsage" -> pure PagePrerenderFinalStatusFailToGetMemoryUsage
+         "DataSaverEnabled" -> pure PagePrerenderFinalStatusDataSaverEnabled
+         "HasEffectiveUrl" -> pure PagePrerenderFinalStatusHasEffectiveUrl
+         "ActivatedBeforeStarted" -> pure PagePrerenderFinalStatusActivatedBeforeStarted
+         "InactivePageRestriction" -> pure PagePrerenderFinalStatusInactivePageRestriction
+         "StartFailed" -> pure PagePrerenderFinalStatusStartFailed
+         "TimeoutBackgrounded" -> pure PagePrerenderFinalStatusTimeoutBackgrounded
          _ -> fail "failed to parse PagePrerenderFinalStatus"
 
 instance ToJSON PagePrerenderFinalStatus where
@@ -7086,9 +7203,15 @@ instance ToJSON PagePrerenderFinalStatus where
          PagePrerenderFinalStatusAudioOutputDeviceRequested -> "AudioOutputDeviceRequested"
          PagePrerenderFinalStatusMixedContent -> "MixedContent"
          PagePrerenderFinalStatusTriggerBackgrounded -> "TriggerBackgrounded"
-         PagePrerenderFinalStatusEmbedderTriggeredAndSameOriginRedirected -> "EmbedderTriggeredAndSameOriginRedirected"
          PagePrerenderFinalStatusEmbedderTriggeredAndCrossOriginRedirected -> "EmbedderTriggeredAndCrossOriginRedirected"
-         PagePrerenderFinalStatusEmbedderTriggeredAndDestroyed -> "EmbedderTriggeredAndDestroyed"
+         PagePrerenderFinalStatusMemoryLimitExceeded -> "MemoryLimitExceeded"
+         PagePrerenderFinalStatusFailToGetMemoryUsage -> "FailToGetMemoryUsage"
+         PagePrerenderFinalStatusDataSaverEnabled -> "DataSaverEnabled"
+         PagePrerenderFinalStatusHasEffectiveUrl -> "HasEffectiveUrl"
+         PagePrerenderFinalStatusActivatedBeforeStarted -> "ActivatedBeforeStarted"
+         PagePrerenderFinalStatusInactivePageRestriction -> "InactivePageRestriction"
+         PagePrerenderFinalStatusStartFailed -> "StartFailed"
+         PagePrerenderFinalStatusTimeoutBackgrounded -> "TimeoutBackgrounded"
 
 
 
@@ -7129,10 +7252,10 @@ instance ToJSON PageFileChooserOpenedMode where
 data PageFileChooserOpened = PageFileChooserOpened {
   -- | Id of the frame containing input node.
   pageFileChooserOpenedFrameId :: PageFrameId,
-  -- | Input node id.
-  pageFileChooserOpenedBackendNodeId :: DOMBackendNodeId,
   -- | Input mode.
-  pageFileChooserOpenedMode :: PageFileChooserOpenedMode
+  pageFileChooserOpenedMode :: PageFileChooserOpenedMode,
+  -- | Input node id. Only present for file choosers opened via an <input type="file"> element.
+  pageFileChooserOpenedBackendNodeId :: Maybe DOMBackendNodeId
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PageFileChooserOpened  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
@@ -7404,7 +7527,10 @@ data PagePrerenderAttemptCompleted = PagePrerenderAttemptCompleted {
   -- | The frame id of the frame initiating prerendering.
   pagePrerenderAttemptCompletedInitiatingFrameId :: PageFrameId,
   pagePrerenderAttemptCompletedPrerenderingUrl :: String,
-  pagePrerenderAttemptCompletedFinalStatus :: PagePrerenderFinalStatus
+  pagePrerenderAttemptCompletedFinalStatus :: PagePrerenderFinalStatus,
+  -- | This is used to give users more information about the name of the API call
+  --   that is incompatible with prerender and has caused the cancellation of the attempt
+  pagePrerenderAttemptCompletedDisallowedApiMethod :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PagePrerenderAttemptCompleted  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
@@ -7821,6 +7947,35 @@ instance FromJSON  PageGetAppId where
 instance Command PPageGetAppId where
    type CommandResponse PPageGetAppId = PageGetAppId
    commandName _ = "Page.getAppId"
+
+
+
+-- | Page.getAdScriptId
+
+-- | Parameters of the 'Page.getAdScriptId' command.
+data PPageGetAdScriptId = PPageGetAdScriptId {
+  pPageGetAdScriptIdFrameId :: PageFrameId
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PPageGetAdScriptId  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
+
+instance FromJSON  PPageGetAdScriptId where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
+
+
+-- | Return type of the 'Page.getAdScriptId' command.
+data PageGetAdScriptId = PageGetAdScriptId {
+  -- | Identifies the bottom-most script which caused the frame to be labelled
+  --   as an ad. Only sent if frame is labelled as an ad and id is available.
+  pageGetAdScriptIdAdScriptId :: Maybe PageAdScriptId
+} deriving (Generic, Eq, Show, Read)
+
+instance FromJSON  PageGetAdScriptId where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
+
+instance Command PPageGetAdScriptId where
+   type CommandResponse PPageGetAdScriptId = PageGetAdScriptId
+   commandName _ = "Page.getAdScriptId"
 
 
 

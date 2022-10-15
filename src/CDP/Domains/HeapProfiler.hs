@@ -327,7 +327,23 @@ instance Command PHeapProfilerGetSamplingProfile where
 data PHeapProfilerStartSampling = PHeapProfilerStartSampling {
   -- | Average sample interval in bytes. Poisson distribution is used for the intervals. The
   --   default value is 32768 bytes.
-  pHeapProfilerStartSamplingSamplingInterval :: Maybe Double
+  pHeapProfilerStartSamplingSamplingInterval :: Maybe Double,
+  -- | By default, the sampling heap profiler reports only objects which are
+  --   still alive when the profile is returned via getSamplingProfile or
+  --   stopSampling, which is useful for determining what functions contribute
+  --   the most to steady-state memory usage. This flag instructs the sampling
+  --   heap profiler to also include information about objects discarded by
+  --   major GC, which will show which functions cause large temporary memory
+  --   usage or long GC pauses.
+  pHeapProfilerStartSamplingIncludeObjectsCollectedByMajorGC :: Maybe Bool,
+  -- | By default, the sampling heap profiler reports only objects which are
+  --   still alive when the profile is returned via getSamplingProfile or
+  --   stopSampling, which is useful for determining what functions contribute
+  --   the most to steady-state memory usage. This flag instructs the sampling
+  --   heap profiler to also include information about objects discarded by
+  --   minor GC, which is useful when tuning a latency-sensitive application
+  --   for minimal GC activity.
+  pHeapProfilerStartSamplingIncludeObjectsCollectedByMinorGC :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PHeapProfilerStartSampling  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
@@ -389,9 +405,10 @@ data PHeapProfilerStopTrackingHeapObjects = PHeapProfilerStopTrackingHeapObjects
   -- | If true 'reportHeapSnapshotProgress' events will be generated while snapshot is being taken
   --   when the tracking is stopped.
   pHeapProfilerStopTrackingHeapObjectsReportProgress :: Maybe Bool,
-  pHeapProfilerStopTrackingHeapObjectsTreatGlobalObjectsAsRoots :: Maybe Bool,
   -- | If true, numerical values are included in the snapshot
-  pHeapProfilerStopTrackingHeapObjectsCaptureNumericValue :: Maybe Bool
+  pHeapProfilerStopTrackingHeapObjectsCaptureNumericValue :: Maybe Bool,
+  -- | If true, exposes internals of the snapshot.
+  pHeapProfilerStopTrackingHeapObjectsExposeInternals :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PHeapProfilerStopTrackingHeapObjects  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 36 , A.omitNothingFields = True}
@@ -412,10 +429,10 @@ instance Command PHeapProfilerStopTrackingHeapObjects where
 data PHeapProfilerTakeHeapSnapshot = PHeapProfilerTakeHeapSnapshot {
   -- | If true 'reportHeapSnapshotProgress' events will be generated while snapshot is being taken.
   pHeapProfilerTakeHeapSnapshotReportProgress :: Maybe Bool,
-  -- | If true, a raw snapshot without artificial roots will be generated
-  pHeapProfilerTakeHeapSnapshotTreatGlobalObjectsAsRoots :: Maybe Bool,
   -- | If true, numerical values are included in the snapshot
-  pHeapProfilerTakeHeapSnapshotCaptureNumericValue :: Maybe Bool
+  pHeapProfilerTakeHeapSnapshotCaptureNumericValue :: Maybe Bool,
+  -- | If true, exposes internals of the snapshot.
+  pHeapProfilerTakeHeapSnapshotExposeInternals :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PHeapProfilerTakeHeapSnapshot  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}

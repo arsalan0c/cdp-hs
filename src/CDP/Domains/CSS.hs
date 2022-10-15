@@ -87,6 +87,8 @@ instance ToJSON CSSStyleSheetOrigin where
 data CSSPseudoElementMatches = CSSPseudoElementMatches {
   -- | Pseudo element type.
   cSSPseudoElementMatchesPseudoType :: DOMPageNetworkEmulationSecurity.DOMPseudoType,
+  -- | Pseudo element custom ident.
+  cSSPseudoElementMatchesPseudoIdentifier :: Maybe String,
   -- | Matches of CSS rules applicable to the pseudo style.
   cSSPseudoElementMatchesMatches :: [CSSRuleMatch]
 } deriving (Generic, Eq, Show, Read)
@@ -252,7 +254,10 @@ data CSSCSSRule = CSSCSSRule {
   cSSCSSRuleSupports :: Maybe [CSSCSSSupports],
   -- | Cascade layer array. Contains the layer hierarchy that this rule belongs to starting
   --   with the innermost layer and going outwards.
-  cSSCSSRuleLayers :: Maybe [CSSCSSLayer]
+  cSSCSSRuleLayers :: Maybe [CSSCSSLayer],
+  -- | @scope CSS at-rule array.
+  --   The array enumerates @scope at-rules starting with the innermost one, going outwards.
+  cSSCSSRuleScopes :: Maybe [CSSCSSScope]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON CSSCSSRule  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 10 , A.omitNothingFields = True}
@@ -376,7 +381,10 @@ data CSSCSSProperty = CSSCSSProperty {
   -- | Whether the property is disabled by the user (present for source-based properties only).
   cSSCSSPropertyDisabled :: Maybe Bool,
   -- | The entire property range in the enclosing style declaration (if available).
-  cSSCSSPropertyRange :: Maybe CSSSourceRange
+  cSSCSSPropertyRange :: Maybe CSSSourceRange,
+  -- | Parsed longhand components of this property if it is a shorthand.
+  --   This field will be empty if the given property is not a shorthand.
+  cSSCSSPropertyLonghandProperties :: Maybe [CSSCSSProperty]
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON CSSCSSProperty  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 14 , A.omitNothingFields = True}
@@ -515,6 +523,25 @@ instance FromJSON  CSSCSSSupports where
 
 
 
+-- | Type 'CSS.CSSScope'.
+--   CSS Scope at-rule descriptor.
+data CSSCSSScope = CSSCSSScope {
+  -- | Scope rule text.
+  cSSCSSScopeText :: String,
+  -- | The associated rule header range in the enclosing stylesheet (if
+  --   available).
+  cSSCSSScopeRange :: Maybe CSSSourceRange,
+  -- | Identifier of the stylesheet containing this object (if exists).
+  cSSCSSScopeStyleSheetId :: Maybe CSSStyleSheetId
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON CSSCSSScope  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 , A.omitNothingFields = True}
+
+instance FromJSON  CSSCSSScope where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 }
+
+
+
 -- | Type 'CSS.CSSLayer'.
 --   CSS Layer at-rule descriptor.
 data CSSCSSLayer = CSSCSSLayer {
@@ -607,6 +634,8 @@ data CSSFontFace = CSSFontFace {
   cSSFontFaceFontWeight :: String,
   -- | The font-stretch.
   cSSFontFaceFontStretch :: String,
+  -- | The font-display.
+  cSSFontFaceFontDisplay :: String,
   -- | The unicode-range.
   cSSFontFaceUnicodeRange :: String,
   -- | The src.
@@ -1028,7 +1057,9 @@ data CSSGetMatchedStylesForNode = CSSGetMatchedStylesForNode {
   -- | A chain of inherited pseudo element styles (from the immediate node parent up to the DOM tree root).
   cSSGetMatchedStylesForNodeInheritedPseudoElements :: Maybe [CSSInheritedPseudoElementMatches],
   -- | A list of CSS keyframed animations matching this node.
-  cSSGetMatchedStylesForNodeCssKeyframesRules :: Maybe [CSSCSSKeyframesRule]
+  cSSGetMatchedStylesForNodeCssKeyframesRules :: Maybe [CSSCSSKeyframesRule],
+  -- | Id of the first parent element that does not have display: contents.
+  cSSGetMatchedStylesForNodeParentLayoutNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMNodeId
 } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON  CSSGetMatchedStylesForNode where
@@ -1343,6 +1374,37 @@ instance FromJSON  CSSSetSupportsText where
 instance Command PCSSSetSupportsText where
    type CommandResponse PCSSSetSupportsText = CSSSetSupportsText
    commandName _ = "CSS.setSupportsText"
+
+
+
+-- | CSS.setScopeText
+--   Modifies the expression of a scope at-rule.
+
+-- | Parameters of the 'CSS.setScopeText' command.
+data PCSSSetScopeText = PCSSSetScopeText {
+  pCSSSetScopeTextStyleSheetId :: CSSStyleSheetId,
+  pCSSSetScopeTextRange :: CSSSourceRange,
+  pCSSSetScopeTextText :: String
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PCSSSetScopeText  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
+
+instance FromJSON  PCSSSetScopeText where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
+
+
+-- | Return type of the 'CSS.setScopeText' command.
+data CSSSetScopeText = CSSSetScopeText {
+  -- | The resulting CSS Scope rule after modification.
+  cSSSetScopeTextScope :: CSSCSSScope
+} deriving (Generic, Eq, Show, Read)
+
+instance FromJSON  CSSSetScopeText where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 15 }
+
+instance Command PCSSSetScopeText where
+   type CommandResponse PCSSSetScopeText = CSSSetScopeText
+   commandName _ = "CSS.setScopeText"
 
 
 

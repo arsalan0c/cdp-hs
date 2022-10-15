@@ -245,6 +245,21 @@ instance FromJSON  DebuggerBreakLocation where
 
 
 
+-- | Type 'Debugger.WasmDisassemblyChunk'.
+data DebuggerWasmDisassemblyChunk = DebuggerWasmDisassemblyChunk {
+  -- | The next chunk of disassembled lines.
+  debuggerWasmDisassemblyChunkLines :: [String],
+  -- | The bytecode offsets describing the start of each line.
+  debuggerWasmDisassemblyChunkBytecodeOffsets :: [Int]
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON DebuggerWasmDisassemblyChunk  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
+
+instance FromJSON  DebuggerWasmDisassemblyChunk where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
+
+
+
 -- | Type 'Debugger.ScriptLanguage'.
 --   Enum of possible script languages.
 data DebuggerScriptLanguage = DebuggerScriptLanguageJavaScript | DebuggerScriptLanguageWebAssembly
@@ -698,6 +713,75 @@ instance Command PDebuggerGetScriptSource where
 
 
 
+-- | Debugger.disassembleWasmModule
+
+-- | Parameters of the 'Debugger.disassembleWasmModule' command.
+data PDebuggerDisassembleWasmModule = PDebuggerDisassembleWasmModule {
+  -- | Id of the script to disassemble
+  pDebuggerDisassembleWasmModuleScriptId :: Runtime.RuntimeScriptId
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PDebuggerDisassembleWasmModule  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
+
+instance FromJSON  PDebuggerDisassembleWasmModule where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
+
+
+-- | Return type of the 'Debugger.disassembleWasmModule' command.
+data DebuggerDisassembleWasmModule = DebuggerDisassembleWasmModule {
+  -- | For large modules, return a stream from which additional chunks of
+  --   disassembly can be read successively.
+  debuggerDisassembleWasmModuleStreamId :: Maybe String,
+  -- | The total number of lines in the disassembly text.
+  debuggerDisassembleWasmModuleTotalNumberOfLines :: Int,
+  -- | The offsets of all function bodies, in the format [start1, end1,
+  --   start2, end2, ...] where all ends are exclusive.
+  debuggerDisassembleWasmModuleFunctionBodyOffsets :: [Int],
+  -- | The first chunk of disassembly.
+  debuggerDisassembleWasmModuleChunk :: DebuggerWasmDisassemblyChunk
+} deriving (Generic, Eq, Show, Read)
+
+instance FromJSON  DebuggerDisassembleWasmModule where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
+
+instance Command PDebuggerDisassembleWasmModule where
+   type CommandResponse PDebuggerDisassembleWasmModule = DebuggerDisassembleWasmModule
+   commandName _ = "Debugger.disassembleWasmModule"
+
+
+
+-- | Debugger.nextWasmDisassemblyChunk
+--   Disassemble the next chunk of lines for the module corresponding to the
+--   stream. If disassembly is complete, this API will invalidate the streamId
+--   and return an empty chunk. Any subsequent calls for the now invalid stream
+--   will return errors.
+
+-- | Parameters of the 'Debugger.nextWasmDisassemblyChunk' command.
+data PDebuggerNextWasmDisassemblyChunk = PDebuggerNextWasmDisassemblyChunk {
+  pDebuggerNextWasmDisassemblyChunkStreamId :: String
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PDebuggerNextWasmDisassemblyChunk  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 , A.omitNothingFields = True}
+
+instance FromJSON  PDebuggerNextWasmDisassemblyChunk where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 33 }
+
+
+-- | Return type of the 'Debugger.nextWasmDisassemblyChunk' command.
+data DebuggerNextWasmDisassemblyChunk = DebuggerNextWasmDisassemblyChunk {
+  -- | The next chunk of disassembly.
+  debuggerNextWasmDisassemblyChunkChunk :: DebuggerWasmDisassemblyChunk
+} deriving (Generic, Eq, Show, Read)
+
+instance FromJSON  DebuggerNextWasmDisassemblyChunk where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
+
+instance Command PDebuggerNextWasmDisassemblyChunk where
+   type CommandResponse PDebuggerNextWasmDisassemblyChunk = DebuggerNextWasmDisassemblyChunk
+   commandName _ = "Debugger.nextWasmDisassemblyChunk"
+
+
+
 -- | Debugger.getStackTrace
 --   Returns stack trace with given `stackTraceId`.
 
@@ -756,6 +840,57 @@ instance FromJSON  PDebuggerRemoveBreakpoint where
 instance Command PDebuggerRemoveBreakpoint where
    type CommandResponse PDebuggerRemoveBreakpoint = ()
    commandName _ = "Debugger.removeBreakpoint"
+   fromJSON = const . A.Success . const ()
+
+
+-- | Debugger.restartFrame
+--   Restarts particular call frame from the beginning. The old, deprecated
+--   behavior of `restartFrame` is to stay paused and allow further CDP commands
+--   after a restart was scheduled. This can cause problems with restarting, so
+--   we now continue execution immediatly after it has been scheduled until we
+--   reach the beginning of the restarted frame.
+--   
+--   To stay back-wards compatible, `restartFrame` now expects a `mode`
+--   parameter to be present. If the `mode` parameter is missing, `restartFrame`
+--   errors out.
+--   
+--   The various return values are deprecated and `callFrames` is always empty.
+--   Use the call frames from the `Debugger#paused` events instead, that fires
+--   once V8 pauses at the beginning of the restarted function.
+
+-- | Parameters of the 'Debugger.restartFrame' command.
+data PDebuggerRestartFrameMode = PDebuggerRestartFrameModeStepInto
+   deriving (Ord, Eq, Show, Read)
+instance FromJSON PDebuggerRestartFrameMode where
+   parseJSON = A.withText  "PDebuggerRestartFrameMode"  $ \v -> do
+      case v of
+         "StepInto" -> pure PDebuggerRestartFrameModeStepInto
+         _ -> fail "failed to parse PDebuggerRestartFrameMode"
+
+instance ToJSON PDebuggerRestartFrameMode where
+   toJSON v = A.String $
+      case v of
+         PDebuggerRestartFrameModeStepInto -> "StepInto"
+
+
+
+data PDebuggerRestartFrame = PDebuggerRestartFrame {
+  -- | Call frame identifier to evaluate on.
+  pDebuggerRestartFrameCallFrameId :: DebuggerCallFrameId,
+  -- | The `mode` parameter must be present and set to 'StepInto', otherwise
+  --   `restartFrame` will error out.
+  pDebuggerRestartFrameMode :: PDebuggerRestartFrameMode
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PDebuggerRestartFrame  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 , A.omitNothingFields = True}
+
+instance FromJSON  PDebuggerRestartFrame where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 21 }
+
+
+instance Command PDebuggerRestartFrame where
+   type CommandResponse PDebuggerRestartFrame = ()
+   commandName _ = "Debugger.restartFrame"
    fromJSON = const . A.Success . const ()
 
 
@@ -1139,6 +1274,12 @@ instance Command PDebuggerSetReturnValue where
 
 -- | Debugger.setScriptSource
 --   Edits JavaScript source live.
+--   
+--   In general, functions that are currently on the stack can not be edited with
+--   a single exception: If the edited function is the top-most stack frame and
+--   that is the only activation of that function on the stack. In this case
+--   the live edit will be successful and a `Debugger.restartFrame` for the
+--   top-most function is automatically triggered.
 
 -- | Parameters of the 'Debugger.setScriptSource' command.
 data PDebuggerSetScriptSource = PDebuggerSetScriptSource {
@@ -1148,7 +1289,10 @@ data PDebuggerSetScriptSource = PDebuggerSetScriptSource {
   pDebuggerSetScriptSourceScriptSource :: String,
   -- | If true the change will not actually be applied. Dry run may be used to get result
   --   description without actually modifying the code.
-  pDebuggerSetScriptSourceDryRun :: Maybe Bool
+  pDebuggerSetScriptSourceDryRun :: Maybe Bool,
+  -- | If true, then `scriptSource` is allowed to change the function on top of the stack
+  --   as long as the top-most stack frame is the only activation of that function.
+  pDebuggerSetScriptSourceAllowTopFrameEditing :: Maybe Bool
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PDebuggerSetScriptSource  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -1159,15 +1303,11 @@ instance FromJSON  PDebuggerSetScriptSource where
 
 -- | Return type of the 'Debugger.setScriptSource' command.
 data DebuggerSetScriptSource = DebuggerSetScriptSource {
-  -- | New stack trace in case editing has happened while VM was stopped.
-  debuggerSetScriptSourceCallFrames :: Maybe [DebuggerCallFrame],
-  -- | Whether current call stack  was modified after applying the changes.
-  debuggerSetScriptSourceStackChanged :: Maybe Bool,
-  -- | Async stack trace, if any.
-  debuggerSetScriptSourceAsyncStackTrace :: Maybe Runtime.RuntimeStackTrace,
-  -- | Async stack trace, if any.
-  debuggerSetScriptSourceAsyncStackTraceId :: Maybe Runtime.RuntimeStackTraceId,
-  -- | Exception details if any.
+  -- | Whether the operation was successful or not. Only `Ok` denotes a
+  --   successful live edit while the other enum variants denote why
+  --   the live edit failed.
+  debuggerSetScriptSourceStatus :: String,
+  -- | Exception details if any. Only present when `status` is `CompileError`.
   debuggerSetScriptSourceExceptionDetails :: Maybe Runtime.RuntimeExceptionDetails
 } deriving (Generic, Eq, Show, Read)
 

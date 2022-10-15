@@ -166,54 +166,6 @@ instance FromJSON  ProfilerScriptCoverage where
 
 
 
--- | Type 'Profiler.TypeObject'.
---   Describes a type collected during runtime.
-data ProfilerTypeObject = ProfilerTypeObject {
-  -- | Name of a type collected with type profiling.
-  profilerTypeObjectName :: String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON ProfilerTypeObject  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 , A.omitNothingFields = True}
-
-instance FromJSON  ProfilerTypeObject where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 18 }
-
-
-
--- | Type 'Profiler.TypeProfileEntry'.
---   Source offset and types for a parameter or return value.
-data ProfilerTypeProfileEntry = ProfilerTypeProfileEntry {
-  -- | Source offset of the parameter or end of function for return values.
-  profilerTypeProfileEntryOffset :: Int,
-  -- | The types for this parameter or return value.
-  profilerTypeProfileEntryTypes :: [ProfilerTypeObject]
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON ProfilerTypeProfileEntry  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
-
-instance FromJSON  ProfilerTypeProfileEntry where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
-
-
-
--- | Type 'Profiler.ScriptTypeProfile'.
---   Type profile data collected during runtime for a JavaScript script.
-data ProfilerScriptTypeProfile = ProfilerScriptTypeProfile {
-  -- | JavaScript script id.
-  profilerScriptTypeProfileScriptId :: Runtime.RuntimeScriptId,
-  -- | JavaScript script name or url.
-  profilerScriptTypeProfileUrl :: String,
-  -- | Type profile entries for parameters and return values of the functions in the script.
-  profilerScriptTypeProfileEntries :: [ProfilerTypeProfileEntry]
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON ProfilerScriptTypeProfile  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}
-
-instance FromJSON  ProfilerScriptTypeProfile where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 }
-
-
-
 
 
 -- | Type of the 'Profiler.consoleProfileFinished' event.
@@ -390,19 +342,6 @@ instance Command PProfilerStartPreciseCoverage where
 
 
 
--- | Profiler.startTypeProfile
---   Enable type profile.
-
--- | Parameters of the 'Profiler.startTypeProfile' command.
-data PProfilerStartTypeProfile = PProfilerStartTypeProfile
-instance ToJSON PProfilerStartTypeProfile where toJSON _ = A.Null
-
-instance Command PProfilerStartTypeProfile where
-   type CommandResponse PProfilerStartTypeProfile = ()
-   commandName _ = "Profiler.startTypeProfile"
-   fromJSON = const . A.Success . const ()
-
-
 -- | Profiler.stop
 
 -- | Parameters of the 'Profiler.stop' command.
@@ -438,19 +377,6 @@ instance Command PProfilerStopPreciseCoverage where
    fromJSON = const . A.Success . const ()
 
 
--- | Profiler.stopTypeProfile
---   Disable type profile. Disabling releases type profile data collected so far.
-
--- | Parameters of the 'Profiler.stopTypeProfile' command.
-data PProfilerStopTypeProfile = PProfilerStopTypeProfile
-instance ToJSON PProfilerStopTypeProfile where toJSON _ = A.Null
-
-instance Command PProfilerStopTypeProfile where
-   type CommandResponse PProfilerStopTypeProfile = ()
-   commandName _ = "Profiler.stopTypeProfile"
-   fromJSON = const . A.Success . const ()
-
-
 -- | Profiler.takePreciseCoverage
 --   Collect coverage data for the current isolate, and resets execution counters. Precise code
 --   coverage needs to have started.
@@ -473,28 +399,6 @@ instance FromJSON  ProfilerTakePreciseCoverage where
 instance Command PProfilerTakePreciseCoverage where
    type CommandResponse PProfilerTakePreciseCoverage = ProfilerTakePreciseCoverage
    commandName _ = "Profiler.takePreciseCoverage"
-
-
-
--- | Profiler.takeTypeProfile
---   Collect type profile.
-
--- | Parameters of the 'Profiler.takeTypeProfile' command.
-data PProfilerTakeTypeProfile = PProfilerTakeTypeProfile
-instance ToJSON PProfilerTakeTypeProfile where toJSON _ = A.Null
-
--- | Return type of the 'Profiler.takeTypeProfile' command.
-data ProfilerTakeTypeProfile = ProfilerTakeTypeProfile {
-  -- | Type profile for all scripts since startTypeProfile() was turned on.
-  profilerTakeTypeProfileResult :: [ProfilerScriptTypeProfile]
-} deriving (Generic, Eq, Show, Read)
-
-instance FromJSON  ProfilerTakeTypeProfile where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 23 }
-
-instance Command PProfilerTakeTypeProfile where
-   type CommandResponse PProfilerTakeTypeProfile = ProfilerTakeTypeProfile
-   commandName _ = "Profiler.takeTypeProfile"
 
 
 

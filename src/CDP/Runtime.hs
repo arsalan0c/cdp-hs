@@ -5,6 +5,7 @@
 {-# LANGUAGE GADTs                  #-}
 {-# LANGUAGE ScopedTypeVariables    #-}
 {-# LANGUAGE TypeFamilies           #-}
+{-# LANGUAGE RankNTypes    #-}
 
 module CDP.Runtime 
     ( module CDP.Runtime
@@ -191,7 +192,7 @@ instance (ToJSON a) => ToJSON (CommandObj a) where
 -- | Sends a command to the browser and waits until a response is received,
 --   for timeout duration configured
 sendCommandWait
-    :: forall cmd. Command cmd
+    :: Command cmd
     => Handle -> cmd -> IO (CommandResponse cmd)
 sendCommandWait handle params = do
     promise <- sendCommand handle params
@@ -230,3 +231,9 @@ instance Show Error where
     show ERRNoResponse      = "no response received from the protocol"
     show (ERRParse msg)     = unlines ["error in parsing a message received from the protocol:", msg]
     show (ERRProtocol pe)   = show pe 
+
+data IsCommand where
+    IsCommand :: Command cmd => cmd -> IsCommand
+
+elimIsCommand :: (forall cmd. Command cmd => cmd -> r) -> IsCommand -> r
+elimIsCommand f (IsCommand c) = f c

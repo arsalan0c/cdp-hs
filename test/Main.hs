@@ -1,5 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 module Main (main) where
 
 import Test.Hspec
@@ -18,8 +16,12 @@ main = hspec $ do
 
         it "sends commands: w/o params w/ results" $ do
             void $ CDP.runClient def $ \handle -> do
-                void $ CDP.sendCommandWait handle CDP.PBrowserGetVersion
-                CDP.sendCommandWait handle CDP.PEmulationCanEmulate
+                -- let (CDP.IsCommand c) = CDP.IsCommand CDP.PBrowserGetVersion
+                -- CDP.sendCommandWait handle c
+                mapM (CDP.elimIsCommand $ void . (CDP.sendCommandWait handle)) $
+                    [ CDP.IsCommand CDP.PBrowserGetVersion
+                    , CDP.IsCommand CDP.PEmulationCanEmulate
+                    ]
 
         it "sends commands: w/ params w/o results" $ do
             CDP.runClient def $ \handle -> 
@@ -56,12 +58,12 @@ main = hspec $ do
             frameIdsM <- newMVar []
             CDP.runClient def $ \handle -> do
                 -- register handler
-                CDP.subscribe handle $ \e -> modifyMVar_ frameIdsM $ 
+                void $ CDP.subscribe handle $ \e -> modifyMVar_ frameIdsM $ 
                     \ids -> pure ((CDP.pageFrameId . CDP.pageFrameNavigatedFrame $ e) : ids)
                 -- enable events
                 CDP.sendCommandWait handle $ CDP.PPageEnable
                 -- navigate to page
-                CDP.sendCommandWait handle $
+                void $ CDP.sendCommandWait handle $
                     CDP.PPageNavigate "http://wikipedia.com" Nothing Nothing Nothing Nothing
                 -- wait for events
                 threadDelay 5000000

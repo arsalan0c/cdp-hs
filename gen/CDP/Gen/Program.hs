@@ -359,7 +359,6 @@ typeCDPToHS ctx _ "object" _ = "[(String, String)]"
 typeCDPToHS ctx domain "array" (Just items) = "[" <> (leftType ctx domain (D.itemsType items) (D.itemsRef items) Nothing) <> "]"
 typeCDPToHS ctx _ ty (Just items) = error . T.unpack $ "non-array type with items: " <> ty
 typeCDPToHS ctx domain ty Nothing = convertType ctx domain ty
-typeCDPToHS ctx _ _ _ = error "no matching type"
 
 convertType :: Context -> T.Text -> T.Text -> T.Text
 convertType _ _ "string"  = "String"

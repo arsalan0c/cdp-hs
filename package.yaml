@@ -71,4 +71,4 @@ tests:
       - -threaded
     dependencies:
       - cdp
-      - hedgehog
+      - hspec

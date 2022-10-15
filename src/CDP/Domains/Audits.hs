@@ -95,7 +95,7 @@ instance FromJSON  AuditsAffectedFrame where
 
 
 -- | Type 'Audits.CookieExclusionReason'.
-data AuditsCookieExclusionReason = AuditsCookieExclusionReasonExcludeSameSiteUnspecifiedTreatedAsLax | AuditsCookieExclusionReasonExcludeSameSiteNoneInsecure | AuditsCookieExclusionReasonExcludeSameSiteLax | AuditsCookieExclusionReasonExcludeSameSiteStrict | AuditsCookieExclusionReasonExcludeInvalidSameParty | AuditsCookieExclusionReasonExcludeSamePartyCrossPartyContext
+data AuditsCookieExclusionReason = AuditsCookieExclusionReasonExcludeSameSiteUnspecifiedTreatedAsLax | AuditsCookieExclusionReasonExcludeSameSiteNoneInsecure | AuditsCookieExclusionReasonExcludeSameSiteLax | AuditsCookieExclusionReasonExcludeSameSiteStrict | AuditsCookieExclusionReasonExcludeInvalidSameParty | AuditsCookieExclusionReasonExcludeSamePartyCrossPartyContext | AuditsCookieExclusionReasonExcludeDomainNonASCII
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsCookieExclusionReason where
    parseJSON = A.withText  "AuditsCookieExclusionReason"  $ \v -> do
@@ -106,6 +106,7 @@ instance FromJSON AuditsCookieExclusionReason where
          "ExcludeSameSiteStrict" -> pure AuditsCookieExclusionReasonExcludeSameSiteStrict
          "ExcludeInvalidSameParty" -> pure AuditsCookieExclusionReasonExcludeInvalidSameParty
          "ExcludeSamePartyCrossPartyContext" -> pure AuditsCookieExclusionReasonExcludeSamePartyCrossPartyContext
+         "ExcludeDomainNonASCII" -> pure AuditsCookieExclusionReasonExcludeDomainNonASCII
          _ -> fail "failed to parse AuditsCookieExclusionReason"
 
 instance ToJSON AuditsCookieExclusionReason where
@@ -117,11 +118,12 @@ instance ToJSON AuditsCookieExclusionReason where
          AuditsCookieExclusionReasonExcludeSameSiteStrict -> "ExcludeSameSiteStrict"
          AuditsCookieExclusionReasonExcludeInvalidSameParty -> "ExcludeInvalidSameParty"
          AuditsCookieExclusionReasonExcludeSamePartyCrossPartyContext -> "ExcludeSamePartyCrossPartyContext"
+         AuditsCookieExclusionReasonExcludeDomainNonASCII -> "ExcludeDomainNonASCII"
 
 
 
 -- | Type 'Audits.CookieWarningReason'.
-data AuditsCookieWarningReason = AuditsCookieWarningReasonWarnSameSiteUnspecifiedCrossSiteContext | AuditsCookieWarningReasonWarnSameSiteNoneInsecure | AuditsCookieWarningReasonWarnSameSiteUnspecifiedLaxAllowUnsafe | AuditsCookieWarningReasonWarnSameSiteStrictLaxDowngradeStrict | AuditsCookieWarningReasonWarnSameSiteStrictCrossDowngradeStrict | AuditsCookieWarningReasonWarnSameSiteStrictCrossDowngradeLax | AuditsCookieWarningReasonWarnSameSiteLaxCrossDowngradeStrict | AuditsCookieWarningReasonWarnSameSiteLaxCrossDowngradeLax | AuditsCookieWarningReasonWarnAttributeValueExceedsMaxSize
+data AuditsCookieWarningReason = AuditsCookieWarningReasonWarnSameSiteUnspecifiedCrossSiteContext | AuditsCookieWarningReasonWarnSameSiteNoneInsecure | AuditsCookieWarningReasonWarnSameSiteUnspecifiedLaxAllowUnsafe | AuditsCookieWarningReasonWarnSameSiteStrictLaxDowngradeStrict | AuditsCookieWarningReasonWarnSameSiteStrictCrossDowngradeStrict | AuditsCookieWarningReasonWarnSameSiteStrictCrossDowngradeLax | AuditsCookieWarningReasonWarnSameSiteLaxCrossDowngradeStrict | AuditsCookieWarningReasonWarnSameSiteLaxCrossDowngradeLax | AuditsCookieWarningReasonWarnAttributeValueExceedsMaxSize | AuditsCookieWarningReasonWarnDomainNonASCII
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsCookieWarningReason where
    parseJSON = A.withText  "AuditsCookieWarningReason"  $ \v -> do
@@ -135,6 +137,7 @@ instance FromJSON AuditsCookieWarningReason where
          "WarnSameSiteLaxCrossDowngradeStrict" -> pure AuditsCookieWarningReasonWarnSameSiteLaxCrossDowngradeStrict
          "WarnSameSiteLaxCrossDowngradeLax" -> pure AuditsCookieWarningReasonWarnSameSiteLaxCrossDowngradeLax
          "WarnAttributeValueExceedsMaxSize" -> pure AuditsCookieWarningReasonWarnAttributeValueExceedsMaxSize
+         "WarnDomainNonASCII" -> pure AuditsCookieWarningReasonWarnDomainNonASCII
          _ -> fail "failed to parse AuditsCookieWarningReason"
 
 instance ToJSON AuditsCookieWarningReason where
@@ -149,6 +152,7 @@ instance ToJSON AuditsCookieWarningReason where
          AuditsCookieWarningReasonWarnSameSiteLaxCrossDowngradeStrict -> "WarnSameSiteLaxCrossDowngradeStrict"
          AuditsCookieWarningReasonWarnSameSiteLaxCrossDowngradeLax -> "WarnSameSiteLaxCrossDowngradeLax"
          AuditsCookieWarningReasonWarnAttributeValueExceedsMaxSize -> "WarnAttributeValueExceedsMaxSize"
+         AuditsCookieWarningReasonWarnDomainNonASCII -> "WarnDomainNonASCII"
 
 
 
@@ -587,33 +591,46 @@ instance FromJSON  AuditsCorsIssueDetails where
 
 
 -- | Type 'Audits.AttributionReportingIssueType'.
-data AuditsAttributionReportingIssueType = AuditsAttributionReportingIssueTypePermissionPolicyDisabled | AuditsAttributionReportingIssueTypeAttributionSourceUntrustworthyOrigin | AuditsAttributionReportingIssueTypeAttributionUntrustworthyOrigin | AuditsAttributionReportingIssueTypeInvalidHeader
+data AuditsAttributionReportingIssueType = AuditsAttributionReportingIssueTypePermissionPolicyDisabled | AuditsAttributionReportingIssueTypePermissionPolicyNotDelegated | AuditsAttributionReportingIssueTypeUntrustworthyReportingOrigin | AuditsAttributionReportingIssueTypeInsecureContext | AuditsAttributionReportingIssueTypeInvalidHeader | AuditsAttributionReportingIssueTypeInvalidRegisterTriggerHeader | AuditsAttributionReportingIssueTypeInvalidEligibleHeader | AuditsAttributionReportingIssueTypeTooManyConcurrentRequests | AuditsAttributionReportingIssueTypeSourceAndTriggerHeaders | AuditsAttributionReportingIssueTypeSourceIgnored | AuditsAttributionReportingIssueTypeTriggerIgnored
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsAttributionReportingIssueType where
    parseJSON = A.withText  "AuditsAttributionReportingIssueType"  $ \v -> do
       case v of
          "PermissionPolicyDisabled" -> pure AuditsAttributionReportingIssueTypePermissionPolicyDisabled
-         "AttributionSourceUntrustworthyOrigin" -> pure AuditsAttributionReportingIssueTypeAttributionSourceUntrustworthyOrigin
-         "AttributionUntrustworthyOrigin" -> pure AuditsAttributionReportingIssueTypeAttributionUntrustworthyOrigin
+         "PermissionPolicyNotDelegated" -> pure AuditsAttributionReportingIssueTypePermissionPolicyNotDelegated
+         "UntrustworthyReportingOrigin" -> pure AuditsAttributionReportingIssueTypeUntrustworthyReportingOrigin
+         "InsecureContext" -> pure AuditsAttributionReportingIssueTypeInsecureContext
          "InvalidHeader" -> pure AuditsAttributionReportingIssueTypeInvalidHeader
+         "InvalidRegisterTriggerHeader" -> pure AuditsAttributionReportingIssueTypeInvalidRegisterTriggerHeader
+         "InvalidEligibleHeader" -> pure AuditsAttributionReportingIssueTypeInvalidEligibleHeader
+         "TooManyConcurrentRequests" -> pure AuditsAttributionReportingIssueTypeTooManyConcurrentRequests
+         "SourceAndTriggerHeaders" -> pure AuditsAttributionReportingIssueTypeSourceAndTriggerHeaders
+         "SourceIgnored" -> pure AuditsAttributionReportingIssueTypeSourceIgnored
+         "TriggerIgnored" -> pure AuditsAttributionReportingIssueTypeTriggerIgnored
          _ -> fail "failed to parse AuditsAttributionReportingIssueType"
 
 instance ToJSON AuditsAttributionReportingIssueType where
    toJSON v = A.String $
       case v of
          AuditsAttributionReportingIssueTypePermissionPolicyDisabled -> "PermissionPolicyDisabled"
-         AuditsAttributionReportingIssueTypeAttributionSourceUntrustworthyOrigin -> "AttributionSourceUntrustworthyOrigin"
-         AuditsAttributionReportingIssueTypeAttributionUntrustworthyOrigin -> "AttributionUntrustworthyOrigin"
+         AuditsAttributionReportingIssueTypePermissionPolicyNotDelegated -> "PermissionPolicyNotDelegated"
+         AuditsAttributionReportingIssueTypeUntrustworthyReportingOrigin -> "UntrustworthyReportingOrigin"
+         AuditsAttributionReportingIssueTypeInsecureContext -> "InsecureContext"
          AuditsAttributionReportingIssueTypeInvalidHeader -> "InvalidHeader"
+         AuditsAttributionReportingIssueTypeInvalidRegisterTriggerHeader -> "InvalidRegisterTriggerHeader"
+         AuditsAttributionReportingIssueTypeInvalidEligibleHeader -> "InvalidEligibleHeader"
+         AuditsAttributionReportingIssueTypeTooManyConcurrentRequests -> "TooManyConcurrentRequests"
+         AuditsAttributionReportingIssueTypeSourceAndTriggerHeaders -> "SourceAndTriggerHeaders"
+         AuditsAttributionReportingIssueTypeSourceIgnored -> "SourceIgnored"
+         AuditsAttributionReportingIssueTypeTriggerIgnored -> "TriggerIgnored"
 
 
 
 -- | Type 'Audits.AttributionReportingIssueDetails'.
 --   Details for issues around "Attribution Reporting API" usage.
---   Explainer: https://github.com/WICG/conversion-measurement-api
+--   Explainer: https://github.com/WICG/attribution-reporting-api
 data AuditsAttributionReportingIssueDetails = AuditsAttributionReportingIssueDetails {
   auditsAttributionReportingIssueDetailsViolationType :: AuditsAttributionReportingIssueType,
-  auditsAttributionReportingIssueDetailsFrame :: Maybe AuditsAffectedFrame,
   auditsAttributionReportingIssueDetailsRequest :: Maybe AuditsAffectedRequest,
   auditsAttributionReportingIssueDetailsViolatingNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMBackendNodeId,
   auditsAttributionReportingIssueDetailsInvalidParameter :: Maybe String
@@ -691,7 +708,7 @@ instance FromJSON  AuditsGenericIssueDetails where
 
 
 -- | Type 'Audits.DeprecationIssueType'.
-data AuditsDeprecationIssueType = AuditsDeprecationIssueTypeAuthorizationCoveredByWildcard | AuditsDeprecationIssueTypeCanRequestURLHTTPContainingNewline | AuditsDeprecationIssueTypeChromeLoadTimesConnectionInfo | AuditsDeprecationIssueTypeChromeLoadTimesFirstPaintAfterLoadTime | AuditsDeprecationIssueTypeChromeLoadTimesWasAlternateProtocolAvailable | AuditsDeprecationIssueTypeCookieWithTruncatingChar | AuditsDeprecationIssueTypeCrossOriginAccessBasedOnDocumentDomain | AuditsDeprecationIssueTypeCrossOriginWindowAlert | AuditsDeprecationIssueTypeCrossOriginWindowConfirm | AuditsDeprecationIssueTypeCSSSelectorInternalMediaControlsOverlayCastButton | AuditsDeprecationIssueTypeDeprecationExample | AuditsDeprecationIssueTypeDocumentDomainSettingWithoutOriginAgentClusterHeader | AuditsDeprecationIssueTypeEventPath | AuditsDeprecationIssueTypeGeolocationInsecureOrigin | AuditsDeprecationIssueTypeGeolocationInsecureOriginDeprecatedNotRemoved | AuditsDeprecationIssueTypeGetUserMediaInsecureOrigin | AuditsDeprecationIssueTypeHostCandidateAttributeGetter | AuditsDeprecationIssueTypeInsecurePrivateNetworkSubresourceRequest | AuditsDeprecationIssueTypeLegacyConstraintGoogIPv6 | AuditsDeprecationIssueTypeLocalCSSFileExtensionRejected | AuditsDeprecationIssueTypeMediaSourceAbortRemove | AuditsDeprecationIssueTypeMediaSourceDurationTruncatingBuffered | AuditsDeprecationIssueTypeNoSysexWebMIDIWithoutPermission | AuditsDeprecationIssueTypeNotificationInsecureOrigin | AuditsDeprecationIssueTypeNotificationPermissionRequestedIframe | AuditsDeprecationIssueTypeObsoleteWebRtcCipherSuite | AuditsDeprecationIssueTypePaymentRequestBasicCard | AuditsDeprecationIssueTypePictureSourceSrc | AuditsDeprecationIssueTypePrefixedCancelAnimationFrame | AuditsDeprecationIssueTypePrefixedRequestAnimationFrame | AuditsDeprecationIssueTypePrefixedStorageInfo | AuditsDeprecationIssueTypePrefixedVideoDisplayingFullscreen | AuditsDeprecationIssueTypePrefixedVideoEnterFullscreen | AuditsDeprecationIssueTypePrefixedVideoEnterFullScreen | AuditsDeprecationIssueTypePrefixedVideoExitFullscreen | AuditsDeprecationIssueTypePrefixedVideoExitFullScreen | AuditsDeprecationIssueTypePrefixedVideoSupportsFullscreen | AuditsDeprecationIssueTypeRangeExpand | AuditsDeprecationIssueTypeRequestedSubresourceWithEmbeddedCredentials | AuditsDeprecationIssueTypeRTCConstraintEnableDtlsSrtpFalse | AuditsDeprecationIssueTypeRTCConstraintEnableDtlsSrtpTrue | AuditsDeprecationIssueTypeRTCPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics | AuditsDeprecationIssueTypeRTCPeerConnectionSdpSemanticsPlanB | AuditsDeprecationIssueTypeRtcpMuxPolicyNegotiate | AuditsDeprecationIssueTypeSharedArrayBufferConstructedWithoutIsolation | AuditsDeprecationIssueTypeTextToSpeech_DisallowedByAutoplay | AuditsDeprecationIssueTypeV8SharedArrayBufferConstructedInExtensionWithoutIsolation | AuditsDeprecationIssueTypeXHRJSONEncodingDetection | AuditsDeprecationIssueTypeXMLHttpRequestSynchronousInNonWorkerOutsideBeforeUnload | AuditsDeprecationIssueTypeXRSupportsSession
+data AuditsDeprecationIssueType = AuditsDeprecationIssueTypeAuthorizationCoveredByWildcard | AuditsDeprecationIssueTypeCanRequestURLHTTPContainingNewline | AuditsDeprecationIssueTypeChromeLoadTimesConnectionInfo | AuditsDeprecationIssueTypeChromeLoadTimesFirstPaintAfterLoadTime | AuditsDeprecationIssueTypeChromeLoadTimesWasAlternateProtocolAvailable | AuditsDeprecationIssueTypeCookieWithTruncatingChar | AuditsDeprecationIssueTypeCrossOriginAccessBasedOnDocumentDomain | AuditsDeprecationIssueTypeCrossOriginWindowAlert | AuditsDeprecationIssueTypeCrossOriginWindowConfirm | AuditsDeprecationIssueTypeCSSSelectorInternalMediaControlsOverlayCastButton | AuditsDeprecationIssueTypeDeprecationExample | AuditsDeprecationIssueTypeDocumentDomainSettingWithoutOriginAgentClusterHeader | AuditsDeprecationIssueTypeEventPath | AuditsDeprecationIssueTypeExpectCTHeader | AuditsDeprecationIssueTypeGeolocationInsecureOrigin | AuditsDeprecationIssueTypeGeolocationInsecureOriginDeprecatedNotRemoved | AuditsDeprecationIssueTypeGetUserMediaInsecureOrigin | AuditsDeprecationIssueTypeHostCandidateAttributeGetter | AuditsDeprecationIssueTypeIdentityInCanMakePaymentEvent | AuditsDeprecationIssueTypeInsecurePrivateNetworkSubresourceRequest | AuditsDeprecationIssueTypeLocalCSSFileExtensionRejected | AuditsDeprecationIssueTypeMediaSourceAbortRemove | AuditsDeprecationIssueTypeMediaSourceDurationTruncatingBuffered | AuditsDeprecationIssueTypeNoSysexWebMIDIWithoutPermission | AuditsDeprecationIssueTypeNotificationInsecureOrigin | AuditsDeprecationIssueTypeNotificationPermissionRequestedIframe | AuditsDeprecationIssueTypeObsoleteWebRtcCipherSuite | AuditsDeprecationIssueTypeOpenWebDatabaseInsecureContext | AuditsDeprecationIssueTypeOverflowVisibleOnReplacedElement | AuditsDeprecationIssueTypePaymentInstruments | AuditsDeprecationIssueTypePaymentRequestCSPViolation | AuditsDeprecationIssueTypePersistentQuotaType | AuditsDeprecationIssueTypePictureSourceSrc | AuditsDeprecationIssueTypePrefixedCancelAnimationFrame | AuditsDeprecationIssueTypePrefixedRequestAnimationFrame | AuditsDeprecationIssueTypePrefixedStorageInfo | AuditsDeprecationIssueTypePrefixedVideoDisplayingFullscreen | AuditsDeprecationIssueTypePrefixedVideoEnterFullscreen | AuditsDeprecationIssueTypePrefixedVideoEnterFullScreen | AuditsDeprecationIssueTypePrefixedVideoExitFullscreen | AuditsDeprecationIssueTypePrefixedVideoExitFullScreen | AuditsDeprecationIssueTypePrefixedVideoSupportsFullscreen | AuditsDeprecationIssueTypeRangeExpand | AuditsDeprecationIssueTypeRequestedSubresourceWithEmbeddedCredentials | AuditsDeprecationIssueTypeRTCConstraintEnableDtlsSrtpFalse | AuditsDeprecationIssueTypeRTCConstraintEnableDtlsSrtpTrue | AuditsDeprecationIssueTypeRTCPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics | AuditsDeprecationIssueTypeRTCPeerConnectionSdpSemanticsPlanB | AuditsDeprecationIssueTypeRtcpMuxPolicyNegotiate | AuditsDeprecationIssueTypeSharedArrayBufferConstructedWithoutIsolation | AuditsDeprecationIssueTypeTextToSpeech_DisallowedByAutoplay | AuditsDeprecationIssueTypeV8SharedArrayBufferConstructedInExtensionWithoutIsolation | AuditsDeprecationIssueTypeXHRJSONEncodingDetection | AuditsDeprecationIssueTypeXMLHttpRequestSynchronousInNonWorkerOutsideBeforeUnload | AuditsDeprecationIssueTypeXRSupportsSession
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsDeprecationIssueType where
    parseJSON = A.withText  "AuditsDeprecationIssueType"  $ \v -> do
@@ -709,12 +726,13 @@ instance FromJSON AuditsDeprecationIssueType where
          "DeprecationExample" -> pure AuditsDeprecationIssueTypeDeprecationExample
          "DocumentDomainSettingWithoutOriginAgentClusterHeader" -> pure AuditsDeprecationIssueTypeDocumentDomainSettingWithoutOriginAgentClusterHeader
          "EventPath" -> pure AuditsDeprecationIssueTypeEventPath
+         "ExpectCTHeader" -> pure AuditsDeprecationIssueTypeExpectCTHeader
          "GeolocationInsecureOrigin" -> pure AuditsDeprecationIssueTypeGeolocationInsecureOrigin
          "GeolocationInsecureOriginDeprecatedNotRemoved" -> pure AuditsDeprecationIssueTypeGeolocationInsecureOriginDeprecatedNotRemoved
          "GetUserMediaInsecureOrigin" -> pure AuditsDeprecationIssueTypeGetUserMediaInsecureOrigin
          "HostCandidateAttributeGetter" -> pure AuditsDeprecationIssueTypeHostCandidateAttributeGetter
+         "IdentityInCanMakePaymentEvent" -> pure AuditsDeprecationIssueTypeIdentityInCanMakePaymentEvent
          "InsecurePrivateNetworkSubresourceRequest" -> pure AuditsDeprecationIssueTypeInsecurePrivateNetworkSubresourceRequest
-         "LegacyConstraintGoogIPv6" -> pure AuditsDeprecationIssueTypeLegacyConstraintGoogIPv6
          "LocalCSSFileExtensionRejected" -> pure AuditsDeprecationIssueTypeLocalCSSFileExtensionRejected
          "MediaSourceAbortRemove" -> pure AuditsDeprecationIssueTypeMediaSourceAbortRemove
          "MediaSourceDurationTruncatingBuffered" -> pure AuditsDeprecationIssueTypeMediaSourceDurationTruncatingBuffered
@@ -722,7 +740,11 @@ instance FromJSON AuditsDeprecationIssueType where
          "NotificationInsecureOrigin" -> pure AuditsDeprecationIssueTypeNotificationInsecureOrigin
          "NotificationPermissionRequestedIframe" -> pure AuditsDeprecationIssueTypeNotificationPermissionRequestedIframe
          "ObsoleteWebRtcCipherSuite" -> pure AuditsDeprecationIssueTypeObsoleteWebRtcCipherSuite
-         "PaymentRequestBasicCard" -> pure AuditsDeprecationIssueTypePaymentRequestBasicCard
+         "OpenWebDatabaseInsecureContext" -> pure AuditsDeprecationIssueTypeOpenWebDatabaseInsecureContext
+         "OverflowVisibleOnReplacedElement" -> pure AuditsDeprecationIssueTypeOverflowVisibleOnReplacedElement
+         "PaymentInstruments" -> pure AuditsDeprecationIssueTypePaymentInstruments
+         "PaymentRequestCSPViolation" -> pure AuditsDeprecationIssueTypePaymentRequestCSPViolation
+         "PersistentQuotaType" -> pure AuditsDeprecationIssueTypePersistentQuotaType
          "PictureSourceSrc" -> pure AuditsDeprecationIssueTypePictureSourceSrc
          "PrefixedCancelAnimationFrame" -> pure AuditsDeprecationIssueTypePrefixedCancelAnimationFrame
          "PrefixedRequestAnimationFrame" -> pure AuditsDeprecationIssueTypePrefixedRequestAnimationFrame
@@ -764,12 +786,13 @@ instance ToJSON AuditsDeprecationIssueType where
          AuditsDeprecationIssueTypeDeprecationExample -> "DeprecationExample"
          AuditsDeprecationIssueTypeDocumentDomainSettingWithoutOriginAgentClusterHeader -> "DocumentDomainSettingWithoutOriginAgentClusterHeader"
          AuditsDeprecationIssueTypeEventPath -> "EventPath"
+         AuditsDeprecationIssueTypeExpectCTHeader -> "ExpectCTHeader"
          AuditsDeprecationIssueTypeGeolocationInsecureOrigin -> "GeolocationInsecureOrigin"
          AuditsDeprecationIssueTypeGeolocationInsecureOriginDeprecatedNotRemoved -> "GeolocationInsecureOriginDeprecatedNotRemoved"
          AuditsDeprecationIssueTypeGetUserMediaInsecureOrigin -> "GetUserMediaInsecureOrigin"
          AuditsDeprecationIssueTypeHostCandidateAttributeGetter -> "HostCandidateAttributeGetter"
+         AuditsDeprecationIssueTypeIdentityInCanMakePaymentEvent -> "IdentityInCanMakePaymentEvent"
          AuditsDeprecationIssueTypeInsecurePrivateNetworkSubresourceRequest -> "InsecurePrivateNetworkSubresourceRequest"
-         AuditsDeprecationIssueTypeLegacyConstraintGoogIPv6 -> "LegacyConstraintGoogIPv6"
          AuditsDeprecationIssueTypeLocalCSSFileExtensionRejected -> "LocalCSSFileExtensionRejected"
          AuditsDeprecationIssueTypeMediaSourceAbortRemove -> "MediaSourceAbortRemove"
          AuditsDeprecationIssueTypeMediaSourceDurationTruncatingBuffered -> "MediaSourceDurationTruncatingBuffered"
@@ -777,7 +800,11 @@ instance ToJSON AuditsDeprecationIssueType where
          AuditsDeprecationIssueTypeNotificationInsecureOrigin -> "NotificationInsecureOrigin"
          AuditsDeprecationIssueTypeNotificationPermissionRequestedIframe -> "NotificationPermissionRequestedIframe"
          AuditsDeprecationIssueTypeObsoleteWebRtcCipherSuite -> "ObsoleteWebRtcCipherSuite"
-         AuditsDeprecationIssueTypePaymentRequestBasicCard -> "PaymentRequestBasicCard"
+         AuditsDeprecationIssueTypeOpenWebDatabaseInsecureContext -> "OpenWebDatabaseInsecureContext"
+         AuditsDeprecationIssueTypeOverflowVisibleOnReplacedElement -> "OverflowVisibleOnReplacedElement"
+         AuditsDeprecationIssueTypePaymentInstruments -> "PaymentInstruments"
+         AuditsDeprecationIssueTypePaymentRequestCSPViolation -> "PaymentRequestCSPViolation"
+         AuditsDeprecationIssueTypePersistentQuotaType -> "PersistentQuotaType"
          AuditsDeprecationIssueTypePictureSourceSrc -> "PictureSourceSrc"
          AuditsDeprecationIssueTypePrefixedCancelAnimationFrame -> "PrefixedCancelAnimationFrame"
          AuditsDeprecationIssueTypePrefixedRequestAnimationFrame -> "PrefixedRequestAnimationFrame"
@@ -855,12 +882,12 @@ instance FromJSON  AuditsFederatedAuthRequestIssueDetails where
 --   Should be updated alongside RequestIdTokenStatus in
 --   third_party/blink/public/mojom/devtools/inspector_issue.mojom to include
 --   all cases except for success.
-data AuditsFederatedAuthRequestIssueReason = AuditsFederatedAuthRequestIssueReasonApprovalDeclined | AuditsFederatedAuthRequestIssueReasonTooManyRequests | AuditsFederatedAuthRequestIssueReasonManifestListHttpNotFound | AuditsFederatedAuthRequestIssueReasonManifestListNoResponse | AuditsFederatedAuthRequestIssueReasonManifestListInvalidResponse | AuditsFederatedAuthRequestIssueReasonManifestNotInManifestList | AuditsFederatedAuthRequestIssueReasonManifestListTooBig | AuditsFederatedAuthRequestIssueReasonManifestHttpNotFound | AuditsFederatedAuthRequestIssueReasonManifestNoResponse | AuditsFederatedAuthRequestIssueReasonManifestInvalidResponse | AuditsFederatedAuthRequestIssueReasonClientMetadataHttpNotFound | AuditsFederatedAuthRequestIssueReasonClientMetadataNoResponse | AuditsFederatedAuthRequestIssueReasonClientMetadataInvalidResponse | AuditsFederatedAuthRequestIssueReasonClientMetadataMissingPrivacyPolicyUrl | AuditsFederatedAuthRequestIssueReasonDisabledInSettings | AuditsFederatedAuthRequestIssueReasonErrorFetchingSignin | AuditsFederatedAuthRequestIssueReasonInvalidSigninResponse | AuditsFederatedAuthRequestIssueReasonAccountsHttpNotFound | AuditsFederatedAuthRequestIssueReasonAccountsNoResponse | AuditsFederatedAuthRequestIssueReasonAccountsInvalidResponse | AuditsFederatedAuthRequestIssueReasonIdTokenHttpNotFound | AuditsFederatedAuthRequestIssueReasonIdTokenNoResponse | AuditsFederatedAuthRequestIssueReasonIdTokenInvalidResponse | AuditsFederatedAuthRequestIssueReasonIdTokenInvalidRequest | AuditsFederatedAuthRequestIssueReasonErrorIdToken | AuditsFederatedAuthRequestIssueReasonCanceled
+data AuditsFederatedAuthRequestIssueReason = AuditsFederatedAuthRequestIssueReasonShouldEmbargo | AuditsFederatedAuthRequestIssueReasonTooManyRequests | AuditsFederatedAuthRequestIssueReasonManifestListHttpNotFound | AuditsFederatedAuthRequestIssueReasonManifestListNoResponse | AuditsFederatedAuthRequestIssueReasonManifestListInvalidResponse | AuditsFederatedAuthRequestIssueReasonManifestNotInManifestList | AuditsFederatedAuthRequestIssueReasonManifestListTooBig | AuditsFederatedAuthRequestIssueReasonManifestHttpNotFound | AuditsFederatedAuthRequestIssueReasonManifestNoResponse | AuditsFederatedAuthRequestIssueReasonManifestInvalidResponse | AuditsFederatedAuthRequestIssueReasonClientMetadataHttpNotFound | AuditsFederatedAuthRequestIssueReasonClientMetadataNoResponse | AuditsFederatedAuthRequestIssueReasonClientMetadataInvalidResponse | AuditsFederatedAuthRequestIssueReasonDisabledInSettings | AuditsFederatedAuthRequestIssueReasonErrorFetchingSignin | AuditsFederatedAuthRequestIssueReasonInvalidSigninResponse | AuditsFederatedAuthRequestIssueReasonAccountsHttpNotFound | AuditsFederatedAuthRequestIssueReasonAccountsNoResponse | AuditsFederatedAuthRequestIssueReasonAccountsInvalidResponse | AuditsFederatedAuthRequestIssueReasonIdTokenHttpNotFound | AuditsFederatedAuthRequestIssueReasonIdTokenNoResponse | AuditsFederatedAuthRequestIssueReasonIdTokenInvalidResponse | AuditsFederatedAuthRequestIssueReasonIdTokenInvalidRequest | AuditsFederatedAuthRequestIssueReasonErrorIdToken | AuditsFederatedAuthRequestIssueReasonCanceled | AuditsFederatedAuthRequestIssueReasonRpPageNotVisible
    deriving (Ord, Eq, Show, Read)
 instance FromJSON AuditsFederatedAuthRequestIssueReason where
    parseJSON = A.withText  "AuditsFederatedAuthRequestIssueReason"  $ \v -> do
       case v of
-         "ApprovalDeclined" -> pure AuditsFederatedAuthRequestIssueReasonApprovalDeclined
+         "ShouldEmbargo" -> pure AuditsFederatedAuthRequestIssueReasonShouldEmbargo
          "TooManyRequests" -> pure AuditsFederatedAuthRequestIssueReasonTooManyRequests
          "ManifestListHttpNotFound" -> pure AuditsFederatedAuthRequestIssueReasonManifestListHttpNotFound
          "ManifestListNoResponse" -> pure AuditsFederatedAuthRequestIssueReasonManifestListNoResponse
@@ -873,7 +900,6 @@ instance FromJSON AuditsFederatedAuthRequestIssueReason where
          "ClientMetadataHttpNotFound" -> pure AuditsFederatedAuthRequestIssueReasonClientMetadataHttpNotFound
          "ClientMetadataNoResponse" -> pure AuditsFederatedAuthRequestIssueReasonClientMetadataNoResponse
          "ClientMetadataInvalidResponse" -> pure AuditsFederatedAuthRequestIssueReasonClientMetadataInvalidResponse
-         "ClientMetadataMissingPrivacyPolicyUrl" -> pure AuditsFederatedAuthRequestIssueReasonClientMetadataMissingPrivacyPolicyUrl
          "DisabledInSettings" -> pure AuditsFederatedAuthRequestIssueReasonDisabledInSettings
          "ErrorFetchingSignin" -> pure AuditsFederatedAuthRequestIssueReasonErrorFetchingSignin
          "InvalidSigninResponse" -> pure AuditsFederatedAuthRequestIssueReasonInvalidSigninResponse
@@ -886,12 +912,13 @@ instance FromJSON AuditsFederatedAuthRequestIssueReason where
          "IdTokenInvalidRequest" -> pure AuditsFederatedAuthRequestIssueReasonIdTokenInvalidRequest
          "ErrorIdToken" -> pure AuditsFederatedAuthRequestIssueReasonErrorIdToken
          "Canceled" -> pure AuditsFederatedAuthRequestIssueReasonCanceled
+         "RpPageNotVisible" -> pure AuditsFederatedAuthRequestIssueReasonRpPageNotVisible
          _ -> fail "failed to parse AuditsFederatedAuthRequestIssueReason"
 
 instance ToJSON AuditsFederatedAuthRequestIssueReason where
    toJSON v = A.String $
       case v of
-         AuditsFederatedAuthRequestIssueReasonApprovalDeclined -> "ApprovalDeclined"
+         AuditsFederatedAuthRequestIssueReasonShouldEmbargo -> "ShouldEmbargo"
          AuditsFederatedAuthRequestIssueReasonTooManyRequests -> "TooManyRequests"
          AuditsFederatedAuthRequestIssueReasonManifestListHttpNotFound -> "ManifestListHttpNotFound"
          AuditsFederatedAuthRequestIssueReasonManifestListNoResponse -> "ManifestListNoResponse"
@@ -904,7 +931,6 @@ instance ToJSON AuditsFederatedAuthRequestIssueReason where
          AuditsFederatedAuthRequestIssueReasonClientMetadataHttpNotFound -> "ClientMetadataHttpNotFound"
          AuditsFederatedAuthRequestIssueReasonClientMetadataNoResponse -> "ClientMetadataNoResponse"
          AuditsFederatedAuthRequestIssueReasonClientMetadataInvalidResponse -> "ClientMetadataInvalidResponse"
-         AuditsFederatedAuthRequestIssueReasonClientMetadataMissingPrivacyPolicyUrl -> "ClientMetadataMissingPrivacyPolicyUrl"
          AuditsFederatedAuthRequestIssueReasonDisabledInSettings -> "DisabledInSettings"
          AuditsFederatedAuthRequestIssueReasonErrorFetchingSignin -> "ErrorFetchingSignin"
          AuditsFederatedAuthRequestIssueReasonInvalidSigninResponse -> "InvalidSigninResponse"
@@ -917,6 +943,7 @@ instance ToJSON AuditsFederatedAuthRequestIssueReason where
          AuditsFederatedAuthRequestIssueReasonIdTokenInvalidRequest -> "IdTokenInvalidRequest"
          AuditsFederatedAuthRequestIssueReasonErrorIdToken -> "ErrorIdToken"
          AuditsFederatedAuthRequestIssueReasonCanceled -> "Canceled"
+         AuditsFederatedAuthRequestIssueReasonRpPageNotVisible -> "RpPageNotVisible"
 
 
 

@@ -222,6 +222,8 @@ instance Event StorageCacheStorageListUpdated where
 data StorageIndexedDBContentUpdated = StorageIndexedDBContentUpdated {
   -- | Origin to update.
   storageIndexedDBContentUpdatedOrigin :: String,
+  -- | Storage key to update.
+  storageIndexedDBContentUpdatedStorageKey :: String,
   -- | Database to update.
   storageIndexedDBContentUpdatedDatabaseName :: String,
   -- | ObjectStore to update.
@@ -240,7 +242,9 @@ instance Event StorageIndexedDBContentUpdated where
 -- | Type of the 'Storage.indexedDBListUpdated' event.
 data StorageIndexedDBListUpdated = StorageIndexedDBListUpdated {
   -- | Origin to update.
-  storageIndexedDBListUpdatedOrigin :: String
+  storageIndexedDBListUpdatedOrigin :: String,
+  -- | Storage key to update.
+  storageIndexedDBListUpdatedStorageKey :: String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON StorageIndexedDBListUpdated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 27 , A.omitNothingFields = True}
@@ -319,6 +323,29 @@ instance FromJSON  PStorageClearDataForOrigin where
 instance Command PStorageClearDataForOrigin where
    type CommandResponse PStorageClearDataForOrigin = ()
    commandName _ = "Storage.clearDataForOrigin"
+   fromJSON = const . A.Success . const ()
+
+
+-- | Storage.clearDataForStorageKey
+--   Clears storage for storage key.
+
+-- | Parameters of the 'Storage.clearDataForStorageKey' command.
+data PStorageClearDataForStorageKey = PStorageClearDataForStorageKey {
+  -- | Storage key.
+  pStorageClearDataForStorageKeyStorageKey :: String,
+  -- | Comma separated list of StorageType to clear.
+  pStorageClearDataForStorageKeyStorageTypes :: String
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PStorageClearDataForStorageKey  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
+
+instance FromJSON  PStorageClearDataForStorageKey where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
+
+
+instance Command PStorageClearDataForStorageKey where
+   type CommandResponse PStorageClearDataForStorageKey = ()
+   commandName _ = "Storage.clearDataForStorageKey"
    fromJSON = const . A.Success . const ()
 
 
@@ -503,6 +530,27 @@ instance Command PStorageTrackIndexedDBForOrigin where
    fromJSON = const . A.Success . const ()
 
 
+-- | Storage.trackIndexedDBForStorageKey
+--   Registers storage key to be notified when an update occurs to its IndexedDB.
+
+-- | Parameters of the 'Storage.trackIndexedDBForStorageKey' command.
+data PStorageTrackIndexedDBForStorageKey = PStorageTrackIndexedDBForStorageKey {
+  -- | Storage key.
+  pStorageTrackIndexedDBForStorageKeyStorageKey :: String
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PStorageTrackIndexedDBForStorageKey  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 , A.omitNothingFields = True}
+
+instance FromJSON  PStorageTrackIndexedDBForStorageKey where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 35 }
+
+
+instance Command PStorageTrackIndexedDBForStorageKey where
+   type CommandResponse PStorageTrackIndexedDBForStorageKey = ()
+   commandName _ = "Storage.trackIndexedDBForStorageKey"
+   fromJSON = const . A.Success . const ()
+
+
 -- | Storage.untrackCacheStorageForOrigin
 --   Unregisters origin from receiving notifications for cache storage.
 
@@ -542,6 +590,27 @@ instance FromJSON  PStorageUntrackIndexedDBForOrigin where
 instance Command PStorageUntrackIndexedDBForOrigin where
    type CommandResponse PStorageUntrackIndexedDBForOrigin = ()
    commandName _ = "Storage.untrackIndexedDBForOrigin"
+   fromJSON = const . A.Success . const ()
+
+
+-- | Storage.untrackIndexedDBForStorageKey
+--   Unregisters storage key from receiving notifications for IndexedDB.
+
+-- | Parameters of the 'Storage.untrackIndexedDBForStorageKey' command.
+data PStorageUntrackIndexedDBForStorageKey = PStorageUntrackIndexedDBForStorageKey {
+  -- | Storage key.
+  pStorageUntrackIndexedDBForStorageKeyStorageKey :: String
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PStorageUntrackIndexedDBForStorageKey  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 , A.omitNothingFields = True}
+
+instance FromJSON  PStorageUntrackIndexedDBForStorageKey where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 }
+
+
+instance Command PStorageUntrackIndexedDBForStorageKey where
+   type CommandResponse PStorageUntrackIndexedDBForStorageKey = ()
+   commandName _ = "Storage.untrackIndexedDBForStorageKey"
    fromJSON = const . A.Success . const ()
 
 

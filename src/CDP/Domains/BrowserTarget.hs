@@ -786,7 +786,10 @@ data TargetTargetInfo = TargetTargetInfo {
   targetTargetInfoCanAccessOpener :: Bool,
   -- | Frame id of originating window (is only set if target has an opener).
   targetTargetInfoOpenerFrameId :: Maybe DOMPageNetworkEmulationSecurity.PageFrameId,
-  targetTargetInfoBrowserContextId :: Maybe BrowserBrowserContextID
+  targetTargetInfoBrowserContextId :: Maybe BrowserBrowserContextID,
+  -- | Provides additional details for specific target types. For example, for
+  --   the type of "page", this may be set to "portal" or "prerender".
+  targetTargetInfoSubtype :: Maybe String
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON TargetTargetInfo  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
@@ -795,6 +798,31 @@ instance FromJSON  TargetTargetInfo where
    parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
 
 
+
+-- | Type 'Target.FilterEntry'.
+--   A filter used by target query/discovery/auto-attach operations.
+data TargetFilterEntry = TargetFilterEntry {
+  -- | If set, causes exclusion of mathcing targets from the list.
+  targetFilterEntryExclude :: Maybe Bool,
+  -- | If not present, matches any type.
+  targetFilterEntryType :: Maybe String
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON TargetFilterEntry  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
+
+instance FromJSON  TargetFilterEntry where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
+
+
+
+-- | Type 'Target.TargetFilter'.
+--   The entries in TargetFilter are matched sequentially against targets and
+--   the first entry that matches determines if the target is included or not,
+--   depending on the value of `exclude` field in the entry.
+--   If filter is not specified, the one assumed is
+--   [{type: "browser", exclude: true}, {type: "tab", exclude: true}, {}]
+--   (i.e. include everything but `browser` and `tab`).
+type TargetTargetFilter = [TargetFilterEntry]
 
 -- | Type 'Target.RemoteLocation'.
 data TargetRemoteLocation = TargetRemoteLocation {
@@ -1223,8 +1251,18 @@ instance Command PTargetGetTargetInfo where
 --   Retrieves a list of available targets.
 
 -- | Parameters of the 'Target.getTargets' command.
-data PTargetGetTargets = PTargetGetTargets
-instance ToJSON PTargetGetTargets where toJSON _ = A.Null
+data PTargetGetTargets = PTargetGetTargets {
+  -- | Only targets matching filter will be reported. If filter is not specified
+  --   and target discovery is currently enabled, a filter used for target discovery
+  --   is used for consistency.
+  pTargetGetTargetsFilter :: Maybe TargetTargetFilter
+} deriving (Generic, Eq, Show, Read)
+instance ToJSON PTargetGetTargets  where
+   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
+
+instance FromJSON  PTargetGetTargets where
+   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
+
 
 -- | Return type of the 'Target.getTargets' command.
 data TargetGetTargets = TargetGetTargets {
@@ -1258,7 +1296,9 @@ data PTargetSetAutoAttach = PTargetSetAutoAttach {
   -- | Enables "flat" access to the session via specifying sessionId attribute in the commands.
   --   We plan to make this the default, deprecate non-flattened mode,
   --   and eventually retire it. See crbug.com/991325.
-  pTargetSetAutoAttachFlatten :: Maybe Bool
+  pTargetSetAutoAttachFlatten :: Maybe Bool,
+  -- | Only targets matching filter will be attached.
+  pTargetSetAutoAttachFilter :: Maybe TargetTargetFilter
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetSetAutoAttach  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 20 , A.omitNothingFields = True}
@@ -1285,7 +1325,9 @@ data PTargetAutoAttachRelated = PTargetAutoAttachRelated {
   pTargetAutoAttachRelatedTargetId :: TargetTargetID,
   -- | Whether to pause new targets when attaching to them. Use `Runtime.runIfWaitingForDebugger`
   --   to run paused targets.
-  pTargetAutoAttachRelatedWaitForDebuggerOnStart :: Bool
+  pTargetAutoAttachRelatedWaitForDebuggerOnStart :: Bool,
+  -- | Only targets matching filter will be attached.
+  pTargetAutoAttachRelatedFilter :: Maybe TargetTargetFilter
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetAutoAttachRelated  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
@@ -1307,7 +1349,10 @@ instance Command PTargetAutoAttachRelated where
 -- | Parameters of the 'Target.setDiscoverTargets' command.
 data PTargetSetDiscoverTargets = PTargetSetDiscoverTargets {
   -- | Whether to discover available targets.
-  pTargetSetDiscoverTargetsDiscover :: Bool
+  pTargetSetDiscoverTargetsDiscover :: Bool,
+  -- | Only targets matching filter will be attached. If `discover` is false,
+  --   `filter` must be omitted or empty.
+  pTargetSetDiscoverTargetsFilter :: Maybe TargetTargetFilter
 } deriving (Generic, Eq, Show, Read)
 instance ToJSON PTargetSetDiscoverTargets  where
    toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 25 , A.omitNothingFields = True}

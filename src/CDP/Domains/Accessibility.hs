@@ -354,6 +354,8 @@ data AccessibilityAXNode = AccessibilityAXNode {
   accessibilityAXNodeIgnoredReasons :: Maybe [AccessibilityAXProperty],
   -- | This `Node`'s role, whether explicit or implicit.
   accessibilityAXNodeRole :: Maybe AccessibilityAXValue,
+  -- | This `Node`'s Chrome raw role.
+  accessibilityAXNodeChromeRole :: Maybe AccessibilityAXValue,
   -- | The accessible name for this `Node`.
   accessibilityAXNodeName :: Maybe AccessibilityAXValue,
   -- | The accessible description for this `Node`.

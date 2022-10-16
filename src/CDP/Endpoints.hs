@@ -31,11 +31,11 @@ data EPActivateTarget   = EPActivateTarget   { unActivateTarget :: TargetId }
 data EPCloseTarget      = EPCloseTarget      { unCloseTarget :: TargetId }
 data EPFrontend         = EPFrontend
 
-data IsEndpoint where
-    IsEndpoint :: Endpoint ep => ep -> IsEndpoint
+data SomeEndpoint where
+    SomeEndpoint :: Endpoint ep => ep -> SomeEndpoint
 
-elimIsEndpoint :: (forall ep. Endpoint ep => ep -> r) -> IsEndpoint -> r
-elimIsEndpoint f (IsEndpoint ep) = f ep
+fromSomeEndpoint :: (forall ep. Endpoint ep => ep -> r) -> SomeEndpoint -> r
+fromSomeEndpoint f (SomeEndpoint ep) = f ep
 
 class Endpoint ep where
     type EndpointResponse ep :: *

@@ -12,8 +12,8 @@ module CDP
     , EPFrontend        (..)
     , Endpoint
     , EndpointResponse
-    , IsEndpoint        (..)
-    , elimIsEndpoint
+    , SomeEndpoint      (..)
+    , fromSomeEndpoint
     , BrowserVersion    (..)
     , TargetInfo        (..)
     , TargetId

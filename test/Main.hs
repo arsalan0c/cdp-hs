@@ -16,13 +16,13 @@ main = hspec $ do
             let cfg = def
             targetId <- fmap CDP.tiId . CDP.endpoint cfg $ CDP.EPOpenNewTab "https://haskell.foundation"
 
-            void $ mapM (CDP.elimIsEndpoint $ void . CDP.endpoint cfg)
-                [ CDP.IsEndpoint CDP.EPBrowserVersion
-                , CDP.IsEndpoint CDP.EPAllTargets
-                , CDP.IsEndpoint CDP.EPCurrentProtocol
-                , CDP.IsEndpoint CDP.EPFrontend
-                , CDP.IsEndpoint $ CDP.EPActivateTarget targetId
-                , CDP.IsEndpoint $ CDP.EPCloseTarget targetId
+            void $ mapM (CDP.fromSomeEndpoint $ void . CDP.endpoint cfg)
+                [ CDP.SomeEndpoint CDP.EPBrowserVersion
+                , CDP.SomeEndpoint CDP.EPAllTargets
+                , CDP.SomeEndpoint CDP.EPCurrentProtocol
+                , CDP.SomeEndpoint CDP.EPFrontend
+                , CDP.SomeEndpoint $ CDP.EPActivateTarget targetId
+                , CDP.SomeEndpoint $ CDP.EPCloseTarget targetId
                 ]
 
     describe "Command responses of the expected type are received" $ do

@@ -5,6 +5,7 @@
 {-# LANGUAGE GADTs                  #-}
 {-# LANGUAGE ScopedTypeVariables    #-}
 {-# LANGUAGE TypeFamilies           #-}
+{-# LANGUAGE RankNTypes    #-}
 
 module CDP.Runtime 
     ( module CDP.Runtime
@@ -190,7 +191,7 @@ instance (ToJSON a) => ToJSON (CommandObj a) where
 -- | Sends a command to the browser and waits until a response is received,
 --   for timeout duration configured
 sendCommandWait
-    :: forall cmd. Command cmd
+    :: Command cmd
     => Handle -> cmd -> IO (CommandResponse cmd)
 sendCommandWait handle params = do
     promise <- sendCommand handle params
@@ -218,6 +219,12 @@ sendCommand handle params = do
             A.Success x   -> Right x
   where
     proxy = Proxy :: Proxy cmd
+
+data SomeCommand where
+    SomeCommand :: Command cmd => cmd -> SomeCommand
+
+fromSomeCommand :: (forall cmd. Command cmd => cmd -> r) -> SomeCommand -> r
+fromSomeCommand f (SomeCommand c) = f c
 
 -- | Sends a request to the specified endpoint
 endpoint :: Endpoint ep => Config -> ep -> IO (EndpointResponse ep)

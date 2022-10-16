@@ -226,6 +226,6 @@ data SomeCommand where
 fromSomeCommand :: (forall cmd. Command cmd => cmd -> r) -> SomeCommand -> r
 fromSomeCommand f (SomeCommand c) = f c
 
--- | Sends a request to the specified endpoint
+-- | Sends a request with the given parameters to the corresponding endpoint
 endpoint :: Endpoint ep => Config -> ep -> IO (EndpointResponse ep)
 endpoint = getEndpoint . hostPort

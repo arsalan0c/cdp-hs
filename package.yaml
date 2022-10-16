@@ -11,7 +11,9 @@ extra-doc-files:
   - README.md
 
 library:
-  source-dirs: src
+  source-dirs: 
+    - src
+    - gen
 
 dependencies:
   - base
@@ -31,6 +33,8 @@ dependencies:
   - monad-loops
   - data-default
   - process
+  - filepath
+  - directory
 
 executables:
   cdp-gen:
@@ -38,11 +42,7 @@ executables:
     main: Main.hs
     default-extensions:
       - Strict
-    dependencies:
-      - containers
-      - filepath
-      - directory
-
+  
   cdp-example-print-page:
     source-dirs: examples
     main: print-page.hs
@@ -61,6 +61,15 @@ executables:
     main: open-twitter.hs
     dependencies:
       - cdp
+
+  cdp-example-endpoints:
+    source-dirs: examples
+    main: endpoints.hs
+    dependencies:
+      - cdp
+      - blaze-html
+      - blaze-markup
+      - utf8-string
 
 tests:
   cdp-test:

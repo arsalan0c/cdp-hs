@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings    #-}
 
 module Main (main) where
 
@@ -11,6 +11,20 @@ import qualified CDP as CDP
 
 main :: IO ()
 main = hspec $ do
+    describe "Endpoints responses of the expected type are received" $ do
+        it "sends requests to all endpoints" $ do
+            let cfg = def
+            targetId <- fmap CDP.tiId . CDP.endpoint cfg $ CDP.EPOpenNewTab "https://haskell.foundation"
+
+            void $ mapM (CDP.elimIsEndpoint $ void . CDP.endpoint cfg)
+                [ CDP.IsEndpoint CDP.EPBrowserVersion
+                , CDP.IsEndpoint CDP.EPAllTargets
+                , CDP.IsEndpoint CDP.EPCurrentProtocol
+                , CDP.IsEndpoint CDP.EPFrontend
+                , CDP.IsEndpoint $ CDP.EPActivateTarget targetId
+                , CDP.IsEndpoint $ CDP.EPCloseTarget targetId
+                ]
+
     describe "Command responses of the expected type are received" $ do
         it "sends commands: w/o params w/o results" $ do
             CDP.runClient def $ \handle -> do
@@ -56,22 +70,16 @@ main = hspec $ do
             frameIdsM <- newMVar []
             CDP.runClient def $ \handle -> do
                 -- register handler
-                CDP.subscribe handle $ \e -> modifyMVar_ frameIdsM $ 
+                void $ CDP.subscribe handle $ \e -> modifyMVar_ frameIdsM $ 
                     \ids -> pure ((CDP.pageFrameId . CDP.pageFrameNavigatedFrame $ e) : ids)
                 -- enable events
                 CDP.sendCommandWait handle $ CDP.PPageEnable
                 -- navigate to page
-                CDP.sendCommandWait handle $
+                void $ CDP.sendCommandWait handle $
                     CDP.PPageNavigate "http://wikipedia.com" Nothing Nothing Nothing Nothing
                 -- wait for events
                 threadDelay 5000000
             
             -- check at least 1 event was received
             ids <- readMVar frameIdsM
-            length ids `shouldSatisfy` (> 0)
-
-        
-
-            
-        
-                
+            length ids `shouldSatisfy` (> 0)                

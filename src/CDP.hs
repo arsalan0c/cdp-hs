@@ -1,7 +1,25 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module CDP
-    ( ClientApp
+    ( Error             (..)
+    , ProtocolError     (..)
+    , EPBrowserVersion  (..)
+    , EPAllTargets      (..)
+    , EPCurrentProtocol (..)
+    , EPOpenNewTab      (..)
+    , EPActivateTarget  (..)
+    , EPCloseTarget     (..)
+    , EPFrontend        (..)
+    , Endpoint
+    , EndpointResponse
+    , IsEndpoint        (..)
+    , elimIsEndpoint
+    , BrowserVersion    (..)
+    , TargetInfo        (..)
+    , TargetId
+    , endpoint
+
+    , ClientApp
     , Handle
     , Config(..)
     , runClient

@@ -11,7 +11,9 @@ module CDP
     , unsubscribe
 
     , Command (..)
+    , SomeCommand (..)
     , Promise (..)
+    , fromSomeCommand
     , readPromise
     , sendCommand
     , sendCommandWait

@@ -232,8 +232,8 @@ instance Show Error where
     show (ERRParse msg)     = unlines ["error in parsing a message received from the protocol:", msg]
     show (ERRProtocol pe)   = show pe 
 
-data IsCommand where
-    IsCommand :: Command cmd => cmd -> IsCommand
+data SomeCommand where
+    SomeCommand :: Command cmd => cmd -> SomeCommand
 
-elimIsCommand :: (forall cmd. Command cmd => cmd -> r) -> IsCommand -> r
-elimIsCommand f (IsCommand c) = f c
+fromSomeCommand :: (forall cmd. Command cmd => cmd -> r) -> SomeCommand -> r
+fromSomeCommand f (SomeCommand c) = f c

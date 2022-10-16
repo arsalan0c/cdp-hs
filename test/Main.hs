@@ -16,9 +16,9 @@ main = hspec $ do
 
         it "sends commands: w/o params w/ results" $ do
             void $ CDP.runClient def $ \handle -> do
-                mapM (CDP.elimIsCommand $ void . (CDP.sendCommandWait handle)) $
-                    [ CDP.IsCommand CDP.PBrowserGetVersion
-                    , CDP.IsCommand CDP.PEmulationCanEmulate
+                mapM (CDP.fromSomeCommand $ void . (CDP.sendCommandWait handle)) $
+                    [ CDP.SomeCommand CDP.PBrowserGetVersion
+                    , CDP.SomeCommand CDP.PEmulationCanEmulate
                     ]
 
         it "sends commands: w/ params w/o results" $ do

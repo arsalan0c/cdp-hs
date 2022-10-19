@@ -1,0 +1,40 @@
+{-# LANGUAGE OverloadedStrings   #-}
+
+module Main where
+
+import Data.Default
+import Control.Concurrent (threadDelay)
+
+import qualified CDP as CDP
+
+main :: IO ()
+main = do
+    CDP.runClient def $ \handle -> do
+        sessionId <- attachTarget handle
+        subPageLoad handle sessionId
+
+-- Attaches to target, returning the session id
+attachTarget :: CDP.Handle -> IO String
+attachTarget handle = do
+    -- get a target id
+    targetInfo <- head . CDP.targetGetTargetsTargetInfos <$> CDP.sendCommandWait handle CDP.PTargetGetTargets
+    let targetId = CDP.targetTargetInfoTargetId targetInfo
+    -- get a session id by attaching to the target
+    CDP.targetAttachToTargetSessionId <$> do
+        CDP.sendCommandWait handle $
+            -- to enable sessions, flatten must be set to True
+            CDP.PTargetAttachToTarget targetId (Just True)
+
+-- | Subscribes to page load events for a given session
+subPageLoad :: CDP.Handle -> String -> IO ()
+subPageLoad handle sessionId = do
+    -- register a handler for the page load event 
+    CDP.subscribeForSesssion handle sessionId (print . CDP.pageLoadEventFiredTimestamp)
+    -- start receiving events
+    CDP.sendCommandForSessionWait handle sessionId CDP.PPageEnable
+    -- navigate to a page, triggering the page load event
+    CDP.sendCommandForSessionWait handle sessionId $
+        CDP.PPageNavigate "http://haskell.foundation" Nothing Nothing Nothing Nothing
+    -- stop the program from terminating, to keep receiving events
+    forever $ do
+        threadDelay 1000

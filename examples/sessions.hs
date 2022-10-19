@@ -34,7 +34,7 @@ subPageLoad handle sessionId = do
     -- register a handler for the page load event 
     CDP.subscribeForSession handle sessionId (print . CDP.pageLoadEventFiredTimestamp)
     -- start receiving events
-    CDP.sendCommandForSessionWait handle sessionId CDP.PPageEnable
+    CDP.sendCommandForSessionWait handle sessionId CDP.pPageEnable
     -- navigate to a page, triggering the page load event
     CDP.sendCommandForSessionWait handle sessionId $
         CDP.pPageNavigate "http://haskell.foundation"

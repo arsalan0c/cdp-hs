@@ -67,7 +67,7 @@ runClient config app = do
                             "Could not parse message: " ++ show bs
                         Just im | Just method <- imMethod im -> do
                             IO.hPutStrLn IO.stderr $ "dispatching with method " ++ show method
-                            dispatchEvent Handle{..} method (imParams im)
+                            dispatchEvent Handle{..} (imSessionId im) method (imParams im)
                         Just im | Just id' <- imId im ->
                             dispatchCommandResponse Handle {..} id'
                             (imError im) (imResult im)
@@ -77,28 +77,30 @@ runClient config app = do
 -- | A message from the browser.  We don't know yet if this is a command
 -- response or an event
 data IncomingMessage = IncomingMessage
-    { imMethod :: Maybe String
-    , imParams :: Maybe A.Value
-    , imId     :: Maybe CommandId
-    , imError  :: Maybe ProtocolError
-    , imResult :: Maybe A.Value
+    { imMethod    :: Maybe String
+    , imParams    :: Maybe A.Value
+    , imSessionId :: Maybe SessionId
+    , imId        :: Maybe CommandId
+    , imError     :: Maybe ProtocolError
+    , imResult    :: Maybe A.Value
     }
 
 instance FromJSON IncomingMessage where
     parseJSON = A.withObject "IncomingMessage" $ \obj -> IncomingMessage
         <$> obj A..:? "method"
         <*> obj A..:? "params"
+        <*> obj A..:? "sessionId"
         <*> obj A..:? "id"
         <*> obj A..:? "error"
         <*> obj A..:? "result"
 
 dispatchCommandResponse
     :: Handle -> CommandId -> Maybe ProtocolError -> Maybe A.Value -> IO ()
-dispatchCommandResponse h cid mbErr mbVal = do
-    mbMVar <- IORef.atomicModifyIORef' (commandBuffer h) $ \buffer ->
-        case M.lookup cid buffer of
+dispatchCommandResponse handle commandId mbErr mbVal = do
+    mbMVar <- IORef.atomicModifyIORef' (commandBuffer handle) $ \buffer ->
+        case M.lookup commandId buffer of
             Nothing -> (buffer, Nothing)
-            Just mv -> (Map.delete cid buffer, Just mv)
+            Just mv -> (Map.delete commandId buffer, Just mv)
     case mbMVar of
         Nothing -> pure ()
         Just mv -> putMVar mv $ case mbErr of
@@ -107,11 +109,11 @@ dispatchCommandResponse h cid mbErr mbVal = do
                 Just val -> Right val
                 Nothing  -> Right A.Null
 
-dispatchEvent :: Handle -> String -> Maybe A.Value -> IO ()
-dispatchEvent handle method mbParams = do
+dispatchEvent :: Handle -> Maybe SessionId -> String -> Maybe A.Value -> IO ()
+dispatchEvent handle mbSessionId method mbParams = do
     byMethod <- subscriptionsHandlers <$> IORef.readIORef (subscriptions handle)
-    case Map.lookup method byMethod of
-        Nothing -> IO.hPutStrLn IO.stderr $ "No handler for " ++ show method
+    case Map.lookup (method, mbSessionId) byMethod of
+        Nothing -> IO.hPutStrLn IO.stderr $ "No handler for " ++ show method ++ maybe "" ((", " <>) . show) mbSessionId
         Just byId -> case mbParams of
             Nothing -> IO.hPutStrLn IO.stderr $ "No params for " ++ show method
             Just params -> do
@@ -125,14 +127,21 @@ data Subscription = Subscription
 
 -- | Subscribes to an event
 subscribe :: forall a. Event a => Handle -> (a -> IO ()) -> IO Subscription
-subscribe handle f = do
+subscribe handle handler = subscribe_ handle Nothing handler
+
+-- | Subscribes to an event for a given session
+subscribeForSession :: forall a. Event a => Handle -> SessionId -> (a -> IO ()) -> IO Subscription
+subscribeForSession handle sessionId handler = subscribe_ handle (Just sessionId) handler
+
+subscribe_ :: forall a. Event a => Handle -> Maybe SessionId -> (a -> IO ()) -> IO Subscription
+subscribe_ handle mbSessionId handler = do
     id' <- IORef.atomicModifyIORef' (subscriptions handle) $ \s ->
         let id' = subscriptionsNextId s in
         ( s { subscriptionsNextId   = id' + 1
             , subscriptionsHandlers = Map.insertWith
                 Map.union
                 ename
-                (Map.singleton id' handler)
+                (Map.singleton (id', mbSessionId) handler)
                 (subscriptionsHandlers s)
             }
         , id'
@@ -154,7 +163,7 @@ unsubscribe :: Handle -> Subscription -> IO ()
 unsubscribe handle (Subscription ename id') =
     IORef.atomicModifyIORef' (subscriptions handle) $ \s ->
         ( s { subscriptionsHandlers =
-                Map.adjust (Map.delete id') ename (subscriptionsHandlers s)
+                Map.adjust (Map.delete id' ename (subscriptionsHandlers s))
             }
         , ()
         )
@@ -174,14 +183,16 @@ randomCommandId handle = modifyMVar (randomGen handle) $ \g -> do
     pure (g2, CommandId id)
 
 data CommandObj a = CommandObj
-    { coId     :: CommandId
-    , coMethod :: String
-    , coParams :: a
+    { coSessionId :: Maybe SessionId
+    , coId        :: CommandId
+    , coMethod    :: String
+    , coParams    :: a
     } deriving Show
 
 instance (ToJSON a) => ToJSON (CommandObj a) where
     toJSON cmd = A.object . concat $
-        [ [ "id"     .= coId cmd ]
+        [ maybe [] (\sid -> [ "sessionId" .= sid ]) $ coSessionId cmd
+        , [ "id"     .= coId cmd ]
         , [ "method" .= coMethod cmd ]
         , case toJSON (coParams cmd) of
             A.Null -> []
@@ -189,11 +200,23 @@ instance (ToJSON a) => ToJSON (CommandObj a) where
         ]
 
 -- | Sends a command to the browser and waits until a response is received,
---   for timeout duration configured
+--   for the timeout duration configured
 sendCommandWait
     :: Command cmd
     => Handle -> cmd -> IO (CommandResponse cmd)
-sendCommandWait handle params = do
+sendCommandWait handle params = sendCommandWait_ handle Nothing params
+
+-- | Sends a command to the browser for a given session
+--   and waits until a response is received, for the timeout duration configured
+sendCommandForSessionWait
+    :: Command cmd
+    => Handle -> SessionId -> cmd -> IO (CommandResponse cmd)
+sendCommandForSessionWait handle sessionId params = sendCommandWait_ handle (Just sessionId) params
+
+sendCommandWait_
+    :: Command cmd
+    => Handle -> Maybe SessionId -> cmd -> IO (CommandResponse cmd)
+sendCommandWait_ handle mbSessionId params = do
     promise <- sendCommand handle params
     let r = readPromise promise
     mbRes <- maybe (fmap Just r) (flip timeout r) (commandTimeout . config $ handle)
@@ -205,9 +228,20 @@ sendCommandWait handle params = do
 sendCommand
     :: forall cmd. Command cmd
     => Handle -> cmd -> IO (Promise (CommandResponse cmd))
-sendCommand handle params = do
+sendCommand handle params = sendCommand_ handle Nothing params
+
+-- | Sends a command to the browser for a given session
+sendCommandForSession
+    :: forall cmd. Command cmd
+    => Handle -> SessionId -> cmd -> IO (Promise (CommandResponse cmd))
+sendCommand handle sessionId params = sendCommand_ handle (Just sessionId) params
+
+sendCommand_
+    :: forall cmd. Command cmd
+    => Handle -> Maybe SessionId -> cmd -> IO (Promise (CommandResponse cmd))
+sendCommand_ handle mbSessionId params = do
     id <- randomCommandId handle
-    let co = CommandObj id (commandName proxy) params
+    let co = CommandObj mbSessionId id (commandName proxy) params
     mv <- newEmptyMVar
     IORef.atomicModifyIORef' (commandBuffer handle) $ \buffer ->
         (M.insert id mv buffer, ())

@@ -19,5 +19,6 @@ jobs:
     - name: cdp build
       run: |
         chrome --headless --remote-debugging-port=9222 http://wikipedia.com &
+        sleep 5
         nix-build --attr exe
 

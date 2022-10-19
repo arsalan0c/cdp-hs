@@ -16,11 +16,8 @@ jobs:
         submodules: true
     - uses: cachix/install-nix-action@v14.1
     - uses: browser-actions/setup-chrome@latest
-    - name: run chrome
-      id: rc
-      run: chrome --headless --remote-debugging-port=9222 http://wikipedia.com &
     - name: cdp build
-      id: cb
-      if: steps.rc.outcome == 'success'
-      run: nix-build --attr exe
+      run: |
+        chrome --headless --remote-debugging-port=9222 http://wikipedia.com &
+        nix-build --attr exe
 

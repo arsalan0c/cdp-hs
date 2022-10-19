@@ -9,6 +9,7 @@
 
 module CDP.Runtime 
     ( module CDP.Runtime
+    , module CDP.Endpoints
     , module CDP.Internal.Utils
     ) where
 
@@ -41,12 +42,13 @@ import System.Timeout
 import Data.Char
 import qualified System.IO as IO
 import qualified Data.IORef as IORef
+import qualified Network.HTTP.Simple  as Http
 
-import CDP.Internal.Endpoints
 import CDP.Internal.Utils
+import CDP.Endpoints
+
 
 type ClientApp b  = Handle -> IO b
-
 runClient :: forall b. Config -> ClientApp b -> IO b
 runClient config app = do
     randomGen      <- newMVar . mkStdGen $ 42
@@ -54,10 +56,7 @@ runClient config app = do
     commandBuffer  <- IORef.newIORef Map.empty
     responseBuffer <- newMVar []
 
-    let endpoint = hostPortToEndpoint $ hostPort config
-    pi <- getPageInfo endpoint
-    let (host, port, path) = parseUri . debuggerUrl $ pi
-
+    (host, port, path) <- browserAddress $ hostPort config
     WS.runClient host port path $ \conn -> do
         let listen = forkIO $ do
                 listenThread <- myThreadId
@@ -215,25 +214,18 @@ sendCommand handle params = do
     WS.sendTextData (conn handle) . A.encode $ co
     pure $ Promise mv $ \entry -> case entry of
         Left err -> Left $ ERRProtocol err
-        Right v  -> case (fromJSON (Proxy :: Proxy cmd) v) of
+        Right v  -> case fromJSON proxy v of
             A.Error   err -> Left $ ERRParse err
             A.Success x   -> Right x
   where
     proxy = Proxy :: Proxy cmd
-
-data Error = 
-      ERRNoResponse
-    | ERRParse String
-    | ERRProtocol ProtocolError
-    deriving Eq
-instance Exception Error
-instance Show Error where
-    show ERRNoResponse      = "no response received from the protocol"
-    show (ERRParse msg)     = unlines ["error in parsing a message received from the protocol:", msg]
-    show (ERRProtocol pe)   = show pe 
 
 data SomeCommand where
     SomeCommand :: Command cmd => cmd -> SomeCommand
 
 fromSomeCommand :: (forall cmd. Command cmd => cmd -> r) -> SomeCommand -> r
 fromSomeCommand f (SomeCommand c) = f c
+
+-- | Sends a request with the given parameters to the corresponding endpoint
+endpoint :: Endpoint ep => Config -> ep -> IO (EndpointResponse ep)
+endpoint = getEndpoint . hostPort

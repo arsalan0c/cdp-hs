@@ -49,7 +49,7 @@ data Subscriptions = Subscriptions
     { subscriptionsHandlers :: Map.Map String (Map.Map Int (A.Value -> IO ()))
     , subscriptionsNextId   :: Int
     }
-
+ 
 data Handle = Handle
     { config            :: Config
     , randomGen        :: MVar StdGen
@@ -61,16 +61,16 @@ data Handle = Handle
     }
 
 data Config = Config
-    { hostPort              :: (String, Int)
-    , doLogResponses        :: Bool
-    , commandTimeout        :: Maybe Int
-        -- ^ number of microseconds to wait for a command response.
-        --   waits forever if Nothing 
+    { hostPort           :: (String, Int) 
+    , doLogResponses     :: Bool
+      -- | Number of microseconds to wait for a command response.
+      --   Waits forever if Nothing.
+    , commandTimeout     :: Maybe Int
     } deriving Show
 instance Default Config where
     def = Config{..}
       where
-        hostPort       = ("http://127.0.0.1", 9222) 
+        hostPort       = ("http://127.0.0.1", 9222)
         doLogResponses = False
         commandTimeout = def
 
@@ -112,6 +112,17 @@ instance FromJSON ProtocolError where
             -32602 -> PEInvalidParams  msg
             -32603 -> PEInternalError  msg
             _      -> if code > -32099 && code < -32000 then PEServerError msg else PEOther msg
+
+data Error = 
+    ERRNoResponse
+    | ERRParse String
+    | ERRProtocol ProtocolError
+    deriving Eq
+instance Exception Error
+instance Show Error where
+    show ERRNoResponse      = "no response received from the browser"
+    show (ERRParse msg)     = unlines ["error in parsing a message received from the browser:", msg]
+    show (ERRProtocol pe)   = unlines ["error encountered by the browser:", show pe] 
 
 uncapitalizeFirst :: String -> String
 uncapitalizeFirst []     = []

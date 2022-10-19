@@ -59,9 +59,9 @@ data PerformanceTimelineLargestContentfulPaint = PerformanceTimelineLargestConte
     -- | The number of pixels being painted.
     performanceTimelineLargestContentfulPaintSize :: Double,
     -- | The id attribute of the element, if available.
-    performanceTimelineLargestContentfulPaintElementId :: Maybe String,
+    performanceTimelineLargestContentfulPaintElementId :: Maybe T.Text,
     -- | The URL of the image (may be trimmed).
-    performanceTimelineLargestContentfulPaintUrl :: Maybe String,
+    performanceTimelineLargestContentfulPaintUrl :: Maybe T.Text,
     performanceTimelineLargestContentfulPaintNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMBackendNodeId
   }
   deriving (Eq, Show)
@@ -135,9 +135,9 @@ data PerformanceTimelineTimelineEvent = PerformanceTimelineTimelineEvent
     performanceTimelineTimelineEventFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId,
     -- | The event type, as specified in https://w3c.github.io/performance-timeline/#dom-performanceentry-entrytype
     --   This determines which of the optional "details" fiedls is present.
-    performanceTimelineTimelineEventType :: String,
+    performanceTimelineTimelineEventType :: T.Text,
     -- | Name may be empty depending on the type.
-    performanceTimelineTimelineEventName :: String,
+    performanceTimelineTimelineEventName :: T.Text,
     -- | Time in seconds since Epoch, monotonically increasing within document lifetime.
     performanceTimelineTimelineEventTime :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
     -- | Event duration, if applicable.
@@ -189,7 +189,7 @@ data PPerformanceTimelineEnable = PPerformanceTimelineEnable
     --   The specified filter overrides any previous filters, passing empty
     --   filter disables recording.
     --   Note that not all types exposed to the web platform are currently supported.
-    pPerformanceTimelineEnableEventTypes :: [String]
+    pPerformanceTimelineEnableEventTypes :: [T.Text]
   }
   deriving (Eq, Show)
 pPerformanceTimelineEnable
@@ -198,7 +198,7 @@ pPerformanceTimelineEnable
   --   The specified filter overrides any previous filters, passing empty
   --   filter disables recording.
   --   Note that not all types exposed to the web platform are currently supported.
-  :: [String]
+  :: [T.Text]
   -> PPerformanceTimelineEnable
 pPerformanceTimelineEnable
   arg_pPerformanceTimelineEnableEventTypes

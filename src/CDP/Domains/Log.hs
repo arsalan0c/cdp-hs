@@ -116,12 +116,12 @@ data LogLogEntry = LogLogEntry
     -- | Log entry severity.
     logLogEntryLevel :: LogLogEntryLevel,
     -- | Logged text.
-    logLogEntryText :: String,
+    logLogEntryText :: T.Text,
     logLogEntryCategory :: Maybe LogLogEntryCategory,
     -- | Timestamp when this entry was added.
     logLogEntryTimestamp :: Runtime.RuntimeTimestamp,
     -- | URL of the resource if known.
-    logLogEntryUrl :: Maybe String,
+    logLogEntryUrl :: Maybe T.Text,
     -- | Line number in the resource.
     logLogEntryLineNumber :: Maybe Int,
     -- | JavaScript stack trace.
@@ -129,7 +129,7 @@ data LogLogEntry = LogLogEntry
     -- | Identifier of the network request associated with this entry.
     logLogEntryNetworkRequestId :: Maybe DOMPageNetworkEmulationSecurity.NetworkRequestId,
     -- | Identifier of the worker associated with this entry.
-    logLogEntryWorkerId :: Maybe String,
+    logLogEntryWorkerId :: Maybe T.Text,
     -- | Call arguments.
     logLogEntryArgs :: Maybe [Runtime.RuntimeRemoteObject]
   }

@@ -57,12 +57,12 @@ import CDP.Internal.Utils
 data PEventBreakpointsSetInstrumentationBreakpoint = PEventBreakpointsSetInstrumentationBreakpoint
   {
     -- | Instrumentation name to stop on.
-    pEventBreakpointsSetInstrumentationBreakpointEventName :: String
+    pEventBreakpointsSetInstrumentationBreakpointEventName :: T.Text
   }
   deriving (Eq, Show)
 pEventBreakpointsSetInstrumentationBreakpoint
   -- | Instrumentation name to stop on.
-  :: String
+  :: T.Text
   -> PEventBreakpointsSetInstrumentationBreakpoint
 pEventBreakpointsSetInstrumentationBreakpoint
   arg_pEventBreakpointsSetInstrumentationBreakpointEventName
@@ -83,12 +83,12 @@ instance Command PEventBreakpointsSetInstrumentationBreakpoint where
 data PEventBreakpointsRemoveInstrumentationBreakpoint = PEventBreakpointsRemoveInstrumentationBreakpoint
   {
     -- | Instrumentation name to stop on.
-    pEventBreakpointsRemoveInstrumentationBreakpointEventName :: String
+    pEventBreakpointsRemoveInstrumentationBreakpointEventName :: T.Text
   }
   deriving (Eq, Show)
 pEventBreakpointsRemoveInstrumentationBreakpoint
   -- | Instrumentation name to stop on.
-  :: String
+  :: T.Text
   -> PEventBreakpointsRemoveInstrumentationBreakpoint
 pEventBreakpointsRemoveInstrumentationBreakpoint
   arg_pEventBreakpointsRemoveInstrumentationBreakpointEventName

@@ -52,11 +52,11 @@ import CDP.Internal.Utils
 -- | Type 'Cast.Sink'.
 data CastSink = CastSink
   {
-    castSinkName :: String,
-    castSinkId :: String,
+    castSinkName :: T.Text,
+    castSinkId :: T.Text,
     -- | Text describing the current session. Present only if there is an active
     --   session on the sink.
-    castSinkSession :: Maybe String
+    castSinkSession :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON CastSink where
@@ -86,7 +86,7 @@ instance Event CastSinksUpdated where
 -- | Type of the 'Cast.issueUpdated' event.
 data CastIssueUpdated = CastIssueUpdated
   {
-    castIssueUpdatedIssueMessage :: String
+    castIssueUpdatedIssueMessage :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON CastIssueUpdated where
@@ -104,7 +104,7 @@ instance Event CastIssueUpdated where
 -- | Parameters of the 'Cast.enable' command.
 data PCastEnable = PCastEnable
   {
-    pCastEnablePresentationUrl :: Maybe String
+    pCastEnablePresentationUrl :: Maybe T.Text
   }
   deriving (Eq, Show)
 pCastEnable
@@ -143,11 +143,11 @@ instance Command PCastDisable where
 -- | Parameters of the 'Cast.setSinkToUse' command.
 data PCastSetSinkToUse = PCastSetSinkToUse
   {
-    pCastSetSinkToUseSinkName :: String
+    pCastSetSinkToUseSinkName :: T.Text
   }
   deriving (Eq, Show)
 pCastSetSinkToUse
-  :: String
+  :: T.Text
   -> PCastSetSinkToUse
 pCastSetSinkToUse
   arg_pCastSetSinkToUseSinkName
@@ -167,11 +167,11 @@ instance Command PCastSetSinkToUse where
 -- | Parameters of the 'Cast.startDesktopMirroring' command.
 data PCastStartDesktopMirroring = PCastStartDesktopMirroring
   {
-    pCastStartDesktopMirroringSinkName :: String
+    pCastStartDesktopMirroringSinkName :: T.Text
   }
   deriving (Eq, Show)
 pCastStartDesktopMirroring
-  :: String
+  :: T.Text
   -> PCastStartDesktopMirroring
 pCastStartDesktopMirroring
   arg_pCastStartDesktopMirroringSinkName
@@ -191,11 +191,11 @@ instance Command PCastStartDesktopMirroring where
 -- | Parameters of the 'Cast.startTabMirroring' command.
 data PCastStartTabMirroring = PCastStartTabMirroring
   {
-    pCastStartTabMirroringSinkName :: String
+    pCastStartTabMirroringSinkName :: T.Text
   }
   deriving (Eq, Show)
 pCastStartTabMirroring
-  :: String
+  :: T.Text
   -> PCastStartTabMirroring
 pCastStartTabMirroring
   arg_pCastStartTabMirroringSinkName
@@ -215,11 +215,11 @@ instance Command PCastStartTabMirroring where
 -- | Parameters of the 'Cast.stopCasting' command.
 data PCastStopCasting = PCastStopCasting
   {
-    pCastStopCastingSinkName :: String
+    pCastStopCastingSinkName :: T.Text
   }
   deriving (Eq, Show)
 pCastStopCasting
-  :: String
+  :: T.Text
   -> PCastStopCasting
 pCastStopCasting
   arg_pCastStopCastingSinkName

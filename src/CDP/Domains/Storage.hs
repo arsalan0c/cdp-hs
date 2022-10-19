@@ -50,7 +50,7 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 
 
 -- | Type 'Storage.SerializedStorageKey'.
-type StorageSerializedStorageKey = String
+type StorageSerializedStorageKey = T.Text
 
 -- | Type 'Storage.StorageType'.
 --   Enum of possible storage types.
@@ -111,7 +111,7 @@ instance ToJSON StorageUsageForType where
 --   Tokens from that issuer.
 data StorageTrustTokens = StorageTrustTokens
   {
-    storageTrustTokensIssuerOrigin :: String,
+    storageTrustTokensIssuerOrigin :: T.Text,
     storageTrustTokensCount :: Double
   }
   deriving (Eq, Show)
@@ -149,8 +149,8 @@ instance ToJSON StorageInterestGroupAccessType where
 --   Ad advertising element inside an interest group.
 data StorageInterestGroupAd = StorageInterestGroupAd
   {
-    storageInterestGroupAdRenderUrl :: String,
-    storageInterestGroupAdMetadata :: Maybe String
+    storageInterestGroupAdRenderUrl :: T.Text,
+    storageInterestGroupAdMetadata :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON StorageInterestGroupAd where
@@ -167,16 +167,16 @@ instance ToJSON StorageInterestGroupAd where
 --   The full details of an interest group.
 data StorageInterestGroupDetails = StorageInterestGroupDetails
   {
-    storageInterestGroupDetailsOwnerOrigin :: String,
-    storageInterestGroupDetailsName :: String,
+    storageInterestGroupDetailsOwnerOrigin :: T.Text,
+    storageInterestGroupDetailsName :: T.Text,
     storageInterestGroupDetailsExpirationTime :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
-    storageInterestGroupDetailsJoiningOrigin :: String,
-    storageInterestGroupDetailsBiddingUrl :: Maybe String,
-    storageInterestGroupDetailsBiddingWasmHelperUrl :: Maybe String,
-    storageInterestGroupDetailsUpdateUrl :: Maybe String,
-    storageInterestGroupDetailsTrustedBiddingSignalsUrl :: Maybe String,
-    storageInterestGroupDetailsTrustedBiddingSignalsKeys :: [String],
-    storageInterestGroupDetailsUserBiddingSignals :: Maybe String,
+    storageInterestGroupDetailsJoiningOrigin :: T.Text,
+    storageInterestGroupDetailsBiddingUrl :: Maybe T.Text,
+    storageInterestGroupDetailsBiddingWasmHelperUrl :: Maybe T.Text,
+    storageInterestGroupDetailsUpdateUrl :: Maybe T.Text,
+    storageInterestGroupDetailsTrustedBiddingSignalsUrl :: Maybe T.Text,
+    storageInterestGroupDetailsTrustedBiddingSignalsKeys :: [T.Text],
+    storageInterestGroupDetailsUserBiddingSignals :: Maybe T.Text,
     storageInterestGroupDetailsAds :: [StorageInterestGroupAd],
     storageInterestGroupDetailsAdComponents :: [StorageInterestGroupAd]
   }
@@ -215,9 +215,9 @@ instance ToJSON StorageInterestGroupDetails where
 data StorageCacheStorageContentUpdated = StorageCacheStorageContentUpdated
   {
     -- | Origin to update.
-    storageCacheStorageContentUpdatedOrigin :: String,
+    storageCacheStorageContentUpdatedOrigin :: T.Text,
     -- | Name of cache in origin.
-    storageCacheStorageContentUpdatedCacheName :: String
+    storageCacheStorageContentUpdatedCacheName :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON StorageCacheStorageContentUpdated where
@@ -231,7 +231,7 @@ instance Event StorageCacheStorageContentUpdated where
 data StorageCacheStorageListUpdated = StorageCacheStorageListUpdated
   {
     -- | Origin to update.
-    storageCacheStorageListUpdatedOrigin :: String
+    storageCacheStorageListUpdatedOrigin :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON StorageCacheStorageListUpdated where
@@ -244,13 +244,13 @@ instance Event StorageCacheStorageListUpdated where
 data StorageIndexedDBContentUpdated = StorageIndexedDBContentUpdated
   {
     -- | Origin to update.
-    storageIndexedDBContentUpdatedOrigin :: String,
+    storageIndexedDBContentUpdatedOrigin :: T.Text,
     -- | Storage key to update.
-    storageIndexedDBContentUpdatedStorageKey :: String,
+    storageIndexedDBContentUpdatedStorageKey :: T.Text,
     -- | Database to update.
-    storageIndexedDBContentUpdatedDatabaseName :: String,
+    storageIndexedDBContentUpdatedDatabaseName :: T.Text,
     -- | ObjectStore to update.
-    storageIndexedDBContentUpdatedObjectStoreName :: String
+    storageIndexedDBContentUpdatedObjectStoreName :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON StorageIndexedDBContentUpdated where
@@ -266,9 +266,9 @@ instance Event StorageIndexedDBContentUpdated where
 data StorageIndexedDBListUpdated = StorageIndexedDBListUpdated
   {
     -- | Origin to update.
-    storageIndexedDBListUpdatedOrigin :: String,
+    storageIndexedDBListUpdatedOrigin :: T.Text,
     -- | Storage key to update.
-    storageIndexedDBListUpdatedStorageKey :: String
+    storageIndexedDBListUpdatedStorageKey :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON StorageIndexedDBListUpdated where
@@ -283,8 +283,8 @@ data StorageInterestGroupAccessed = StorageInterestGroupAccessed
   {
     storageInterestGroupAccessedAccessTime :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
     storageInterestGroupAccessedType :: StorageInterestGroupAccessType,
-    storageInterestGroupAccessedOwnerOrigin :: String,
-    storageInterestGroupAccessedName :: String
+    storageInterestGroupAccessedOwnerOrigin :: T.Text,
+    storageInterestGroupAccessedName :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON StorageInterestGroupAccessed where
@@ -333,16 +333,16 @@ instance Command PStorageGetStorageKeyForFrame where
 data PStorageClearDataForOrigin = PStorageClearDataForOrigin
   {
     -- | Security origin.
-    pStorageClearDataForOriginOrigin :: String,
+    pStorageClearDataForOriginOrigin :: T.Text,
     -- | Comma separated list of StorageType to clear.
-    pStorageClearDataForOriginStorageTypes :: String
+    pStorageClearDataForOriginStorageTypes :: T.Text
   }
   deriving (Eq, Show)
 pStorageClearDataForOrigin
   -- | Security origin.
-  :: String
+  :: T.Text
   -- | Comma separated list of StorageType to clear.
-  -> String
+  -> T.Text
   -> PStorageClearDataForOrigin
 pStorageClearDataForOrigin
   arg_pStorageClearDataForOriginOrigin
@@ -366,16 +366,16 @@ instance Command PStorageClearDataForOrigin where
 data PStorageClearDataForStorageKey = PStorageClearDataForStorageKey
   {
     -- | Storage key.
-    pStorageClearDataForStorageKeyStorageKey :: String,
+    pStorageClearDataForStorageKeyStorageKey :: T.Text,
     -- | Comma separated list of StorageType to clear.
-    pStorageClearDataForStorageKeyStorageTypes :: String
+    pStorageClearDataForStorageKeyStorageTypes :: T.Text
   }
   deriving (Eq, Show)
 pStorageClearDataForStorageKey
   -- | Storage key.
-  :: String
+  :: T.Text
   -- | Comma separated list of StorageType to clear.
-  -> String
+  -> T.Text
   -> PStorageClearDataForStorageKey
 pStorageClearDataForStorageKey
   arg_pStorageClearDataForStorageKeyStorageKey
@@ -483,12 +483,12 @@ instance Command PStorageClearCookies where
 data PStorageGetUsageAndQuota = PStorageGetUsageAndQuota
   {
     -- | Security origin.
-    pStorageGetUsageAndQuotaOrigin :: String
+    pStorageGetUsageAndQuotaOrigin :: T.Text
   }
   deriving (Eq, Show)
 pStorageGetUsageAndQuota
   -- | Security origin.
-  :: String
+  :: T.Text
   -> PStorageGetUsageAndQuota
 pStorageGetUsageAndQuota
   arg_pStorageGetUsageAndQuotaOrigin
@@ -526,7 +526,7 @@ instance Command PStorageGetUsageAndQuota where
 data PStorageOverrideQuotaForOrigin = PStorageOverrideQuotaForOrigin
   {
     -- | Security origin.
-    pStorageOverrideQuotaForOriginOrigin :: String,
+    pStorageOverrideQuotaForOriginOrigin :: T.Text,
     -- | The quota size (in bytes) to override the original quota with.
     --   If this is called multiple times, the overridden quota will be equal to
     --   the quotaSize provided in the final call. If this is called without
@@ -539,7 +539,7 @@ data PStorageOverrideQuotaForOrigin = PStorageOverrideQuotaForOrigin
   deriving (Eq, Show)
 pStorageOverrideQuotaForOrigin
   -- | Security origin.
-  :: String
+  :: T.Text
   -> PStorageOverrideQuotaForOrigin
 pStorageOverrideQuotaForOrigin
   arg_pStorageOverrideQuotaForOriginOrigin
@@ -562,12 +562,12 @@ instance Command PStorageOverrideQuotaForOrigin where
 data PStorageTrackCacheStorageForOrigin = PStorageTrackCacheStorageForOrigin
   {
     -- | Security origin.
-    pStorageTrackCacheStorageForOriginOrigin :: String
+    pStorageTrackCacheStorageForOriginOrigin :: T.Text
   }
   deriving (Eq, Show)
 pStorageTrackCacheStorageForOrigin
   -- | Security origin.
-  :: String
+  :: T.Text
   -> PStorageTrackCacheStorageForOrigin
 pStorageTrackCacheStorageForOrigin
   arg_pStorageTrackCacheStorageForOriginOrigin
@@ -588,12 +588,12 @@ instance Command PStorageTrackCacheStorageForOrigin where
 data PStorageTrackIndexedDBForOrigin = PStorageTrackIndexedDBForOrigin
   {
     -- | Security origin.
-    pStorageTrackIndexedDBForOriginOrigin :: String
+    pStorageTrackIndexedDBForOriginOrigin :: T.Text
   }
   deriving (Eq, Show)
 pStorageTrackIndexedDBForOrigin
   -- | Security origin.
-  :: String
+  :: T.Text
   -> PStorageTrackIndexedDBForOrigin
 pStorageTrackIndexedDBForOrigin
   arg_pStorageTrackIndexedDBForOriginOrigin
@@ -614,12 +614,12 @@ instance Command PStorageTrackIndexedDBForOrigin where
 data PStorageTrackIndexedDBForStorageKey = PStorageTrackIndexedDBForStorageKey
   {
     -- | Storage key.
-    pStorageTrackIndexedDBForStorageKeyStorageKey :: String
+    pStorageTrackIndexedDBForStorageKeyStorageKey :: T.Text
   }
   deriving (Eq, Show)
 pStorageTrackIndexedDBForStorageKey
   -- | Storage key.
-  :: String
+  :: T.Text
   -> PStorageTrackIndexedDBForStorageKey
 pStorageTrackIndexedDBForStorageKey
   arg_pStorageTrackIndexedDBForStorageKeyStorageKey
@@ -640,12 +640,12 @@ instance Command PStorageTrackIndexedDBForStorageKey where
 data PStorageUntrackCacheStorageForOrigin = PStorageUntrackCacheStorageForOrigin
   {
     -- | Security origin.
-    pStorageUntrackCacheStorageForOriginOrigin :: String
+    pStorageUntrackCacheStorageForOriginOrigin :: T.Text
   }
   deriving (Eq, Show)
 pStorageUntrackCacheStorageForOrigin
   -- | Security origin.
-  :: String
+  :: T.Text
   -> PStorageUntrackCacheStorageForOrigin
 pStorageUntrackCacheStorageForOrigin
   arg_pStorageUntrackCacheStorageForOriginOrigin
@@ -666,12 +666,12 @@ instance Command PStorageUntrackCacheStorageForOrigin where
 data PStorageUntrackIndexedDBForOrigin = PStorageUntrackIndexedDBForOrigin
   {
     -- | Security origin.
-    pStorageUntrackIndexedDBForOriginOrigin :: String
+    pStorageUntrackIndexedDBForOriginOrigin :: T.Text
   }
   deriving (Eq, Show)
 pStorageUntrackIndexedDBForOrigin
   -- | Security origin.
-  :: String
+  :: T.Text
   -> PStorageUntrackIndexedDBForOrigin
 pStorageUntrackIndexedDBForOrigin
   arg_pStorageUntrackIndexedDBForOriginOrigin
@@ -692,12 +692,12 @@ instance Command PStorageUntrackIndexedDBForOrigin where
 data PStorageUntrackIndexedDBForStorageKey = PStorageUntrackIndexedDBForStorageKey
   {
     -- | Storage key.
-    pStorageUntrackIndexedDBForStorageKeyStorageKey :: String
+    pStorageUntrackIndexedDBForStorageKeyStorageKey :: T.Text
   }
   deriving (Eq, Show)
 pStorageUntrackIndexedDBForStorageKey
   -- | Storage key.
-  :: String
+  :: T.Text
   -> PStorageUntrackIndexedDBForStorageKey
 pStorageUntrackIndexedDBForStorageKey
   arg_pStorageUntrackIndexedDBForStorageKeyStorageKey
@@ -742,11 +742,11 @@ instance Command PStorageGetTrustTokens where
 -- | Parameters of the 'Storage.clearTrustTokens' command.
 data PStorageClearTrustTokens = PStorageClearTrustTokens
   {
-    pStorageClearTrustTokensIssuerOrigin :: String
+    pStorageClearTrustTokensIssuerOrigin :: T.Text
   }
   deriving (Eq, Show)
 pStorageClearTrustTokens
-  :: String
+  :: T.Text
   -> PStorageClearTrustTokens
 pStorageClearTrustTokens
   arg_pStorageClearTrustTokensIssuerOrigin
@@ -774,13 +774,13 @@ instance Command PStorageClearTrustTokens where
 -- | Parameters of the 'Storage.getInterestGroupDetails' command.
 data PStorageGetInterestGroupDetails = PStorageGetInterestGroupDetails
   {
-    pStorageGetInterestGroupDetailsOwnerOrigin :: String,
-    pStorageGetInterestGroupDetailsName :: String
+    pStorageGetInterestGroupDetailsOwnerOrigin :: T.Text,
+    pStorageGetInterestGroupDetailsName :: T.Text
   }
   deriving (Eq, Show)
 pStorageGetInterestGroupDetails
-  :: String
-  -> String
+  :: T.Text
+  -> T.Text
   -> PStorageGetInterestGroupDetails
 pStorageGetInterestGroupDetails
   arg_pStorageGetInterestGroupDetailsOwnerOrigin

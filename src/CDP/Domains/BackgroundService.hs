@@ -78,8 +78,8 @@ instance ToJSON BackgroundServiceServiceName where
 --   A key-value pair for additional event information to pass along.
 data BackgroundServiceEventMetadata = BackgroundServiceEventMetadata
   {
-    backgroundServiceEventMetadataKey :: String,
-    backgroundServiceEventMetadataValue :: String
+    backgroundServiceEventMetadataKey :: T.Text,
+    backgroundServiceEventMetadataValue :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON BackgroundServiceEventMetadata where
@@ -98,15 +98,15 @@ data BackgroundServiceBackgroundServiceEvent = BackgroundServiceBackgroundServic
     -- | Timestamp of the event (in seconds).
     backgroundServiceBackgroundServiceEventTimestamp :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
     -- | The origin this event belongs to.
-    backgroundServiceBackgroundServiceEventOrigin :: String,
+    backgroundServiceBackgroundServiceEventOrigin :: T.Text,
     -- | The Service Worker ID that initiated the event.
     backgroundServiceBackgroundServiceEventServiceWorkerRegistrationId :: ServiceWorker.ServiceWorkerRegistrationID,
     -- | The Background Service this event belongs to.
     backgroundServiceBackgroundServiceEventService :: BackgroundServiceServiceName,
     -- | A description of the event.
-    backgroundServiceBackgroundServiceEventEventName :: String,
+    backgroundServiceBackgroundServiceEventEventName :: T.Text,
     -- | An identifier that groups related events together.
-    backgroundServiceBackgroundServiceEventInstanceId :: String,
+    backgroundServiceBackgroundServiceEventInstanceId :: T.Text,
     -- | A list of event-specific information.
     backgroundServiceBackgroundServiceEventEventMetadata :: [BackgroundServiceEventMetadata]
   }

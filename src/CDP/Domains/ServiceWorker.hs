@@ -49,14 +49,14 @@ import CDP.Domains.BrowserTarget as BrowserTarget
 
 
 -- | Type 'ServiceWorker.RegistrationID'.
-type ServiceWorkerRegistrationID = String
+type ServiceWorkerRegistrationID = T.Text
 
 -- | Type 'ServiceWorker.ServiceWorkerRegistration'.
 --   ServiceWorker registration.
 data ServiceWorkerServiceWorkerRegistration = ServiceWorkerServiceWorkerRegistration
   {
     serviceWorkerServiceWorkerRegistrationRegistrationId :: ServiceWorkerRegistrationID,
-    serviceWorkerServiceWorkerRegistrationScopeURL :: String,
+    serviceWorkerServiceWorkerRegistrationScopeURL :: T.Text,
     serviceWorkerServiceWorkerRegistrationIsDeleted :: Bool
   }
   deriving (Eq, Show)
@@ -114,9 +114,9 @@ instance ToJSON ServiceWorkerServiceWorkerVersionStatus where
 --   ServiceWorker version.
 data ServiceWorkerServiceWorkerVersion = ServiceWorkerServiceWorkerVersion
   {
-    serviceWorkerServiceWorkerVersionVersionId :: String,
+    serviceWorkerServiceWorkerVersionVersionId :: T.Text,
     serviceWorkerServiceWorkerVersionRegistrationId :: ServiceWorkerRegistrationID,
-    serviceWorkerServiceWorkerVersionScriptURL :: String,
+    serviceWorkerServiceWorkerVersionScriptURL :: T.Text,
     serviceWorkerServiceWorkerVersionRunningStatus :: ServiceWorkerServiceWorkerVersionRunningStatus,
     serviceWorkerServiceWorkerVersionStatus :: ServiceWorkerServiceWorkerVersionStatus,
     -- | The Last-Modified header value of the main script.
@@ -156,10 +156,10 @@ instance ToJSON ServiceWorkerServiceWorkerVersion where
 --   ServiceWorker error message.
 data ServiceWorkerServiceWorkerErrorMessage = ServiceWorkerServiceWorkerErrorMessage
   {
-    serviceWorkerServiceWorkerErrorMessageErrorMessage :: String,
+    serviceWorkerServiceWorkerErrorMessageErrorMessage :: T.Text,
     serviceWorkerServiceWorkerErrorMessageRegistrationId :: ServiceWorkerRegistrationID,
-    serviceWorkerServiceWorkerErrorMessageVersionId :: String,
-    serviceWorkerServiceWorkerErrorMessageSourceURL :: String,
+    serviceWorkerServiceWorkerErrorMessageVersionId :: T.Text,
+    serviceWorkerServiceWorkerErrorMessageSourceURL :: T.Text,
     serviceWorkerServiceWorkerErrorMessageLineNumber :: Int,
     serviceWorkerServiceWorkerErrorMessageColumnNumber :: Int
   }
@@ -222,15 +222,15 @@ instance Event ServiceWorkerWorkerVersionUpdated where
 -- | Parameters of the 'ServiceWorker.deliverPushMessage' command.
 data PServiceWorkerDeliverPushMessage = PServiceWorkerDeliverPushMessage
   {
-    pServiceWorkerDeliverPushMessageOrigin :: String,
+    pServiceWorkerDeliverPushMessageOrigin :: T.Text,
     pServiceWorkerDeliverPushMessageRegistrationId :: ServiceWorkerRegistrationID,
-    pServiceWorkerDeliverPushMessageData :: String
+    pServiceWorkerDeliverPushMessageData :: T.Text
   }
   deriving (Eq, Show)
 pServiceWorkerDeliverPushMessage
-  :: String
+  :: T.Text
   -> ServiceWorkerRegistrationID
-  -> String
+  -> T.Text
   -> PServiceWorkerDeliverPushMessage
 pServiceWorkerDeliverPushMessage
   arg_pServiceWorkerDeliverPushMessageOrigin
@@ -270,16 +270,16 @@ instance Command PServiceWorkerDisable where
 -- | Parameters of the 'ServiceWorker.dispatchSyncEvent' command.
 data PServiceWorkerDispatchSyncEvent = PServiceWorkerDispatchSyncEvent
   {
-    pServiceWorkerDispatchSyncEventOrigin :: String,
+    pServiceWorkerDispatchSyncEventOrigin :: T.Text,
     pServiceWorkerDispatchSyncEventRegistrationId :: ServiceWorkerRegistrationID,
-    pServiceWorkerDispatchSyncEventTag :: String,
+    pServiceWorkerDispatchSyncEventTag :: T.Text,
     pServiceWorkerDispatchSyncEventLastChance :: Bool
   }
   deriving (Eq, Show)
 pServiceWorkerDispatchSyncEvent
-  :: String
+  :: T.Text
   -> ServiceWorkerRegistrationID
-  -> String
+  -> T.Text
   -> Bool
   -> PServiceWorkerDispatchSyncEvent
 pServiceWorkerDispatchSyncEvent
@@ -308,15 +308,15 @@ instance Command PServiceWorkerDispatchSyncEvent where
 -- | Parameters of the 'ServiceWorker.dispatchPeriodicSyncEvent' command.
 data PServiceWorkerDispatchPeriodicSyncEvent = PServiceWorkerDispatchPeriodicSyncEvent
   {
-    pServiceWorkerDispatchPeriodicSyncEventOrigin :: String,
+    pServiceWorkerDispatchPeriodicSyncEventOrigin :: T.Text,
     pServiceWorkerDispatchPeriodicSyncEventRegistrationId :: ServiceWorkerRegistrationID,
-    pServiceWorkerDispatchPeriodicSyncEventTag :: String
+    pServiceWorkerDispatchPeriodicSyncEventTag :: T.Text
   }
   deriving (Eq, Show)
 pServiceWorkerDispatchPeriodicSyncEvent
-  :: String
+  :: T.Text
   -> ServiceWorkerRegistrationID
-  -> String
+  -> T.Text
   -> PServiceWorkerDispatchPeriodicSyncEvent
 pServiceWorkerDispatchPeriodicSyncEvent
   arg_pServiceWorkerDispatchPeriodicSyncEventOrigin
@@ -356,11 +356,11 @@ instance Command PServiceWorkerEnable where
 -- | Parameters of the 'ServiceWorker.inspectWorker' command.
 data PServiceWorkerInspectWorker = PServiceWorkerInspectWorker
   {
-    pServiceWorkerInspectWorkerVersionId :: String
+    pServiceWorkerInspectWorkerVersionId :: T.Text
   }
   deriving (Eq, Show)
 pServiceWorkerInspectWorker
-  :: String
+  :: T.Text
   -> PServiceWorkerInspectWorker
 pServiceWorkerInspectWorker
   arg_pServiceWorkerInspectWorkerVersionId
@@ -402,11 +402,11 @@ instance Command PServiceWorkerSetForceUpdateOnPageLoad where
 -- | Parameters of the 'ServiceWorker.skipWaiting' command.
 data PServiceWorkerSkipWaiting = PServiceWorkerSkipWaiting
   {
-    pServiceWorkerSkipWaitingScopeURL :: String
+    pServiceWorkerSkipWaitingScopeURL :: T.Text
   }
   deriving (Eq, Show)
 pServiceWorkerSkipWaiting
-  :: String
+  :: T.Text
   -> PServiceWorkerSkipWaiting
 pServiceWorkerSkipWaiting
   arg_pServiceWorkerSkipWaitingScopeURL
@@ -425,11 +425,11 @@ instance Command PServiceWorkerSkipWaiting where
 -- | Parameters of the 'ServiceWorker.startWorker' command.
 data PServiceWorkerStartWorker = PServiceWorkerStartWorker
   {
-    pServiceWorkerStartWorkerScopeURL :: String
+    pServiceWorkerStartWorkerScopeURL :: T.Text
   }
   deriving (Eq, Show)
 pServiceWorkerStartWorker
-  :: String
+  :: T.Text
   -> PServiceWorkerStartWorker
 pServiceWorkerStartWorker
   arg_pServiceWorkerStartWorkerScopeURL
@@ -463,11 +463,11 @@ instance Command PServiceWorkerStopAllWorkers where
 -- | Parameters of the 'ServiceWorker.stopWorker' command.
 data PServiceWorkerStopWorker = PServiceWorkerStopWorker
   {
-    pServiceWorkerStopWorkerVersionId :: String
+    pServiceWorkerStopWorkerVersionId :: T.Text
   }
   deriving (Eq, Show)
 pServiceWorkerStopWorker
-  :: String
+  :: T.Text
   -> PServiceWorkerStopWorker
 pServiceWorkerStopWorker
   arg_pServiceWorkerStopWorkerVersionId
@@ -486,11 +486,11 @@ instance Command PServiceWorkerStopWorker where
 -- | Parameters of the 'ServiceWorker.unregister' command.
 data PServiceWorkerUnregister = PServiceWorkerUnregister
   {
-    pServiceWorkerUnregisterScopeURL :: String
+    pServiceWorkerUnregisterScopeURL :: T.Text
   }
   deriving (Eq, Show)
 pServiceWorkerUnregister
-  :: String
+  :: T.Text
   -> PServiceWorkerUnregister
 pServiceWorkerUnregister
   arg_pServiceWorkerUnregisterScopeURL
@@ -509,11 +509,11 @@ instance Command PServiceWorkerUnregister where
 -- | Parameters of the 'ServiceWorker.updateRegistration' command.
 data PServiceWorkerUpdateRegistration = PServiceWorkerUpdateRegistration
   {
-    pServiceWorkerUpdateRegistrationScopeURL :: String
+    pServiceWorkerUpdateRegistrationScopeURL :: T.Text
   }
   deriving (Eq, Show)
 pServiceWorkerUpdateRegistration
-  :: String
+  :: T.Text
   -> PServiceWorkerUpdateRegistration
 pServiceWorkerUpdateRegistration
   arg_pServiceWorkerUpdateRegistrationScopeURL

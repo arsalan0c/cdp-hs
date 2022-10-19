@@ -86,7 +86,7 @@ data DOMBackendNode = DOMBackendNode
     -- | `Node`'s nodeType.
     dOMBackendNodeNodeType :: Int,
     -- | `Node`'s nodeName.
-    dOMBackendNodeNodeName :: String,
+    dOMBackendNodeNodeName :: T.Text,
     dOMBackendNodeBackendNodeId :: DOMBackendNodeId
   }
   deriving (Eq, Show)
@@ -210,38 +210,38 @@ data DOMNode = DOMNode
     -- | `Node`'s nodeType.
     dOMNodeNodeType :: Int,
     -- | `Node`'s nodeName.
-    dOMNodeNodeName :: String,
+    dOMNodeNodeName :: T.Text,
     -- | `Node`'s localName.
-    dOMNodeLocalName :: String,
+    dOMNodeLocalName :: T.Text,
     -- | `Node`'s nodeValue.
-    dOMNodeNodeValue :: String,
+    dOMNodeNodeValue :: T.Text,
     -- | Child count for `Container` nodes.
     dOMNodeChildNodeCount :: Maybe Int,
     -- | Child nodes of this node when requested with children.
     dOMNodeChildren :: Maybe [DOMNode],
     -- | Attributes of the `Element` node in the form of flat array `[name1, value1, name2, value2]`.
-    dOMNodeAttributes :: Maybe [String],
+    dOMNodeAttributes :: Maybe [T.Text],
     -- | Document URL that `Document` or `FrameOwner` node points to.
-    dOMNodeDocumentURL :: Maybe String,
+    dOMNodeDocumentURL :: Maybe T.Text,
     -- | Base URL that `Document` or `FrameOwner` node uses for URL completion.
-    dOMNodeBaseURL :: Maybe String,
+    dOMNodeBaseURL :: Maybe T.Text,
     -- | `DocumentType`'s publicId.
-    dOMNodePublicId :: Maybe String,
+    dOMNodePublicId :: Maybe T.Text,
     -- | `DocumentType`'s systemId.
-    dOMNodeSystemId :: Maybe String,
+    dOMNodeSystemId :: Maybe T.Text,
     -- | `DocumentType`'s internalSubset.
-    dOMNodeInternalSubset :: Maybe String,
+    dOMNodeInternalSubset :: Maybe T.Text,
     -- | `Document`'s XML version in case of XML documents.
-    dOMNodeXmlVersion :: Maybe String,
+    dOMNodeXmlVersion :: Maybe T.Text,
     -- | `Attr`'s name.
-    dOMNodeName :: Maybe String,
+    dOMNodeName :: Maybe T.Text,
     -- | `Attr`'s value.
-    dOMNodeValue :: Maybe String,
+    dOMNodeValue :: Maybe T.Text,
     -- | Pseudo element type for this node.
     dOMNodePseudoType :: Maybe DOMPseudoType,
     -- | Pseudo element identifier for this node. Only present if there is a
     --   valid pseudoType.
-    dOMNodePseudoIdentifier :: Maybe String,
+    dOMNodePseudoIdentifier :: Maybe T.Text,
     -- | Shadow root type.
     dOMNodeShadowRootType :: Maybe DOMShadowRootType,
     -- | Frame ID for frame owner elements.
@@ -456,9 +456,9 @@ instance ToJSON DOMRect where
 data DOMCSSComputedStyleProperty = DOMCSSComputedStyleProperty
   {
     -- | Computed style property name.
-    dOMCSSComputedStylePropertyName :: String,
+    dOMCSSComputedStylePropertyName :: T.Text,
     -- | Computed style property value.
-    dOMCSSComputedStylePropertyValue :: String
+    dOMCSSComputedStylePropertyValue :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON DOMCSSComputedStyleProperty where
@@ -477,9 +477,9 @@ data DOMAttributeModified = DOMAttributeModified
     -- | Id of the node that has changed.
     dOMAttributeModifiedNodeId :: DOMNodeId,
     -- | Attribute name.
-    dOMAttributeModifiedName :: String,
+    dOMAttributeModifiedName :: T.Text,
     -- | Attribute value.
-    dOMAttributeModifiedValue :: String
+    dOMAttributeModifiedValue :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON DOMAttributeModified where
@@ -496,7 +496,7 @@ data DOMAttributeRemoved = DOMAttributeRemoved
     -- | Id of the node that has changed.
     dOMAttributeRemovedNodeId :: DOMNodeId,
     -- | A ttribute name.
-    dOMAttributeRemovedName :: String
+    dOMAttributeRemovedName :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON DOMAttributeRemoved where
@@ -512,7 +512,7 @@ data DOMCharacterDataModified = DOMCharacterDataModified
     -- | Id of the node that has changed.
     dOMCharacterDataModifiedNodeId :: DOMNodeId,
     -- | New text value.
-    dOMCharacterDataModifiedCharacterData :: String
+    dOMCharacterDataModifiedCharacterData :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON DOMCharacterDataModified where
@@ -722,7 +722,7 @@ instance ToJSON PDOMCollectClassNamesFromSubtree where
 data DOMCollectClassNamesFromSubtree = DOMCollectClassNamesFromSubtree
   {
     -- | Class name list.
-    dOMCollectClassNamesFromSubtreeClassNames :: [String]
+    dOMCollectClassNamesFromSubtreeClassNames :: [T.Text]
   }
   deriving (Eq, Show)
 instance FromJSON DOMCollectClassNamesFromSubtree where
@@ -890,12 +890,12 @@ instance Command PDOMDisable where
 data PDOMDiscardSearchResults = PDOMDiscardSearchResults
   {
     -- | Unique search session identifier.
-    pDOMDiscardSearchResultsSearchId :: String
+    pDOMDiscardSearchResultsSearchId :: T.Text
   }
   deriving (Eq, Show)
 pDOMDiscardSearchResults
   -- | Unique search session identifier.
-  :: String
+  :: T.Text
   -> PDOMDiscardSearchResults
 pDOMDiscardSearchResults
   arg_pDOMDiscardSearchResultsSearchId
@@ -999,7 +999,7 @@ instance ToJSON PDOMGetAttributes where
 data DOMGetAttributes = DOMGetAttributes
   {
     -- | An interleaved array of node attribute names and values.
-    dOMGetAttributesAttributes :: [String]
+    dOMGetAttributesAttributes :: [T.Text]
   }
   deriving (Eq, Show)
 instance FromJSON DOMGetAttributes where
@@ -1256,7 +1256,7 @@ instance ToJSON PDOMGetOuterHTML where
 data DOMGetOuterHTML = DOMGetOuterHTML
   {
     -- | Outer HTML markup.
-    dOMGetOuterHTMLOuterHTML :: String
+    dOMGetOuterHTMLOuterHTML :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON DOMGetOuterHTML where
@@ -1307,7 +1307,7 @@ instance Command PDOMGetRelayoutBoundary where
 data PDOMGetSearchResults = PDOMGetSearchResults
   {
     -- | Unique search session identifier.
-    pDOMGetSearchResultsSearchId :: String,
+    pDOMGetSearchResultsSearchId :: T.Text,
     -- | Start index of the search result to be returned.
     pDOMGetSearchResultsFromIndex :: Int,
     -- | End index of the search result to be returned.
@@ -1316,7 +1316,7 @@ data PDOMGetSearchResults = PDOMGetSearchResults
   deriving (Eq, Show)
 pDOMGetSearchResults
   -- | Unique search session identifier.
-  :: String
+  :: T.Text
   -- | Start index of the search result to be returned.
   -> Int
   -- | End index of the search result to be returned.
@@ -1466,14 +1466,14 @@ instance Command PDOMMoveTo where
 data PDOMPerformSearch = PDOMPerformSearch
   {
     -- | Plain text or query selector or XPath search query.
-    pDOMPerformSearchQuery :: String,
+    pDOMPerformSearchQuery :: T.Text,
     -- | True to search in user agent shadow DOM.
     pDOMPerformSearchIncludeUserAgentShadowDOM :: Maybe Bool
   }
   deriving (Eq, Show)
 pDOMPerformSearch
   -- | Plain text or query selector or XPath search query.
-  :: String
+  :: T.Text
   -> PDOMPerformSearch
 pDOMPerformSearch
   arg_pDOMPerformSearchQuery
@@ -1488,7 +1488,7 @@ instance ToJSON PDOMPerformSearch where
 data DOMPerformSearch = DOMPerformSearch
   {
     -- | Unique search session identifier.
-    dOMPerformSearchSearchId :: String,
+    dOMPerformSearchSearchId :: T.Text,
     -- | Number of search results.
     dOMPerformSearchResultCount :: Int
   }
@@ -1507,12 +1507,12 @@ instance Command PDOMPerformSearch where
 data PDOMPushNodeByPathToFrontend = PDOMPushNodeByPathToFrontend
   {
     -- | Path to node in the proprietary format.
-    pDOMPushNodeByPathToFrontendPath :: String
+    pDOMPushNodeByPathToFrontendPath :: T.Text
   }
   deriving (Eq, Show)
 pDOMPushNodeByPathToFrontend
   -- | Path to node in the proprietary format.
-  :: String
+  :: T.Text
   -> PDOMPushNodeByPathToFrontend
 pDOMPushNodeByPathToFrontend
   arg_pDOMPushNodeByPathToFrontendPath
@@ -1578,14 +1578,14 @@ data PDOMQuerySelector = PDOMQuerySelector
     -- | Id of the node to query upon.
     pDOMQuerySelectorNodeId :: DOMNodeId,
     -- | Selector string.
-    pDOMQuerySelectorSelector :: String
+    pDOMQuerySelectorSelector :: T.Text
   }
   deriving (Eq, Show)
 pDOMQuerySelector
   -- | Id of the node to query upon.
   :: DOMNodeId
   -- | Selector string.
-  -> String
+  -> T.Text
   -> PDOMQuerySelector
 pDOMQuerySelector
   arg_pDOMQuerySelectorNodeId
@@ -1619,14 +1619,14 @@ data PDOMQuerySelectorAll = PDOMQuerySelectorAll
     -- | Id of the node to query upon.
     pDOMQuerySelectorAllNodeId :: DOMNodeId,
     -- | Selector string.
-    pDOMQuerySelectorAllSelector :: String
+    pDOMQuerySelectorAllSelector :: T.Text
   }
   deriving (Eq, Show)
 pDOMQuerySelectorAll
   -- | Id of the node to query upon.
   :: DOMNodeId
   -- | Selector string.
-  -> String
+  -> T.Text
   -> PDOMQuerySelectorAll
 pDOMQuerySelectorAll
   arg_pDOMQuerySelectorAllNodeId
@@ -1702,14 +1702,14 @@ data PDOMRemoveAttribute = PDOMRemoveAttribute
     -- | Id of the element to remove attribute from.
     pDOMRemoveAttributeNodeId :: DOMNodeId,
     -- | Name of the attribute to remove.
-    pDOMRemoveAttributeName :: String
+    pDOMRemoveAttributeName :: T.Text
   }
   deriving (Eq, Show)
 pDOMRemoveAttribute
   -- | Id of the element to remove attribute from.
   :: DOMNodeId
   -- | Name of the attribute to remove.
-  -> String
+  -> T.Text
   -> PDOMRemoveAttribute
 pDOMRemoveAttribute
   arg_pDOMRemoveAttributeNodeId
@@ -1837,7 +1837,7 @@ data PDOMResolveNode = PDOMResolveNode
     -- | Backend identifier of the node to resolve.
     pDOMResolveNodeBackendNodeId :: Maybe DOMBackendNodeId,
     -- | Symbolic group name that can be used to release multiple objects.
-    pDOMResolveNodeObjectGroup :: Maybe String,
+    pDOMResolveNodeObjectGroup :: Maybe T.Text,
     -- | Execution context in which to resolve the node.
     pDOMResolveNodeExecutionContextId :: Maybe Runtime.RuntimeExecutionContextId
   }
@@ -1878,18 +1878,18 @@ data PDOMSetAttributeValue = PDOMSetAttributeValue
     -- | Id of the element to set attribute for.
     pDOMSetAttributeValueNodeId :: DOMNodeId,
     -- | Attribute name.
-    pDOMSetAttributeValueName :: String,
+    pDOMSetAttributeValueName :: T.Text,
     -- | Attribute value.
-    pDOMSetAttributeValueValue :: String
+    pDOMSetAttributeValueValue :: T.Text
   }
   deriving (Eq, Show)
 pDOMSetAttributeValue
   -- | Id of the element to set attribute for.
   :: DOMNodeId
   -- | Attribute name.
-  -> String
+  -> T.Text
   -- | Attribute value.
-  -> String
+  -> T.Text
   -> PDOMSetAttributeValue
 pDOMSetAttributeValue
   arg_pDOMSetAttributeValueNodeId
@@ -1919,17 +1919,17 @@ data PDOMSetAttributesAsText = PDOMSetAttributesAsText
     -- | Id of the element to set attributes for.
     pDOMSetAttributesAsTextNodeId :: DOMNodeId,
     -- | Text with a number of attributes. Will parse this text using HTML parser.
-    pDOMSetAttributesAsTextText :: String,
+    pDOMSetAttributesAsTextText :: T.Text,
     -- | Attribute name to replace with new attributes derived from text in case text parsed
     --   successfully.
-    pDOMSetAttributesAsTextName :: Maybe String
+    pDOMSetAttributesAsTextName :: Maybe T.Text
   }
   deriving (Eq, Show)
 pDOMSetAttributesAsText
   -- | Id of the element to set attributes for.
   :: DOMNodeId
   -- | Text with a number of attributes. Will parse this text using HTML parser.
-  -> String
+  -> T.Text
   -> PDOMSetAttributesAsText
 pDOMSetAttributesAsText
   arg_pDOMSetAttributesAsTextNodeId
@@ -1955,7 +1955,7 @@ instance Command PDOMSetAttributesAsText where
 data PDOMSetFileInputFiles = PDOMSetFileInputFiles
   {
     -- | Array of file paths to set.
-    pDOMSetFileInputFilesFiles :: [String],
+    pDOMSetFileInputFilesFiles :: [T.Text],
     -- | Identifier of the node.
     pDOMSetFileInputFilesNodeId :: Maybe DOMNodeId,
     -- | Identifier of the backend node.
@@ -1966,7 +1966,7 @@ data PDOMSetFileInputFiles = PDOMSetFileInputFiles
   deriving (Eq, Show)
 pDOMSetFileInputFiles
   -- | Array of file paths to set.
-  :: [String]
+  :: [T.Text]
   -> PDOMSetFileInputFiles
 pDOMSetFileInputFiles
   arg_pDOMSetFileInputFilesFiles
@@ -2071,7 +2071,7 @@ instance ToJSON PDOMGetFileInfo where
     ]
 data DOMGetFileInfo = DOMGetFileInfo
   {
-    dOMGetFileInfoPath :: String
+    dOMGetFileInfoPath :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON DOMGetFileInfo where
@@ -2116,14 +2116,14 @@ data PDOMSetNodeName = PDOMSetNodeName
     -- | Id of the node to set name for.
     pDOMSetNodeNameNodeId :: DOMNodeId,
     -- | New node's name.
-    pDOMSetNodeNameName :: String
+    pDOMSetNodeNameName :: T.Text
   }
   deriving (Eq, Show)
 pDOMSetNodeName
   -- | Id of the node to set name for.
   :: DOMNodeId
   -- | New node's name.
-  -> String
+  -> T.Text
   -> PDOMSetNodeName
 pDOMSetNodeName
   arg_pDOMSetNodeNameNodeId
@@ -2157,14 +2157,14 @@ data PDOMSetNodeValue = PDOMSetNodeValue
     -- | Id of the node to set value for.
     pDOMSetNodeValueNodeId :: DOMNodeId,
     -- | New node's value.
-    pDOMSetNodeValueValue :: String
+    pDOMSetNodeValueValue :: T.Text
   }
   deriving (Eq, Show)
 pDOMSetNodeValue
   -- | Id of the node to set value for.
   :: DOMNodeId
   -- | New node's value.
-  -> String
+  -> T.Text
   -> PDOMSetNodeValue
 pDOMSetNodeValue
   arg_pDOMSetNodeValueNodeId
@@ -2190,14 +2190,14 @@ data PDOMSetOuterHTML = PDOMSetOuterHTML
     -- | Id of the node to set markup for.
     pDOMSetOuterHTMLNodeId :: DOMNodeId,
     -- | Outer HTML markup to set.
-    pDOMSetOuterHTMLOuterHTML :: String
+    pDOMSetOuterHTMLOuterHTML :: T.Text
   }
   deriving (Eq, Show)
 pDOMSetOuterHTML
   -- | Id of the node to set markup for.
   :: DOMNodeId
   -- | Outer HTML markup to set.
-  -> String
+  -> T.Text
   -> PDOMSetOuterHTML
 pDOMSetOuterHTML
   arg_pDOMSetOuterHTMLNodeId
@@ -2274,7 +2274,7 @@ instance Command PDOMGetFrameOwner where
 data PDOMGetContainerForNode = PDOMGetContainerForNode
   {
     pDOMGetContainerForNodeNodeId :: DOMNodeId,
-    pDOMGetContainerForNodeContainerName :: Maybe String
+    pDOMGetContainerForNodeContainerName :: Maybe T.Text
   }
   deriving (Eq, Show)
 pDOMGetContainerForNode
@@ -2413,8 +2413,8 @@ instance ToJSON EmulationDisplayFeature where
 -- | Type 'Emulation.MediaFeature'.
 data EmulationMediaFeature = EmulationMediaFeature
   {
-    emulationMediaFeatureName :: String,
-    emulationMediaFeatureValue :: String
+    emulationMediaFeatureName :: T.Text,
+    emulationMediaFeatureValue :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON EmulationMediaFeature where
@@ -2450,8 +2450,8 @@ instance ToJSON EmulationVirtualTimePolicy where
 --   Used to specify User Agent Cient Hints to emulate. See https://wicg.github.io/ua-client-hints
 data EmulationUserAgentBrandVersion = EmulationUserAgentBrandVersion
   {
-    emulationUserAgentBrandVersionBrand :: String,
-    emulationUserAgentBrandVersionVersion :: String
+    emulationUserAgentBrandVersionBrand :: T.Text,
+    emulationUserAgentBrandVersionVersion :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON EmulationUserAgentBrandVersion where
@@ -2471,12 +2471,12 @@ data EmulationUserAgentMetadata = EmulationUserAgentMetadata
   {
     emulationUserAgentMetadataBrands :: Maybe [EmulationUserAgentBrandVersion],
     emulationUserAgentMetadataFullVersionList :: Maybe [EmulationUserAgentBrandVersion],
-    emulationUserAgentMetadataPlatform :: String,
-    emulationUserAgentMetadataPlatformVersion :: String,
-    emulationUserAgentMetadataArchitecture :: String,
-    emulationUserAgentMetadataModel :: String,
+    emulationUserAgentMetadataPlatform :: T.Text,
+    emulationUserAgentMetadataPlatformVersion :: T.Text,
+    emulationUserAgentMetadataArchitecture :: T.Text,
+    emulationUserAgentMetadataModel :: T.Text,
     emulationUserAgentMetadataMobile :: Bool,
-    emulationUserAgentMetadataBitness :: Maybe String,
+    emulationUserAgentMetadataBitness :: Maybe T.Text,
     emulationUserAgentMetadataWow64 :: Maybe Bool
   }
   deriving (Eq, Show)
@@ -2886,7 +2886,7 @@ instance Command PEmulationSetEmitTouchEventsForMouse where
 data PEmulationSetEmulatedMedia = PEmulationSetEmulatedMedia
   {
     -- | Media type to emulate. Empty string disables the override.
-    pEmulationSetEmulatedMediaMedia :: Maybe String,
+    pEmulationSetEmulatedMediaMedia :: Maybe T.Text,
     -- | Media features to emulate.
     pEmulationSetEmulatedMediaFeatures :: Maybe [EmulationMediaFeature]
   }
@@ -3169,7 +3169,7 @@ data PEmulationSetLocaleOverride = PEmulationSetLocaleOverride
   {
     -- | ICU style C locale (e.g. "en_US"). If not specified or empty, disables the override and
     --   restores default host system locale.
-    pEmulationSetLocaleOverrideLocale :: Maybe String
+    pEmulationSetLocaleOverrideLocale :: Maybe T.Text
   }
   deriving (Eq, Show)
 pEmulationSetLocaleOverride
@@ -3193,13 +3193,13 @@ data PEmulationSetTimezoneOverride = PEmulationSetTimezoneOverride
   {
     -- | The timezone identifier. If empty, disables the override and
     --   restores default host system timezone.
-    pEmulationSetTimezoneOverrideTimezoneId :: String
+    pEmulationSetTimezoneOverrideTimezoneId :: T.Text
   }
   deriving (Eq, Show)
 pEmulationSetTimezoneOverride
   -- | The timezone identifier. If empty, disables the override and
   --   restores default host system timezone.
-  :: String
+  :: T.Text
   -> PEmulationSetTimezoneOverride
 pEmulationSetTimezoneOverride
   arg_pEmulationSetTimezoneOverrideTimezoneId
@@ -3270,18 +3270,18 @@ instance Command PEmulationSetHardwareConcurrencyOverride where
 data PEmulationSetUserAgentOverride = PEmulationSetUserAgentOverride
   {
     -- | User agent to use.
-    pEmulationSetUserAgentOverrideUserAgent :: String,
+    pEmulationSetUserAgentOverrideUserAgent :: T.Text,
     -- | Browser langugage to emulate.
-    pEmulationSetUserAgentOverrideAcceptLanguage :: Maybe String,
+    pEmulationSetUserAgentOverrideAcceptLanguage :: Maybe T.Text,
     -- | The platform navigator.platform should return.
-    pEmulationSetUserAgentOverridePlatform :: Maybe String,
+    pEmulationSetUserAgentOverridePlatform :: Maybe T.Text,
     -- | To be sent in Sec-CH-UA-* headers and returned in navigator.userAgentData
     pEmulationSetUserAgentOverrideUserAgentMetadata :: Maybe EmulationUserAgentMetadata
   }
   deriving (Eq, Show)
 pEmulationSetUserAgentOverride
   -- | User agent to use.
-  :: String
+  :: T.Text
   -> PEmulationSetUserAgentOverride
 pEmulationSetUserAgentOverride
   arg_pEmulationSetUserAgentOverrideUserAgent
@@ -3376,15 +3376,15 @@ instance ToJSON NetworkResourceType where
 
 -- | Type 'Network.LoaderId'.
 --   Unique loader identifier.
-type NetworkLoaderId = String
+type NetworkLoaderId = T.Text
 
 -- | Type 'Network.RequestId'.
 --   Unique request identifier.
-type NetworkRequestId = String
+type NetworkRequestId = T.Text
 
 -- | Type 'Network.InterceptionId'.
 --   Unique intercepted request identifier.
-type NetworkInterceptionId = String
+type NetworkInterceptionId = T.Text
 
 -- | Type 'Network.ErrorReason'.
 --   Network level fetch failure reason.
@@ -3434,7 +3434,7 @@ type NetworkMonotonicTime = Double
 
 -- | Type 'Network.Headers'.
 --   Request / response headers as keys / values of JSON object.
-type NetworkHeaders = [(String, String)]
+type NetworkHeaders = [(T.Text, T.Text)]
 
 -- | Type 'Network.ConnectionType'.
 --   The underlying connection technology that the browser is supposedly using.
@@ -3625,7 +3625,7 @@ instance ToJSON NetworkResourcePriority where
 --   Post data entry for HTTP request
 data NetworkPostDataEntry = NetworkPostDataEntry
   {
-    networkPostDataEntryBytes :: Maybe String
+    networkPostDataEntryBytes :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON NetworkPostDataEntry where
@@ -3664,15 +3664,15 @@ instance ToJSON NetworkRequestReferrerPolicy where
 data NetworkRequest = NetworkRequest
   {
     -- | Request URL (without fragment).
-    networkRequestUrl :: String,
+    networkRequestUrl :: T.Text,
     -- | Fragment of the requested URL starting with hash, if present.
-    networkRequestUrlFragment :: Maybe String,
+    networkRequestUrlFragment :: Maybe T.Text,
     -- | HTTP request method.
-    networkRequestMethod :: String,
+    networkRequestMethod :: T.Text,
     -- | HTTP request headers.
     networkRequestHeaders :: NetworkHeaders,
     -- | HTTP POST request data.
-    networkRequestPostData :: Maybe String,
+    networkRequestPostData :: Maybe T.Text,
     -- | True when the request has POST data. Note that postData might still be omitted when this flag is true when the data is too long.
     networkRequestHasPostData :: Maybe Bool,
     -- | Request body elements. This will be converted from base64 to binary
@@ -3730,22 +3730,22 @@ instance ToJSON NetworkRequest where
 data NetworkSignedCertificateTimestamp = NetworkSignedCertificateTimestamp
   {
     -- | Validation status.
-    networkSignedCertificateTimestampStatus :: String,
+    networkSignedCertificateTimestampStatus :: T.Text,
     -- | Origin.
-    networkSignedCertificateTimestampOrigin :: String,
+    networkSignedCertificateTimestampOrigin :: T.Text,
     -- | Log name / description.
-    networkSignedCertificateTimestampLogDescription :: String,
+    networkSignedCertificateTimestampLogDescription :: T.Text,
     -- | Log ID.
-    networkSignedCertificateTimestampLogId :: String,
+    networkSignedCertificateTimestampLogId :: T.Text,
     -- | Issuance date. Unlike TimeSinceEpoch, this contains the number of
     --   milliseconds since January 1, 1970, UTC, not the number of seconds.
     networkSignedCertificateTimestampTimestamp :: Double,
     -- | Hash algorithm.
-    networkSignedCertificateTimestampHashAlgorithm :: String,
+    networkSignedCertificateTimestampHashAlgorithm :: T.Text,
     -- | Signature algorithm.
-    networkSignedCertificateTimestampSignatureAlgorithm :: String,
+    networkSignedCertificateTimestampSignatureAlgorithm :: T.Text,
     -- | Signature data.
-    networkSignedCertificateTimestampSignatureData :: String
+    networkSignedCertificateTimestampSignatureData :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON NetworkSignedCertificateTimestamp where
@@ -3775,23 +3775,23 @@ instance ToJSON NetworkSignedCertificateTimestamp where
 data NetworkSecurityDetails = NetworkSecurityDetails
   {
     -- | Protocol name (e.g. "TLS 1.2" or "QUIC").
-    networkSecurityDetailsProtocol :: String,
+    networkSecurityDetailsProtocol :: T.Text,
     -- | Key Exchange used by the connection, or the empty string if not applicable.
-    networkSecurityDetailsKeyExchange :: String,
+    networkSecurityDetailsKeyExchange :: T.Text,
     -- | (EC)DH group used by the connection, if applicable.
-    networkSecurityDetailsKeyExchangeGroup :: Maybe String,
+    networkSecurityDetailsKeyExchangeGroup :: Maybe T.Text,
     -- | Cipher name.
-    networkSecurityDetailsCipher :: String,
+    networkSecurityDetailsCipher :: T.Text,
     -- | TLS MAC. Note that AEAD ciphers do not have separate MACs.
-    networkSecurityDetailsMac :: Maybe String,
+    networkSecurityDetailsMac :: Maybe T.Text,
     -- | Certificate ID value.
     networkSecurityDetailsCertificateId :: SecurityCertificateId,
     -- | Certificate subject name.
-    networkSecurityDetailsSubjectName :: String,
+    networkSecurityDetailsSubjectName :: T.Text,
     -- | Subject Alternative Name (SAN) DNS names and IP addresses.
-    networkSecurityDetailsSanList :: [String],
+    networkSecurityDetailsSanList :: [T.Text],
     -- | Name of the issuing CA.
-    networkSecurityDetailsIssuer :: String,
+    networkSecurityDetailsIssuer :: T.Text,
     -- | Certificate valid from date.
     networkSecurityDetailsValidFrom :: NetworkTimeSinceEpoch,
     -- | Certificate valid to (expiration) date
@@ -3968,7 +3968,7 @@ instance ToJSON NetworkCorsError where
 data NetworkCorsErrorStatus = NetworkCorsErrorStatus
   {
     networkCorsErrorStatusCorsError :: NetworkCorsError,
-    networkCorsErrorStatusFailedParameter :: String
+    networkCorsErrorStatusFailedParameter :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON NetworkCorsErrorStatus where
@@ -4022,7 +4022,7 @@ data NetworkTrustTokenParams = NetworkTrustTokenParams
     networkTrustTokenParamsRefreshPolicy :: NetworkTrustTokenParamsRefreshPolicy,
     -- | Origins of issuers from whom to request tokens or redemption
     --   records.
-    networkTrustTokenParamsIssuers :: Maybe [String]
+    networkTrustTokenParamsIssuers :: Maybe [T.Text]
   }
   deriving (Eq, Show)
 instance FromJSON NetworkTrustTokenParams where
@@ -4083,15 +4083,15 @@ instance ToJSON NetworkAlternateProtocolUsage where
 data NetworkResponse = NetworkResponse
   {
     -- | Response URL. This URL can be different from CachedResource.url in case of redirect.
-    networkResponseUrl :: String,
+    networkResponseUrl :: T.Text,
     -- | HTTP response status code.
     networkResponseStatus :: Int,
     -- | HTTP response status text.
-    networkResponseStatusText :: String,
+    networkResponseStatusText :: T.Text,
     -- | HTTP response headers.
     networkResponseHeaders :: NetworkHeaders,
     -- | Resource mimeType as determined by the browser.
-    networkResponseMimeType :: String,
+    networkResponseMimeType :: T.Text,
     -- | Refined HTTP request headers that were actually transmitted over the network.
     networkResponseRequestHeaders :: Maybe NetworkHeaders,
     -- | Specifies whether physical connection was actually reused for this request.
@@ -4099,7 +4099,7 @@ data NetworkResponse = NetworkResponse
     -- | Physical connection id that was actually used for this request.
     networkResponseConnectionId :: Double,
     -- | Remote IP address.
-    networkResponseRemoteIPAddress :: Maybe String,
+    networkResponseRemoteIPAddress :: Maybe T.Text,
     -- | Remote port.
     networkResponseRemotePort :: Maybe Int,
     -- | Specifies that the request was served from the disk cache.
@@ -4117,9 +4117,9 @@ data NetworkResponse = NetworkResponse
     -- | The time at which the returned response was generated.
     networkResponseResponseTime :: Maybe NetworkTimeSinceEpoch,
     -- | Cache Storage Cache Name.
-    networkResponseCacheStorageCacheName :: Maybe String,
+    networkResponseCacheStorageCacheName :: Maybe T.Text,
     -- | Protocol used to fetch this request.
-    networkResponseProtocol :: Maybe String,
+    networkResponseProtocol :: Maybe T.Text,
     -- | The reason why Chrome uses a specific transport protocol for HTTP semantics.
     networkResponseAlternateProtocolUsage :: Maybe NetworkAlternateProtocolUsage,
     -- | Security state of the request resource.
@@ -4201,15 +4201,15 @@ data NetworkWebSocketResponse = NetworkWebSocketResponse
     -- | HTTP response status code.
     networkWebSocketResponseStatus :: Int,
     -- | HTTP response status text.
-    networkWebSocketResponseStatusText :: String,
+    networkWebSocketResponseStatusText :: T.Text,
     -- | HTTP response headers.
     networkWebSocketResponseHeaders :: NetworkHeaders,
     -- | HTTP response headers text.
-    networkWebSocketResponseHeadersText :: Maybe String,
+    networkWebSocketResponseHeadersText :: Maybe T.Text,
     -- | HTTP request headers.
     networkWebSocketResponseRequestHeaders :: Maybe NetworkHeaders,
     -- | HTTP request headers text.
-    networkWebSocketResponseRequestHeadersText :: Maybe String
+    networkWebSocketResponseRequestHeadersText :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON NetworkWebSocketResponse where
@@ -4241,7 +4241,7 @@ data NetworkWebSocketFrame = NetworkWebSocketFrame
     -- | WebSocket message payload data.
     --   If the opcode is 1, this is a text message and payloadData is a UTF-8 string.
     --   If the opcode isn't 1, then payloadData is a base64 encoded string representing binary data.
-    networkWebSocketFramePayloadData :: String
+    networkWebSocketFramePayloadData :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON NetworkWebSocketFrame where
@@ -4261,7 +4261,7 @@ instance ToJSON NetworkWebSocketFrame where
 data NetworkCachedResource = NetworkCachedResource
   {
     -- | Resource URL. This is the url of the original network request.
-    networkCachedResourceUrl :: String,
+    networkCachedResourceUrl :: T.Text,
     -- | Type of this resource.
     networkCachedResourceType :: NetworkResourceType,
     -- | Cached response data.
@@ -4312,7 +4312,7 @@ data NetworkInitiator = NetworkInitiator
     -- | Initiator JavaScript stack trace, set for Script only.
     networkInitiatorStack :: Maybe Runtime.RuntimeStackTrace,
     -- | Initiator URL, set for Parser type or for Script type (when script is importing module) or for SignedExchange type.
-    networkInitiatorUrl :: Maybe String,
+    networkInitiatorUrl :: Maybe T.Text,
     -- | Initiator line number, set for Parser type or for Script type (when script is importing
     --   module) (0-based).
     networkInitiatorLineNumber :: Maybe Double,
@@ -4346,13 +4346,13 @@ instance ToJSON NetworkInitiator where
 data NetworkCookie = NetworkCookie
   {
     -- | Cookie name.
-    networkCookieName :: String,
+    networkCookieName :: T.Text,
     -- | Cookie value.
-    networkCookieValue :: String,
+    networkCookieValue :: T.Text,
     -- | Cookie domain.
-    networkCookieDomain :: String,
+    networkCookieDomain :: T.Text,
     -- | Cookie path.
-    networkCookiePath :: String,
+    networkCookiePath :: T.Text,
     -- | Cookie expiration date as the number of seconds since the UNIX epoch.
     networkCookieExpires :: Double,
     -- | Cookie size.
@@ -4377,7 +4377,7 @@ data NetworkCookie = NetworkCookie
     networkCookieSourcePort :: Int,
     -- | Cookie partition key. The site of the top-level URL the browser was visiting at the start
     --   of the request to the endpoint that set the cookie.
-    networkCookiePartitionKey :: Maybe String,
+    networkCookiePartitionKey :: Maybe T.Text,
     -- | True if cookie partition key is opaque.
     networkCookiePartitionKeyOpaque :: Maybe Bool
   }
@@ -4512,7 +4512,7 @@ data NetworkBlockedSetCookieWithReason = NetworkBlockedSetCookieWithReason
     networkBlockedSetCookieWithReasonBlockedReasons :: [NetworkSetCookieBlockedReason],
     -- | The string representing this individual cookie as it would appear in the header.
     --   This is not the entire "cookie" or "set-cookie" header which could have multiple cookies.
-    networkBlockedSetCookieWithReasonCookieLine :: String,
+    networkBlockedSetCookieWithReasonCookieLine :: T.Text,
     -- | The cookie object which represents the cookie which was not stored. It is optional because
     --   sometimes complete cookie information is not available, such as in the case of parsing
     --   errors.
@@ -4556,16 +4556,16 @@ instance ToJSON NetworkBlockedCookieWithReason where
 data NetworkCookieParam = NetworkCookieParam
   {
     -- | Cookie name.
-    networkCookieParamName :: String,
+    networkCookieParamName :: T.Text,
     -- | Cookie value.
-    networkCookieParamValue :: String,
+    networkCookieParamValue :: T.Text,
     -- | The request-URI to associate with the setting of the cookie. This value can affect the
     --   default domain, path, source port, and source scheme values of the created cookie.
-    networkCookieParamUrl :: Maybe String,
+    networkCookieParamUrl :: Maybe T.Text,
     -- | Cookie domain.
-    networkCookieParamDomain :: Maybe String,
+    networkCookieParamDomain :: Maybe T.Text,
     -- | Cookie path.
-    networkCookieParamPath :: Maybe String,
+    networkCookieParamPath :: Maybe T.Text,
     -- | True if cookie is secure.
     networkCookieParamSecure :: Maybe Bool,
     -- | True if cookie is http-only.
@@ -4587,7 +4587,7 @@ data NetworkCookieParam = NetworkCookieParam
     -- | Cookie partition key. The site of the top-level URL the browser was visiting at the start
     --   of the request to the endpoint that set the cookie.
     --   If not set, the cookie will be set as not partitioned.
-    networkCookieParamPartitionKey :: Maybe String
+    networkCookieParamPartitionKey :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON NetworkCookieParam where
@@ -4642,11 +4642,11 @@ data NetworkAuthChallenge = NetworkAuthChallenge
     -- | Source of the authentication challenge.
     networkAuthChallengeSource :: Maybe NetworkAuthChallengeSource,
     -- | Origin of the challenger.
-    networkAuthChallengeOrigin :: String,
+    networkAuthChallengeOrigin :: T.Text,
     -- | The authentication scheme used, such as basic or digest
-    networkAuthChallengeScheme :: String,
+    networkAuthChallengeScheme :: T.Text,
     -- | The realm of the challenge. May be empty.
-    networkAuthChallengeRealm :: String
+    networkAuthChallengeRealm :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON NetworkAuthChallenge where
@@ -4686,10 +4686,10 @@ data NetworkAuthChallengeResponse = NetworkAuthChallengeResponse
     networkAuthChallengeResponseResponse :: NetworkAuthChallengeResponseResponse,
     -- | The username to provide, possibly empty. Should only be set if response is
     --   ProvideCredentials.
-    networkAuthChallengeResponseUsername :: Maybe String,
+    networkAuthChallengeResponseUsername :: Maybe T.Text,
     -- | The password to provide, possibly empty. Should only be set if response is
     --   ProvideCredentials.
-    networkAuthChallengeResponsePassword :: Maybe String
+    networkAuthChallengeResponsePassword :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON NetworkAuthChallengeResponse where
@@ -4725,7 +4725,7 @@ data NetworkRequestPattern = NetworkRequestPattern
   {
     -- | Wildcards (`'*'` -> zero or more, `'?'` -> exactly one) are allowed. Escape character is
     --   backslash. Omitting is equivalent to `"*"`.
-    networkRequestPatternUrlPattern :: Maybe String,
+    networkRequestPatternUrlPattern :: Maybe T.Text,
     -- | If set, only requests for matching resource types will be intercepted.
     networkRequestPatternResourceType :: Maybe NetworkResourceType,
     -- | Stage at which to begin intercepting requests. Default is Request.
@@ -4750,23 +4750,23 @@ instance ToJSON NetworkRequestPattern where
 data NetworkSignedExchangeSignature = NetworkSignedExchangeSignature
   {
     -- | Signed exchange signature label.
-    networkSignedExchangeSignatureLabel :: String,
+    networkSignedExchangeSignatureLabel :: T.Text,
     -- | The hex string of signed exchange signature.
-    networkSignedExchangeSignatureSignature :: String,
+    networkSignedExchangeSignatureSignature :: T.Text,
     -- | Signed exchange signature integrity.
-    networkSignedExchangeSignatureIntegrity :: String,
+    networkSignedExchangeSignatureIntegrity :: T.Text,
     -- | Signed exchange signature cert Url.
-    networkSignedExchangeSignatureCertUrl :: Maybe String,
+    networkSignedExchangeSignatureCertUrl :: Maybe T.Text,
     -- | The hex string of signed exchange signature cert sha256.
-    networkSignedExchangeSignatureCertSha256 :: Maybe String,
+    networkSignedExchangeSignatureCertSha256 :: Maybe T.Text,
     -- | Signed exchange signature validity Url.
-    networkSignedExchangeSignatureValidityUrl :: String,
+    networkSignedExchangeSignatureValidityUrl :: T.Text,
     -- | Signed exchange signature date.
     networkSignedExchangeSignatureDate :: Int,
     -- | Signed exchange signature expires.
     networkSignedExchangeSignatureExpires :: Int,
     -- | The encoded certificates.
-    networkSignedExchangeSignatureCertificates :: Maybe [String]
+    networkSignedExchangeSignatureCertificates :: Maybe [T.Text]
   }
   deriving (Eq, Show)
 instance FromJSON NetworkSignedExchangeSignature where
@@ -4799,7 +4799,7 @@ instance ToJSON NetworkSignedExchangeSignature where
 data NetworkSignedExchangeHeader = NetworkSignedExchangeHeader
   {
     -- | Signed exchange request URL.
-    networkSignedExchangeHeaderRequestUrl :: String,
+    networkSignedExchangeHeaderRequestUrl :: T.Text,
     -- | Signed exchange response code.
     networkSignedExchangeHeaderResponseCode :: Int,
     -- | Signed exchange response headers.
@@ -4807,7 +4807,7 @@ data NetworkSignedExchangeHeader = NetworkSignedExchangeHeader
     -- | Signed exchange response signature.
     networkSignedExchangeHeaderSignatures :: [NetworkSignedExchangeSignature],
     -- | Signed exchange header integrity hash in the form of "sha256-<base64-hash-value>".
-    networkSignedExchangeHeaderHeaderIntegrity :: String
+    networkSignedExchangeHeaderHeaderIntegrity :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON NetworkSignedExchangeHeader where
@@ -4853,7 +4853,7 @@ instance ToJSON NetworkSignedExchangeErrorField where
 data NetworkSignedExchangeError = NetworkSignedExchangeError
   {
     -- | Error message.
-    networkSignedExchangeErrorMessage :: String,
+    networkSignedExchangeErrorMessage :: T.Text,
     -- | The index of the signature which caused the error.
     networkSignedExchangeErrorSignatureIndex :: Maybe Int,
     -- | The field which caused the error.
@@ -5015,8 +5015,8 @@ data NetworkCrossOriginOpenerPolicyStatus = NetworkCrossOriginOpenerPolicyStatus
   {
     networkCrossOriginOpenerPolicyStatusValue :: NetworkCrossOriginOpenerPolicyValue,
     networkCrossOriginOpenerPolicyStatusReportOnlyValue :: NetworkCrossOriginOpenerPolicyValue,
-    networkCrossOriginOpenerPolicyStatusReportingEndpoint :: Maybe String,
-    networkCrossOriginOpenerPolicyStatusReportOnlyReportingEndpoint :: Maybe String
+    networkCrossOriginOpenerPolicyStatusReportingEndpoint :: Maybe T.Text,
+    networkCrossOriginOpenerPolicyStatusReportOnlyReportingEndpoint :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON NetworkCrossOriginOpenerPolicyStatus where
@@ -5053,8 +5053,8 @@ data NetworkCrossOriginEmbedderPolicyStatus = NetworkCrossOriginEmbedderPolicySt
   {
     networkCrossOriginEmbedderPolicyStatusValue :: NetworkCrossOriginEmbedderPolicyValue,
     networkCrossOriginEmbedderPolicyStatusReportOnlyValue :: NetworkCrossOriginEmbedderPolicyValue,
-    networkCrossOriginEmbedderPolicyStatusReportingEndpoint :: Maybe String,
-    networkCrossOriginEmbedderPolicyStatusReportOnlyReportingEndpoint :: Maybe String
+    networkCrossOriginEmbedderPolicyStatusReportingEndpoint :: Maybe T.Text,
+    networkCrossOriginEmbedderPolicyStatusReportOnlyReportingEndpoint :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON NetworkCrossOriginEmbedderPolicyStatus where
@@ -5107,7 +5107,7 @@ instance ToJSON NetworkReportStatus where
     NetworkReportStatusSuccess -> "Success"
 
 -- | Type 'Network.ReportId'.
-type NetworkReportId = String
+type NetworkReportId = T.Text
 
 -- | Type 'Network.ReportingApiReport'.
 --   An object representing a report generated by the Reporting API.
@@ -5115,18 +5115,18 @@ data NetworkReportingApiReport = NetworkReportingApiReport
   {
     networkReportingApiReportId :: NetworkReportId,
     -- | The URL of the document that triggered the report.
-    networkReportingApiReportInitiatorUrl :: String,
+    networkReportingApiReportInitiatorUrl :: T.Text,
     -- | The name of the endpoint group that should be used to deliver the report.
-    networkReportingApiReportDestination :: String,
+    networkReportingApiReportDestination :: T.Text,
     -- | The type of the report (specifies the set of data that is contained in the report body).
-    networkReportingApiReportType :: String,
+    networkReportingApiReportType :: T.Text,
     -- | When the report was generated.
     networkReportingApiReportTimestamp :: NetworkTimeSinceEpoch,
     -- | How many uploads deep the related request was.
     networkReportingApiReportDepth :: Int,
     -- | The number of delivery attempts made so far, not including an active attempt.
     networkReportingApiReportCompletedAttempts :: Int,
-    networkReportingApiReportBody :: [(String, String)],
+    networkReportingApiReportBody :: [(T.Text, T.Text)],
     networkReportingApiReportStatus :: NetworkReportStatus
   }
   deriving (Eq, Show)
@@ -5158,9 +5158,9 @@ instance ToJSON NetworkReportingApiReport where
 data NetworkReportingApiEndpoint = NetworkReportingApiEndpoint
   {
     -- | The URL of the endpoint to which reports may be delivered.
-    networkReportingApiEndpointUrl :: String,
+    networkReportingApiEndpointUrl :: T.Text,
     -- | Name of the endpoint group.
-    networkReportingApiEndpointGroupName :: String
+    networkReportingApiEndpointGroupName :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON NetworkReportingApiEndpoint where
@@ -5180,7 +5180,7 @@ data NetworkLoadNetworkResourcePageResult = NetworkLoadNetworkResourcePageResult
     networkLoadNetworkResourcePageResultSuccess :: Bool,
     -- | Optional values used for error reporting.
     networkLoadNetworkResourcePageResultNetError :: Maybe Double,
-    networkLoadNetworkResourcePageResultNetErrorName :: Maybe String,
+    networkLoadNetworkResourcePageResultNetErrorName :: Maybe T.Text,
     networkLoadNetworkResourcePageResultHttpStatusCode :: Maybe Double,
     -- | If successful, one of the following two fields holds the result.
     networkLoadNetworkResourcePageResultStream :: Maybe IO.IOStreamHandle,
@@ -5255,11 +5255,11 @@ data NetworkEventSourceMessageReceived = NetworkEventSourceMessageReceived
     -- | Timestamp.
     networkEventSourceMessageReceivedTimestamp :: NetworkMonotonicTime,
     -- | Message type.
-    networkEventSourceMessageReceivedEventName :: String,
+    networkEventSourceMessageReceivedEventName :: T.Text,
     -- | Message identifier.
-    networkEventSourceMessageReceivedEventId :: String,
+    networkEventSourceMessageReceivedEventId :: T.Text,
     -- | Message content.
-    networkEventSourceMessageReceivedData :: String
+    networkEventSourceMessageReceivedData :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON NetworkEventSourceMessageReceived where
@@ -5282,7 +5282,7 @@ data NetworkLoadingFailed = NetworkLoadingFailed
     -- | Resource type.
     networkLoadingFailedType :: NetworkResourceType,
     -- | User friendly error message.
-    networkLoadingFailedErrorText :: String,
+    networkLoadingFailedErrorText :: T.Text,
     -- | True if loading was canceled.
     networkLoadingFailedCanceled :: Maybe Bool,
     -- | The reason why loading was blocked, if any.
@@ -5347,7 +5347,7 @@ data NetworkRequestWillBeSent = NetworkRequestWillBeSent
     -- | Loader identifier. Empty string if the request is fetched from worker.
     networkRequestWillBeSentLoaderId :: NetworkLoaderId,
     -- | URL of the document this request is loaded for.
-    networkRequestWillBeSentDocumentURL :: String,
+    networkRequestWillBeSentDocumentURL :: T.Text,
     -- | Request data.
     networkRequestWillBeSentRequest :: NetworkRequest,
     -- | Timestamp.
@@ -5476,7 +5476,7 @@ data NetworkWebSocketCreated = NetworkWebSocketCreated
     -- | Request identifier.
     networkWebSocketCreatedRequestId :: NetworkRequestId,
     -- | WebSocket request URL.
-    networkWebSocketCreatedUrl :: String,
+    networkWebSocketCreatedUrl :: T.Text,
     -- | Request initiator.
     networkWebSocketCreatedInitiator :: Maybe NetworkInitiator
   }
@@ -5497,7 +5497,7 @@ data NetworkWebSocketFrameError = NetworkWebSocketFrameError
     -- | Timestamp.
     networkWebSocketFrameErrorTimestamp :: NetworkMonotonicTime,
     -- | WebSocket error message.
-    networkWebSocketFrameErrorErrorMessage :: String
+    networkWebSocketFrameErrorErrorMessage :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON NetworkWebSocketFrameError where
@@ -5593,7 +5593,7 @@ data NetworkWebTransportCreated = NetworkWebTransportCreated
     -- | WebTransport identifier.
     networkWebTransportCreatedTransportId :: NetworkRequestId,
     -- | WebTransport request URL.
-    networkWebTransportCreatedUrl :: String,
+    networkWebTransportCreatedUrl :: T.Text,
     -- | Timestamp.
     networkWebTransportCreatedTimestamp :: NetworkMonotonicTime,
     -- | Request initiator.
@@ -5687,7 +5687,7 @@ data NetworkResponseReceivedExtraInfo = NetworkResponseReceivedExtraInfo
     networkResponseReceivedExtraInfoStatusCode :: Int,
     -- | Raw response header text as it was received over the wire. The raw text may not always be
     --   available, such as in the case of HTTP/2 or QUIC.
-    networkResponseReceivedExtraInfoHeadersText :: Maybe String
+    networkResponseReceivedExtraInfoHeadersText :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON NetworkResponseReceivedExtraInfo where
@@ -5739,9 +5739,9 @@ data NetworkTrustTokenOperationDone = NetworkTrustTokenOperationDone
     networkTrustTokenOperationDoneType :: NetworkTrustTokenOperationType,
     networkTrustTokenOperationDoneRequestId :: NetworkRequestId,
     -- | Top level origin. The context in which the operation was attempted.
-    networkTrustTokenOperationDoneTopLevelOrigin :: Maybe String,
+    networkTrustTokenOperationDoneTopLevelOrigin :: Maybe T.Text,
     -- | Origin of the issuer in case of a "Issuance" or "Redemption" operation.
-    networkTrustTokenOperationDoneIssuerOrigin :: Maybe String,
+    networkTrustTokenOperationDoneIssuerOrigin :: Maybe T.Text,
     -- | The number of obtained Trust Tokens on a successful "Issuance" operation.
     networkTrustTokenOperationDoneIssuedTokenCount :: Maybe Int
   }
@@ -5763,7 +5763,7 @@ data NetworkSubresourceWebBundleMetadataReceived = NetworkSubresourceWebBundleMe
     -- | Request identifier. Used to match this information to another event.
     networkSubresourceWebBundleMetadataReceivedRequestId :: NetworkRequestId,
     -- | A list of URLs of resources in the subresource Web Bundle.
-    networkSubresourceWebBundleMetadataReceivedUrls :: [String]
+    networkSubresourceWebBundleMetadataReceivedUrls :: [T.Text]
   }
   deriving (Eq, Show)
 instance FromJSON NetworkSubresourceWebBundleMetadataReceived where
@@ -5779,7 +5779,7 @@ data NetworkSubresourceWebBundleMetadataError = NetworkSubresourceWebBundleMetad
     -- | Request identifier. Used to match this information to another event.
     networkSubresourceWebBundleMetadataErrorRequestId :: NetworkRequestId,
     -- | Error message
-    networkSubresourceWebBundleMetadataErrorErrorMessage :: String
+    networkSubresourceWebBundleMetadataErrorErrorMessage :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON NetworkSubresourceWebBundleMetadataError where
@@ -5795,7 +5795,7 @@ data NetworkSubresourceWebBundleInnerResponseParsed = NetworkSubresourceWebBundl
     -- | Request identifier of the subresource request
     networkSubresourceWebBundleInnerResponseParsedInnerRequestId :: NetworkRequestId,
     -- | URL of the subresource resource.
-    networkSubresourceWebBundleInnerResponseParsedInnerRequestURL :: String,
+    networkSubresourceWebBundleInnerResponseParsedInnerRequestURL :: T.Text,
     -- | Bundle request identifier. Used to match this information to another event.
     --   This made be absent in case when the instrumentation was enabled only
     --   after webbundle was parsed.
@@ -5816,9 +5816,9 @@ data NetworkSubresourceWebBundleInnerResponseError = NetworkSubresourceWebBundle
     -- | Request identifier of the subresource request
     networkSubresourceWebBundleInnerResponseErrorInnerRequestId :: NetworkRequestId,
     -- | URL of the subresource resource.
-    networkSubresourceWebBundleInnerResponseErrorInnerRequestURL :: String,
+    networkSubresourceWebBundleInnerResponseErrorInnerRequestURL :: T.Text,
     -- | Error message
-    networkSubresourceWebBundleInnerResponseErrorErrorMessage :: String,
+    networkSubresourceWebBundleInnerResponseErrorErrorMessage :: T.Text,
     -- | Bundle request identifier. Used to match this information to another event.
     --   This made be absent in case when the instrumentation was enabled only
     --   after webbundle was parsed.
@@ -5862,7 +5862,7 @@ instance Event NetworkReportingApiReportUpdated where
 data NetworkReportingApiEndpointsChangedForOrigin = NetworkReportingApiEndpointsChangedForOrigin
   {
     -- | Origin of the document(s) which configured the endpoints.
-    networkReportingApiEndpointsChangedForOriginOrigin :: String,
+    networkReportingApiEndpointsChangedForOriginOrigin :: T.Text,
     networkReportingApiEndpointsChangedForOriginEndpoints :: [NetworkReportingApiEndpoint]
   }
   deriving (Eq, Show)
@@ -5953,19 +5953,19 @@ instance Command PNetworkClearBrowserCookies where
 data PNetworkDeleteCookies = PNetworkDeleteCookies
   {
     -- | Name of the cookies to remove.
-    pNetworkDeleteCookiesName :: String,
+    pNetworkDeleteCookiesName :: T.Text,
     -- | If specified, deletes all the cookies with the given name where domain and path match
     --   provided URL.
-    pNetworkDeleteCookiesUrl :: Maybe String,
+    pNetworkDeleteCookiesUrl :: Maybe T.Text,
     -- | If specified, deletes only cookies with the exact domain.
-    pNetworkDeleteCookiesDomain :: Maybe String,
+    pNetworkDeleteCookiesDomain :: Maybe T.Text,
     -- | If specified, deletes only cookies with the exact path.
-    pNetworkDeleteCookiesPath :: Maybe String
+    pNetworkDeleteCookiesPath :: Maybe T.Text
   }
   deriving (Eq, Show)
 pNetworkDeleteCookies
   -- | Name of the cookies to remove.
-  :: String
+  :: T.Text
   -> PNetworkDeleteCookies
 pNetworkDeleteCookies
   arg_pNetworkDeleteCookiesName
@@ -6115,12 +6115,12 @@ instance Command PNetworkGetAllCookies where
 data PNetworkGetCertificate = PNetworkGetCertificate
   {
     -- | Origin to get certificate for.
-    pNetworkGetCertificateOrigin :: String
+    pNetworkGetCertificateOrigin :: T.Text
   }
   deriving (Eq, Show)
 pNetworkGetCertificate
   -- | Origin to get certificate for.
-  :: String
+  :: T.Text
   -> PNetworkGetCertificate
 pNetworkGetCertificate
   arg_pNetworkGetCertificateOrigin
@@ -6132,7 +6132,7 @@ instance ToJSON PNetworkGetCertificate where
     ]
 data NetworkGetCertificate = NetworkGetCertificate
   {
-    networkGetCertificateTableNames :: [String]
+    networkGetCertificateTableNames :: [T.Text]
   }
   deriving (Eq, Show)
 instance FromJSON NetworkGetCertificate where
@@ -6151,7 +6151,7 @@ data PNetworkGetCookies = PNetworkGetCookies
     -- | The list of URLs for which applicable cookies will be fetched.
     --   If not specified, it's assumed to be set to the list containing
     --   the URLs of the page and all of its subframes.
-    pNetworkGetCookiesUrls :: Maybe [String]
+    pNetworkGetCookiesUrls :: Maybe [T.Text]
   }
   deriving (Eq, Show)
 pNetworkGetCookies
@@ -6200,7 +6200,7 @@ instance ToJSON PNetworkGetResponseBody where
 data NetworkGetResponseBody = NetworkGetResponseBody
   {
     -- | Response body.
-    networkGetResponseBodyBody :: String,
+    networkGetResponseBodyBody :: T.Text,
     -- | True, if content was sent as base64.
     networkGetResponseBodyBase64Encoded :: Bool
   }
@@ -6237,7 +6237,7 @@ instance ToJSON PNetworkGetRequestPostData where
 data NetworkGetRequestPostData = NetworkGetRequestPostData
   {
     -- | Request body string, omitting files from multipart requests
-    networkGetRequestPostDataPostData :: String
+    networkGetRequestPostDataPostData :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON NetworkGetRequestPostData where
@@ -6271,7 +6271,7 @@ instance ToJSON PNetworkGetResponseBodyForInterception where
 data NetworkGetResponseBodyForInterception = NetworkGetResponseBodyForInterception
   {
     -- | Response body.
-    networkGetResponseBodyForInterceptionBody :: String,
+    networkGetResponseBodyForInterceptionBody :: T.Text,
     -- | True, if content was sent as base64.
     networkGetResponseBodyForInterceptionBase64Encoded :: Bool
   }
@@ -6354,7 +6354,7 @@ data PNetworkSearchInResponseBody = PNetworkSearchInResponseBody
     -- | Identifier of the network response to search.
     pNetworkSearchInResponseBodyRequestId :: NetworkRequestId,
     -- | String to search for.
-    pNetworkSearchInResponseBodyQuery :: String,
+    pNetworkSearchInResponseBodyQuery :: T.Text,
     -- | If true, search is case sensitive.
     pNetworkSearchInResponseBodyCaseSensitive :: Maybe Bool,
     -- | If true, treats string parameter as regex.
@@ -6365,7 +6365,7 @@ pNetworkSearchInResponseBody
   -- | Identifier of the network response to search.
   :: NetworkRequestId
   -- | String to search for.
-  -> String
+  -> T.Text
   -> PNetworkSearchInResponseBody
 pNetworkSearchInResponseBody
   arg_pNetworkSearchInResponseBodyRequestId
@@ -6401,12 +6401,12 @@ instance Command PNetworkSearchInResponseBody where
 data PNetworkSetBlockedURLs = PNetworkSetBlockedURLs
   {
     -- | URL patterns to block. Wildcards ('*') are allowed.
-    pNetworkSetBlockedURLsUrls :: [String]
+    pNetworkSetBlockedURLsUrls :: [T.Text]
   }
   deriving (Eq, Show)
 pNetworkSetBlockedURLs
   -- | URL patterns to block. Wildcards ('*') are allowed.
-  :: [String]
+  :: [T.Text]
   -> PNetworkSetBlockedURLs
 pNetworkSetBlockedURLs
   arg_pNetworkSetBlockedURLsUrls
@@ -6479,16 +6479,16 @@ instance Command PNetworkSetCacheDisabled where
 data PNetworkSetCookie = PNetworkSetCookie
   {
     -- | Cookie name.
-    pNetworkSetCookieName :: String,
+    pNetworkSetCookieName :: T.Text,
     -- | Cookie value.
-    pNetworkSetCookieValue :: String,
+    pNetworkSetCookieValue :: T.Text,
     -- | The request-URI to associate with the setting of the cookie. This value can affect the
     --   default domain, path, source port, and source scheme values of the created cookie.
-    pNetworkSetCookieUrl :: Maybe String,
+    pNetworkSetCookieUrl :: Maybe T.Text,
     -- | Cookie domain.
-    pNetworkSetCookieDomain :: Maybe String,
+    pNetworkSetCookieDomain :: Maybe T.Text,
     -- | Cookie path.
-    pNetworkSetCookiePath :: Maybe String,
+    pNetworkSetCookiePath :: Maybe T.Text,
     -- | True if cookie is secure.
     pNetworkSetCookieSecure :: Maybe Bool,
     -- | True if cookie is http-only.
@@ -6510,14 +6510,14 @@ data PNetworkSetCookie = PNetworkSetCookie
     -- | Cookie partition key. The site of the top-level URL the browser was visiting at the start
     --   of the request to the endpoint that set the cookie.
     --   If not set, the cookie will be set as not partitioned.
-    pNetworkSetCookiePartitionKey :: Maybe String
+    pNetworkSetCookiePartitionKey :: Maybe T.Text
   }
   deriving (Eq, Show)
 pNetworkSetCookie
   -- | Cookie name.
-  :: String
+  :: T.Text
   -- | Cookie value.
-  -> String
+  -> T.Text
   -> PNetworkSetCookie
 pNetworkSetCookie
   arg_pNetworkSetCookieName
@@ -6643,18 +6643,18 @@ instance Command PNetworkSetAttachDebugStack where
 data PNetworkSetUserAgentOverride = PNetworkSetUserAgentOverride
   {
     -- | User agent to use.
-    pNetworkSetUserAgentOverrideUserAgent :: String,
+    pNetworkSetUserAgentOverrideUserAgent :: T.Text,
     -- | Browser langugage to emulate.
-    pNetworkSetUserAgentOverrideAcceptLanguage :: Maybe String,
+    pNetworkSetUserAgentOverrideAcceptLanguage :: Maybe T.Text,
     -- | The platform navigator.platform should return.
-    pNetworkSetUserAgentOverridePlatform :: Maybe String,
+    pNetworkSetUserAgentOverridePlatform :: Maybe T.Text,
     -- | To be sent in Sec-CH-UA-* headers and returned in navigator.userAgentData
     pNetworkSetUserAgentOverrideUserAgentMetadata :: Maybe EmulationUserAgentMetadata
   }
   deriving (Eq, Show)
 pNetworkSetUserAgentOverride
   -- | User agent to use.
-  :: String
+  :: T.Text
   -> PNetworkSetUserAgentOverride
 pNetworkSetUserAgentOverride
   arg_pNetworkSetUserAgentOverrideUserAgent
@@ -6741,14 +6741,14 @@ data PNetworkLoadNetworkResource = PNetworkLoadNetworkResource
     --   should be omitted for worker targets.
     pNetworkLoadNetworkResourceFrameId :: Maybe PageFrameId,
     -- | URL of the resource to get content for.
-    pNetworkLoadNetworkResourceUrl :: String,
+    pNetworkLoadNetworkResourceUrl :: T.Text,
     -- | Options for the request.
     pNetworkLoadNetworkResourceOptions :: NetworkLoadNetworkResourceOptions
   }
   deriving (Eq, Show)
 pNetworkLoadNetworkResource
   -- | URL of the resource to get content for.
-  :: String
+  :: T.Text
   -- | Options for the request.
   -> NetworkLoadNetworkResourceOptions
   -> PNetworkLoadNetworkResource
@@ -6779,7 +6779,7 @@ instance Command PNetworkLoadNetworkResource where
 
 -- | Type 'Page.FrameId'.
 --   Unique frame identifier.
-type PageFrameId = String
+type PageFrameId = T.Text
 
 -- | Type 'Page.AdFrameType'.
 --   Indicates whether a frame has been identified as an ad.
@@ -7184,9 +7184,9 @@ instance ToJSON PageOriginTrialUsageRestriction where
 -- | Type 'Page.OriginTrialToken'.
 data PageOriginTrialToken = PageOriginTrialToken
   {
-    pageOriginTrialTokenOrigin :: String,
+    pageOriginTrialTokenOrigin :: T.Text,
     pageOriginTrialTokenMatchSubDomains :: Bool,
-    pageOriginTrialTokenTrialName :: String,
+    pageOriginTrialTokenTrialName :: T.Text,
     pageOriginTrialTokenExpiryTime :: NetworkTimeSinceEpoch,
     pageOriginTrialTokenIsThirdParty :: Bool,
     pageOriginTrialTokenUsageRestriction :: PageOriginTrialUsageRestriction
@@ -7213,7 +7213,7 @@ instance ToJSON PageOriginTrialToken where
 -- | Type 'Page.OriginTrialTokenWithStatus'.
 data PageOriginTrialTokenWithStatus = PageOriginTrialTokenWithStatus
   {
-    pageOriginTrialTokenWithStatusRawTokenText :: String,
+    pageOriginTrialTokenWithStatusRawTokenText :: T.Text,
     -- | `parsedToken` is present only when the token is extractable and
     --   parsable.
     pageOriginTrialTokenWithStatusParsedToken :: Maybe PageOriginTrialToken,
@@ -7235,7 +7235,7 @@ instance ToJSON PageOriginTrialTokenWithStatus where
 -- | Type 'Page.OriginTrial'.
 data PageOriginTrial = PageOriginTrial
   {
-    pageOriginTrialTrialName :: String,
+    pageOriginTrialTrialName :: T.Text,
     pageOriginTrialStatus :: PageOriginTrialStatus,
     pageOriginTrialTokensWithStatus :: [PageOriginTrialTokenWithStatus]
   }
@@ -7263,22 +7263,22 @@ data PageFrame = PageFrame
     -- | Identifier of the loader associated with this frame.
     pageFrameLoaderId :: NetworkLoaderId,
     -- | Frame's name as specified in the tag.
-    pageFrameName :: Maybe String,
+    pageFrameName :: Maybe T.Text,
     -- | Frame document's URL without fragment.
-    pageFrameUrl :: String,
+    pageFrameUrl :: T.Text,
     -- | Frame document's URL fragment including the '#'.
-    pageFrameUrlFragment :: Maybe String,
+    pageFrameUrlFragment :: Maybe T.Text,
     -- | Frame document's registered domain, taking the public suffixes list into account.
     --   Extracted from the Frame's url.
     --   Example URLs: http://www.google.com/file.html -> "google.com"
     --                 http://a.b.co.uk/file.html      -> "b.co.uk"
-    pageFrameDomainAndRegistry :: String,
+    pageFrameDomainAndRegistry :: T.Text,
     -- | Frame document's security origin.
-    pageFrameSecurityOrigin :: String,
+    pageFrameSecurityOrigin :: T.Text,
     -- | Frame document's mimeType as determined by the browser.
-    pageFrameMimeType :: String,
+    pageFrameMimeType :: T.Text,
     -- | If the frame failed to load, this contains the URL that could not be loaded. Note that unlike url above, this URL may contain a fragment.
-    pageFrameUnreachableUrl :: Maybe String,
+    pageFrameUnreachableUrl :: Maybe T.Text,
     -- | Indicates whether this frame was tagged as an ad and why.
     pageFrameAdFrameStatus :: Maybe PageAdFrameStatus,
     -- | Indicates whether the main document is a secure context and explains why that is the case.
@@ -7328,11 +7328,11 @@ instance ToJSON PageFrame where
 data PageFrameResource = PageFrameResource
   {
     -- | Resource URL.
-    pageFrameResourceUrl :: String,
+    pageFrameResourceUrl :: T.Text,
     -- | Type of this resource.
     pageFrameResourceType :: NetworkResourceType,
     -- | Resource mimeType as determined by the browser.
-    pageFrameResourceMimeType :: String,
+    pageFrameResourceMimeType :: T.Text,
     -- | last-modified timestamp as reported by server.
     pageFrameResourceLastModified :: Maybe NetworkTimeSinceEpoch,
     -- | Resource content size.
@@ -7409,7 +7409,7 @@ instance ToJSON PageFrameTree where
 
 -- | Type 'Page.ScriptIdentifier'.
 --   Unique script identifier.
-type PageScriptIdentifier = String
+type PageScriptIdentifier = T.Text
 
 -- | Type 'Page.TransitionType'.
 --   Transition type.
@@ -7454,11 +7454,11 @@ data PageNavigationEntry = PageNavigationEntry
     -- | Unique id of the navigation history entry.
     pageNavigationEntryId :: Int,
     -- | URL of the navigation history entry.
-    pageNavigationEntryUrl :: String,
+    pageNavigationEntryUrl :: T.Text,
     -- | URL that the user typed in the url bar.
-    pageNavigationEntryUserTypedURL :: String,
+    pageNavigationEntryUserTypedURL :: T.Text,
     -- | Title of the navigation history entry.
-    pageNavigationEntryTitle :: String,
+    pageNavigationEntryTitle :: T.Text,
     -- | Transition type.
     pageNavigationEntryTransitionType :: PageTransitionType
   }
@@ -7542,7 +7542,7 @@ instance ToJSON PageDialogType where
 data PageAppManifestError = PageAppManifestError
   {
     -- | Error message.
-    pageAppManifestErrorMessage :: String,
+    pageAppManifestErrorMessage :: T.Text,
     -- | If criticial, this is a non-recoverable parse error.
     pageAppManifestErrorCritical :: Int,
     -- | Error line.
@@ -7570,7 +7570,7 @@ instance ToJSON PageAppManifestError where
 data PageAppManifestParsedProperties = PageAppManifestParsedProperties
   {
     -- | Computed scope value
-    pageAppManifestParsedPropertiesScope :: String
+    pageAppManifestParsedPropertiesScope :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON PageAppManifestParsedProperties where
@@ -7690,19 +7690,19 @@ instance ToJSON PageViewport where
 data PageFontFamilies = PageFontFamilies
   {
     -- | The standard font-family.
-    pageFontFamiliesStandard :: Maybe String,
+    pageFontFamiliesStandard :: Maybe T.Text,
     -- | The fixed font-family.
-    pageFontFamiliesFixed :: Maybe String,
+    pageFontFamiliesFixed :: Maybe T.Text,
     -- | The serif font-family.
-    pageFontFamiliesSerif :: Maybe String,
+    pageFontFamiliesSerif :: Maybe T.Text,
     -- | The sansSerif font-family.
-    pageFontFamiliesSansSerif :: Maybe String,
+    pageFontFamiliesSansSerif :: Maybe T.Text,
     -- | The cursive font-family.
-    pageFontFamiliesCursive :: Maybe String,
+    pageFontFamiliesCursive :: Maybe T.Text,
     -- | The fantasy font-family.
-    pageFontFamiliesFantasy :: Maybe String,
+    pageFontFamiliesFantasy :: Maybe T.Text,
     -- | The math font-family.
-    pageFontFamiliesMath :: Maybe String
+    pageFontFamiliesMath :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON PageFontFamilies where
@@ -7730,7 +7730,7 @@ instance ToJSON PageFontFamilies where
 data PageScriptFontFamilies = PageScriptFontFamilies
   {
     -- | Name of the script which these font families are defined for.
-    pageScriptFontFamiliesScript :: String,
+    pageScriptFontFamiliesScript :: T.Text,
     -- | Generic font families collection for the script.
     pageScriptFontFamiliesFontFamilies :: PageFontFamilies
   }
@@ -7811,9 +7811,9 @@ instance ToJSON PageClientNavigationDisposition where
 data PageInstallabilityErrorArgument = PageInstallabilityErrorArgument
   {
     -- | Argument name (e.g. name:'minimum-icon-size-in-pixels').
-    pageInstallabilityErrorArgumentName :: String,
+    pageInstallabilityErrorArgumentName :: T.Text,
     -- | Argument value (e.g. value:'64').
-    pageInstallabilityErrorArgumentValue :: String
+    pageInstallabilityErrorArgumentValue :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON PageInstallabilityErrorArgument where
@@ -7831,7 +7831,7 @@ instance ToJSON PageInstallabilityErrorArgument where
 data PageInstallabilityError = PageInstallabilityError
   {
     -- | The error id (e.g. 'manifest-missing-suitable-icon').
-    pageInstallabilityErrorErrorId :: String,
+    pageInstallabilityErrorErrorId :: T.Text,
     -- | The list of error arguments (e.g. {name:'minimum-icon-size-in-pixels', value:'64'}).
     pageInstallabilityErrorErrorArguments :: [PageInstallabilityErrorArgument]
   }
@@ -7877,7 +7877,7 @@ instance ToJSON PageReferrerPolicy where
 data PageCompilationCacheParams = PageCompilationCacheParams
   {
     -- | The URL of the script to produce a compilation cache entry for.
-    pageCompilationCacheParamsUrl :: String,
+    pageCompilationCacheParamsUrl :: T.Text,
     -- | A hint to the backend whether eager compilation is recommended.
     --   (the actual compilation mode used is upon backend discretion).
     pageCompilationCacheParamsEager :: Maybe Bool
@@ -8187,7 +8187,7 @@ data PageBackForwardCacheNotRestoredExplanation = PageBackForwardCacheNotRestore
     -- | Context associated with the reason. The meaning of this context is
     --   dependent on the reason:
     --   - EmbedderExtensionSentMessageToCachedFrame: the extension ID.
-    pageBackForwardCacheNotRestoredExplanationContext :: Maybe String
+    pageBackForwardCacheNotRestoredExplanationContext :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON PageBackForwardCacheNotRestoredExplanation where
@@ -8206,7 +8206,7 @@ instance ToJSON PageBackForwardCacheNotRestoredExplanation where
 data PageBackForwardCacheNotRestoredExplanationTree = PageBackForwardCacheNotRestoredExplanationTree
   {
     -- | URL of each frame
-    pageBackForwardCacheNotRestoredExplanationTreeUrl :: String,
+    pageBackForwardCacheNotRestoredExplanationTreeUrl :: T.Text,
     -- | Not restored reasons of each frame
     pageBackForwardCacheNotRestoredExplanationTreeExplanations :: [PageBackForwardCacheNotRestoredExplanation],
     -- | Array of children frame
@@ -8444,7 +8444,7 @@ data PageFrameRequestedNavigation = PageFrameRequestedNavigation
     -- | The reason for the navigation.
     pageFrameRequestedNavigationReason :: PageClientNavigationReason,
     -- | The destination URL for the requested navigation.
-    pageFrameRequestedNavigationUrl :: String,
+    pageFrameRequestedNavigationUrl :: T.Text,
     -- | The disposition for the navigation.
     pageFrameRequestedNavigationDisposition :: PageClientNavigationDisposition
   }
@@ -8506,7 +8506,7 @@ data PageJavascriptDialogClosed = PageJavascriptDialogClosed
     -- | Whether dialog was confirmed.
     pageJavascriptDialogClosedResult :: Bool,
     -- | User input in case of prompt.
-    pageJavascriptDialogClosedUserInput :: String
+    pageJavascriptDialogClosedUserInput :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON PageJavascriptDialogClosed where
@@ -8520,9 +8520,9 @@ instance Event PageJavascriptDialogClosed where
 data PageJavascriptDialogOpening = PageJavascriptDialogOpening
   {
     -- | Frame url.
-    pageJavascriptDialogOpeningUrl :: String,
+    pageJavascriptDialogOpeningUrl :: T.Text,
     -- | Message that will be displayed by the dialog.
-    pageJavascriptDialogOpeningMessage :: String,
+    pageJavascriptDialogOpeningMessage :: T.Text,
     -- | Dialog type.
     pageJavascriptDialogOpeningType :: PageDialogType,
     -- | True iff browser is capable showing or acting on the given dialog. When browser has no
@@ -8530,7 +8530,7 @@ data PageJavascriptDialogOpening = PageJavascriptDialogOpening
     --   the page execution. Execution can be resumed via calling Page.handleJavaScriptDialog.
     pageJavascriptDialogOpeningHasBrowserHandler :: Bool,
     -- | Default dialog prompt.
-    pageJavascriptDialogOpeningDefaultPrompt :: Maybe String
+    pageJavascriptDialogOpeningDefaultPrompt :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON PageJavascriptDialogOpening where
@@ -8550,7 +8550,7 @@ data PageLifecycleEvent = PageLifecycleEvent
     pageLifecycleEventFrameId :: PageFrameId,
     -- | Loader identifier. Empty string if the request is fetched from worker.
     pageLifecycleEventLoaderId :: NetworkLoaderId,
-    pageLifecycleEventName :: String,
+    pageLifecycleEventName :: T.Text,
     pageLifecycleEventTimestamp :: NetworkMonotonicTime
   }
   deriving (Eq, Show)
@@ -8590,11 +8590,11 @@ data PagePrerenderAttemptCompleted = PagePrerenderAttemptCompleted
   {
     -- | The frame id of the frame initiating prerendering.
     pagePrerenderAttemptCompletedInitiatingFrameId :: PageFrameId,
-    pagePrerenderAttemptCompletedPrerenderingUrl :: String,
+    pagePrerenderAttemptCompletedPrerenderingUrl :: T.Text,
     pagePrerenderAttemptCompletedFinalStatus :: PagePrerenderFinalStatus,
     -- | This is used to give users more information about the name of the API call
     --   that is incompatible with prerender and has caused the cancellation of the attempt
-    pagePrerenderAttemptCompletedDisallowedApiMethod :: Maybe String
+    pagePrerenderAttemptCompletedDisallowedApiMethod :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON PagePrerenderAttemptCompleted where
@@ -8624,7 +8624,7 @@ data PageNavigatedWithinDocument = PageNavigatedWithinDocument
     -- | Id of the frame.
     pageNavigatedWithinDocumentFrameId :: PageFrameId,
     -- | Frame's new url.
-    pageNavigatedWithinDocumentUrl :: String
+    pageNavigatedWithinDocumentUrl :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON PageNavigatedWithinDocument where
@@ -8638,7 +8638,7 @@ instance Event PageNavigatedWithinDocument where
 data PageScreencastFrame = PageScreencastFrame
   {
     -- | Base64-encoded compressed image. (Encoded as a base64 string when passed over JSON)
-    pageScreencastFrameData :: String,
+    pageScreencastFrameData :: T.Text,
     -- | Screencast frame metadata.
     pageScreencastFrameMetadata :: PageScreencastFrameMetadata,
     -- | Frame number.
@@ -8670,11 +8670,11 @@ instance Event PageScreencastVisibilityChanged where
 data PageWindowOpen = PageWindowOpen
   {
     -- | The URL for the new window.
-    pageWindowOpenUrl :: String,
+    pageWindowOpenUrl :: T.Text,
     -- | Window name.
-    pageWindowOpenWindowName :: String,
+    pageWindowOpenWindowName :: T.Text,
     -- | An array of enabled window features.
-    pageWindowOpenWindowFeatures :: [String],
+    pageWindowOpenWindowFeatures :: [T.Text],
     -- | Whether or not it was triggered by user gesture.
     pageWindowOpenUserGesture :: Bool
   }
@@ -8691,9 +8691,9 @@ instance Event PageWindowOpen where
 -- | Type of the 'Page.compilationCacheProduced' event.
 data PageCompilationCacheProduced = PageCompilationCacheProduced
   {
-    pageCompilationCacheProducedUrl :: String,
+    pageCompilationCacheProducedUrl :: T.Text,
     -- | Base64-encoded data (Encoded as a base64 string when passed over JSON)
-    pageCompilationCacheProducedData :: String
+    pageCompilationCacheProducedData :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON PageCompilationCacheProduced where
@@ -8708,18 +8708,18 @@ instance Event PageCompilationCacheProduced where
 -- | Parameters of the 'Page.addScriptToEvaluateOnNewDocument' command.
 data PPageAddScriptToEvaluateOnNewDocument = PPageAddScriptToEvaluateOnNewDocument
   {
-    pPageAddScriptToEvaluateOnNewDocumentSource :: String,
+    pPageAddScriptToEvaluateOnNewDocumentSource :: T.Text,
     -- | If specified, creates an isolated world with the given name and evaluates given script in it.
     --   This world name will be used as the ExecutionContextDescription::name when the corresponding
     --   event is emitted.
-    pPageAddScriptToEvaluateOnNewDocumentWorldName :: Maybe String,
+    pPageAddScriptToEvaluateOnNewDocumentWorldName :: Maybe T.Text,
     -- | Specifies whether command line API should be available to the script, defaults
     --   to false.
     pPageAddScriptToEvaluateOnNewDocumentIncludeCommandLineAPI :: Maybe Bool
   }
   deriving (Eq, Show)
 pPageAddScriptToEvaluateOnNewDocument
-  :: String
+  :: T.Text
   -> PPageAddScriptToEvaluateOnNewDocument
 pPageAddScriptToEvaluateOnNewDocument
   arg_pPageAddScriptToEvaluateOnNewDocumentSource
@@ -8812,7 +8812,7 @@ instance ToJSON PPageCaptureScreenshot where
 data PageCaptureScreenshot = PageCaptureScreenshot
   {
     -- | Base64-encoded image data. (Encoded as a base64 string when passed over JSON)
-    pageCaptureScreenshotData :: String
+    pageCaptureScreenshotData :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON PageCaptureScreenshot where
@@ -8853,7 +8853,7 @@ instance ToJSON PPageCaptureSnapshot where
 data PageCaptureSnapshot = PageCaptureSnapshot
   {
     -- | Serialized page data.
-    pageCaptureSnapshotData :: String
+    pageCaptureSnapshotData :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON PageCaptureSnapshot where
@@ -8871,7 +8871,7 @@ data PPageCreateIsolatedWorld = PPageCreateIsolatedWorld
     -- | Id of the frame in which the isolated world should be created.
     pPageCreateIsolatedWorldFrameId :: PageFrameId,
     -- | An optional name which is reported in the Execution Context.
-    pPageCreateIsolatedWorldWorldName :: Maybe String,
+    pPageCreateIsolatedWorldWorldName :: Maybe T.Text,
     -- | Whether or not universal access should be granted to the isolated world. This is a powerful
     --   option, use with caution.
     pPageCreateIsolatedWorldGrantUniveralAccess :: Maybe Bool
@@ -8951,10 +8951,10 @@ instance ToJSON PPageGetAppManifest where
 data PageGetAppManifest = PageGetAppManifest
   {
     -- | Manifest location.
-    pageGetAppManifestUrl :: String,
+    pageGetAppManifestUrl :: T.Text,
     pageGetAppManifestErrors :: [PageAppManifestError],
     -- | Manifest content.
-    pageGetAppManifestData :: Maybe String,
+    pageGetAppManifestData :: Maybe T.Text,
     -- | Parsed manifest properties
     pageGetAppManifestParsed :: Maybe PageAppManifestParsedProperties
   }
@@ -9003,7 +9003,7 @@ instance ToJSON PPageGetManifestIcons where
   toJSON _ = A.Null
 data PageGetManifestIcons = PageGetManifestIcons
   {
-    pageGetManifestIconsPrimaryIcon :: Maybe String
+    pageGetManifestIconsPrimaryIcon :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON PageGetManifestIcons where
@@ -9028,9 +9028,9 @@ instance ToJSON PPageGetAppId where
 data PageGetAppId = PageGetAppId
   {
     -- | App id, either from manifest's id attribute or computed from start_url
-    pageGetAppIdAppId :: Maybe String,
+    pageGetAppIdAppId :: Maybe T.Text,
     -- | Recommendation for manifest's id attribute to match current id computed from start_url
-    pageGetAppIdRecommendedId :: Maybe String
+    pageGetAppIdRecommendedId :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON PageGetAppId where
@@ -9178,14 +9178,14 @@ data PPageGetResourceContent = PPageGetResourceContent
     -- | Frame id to get resource for.
     pPageGetResourceContentFrameId :: PageFrameId,
     -- | URL of the resource to get content for.
-    pPageGetResourceContentUrl :: String
+    pPageGetResourceContentUrl :: T.Text
   }
   deriving (Eq, Show)
 pPageGetResourceContent
   -- | Frame id to get resource for.
   :: PageFrameId
   -- | URL of the resource to get content for.
-  -> String
+  -> T.Text
   -> PPageGetResourceContent
 pPageGetResourceContent
   arg_pPageGetResourceContentFrameId
@@ -9201,7 +9201,7 @@ instance ToJSON PPageGetResourceContent where
 data PageGetResourceContent = PageGetResourceContent
   {
     -- | Resource content.
-    pageGetResourceContentContent :: String,
+    pageGetResourceContentContent :: T.Text,
     -- | True, if content was served as base64.
     pageGetResourceContentBase64Encoded :: Bool
   }
@@ -9247,7 +9247,7 @@ data PPageHandleJavaScriptDialog = PPageHandleJavaScriptDialog
     pPageHandleJavaScriptDialogAccept :: Bool,
     -- | The text to enter into the dialog prompt before accepting. Used only if this is a prompt
     --   dialog.
-    pPageHandleJavaScriptDialogPromptText :: Maybe String
+    pPageHandleJavaScriptDialogPromptText :: Maybe T.Text
   }
   deriving (Eq, Show)
 pPageHandleJavaScriptDialog
@@ -9275,9 +9275,9 @@ instance Command PPageHandleJavaScriptDialog where
 data PPageNavigate = PPageNavigate
   {
     -- | URL to navigate the page to.
-    pPageNavigateUrl :: String,
+    pPageNavigateUrl :: T.Text,
     -- | Referrer URL.
-    pPageNavigateReferrer :: Maybe String,
+    pPageNavigateReferrer :: Maybe T.Text,
     -- | Intended transition type.
     pPageNavigateTransitionType :: Maybe PageTransitionType,
     -- | Frame id to navigate, if not specified navigates the top frame.
@@ -9288,7 +9288,7 @@ data PPageNavigate = PPageNavigate
   deriving (Eq, Show)
 pPageNavigate
   -- | URL to navigate the page to.
-  :: String
+  :: T.Text
   -> PPageNavigate
 pPageNavigate
   arg_pPageNavigateUrl
@@ -9314,7 +9314,7 @@ data PageNavigate = PageNavigate
     --   as the previously committed loaderId would not change.
     pageNavigateLoaderId :: Maybe NetworkLoaderId,
     -- | User friendly error message, present if and only if navigation has failed.
-    pageNavigateErrorText :: Maybe String
+    pageNavigateErrorText :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON PageNavigate where
@@ -9396,7 +9396,7 @@ data PPagePrintToPDF = PPagePrintToPDF
     --   document, and ranges beyond the end of the document are ignored.
     --   If this results in no pages to print, an error is reported.
     --   It is an error to specify a range with start greater than end.
-    pPagePrintToPDFPageRanges :: Maybe String,
+    pPagePrintToPDFPageRanges :: Maybe T.Text,
     -- | HTML template for the print header. Should be valid HTML markup with following
     --   classes used to inject printing values into them:
     --   - `date`: formatted print date
@@ -9406,9 +9406,9 @@ data PPagePrintToPDF = PPagePrintToPDF
     --   - `totalPages`: total pages in the document
     --   
     --   For example, `<span class=title></span>` would generate span containing the title.
-    pPagePrintToPDFHeaderTemplate :: Maybe String,
+    pPagePrintToPDFHeaderTemplate :: Maybe T.Text,
     -- | HTML template for the print footer. Should use the same format as the `headerTemplate`.
-    pPagePrintToPDFFooterTemplate :: Maybe String,
+    pPagePrintToPDFFooterTemplate :: Maybe T.Text,
     -- | Whether or not to prefer page size as defined by css. Defaults to false,
     --   in which case the content will be scaled to fit the paper size.
     pPagePrintToPDFPreferCSSPageSize :: Maybe Bool,
@@ -9456,7 +9456,7 @@ instance ToJSON PPagePrintToPDF where
 data PagePrintToPDF = PagePrintToPDF
   {
     -- | Base64-encoded pdf data. Empty if |returnAsStream| is specified. (Encoded as a base64 string when passed over JSON)
-    pagePrintToPDFData :: String,
+    pagePrintToPDFData :: T.Text,
     -- | A handle of the stream that holds resulting PDF data.
     pagePrintToPDFStream :: Maybe IO.IOStreamHandle
   }
@@ -9478,7 +9478,7 @@ data PPageReload = PPageReload
     pPageReloadIgnoreCache :: Maybe Bool,
     -- | If set, the script will be injected into all frames of the inspected page after reload.
     --   Argument will be ignored if reloading dataURL origin.
-    pPageReloadScriptToEvaluateOnLoad :: Maybe String
+    pPageReloadScriptToEvaluateOnLoad :: Maybe T.Text
   }
   deriving (Eq, Show)
 pPageReload
@@ -9555,9 +9555,9 @@ data PPageSearchInResource = PPageSearchInResource
     -- | Frame id for resource to search in.
     pPageSearchInResourceFrameId :: PageFrameId,
     -- | URL of the resource to search in.
-    pPageSearchInResourceUrl :: String,
+    pPageSearchInResourceUrl :: T.Text,
     -- | String to search for.
-    pPageSearchInResourceQuery :: String,
+    pPageSearchInResourceQuery :: T.Text,
     -- | If true, search is case sensitive.
     pPageSearchInResourceCaseSensitive :: Maybe Bool,
     -- | If true, treats string parameter as regex.
@@ -9568,9 +9568,9 @@ pPageSearchInResource
   -- | Frame id for resource to search in.
   :: PageFrameId
   -- | URL of the resource to search in.
-  -> String
+  -> T.Text
   -- | String to search for.
-  -> String
+  -> T.Text
   -> PPageSearchInResource
 pPageSearchInResource
   arg_pPageSearchInResourceFrameId
@@ -9781,14 +9781,14 @@ data PPageSetDocumentContent = PPageSetDocumentContent
     -- | Frame id to set HTML for.
     pPageSetDocumentContentFrameId :: PageFrameId,
     -- | HTML content to set.
-    pPageSetDocumentContentHtml :: String
+    pPageSetDocumentContentHtml :: T.Text
   }
   deriving (Eq, Show)
 pPageSetDocumentContent
   -- | Frame id to set HTML for.
   :: PageFrameId
   -- | HTML content to set.
-  -> String
+  -> T.Text
   -> PPageSetDocumentContent
 pPageSetDocumentContent
   arg_pPageSetDocumentContentFrameId
@@ -10020,15 +10020,15 @@ instance Command PPageProduceCompilationCache where
 -- | Parameters of the 'Page.addCompilationCache' command.
 data PPageAddCompilationCache = PPageAddCompilationCache
   {
-    pPageAddCompilationCacheUrl :: String,
+    pPageAddCompilationCacheUrl :: T.Text,
     -- | Base64-encoded data (Encoded as a base64 string when passed over JSON)
-    pPageAddCompilationCacheData :: String
+    pPageAddCompilationCacheData :: T.Text
   }
   deriving (Eq, Show)
 pPageAddCompilationCache
-  :: String
+  :: T.Text
   -- | Base64-encoded data (Encoded as a base64 string when passed over JSON)
-  -> String
+  -> T.Text
   -> PPageAddCompilationCache
 pPageAddCompilationCache
   arg_pPageAddCompilationCacheUrl
@@ -10106,14 +10106,14 @@ instance Command PPageSetSPCTransactionMode where
 data PPageGenerateTestReport = PPageGenerateTestReport
   {
     -- | Message to be displayed in the report.
-    pPageGenerateTestReportMessage :: String,
+    pPageGenerateTestReportMessage :: T.Text,
     -- | Specifies the endpoint group to deliver the report to.
-    pPageGenerateTestReportGroup :: Maybe String
+    pPageGenerateTestReportGroup :: Maybe T.Text
   }
   deriving (Eq, Show)
 pPageGenerateTestReport
   -- | Message to be displayed in the report.
-  :: String
+  :: T.Text
   -> PPageGenerateTestReport
 pPageGenerateTestReport
   arg_pPageGenerateTestReportMessage
@@ -10220,27 +10220,27 @@ instance ToJSON SecuritySecurityState where
 data SecurityCertificateSecurityState = SecurityCertificateSecurityState
   {
     -- | Protocol name (e.g. "TLS 1.2" or "QUIC").
-    securityCertificateSecurityStateProtocol :: String,
+    securityCertificateSecurityStateProtocol :: T.Text,
     -- | Key Exchange used by the connection, or the empty string if not applicable.
-    securityCertificateSecurityStateKeyExchange :: String,
+    securityCertificateSecurityStateKeyExchange :: T.Text,
     -- | (EC)DH group used by the connection, if applicable.
-    securityCertificateSecurityStateKeyExchangeGroup :: Maybe String,
+    securityCertificateSecurityStateKeyExchangeGroup :: Maybe T.Text,
     -- | Cipher name.
-    securityCertificateSecurityStateCipher :: String,
+    securityCertificateSecurityStateCipher :: T.Text,
     -- | TLS MAC. Note that AEAD ciphers do not have separate MACs.
-    securityCertificateSecurityStateMac :: Maybe String,
+    securityCertificateSecurityStateMac :: Maybe T.Text,
     -- | Page certificate.
-    securityCertificateSecurityStateCertificate :: [String],
+    securityCertificateSecurityStateCertificate :: [T.Text],
     -- | Certificate subject name.
-    securityCertificateSecurityStateSubjectName :: String,
+    securityCertificateSecurityStateSubjectName :: T.Text,
     -- | Name of the issuing CA.
-    securityCertificateSecurityStateIssuer :: String,
+    securityCertificateSecurityStateIssuer :: T.Text,
     -- | Certificate valid from date.
     securityCertificateSecurityStateValidFrom :: NetworkTimeSinceEpoch,
     -- | Certificate valid to (expiration) date
     securityCertificateSecurityStateValidTo :: NetworkTimeSinceEpoch,
     -- | The highest priority network error code, if the certificate has an error.
-    securityCertificateSecurityStateCertificateNetworkError :: Maybe String,
+    securityCertificateSecurityStateCertificateNetworkError :: Maybe T.Text,
     -- | True if the certificate uses a weak signature aglorithm.
     securityCertificateSecurityStateCertificateHasWeakSignature :: Bool,
     -- | True if the certificate has a SHA1 signature in the chain.
@@ -10318,7 +10318,7 @@ data SecuritySafetyTipInfo = SecuritySafetyTipInfo
     -- | Describes whether the page triggers any safety tips or reputation warnings. Default is unknown.
     securitySafetyTipInfoSafetyTipStatus :: SecuritySafetyTipStatus,
     -- | The URL the safety tip suggested ("Did you mean?"). Only filled in for lookalike matches.
-    securitySafetyTipInfoSafeUrl :: Maybe String
+    securitySafetyTipInfoSafeUrl :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON SecuritySafetyTipInfo where
@@ -10342,7 +10342,7 @@ data SecurityVisibleSecurityState = SecurityVisibleSecurityState
     -- | The type of Safety Tip triggered on the page. Note that this field will be set even if the Safety Tip UI was not actually shown.
     securityVisibleSecurityStateSafetyTipInfo :: Maybe SecuritySafetyTipInfo,
     -- | Array of security state issues ids.
-    securityVisibleSecurityStateSecurityStateIssueIds :: [String]
+    securityVisibleSecurityStateSecurityStateIssueIds :: [T.Text]
   }
   deriving (Eq, Show)
 instance FromJSON SecurityVisibleSecurityState where
@@ -10366,17 +10366,17 @@ data SecuritySecurityStateExplanation = SecuritySecurityStateExplanation
     -- | Security state representing the severity of the factor being explained.
     securitySecurityStateExplanationSecurityState :: SecuritySecurityState,
     -- | Title describing the type of factor.
-    securitySecurityStateExplanationTitle :: String,
+    securitySecurityStateExplanationTitle :: T.Text,
     -- | Short phrase describing the type of factor.
-    securitySecurityStateExplanationSummary :: String,
+    securitySecurityStateExplanationSummary :: T.Text,
     -- | Full text explanation of the factor.
-    securitySecurityStateExplanationDescription :: String,
+    securitySecurityStateExplanationDescription :: T.Text,
     -- | The type of mixed content described by the explanation.
     securitySecurityStateExplanationMixedContentType :: SecurityMixedContentType,
     -- | Page certificate.
-    securitySecurityStateExplanationCertificate :: [String],
+    securitySecurityStateExplanationCertificate :: [T.Text],
     -- | Recommendations to fix any issues.
-    securitySecurityStateExplanationRecommendations :: Maybe [String]
+    securitySecurityStateExplanationRecommendations :: Maybe [T.Text]
   }
   deriving (Eq, Show)
 instance FromJSON SecuritySecurityStateExplanation where

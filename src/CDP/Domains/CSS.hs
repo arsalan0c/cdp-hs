@@ -55,7 +55,7 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 
 
 -- | Type 'CSS.StyleSheetId'.
-type CSSStyleSheetId = String
+type CSSStyleSheetId = T.Text
 
 -- | Type 'CSS.StyleSheetOrigin'.
 --   Stylesheet type: "injected" for stylesheets injected via extension, "user-agent" for user-agent
@@ -84,7 +84,7 @@ data CSSPseudoElementMatches = CSSPseudoElementMatches
     -- | Pseudo element type.
     cSSPseudoElementMatchesPseudoType :: DOMPageNetworkEmulationSecurity.DOMPseudoType,
     -- | Pseudo element custom ident.
-    cSSPseudoElementMatchesPseudoIdentifier :: Maybe String,
+    cSSPseudoElementMatchesPseudoIdentifier :: Maybe T.Text,
     -- | Matches of CSS rules applicable to the pseudo style.
     cSSPseudoElementMatchesMatches :: [CSSRuleMatch]
   }
@@ -162,7 +162,7 @@ instance ToJSON CSSRuleMatch where
 data CSSValue = CSSValue
   {
     -- | Value text.
-    cSSValueText :: String,
+    cSSValueText :: T.Text,
     -- | Value range in the underlying resource (if available).
     cSSValueRange :: Maybe CSSSourceRange
   }
@@ -184,7 +184,7 @@ data CSSSelectorList = CSSSelectorList
     -- | Selectors in the list.
     cSSSelectorListSelectors :: [CSSValue],
     -- | Rule selector text.
-    cSSSelectorListText :: String
+    cSSSelectorListText :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON CSSSelectorList where
@@ -208,13 +208,13 @@ data CSSCSSStyleSheetHeader = CSSCSSStyleSheetHeader
     -- | Stylesheet resource URL. Empty if this is a constructed stylesheet created using
     --   new CSSStyleSheet() (but non-empty if this is a constructed sylesheet imported
     --   as a CSS module script).
-    cSSCSSStyleSheetHeaderSourceURL :: String,
+    cSSCSSStyleSheetHeaderSourceURL :: T.Text,
     -- | URL of source map associated with the stylesheet (if any).
-    cSSCSSStyleSheetHeaderSourceMapURL :: Maybe String,
+    cSSCSSStyleSheetHeaderSourceMapURL :: Maybe T.Text,
     -- | Stylesheet origin.
     cSSCSSStyleSheetHeaderOrigin :: CSSStyleSheetOrigin,
     -- | Stylesheet title.
-    cSSCSSStyleSheetHeaderTitle :: String,
+    cSSCSSStyleSheetHeaderTitle :: T.Text,
     -- | The backend id for the owner node of the stylesheet.
     cSSCSSStyleSheetHeaderOwnerNode :: Maybe DOMPageNetworkEmulationSecurity.DOMBackendNodeId,
     -- | Denotes whether the stylesheet is disabled.
@@ -399,9 +399,9 @@ instance ToJSON CSSSourceRange where
 data CSSShorthandEntry = CSSShorthandEntry
   {
     -- | Shorthand name.
-    cSSShorthandEntryName :: String,
+    cSSShorthandEntryName :: T.Text,
     -- | Shorthand value.
-    cSSShorthandEntryValue :: String,
+    cSSShorthandEntryValue :: T.Text,
     -- | Whether the property has "!important" annotation (implies `false` if absent).
     cSSShorthandEntryImportant :: Maybe Bool
   }
@@ -422,9 +422,9 @@ instance ToJSON CSSShorthandEntry where
 data CSSCSSComputedStyleProperty = CSSCSSComputedStyleProperty
   {
     -- | Computed style property name.
-    cSSCSSComputedStylePropertyName :: String,
+    cSSCSSComputedStylePropertyName :: T.Text,
     -- | Computed style property value.
-    cSSCSSComputedStylePropertyValue :: String
+    cSSCSSComputedStylePropertyValue :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON CSSCSSComputedStyleProperty where
@@ -449,7 +449,7 @@ data CSSCSSStyle = CSSCSSStyle
     -- | Computed values for all shorthands found in the style.
     cSSCSSStyleShorthandEntries :: [CSSShorthandEntry],
     -- | Style declaration text (if available).
-    cSSCSSStyleCssText :: Maybe String,
+    cSSCSSStyleCssText :: Maybe T.Text,
     -- | Style declaration range in the enclosing stylesheet (if available).
     cSSCSSStyleRange :: Maybe CSSSourceRange
   }
@@ -475,15 +475,15 @@ instance ToJSON CSSCSSStyle where
 data CSSCSSProperty = CSSCSSProperty
   {
     -- | The property name.
-    cSSCSSPropertyName :: String,
+    cSSCSSPropertyName :: T.Text,
     -- | The property value.
-    cSSCSSPropertyValue :: String,
+    cSSCSSPropertyValue :: T.Text,
     -- | Whether the property has "!important" annotation (implies `false` if absent).
     cSSCSSPropertyImportant :: Maybe Bool,
     -- | Whether the property is implicit (implies `false` if absent).
     cSSCSSPropertyImplicit :: Maybe Bool,
     -- | The full property text as specified in the style.
-    cSSCSSPropertyText :: Maybe String,
+    cSSCSSPropertyText :: Maybe T.Text,
     -- | Whether the property is understood by the browser (implies `true` if absent).
     cSSCSSPropertyParsedOk :: Maybe Bool,
     -- | Whether the property is disabled by the user (present for source-based properties only).
@@ -539,14 +539,14 @@ instance ToJSON CSSCSSMediaSource where
 data CSSCSSMedia = CSSCSSMedia
   {
     -- | Media query text.
-    cSSCSSMediaText :: String,
+    cSSCSSMediaText :: T.Text,
     -- | Source of the media query: "mediaRule" if specified by a @media rule, "importRule" if
     --   specified by an @import rule, "linkedSheet" if specified by a "media" attribute in a linked
     --   stylesheet's LINK tag, "inlineSheet" if specified by a "media" attribute in an inline
     --   stylesheet's STYLE tag.
     cSSCSSMediaSource :: CSSCSSMediaSource,
     -- | URL of the document containing the media query description.
-    cSSCSSMediaSourceURL :: Maybe String,
+    cSSCSSMediaSourceURL :: Maybe T.Text,
     -- | The associated rule (@media or @import) header range in the enclosing stylesheet (if
     --   available).
     cSSCSSMediaRange :: Maybe CSSSourceRange,
@@ -601,9 +601,9 @@ data CSSMediaQueryExpression = CSSMediaQueryExpression
     -- | Media query expression value.
     cSSMediaQueryExpressionValue :: Double,
     -- | Media query expression units.
-    cSSMediaQueryExpressionUnit :: String,
+    cSSMediaQueryExpressionUnit :: T.Text,
     -- | Media query expression feature.
-    cSSMediaQueryExpressionFeature :: String,
+    cSSMediaQueryExpressionFeature :: T.Text,
     -- | The associated range of the value text in the enclosing stylesheet (if available).
     cSSMediaQueryExpressionValueRange :: Maybe CSSSourceRange,
     -- | Computed length of media query expression (if applicable).
@@ -631,14 +631,14 @@ instance ToJSON CSSMediaQueryExpression where
 data CSSCSSContainerQuery = CSSCSSContainerQuery
   {
     -- | Container query text.
-    cSSCSSContainerQueryText :: String,
+    cSSCSSContainerQueryText :: T.Text,
     -- | The associated rule header range in the enclosing stylesheet (if
     --   available).
     cSSCSSContainerQueryRange :: Maybe CSSSourceRange,
     -- | Identifier of the stylesheet containing this object (if exists).
     cSSCSSContainerQueryStyleSheetId :: Maybe CSSStyleSheetId,
     -- | Optional name for the container.
-    cSSCSSContainerQueryName :: Maybe String
+    cSSCSSContainerQueryName :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON CSSCSSContainerQuery where
@@ -660,7 +660,7 @@ instance ToJSON CSSCSSContainerQuery where
 data CSSCSSSupports = CSSCSSSupports
   {
     -- | Supports rule text.
-    cSSCSSSupportsText :: String,
+    cSSCSSSupportsText :: T.Text,
     -- | Whether the supports condition is satisfied.
     cSSCSSSupportsActive :: Bool,
     -- | The associated rule header range in the enclosing stylesheet (if
@@ -689,7 +689,7 @@ instance ToJSON CSSCSSSupports where
 data CSSCSSScope = CSSCSSScope
   {
     -- | Scope rule text.
-    cSSCSSScopeText :: String,
+    cSSCSSScopeText :: T.Text,
     -- | The associated rule header range in the enclosing stylesheet (if
     --   available).
     cSSCSSScopeRange :: Maybe CSSSourceRange,
@@ -714,7 +714,7 @@ instance ToJSON CSSCSSScope where
 data CSSCSSLayer = CSSCSSLayer
   {
     -- | Layer name.
-    cSSCSSLayerText :: String,
+    cSSCSSLayerText :: T.Text,
     -- | The associated rule header range in the enclosing stylesheet (if
     --   available).
     cSSCSSLayerRange :: Maybe CSSSourceRange,
@@ -739,7 +739,7 @@ instance ToJSON CSSCSSLayer where
 data CSSCSSLayerData = CSSCSSLayerData
   {
     -- | Layer name.
-    cSSCSSLayerDataName :: String,
+    cSSCSSLayerDataName :: T.Text,
     -- | Direct sub-layers
     cSSCSSLayerDataSubLayers :: Maybe [CSSCSSLayerData],
     -- | Layer order. The order determines the order of the layer in the cascade order.
@@ -764,7 +764,7 @@ instance ToJSON CSSCSSLayerData where
 data CSSPlatformFontUsage = CSSPlatformFontUsage
   {
     -- | Font's family name reported by platform.
-    cSSPlatformFontUsageFamilyName :: String,
+    cSSPlatformFontUsageFamilyName :: T.Text,
     -- | Indicates if the font was downloaded or resolved locally.
     cSSPlatformFontUsageIsCustomFont :: Bool,
     -- | Amount of glyphs that were rendered with this font.
@@ -788,9 +788,9 @@ instance ToJSON CSSPlatformFontUsage where
 data CSSFontVariationAxis = CSSFontVariationAxis
   {
     -- | The font-variation-setting tag (a.k.a. "axis tag").
-    cSSFontVariationAxisTag :: String,
+    cSSFontVariationAxisTag :: T.Text,
     -- | Human-readable variation name in the default language (normally, "en").
-    cSSFontVariationAxisName :: String,
+    cSSFontVariationAxisName :: T.Text,
     -- | The minimum value (inclusive) the font supports for this tag.
     cSSFontVariationAxisMinValue :: Double,
     -- | The maximum value (inclusive) the font supports for this tag.
@@ -821,23 +821,23 @@ instance ToJSON CSSFontVariationAxis where
 data CSSFontFace = CSSFontFace
   {
     -- | The font-family.
-    cSSFontFaceFontFamily :: String,
+    cSSFontFaceFontFamily :: T.Text,
     -- | The font-style.
-    cSSFontFaceFontStyle :: String,
+    cSSFontFaceFontStyle :: T.Text,
     -- | The font-variant.
-    cSSFontFaceFontVariant :: String,
+    cSSFontFaceFontVariant :: T.Text,
     -- | The font-weight.
-    cSSFontFaceFontWeight :: String,
+    cSSFontFaceFontWeight :: T.Text,
     -- | The font-stretch.
-    cSSFontFaceFontStretch :: String,
+    cSSFontFaceFontStretch :: T.Text,
     -- | The font-display.
-    cSSFontFaceFontDisplay :: String,
+    cSSFontFaceFontDisplay :: T.Text,
     -- | The unicode-range.
-    cSSFontFaceUnicodeRange :: String,
+    cSSFontFaceUnicodeRange :: T.Text,
     -- | The src.
-    cSSFontFaceSrc :: String,
+    cSSFontFaceSrc :: T.Text,
     -- | The resolved platform font family
-    cSSFontFacePlatformFontFamily :: String,
+    cSSFontFacePlatformFontFamily :: T.Text,
     -- | Available variation settings (a.k.a. "axes").
     cSSFontFaceFontVariationAxes :: Maybe [CSSFontVariationAxis]
   }
@@ -926,7 +926,7 @@ data CSSStyleDeclarationEdit = CSSStyleDeclarationEdit
     -- | The range of the style text in the enclosing stylesheet.
     cSSStyleDeclarationEditRange :: CSSSourceRange,
     -- | New style text.
-    cSSStyleDeclarationEditText :: String
+    cSSStyleDeclarationEditText :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON CSSStyleDeclarationEdit where
@@ -1009,7 +1009,7 @@ data PCSSAddRule = PCSSAddRule
     -- | The css style sheet identifier where a new rule should be inserted.
     pCSSAddRuleStyleSheetId :: CSSStyleSheetId,
     -- | The text of a new rule.
-    pCSSAddRuleRuleText :: String,
+    pCSSAddRuleRuleText :: T.Text,
     -- | Text position of a new rule in the target style sheet.
     pCSSAddRuleLocation :: CSSSourceRange
   }
@@ -1018,7 +1018,7 @@ pCSSAddRule
   -- | The css style sheet identifier where a new rule should be inserted.
   :: CSSStyleSheetId
   -- | The text of a new rule.
-  -> String
+  -> T.Text
   -- | Text position of a new rule in the target style sheet.
   -> CSSSourceRange
   -> PCSSAddRule
@@ -1071,7 +1071,7 @@ instance ToJSON PCSSCollectClassNames where
 data CSSCollectClassNames = CSSCollectClassNames
   {
     -- | Class name list.
-    cSSCollectClassNamesClassNames :: [String]
+    cSSCollectClassNamesClassNames :: [T.Text]
   }
   deriving (Eq, Show)
 instance FromJSON CSSCollectClassNames where
@@ -1157,14 +1157,14 @@ data PCSSForcePseudoState = PCSSForcePseudoState
     -- | The element id for which to force the pseudo state.
     pCSSForcePseudoStateNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId,
     -- | Element pseudo classes to force when computing the element's style.
-    pCSSForcePseudoStateForcedPseudoClasses :: [String]
+    pCSSForcePseudoStateForcedPseudoClasses :: [T.Text]
   }
   deriving (Eq, Show)
 pCSSForcePseudoState
   -- | The element id for which to force the pseudo state.
   :: DOMPageNetworkEmulationSecurity.DOMNodeId
   -- | Element pseudo classes to force when computing the element's style.
-  -> [String]
+  -> [T.Text]
   -> PCSSForcePseudoState
 pCSSForcePseudoState
   arg_pCSSForcePseudoStateNodeId
@@ -1209,12 +1209,12 @@ data CSSGetBackgroundColors = CSSGetBackgroundColors
     --   this will consist of simply that color. In the case of a gradient, this will consist of each
     --   of the color stops. For anything more complicated, this will be an empty array. Images will
     --   be ignored (as if the image had failed to load).
-    cSSGetBackgroundColorsBackgroundColors :: Maybe [String],
+    cSSGetBackgroundColorsBackgroundColors :: Maybe [T.Text],
     -- | The computed font size for this node, as a CSS computed value string (e.g. '12px').
-    cSSGetBackgroundColorsComputedFontSize :: Maybe String,
+    cSSGetBackgroundColorsComputedFontSize :: Maybe T.Text,
     -- | The computed font weight for this node, as a CSS computed value string (e.g. 'normal' or
     --   '100').
-    cSSGetBackgroundColorsComputedFontWeight :: Maybe String
+    cSSGetBackgroundColorsComputedFontWeight :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON CSSGetBackgroundColors where
@@ -1425,7 +1425,7 @@ instance ToJSON PCSSGetStyleSheetText where
 data CSSGetStyleSheetText = CSSGetStyleSheetText
   {
     -- | The stylesheet text.
-    cSSGetStyleSheetTextText :: String
+    cSSGetStyleSheetTextText :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON CSSGetStyleSheetText where
@@ -1530,15 +1530,15 @@ data PCSSSetEffectivePropertyValueForNode = PCSSSetEffectivePropertyValueForNode
   {
     -- | The element id for which to set property.
     pCSSSetEffectivePropertyValueForNodeNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId,
-    pCSSSetEffectivePropertyValueForNodePropertyName :: String,
-    pCSSSetEffectivePropertyValueForNodeValue :: String
+    pCSSSetEffectivePropertyValueForNodePropertyName :: T.Text,
+    pCSSSetEffectivePropertyValueForNodeValue :: T.Text
   }
   deriving (Eq, Show)
 pCSSSetEffectivePropertyValueForNode
   -- | The element id for which to set property.
   :: DOMPageNetworkEmulationSecurity.DOMNodeId
-  -> String
-  -> String
+  -> T.Text
+  -> T.Text
   -> PCSSSetEffectivePropertyValueForNode
 pCSSSetEffectivePropertyValueForNode
   arg_pCSSSetEffectivePropertyValueForNodeNodeId
@@ -1566,13 +1566,13 @@ data PCSSSetKeyframeKey = PCSSSetKeyframeKey
   {
     pCSSSetKeyframeKeyStyleSheetId :: CSSStyleSheetId,
     pCSSSetKeyframeKeyRange :: CSSSourceRange,
-    pCSSSetKeyframeKeyKeyText :: String
+    pCSSSetKeyframeKeyKeyText :: T.Text
   }
   deriving (Eq, Show)
 pCSSSetKeyframeKey
   :: CSSStyleSheetId
   -> CSSSourceRange
-  -> String
+  -> T.Text
   -> PCSSSetKeyframeKey
 pCSSSetKeyframeKey
   arg_pCSSSetKeyframeKeyStyleSheetId
@@ -1608,13 +1608,13 @@ data PCSSSetMediaText = PCSSSetMediaText
   {
     pCSSSetMediaTextStyleSheetId :: CSSStyleSheetId,
     pCSSSetMediaTextRange :: CSSSourceRange,
-    pCSSSetMediaTextText :: String
+    pCSSSetMediaTextText :: T.Text
   }
   deriving (Eq, Show)
 pCSSSetMediaText
   :: CSSStyleSheetId
   -> CSSSourceRange
-  -> String
+  -> T.Text
   -> PCSSSetMediaText
 pCSSSetMediaText
   arg_pCSSSetMediaTextStyleSheetId
@@ -1650,13 +1650,13 @@ data PCSSSetContainerQueryText = PCSSSetContainerQueryText
   {
     pCSSSetContainerQueryTextStyleSheetId :: CSSStyleSheetId,
     pCSSSetContainerQueryTextRange :: CSSSourceRange,
-    pCSSSetContainerQueryTextText :: String
+    pCSSSetContainerQueryTextText :: T.Text
   }
   deriving (Eq, Show)
 pCSSSetContainerQueryText
   :: CSSStyleSheetId
   -> CSSSourceRange
-  -> String
+  -> T.Text
   -> PCSSSetContainerQueryText
 pCSSSetContainerQueryText
   arg_pCSSSetContainerQueryTextStyleSheetId
@@ -1692,13 +1692,13 @@ data PCSSSetSupportsText = PCSSSetSupportsText
   {
     pCSSSetSupportsTextStyleSheetId :: CSSStyleSheetId,
     pCSSSetSupportsTextRange :: CSSSourceRange,
-    pCSSSetSupportsTextText :: String
+    pCSSSetSupportsTextText :: T.Text
   }
   deriving (Eq, Show)
 pCSSSetSupportsText
   :: CSSStyleSheetId
   -> CSSSourceRange
-  -> String
+  -> T.Text
   -> PCSSSetSupportsText
 pCSSSetSupportsText
   arg_pCSSSetSupportsTextStyleSheetId
@@ -1734,13 +1734,13 @@ data PCSSSetScopeText = PCSSSetScopeText
   {
     pCSSSetScopeTextStyleSheetId :: CSSStyleSheetId,
     pCSSSetScopeTextRange :: CSSSourceRange,
-    pCSSSetScopeTextText :: String
+    pCSSSetScopeTextText :: T.Text
   }
   deriving (Eq, Show)
 pCSSSetScopeText
   :: CSSStyleSheetId
   -> CSSSourceRange
-  -> String
+  -> T.Text
   -> PCSSSetScopeText
 pCSSSetScopeText
   arg_pCSSSetScopeTextStyleSheetId
@@ -1776,13 +1776,13 @@ data PCSSSetRuleSelector = PCSSSetRuleSelector
   {
     pCSSSetRuleSelectorStyleSheetId :: CSSStyleSheetId,
     pCSSSetRuleSelectorRange :: CSSSourceRange,
-    pCSSSetRuleSelectorSelector :: String
+    pCSSSetRuleSelectorSelector :: T.Text
   }
   deriving (Eq, Show)
 pCSSSetRuleSelector
   :: CSSStyleSheetId
   -> CSSSourceRange
-  -> String
+  -> T.Text
   -> PCSSSetRuleSelector
 pCSSSetRuleSelector
   arg_pCSSSetRuleSelectorStyleSheetId
@@ -1817,12 +1817,12 @@ instance Command PCSSSetRuleSelector where
 data PCSSSetStyleSheetText = PCSSSetStyleSheetText
   {
     pCSSSetStyleSheetTextStyleSheetId :: CSSStyleSheetId,
-    pCSSSetStyleSheetTextText :: String
+    pCSSSetStyleSheetTextText :: T.Text
   }
   deriving (Eq, Show)
 pCSSSetStyleSheetText
   :: CSSStyleSheetId
-  -> String
+  -> T.Text
   -> PCSSSetStyleSheetText
 pCSSSetStyleSheetText
   arg_pCSSSetStyleSheetTextStyleSheetId
@@ -1838,7 +1838,7 @@ instance ToJSON PCSSSetStyleSheetText where
 data CSSSetStyleSheetText = CSSSetStyleSheetText
   {
     -- | URL of source map associated with script (if any).
-    cSSSetStyleSheetTextSourceMapURL :: Maybe String
+    cSSSetStyleSheetTextSourceMapURL :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON CSSSetStyleSheetText where

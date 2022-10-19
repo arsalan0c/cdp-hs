@@ -50,7 +50,7 @@ import CDP.Domains.Runtime as Runtime
 
 -- | Type 'HeapProfiler.HeapSnapshotObjectId'.
 --   Heap snapshot object id.
-type HeapProfilerHeapSnapshotObjectId = String
+type HeapProfilerHeapSnapshotObjectId = T.Text
 
 -- | Type 'HeapProfiler.SamplingHeapProfileNode'.
 --   Sampling Heap Profile node. Holds callsite information, allocation statistics and child nodes.
@@ -126,7 +126,7 @@ instance ToJSON HeapProfilerSamplingHeapProfile where
 -- | Type of the 'HeapProfiler.addHeapSnapshotChunk' event.
 data HeapProfilerAddHeapSnapshotChunk = HeapProfilerAddHeapSnapshotChunk
   {
-    heapProfilerAddHeapSnapshotChunkChunk :: String
+    heapProfilerAddHeapSnapshotChunkChunk :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON HeapProfilerAddHeapSnapshotChunk where
@@ -299,7 +299,7 @@ data PHeapProfilerGetObjectByHeapObjectId = PHeapProfilerGetObjectByHeapObjectId
   {
     pHeapProfilerGetObjectByHeapObjectIdObjectId :: HeapProfilerHeapSnapshotObjectId,
     -- | Symbolic group name that can be used to release multiple objects.
-    pHeapProfilerGetObjectByHeapObjectIdObjectGroup :: Maybe String
+    pHeapProfilerGetObjectByHeapObjectIdObjectGroup :: Maybe T.Text
   }
   deriving (Eq, Show)
 pHeapProfilerGetObjectByHeapObjectId

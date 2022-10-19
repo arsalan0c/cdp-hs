@@ -70,7 +70,7 @@ data MemorySamplingProfileNode = MemorySamplingProfileNode
     -- | Total bytes attributed to this sample.
     memorySamplingProfileNodeTotal :: Double,
     -- | Execution stack at the point of allocation.
-    memorySamplingProfileNodeStack :: [String]
+    memorySamplingProfileNodeStack :: [T.Text]
   }
   deriving (Eq, Show)
 instance FromJSON MemorySamplingProfileNode where
@@ -108,12 +108,12 @@ instance ToJSON MemorySamplingProfile where
 data MemoryModule = MemoryModule
   {
     -- | Name of the module.
-    memoryModuleName :: String,
+    memoryModuleName :: T.Text,
     -- | UUID of the module.
-    memoryModuleUuid :: String,
+    memoryModuleUuid :: T.Text,
     -- | Base address where the module is loaded into memory. Encoded as a decimal
     --   or hexadecimal (0x prefixed) string.
-    memoryModuleBaseAddress :: String,
+    memoryModuleBaseAddress :: T.Text,
     -- | Size of the module in bytes.
     memoryModuleSize :: Double
   }

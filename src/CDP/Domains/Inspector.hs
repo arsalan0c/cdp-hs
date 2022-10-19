@@ -51,7 +51,7 @@ import CDP.Internal.Utils
 data InspectorDetached = InspectorDetached
   {
     -- | The reason why connection has been terminated.
-    inspectorDetachedReason :: String
+    inspectorDetachedReason :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON InspectorDetached where

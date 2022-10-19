@@ -50,7 +50,7 @@ import CDP.Internal.Utils
 
 
 -- | Type 'WebAuthn.AuthenticatorId'.
-type WebAuthnAuthenticatorId = String
+type WebAuthnAuthenticatorId = T.Text
 
 -- | Type 'WebAuthn.AuthenticatorProtocol'.
 data WebAuthnAuthenticatorProtocol = WebAuthnAuthenticatorProtocolU2f | WebAuthnAuthenticatorProtocolCtap2
@@ -157,23 +157,23 @@ instance ToJSON WebAuthnVirtualAuthenticatorOptions where
 -- | Type 'WebAuthn.Credential'.
 data WebAuthnCredential = WebAuthnCredential
   {
-    webAuthnCredentialCredentialId :: String,
+    webAuthnCredentialCredentialId :: T.Text,
     webAuthnCredentialIsResidentCredential :: Bool,
     -- | Relying Party ID the credential is scoped to. Must be set when adding a
     --   credential.
-    webAuthnCredentialRpId :: Maybe String,
+    webAuthnCredentialRpId :: Maybe T.Text,
     -- | The ECDSA P-256 private key in PKCS#8 format. (Encoded as a base64 string when passed over JSON)
-    webAuthnCredentialPrivateKey :: String,
+    webAuthnCredentialPrivateKey :: T.Text,
     -- | An opaque byte sequence with a maximum size of 64 bytes mapping the
     --   credential to a specific user. (Encoded as a base64 string when passed over JSON)
-    webAuthnCredentialUserHandle :: Maybe String,
+    webAuthnCredentialUserHandle :: Maybe T.Text,
     -- | Signature counter. This is incremented by one for each successful
     --   assertion.
     --   See https://w3c.github.io/webauthn/#signature-counter
     webAuthnCredentialSignCount :: Int,
     -- | The large blob associated with the credential.
     --   See https://w3c.github.io/webauthn/#sctn-large-blob-extension (Encoded as a base64 string when passed over JSON)
-    webAuthnCredentialLargeBlob :: Maybe String
+    webAuthnCredentialLargeBlob :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON WebAuthnCredential where
@@ -331,12 +331,12 @@ instance Command PWebAuthnAddCredential where
 data PWebAuthnGetCredential = PWebAuthnGetCredential
   {
     pWebAuthnGetCredentialAuthenticatorId :: WebAuthnAuthenticatorId,
-    pWebAuthnGetCredentialCredentialId :: String
+    pWebAuthnGetCredentialCredentialId :: T.Text
   }
   deriving (Eq, Show)
 pWebAuthnGetCredential
   :: WebAuthnAuthenticatorId
-  -> String
+  -> T.Text
   -> PWebAuthnGetCredential
 pWebAuthnGetCredential
   arg_pWebAuthnGetCredentialAuthenticatorId
@@ -398,12 +398,12 @@ instance Command PWebAuthnGetCredentials where
 data PWebAuthnRemoveCredential = PWebAuthnRemoveCredential
   {
     pWebAuthnRemoveCredentialAuthenticatorId :: WebAuthnAuthenticatorId,
-    pWebAuthnRemoveCredentialCredentialId :: String
+    pWebAuthnRemoveCredentialCredentialId :: T.Text
   }
   deriving (Eq, Show)
 pWebAuthnRemoveCredential
   :: WebAuthnAuthenticatorId
-  -> String
+  -> T.Text
   -> PWebAuthnRemoveCredential
 pWebAuthnRemoveCredential
   arg_pWebAuthnRemoveCredentialAuthenticatorId

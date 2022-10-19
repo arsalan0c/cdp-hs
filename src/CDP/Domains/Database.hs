@@ -49,7 +49,7 @@ import CDP.Internal.Utils
 
 -- | Type 'Database.DatabaseId'.
 --   Unique identifier of Database object.
-type DatabaseDatabaseId = String
+type DatabaseDatabaseId = T.Text
 
 -- | Type 'Database.Database'.
 --   Database object.
@@ -58,11 +58,11 @@ data DatabaseDatabase = DatabaseDatabase
     -- | Database ID.
     databaseDatabaseId :: DatabaseDatabaseId,
     -- | Database domain.
-    databaseDatabaseDomain :: String,
+    databaseDatabaseDomain :: T.Text,
     -- | Database name.
-    databaseDatabaseName :: String,
+    databaseDatabaseName :: T.Text,
     -- | Database version.
-    databaseDatabaseVersion :: String
+    databaseDatabaseVersion :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON DatabaseDatabase where
@@ -84,7 +84,7 @@ instance ToJSON DatabaseDatabase where
 data DatabaseError = DatabaseError
   {
     -- | Error message.
-    databaseErrorMessage :: String,
+    databaseErrorMessage :: T.Text,
     -- | Error code.
     databaseErrorCode :: Int
   }
@@ -148,12 +148,12 @@ instance Command PDatabaseEnable where
 data PDatabaseExecuteSQL = PDatabaseExecuteSQL
   {
     pDatabaseExecuteSQLDatabaseId :: DatabaseDatabaseId,
-    pDatabaseExecuteSQLQuery :: String
+    pDatabaseExecuteSQLQuery :: T.Text
   }
   deriving (Eq, Show)
 pDatabaseExecuteSQL
   :: DatabaseDatabaseId
-  -> String
+  -> T.Text
   -> PDatabaseExecuteSQL
 pDatabaseExecuteSQL
   arg_pDatabaseExecuteSQLDatabaseId
@@ -168,7 +168,7 @@ instance ToJSON PDatabaseExecuteSQL where
     ]
 data DatabaseExecuteSQL = DatabaseExecuteSQL
   {
-    databaseExecuteSQLColumnNames :: Maybe [String],
+    databaseExecuteSQLColumnNames :: Maybe [T.Text],
     databaseExecuteSQLValues :: Maybe [Int],
     databaseExecuteSQLSqlError :: Maybe DatabaseError
   }
@@ -202,7 +202,7 @@ instance ToJSON PDatabaseGetDatabaseTableNames where
     ]
 data DatabaseGetDatabaseTableNames = DatabaseGetDatabaseTableNames
   {
-    databaseGetDatabaseTableNamesTableNames :: [String]
+    databaseGetDatabaseTableNamesTableNames :: [T.Text]
   }
   deriving (Eq, Show)
 instance FromJSON DatabaseGetDatabaseTableNames where

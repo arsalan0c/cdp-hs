@@ -49,7 +49,7 @@ import CDP.Internal.Utils
 
 -- | Type 'CacheStorage.CacheId'.
 --   Unique identifier of the Cache object.
-type CacheStorageCacheId = String
+type CacheStorageCacheId = T.Text
 
 -- | Type 'CacheStorage.CachedResponseType'.
 --   type of HTTP response cached
@@ -78,9 +78,9 @@ instance ToJSON CacheStorageCachedResponseType where
 data CacheStorageDataEntry = CacheStorageDataEntry
   {
     -- | Request URL.
-    cacheStorageDataEntryRequestURL :: String,
+    cacheStorageDataEntryRequestURL :: T.Text,
     -- | Request method.
-    cacheStorageDataEntryRequestMethod :: String,
+    cacheStorageDataEntryRequestMethod :: T.Text,
     -- | Request headers
     cacheStorageDataEntryRequestHeaders :: [CacheStorageHeader],
     -- | Number of seconds since epoch.
@@ -88,7 +88,7 @@ data CacheStorageDataEntry = CacheStorageDataEntry
     -- | HTTP response status code.
     cacheStorageDataEntryResponseStatus :: Int,
     -- | HTTP response status text.
-    cacheStorageDataEntryResponseStatusText :: String,
+    cacheStorageDataEntryResponseStatusText :: T.Text,
     -- | HTTP response type
     cacheStorageDataEntryResponseType :: CacheStorageCachedResponseType,
     -- | Response headers
@@ -124,9 +124,9 @@ data CacheStorageCache = CacheStorageCache
     -- | An opaque unique id of the cache.
     cacheStorageCacheCacheId :: CacheStorageCacheId,
     -- | Security origin of the cache.
-    cacheStorageCacheSecurityOrigin :: String,
+    cacheStorageCacheSecurityOrigin :: T.Text,
     -- | The name of the cache.
-    cacheStorageCacheCacheName :: String
+    cacheStorageCacheCacheName :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON CacheStorageCache where
@@ -144,8 +144,8 @@ instance ToJSON CacheStorageCache where
 -- | Type 'CacheStorage.Header'.
 data CacheStorageHeader = CacheStorageHeader
   {
-    cacheStorageHeaderName :: String,
-    cacheStorageHeaderValue :: String
+    cacheStorageHeaderName :: T.Text,
+    cacheStorageHeaderValue :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON CacheStorageHeader where
@@ -163,7 +163,7 @@ instance ToJSON CacheStorageHeader where
 data CacheStorageCachedResponse = CacheStorageCachedResponse
   {
     -- | Entry content, base64-encoded. (Encoded as a base64 string when passed over JSON)
-    cacheStorageCachedResponseBody :: String
+    cacheStorageCachedResponseBody :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON CacheStorageCachedResponse where
@@ -208,14 +208,14 @@ data PCacheStorageDeleteEntry = PCacheStorageDeleteEntry
     -- | Id of cache where the entry will be deleted.
     pCacheStorageDeleteEntryCacheId :: CacheStorageCacheId,
     -- | URL spec of the request.
-    pCacheStorageDeleteEntryRequest :: String
+    pCacheStorageDeleteEntryRequest :: T.Text
   }
   deriving (Eq, Show)
 pCacheStorageDeleteEntry
   -- | Id of cache where the entry will be deleted.
   :: CacheStorageCacheId
   -- | URL spec of the request.
-  -> String
+  -> T.Text
   -> PCacheStorageDeleteEntry
 pCacheStorageDeleteEntry
   arg_pCacheStorageDeleteEntryCacheId
@@ -239,12 +239,12 @@ instance Command PCacheStorageDeleteEntry where
 data PCacheStorageRequestCacheNames = PCacheStorageRequestCacheNames
   {
     -- | Security origin.
-    pCacheStorageRequestCacheNamesSecurityOrigin :: String
+    pCacheStorageRequestCacheNamesSecurityOrigin :: T.Text
   }
   deriving (Eq, Show)
 pCacheStorageRequestCacheNames
   -- | Security origin.
-  :: String
+  :: T.Text
   -> PCacheStorageRequestCacheNames
 pCacheStorageRequestCacheNames
   arg_pCacheStorageRequestCacheNamesSecurityOrigin
@@ -275,7 +275,7 @@ data PCacheStorageRequestCachedResponse = PCacheStorageRequestCachedResponse
     -- | Id of cache that contains the entry.
     pCacheStorageRequestCachedResponseCacheId :: CacheStorageCacheId,
     -- | URL spec of the request.
-    pCacheStorageRequestCachedResponseRequestURL :: String,
+    pCacheStorageRequestCachedResponseRequestURL :: T.Text,
     -- | headers of the request.
     pCacheStorageRequestCachedResponseRequestHeaders :: [CacheStorageHeader]
   }
@@ -284,7 +284,7 @@ pCacheStorageRequestCachedResponse
   -- | Id of cache that contains the entry.
   :: CacheStorageCacheId
   -- | URL spec of the request.
-  -> String
+  -> T.Text
   -- | headers of the request.
   -> [CacheStorageHeader]
   -> PCacheStorageRequestCachedResponse
@@ -327,7 +327,7 @@ data PCacheStorageRequestEntries = PCacheStorageRequestEntries
     -- | Number of records to fetch.
     pCacheStorageRequestEntriesPageSize :: Maybe Int,
     -- | If present, only return the entries containing this substring in the path
-    pCacheStorageRequestEntriesPathFilter :: Maybe String
+    pCacheStorageRequestEntriesPathFilter :: Maybe T.Text
   }
   deriving (Eq, Show)
 pCacheStorageRequestEntries

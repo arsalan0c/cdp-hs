@@ -23,7 +23,7 @@ attachTarget handle = do
         (CDP.sendCommandWait handle $ CDP.PTargetGetTargets Nothing)
     let targetId = CDP.targetTargetInfoTargetId targetInfo
     -- get a session id by attaching to the target
-    T.pack . CDP.targetAttachToTargetSessionId <$> do
+    CDP.targetAttachToTargetSessionId <$> do
         CDP.sendCommandWait handle $
             -- to enable sessions, flatten must be set to True
             CDP.PTargetAttachToTarget targetId (Just True)
@@ -37,7 +37,7 @@ subPageLoad handle sessionId = do
     CDP.sendCommandForSessionWait handle sessionId CDP.PPageEnable
     -- navigate to a page, triggering the page load event
     CDP.sendCommandForSessionWait handle sessionId $
-        CDP.PPageNavigate "http://haskell.foundation" Nothing Nothing Nothing Nothing
+        CDP.pPageNavigate "http://haskell.foundation"
     -- stop the program from terminating, to keep receiving events
     forever $ do
         threadDelay 1000

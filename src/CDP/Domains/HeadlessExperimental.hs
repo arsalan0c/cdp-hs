@@ -124,7 +124,7 @@ data HeadlessExperimentalBeginFrame = HeadlessExperimentalBeginFrame
     --   display. Reported for diagnostic uses, may be removed in the future.
     headlessExperimentalBeginFrameHasDamage :: Bool,
     -- | Base64-encoded image data of the screenshot, if one was requested and successfully taken. (Encoded as a base64 string when passed over JSON)
-    headlessExperimentalBeginFrameScreenshotData :: Maybe String
+    headlessExperimentalBeginFrameScreenshotData :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON HeadlessExperimentalBeginFrame where

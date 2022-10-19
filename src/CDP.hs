@@ -26,6 +26,7 @@ module CDP
 
     , Subscription
     , subscribe
+    , subscribeForSession
     , unsubscribe
 
     , Command (..)
@@ -34,7 +35,9 @@ module CDP
     , fromSomeCommand
     , readPromise
     , sendCommand
+    , sendCommandForSession
     , sendCommandWait
+    , sendCommandForSessionWait
 
     , module CDP.Domains
     ) where

@@ -339,13 +339,13 @@ leftType ctx domain _ (Just ty) itemsElt = typeCDPToHS ctx domain ty itemsElt
 leftType ctx _ _ _ _ = error "no type found"
 
 typeCDPToHS :: Context -> T.Text -> T.Text -> Maybe D.Items -> T.Text
-typeCDPToHS ctx _ "object" _ = "[(String, String)]"
+typeCDPToHS ctx _ "object" _ = "[(T.Text, T.Text)]"
 typeCDPToHS ctx domain "array" (Just items) = "[" <> (leftType ctx domain (D.itemsType items) (D.itemsRef items) Nothing) <> "]"
 typeCDPToHS ctx _ ty (Just items) = error . T.unpack $ "non-array type with items: " <> ty
 typeCDPToHS ctx domain ty Nothing = convertType ctx domain ty
 
 convertType :: Context -> T.Text -> T.Text -> T.Text
-convertType _ _ "string"  = "String"
+convertType _ _ "string"  = "T.Text"
 convertType _ _ "integer" = "Int"
 convertType _ _ "boolean" = "Bool"
 convertType _ _ "number"  = "Double"

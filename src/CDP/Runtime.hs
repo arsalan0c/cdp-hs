@@ -122,6 +122,7 @@ dispatchEvent handle mbSessionId method mbParams = do
 
 data Subscription = Subscription
     { subscriptionEventName :: String
+    , subscriptionSessionId :: Maybe SessionId
     , subscriptionId        :: Int
     }
 
@@ -140,8 +141,8 @@ subscribe_ handle mbSessionId handler = do
         ( s { subscriptionsNextId   = id' + 1
             , subscriptionsHandlers = Map.insertWith
                 Map.union
-                ename
-                (Map.singleton (id', mbSessionId) handler)
+                (ename, mbSessionId)
+                (Map.singleton id' handler)
                 (subscriptionsHandlers s)
             }
         , id'
@@ -160,10 +161,10 @@ subscribe_ handle mbSessionId handler = do
 
 -- | Unsubscribes to an event
 unsubscribe :: Handle -> Subscription -> IO ()
-unsubscribe handle (Subscription ename id') =
+unsubscribe handle (Subscription ename mbSessionId id') =
     IORef.atomicModifyIORef' (subscriptions handle) $ \s ->
         ( s { subscriptionsHandlers =
-                Map.adjust (Map.delete id' ename (subscriptionsHandlers s))
+                Map.adjust (Map.delete id') (ename, mbSessionId) (subscriptionsHandlers s)
             }
         , ()
         )

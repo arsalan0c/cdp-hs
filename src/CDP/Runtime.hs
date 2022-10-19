@@ -58,7 +58,7 @@ runClient config app = do
 
     (host, port, path) <- do
         let hp@(host,port) = hostPort config
-        maybe (browserAddress hp) (\path -> pure (host, port path)) $ path config
+        maybe (browserAddress hp) (\path -> pure (host, port, path)) $ path config
     WS.runClient host port path $ \conn -> do
         let listen = forkIO $ do
                 listenThread <- myThreadId

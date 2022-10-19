@@ -45,8 +45,10 @@ newtype CommandId = CommandId { unCommandId :: Int }
 type CommandResponseBuffer =
     Map.Map CommandId (MVar (Either ProtocolError A.Value))
 
+type SessionId = T.Text
+
 data Subscriptions = Subscriptions
-    { subscriptionsHandlers :: Map.Map String (Map.Map Int (A.Value -> IO ()))
+    { subscriptionsHandlers :: Map.Map (String, Maybe SessionId) (Map.Map Int (A.Value -> IO ()))
     , subscriptionsNextId   :: Int
     }
  
@@ -94,13 +96,13 @@ data ProtocolError =
     deriving Eq
 instance Exception ProtocolError
 instance Show ProtocolError where
-    show (PEParse msg)            = msg 
-    show (PEInvalidRequest msg)   = msg
-    show (PEMethodNotFound msg)   = msg
-    show (PEInvalidParams msg)    = msg
-    show (PEInternalError msg)    = msg
-    show (PEServerError msg)      = msg
-    show (PEOther msg)            = msg
+    show  (PEParse msg)           = unlines ["Server parsing protocol error:", msg] 
+    show (PEInvalidRequest msg)   = unlines ["Invalid request protocol error:", msg]
+    show (PEMethodNotFound msg)   = unlines ["Method not found protocol error:", msg]
+    show (PEInvalidParams msg)    = unlines ["Invalid params protocol error:", msg]
+    show (PEInternalError msg)    = unlines ["Internal protocol error:", msg]
+    show (PEServerError msg)      = unlines ["Server protocol error:", msg]
+    show (PEOther msg)            = unlines ["Other protocol error:", msg]
 instance FromJSON ProtocolError where
     parseJSON = A.withObject "ProtocolError" $ \obj -> do
         code <- obj .: "code"

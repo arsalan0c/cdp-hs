@@ -8,10 +8,10 @@
 
 
 {- |
-  PerformanceTimeline :
-     Reporting of performance timeline events, as specified in
-     https://w3c.github.io/performance-timeline/#dom-performanceobserver.
+= PerformanceTimeline
 
+Reporting of performance timeline events, as specified in
+https://w3c.github.io/performance-timeline/#dom-performanceobserver.
 -}
 
 
@@ -52,122 +52,164 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 
 -- | Type 'PerformanceTimeline.LargestContentfulPaint'.
 --   See https://github.com/WICG/LargestContentfulPaint and largest_contentful_paint.idl
-data PerformanceTimelineLargestContentfulPaint = PerformanceTimelineLargestContentfulPaint {
-  performanceTimelineLargestContentfulPaintRenderTime :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
-  performanceTimelineLargestContentfulPaintLoadTime :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
-  -- | The number of pixels being painted.
-  performanceTimelineLargestContentfulPaintSize :: Double,
-  -- | The id attribute of the element, if available.
-  performanceTimelineLargestContentfulPaintElementId :: Maybe String,
-  -- | The URL of the image (may be trimmed).
-  performanceTimelineLargestContentfulPaintUrl :: Maybe String,
-  performanceTimelineLargestContentfulPaintNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMBackendNodeId
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PerformanceTimelineLargestContentfulPaint  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 41 , A.omitNothingFields = True}
-
-instance FromJSON  PerformanceTimelineLargestContentfulPaint where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 41 }
-
-
+data PerformanceTimelineLargestContentfulPaint = PerformanceTimelineLargestContentfulPaint
+  {
+    performanceTimelineLargestContentfulPaintRenderTime :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
+    performanceTimelineLargestContentfulPaintLoadTime :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
+    -- | The number of pixels being painted.
+    performanceTimelineLargestContentfulPaintSize :: Double,
+    -- | The id attribute of the element, if available.
+    performanceTimelineLargestContentfulPaintElementId :: Maybe String,
+    -- | The URL of the image (may be trimmed).
+    performanceTimelineLargestContentfulPaintUrl :: Maybe String,
+    performanceTimelineLargestContentfulPaintNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMBackendNodeId
+  }
+  deriving (Eq, Show)
+instance FromJSON PerformanceTimelineLargestContentfulPaint where
+  parseJSON = A.withObject "PerformanceTimelineLargestContentfulPaint" $ \o -> PerformanceTimelineLargestContentfulPaint
+    <$> o A..: "renderTime"
+    <*> o A..: "loadTime"
+    <*> o A..: "size"
+    <*> o A..:? "elementId"
+    <*> o A..:? "url"
+    <*> o A..:? "nodeId"
+instance ToJSON PerformanceTimelineLargestContentfulPaint where
+  toJSON p = A.object $ catMaybes [
+    ("renderTime" A..=) <$> Just (performanceTimelineLargestContentfulPaintRenderTime p),
+    ("loadTime" A..=) <$> Just (performanceTimelineLargestContentfulPaintLoadTime p),
+    ("size" A..=) <$> Just (performanceTimelineLargestContentfulPaintSize p),
+    ("elementId" A..=) <$> (performanceTimelineLargestContentfulPaintElementId p),
+    ("url" A..=) <$> (performanceTimelineLargestContentfulPaintUrl p),
+    ("nodeId" A..=) <$> (performanceTimelineLargestContentfulPaintNodeId p)
+    ]
 
 -- | Type 'PerformanceTimeline.LayoutShiftAttribution'.
-data PerformanceTimelineLayoutShiftAttribution = PerformanceTimelineLayoutShiftAttribution {
-  performanceTimelineLayoutShiftAttributionPreviousRect :: DOMPageNetworkEmulationSecurity.DOMRect,
-  performanceTimelineLayoutShiftAttributionCurrentRect :: DOMPageNetworkEmulationSecurity.DOMRect,
-  performanceTimelineLayoutShiftAttributionNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMBackendNodeId
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PerformanceTimelineLayoutShiftAttribution  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 41 , A.omitNothingFields = True}
-
-instance FromJSON  PerformanceTimelineLayoutShiftAttribution where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 41 }
-
-
+data PerformanceTimelineLayoutShiftAttribution = PerformanceTimelineLayoutShiftAttribution
+  {
+    performanceTimelineLayoutShiftAttributionPreviousRect :: DOMPageNetworkEmulationSecurity.DOMRect,
+    performanceTimelineLayoutShiftAttributionCurrentRect :: DOMPageNetworkEmulationSecurity.DOMRect,
+    performanceTimelineLayoutShiftAttributionNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMBackendNodeId
+  }
+  deriving (Eq, Show)
+instance FromJSON PerformanceTimelineLayoutShiftAttribution where
+  parseJSON = A.withObject "PerformanceTimelineLayoutShiftAttribution" $ \o -> PerformanceTimelineLayoutShiftAttribution
+    <$> o A..: "previousRect"
+    <*> o A..: "currentRect"
+    <*> o A..:? "nodeId"
+instance ToJSON PerformanceTimelineLayoutShiftAttribution where
+  toJSON p = A.object $ catMaybes [
+    ("previousRect" A..=) <$> Just (performanceTimelineLayoutShiftAttributionPreviousRect p),
+    ("currentRect" A..=) <$> Just (performanceTimelineLayoutShiftAttributionCurrentRect p),
+    ("nodeId" A..=) <$> (performanceTimelineLayoutShiftAttributionNodeId p)
+    ]
 
 -- | Type 'PerformanceTimeline.LayoutShift'.
 --   See https://wicg.github.io/layout-instability/#sec-layout-shift and layout_shift.idl
-data PerformanceTimelineLayoutShift = PerformanceTimelineLayoutShift {
-  -- | Score increment produced by this event.
-  performanceTimelineLayoutShiftValue :: Double,
-  performanceTimelineLayoutShiftHadRecentInput :: Bool,
-  performanceTimelineLayoutShiftLastInputTime :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
-  performanceTimelineLayoutShiftSources :: [PerformanceTimelineLayoutShiftAttribution]
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PerformanceTimelineLayoutShift  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 , A.omitNothingFields = True}
-
-instance FromJSON  PerformanceTimelineLayoutShift where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 30 }
-
-
+data PerformanceTimelineLayoutShift = PerformanceTimelineLayoutShift
+  {
+    -- | Score increment produced by this event.
+    performanceTimelineLayoutShiftValue :: Double,
+    performanceTimelineLayoutShiftHadRecentInput :: Bool,
+    performanceTimelineLayoutShiftLastInputTime :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
+    performanceTimelineLayoutShiftSources :: [PerformanceTimelineLayoutShiftAttribution]
+  }
+  deriving (Eq, Show)
+instance FromJSON PerformanceTimelineLayoutShift where
+  parseJSON = A.withObject "PerformanceTimelineLayoutShift" $ \o -> PerformanceTimelineLayoutShift
+    <$> o A..: "value"
+    <*> o A..: "hadRecentInput"
+    <*> o A..: "lastInputTime"
+    <*> o A..: "sources"
+instance ToJSON PerformanceTimelineLayoutShift where
+  toJSON p = A.object $ catMaybes [
+    ("value" A..=) <$> Just (performanceTimelineLayoutShiftValue p),
+    ("hadRecentInput" A..=) <$> Just (performanceTimelineLayoutShiftHadRecentInput p),
+    ("lastInputTime" A..=) <$> Just (performanceTimelineLayoutShiftLastInputTime p),
+    ("sources" A..=) <$> Just (performanceTimelineLayoutShiftSources p)
+    ]
 
 -- | Type 'PerformanceTimeline.TimelineEvent'.
-data PerformanceTimelineTimelineEvent = PerformanceTimelineTimelineEvent {
-  -- | Identifies the frame that this event is related to. Empty for non-frame targets.
-  performanceTimelineTimelineEventFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId,
-  -- | The event type, as specified in https://w3c.github.io/performance-timeline/#dom-performanceentry-entrytype
-  --   This determines which of the optional "details" fiedls is present.
-  performanceTimelineTimelineEventType :: String,
-  -- | Name may be empty depending on the type.
-  performanceTimelineTimelineEventName :: String,
-  -- | Time in seconds since Epoch, monotonically increasing within document lifetime.
-  performanceTimelineTimelineEventTime :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
-  -- | Event duration, if applicable.
-  performanceTimelineTimelineEventDuration :: Maybe Double,
-  performanceTimelineTimelineEventLcpDetails :: Maybe PerformanceTimelineLargestContentfulPaint,
-  performanceTimelineTimelineEventLayoutShiftDetails :: Maybe PerformanceTimelineLayoutShift
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PerformanceTimelineTimelineEvent  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 , A.omitNothingFields = True}
-
-instance FromJSON  PerformanceTimelineTimelineEvent where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 32 }
-
-
-
-
+data PerformanceTimelineTimelineEvent = PerformanceTimelineTimelineEvent
+  {
+    -- | Identifies the frame that this event is related to. Empty for non-frame targets.
+    performanceTimelineTimelineEventFrameId :: DOMPageNetworkEmulationSecurity.PageFrameId,
+    -- | The event type, as specified in https://w3c.github.io/performance-timeline/#dom-performanceentry-entrytype
+    --   This determines which of the optional "details" fiedls is present.
+    performanceTimelineTimelineEventType :: String,
+    -- | Name may be empty depending on the type.
+    performanceTimelineTimelineEventName :: String,
+    -- | Time in seconds since Epoch, monotonically increasing within document lifetime.
+    performanceTimelineTimelineEventTime :: DOMPageNetworkEmulationSecurity.NetworkTimeSinceEpoch,
+    -- | Event duration, if applicable.
+    performanceTimelineTimelineEventDuration :: Maybe Double,
+    performanceTimelineTimelineEventLcpDetails :: Maybe PerformanceTimelineLargestContentfulPaint,
+    performanceTimelineTimelineEventLayoutShiftDetails :: Maybe PerformanceTimelineLayoutShift
+  }
+  deriving (Eq, Show)
+instance FromJSON PerformanceTimelineTimelineEvent where
+  parseJSON = A.withObject "PerformanceTimelineTimelineEvent" $ \o -> PerformanceTimelineTimelineEvent
+    <$> o A..: "frameId"
+    <*> o A..: "type"
+    <*> o A..: "name"
+    <*> o A..: "time"
+    <*> o A..:? "duration"
+    <*> o A..:? "lcpDetails"
+    <*> o A..:? "layoutShiftDetails"
+instance ToJSON PerformanceTimelineTimelineEvent where
+  toJSON p = A.object $ catMaybes [
+    ("frameId" A..=) <$> Just (performanceTimelineTimelineEventFrameId p),
+    ("type" A..=) <$> Just (performanceTimelineTimelineEventType p),
+    ("name" A..=) <$> Just (performanceTimelineTimelineEventName p),
+    ("time" A..=) <$> Just (performanceTimelineTimelineEventTime p),
+    ("duration" A..=) <$> (performanceTimelineTimelineEventDuration p),
+    ("lcpDetails" A..=) <$> (performanceTimelineTimelineEventLcpDetails p),
+    ("layoutShiftDetails" A..=) <$> (performanceTimelineTimelineEventLayoutShiftDetails p)
+    ]
 
 -- | Type of the 'PerformanceTimeline.timelineEventAdded' event.
-data PerformanceTimelineTimelineEventAdded = PerformanceTimelineTimelineEventAdded {
-  performanceTimelineTimelineEventAddedEvent :: PerformanceTimelineTimelineEvent
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PerformanceTimelineTimelineEventAdded  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 , A.omitNothingFields = True}
-
-instance FromJSON  PerformanceTimelineTimelineEventAdded where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 37 }
-
-
+data PerformanceTimelineTimelineEventAdded = PerformanceTimelineTimelineEventAdded
+  {
+    performanceTimelineTimelineEventAddedEvent :: PerformanceTimelineTimelineEvent
+  }
+  deriving (Eq, Show)
+instance FromJSON PerformanceTimelineTimelineEventAdded where
+  parseJSON = A.withObject "PerformanceTimelineTimelineEventAdded" $ \o -> PerformanceTimelineTimelineEventAdded
+    <$> o A..: "event"
 instance Event PerformanceTimelineTimelineEventAdded where
-    eventName _ = "PerformanceTimeline.timelineEventAdded"
+  eventName _ = "PerformanceTimeline.timelineEventAdded"
 
-
-
--- | PerformanceTimeline.enable
---   Previously buffered events would be reported before method returns.
+-- | Previously buffered events would be reported before method returns.
 --   See also: timelineEventAdded
 
 -- | Parameters of the 'PerformanceTimeline.enable' command.
-data PPerformanceTimelineEnable = PPerformanceTimelineEnable {
+data PPerformanceTimelineEnable = PPerformanceTimelineEnable
+  {
+    -- | The types of event to report, as specified in
+    --   https://w3c.github.io/performance-timeline/#dom-performanceentry-entrytype
+    --   The specified filter overrides any previous filters, passing empty
+    --   filter disables recording.
+    --   Note that not all types exposed to the web platform are currently supported.
+    pPerformanceTimelineEnableEventTypes :: [String]
+  }
+  deriving (Eq, Show)
+pPerformanceTimelineEnable
   -- | The types of event to report, as specified in
   --   https://w3c.github.io/performance-timeline/#dom-performanceentry-entrytype
   --   The specified filter overrides any previous filters, passing empty
   --   filter disables recording.
   --   Note that not all types exposed to the web platform are currently supported.
-  pPerformanceTimelineEnableEventTypes :: [String]
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PPerformanceTimelineEnable  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
-
-instance FromJSON  PPerformanceTimelineEnable where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
-
-
+  :: [String]
+  -> PPerformanceTimelineEnable
+pPerformanceTimelineEnable
+  arg_pPerformanceTimelineEnableEventTypes
+  = PPerformanceTimelineEnable
+    arg_pPerformanceTimelineEnableEventTypes
+instance ToJSON PPerformanceTimelineEnable where
+  toJSON p = A.object $ catMaybes [
+    ("eventTypes" A..=) <$> Just (pPerformanceTimelineEnableEventTypes p)
+    ]
 instance Command PPerformanceTimelineEnable where
-   type CommandResponse PPerformanceTimelineEnable = ()
-   commandName _ = "PerformanceTimeline.enable"
-   fromJSON = const . A.Success . const ()
-
-
+  type CommandResponse PPerformanceTimelineEnable = ()
+  commandName _ = "PerformanceTimeline.enable"
+  fromJSON = const . A.Success . const ()
 

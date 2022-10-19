@@ -8,7 +8,7 @@ import Control.Monad.Fix (mfix)
 
 main :: IO ()
 main = CDP.runClient def $ \handle -> do
-    CDP.sendCommand handle CDP.PPageEnable
+    CDP.sendCommand handle CDP.pPageEnable
     sub1 <- mfix $ \sub -> CDP.subscribe handle $ \e -> do
         putStrLn $ "1: " ++ CDP.pageFrameUrl (CDP.pageFrameNavigatedFrame e)
         CDP.unsubscribe handle sub

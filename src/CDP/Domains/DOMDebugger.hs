@@ -8,10 +8,10 @@
 
 
 {- |
-  DOMDebugger :
-     DOM debugging allows setting breakpoints on particular DOM operations and events. JavaScript
-     execution will stop on these operations as if there was a regular breakpoint set.
+= DOMDebugger
 
+DOM debugging allows setting breakpoints on particular DOM operations and events. JavaScript
+execution will stop on these operations as if there was a regular breakpoint set.
 -}
 
 
@@ -54,311 +54,383 @@ import CDP.Domains.Runtime as Runtime
 -- | Type 'DOMDebugger.DOMBreakpointType'.
 --   DOM breakpoint type.
 data DOMDebuggerDOMBreakpointType = DOMDebuggerDOMBreakpointTypeSubtreeModified | DOMDebuggerDOMBreakpointTypeAttributeModified | DOMDebuggerDOMBreakpointTypeNodeRemoved
-   deriving (Ord, Eq, Show, Read)
+  deriving (Ord, Eq, Show, Read)
 instance FromJSON DOMDebuggerDOMBreakpointType where
-   parseJSON = A.withText  "DOMDebuggerDOMBreakpointType"  $ \v -> do
-      case v of
-         "subtree-modified" -> pure DOMDebuggerDOMBreakpointTypeSubtreeModified
-         "attribute-modified" -> pure DOMDebuggerDOMBreakpointTypeAttributeModified
-         "node-removed" -> pure DOMDebuggerDOMBreakpointTypeNodeRemoved
-         _ -> fail "failed to parse DOMDebuggerDOMBreakpointType"
-
+  parseJSON = A.withText "DOMDebuggerDOMBreakpointType" $ \v -> case v of
+    "subtree-modified" -> pure DOMDebuggerDOMBreakpointTypeSubtreeModified
+    "attribute-modified" -> pure DOMDebuggerDOMBreakpointTypeAttributeModified
+    "node-removed" -> pure DOMDebuggerDOMBreakpointTypeNodeRemoved
+    "_" -> fail "failed to parse DOMDebuggerDOMBreakpointType"
 instance ToJSON DOMDebuggerDOMBreakpointType where
-   toJSON v = A.String $
-      case v of
-         DOMDebuggerDOMBreakpointTypeSubtreeModified -> "subtree-modified"
-         DOMDebuggerDOMBreakpointTypeAttributeModified -> "attribute-modified"
-         DOMDebuggerDOMBreakpointTypeNodeRemoved -> "node-removed"
-
-
+  toJSON v = A.String $ case v of
+    DOMDebuggerDOMBreakpointTypeSubtreeModified -> "subtree-modified"
+    DOMDebuggerDOMBreakpointTypeAttributeModified -> "attribute-modified"
+    DOMDebuggerDOMBreakpointTypeNodeRemoved -> "node-removed"
 
 -- | Type 'DOMDebugger.CSPViolationType'.
 --   CSP Violation type.
 data DOMDebuggerCSPViolationType = DOMDebuggerCSPViolationTypeTrustedtypeSinkViolation | DOMDebuggerCSPViolationTypeTrustedtypePolicyViolation
-   deriving (Ord, Eq, Show, Read)
+  deriving (Ord, Eq, Show, Read)
 instance FromJSON DOMDebuggerCSPViolationType where
-   parseJSON = A.withText  "DOMDebuggerCSPViolationType"  $ \v -> do
-      case v of
-         "trustedtype-sink-violation" -> pure DOMDebuggerCSPViolationTypeTrustedtypeSinkViolation
-         "trustedtype-policy-violation" -> pure DOMDebuggerCSPViolationTypeTrustedtypePolicyViolation
-         _ -> fail "failed to parse DOMDebuggerCSPViolationType"
-
+  parseJSON = A.withText "DOMDebuggerCSPViolationType" $ \v -> case v of
+    "trustedtype-sink-violation" -> pure DOMDebuggerCSPViolationTypeTrustedtypeSinkViolation
+    "trustedtype-policy-violation" -> pure DOMDebuggerCSPViolationTypeTrustedtypePolicyViolation
+    "_" -> fail "failed to parse DOMDebuggerCSPViolationType"
 instance ToJSON DOMDebuggerCSPViolationType where
-   toJSON v = A.String $
-      case v of
-         DOMDebuggerCSPViolationTypeTrustedtypeSinkViolation -> "trustedtype-sink-violation"
-         DOMDebuggerCSPViolationTypeTrustedtypePolicyViolation -> "trustedtype-policy-violation"
-
-
+  toJSON v = A.String $ case v of
+    DOMDebuggerCSPViolationTypeTrustedtypeSinkViolation -> "trustedtype-sink-violation"
+    DOMDebuggerCSPViolationTypeTrustedtypePolicyViolation -> "trustedtype-policy-violation"
 
 -- | Type 'DOMDebugger.EventListener'.
 --   Object event listener.
-data DOMDebuggerEventListener = DOMDebuggerEventListener {
-  -- | `EventListener`'s type.
-  dOMDebuggerEventListenerType :: String,
-  -- | `EventListener`'s useCapture.
-  dOMDebuggerEventListenerUseCapture :: Bool,
-  -- | `EventListener`'s passive flag.
-  dOMDebuggerEventListenerPassive :: Bool,
-  -- | `EventListener`'s once flag.
-  dOMDebuggerEventListenerOnce :: Bool,
-  -- | Script id of the handler code.
-  dOMDebuggerEventListenerScriptId :: Runtime.RuntimeScriptId,
-  -- | Line number in the script (0-based).
-  dOMDebuggerEventListenerLineNumber :: Int,
-  -- | Column number in the script (0-based).
-  dOMDebuggerEventListenerColumnNumber :: Int,
-  -- | Event handler function value.
-  dOMDebuggerEventListenerHandler :: Maybe Runtime.RuntimeRemoteObject,
-  -- | Event original handler function value.
-  dOMDebuggerEventListenerOriginalHandler :: Maybe Runtime.RuntimeRemoteObject,
-  -- | Node the listener is added to (if any).
-  dOMDebuggerEventListenerBackendNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMBackendNodeId
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON DOMDebuggerEventListener  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 , A.omitNothingFields = True}
+data DOMDebuggerEventListener = DOMDebuggerEventListener
+  {
+    -- | `EventListener`'s type.
+    dOMDebuggerEventListenerType :: String,
+    -- | `EventListener`'s useCapture.
+    dOMDebuggerEventListenerUseCapture :: Bool,
+    -- | `EventListener`'s passive flag.
+    dOMDebuggerEventListenerPassive :: Bool,
+    -- | `EventListener`'s once flag.
+    dOMDebuggerEventListenerOnce :: Bool,
+    -- | Script id of the handler code.
+    dOMDebuggerEventListenerScriptId :: Runtime.RuntimeScriptId,
+    -- | Line number in the script (0-based).
+    dOMDebuggerEventListenerLineNumber :: Int,
+    -- | Column number in the script (0-based).
+    dOMDebuggerEventListenerColumnNumber :: Int,
+    -- | Event handler function value.
+    dOMDebuggerEventListenerHandler :: Maybe Runtime.RuntimeRemoteObject,
+    -- | Event original handler function value.
+    dOMDebuggerEventListenerOriginalHandler :: Maybe Runtime.RuntimeRemoteObject,
+    -- | Node the listener is added to (if any).
+    dOMDebuggerEventListenerBackendNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMBackendNodeId
+  }
+  deriving (Eq, Show)
+instance FromJSON DOMDebuggerEventListener where
+  parseJSON = A.withObject "DOMDebuggerEventListener" $ \o -> DOMDebuggerEventListener
+    <$> o A..: "type"
+    <*> o A..: "useCapture"
+    <*> o A..: "passive"
+    <*> o A..: "once"
+    <*> o A..: "scriptId"
+    <*> o A..: "lineNumber"
+    <*> o A..: "columnNumber"
+    <*> o A..:? "handler"
+    <*> o A..:? "originalHandler"
+    <*> o A..:? "backendNodeId"
+instance ToJSON DOMDebuggerEventListener where
+  toJSON p = A.object $ catMaybes [
+    ("type" A..=) <$> Just (dOMDebuggerEventListenerType p),
+    ("useCapture" A..=) <$> Just (dOMDebuggerEventListenerUseCapture p),
+    ("passive" A..=) <$> Just (dOMDebuggerEventListenerPassive p),
+    ("once" A..=) <$> Just (dOMDebuggerEventListenerOnce p),
+    ("scriptId" A..=) <$> Just (dOMDebuggerEventListenerScriptId p),
+    ("lineNumber" A..=) <$> Just (dOMDebuggerEventListenerLineNumber p),
+    ("columnNumber" A..=) <$> Just (dOMDebuggerEventListenerColumnNumber p),
+    ("handler" A..=) <$> (dOMDebuggerEventListenerHandler p),
+    ("originalHandler" A..=) <$> (dOMDebuggerEventListenerOriginalHandler p),
+    ("backendNodeId" A..=) <$> (dOMDebuggerEventListenerBackendNodeId p)
+    ]
 
-instance FromJSON  DOMDebuggerEventListener where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 24 }
-
-
-
-
-
-
-
--- | DOMDebugger.getEventListeners
---   Returns event listeners of the given object.
+-- | Returns event listeners of the given object.
 
 -- | Parameters of the 'DOMDebugger.getEventListeners' command.
-data PDOMDebuggerGetEventListeners = PDOMDebuggerGetEventListeners {
+data PDOMDebuggerGetEventListeners = PDOMDebuggerGetEventListeners
+  {
+    -- | Identifier of the object to return listeners for.
+    pDOMDebuggerGetEventListenersObjectId :: Runtime.RuntimeRemoteObjectId,
+    -- | The maximum depth at which Node children should be retrieved, defaults to 1. Use -1 for the
+    --   entire subtree or provide an integer larger than 0.
+    pDOMDebuggerGetEventListenersDepth :: Maybe Int,
+    -- | Whether or not iframes and shadow roots should be traversed when returning the subtree
+    --   (default is false). Reports listeners for all contexts if pierce is enabled.
+    pDOMDebuggerGetEventListenersPierce :: Maybe Bool
+  }
+  deriving (Eq, Show)
+pDOMDebuggerGetEventListeners
   -- | Identifier of the object to return listeners for.
-  pDOMDebuggerGetEventListenersObjectId :: Runtime.RuntimeRemoteObjectId,
-  -- | The maximum depth at which Node children should be retrieved, defaults to 1. Use -1 for the
-  --   entire subtree or provide an integer larger than 0.
-  pDOMDebuggerGetEventListenersDepth :: Maybe Int,
-  -- | Whether or not iframes and shadow roots should be traversed when returning the subtree
-  --   (default is false). Reports listeners for all contexts if pierce is enabled.
-  pDOMDebuggerGetEventListenersPierce :: Maybe Bool
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PDOMDebuggerGetEventListeners  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 , A.omitNothingFields = True}
-
-instance FromJSON  PDOMDebuggerGetEventListeners where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 29 }
-
-
--- | Return type of the 'DOMDebugger.getEventListeners' command.
-data DOMDebuggerGetEventListeners = DOMDebuggerGetEventListeners {
-  -- | Array of relevant listeners.
-  dOMDebuggerGetEventListenersListeners :: [DOMDebuggerEventListener]
-} deriving (Generic, Eq, Show, Read)
-
-instance FromJSON  DOMDebuggerGetEventListeners where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
-
+  :: Runtime.RuntimeRemoteObjectId
+  -> PDOMDebuggerGetEventListeners
+pDOMDebuggerGetEventListeners
+  arg_pDOMDebuggerGetEventListenersObjectId
+  = PDOMDebuggerGetEventListeners
+    arg_pDOMDebuggerGetEventListenersObjectId
+    Nothing
+    Nothing
+instance ToJSON PDOMDebuggerGetEventListeners where
+  toJSON p = A.object $ catMaybes [
+    ("objectId" A..=) <$> Just (pDOMDebuggerGetEventListenersObjectId p),
+    ("depth" A..=) <$> (pDOMDebuggerGetEventListenersDepth p),
+    ("pierce" A..=) <$> (pDOMDebuggerGetEventListenersPierce p)
+    ]
+data DOMDebuggerGetEventListeners = DOMDebuggerGetEventListeners
+  {
+    -- | Array of relevant listeners.
+    dOMDebuggerGetEventListenersListeners :: [DOMDebuggerEventListener]
+  }
+  deriving (Eq, Show)
+instance FromJSON DOMDebuggerGetEventListeners where
+  parseJSON = A.withObject "DOMDebuggerGetEventListeners" $ \o -> DOMDebuggerGetEventListeners
+    <$> o A..: "listeners"
 instance Command PDOMDebuggerGetEventListeners where
-   type CommandResponse PDOMDebuggerGetEventListeners = DOMDebuggerGetEventListeners
-   commandName _ = "DOMDebugger.getEventListeners"
+  type CommandResponse PDOMDebuggerGetEventListeners = DOMDebuggerGetEventListeners
+  commandName _ = "DOMDebugger.getEventListeners"
 
-
-
--- | DOMDebugger.removeDOMBreakpoint
---   Removes DOM breakpoint that was set using `setDOMBreakpoint`.
+-- | Removes DOM breakpoint that was set using `setDOMBreakpoint`.
 
 -- | Parameters of the 'DOMDebugger.removeDOMBreakpoint' command.
-data PDOMDebuggerRemoveDOMBreakpoint = PDOMDebuggerRemoveDOMBreakpoint {
+data PDOMDebuggerRemoveDOMBreakpoint = PDOMDebuggerRemoveDOMBreakpoint
+  {
+    -- | Identifier of the node to remove breakpoint from.
+    pDOMDebuggerRemoveDOMBreakpointNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId,
+    -- | Type of the breakpoint to remove.
+    pDOMDebuggerRemoveDOMBreakpointType :: DOMDebuggerDOMBreakpointType
+  }
+  deriving (Eq, Show)
+pDOMDebuggerRemoveDOMBreakpoint
   -- | Identifier of the node to remove breakpoint from.
-  pDOMDebuggerRemoveDOMBreakpointNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId,
+  :: DOMPageNetworkEmulationSecurity.DOMNodeId
   -- | Type of the breakpoint to remove.
-  pDOMDebuggerRemoveDOMBreakpointType :: DOMDebuggerDOMBreakpointType
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PDOMDebuggerRemoveDOMBreakpoint  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
-
-instance FromJSON  PDOMDebuggerRemoveDOMBreakpoint where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
-
-
+  -> DOMDebuggerDOMBreakpointType
+  -> PDOMDebuggerRemoveDOMBreakpoint
+pDOMDebuggerRemoveDOMBreakpoint
+  arg_pDOMDebuggerRemoveDOMBreakpointNodeId
+  arg_pDOMDebuggerRemoveDOMBreakpointType
+  = PDOMDebuggerRemoveDOMBreakpoint
+    arg_pDOMDebuggerRemoveDOMBreakpointNodeId
+    arg_pDOMDebuggerRemoveDOMBreakpointType
+instance ToJSON PDOMDebuggerRemoveDOMBreakpoint where
+  toJSON p = A.object $ catMaybes [
+    ("nodeId" A..=) <$> Just (pDOMDebuggerRemoveDOMBreakpointNodeId p),
+    ("type" A..=) <$> Just (pDOMDebuggerRemoveDOMBreakpointType p)
+    ]
 instance Command PDOMDebuggerRemoveDOMBreakpoint where
-   type CommandResponse PDOMDebuggerRemoveDOMBreakpoint = ()
-   commandName _ = "DOMDebugger.removeDOMBreakpoint"
-   fromJSON = const . A.Success . const ()
+  type CommandResponse PDOMDebuggerRemoveDOMBreakpoint = ()
+  commandName _ = "DOMDebugger.removeDOMBreakpoint"
+  fromJSON = const . A.Success . const ()
 
-
--- | DOMDebugger.removeEventListenerBreakpoint
---   Removes breakpoint on particular DOM event.
+-- | Removes breakpoint on particular DOM event.
 
 -- | Parameters of the 'DOMDebugger.removeEventListenerBreakpoint' command.
-data PDOMDebuggerRemoveEventListenerBreakpoint = PDOMDebuggerRemoveEventListenerBreakpoint {
+data PDOMDebuggerRemoveEventListenerBreakpoint = PDOMDebuggerRemoveEventListenerBreakpoint
+  {
+    -- | Event name.
+    pDOMDebuggerRemoveEventListenerBreakpointEventName :: String,
+    -- | EventTarget interface name.
+    pDOMDebuggerRemoveEventListenerBreakpointTargetName :: Maybe String
+  }
+  deriving (Eq, Show)
+pDOMDebuggerRemoveEventListenerBreakpoint
   -- | Event name.
-  pDOMDebuggerRemoveEventListenerBreakpointEventName :: String,
-  -- | EventTarget interface name.
-  pDOMDebuggerRemoveEventListenerBreakpointTargetName :: Maybe String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PDOMDebuggerRemoveEventListenerBreakpoint  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 41 , A.omitNothingFields = True}
-
-instance FromJSON  PDOMDebuggerRemoveEventListenerBreakpoint where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 41 }
-
-
+  :: String
+  -> PDOMDebuggerRemoveEventListenerBreakpoint
+pDOMDebuggerRemoveEventListenerBreakpoint
+  arg_pDOMDebuggerRemoveEventListenerBreakpointEventName
+  = PDOMDebuggerRemoveEventListenerBreakpoint
+    arg_pDOMDebuggerRemoveEventListenerBreakpointEventName
+    Nothing
+instance ToJSON PDOMDebuggerRemoveEventListenerBreakpoint where
+  toJSON p = A.object $ catMaybes [
+    ("eventName" A..=) <$> Just (pDOMDebuggerRemoveEventListenerBreakpointEventName p),
+    ("targetName" A..=) <$> (pDOMDebuggerRemoveEventListenerBreakpointTargetName p)
+    ]
 instance Command PDOMDebuggerRemoveEventListenerBreakpoint where
-   type CommandResponse PDOMDebuggerRemoveEventListenerBreakpoint = ()
-   commandName _ = "DOMDebugger.removeEventListenerBreakpoint"
-   fromJSON = const . A.Success . const ()
+  type CommandResponse PDOMDebuggerRemoveEventListenerBreakpoint = ()
+  commandName _ = "DOMDebugger.removeEventListenerBreakpoint"
+  fromJSON = const . A.Success . const ()
 
-
--- | DOMDebugger.removeInstrumentationBreakpoint
---   Removes breakpoint on particular native event.
+-- | Removes breakpoint on particular native event.
 
 -- | Parameters of the 'DOMDebugger.removeInstrumentationBreakpoint' command.
-data PDOMDebuggerRemoveInstrumentationBreakpoint = PDOMDebuggerRemoveInstrumentationBreakpoint {
+data PDOMDebuggerRemoveInstrumentationBreakpoint = PDOMDebuggerRemoveInstrumentationBreakpoint
+  {
+    -- | Instrumentation name to stop on.
+    pDOMDebuggerRemoveInstrumentationBreakpointEventName :: String
+  }
+  deriving (Eq, Show)
+pDOMDebuggerRemoveInstrumentationBreakpoint
   -- | Instrumentation name to stop on.
-  pDOMDebuggerRemoveInstrumentationBreakpointEventName :: String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PDOMDebuggerRemoveInstrumentationBreakpoint  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 43 , A.omitNothingFields = True}
-
-instance FromJSON  PDOMDebuggerRemoveInstrumentationBreakpoint where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 43 }
-
-
+  :: String
+  -> PDOMDebuggerRemoveInstrumentationBreakpoint
+pDOMDebuggerRemoveInstrumentationBreakpoint
+  arg_pDOMDebuggerRemoveInstrumentationBreakpointEventName
+  = PDOMDebuggerRemoveInstrumentationBreakpoint
+    arg_pDOMDebuggerRemoveInstrumentationBreakpointEventName
+instance ToJSON PDOMDebuggerRemoveInstrumentationBreakpoint where
+  toJSON p = A.object $ catMaybes [
+    ("eventName" A..=) <$> Just (pDOMDebuggerRemoveInstrumentationBreakpointEventName p)
+    ]
 instance Command PDOMDebuggerRemoveInstrumentationBreakpoint where
-   type CommandResponse PDOMDebuggerRemoveInstrumentationBreakpoint = ()
-   commandName _ = "DOMDebugger.removeInstrumentationBreakpoint"
-   fromJSON = const . A.Success . const ()
+  type CommandResponse PDOMDebuggerRemoveInstrumentationBreakpoint = ()
+  commandName _ = "DOMDebugger.removeInstrumentationBreakpoint"
+  fromJSON = const . A.Success . const ()
 
-
--- | DOMDebugger.removeXHRBreakpoint
---   Removes breakpoint from XMLHttpRequest.
+-- | Removes breakpoint from XMLHttpRequest.
 
 -- | Parameters of the 'DOMDebugger.removeXHRBreakpoint' command.
-data PDOMDebuggerRemoveXHRBreakpoint = PDOMDebuggerRemoveXHRBreakpoint {
+data PDOMDebuggerRemoveXHRBreakpoint = PDOMDebuggerRemoveXHRBreakpoint
+  {
+    -- | Resource URL substring.
+    pDOMDebuggerRemoveXHRBreakpointUrl :: String
+  }
+  deriving (Eq, Show)
+pDOMDebuggerRemoveXHRBreakpoint
   -- | Resource URL substring.
-  pDOMDebuggerRemoveXHRBreakpointUrl :: String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PDOMDebuggerRemoveXHRBreakpoint  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 , A.omitNothingFields = True}
-
-instance FromJSON  PDOMDebuggerRemoveXHRBreakpoint where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 31 }
-
-
+  :: String
+  -> PDOMDebuggerRemoveXHRBreakpoint
+pDOMDebuggerRemoveXHRBreakpoint
+  arg_pDOMDebuggerRemoveXHRBreakpointUrl
+  = PDOMDebuggerRemoveXHRBreakpoint
+    arg_pDOMDebuggerRemoveXHRBreakpointUrl
+instance ToJSON PDOMDebuggerRemoveXHRBreakpoint where
+  toJSON p = A.object $ catMaybes [
+    ("url" A..=) <$> Just (pDOMDebuggerRemoveXHRBreakpointUrl p)
+    ]
 instance Command PDOMDebuggerRemoveXHRBreakpoint where
-   type CommandResponse PDOMDebuggerRemoveXHRBreakpoint = ()
-   commandName _ = "DOMDebugger.removeXHRBreakpoint"
-   fromJSON = const . A.Success . const ()
+  type CommandResponse PDOMDebuggerRemoveXHRBreakpoint = ()
+  commandName _ = "DOMDebugger.removeXHRBreakpoint"
+  fromJSON = const . A.Success . const ()
 
-
--- | DOMDebugger.setBreakOnCSPViolation
---   Sets breakpoint on particular CSP violations.
+-- | Sets breakpoint on particular CSP violations.
 
 -- | Parameters of the 'DOMDebugger.setBreakOnCSPViolation' command.
-data PDOMDebuggerSetBreakOnCSPViolation = PDOMDebuggerSetBreakOnCSPViolation {
+data PDOMDebuggerSetBreakOnCSPViolation = PDOMDebuggerSetBreakOnCSPViolation
+  {
+    -- | CSP Violations to stop upon.
+    pDOMDebuggerSetBreakOnCSPViolationViolationTypes :: [DOMDebuggerCSPViolationType]
+  }
+  deriving (Eq, Show)
+pDOMDebuggerSetBreakOnCSPViolation
   -- | CSP Violations to stop upon.
-  pDOMDebuggerSetBreakOnCSPViolationViolationTypes :: [DOMDebuggerCSPViolationType]
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PDOMDebuggerSetBreakOnCSPViolation  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 , A.omitNothingFields = True}
-
-instance FromJSON  PDOMDebuggerSetBreakOnCSPViolation where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 34 }
-
-
+  :: [DOMDebuggerCSPViolationType]
+  -> PDOMDebuggerSetBreakOnCSPViolation
+pDOMDebuggerSetBreakOnCSPViolation
+  arg_pDOMDebuggerSetBreakOnCSPViolationViolationTypes
+  = PDOMDebuggerSetBreakOnCSPViolation
+    arg_pDOMDebuggerSetBreakOnCSPViolationViolationTypes
+instance ToJSON PDOMDebuggerSetBreakOnCSPViolation where
+  toJSON p = A.object $ catMaybes [
+    ("violationTypes" A..=) <$> Just (pDOMDebuggerSetBreakOnCSPViolationViolationTypes p)
+    ]
 instance Command PDOMDebuggerSetBreakOnCSPViolation where
-   type CommandResponse PDOMDebuggerSetBreakOnCSPViolation = ()
-   commandName _ = "DOMDebugger.setBreakOnCSPViolation"
-   fromJSON = const . A.Success . const ()
+  type CommandResponse PDOMDebuggerSetBreakOnCSPViolation = ()
+  commandName _ = "DOMDebugger.setBreakOnCSPViolation"
+  fromJSON = const . A.Success . const ()
 
-
--- | DOMDebugger.setDOMBreakpoint
---   Sets breakpoint on particular operation with DOM.
+-- | Sets breakpoint on particular operation with DOM.
 
 -- | Parameters of the 'DOMDebugger.setDOMBreakpoint' command.
-data PDOMDebuggerSetDOMBreakpoint = PDOMDebuggerSetDOMBreakpoint {
+data PDOMDebuggerSetDOMBreakpoint = PDOMDebuggerSetDOMBreakpoint
+  {
+    -- | Identifier of the node to set breakpoint on.
+    pDOMDebuggerSetDOMBreakpointNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId,
+    -- | Type of the operation to stop upon.
+    pDOMDebuggerSetDOMBreakpointType :: DOMDebuggerDOMBreakpointType
+  }
+  deriving (Eq, Show)
+pDOMDebuggerSetDOMBreakpoint
   -- | Identifier of the node to set breakpoint on.
-  pDOMDebuggerSetDOMBreakpointNodeId :: DOMPageNetworkEmulationSecurity.DOMNodeId,
+  :: DOMPageNetworkEmulationSecurity.DOMNodeId
   -- | Type of the operation to stop upon.
-  pDOMDebuggerSetDOMBreakpointType :: DOMDebuggerDOMBreakpointType
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PDOMDebuggerSetDOMBreakpoint  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
-
-instance FromJSON  PDOMDebuggerSetDOMBreakpoint where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
-
-
+  -> DOMDebuggerDOMBreakpointType
+  -> PDOMDebuggerSetDOMBreakpoint
+pDOMDebuggerSetDOMBreakpoint
+  arg_pDOMDebuggerSetDOMBreakpointNodeId
+  arg_pDOMDebuggerSetDOMBreakpointType
+  = PDOMDebuggerSetDOMBreakpoint
+    arg_pDOMDebuggerSetDOMBreakpointNodeId
+    arg_pDOMDebuggerSetDOMBreakpointType
+instance ToJSON PDOMDebuggerSetDOMBreakpoint where
+  toJSON p = A.object $ catMaybes [
+    ("nodeId" A..=) <$> Just (pDOMDebuggerSetDOMBreakpointNodeId p),
+    ("type" A..=) <$> Just (pDOMDebuggerSetDOMBreakpointType p)
+    ]
 instance Command PDOMDebuggerSetDOMBreakpoint where
-   type CommandResponse PDOMDebuggerSetDOMBreakpoint = ()
-   commandName _ = "DOMDebugger.setDOMBreakpoint"
-   fromJSON = const . A.Success . const ()
+  type CommandResponse PDOMDebuggerSetDOMBreakpoint = ()
+  commandName _ = "DOMDebugger.setDOMBreakpoint"
+  fromJSON = const . A.Success . const ()
 
-
--- | DOMDebugger.setEventListenerBreakpoint
---   Sets breakpoint on particular DOM event.
+-- | Sets breakpoint on particular DOM event.
 
 -- | Parameters of the 'DOMDebugger.setEventListenerBreakpoint' command.
-data PDOMDebuggerSetEventListenerBreakpoint = PDOMDebuggerSetEventListenerBreakpoint {
+data PDOMDebuggerSetEventListenerBreakpoint = PDOMDebuggerSetEventListenerBreakpoint
+  {
+    -- | DOM Event name to stop on (any DOM event will do).
+    pDOMDebuggerSetEventListenerBreakpointEventName :: String,
+    -- | EventTarget interface name to stop on. If equal to `"*"` or not provided, will stop on any
+    --   EventTarget.
+    pDOMDebuggerSetEventListenerBreakpointTargetName :: Maybe String
+  }
+  deriving (Eq, Show)
+pDOMDebuggerSetEventListenerBreakpoint
   -- | DOM Event name to stop on (any DOM event will do).
-  pDOMDebuggerSetEventListenerBreakpointEventName :: String,
-  -- | EventTarget interface name to stop on. If equal to `"*"` or not provided, will stop on any
-  --   EventTarget.
-  pDOMDebuggerSetEventListenerBreakpointTargetName :: Maybe String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PDOMDebuggerSetEventListenerBreakpoint  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 , A.omitNothingFields = True}
-
-instance FromJSON  PDOMDebuggerSetEventListenerBreakpoint where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 38 }
-
-
+  :: String
+  -> PDOMDebuggerSetEventListenerBreakpoint
+pDOMDebuggerSetEventListenerBreakpoint
+  arg_pDOMDebuggerSetEventListenerBreakpointEventName
+  = PDOMDebuggerSetEventListenerBreakpoint
+    arg_pDOMDebuggerSetEventListenerBreakpointEventName
+    Nothing
+instance ToJSON PDOMDebuggerSetEventListenerBreakpoint where
+  toJSON p = A.object $ catMaybes [
+    ("eventName" A..=) <$> Just (pDOMDebuggerSetEventListenerBreakpointEventName p),
+    ("targetName" A..=) <$> (pDOMDebuggerSetEventListenerBreakpointTargetName p)
+    ]
 instance Command PDOMDebuggerSetEventListenerBreakpoint where
-   type CommandResponse PDOMDebuggerSetEventListenerBreakpoint = ()
-   commandName _ = "DOMDebugger.setEventListenerBreakpoint"
-   fromJSON = const . A.Success . const ()
+  type CommandResponse PDOMDebuggerSetEventListenerBreakpoint = ()
+  commandName _ = "DOMDebugger.setEventListenerBreakpoint"
+  fromJSON = const . A.Success . const ()
 
-
--- | DOMDebugger.setInstrumentationBreakpoint
---   Sets breakpoint on particular native event.
+-- | Sets breakpoint on particular native event.
 
 -- | Parameters of the 'DOMDebugger.setInstrumentationBreakpoint' command.
-data PDOMDebuggerSetInstrumentationBreakpoint = PDOMDebuggerSetInstrumentationBreakpoint {
+data PDOMDebuggerSetInstrumentationBreakpoint = PDOMDebuggerSetInstrumentationBreakpoint
+  {
+    -- | Instrumentation name to stop on.
+    pDOMDebuggerSetInstrumentationBreakpointEventName :: String
+  }
+  deriving (Eq, Show)
+pDOMDebuggerSetInstrumentationBreakpoint
   -- | Instrumentation name to stop on.
-  pDOMDebuggerSetInstrumentationBreakpointEventName :: String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PDOMDebuggerSetInstrumentationBreakpoint  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 , A.omitNothingFields = True}
-
-instance FromJSON  PDOMDebuggerSetInstrumentationBreakpoint where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 40 }
-
-
+  :: String
+  -> PDOMDebuggerSetInstrumentationBreakpoint
+pDOMDebuggerSetInstrumentationBreakpoint
+  arg_pDOMDebuggerSetInstrumentationBreakpointEventName
+  = PDOMDebuggerSetInstrumentationBreakpoint
+    arg_pDOMDebuggerSetInstrumentationBreakpointEventName
+instance ToJSON PDOMDebuggerSetInstrumentationBreakpoint where
+  toJSON p = A.object $ catMaybes [
+    ("eventName" A..=) <$> Just (pDOMDebuggerSetInstrumentationBreakpointEventName p)
+    ]
 instance Command PDOMDebuggerSetInstrumentationBreakpoint where
-   type CommandResponse PDOMDebuggerSetInstrumentationBreakpoint = ()
-   commandName _ = "DOMDebugger.setInstrumentationBreakpoint"
-   fromJSON = const . A.Success . const ()
+  type CommandResponse PDOMDebuggerSetInstrumentationBreakpoint = ()
+  commandName _ = "DOMDebugger.setInstrumentationBreakpoint"
+  fromJSON = const . A.Success . const ()
 
-
--- | DOMDebugger.setXHRBreakpoint
---   Sets breakpoint on XMLHttpRequest.
+-- | Sets breakpoint on XMLHttpRequest.
 
 -- | Parameters of the 'DOMDebugger.setXHRBreakpoint' command.
-data PDOMDebuggerSetXHRBreakpoint = PDOMDebuggerSetXHRBreakpoint {
+data PDOMDebuggerSetXHRBreakpoint = PDOMDebuggerSetXHRBreakpoint
+  {
+    -- | Resource URL substring. All XHRs having this substring in the URL will get stopped upon.
+    pDOMDebuggerSetXHRBreakpointUrl :: String
+  }
+  deriving (Eq, Show)
+pDOMDebuggerSetXHRBreakpoint
   -- | Resource URL substring. All XHRs having this substring in the URL will get stopped upon.
-  pDOMDebuggerSetXHRBreakpointUrl :: String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PDOMDebuggerSetXHRBreakpoint  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 , A.omitNothingFields = True}
-
-instance FromJSON  PDOMDebuggerSetXHRBreakpoint where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 28 }
-
-
+  :: String
+  -> PDOMDebuggerSetXHRBreakpoint
+pDOMDebuggerSetXHRBreakpoint
+  arg_pDOMDebuggerSetXHRBreakpointUrl
+  = PDOMDebuggerSetXHRBreakpoint
+    arg_pDOMDebuggerSetXHRBreakpointUrl
+instance ToJSON PDOMDebuggerSetXHRBreakpoint where
+  toJSON p = A.object $ catMaybes [
+    ("url" A..=) <$> Just (pDOMDebuggerSetXHRBreakpointUrl p)
+    ]
 instance Command PDOMDebuggerSetXHRBreakpoint where
-   type CommandResponse PDOMDebuggerSetXHRBreakpoint = ()
-   commandName _ = "DOMDebugger.setXHRBreakpoint"
-   fromJSON = const . A.Success . const ()
-
-
+  type CommandResponse PDOMDebuggerSetXHRBreakpoint = ()
+  commandName _ = "DOMDebugger.setXHRBreakpoint"
+  fromJSON = const . A.Success . const ()
 

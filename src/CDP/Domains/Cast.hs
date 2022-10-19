@@ -8,10 +8,10 @@
 
 
 {- |
-  Cast :
-     A domain for interacting with Cast, Presentation API, and Remote Playback API
-     functionalities.
+= Cast
 
+A domain for interacting with Cast, Presentation API, and Remote Playback API
+functionalities.
 -}
 
 
@@ -50,169 +50,187 @@ import CDP.Internal.Utils
 
 
 -- | Type 'Cast.Sink'.
-data CastSink = CastSink {
-  castSinkName :: String,
-  castSinkId :: String,
-  -- | Text describing the current session. Present only if there is an active
-  --   session on the sink.
-  castSinkSession :: Maybe String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON CastSink  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 8 , A.omitNothingFields = True}
-
-instance FromJSON  CastSink where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 8 }
-
-
-
-
+data CastSink = CastSink
+  {
+    castSinkName :: String,
+    castSinkId :: String,
+    -- | Text describing the current session. Present only if there is an active
+    --   session on the sink.
+    castSinkSession :: Maybe String
+  }
+  deriving (Eq, Show)
+instance FromJSON CastSink where
+  parseJSON = A.withObject "CastSink" $ \o -> CastSink
+    <$> o A..: "name"
+    <*> o A..: "id"
+    <*> o A..:? "session"
+instance ToJSON CastSink where
+  toJSON p = A.object $ catMaybes [
+    ("name" A..=) <$> Just (castSinkName p),
+    ("id" A..=) <$> Just (castSinkId p),
+    ("session" A..=) <$> (castSinkSession p)
+    ]
 
 -- | Type of the 'Cast.sinksUpdated' event.
-data CastSinksUpdated = CastSinksUpdated {
-  castSinksUpdatedSinks :: [CastSink]
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON CastSinksUpdated  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
-
-instance FromJSON  CastSinksUpdated where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
-
-
+data CastSinksUpdated = CastSinksUpdated
+  {
+    castSinksUpdatedSinks :: [CastSink]
+  }
+  deriving (Eq, Show)
+instance FromJSON CastSinksUpdated where
+  parseJSON = A.withObject "CastSinksUpdated" $ \o -> CastSinksUpdated
+    <$> o A..: "sinks"
 instance Event CastSinksUpdated where
-    eventName _ = "Cast.sinksUpdated"
+  eventName _ = "Cast.sinksUpdated"
 
 -- | Type of the 'Cast.issueUpdated' event.
-data CastIssueUpdated = CastIssueUpdated {
-  castIssueUpdatedIssueMessage :: String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON CastIssueUpdated  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
-
-instance FromJSON  CastIssueUpdated where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
-
-
+data CastIssueUpdated = CastIssueUpdated
+  {
+    castIssueUpdatedIssueMessage :: String
+  }
+  deriving (Eq, Show)
+instance FromJSON CastIssueUpdated where
+  parseJSON = A.withObject "CastIssueUpdated" $ \o -> CastIssueUpdated
+    <$> o A..: "issueMessage"
 instance Event CastIssueUpdated where
-    eventName _ = "Cast.issueUpdated"
+  eventName _ = "Cast.issueUpdated"
 
-
-
--- | Cast.enable
---   Starts observing for sinks that can be used for tab mirroring, and if set,
+-- | Starts observing for sinks that can be used for tab mirroring, and if set,
 --   sinks compatible with |presentationUrl| as well. When sinks are found, a
 --   |sinksUpdated| event is fired.
 --   Also starts observing for issue messages. When an issue is added or removed,
 --   an |issueUpdated| event is fired.
 
 -- | Parameters of the 'Cast.enable' command.
-data PCastEnable = PCastEnable {
-  pCastEnablePresentationUrl :: Maybe String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PCastEnable  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 , A.omitNothingFields = True}
-
-instance FromJSON  PCastEnable where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 11 }
-
-
+data PCastEnable = PCastEnable
+  {
+    pCastEnablePresentationUrl :: Maybe String
+  }
+  deriving (Eq, Show)
+pCastEnable
+  :: PCastEnable
+pCastEnable
+  = PCastEnable
+    Nothing
+instance ToJSON PCastEnable where
+  toJSON p = A.object $ catMaybes [
+    ("presentationUrl" A..=) <$> (pCastEnablePresentationUrl p)
+    ]
 instance Command PCastEnable where
-   type CommandResponse PCastEnable = ()
-   commandName _ = "Cast.enable"
-   fromJSON = const . A.Success . const ()
+  type CommandResponse PCastEnable = ()
+  commandName _ = "Cast.enable"
+  fromJSON = const . A.Success . const ()
 
-
--- | Cast.disable
---   Stops observing for sinks and issues.
+-- | Stops observing for sinks and issues.
 
 -- | Parameters of the 'Cast.disable' command.
 data PCastDisable = PCastDisable
-instance ToJSON PCastDisable where toJSON _ = A.Null
-
+  deriving (Eq, Show)
+pCastDisable
+  :: PCastDisable
+pCastDisable
+  = PCastDisable
+instance ToJSON PCastDisable where
+  toJSON _ = A.Null
 instance Command PCastDisable where
-   type CommandResponse PCastDisable = ()
-   commandName _ = "Cast.disable"
-   fromJSON = const . A.Success . const ()
+  type CommandResponse PCastDisable = ()
+  commandName _ = "Cast.disable"
+  fromJSON = const . A.Success . const ()
 
-
--- | Cast.setSinkToUse
---   Sets a sink to be used when the web page requests the browser to choose a
+-- | Sets a sink to be used when the web page requests the browser to choose a
 --   sink via Presentation API, Remote Playback API, or Cast SDK.
 
 -- | Parameters of the 'Cast.setSinkToUse' command.
-data PCastSetSinkToUse = PCastSetSinkToUse {
-  pCastSetSinkToUseSinkName :: String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PCastSetSinkToUse  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 , A.omitNothingFields = True}
-
-instance FromJSON  PCastSetSinkToUse where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 17 }
-
-
+data PCastSetSinkToUse = PCastSetSinkToUse
+  {
+    pCastSetSinkToUseSinkName :: String
+  }
+  deriving (Eq, Show)
+pCastSetSinkToUse
+  :: String
+  -> PCastSetSinkToUse
+pCastSetSinkToUse
+  arg_pCastSetSinkToUseSinkName
+  = PCastSetSinkToUse
+    arg_pCastSetSinkToUseSinkName
+instance ToJSON PCastSetSinkToUse where
+  toJSON p = A.object $ catMaybes [
+    ("sinkName" A..=) <$> Just (pCastSetSinkToUseSinkName p)
+    ]
 instance Command PCastSetSinkToUse where
-   type CommandResponse PCastSetSinkToUse = ()
-   commandName _ = "Cast.setSinkToUse"
-   fromJSON = const . A.Success . const ()
+  type CommandResponse PCastSetSinkToUse = ()
+  commandName _ = "Cast.setSinkToUse"
+  fromJSON = const . A.Success . const ()
 
-
--- | Cast.startDesktopMirroring
---   Starts mirroring the desktop to the sink.
+-- | Starts mirroring the desktop to the sink.
 
 -- | Parameters of the 'Cast.startDesktopMirroring' command.
-data PCastStartDesktopMirroring = PCastStartDesktopMirroring {
-  pCastStartDesktopMirroringSinkName :: String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PCastStartDesktopMirroring  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 , A.omitNothingFields = True}
-
-instance FromJSON  PCastStartDesktopMirroring where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 26 }
-
-
+data PCastStartDesktopMirroring = PCastStartDesktopMirroring
+  {
+    pCastStartDesktopMirroringSinkName :: String
+  }
+  deriving (Eq, Show)
+pCastStartDesktopMirroring
+  :: String
+  -> PCastStartDesktopMirroring
+pCastStartDesktopMirroring
+  arg_pCastStartDesktopMirroringSinkName
+  = PCastStartDesktopMirroring
+    arg_pCastStartDesktopMirroringSinkName
+instance ToJSON PCastStartDesktopMirroring where
+  toJSON p = A.object $ catMaybes [
+    ("sinkName" A..=) <$> Just (pCastStartDesktopMirroringSinkName p)
+    ]
 instance Command PCastStartDesktopMirroring where
-   type CommandResponse PCastStartDesktopMirroring = ()
-   commandName _ = "Cast.startDesktopMirroring"
-   fromJSON = const . A.Success . const ()
+  type CommandResponse PCastStartDesktopMirroring = ()
+  commandName _ = "Cast.startDesktopMirroring"
+  fromJSON = const . A.Success . const ()
 
-
--- | Cast.startTabMirroring
---   Starts mirroring the tab to the sink.
+-- | Starts mirroring the tab to the sink.
 
 -- | Parameters of the 'Cast.startTabMirroring' command.
-data PCastStartTabMirroring = PCastStartTabMirroring {
-  pCastStartTabMirroringSinkName :: String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PCastStartTabMirroring  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 , A.omitNothingFields = True}
-
-instance FromJSON  PCastStartTabMirroring where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 22 }
-
-
+data PCastStartTabMirroring = PCastStartTabMirroring
+  {
+    pCastStartTabMirroringSinkName :: String
+  }
+  deriving (Eq, Show)
+pCastStartTabMirroring
+  :: String
+  -> PCastStartTabMirroring
+pCastStartTabMirroring
+  arg_pCastStartTabMirroringSinkName
+  = PCastStartTabMirroring
+    arg_pCastStartTabMirroringSinkName
+instance ToJSON PCastStartTabMirroring where
+  toJSON p = A.object $ catMaybes [
+    ("sinkName" A..=) <$> Just (pCastStartTabMirroringSinkName p)
+    ]
 instance Command PCastStartTabMirroring where
-   type CommandResponse PCastStartTabMirroring = ()
-   commandName _ = "Cast.startTabMirroring"
-   fromJSON = const . A.Success . const ()
+  type CommandResponse PCastStartTabMirroring = ()
+  commandName _ = "Cast.startTabMirroring"
+  fromJSON = const . A.Success . const ()
 
-
--- | Cast.stopCasting
---   Stops the active Cast session on the sink.
+-- | Stops the active Cast session on the sink.
 
 -- | Parameters of the 'Cast.stopCasting' command.
-data PCastStopCasting = PCastStopCasting {
-  pCastStopCastingSinkName :: String
-} deriving (Generic, Eq, Show, Read)
-instance ToJSON PCastStopCasting  where
-   toJSON = A.genericToJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 , A.omitNothingFields = True}
-
-instance FromJSON  PCastStopCasting where
-   parseJSON = A.genericParseJSON A.defaultOptions{A.fieldLabelModifier = uncapitalizeFirst . drop 16 }
-
-
+data PCastStopCasting = PCastStopCasting
+  {
+    pCastStopCastingSinkName :: String
+  }
+  deriving (Eq, Show)
+pCastStopCasting
+  :: String
+  -> PCastStopCasting
+pCastStopCasting
+  arg_pCastStopCastingSinkName
+  = PCastStopCasting
+    arg_pCastStopCastingSinkName
+instance ToJSON PCastStopCasting where
+  toJSON p = A.object $ catMaybes [
+    ("sinkName" A..=) <$> Just (pCastStopCastingSinkName p)
+    ]
 instance Command PCastStopCasting where
-   type CommandResponse PCastStopCasting = ()
-   commandName _ = "Cast.stopCasting"
-   fromJSON = const . A.Success . const ()
-
-
+  type CommandResponse PCastStopCasting = ()
+  commandName _ = "Cast.stopCasting"
+  fromJSON = const . A.Success . const ()
 

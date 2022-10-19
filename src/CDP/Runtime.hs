@@ -135,29 +135,29 @@ subscribeForSession :: forall a. Event a => Handle -> SessionId -> (a -> IO ()) 
 subscribeForSession handle sessionId handler = subscribe_ handle (Just sessionId) handler
 
 subscribe_ :: forall a. Event a => Handle -> Maybe SessionId -> (a -> IO ()) -> IO Subscription
-subscribe_ handle mbSessionId handler = do
+subscribe_ handle mbSessionId handler1 = do
     id' <- IORef.atomicModifyIORef' (subscriptions handle) $ \s ->
         let id' = subscriptionsNextId s in
         ( s { subscriptionsNextId   = id' + 1
             , subscriptionsHandlers = Map.insertWith
                 Map.union
                 (ename, mbSessionId)
-                (Map.singleton id' handler)
+                (Map.singleton id' handler2)
                 (subscriptionsHandlers s)
             }
         , id'
         )
 
-    pure $ Subscription ename id'
+    pure $ Subscription ename mbSessionId id'
   where
     ename = eventName (Proxy :: Proxy a)
 
-    handler :: A.Value -> IO ()
-    handler val = case A.fromJSON val :: A.Result a of
+    handler2 :: A.Value -> IO ()
+    handler2 val = case A.fromJSON val :: A.Result a of
         A.Error   err -> do
             IO.hPutStrLn IO.stderr $ "Error parsing JSON: " ++ err
             IO.hPutStrLn IO.stderr $ "Value: " ++ show val
-        A.Success x   -> f x
+        A.Success x   -> handler1 x
 
 -- | Unsubscribes to an event
 unsubscribe :: Handle -> Subscription -> IO ()
@@ -235,7 +235,7 @@ sendCommand handle params = sendCommand_ handle Nothing params
 sendCommandForSession
     :: forall cmd. Command cmd
     => Handle -> SessionId -> cmd -> IO (Promise (CommandResponse cmd))
-sendCommand handle sessionId params = sendCommand_ handle (Just sessionId) params
+sendCommandForSession handle sessionId params = sendCommand_ handle (Just sessionId) params
 
 sendCommand_
     :: forall cmd. Command cmd

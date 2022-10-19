@@ -24,7 +24,7 @@ jobs:
     #         - 'cdp/**/*'
     - name: run chrome
       id: rc
-      run: chrome --remote-debugging-port=9222 http://wikipedia.com &
+      run: chrome --headless --remote-debugging-port=9222 http://wikipedia.com &
     - name: cdp-gen build
       id: cgb
       if: steps.rc.outcome == 'success'

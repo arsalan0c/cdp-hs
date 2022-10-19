@@ -37,7 +37,7 @@ printPDF handle = do
     -- bytestring
     let params = CDP.PIORead streamHandle Nothing $ Just 24000
     reads <- whileTrue (not . CDP.iOReadEof) $ CDP.sendCommandWait handle params
-    let dat = map (Base64.decodeLenient . T.encodeUtf8 . T.pack . CDP.iOReadData) reads
+    let dat = map (Base64.decodeLenient . T.encodeUtf8 . CDP.iOReadData) reads
     B.writeFile "mypdf.pdf" $ B.concat dat
 
 whileTrue :: Monad m => (a -> Bool) -> m a -> m [a]

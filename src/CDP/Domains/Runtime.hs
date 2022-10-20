@@ -115,7 +115,7 @@ instance ToJSON RuntimeWebDriverValueType where
 data RuntimeWebDriverValue = RuntimeWebDriverValue
   {
     runtimeWebDriverValueType :: RuntimeWebDriverValueType,
-    runtimeWebDriverValueValue :: Maybe Int,
+    runtimeWebDriverValueValue :: Maybe A.Value,
     runtimeWebDriverValueObjectId :: Maybe T.Text
   }
   deriving (Eq, Show)
@@ -221,7 +221,7 @@ data RuntimeRemoteObject = RuntimeRemoteObject
     -- | Object class (constructor) name. Specified for `object` type values only.
     runtimeRemoteObjectClassName :: Maybe T.Text,
     -- | Remote object value in case of primitive values or JSON values (if it was requested).
-    runtimeRemoteObjectValue :: Maybe Int,
+    runtimeRemoteObjectValue :: Maybe A.Value,
     -- | Primitive value which can not be JSON-stringified does not have `value`, but gets this
     --   property.
     runtimeRemoteObjectUnserializableValue :: Maybe RuntimeUnserializableValue,
@@ -620,7 +620,7 @@ instance ToJSON RuntimePrivatePropertyDescriptor where
 data RuntimeCallArgument = RuntimeCallArgument
   {
     -- | Primitive value or serializable javascript object.
-    runtimeCallArgumentValue :: Maybe Int,
+    runtimeCallArgumentValue :: Maybe A.Value,
     -- | Primitive value which can not be JSON-stringified.
     runtimeCallArgumentUnserializableValue :: Maybe RuntimeUnserializableValue,
     -- | Remote object handle.

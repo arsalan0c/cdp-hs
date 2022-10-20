@@ -169,7 +169,7 @@ instance ToJSON PDatabaseExecuteSQL where
 data DatabaseExecuteSQL = DatabaseExecuteSQL
   {
     databaseExecuteSQLColumnNames :: Maybe [T.Text],
-    databaseExecuteSQLValues :: Maybe [Int],
+    databaseExecuteSQLValues :: Maybe [A.Value],
     databaseExecuteSQLSqlError :: Maybe DatabaseError
   }
   deriving (Eq, Show)

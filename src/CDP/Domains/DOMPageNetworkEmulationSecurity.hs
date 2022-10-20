@@ -407,9 +407,9 @@ data DOMShapeOutsideInfo = DOMShapeOutsideInfo
     -- | Shape bounds
     dOMShapeOutsideInfoBounds :: DOMQuad,
     -- | Shape coordinate details
-    dOMShapeOutsideInfoShape :: [Int],
+    dOMShapeOutsideInfoShape :: [A.Value],
     -- | Margin shape bounds
-    dOMShapeOutsideInfoMarginShape :: [Int]
+    dOMShapeOutsideInfoMarginShape :: [A.Value]
   }
   deriving (Eq, Show)
 instance FromJSON DOMShapeOutsideInfo where

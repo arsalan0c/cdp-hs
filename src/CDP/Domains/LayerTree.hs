@@ -50,11 +50,11 @@ import CDP.Domains.DOMPageNetworkEmulationSecurity as DOMPageNetworkEmulationSec
 
 -- | Type 'LayerTree.LayerId'.
 --   Unique Layer identifier.
-type LayerTreeLayerId = String
+type LayerTreeLayerId = T.Text
 
 -- | Type 'LayerTree.SnapshotId'.
 --   Unique snapshot identifier.
-type LayerTreeSnapshotId = String
+type LayerTreeSnapshotId = T.Text
 
 -- | Type 'LayerTree.ScrollRect'.
 --   Rectangle where scrolling happens on the main thread.
@@ -126,7 +126,7 @@ data LayerTreePictureTile = LayerTreePictureTile
     -- | Offset from owning layer top boundary
     layerTreePictureTileY :: Double,
     -- | Base64-encoded snapshot data. (Encoded as a base64 string when passed over JSON)
-    layerTreePictureTilePicture :: String
+    layerTreePictureTilePicture :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON LayerTreePictureTile where
@@ -275,7 +275,7 @@ instance ToJSON PLayerTreeCompositingReasons where
 data LayerTreeCompositingReasons = LayerTreeCompositingReasons
   {
     -- | A list of strings specifying reason IDs for the given layer to become composited.
-    layerTreeCompositingReasonsCompositingReasonIds :: [String]
+    layerTreeCompositingReasonsCompositingReasonIds :: [T.Text]
   }
   deriving (Eq, Show)
 instance FromJSON LayerTreeCompositingReasons where
@@ -492,7 +492,7 @@ instance ToJSON PLayerTreeReplaySnapshot where
 data LayerTreeReplaySnapshot = LayerTreeReplaySnapshot
   {
     -- | A data: URL for resulting image.
-    layerTreeReplaySnapshotDataURL :: String
+    layerTreeReplaySnapshotDataURL :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON LayerTreeReplaySnapshot where
@@ -526,7 +526,7 @@ instance ToJSON PLayerTreeSnapshotCommandLog where
 data LayerTreeSnapshotCommandLog = LayerTreeSnapshotCommandLog
   {
     -- | The array of canvas function calls.
-    layerTreeSnapshotCommandLogCommandLog :: [[(String, String)]]
+    layerTreeSnapshotCommandLogCommandLog :: [[(T.Text, T.Text)]]
   }
   deriving (Eq, Show)
 instance FromJSON LayerTreeSnapshotCommandLog where

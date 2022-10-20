@@ -49,14 +49,14 @@ import CDP.Internal.Utils
 
 
 -- | Type 'DOMStorage.SerializedStorageKey'.
-type DOMStorageSerializedStorageKey = String
+type DOMStorageSerializedStorageKey = T.Text
 
 -- | Type 'DOMStorage.StorageId'.
 --   DOM Storage identifier.
 data DOMStorageStorageId = DOMStorageStorageId
   {
     -- | Security origin for the storage.
-    dOMStorageStorageIdSecurityOrigin :: Maybe String,
+    dOMStorageStorageIdSecurityOrigin :: Maybe T.Text,
     -- | Represents a key by which DOM Storage keys its CachedStorageAreas
     dOMStorageStorageIdStorageKey :: Maybe DOMStorageSerializedStorageKey,
     -- | Whether the storage is local storage (not session storage).
@@ -77,14 +77,14 @@ instance ToJSON DOMStorageStorageId where
 
 -- | Type 'DOMStorage.Item'.
 --   DOM Storage item.
-type DOMStorageItem = [String]
+type DOMStorageItem = [T.Text]
 
 -- | Type of the 'DOMStorage.domStorageItemAdded' event.
 data DOMStorageDomStorageItemAdded = DOMStorageDomStorageItemAdded
   {
     dOMStorageDomStorageItemAddedStorageId :: DOMStorageStorageId,
-    dOMStorageDomStorageItemAddedKey :: String,
-    dOMStorageDomStorageItemAddedNewValue :: String
+    dOMStorageDomStorageItemAddedKey :: T.Text,
+    dOMStorageDomStorageItemAddedNewValue :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON DOMStorageDomStorageItemAdded where
@@ -99,7 +99,7 @@ instance Event DOMStorageDomStorageItemAdded where
 data DOMStorageDomStorageItemRemoved = DOMStorageDomStorageItemRemoved
   {
     dOMStorageDomStorageItemRemovedStorageId :: DOMStorageStorageId,
-    dOMStorageDomStorageItemRemovedKey :: String
+    dOMStorageDomStorageItemRemovedKey :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON DOMStorageDomStorageItemRemoved where
@@ -113,9 +113,9 @@ instance Event DOMStorageDomStorageItemRemoved where
 data DOMStorageDomStorageItemUpdated = DOMStorageDomStorageItemUpdated
   {
     dOMStorageDomStorageItemUpdatedStorageId :: DOMStorageStorageId,
-    dOMStorageDomStorageItemUpdatedKey :: String,
-    dOMStorageDomStorageItemUpdatedOldValue :: String,
-    dOMStorageDomStorageItemUpdatedNewValue :: String
+    dOMStorageDomStorageItemUpdatedKey :: T.Text,
+    dOMStorageDomStorageItemUpdatedOldValue :: T.Text,
+    dOMStorageDomStorageItemUpdatedNewValue :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON DOMStorageDomStorageItemUpdated where
@@ -229,12 +229,12 @@ instance Command PDOMStorageGetDOMStorageItems where
 data PDOMStorageRemoveDOMStorageItem = PDOMStorageRemoveDOMStorageItem
   {
     pDOMStorageRemoveDOMStorageItemStorageId :: DOMStorageStorageId,
-    pDOMStorageRemoveDOMStorageItemKey :: String
+    pDOMStorageRemoveDOMStorageItemKey :: T.Text
   }
   deriving (Eq, Show)
 pDOMStorageRemoveDOMStorageItem
   :: DOMStorageStorageId
-  -> String
+  -> T.Text
   -> PDOMStorageRemoveDOMStorageItem
 pDOMStorageRemoveDOMStorageItem
   arg_pDOMStorageRemoveDOMStorageItemStorageId
@@ -257,14 +257,14 @@ instance Command PDOMStorageRemoveDOMStorageItem where
 data PDOMStorageSetDOMStorageItem = PDOMStorageSetDOMStorageItem
   {
     pDOMStorageSetDOMStorageItemStorageId :: DOMStorageStorageId,
-    pDOMStorageSetDOMStorageItemKey :: String,
-    pDOMStorageSetDOMStorageItemValue :: String
+    pDOMStorageSetDOMStorageItemKey :: T.Text,
+    pDOMStorageSetDOMStorageItemValue :: T.Text
   }
   deriving (Eq, Show)
 pDOMStorageSetDOMStorageItem
   :: DOMStorageStorageId
-  -> String
-  -> String
+  -> T.Text
+  -> T.Text
   -> PDOMStorageSetDOMStorageItem
 pDOMStorageSetDOMStorageItem
   arg_pDOMStorageSetDOMStorageItemStorageId

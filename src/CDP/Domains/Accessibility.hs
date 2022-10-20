@@ -51,7 +51,7 @@ import CDP.Domains.Runtime as Runtime
 
 -- | Type 'Accessibility.AXNodeId'.
 --   Unique accessibility node identifier.
-type AccessibilityAXNodeId = String
+type AccessibilityAXNodeId = T.Text
 
 -- | Type 'Accessibility.AXValueType'.
 --   Enum of possible property types.
@@ -158,7 +158,7 @@ data AccessibilityAXValueSource = AccessibilityAXValueSource
     -- | The value of this property source.
     accessibilityAXValueSourceValue :: Maybe AccessibilityAXValue,
     -- | The name of the relevant attribute, if any.
-    accessibilityAXValueSourceAttribute :: Maybe String,
+    accessibilityAXValueSourceAttribute :: Maybe T.Text,
     -- | The value of the relevant attribute, if any.
     accessibilityAXValueSourceAttributeValue :: Maybe AccessibilityAXValue,
     -- | Whether this source is superseded by a higher priority source.
@@ -170,7 +170,7 @@ data AccessibilityAXValueSource = AccessibilityAXValueSource
     -- | Whether the value for this property is invalid.
     accessibilityAXValueSourceInvalid :: Maybe Bool,
     -- | Reason for the value being invalid, if it is.
-    accessibilityAXValueSourceInvalidReason :: Maybe String
+    accessibilityAXValueSourceInvalidReason :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON AccessibilityAXValueSource where
@@ -203,9 +203,9 @@ data AccessibilityAXRelatedNode = AccessibilityAXRelatedNode
     -- | The BackendNodeId of the related DOM node.
     accessibilityAXRelatedNodeBackendDOMNodeId :: DOMPageNetworkEmulationSecurity.DOMBackendNodeId,
     -- | The IDRef value provided, if any.
-    accessibilityAXRelatedNodeIdref :: Maybe String,
+    accessibilityAXRelatedNodeIdref :: Maybe T.Text,
     -- | The text alternative of this node in the current context.
-    accessibilityAXRelatedNodeText :: Maybe String
+    accessibilityAXRelatedNodeText :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON AccessibilityAXRelatedNode where
@@ -687,9 +687,9 @@ data PAccessibilityQueryAXTree = PAccessibilityQueryAXTree
     -- | JavaScript object id of the node wrapper for the root to query.
     pAccessibilityQueryAXTreeObjectId :: Maybe Runtime.RuntimeRemoteObjectId,
     -- | Find nodes with this computed name.
-    pAccessibilityQueryAXTreeAccessibleName :: Maybe String,
+    pAccessibilityQueryAXTreeAccessibleName :: Maybe T.Text,
     -- | Find nodes with this computed role.
-    pAccessibilityQueryAXTreeRole :: Maybe String
+    pAccessibilityQueryAXTreeRole :: Maybe T.Text
   }
   deriving (Eq, Show)
 pAccessibilityQueryAXTree

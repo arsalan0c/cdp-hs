@@ -63,7 +63,10 @@ data Handle = Handle
     }
 
 data Config = Config
-    { hostPort           :: (String, Int) 
+    { hostPort           :: (String, Int)
+      -- | WebSocket path to connect to. 
+      --   If Nothing, the initial connection is made to the browser.
+    , path               :: Maybe String 
     , doLogResponses     :: Bool
       -- | Number of microseconds to wait for a command response.
       --   Waits forever if Nothing.
@@ -73,6 +76,7 @@ instance Default Config where
     def = Config{..}
       where
         hostPort       = ("http://127.0.0.1", 9222)
+        path           = def
         doLogResponses = False
         commandTimeout = def
 

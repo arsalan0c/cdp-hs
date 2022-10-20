@@ -54,7 +54,7 @@ data TetheringAccepted = TetheringAccepted
     -- | Port number that was successfully bound.
     tetheringAcceptedPort :: Int,
     -- | Connection id to be used.
-    tetheringAcceptedConnectionId :: String
+    tetheringAcceptedConnectionId :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON TetheringAccepted where

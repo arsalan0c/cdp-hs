@@ -51,7 +51,7 @@ import CDP.Internal.Utils
 
 -- | Type 'WebAudio.GraphObjectId'.
 --   An unique ID for a graph object (AudioContext, AudioNode, AudioParam) in Web Audio API
-type WebAudioGraphObjectId = String
+type WebAudioGraphObjectId = T.Text
 
 -- | Type 'WebAudio.ContextType'.
 --   Enum of BaseAudioContext types
@@ -85,7 +85,7 @@ instance ToJSON WebAudioContextState where
 
 -- | Type 'WebAudio.NodeType'.
 --   Enum of AudioNode types
-type WebAudioNodeType = String
+type WebAudioNodeType = T.Text
 
 -- | Type 'WebAudio.ChannelCountMode'.
 --   Enum of AudioNode::ChannelCountMode from the spec
@@ -119,7 +119,7 @@ instance ToJSON WebAudioChannelInterpretation where
 
 -- | Type 'WebAudio.ParamType'.
 --   Enum of AudioParam types
-type WebAudioParamType = String
+type WebAudioParamType = T.Text
 
 -- | Type 'WebAudio.AutomationRate'.
 --   Enum of AudioParam::AutomationRate from the spec

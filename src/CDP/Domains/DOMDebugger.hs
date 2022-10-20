@@ -86,7 +86,7 @@ instance ToJSON DOMDebuggerCSPViolationType where
 data DOMDebuggerEventListener = DOMDebuggerEventListener
   {
     -- | `EventListener`'s type.
-    dOMDebuggerEventListenerType :: String,
+    dOMDebuggerEventListenerType :: T.Text,
     -- | `EventListener`'s useCapture.
     dOMDebuggerEventListenerUseCapture :: Bool,
     -- | `EventListener`'s passive flag.
@@ -216,14 +216,14 @@ instance Command PDOMDebuggerRemoveDOMBreakpoint where
 data PDOMDebuggerRemoveEventListenerBreakpoint = PDOMDebuggerRemoveEventListenerBreakpoint
   {
     -- | Event name.
-    pDOMDebuggerRemoveEventListenerBreakpointEventName :: String,
+    pDOMDebuggerRemoveEventListenerBreakpointEventName :: T.Text,
     -- | EventTarget interface name.
-    pDOMDebuggerRemoveEventListenerBreakpointTargetName :: Maybe String
+    pDOMDebuggerRemoveEventListenerBreakpointTargetName :: Maybe T.Text
   }
   deriving (Eq, Show)
 pDOMDebuggerRemoveEventListenerBreakpoint
   -- | Event name.
-  :: String
+  :: T.Text
   -> PDOMDebuggerRemoveEventListenerBreakpoint
 pDOMDebuggerRemoveEventListenerBreakpoint
   arg_pDOMDebuggerRemoveEventListenerBreakpointEventName
@@ -246,12 +246,12 @@ instance Command PDOMDebuggerRemoveEventListenerBreakpoint where
 data PDOMDebuggerRemoveInstrumentationBreakpoint = PDOMDebuggerRemoveInstrumentationBreakpoint
   {
     -- | Instrumentation name to stop on.
-    pDOMDebuggerRemoveInstrumentationBreakpointEventName :: String
+    pDOMDebuggerRemoveInstrumentationBreakpointEventName :: T.Text
   }
   deriving (Eq, Show)
 pDOMDebuggerRemoveInstrumentationBreakpoint
   -- | Instrumentation name to stop on.
-  :: String
+  :: T.Text
   -> PDOMDebuggerRemoveInstrumentationBreakpoint
 pDOMDebuggerRemoveInstrumentationBreakpoint
   arg_pDOMDebuggerRemoveInstrumentationBreakpointEventName
@@ -272,12 +272,12 @@ instance Command PDOMDebuggerRemoveInstrumentationBreakpoint where
 data PDOMDebuggerRemoveXHRBreakpoint = PDOMDebuggerRemoveXHRBreakpoint
   {
     -- | Resource URL substring.
-    pDOMDebuggerRemoveXHRBreakpointUrl :: String
+    pDOMDebuggerRemoveXHRBreakpointUrl :: T.Text
   }
   deriving (Eq, Show)
 pDOMDebuggerRemoveXHRBreakpoint
   -- | Resource URL substring.
-  :: String
+  :: T.Text
   -> PDOMDebuggerRemoveXHRBreakpoint
 pDOMDebuggerRemoveXHRBreakpoint
   arg_pDOMDebuggerRemoveXHRBreakpointUrl
@@ -357,15 +357,15 @@ instance Command PDOMDebuggerSetDOMBreakpoint where
 data PDOMDebuggerSetEventListenerBreakpoint = PDOMDebuggerSetEventListenerBreakpoint
   {
     -- | DOM Event name to stop on (any DOM event will do).
-    pDOMDebuggerSetEventListenerBreakpointEventName :: String,
+    pDOMDebuggerSetEventListenerBreakpointEventName :: T.Text,
     -- | EventTarget interface name to stop on. If equal to `"*"` or not provided, will stop on any
     --   EventTarget.
-    pDOMDebuggerSetEventListenerBreakpointTargetName :: Maybe String
+    pDOMDebuggerSetEventListenerBreakpointTargetName :: Maybe T.Text
   }
   deriving (Eq, Show)
 pDOMDebuggerSetEventListenerBreakpoint
   -- | DOM Event name to stop on (any DOM event will do).
-  :: String
+  :: T.Text
   -> PDOMDebuggerSetEventListenerBreakpoint
 pDOMDebuggerSetEventListenerBreakpoint
   arg_pDOMDebuggerSetEventListenerBreakpointEventName
@@ -388,12 +388,12 @@ instance Command PDOMDebuggerSetEventListenerBreakpoint where
 data PDOMDebuggerSetInstrumentationBreakpoint = PDOMDebuggerSetInstrumentationBreakpoint
   {
     -- | Instrumentation name to stop on.
-    pDOMDebuggerSetInstrumentationBreakpointEventName :: String
+    pDOMDebuggerSetInstrumentationBreakpointEventName :: T.Text
   }
   deriving (Eq, Show)
 pDOMDebuggerSetInstrumentationBreakpoint
   -- | Instrumentation name to stop on.
-  :: String
+  :: T.Text
   -> PDOMDebuggerSetInstrumentationBreakpoint
 pDOMDebuggerSetInstrumentationBreakpoint
   arg_pDOMDebuggerSetInstrumentationBreakpointEventName
@@ -414,12 +414,12 @@ instance Command PDOMDebuggerSetInstrumentationBreakpoint where
 data PDOMDebuggerSetXHRBreakpoint = PDOMDebuggerSetXHRBreakpoint
   {
     -- | Resource URL substring. All XHRs having this substring in the URL will get stopped upon.
-    pDOMDebuggerSetXHRBreakpointUrl :: String
+    pDOMDebuggerSetXHRBreakpointUrl :: T.Text
   }
   deriving (Eq, Show)
 pDOMDebuggerSetXHRBreakpoint
   -- | Resource URL substring. All XHRs having this substring in the URL will get stopped upon.
-  :: String
+  :: T.Text
   -> PDOMDebuggerSetXHRBreakpoint
 pDOMDebuggerSetXHRBreakpoint
   arg_pDOMDebuggerSetXHRBreakpointUrl

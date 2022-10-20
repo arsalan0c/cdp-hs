@@ -56,7 +56,9 @@ runClient config app = do
     commandBuffer  <- IORef.newIORef Map.empty
     responseBuffer <- newMVar []
 
-    (host, port, path) <- browserAddress $ hostPort config
+    (host, port, path) <- do
+        let hp@(host,port) = hostPort config
+        maybe (browserAddress hp) (\path -> pure (host, port, path)) $ path config
     WS.runClient host port path $ \conn -> do
         let listen = forkIO $ do
                 listenThread <- myThreadId

@@ -61,13 +61,13 @@ data SystemInfoGPUDevice = SystemInfoGPUDevice
     -- | Revision of the GPU, only available on Windows.
     systemInfoGPUDeviceRevision :: Maybe Double,
     -- | String description of the GPU vendor, if the PCI ID is not available.
-    systemInfoGPUDeviceVendorString :: String,
+    systemInfoGPUDeviceVendorString :: T.Text,
     -- | String description of the GPU device, if the PCI ID is not available.
-    systemInfoGPUDeviceDeviceString :: String,
+    systemInfoGPUDeviceDeviceString :: T.Text,
     -- | String description of the GPU driver vendor.
-    systemInfoGPUDeviceDriverVendor :: String,
+    systemInfoGPUDeviceDriverVendor :: T.Text,
     -- | String description of the GPU driver version.
-    systemInfoGPUDeviceDriverVersion :: String
+    systemInfoGPUDeviceDriverVersion :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON SystemInfoGPUDevice where
@@ -118,7 +118,7 @@ instance ToJSON SystemInfoSize where
 data SystemInfoVideoDecodeAcceleratorCapability = SystemInfoVideoDecodeAcceleratorCapability
   {
     -- | Video codec profile that is supported, e.g. VP9 Profile 2.
-    systemInfoVideoDecodeAcceleratorCapabilityProfile :: String,
+    systemInfoVideoDecodeAcceleratorCapabilityProfile :: T.Text,
     -- | Maximum video dimensions in pixels supported for this |profile|.
     systemInfoVideoDecodeAcceleratorCapabilityMaxResolution :: SystemInfoSize,
     -- | Minimum video dimensions in pixels supported for this |profile|.
@@ -143,7 +143,7 @@ instance ToJSON SystemInfoVideoDecodeAcceleratorCapability where
 data SystemInfoVideoEncodeAcceleratorCapability = SystemInfoVideoEncodeAcceleratorCapability
   {
     -- | Video codec profile that is supported, e.g H264 Main.
-    systemInfoVideoEncodeAcceleratorCapabilityProfile :: String,
+    systemInfoVideoEncodeAcceleratorCapabilityProfile :: T.Text,
     -- | Maximum video dimensions in pixels supported for this |profile|.
     systemInfoVideoEncodeAcceleratorCapabilityMaxResolution :: SystemInfoSize,
     -- | Maximum encoding framerate in frames per second supported for this
@@ -235,11 +235,11 @@ data SystemInfoGPUInfo = SystemInfoGPUInfo
     -- | The graphics devices on the system. Element 0 is the primary GPU.
     systemInfoGPUInfoDevices :: [SystemInfoGPUDevice],
     -- | An optional dictionary of additional GPU related attributes.
-    systemInfoGPUInfoAuxAttributes :: Maybe [(String, String)],
+    systemInfoGPUInfoAuxAttributes :: Maybe [(T.Text, T.Text)],
     -- | An optional dictionary of graphics features and their status.
-    systemInfoGPUInfoFeatureStatus :: Maybe [(String, String)],
+    systemInfoGPUInfoFeatureStatus :: Maybe [(T.Text, T.Text)],
     -- | An optional array of GPU driver bug workarounds.
-    systemInfoGPUInfoDriverBugWorkarounds :: [String],
+    systemInfoGPUInfoDriverBugWorkarounds :: [T.Text],
     -- | Supported accelerated video decoding capabilities.
     systemInfoGPUInfoVideoDecoding :: [SystemInfoVideoDecodeAcceleratorCapability],
     -- | Supported accelerated video encoding capabilities.
@@ -273,7 +273,7 @@ instance ToJSON SystemInfoGPUInfo where
 data SystemInfoProcessInfo = SystemInfoProcessInfo
   {
     -- | Specifies process type.
-    systemInfoProcessInfoType :: String,
+    systemInfoProcessInfoType :: T.Text,
     -- | Specifies process id.
     systemInfoProcessInfoId :: Int,
     -- | Specifies cumulative CPU usage in seconds across all threads of the
@@ -310,13 +310,13 @@ data SystemInfoGetInfo = SystemInfoGetInfo
     systemInfoGetInfoGpu :: SystemInfoGPUInfo,
     -- | A platform-dependent description of the model of the machine. On Mac OS, this is, for
     --   example, 'MacBookPro'. Will be the empty string if not supported.
-    systemInfoGetInfoModelName :: String,
+    systemInfoGetInfoModelName :: T.Text,
     -- | A platform-dependent description of the version of the machine. On Mac OS, this is, for
     --   example, '10.1'. Will be the empty string if not supported.
-    systemInfoGetInfoModelVersion :: String,
+    systemInfoGetInfoModelVersion :: T.Text,
     -- | The command line string used to launch the browser. Will be the empty string if not
     --   supported.
-    systemInfoGetInfoCommandLine :: String
+    systemInfoGetInfoCommandLine :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON SystemInfoGetInfo where

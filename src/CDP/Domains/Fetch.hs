@@ -52,7 +52,7 @@ import CDP.Domains.IO as IO
 
 -- | Type 'Fetch.RequestId'.
 --   Unique request identifier.
-type FetchRequestId = String
+type FetchRequestId = T.Text
 
 -- | Type 'Fetch.RequestStage'.
 --   Stages of the request to handle. Request will intercept before the request is
@@ -75,7 +75,7 @@ data FetchRequestPattern = FetchRequestPattern
   {
     -- | Wildcards (`'*'` -> zero or more, `'?'` -> exactly one) are allowed. Escape character is
     --   backslash. Omitting is equivalent to `"*"`.
-    fetchRequestPatternUrlPattern :: Maybe String,
+    fetchRequestPatternUrlPattern :: Maybe T.Text,
     -- | If set, only requests for matching resource types will be intercepted.
     fetchRequestPatternResourceType :: Maybe DOMPageNetworkEmulationSecurity.NetworkResourceType,
     -- | Stage at which to begin intercepting requests. Default is Request.
@@ -98,8 +98,8 @@ instance ToJSON FetchRequestPattern where
 --   Response HTTP header entry
 data FetchHeaderEntry = FetchHeaderEntry
   {
-    fetchHeaderEntryName :: String,
-    fetchHeaderEntryValue :: String
+    fetchHeaderEntryName :: T.Text,
+    fetchHeaderEntryValue :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON FetchHeaderEntry where
@@ -130,11 +130,11 @@ data FetchAuthChallenge = FetchAuthChallenge
     -- | Source of the authentication challenge.
     fetchAuthChallengeSource :: Maybe FetchAuthChallengeSource,
     -- | Origin of the challenger.
-    fetchAuthChallengeOrigin :: String,
+    fetchAuthChallengeOrigin :: T.Text,
     -- | The authentication scheme used, such as basic or digest
-    fetchAuthChallengeScheme :: String,
+    fetchAuthChallengeScheme :: T.Text,
     -- | The realm of the challenge. May be empty.
-    fetchAuthChallengeRealm :: String
+    fetchAuthChallengeRealm :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON FetchAuthChallenge where
@@ -174,10 +174,10 @@ data FetchAuthChallengeResponse = FetchAuthChallengeResponse
     fetchAuthChallengeResponseResponse :: FetchAuthChallengeResponseResponse,
     -- | The username to provide, possibly empty. Should only be set if response is
     --   ProvideCredentials.
-    fetchAuthChallengeResponseUsername :: Maybe String,
+    fetchAuthChallengeResponseUsername :: Maybe T.Text,
     -- | The password to provide, possibly empty. Should only be set if response is
     --   ProvideCredentials.
-    fetchAuthChallengeResponsePassword :: Maybe String
+    fetchAuthChallengeResponsePassword :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON FetchAuthChallengeResponse where
@@ -208,7 +208,7 @@ data FetchRequestPaused = FetchRequestPaused
     -- | Response code if intercepted at response stage.
     fetchRequestPausedResponseStatusCode :: Maybe Int,
     -- | Response status text if intercepted at response stage.
-    fetchRequestPausedResponseStatusText :: Maybe String,
+    fetchRequestPausedResponseStatusText :: Maybe T.Text,
     -- | Response headers if intercepted at the response stage.
     fetchRequestPausedResponseHeaders :: Maybe [FetchHeaderEntry],
     -- | If the intercepted request had a corresponding Network.requestWillBeSent event fired for it,
@@ -356,14 +356,14 @@ data PFetchFulfillRequest = PFetchFulfillRequest
     --   series of name: value pairs. Prefer the above method unless you
     --   need to represent some non-UTF8 values that can't be transmitted
     --   over the protocol as text. (Encoded as a base64 string when passed over JSON)
-    pFetchFulfillRequestBinaryResponseHeaders :: Maybe String,
+    pFetchFulfillRequestBinaryResponseHeaders :: Maybe T.Text,
     -- | A response body. If absent, original response body will be used if
     --   the request is intercepted at the response stage and empty body
     --   will be used if the request is intercepted at the request stage. (Encoded as a base64 string when passed over JSON)
-    pFetchFulfillRequestBody :: Maybe String,
+    pFetchFulfillRequestBody :: Maybe T.Text,
     -- | A textual representation of responseCode.
     --   If absent, a standard phrase matching responseCode is used.
-    pFetchFulfillRequestResponsePhrase :: Maybe String
+    pFetchFulfillRequestResponsePhrase :: Maybe T.Text
   }
   deriving (Eq, Show)
 pFetchFulfillRequest
@@ -404,11 +404,11 @@ data PFetchContinueRequest = PFetchContinueRequest
     -- | An id the client received in requestPaused event.
     pFetchContinueRequestRequestId :: FetchRequestId,
     -- | If set, the request url will be modified in a way that's not observable by page.
-    pFetchContinueRequestUrl :: Maybe String,
+    pFetchContinueRequestUrl :: Maybe T.Text,
     -- | If set, the request method is overridden.
-    pFetchContinueRequestMethod :: Maybe String,
+    pFetchContinueRequestMethod :: Maybe T.Text,
     -- | If set, overrides the post data in the request. (Encoded as a base64 string when passed over JSON)
-    pFetchContinueRequestPostData :: Maybe String,
+    pFetchContinueRequestPostData :: Maybe T.Text,
     -- | If set, overrides the request headers. Note that the overrides do not
     --   extend to subsequent redirect hops, if a redirect happens. Another override
     --   may be applied to a different request produced by a redirect.
@@ -490,14 +490,14 @@ data PFetchContinueResponse = PFetchContinueResponse
     pFetchContinueResponseResponseCode :: Maybe Int,
     -- | A textual representation of responseCode.
     --   If absent, a standard phrase matching responseCode is used.
-    pFetchContinueResponseResponsePhrase :: Maybe String,
+    pFetchContinueResponseResponsePhrase :: Maybe T.Text,
     -- | Response headers. If absent, original response headers will be used.
     pFetchContinueResponseResponseHeaders :: Maybe [FetchHeaderEntry],
     -- | Alternative way of specifying response headers as a \0-separated
     --   series of name: value pairs. Prefer the above method unless you
     --   need to represent some non-UTF8 values that can't be transmitted
     --   over the protocol as text. (Encoded as a base64 string when passed over JSON)
-    pFetchContinueResponseBinaryResponseHeaders :: Maybe String
+    pFetchContinueResponseBinaryResponseHeaders :: Maybe T.Text
   }
   deriving (Eq, Show)
 pFetchContinueResponse
@@ -554,7 +554,7 @@ instance ToJSON PFetchGetResponseBody where
 data FetchGetResponseBody = FetchGetResponseBody
   {
     -- | Response body.
-    fetchGetResponseBodyBody :: String,
+    fetchGetResponseBodyBody :: T.Text,
     -- | True, if content was sent as base64.
     fetchGetResponseBodyBase64Encoded :: Bool
   }

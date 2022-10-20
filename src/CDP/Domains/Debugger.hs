@@ -52,11 +52,11 @@ import CDP.Domains.Runtime as Runtime
 
 -- | Type 'Debugger.BreakpointId'.
 --   Breakpoint identifier.
-type DebuggerBreakpointId = String
+type DebuggerBreakpointId = T.Text
 
 -- | Type 'Debugger.CallFrameId'.
 --   Call frame identifier.
-type DebuggerCallFrameId = String
+type DebuggerCallFrameId = T.Text
 
 -- | Type 'Debugger.Location'.
 --   Location in the source code.
@@ -128,7 +128,7 @@ data DebuggerCallFrame = DebuggerCallFrame
     -- | Call frame identifier. This identifier is only valid while the virtual machine is paused.
     debuggerCallFrameCallFrameId :: DebuggerCallFrameId,
     -- | Name of the JavaScript function called on this call frame.
-    debuggerCallFrameFunctionName :: String,
+    debuggerCallFrameFunctionName :: T.Text,
     -- | Location in the source code.
     debuggerCallFrameFunctionLocation :: Maybe DebuggerLocation,
     -- | Location in the source code.
@@ -205,7 +205,7 @@ data DebuggerScope = DebuggerScope
     --   object; for the rest of the scopes, it is artificial transient object enumerating scope
     --   variables as its properties.
     debuggerScopeObject :: Runtime.RuntimeRemoteObject,
-    debuggerScopeName :: Maybe String,
+    debuggerScopeName :: Maybe T.Text,
     -- | Location in the source code where scope starts
     debuggerScopeStartLocation :: Maybe DebuggerLocation,
     -- | Location in the source code where scope ends
@@ -235,7 +235,7 @@ data DebuggerSearchMatch = DebuggerSearchMatch
     -- | Line number in resource content.
     debuggerSearchMatchLineNumber :: Double,
     -- | Line with match content.
-    debuggerSearchMatchLineContent :: String
+    debuggerSearchMatchLineContent :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON DebuggerSearchMatch where
@@ -291,7 +291,7 @@ instance ToJSON DebuggerBreakLocation where
 data DebuggerWasmDisassemblyChunk = DebuggerWasmDisassemblyChunk
   {
     -- | The next chunk of disassembled lines.
-    debuggerWasmDisassemblyChunkLines :: [String],
+    debuggerWasmDisassemblyChunkLines :: [T.Text],
     -- | The bytecode offsets describing the start of each line.
     debuggerWasmDisassemblyChunkBytecodeOffsets :: [Int]
   }
@@ -342,7 +342,7 @@ data DebuggerDebugSymbols = DebuggerDebugSymbols
     -- | Type of the debug symbols.
     debuggerDebugSymbolsType :: DebuggerDebugSymbolsType,
     -- | URL of the external symbol source.
-    debuggerDebugSymbolsExternalURL :: Maybe String
+    debuggerDebugSymbolsExternalURL :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON DebuggerDebugSymbols where
@@ -410,9 +410,9 @@ data DebuggerPaused = DebuggerPaused
     -- | Pause reason.
     debuggerPausedReason :: DebuggerPausedReason,
     -- | Object containing break-specific auxiliary properties.
-    debuggerPausedData :: Maybe [(String, String)],
+    debuggerPausedData :: Maybe [(T.Text, T.Text)],
     -- | Hit breakpoints IDs
-    debuggerPausedHitBreakpoints :: Maybe [String],
+    debuggerPausedHitBreakpoints :: Maybe [T.Text],
     -- | Async stack trace, if any.
     debuggerPausedAsyncStackTrace :: Maybe Runtime.RuntimeStackTrace,
     -- | Async stack trace, if any.
@@ -444,7 +444,7 @@ data DebuggerScriptFailedToParse = DebuggerScriptFailedToParse
     -- | Identifier of the script parsed.
     debuggerScriptFailedToParseScriptId :: Runtime.RuntimeScriptId,
     -- | URL or name of the script parsed (if any).
-    debuggerScriptFailedToParseUrl :: String,
+    debuggerScriptFailedToParseUrl :: T.Text,
     -- | Line offset of the script within the resource with given URL (for script tags).
     debuggerScriptFailedToParseStartLine :: Int,
     -- | Column offset of the script within the resource with given URL.
@@ -456,11 +456,11 @@ data DebuggerScriptFailedToParse = DebuggerScriptFailedToParse
     -- | Specifies script creation context.
     debuggerScriptFailedToParseExecutionContextId :: Runtime.RuntimeExecutionContextId,
     -- | Content hash of the script, SHA-256.
-    debuggerScriptFailedToParseHash :: String,
+    debuggerScriptFailedToParseHash :: T.Text,
     -- | Embedder-specific auxiliary data.
-    debuggerScriptFailedToParseExecutionContextAuxData :: Maybe [(String, String)],
+    debuggerScriptFailedToParseExecutionContextAuxData :: Maybe [(T.Text, T.Text)],
     -- | URL of source map associated with script (if any).
-    debuggerScriptFailedToParseSourceMapURL :: Maybe String,
+    debuggerScriptFailedToParseSourceMapURL :: Maybe T.Text,
     -- | True, if this script has sourceURL.
     debuggerScriptFailedToParseHasSourceURL :: Maybe Bool,
     -- | True, if this script is ES6 module.
@@ -474,7 +474,7 @@ data DebuggerScriptFailedToParse = DebuggerScriptFailedToParse
     -- | The language of the script.
     debuggerScriptFailedToParseScriptLanguage :: Maybe DebuggerScriptLanguage,
     -- | The name the embedder supplied for this script.
-    debuggerScriptFailedToParseEmbedderName :: Maybe String
+    debuggerScriptFailedToParseEmbedderName :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON DebuggerScriptFailedToParse where
@@ -505,7 +505,7 @@ data DebuggerScriptParsed = DebuggerScriptParsed
     -- | Identifier of the script parsed.
     debuggerScriptParsedScriptId :: Runtime.RuntimeScriptId,
     -- | URL or name of the script parsed (if any).
-    debuggerScriptParsedUrl :: String,
+    debuggerScriptParsedUrl :: T.Text,
     -- | Line offset of the script within the resource with given URL (for script tags).
     debuggerScriptParsedStartLine :: Int,
     -- | Column offset of the script within the resource with given URL.
@@ -517,13 +517,13 @@ data DebuggerScriptParsed = DebuggerScriptParsed
     -- | Specifies script creation context.
     debuggerScriptParsedExecutionContextId :: Runtime.RuntimeExecutionContextId,
     -- | Content hash of the script, SHA-256.
-    debuggerScriptParsedHash :: String,
+    debuggerScriptParsedHash :: T.Text,
     -- | Embedder-specific auxiliary data.
-    debuggerScriptParsedExecutionContextAuxData :: Maybe [(String, String)],
+    debuggerScriptParsedExecutionContextAuxData :: Maybe [(T.Text, T.Text)],
     -- | True, if this script is generated as a result of the live edit operation.
     debuggerScriptParsedIsLiveEdit :: Maybe Bool,
     -- | URL of source map associated with script (if any).
-    debuggerScriptParsedSourceMapURL :: Maybe String,
+    debuggerScriptParsedSourceMapURL :: Maybe T.Text,
     -- | True, if this script has sourceURL.
     debuggerScriptParsedHasSourceURL :: Maybe Bool,
     -- | True, if this script is ES6 module.
@@ -539,7 +539,7 @@ data DebuggerScriptParsed = DebuggerScriptParsed
     -- | If the scriptLanguage is WebASsembly, the source of debug symbols for the module.
     debuggerScriptParsedDebugSymbols :: Maybe DebuggerDebugSymbols,
     -- | The name the embedder supplied for this script.
-    debuggerScriptParsedEmbedderName :: Maybe String
+    debuggerScriptParsedEmbedderName :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON DebuggerScriptParsed where
@@ -663,10 +663,10 @@ data PDebuggerEvaluateOnCallFrame = PDebuggerEvaluateOnCallFrame
     -- | Call frame identifier to evaluate on.
     pDebuggerEvaluateOnCallFrameCallFrameId :: DebuggerCallFrameId,
     -- | Expression to evaluate.
-    pDebuggerEvaluateOnCallFrameExpression :: String,
+    pDebuggerEvaluateOnCallFrameExpression :: T.Text,
     -- | String object group name to put result into (allows rapid releasing resulting object handles
     --   using `releaseObjectGroup`).
-    pDebuggerEvaluateOnCallFrameObjectGroup :: Maybe String,
+    pDebuggerEvaluateOnCallFrameObjectGroup :: Maybe T.Text,
     -- | Specifies whether command line API should be available to the evaluated expression, defaults
     --   to false.
     pDebuggerEvaluateOnCallFrameIncludeCommandLineAPI :: Maybe Bool,
@@ -687,7 +687,7 @@ pDebuggerEvaluateOnCallFrame
   -- | Call frame identifier to evaluate on.
   :: DebuggerCallFrameId
   -- | Expression to evaluate.
-  -> String
+  -> T.Text
   -> PDebuggerEvaluateOnCallFrame
 pDebuggerEvaluateOnCallFrame
   arg_pDebuggerEvaluateOnCallFrameCallFrameId
@@ -798,9 +798,9 @@ instance ToJSON PDebuggerGetScriptSource where
 data DebuggerGetScriptSource = DebuggerGetScriptSource
   {
     -- | Script source (empty in case of Wasm bytecode).
-    debuggerGetScriptSourceScriptSource :: String,
+    debuggerGetScriptSourceScriptSource :: T.Text,
     -- | Wasm bytecode. (Encoded as a base64 string when passed over JSON)
-    debuggerGetScriptSourceBytecode :: Maybe String
+    debuggerGetScriptSourceBytecode :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON DebuggerGetScriptSource where
@@ -835,7 +835,7 @@ data DebuggerDisassembleWasmModule = DebuggerDisassembleWasmModule
   {
     -- | For large modules, return a stream from which additional chunks of
     --   disassembly can be read successively.
-    debuggerDisassembleWasmModuleStreamId :: Maybe String,
+    debuggerDisassembleWasmModuleStreamId :: Maybe T.Text,
     -- | The total number of lines in the disassembly text.
     debuggerDisassembleWasmModuleTotalNumberOfLines :: Int,
     -- | The offsets of all function bodies, in the format [start1, end1,
@@ -863,11 +863,11 @@ instance Command PDebuggerDisassembleWasmModule where
 -- | Parameters of the 'Debugger.nextWasmDisassemblyChunk' command.
 data PDebuggerNextWasmDisassemblyChunk = PDebuggerNextWasmDisassemblyChunk
   {
-    pDebuggerNextWasmDisassemblyChunkStreamId :: String
+    pDebuggerNextWasmDisassemblyChunkStreamId :: T.Text
   }
   deriving (Eq, Show)
 pDebuggerNextWasmDisassemblyChunk
-  :: String
+  :: T.Text
   -> PDebuggerNextWasmDisassemblyChunk
 pDebuggerNextWasmDisassemblyChunk
   arg_pDebuggerNextWasmDisassemblyChunkStreamId
@@ -1048,7 +1048,7 @@ data PDebuggerSearchInContent = PDebuggerSearchInContent
     -- | Id of the script to search in.
     pDebuggerSearchInContentScriptId :: Runtime.RuntimeScriptId,
     -- | String to search for.
-    pDebuggerSearchInContentQuery :: String,
+    pDebuggerSearchInContentQuery :: T.Text,
     -- | If true, search is case sensitive.
     pDebuggerSearchInContentCaseSensitive :: Maybe Bool,
     -- | If true, treats string parameter as regex.
@@ -1059,7 +1059,7 @@ pDebuggerSearchInContent
   -- | Id of the script to search in.
   :: Runtime.RuntimeScriptId
   -- | String to search for.
-  -> String
+  -> T.Text
   -> PDebuggerSearchInContent
 pDebuggerSearchInContent
   arg_pDebuggerSearchInContentScriptId
@@ -1125,12 +1125,12 @@ instance Command PDebuggerSetAsyncCallStackDepth where
 data PDebuggerSetBlackboxPatterns = PDebuggerSetBlackboxPatterns
   {
     -- | Array of regexps that will be used to check script url for blackbox state.
-    pDebuggerSetBlackboxPatternsPatterns :: [String]
+    pDebuggerSetBlackboxPatternsPatterns :: [T.Text]
   }
   deriving (Eq, Show)
 pDebuggerSetBlackboxPatterns
   -- | Array of regexps that will be used to check script url for blackbox state.
-  :: [String]
+  :: [T.Text]
   -> PDebuggerSetBlackboxPatterns
 pDebuggerSetBlackboxPatterns
   arg_pDebuggerSetBlackboxPatternsPatterns
@@ -1188,7 +1188,7 @@ data PDebuggerSetBreakpoint = PDebuggerSetBreakpoint
     pDebuggerSetBreakpointLocation :: DebuggerLocation,
     -- | Expression to use as a breakpoint condition. When specified, debugger will only stop on the
     --   breakpoint if this expression evaluates to true.
-    pDebuggerSetBreakpointCondition :: Maybe String
+    pDebuggerSetBreakpointCondition :: Maybe T.Text
   }
   deriving (Eq, Show)
 pDebuggerSetBreakpoint
@@ -1277,17 +1277,17 @@ data PDebuggerSetBreakpointByUrl = PDebuggerSetBreakpointByUrl
     -- | Line number to set breakpoint at.
     pDebuggerSetBreakpointByUrlLineNumber :: Int,
     -- | URL of the resources to set breakpoint on.
-    pDebuggerSetBreakpointByUrlUrl :: Maybe String,
+    pDebuggerSetBreakpointByUrlUrl :: Maybe T.Text,
     -- | Regex pattern for the URLs of the resources to set breakpoints on. Either `url` or
     --   `urlRegex` must be specified.
-    pDebuggerSetBreakpointByUrlUrlRegex :: Maybe String,
+    pDebuggerSetBreakpointByUrlUrlRegex :: Maybe T.Text,
     -- | Script hash of the resources to set breakpoint on.
-    pDebuggerSetBreakpointByUrlScriptHash :: Maybe String,
+    pDebuggerSetBreakpointByUrlScriptHash :: Maybe T.Text,
     -- | Offset in the line to set breakpoint at.
     pDebuggerSetBreakpointByUrlColumnNumber :: Maybe Int,
     -- | Expression to use as a breakpoint condition. When specified, debugger will only stop on the
     --   breakpoint if this expression evaluates to true.
-    pDebuggerSetBreakpointByUrlCondition :: Maybe String
+    pDebuggerSetBreakpointByUrlCondition :: Maybe T.Text
   }
   deriving (Eq, Show)
 pDebuggerSetBreakpointByUrl
@@ -1339,7 +1339,7 @@ data PDebuggerSetBreakpointOnFunctionCall = PDebuggerSetBreakpointOnFunctionCall
     pDebuggerSetBreakpointOnFunctionCallObjectId :: Runtime.RuntimeRemoteObjectId,
     -- | Expression to use as a breakpoint condition. When specified, debugger will
     --   stop on the breakpoint if this expression evaluates to true.
-    pDebuggerSetBreakpointOnFunctionCallCondition :: Maybe String
+    pDebuggerSetBreakpointOnFunctionCallCondition :: Maybe T.Text
   }
   deriving (Eq, Show)
 pDebuggerSetBreakpointOnFunctionCall
@@ -1475,7 +1475,7 @@ data PDebuggerSetScriptSource = PDebuggerSetScriptSource
     -- | Id of the script to edit.
     pDebuggerSetScriptSourceScriptId :: Runtime.RuntimeScriptId,
     -- | New content of the script.
-    pDebuggerSetScriptSourceScriptSource :: String,
+    pDebuggerSetScriptSourceScriptSource :: T.Text,
     -- | If true the change will not actually be applied. Dry run may be used to get result
     --   description without actually modifying the code.
     pDebuggerSetScriptSourceDryRun :: Maybe Bool,
@@ -1488,7 +1488,7 @@ pDebuggerSetScriptSource
   -- | Id of the script to edit.
   :: Runtime.RuntimeScriptId
   -- | New content of the script.
-  -> String
+  -> T.Text
   -> PDebuggerSetScriptSource
 pDebuggerSetScriptSource
   arg_pDebuggerSetScriptSourceScriptId
@@ -1574,7 +1574,7 @@ data PDebuggerSetVariableValue = PDebuggerSetVariableValue
     --   scope types are allowed. Other scopes could be manipulated manually.
     pDebuggerSetVariableValueScopeNumber :: Int,
     -- | Variable name.
-    pDebuggerSetVariableValueVariableName :: String,
+    pDebuggerSetVariableValueVariableName :: T.Text,
     -- | New variable value.
     pDebuggerSetVariableValueNewValue :: Runtime.RuntimeCallArgument,
     -- | Id of callframe that holds variable.
@@ -1586,7 +1586,7 @@ pDebuggerSetVariableValue
   --   scope types are allowed. Other scopes could be manipulated manually.
   :: Int
   -- | Variable name.
-  -> String
+  -> T.Text
   -- | New variable value.
   -> Runtime.RuntimeCallArgument
   -- | Id of callframe that holds variable.

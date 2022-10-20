@@ -6,44 +6,56 @@ import Test.Hspec
 import Control.Monad
 import Data.Default
 import Control.Concurrent
+import Data.Maybe
+import qualified Data.Text as T
 
 import qualified CDP as CDP
 
+connectToPage :: CDP.Config -> IO CDP.TargetInfo
+connectToPage cfg = do
+    targetInfo <- CDP.endpoint cfg $ CDP.EPOpenNewTab "https://haskell.foundation"
+    CDP.endpoint cfg $ CDP.EPActivateTarget $ CDP.tiId targetInfo
+    pure targetInfo
+
 main :: IO ()
 main = hspec $ do
+    
     describe "Endpoints responses of the expected type are received" $ do
         it "sends requests to all endpoints" $ do
             let cfg = def
-            targetId <- fmap CDP.tiId . CDP.endpoint cfg $ CDP.EPOpenNewTab "https://haskell.foundation"
-
+            targetId <- fmap CDP.tiId $ connectToPage cfg
             void $ mapM (CDP.fromSomeEndpoint $ void . CDP.endpoint cfg)
                 [ CDP.SomeEndpoint CDP.EPBrowserVersion
                 , CDP.SomeEndpoint CDP.EPAllTargets
                 , CDP.SomeEndpoint CDP.EPCurrentProtocol
                 , CDP.SomeEndpoint CDP.EPFrontend
-                , CDP.SomeEndpoint $ CDP.EPActivateTarget targetId
                 , CDP.SomeEndpoint $ CDP.EPCloseTarget targetId
                 ]
 
+    targetInfo <- runIO $ connectToPage def
+    let (host,port,path) = fromMaybe (error "invalid uri") . CDP.parseUri . T.unpack . CDP.tiWebSocketDebuggerUrl $ targetInfo
+        cfg      = def{CDP.hostPort = (host,port), CDP.path = Just path}
+        targetId = CDP.tiId targetInfo
+
     describe "Command responses of the expected type are received" $ do
         it "sends commands: w/o params w/o results" $ do
-            CDP.runClient def $ \handle -> do
-                CDP.sendCommandWait handle CDP.PBrowserCrashGpuProcess
-
+            CDP.runClient cfg $ \handle -> do
+                CDP.sendCommandForSessionWait handle targetId CDP.PBrowserCrashGpuProcess
+        
         it "sends commands: w/o params w/ results" $ do
-            void $ CDP.runClient def $ \handle -> do
+            void $ CDP.runClient cfg $ \handle -> do
                 mapM (CDP.fromSomeCommand $ void . (CDP.sendCommandWait handle)) $
                     [ CDP.SomeCommand CDP.PBrowserGetVersion
                     , CDP.SomeCommand CDP.PEmulationCanEmulate
                     ]
 
         it "sends commands: w/ params w/o results" $ do
-            CDP.runClient def $ \handle -> 
+            CDP.runClient cfg $ \handle -> 
                 CDP.sendCommandWait handle $
                     CDP.PEmulationSetGeolocationOverride (Just 90) (Just 90) Nothing
         
         it "sends commands: w/ params w/ results" $ do
-            void $ CDP.runClient def $ \handle ->
+            void $ CDP.runClient cfg $ \handle ->
                 CDP.sendCommandWait handle $ CDP.PDOMGetDocument Nothing Nothing
 
     describe "Commands have the expected behaviour" $ do
@@ -52,7 +64,7 @@ main = hspec $ do
                 value  = "value"
                 domain = "localhost"
 
-            cookies <- CDP.runClient def $ \handle -> do
+            cookies <- CDP.runClient cfg $ \handle -> do
                 CDP.sendCommandWait handle CDP.PNetworkClearBrowserCookies
                 CDP.sendCommandWait handle $
                     CDP.PNetworkSetCookie name value Nothing (Just domain) Nothing Nothing Nothing Nothing Nothing
@@ -70,7 +82,7 @@ main = hspec $ do
     describe "Expected events are triggered" $ do
         it "navigates to a page" $ do
             frameIdsM <- newMVar []
-            CDP.runClient def $ \handle -> do
+            CDP.runClient cfg $ \handle -> do
                 -- register handler
                 void $ CDP.subscribe handle $ \e -> modifyMVar_ frameIdsM $ 
                     \ids -> pure ((CDP.pageFrameId . CDP.pageFrameNavigatedFrame $ e) : ids)

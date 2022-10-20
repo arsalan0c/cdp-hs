@@ -63,7 +63,7 @@ data ProfilerProfileNode = ProfilerProfileNode
     profilerProfileNodeChildren :: Maybe [Int],
     -- | The reason of being not optimized. The function may be deoptimized or marked as don't
     --   optimize.
-    profilerProfileNodeDeoptReason :: Maybe String,
+    profilerProfileNodeDeoptReason :: Maybe T.Text,
     -- | An array of source position ticks.
     profilerProfileNodePositionTicks :: Maybe [ProfilerPositionTickInfo]
   }
@@ -168,7 +168,7 @@ instance ToJSON ProfilerCoverageRange where
 data ProfilerFunctionCoverage = ProfilerFunctionCoverage
   {
     -- | JavaScript function name.
-    profilerFunctionCoverageFunctionName :: String,
+    profilerFunctionCoverageFunctionName :: T.Text,
     -- | Source ranges inside the function with coverage data.
     profilerFunctionCoverageRanges :: [ProfilerCoverageRange],
     -- | Whether coverage data for this function has block granularity.
@@ -194,7 +194,7 @@ data ProfilerScriptCoverage = ProfilerScriptCoverage
     -- | JavaScript script id.
     profilerScriptCoverageScriptId :: Runtime.RuntimeScriptId,
     -- | JavaScript script name or url.
-    profilerScriptCoverageUrl :: String,
+    profilerScriptCoverageUrl :: T.Text,
     -- | Functions contained in the script that has coverage data.
     profilerScriptCoverageFunctions :: [ProfilerFunctionCoverage]
   }
@@ -214,12 +214,12 @@ instance ToJSON ProfilerScriptCoverage where
 -- | Type of the 'Profiler.consoleProfileFinished' event.
 data ProfilerConsoleProfileFinished = ProfilerConsoleProfileFinished
   {
-    profilerConsoleProfileFinishedId :: String,
+    profilerConsoleProfileFinishedId :: T.Text,
     -- | Location of console.profileEnd().
     profilerConsoleProfileFinishedLocation :: Debugger.DebuggerLocation,
     profilerConsoleProfileFinishedProfile :: ProfilerProfile,
     -- | Profile title passed as an argument to console.profile().
-    profilerConsoleProfileFinishedTitle :: Maybe String
+    profilerConsoleProfileFinishedTitle :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON ProfilerConsoleProfileFinished where
@@ -234,11 +234,11 @@ instance Event ProfilerConsoleProfileFinished where
 -- | Type of the 'Profiler.consoleProfileStarted' event.
 data ProfilerConsoleProfileStarted = ProfilerConsoleProfileStarted
   {
-    profilerConsoleProfileStartedId :: String,
+    profilerConsoleProfileStartedId :: T.Text,
     -- | Location of console.profile().
     profilerConsoleProfileStartedLocation :: Debugger.DebuggerLocation,
     -- | Profile title passed as an argument to console.profile().
-    profilerConsoleProfileStartedTitle :: Maybe String
+    profilerConsoleProfileStartedTitle :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON ProfilerConsoleProfileStarted where
@@ -255,7 +255,7 @@ data ProfilerPreciseCoverageDeltaUpdate = ProfilerPreciseCoverageDeltaUpdate
     -- | Monotonically increasing time (in seconds) when the coverage update was taken in the backend.
     profilerPreciseCoverageDeltaUpdateTimestamp :: Double,
     -- | Identifier for distinguishing coverage events.
-    profilerPreciseCoverageDeltaUpdateOccasion :: String,
+    profilerPreciseCoverageDeltaUpdateOccasion :: T.Text,
     -- | Coverage data for the current isolate.
     profilerPreciseCoverageDeltaUpdateResult :: [ProfilerScriptCoverage]
   }

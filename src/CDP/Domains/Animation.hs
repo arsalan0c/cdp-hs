@@ -67,13 +67,13 @@ instance ToJSON AnimationAnimationType where
 data AnimationAnimation = AnimationAnimation
   {
     -- | `Animation`'s id.
-    animationAnimationId :: String,
+    animationAnimationId :: T.Text,
     -- | `Animation`'s name.
-    animationAnimationName :: String,
+    animationAnimationName :: T.Text,
     -- | `Animation`'s internal paused state.
     animationAnimationPausedState :: Bool,
     -- | `Animation`'s play state.
-    animationAnimationPlayState :: String,
+    animationAnimationPlayState :: T.Text,
     -- | `Animation`'s playback rate.
     animationAnimationPlaybackRate :: Double,
     -- | `Animation`'s start time.
@@ -86,7 +86,7 @@ data AnimationAnimation = AnimationAnimation
     animationAnimationSource :: Maybe AnimationAnimationEffect,
     -- | A unique ID for `Animation` representing the sources that triggered this CSS
     --   animation/transition.
-    animationAnimationCssId :: Maybe String
+    animationAnimationCssId :: Maybe T.Text
   }
   deriving (Eq, Show)
 instance FromJSON AnimationAnimation where
@@ -130,15 +130,15 @@ data AnimationAnimationEffect = AnimationAnimationEffect
     -- | `AnimationEffect`'s iteration duration.
     animationAnimationEffectDuration :: Double,
     -- | `AnimationEffect`'s playback direction.
-    animationAnimationEffectDirection :: String,
+    animationAnimationEffectDirection :: T.Text,
     -- | `AnimationEffect`'s fill mode.
-    animationAnimationEffectFill :: String,
+    animationAnimationEffectFill :: T.Text,
     -- | `AnimationEffect`'s target node.
     animationAnimationEffectBackendNodeId :: Maybe DOMPageNetworkEmulationSecurity.DOMBackendNodeId,
     -- | `AnimationEffect`'s keyframes.
     animationAnimationEffectKeyframesRule :: Maybe AnimationKeyframesRule,
     -- | `AnimationEffect`'s timing function.
-    animationAnimationEffectEasing :: String
+    animationAnimationEffectEasing :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON AnimationAnimationEffect where
@@ -172,7 +172,7 @@ instance ToJSON AnimationAnimationEffect where
 data AnimationKeyframesRule = AnimationKeyframesRule
   {
     -- | CSS keyframed animation's name.
-    animationKeyframesRuleName :: Maybe String,
+    animationKeyframesRuleName :: Maybe T.Text,
     -- | List of animation keyframes.
     animationKeyframesRuleKeyframes :: [AnimationKeyframeStyle]
   }
@@ -192,9 +192,9 @@ instance ToJSON AnimationKeyframesRule where
 data AnimationKeyframeStyle = AnimationKeyframeStyle
   {
     -- | Keyframe's time offset.
-    animationKeyframeStyleOffset :: String,
+    animationKeyframeStyleOffset :: T.Text,
     -- | `AnimationEffect`'s timing function.
-    animationKeyframeStyleEasing :: String
+    animationKeyframeStyleEasing :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON AnimationKeyframeStyle where
@@ -211,7 +211,7 @@ instance ToJSON AnimationKeyframeStyle where
 data AnimationAnimationCanceled = AnimationAnimationCanceled
   {
     -- | Id of the animation that was cancelled.
-    animationAnimationCanceledId :: String
+    animationAnimationCanceledId :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON AnimationAnimationCanceled where
@@ -224,7 +224,7 @@ instance Event AnimationAnimationCanceled where
 data AnimationAnimationCreated = AnimationAnimationCreated
   {
     -- | Id of the animation that was created.
-    animationAnimationCreatedId :: String
+    animationAnimationCreatedId :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON AnimationAnimationCreated where
@@ -284,12 +284,12 @@ instance Command PAnimationEnable where
 data PAnimationGetCurrentTime = PAnimationGetCurrentTime
   {
     -- | Id of animation.
-    pAnimationGetCurrentTimeId :: String
+    pAnimationGetCurrentTimeId :: T.Text
   }
   deriving (Eq, Show)
 pAnimationGetCurrentTime
   -- | Id of animation.
-  :: String
+  :: T.Text
   -> PAnimationGetCurrentTime
 pAnimationGetCurrentTime
   arg_pAnimationGetCurrentTimeId
@@ -342,12 +342,12 @@ instance Command PAnimationGetPlaybackRate where
 data PAnimationReleaseAnimations = PAnimationReleaseAnimations
   {
     -- | List of animation ids to seek.
-    pAnimationReleaseAnimationsAnimations :: [String]
+    pAnimationReleaseAnimationsAnimations :: [T.Text]
   }
   deriving (Eq, Show)
 pAnimationReleaseAnimations
   -- | List of animation ids to seek.
-  :: [String]
+  :: [T.Text]
   -> PAnimationReleaseAnimations
 pAnimationReleaseAnimations
   arg_pAnimationReleaseAnimationsAnimations
@@ -368,12 +368,12 @@ instance Command PAnimationReleaseAnimations where
 data PAnimationResolveAnimation = PAnimationResolveAnimation
   {
     -- | Animation id.
-    pAnimationResolveAnimationAnimationId :: String
+    pAnimationResolveAnimationAnimationId :: T.Text
   }
   deriving (Eq, Show)
 pAnimationResolveAnimation
   -- | Animation id.
-  :: String
+  :: T.Text
   -> PAnimationResolveAnimation
 pAnimationResolveAnimation
   arg_pAnimationResolveAnimationAnimationId
@@ -402,14 +402,14 @@ instance Command PAnimationResolveAnimation where
 data PAnimationSeekAnimations = PAnimationSeekAnimations
   {
     -- | List of animation ids to seek.
-    pAnimationSeekAnimationsAnimations :: [String],
+    pAnimationSeekAnimationsAnimations :: [T.Text],
     -- | Set the current time of each animation.
     pAnimationSeekAnimationsCurrentTime :: Double
   }
   deriving (Eq, Show)
 pAnimationSeekAnimations
   -- | List of animation ids to seek.
-  :: [String]
+  :: [T.Text]
   -- | Set the current time of each animation.
   -> Double
   -> PAnimationSeekAnimations
@@ -435,14 +435,14 @@ instance Command PAnimationSeekAnimations where
 data PAnimationSetPaused = PAnimationSetPaused
   {
     -- | Animations to set the pause state of.
-    pAnimationSetPausedAnimations :: [String],
+    pAnimationSetPausedAnimations :: [T.Text],
     -- | Paused state to set to.
     pAnimationSetPausedPaused :: Bool
   }
   deriving (Eq, Show)
 pAnimationSetPaused
   -- | Animations to set the pause state of.
-  :: [String]
+  :: [T.Text]
   -- | Paused state to set to.
   -> Bool
   -> PAnimationSetPaused
@@ -494,7 +494,7 @@ instance Command PAnimationSetPlaybackRate where
 data PAnimationSetTiming = PAnimationSetTiming
   {
     -- | Animation id.
-    pAnimationSetTimingAnimationId :: String,
+    pAnimationSetTimingAnimationId :: T.Text,
     -- | Duration of the animation.
     pAnimationSetTimingDuration :: Double,
     -- | Delay of the animation.
@@ -503,7 +503,7 @@ data PAnimationSetTiming = PAnimationSetTiming
   deriving (Eq, Show)
 pAnimationSetTiming
   -- | Animation id.
-  :: String
+  :: T.Text
   -- | Duration of the animation.
   -> Double
   -- | Delay of the animation.

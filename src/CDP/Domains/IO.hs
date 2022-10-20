@@ -52,7 +52,7 @@ import CDP.Domains.Runtime as Runtime
 -- | Type 'IO.StreamHandle'.
 --   This is either obtained from another method or specified as `blob:&lt;uuid&gt;` where
 --   `&lt;uuid&gt` is an UUID of a Blob.
-type IOStreamHandle = String
+type IOStreamHandle = T.Text
 
 -- | Close the stream, discard any temporary backing storage.
 
@@ -115,7 +115,7 @@ data IORead = IORead
     -- | Set if the data is base64-encoded
     iOReadBase64Encoded :: Maybe Bool,
     -- | Data that were read.
-    iOReadData :: String,
+    iOReadData :: T.Text,
     -- | Set if the end-of-file condition occurred while reading.
     iOReadEof :: Bool
   }
@@ -153,7 +153,7 @@ instance ToJSON PIOResolveBlob where
 data IOResolveBlob = IOResolveBlob
   {
     -- | UUID of the specified Blob.
-    iOResolveBlobUuid :: String
+    iOResolveBlobUuid :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON IOResolveBlob where

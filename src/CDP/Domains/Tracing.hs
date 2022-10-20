@@ -50,7 +50,7 @@ import CDP.Domains.IO as IO
 
 -- | Type 'Tracing.MemoryDumpConfig'.
 --   Configuration for memory dump. Used only when "memory-infra" category is enabled.
-type TracingMemoryDumpConfig = [(String, String)]
+type TracingMemoryDumpConfig = [(T.Text, T.Text)]
 
 -- | Type 'Tracing.TraceConfig'.
 data TracingTraceConfigRecordMode = TracingTraceConfigRecordModeRecordUntilFull | TracingTraceConfigRecordModeRecordContinuously | TracingTraceConfigRecordModeRecordAsMuchAsPossible | TracingTraceConfigRecordModeEchoToConsole
@@ -82,11 +82,11 @@ data TracingTraceConfig = TracingTraceConfig
     -- | Turns on argument filter.
     tracingTraceConfigEnableArgumentFilter :: Maybe Bool,
     -- | Included category filters.
-    tracingTraceConfigIncludedCategories :: Maybe [String],
+    tracingTraceConfigIncludedCategories :: Maybe [T.Text],
     -- | Excluded category filters.
-    tracingTraceConfigExcludedCategories :: Maybe [String],
+    tracingTraceConfigExcludedCategories :: Maybe [T.Text],
     -- | Configuration to synthesize the delays in tracing.
-    tracingTraceConfigSyntheticDelays :: Maybe [String],
+    tracingTraceConfigSyntheticDelays :: Maybe [T.Text],
     -- | Configuration for memory dump triggers. Used only when "memory-infra" category is enabled.
     tracingTraceConfigMemoryDumpConfig :: Maybe TracingMemoryDumpConfig
   }
@@ -206,7 +206,7 @@ instance Event TracingBufferUsage where
 -- | Type of the 'Tracing.dataCollected' event.
 data TracingDataCollected = TracingDataCollected
   {
-    tracingDataCollectedValue :: [[(String, String)]]
+    tracingDataCollectedValue :: [[(T.Text, T.Text)]]
   }
   deriving (Eq, Show)
 instance FromJSON TracingDataCollected where
@@ -268,7 +268,7 @@ instance ToJSON PTracingGetCategories where
 data TracingGetCategories = TracingGetCategories
   {
     -- | A list of supported tracing categories.
-    tracingGetCategoriesCategories :: [String]
+    tracingGetCategoriesCategories :: [T.Text]
   }
   deriving (Eq, Show)
 instance FromJSON TracingGetCategories where
@@ -284,12 +284,12 @@ instance Command PTracingGetCategories where
 data PTracingRecordClockSyncMarker = PTracingRecordClockSyncMarker
   {
     -- | The ID of this clock sync marker
-    pTracingRecordClockSyncMarkerSyncId :: String
+    pTracingRecordClockSyncMarkerSyncId :: T.Text
   }
   deriving (Eq, Show)
 pTracingRecordClockSyncMarker
   -- | The ID of this clock sync marker
-  :: String
+  :: T.Text
   -> PTracingRecordClockSyncMarker
 pTracingRecordClockSyncMarker
   arg_pTracingRecordClockSyncMarkerSyncId
@@ -329,7 +329,7 @@ instance ToJSON PTracingRequestMemoryDump where
 data TracingRequestMemoryDump = TracingRequestMemoryDump
   {
     -- | GUID of the resulting global memory dump.
-    tracingRequestMemoryDumpDumpGuid :: String,
+    tracingRequestMemoryDumpDumpGuid :: T.Text,
     -- | True iff the global memory dump succeeded.
     tracingRequestMemoryDumpSuccess :: Bool
   }
@@ -373,7 +373,7 @@ data PTracingStart = PTracingStart
     -- | Base64-encoded serialized perfetto.protos.TraceConfig protobuf message
     --   When specified, the parameters `categories`, `options`, `traceConfig`
     --   are ignored. (Encoded as a base64 string when passed over JSON)
-    pTracingStartPerfettoConfig :: Maybe String,
+    pTracingStartPerfettoConfig :: Maybe T.Text,
     -- | Backend type (defaults to `auto`)
     pTracingStartTracingBackend :: Maybe TracingTracingBackend
   }

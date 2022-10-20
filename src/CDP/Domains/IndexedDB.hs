@@ -53,7 +53,7 @@ import CDP.Domains.Runtime as Runtime
 data IndexedDBDatabaseWithObjectStores = IndexedDBDatabaseWithObjectStores
   {
     -- | Database name.
-    indexedDBDatabaseWithObjectStoresName :: String,
+    indexedDBDatabaseWithObjectStoresName :: T.Text,
     -- | Database version (type is not 'integer', as the standard
     --   requires the version number to be 'unsigned long long')
     indexedDBDatabaseWithObjectStoresVersion :: Double,
@@ -78,7 +78,7 @@ instance ToJSON IndexedDBDatabaseWithObjectStores where
 data IndexedDBObjectStore = IndexedDBObjectStore
   {
     -- | Object store name.
-    indexedDBObjectStoreName :: String,
+    indexedDBObjectStoreName :: T.Text,
     -- | Object store key path.
     indexedDBObjectStoreKeyPath :: IndexedDBKeyPath,
     -- | If true, object store has auto increment flag set.
@@ -106,7 +106,7 @@ instance ToJSON IndexedDBObjectStore where
 data IndexedDBObjectStoreIndex = IndexedDBObjectStoreIndex
   {
     -- | Index name.
-    indexedDBObjectStoreIndexName :: String,
+    indexedDBObjectStoreIndexName :: T.Text,
     -- | Index key path.
     indexedDBObjectStoreIndexKeyPath :: IndexedDBKeyPath,
     -- | If true, index is unique.
@@ -153,7 +153,7 @@ data IndexedDBKey = IndexedDBKey
     -- | Number value.
     indexedDBKeyNumber :: Maybe Double,
     -- | String value.
-    indexedDBKeyString :: Maybe String,
+    indexedDBKeyString :: Maybe T.Text,
     -- | Date value.
     indexedDBKeyDate :: Maybe Double,
     -- | Array value.
@@ -248,9 +248,9 @@ data IndexedDBKeyPath = IndexedDBKeyPath
     -- | Key path type.
     indexedDBKeyPathType :: IndexedDBKeyPathType,
     -- | String value.
-    indexedDBKeyPathString :: Maybe String,
+    indexedDBKeyPathString :: Maybe T.Text,
     -- | Array value.
-    indexedDBKeyPathArray :: Maybe [String]
+    indexedDBKeyPathArray :: Maybe [T.Text]
   }
   deriving (Eq, Show)
 instance FromJSON IndexedDBKeyPath where
@@ -272,20 +272,20 @@ data PIndexedDBClearObjectStore = PIndexedDBClearObjectStore
   {
     -- | At least and at most one of securityOrigin, storageKey must be specified.
     --   Security origin.
-    pIndexedDBClearObjectStoreSecurityOrigin :: Maybe String,
+    pIndexedDBClearObjectStoreSecurityOrigin :: Maybe T.Text,
     -- | Storage key.
-    pIndexedDBClearObjectStoreStorageKey :: Maybe String,
+    pIndexedDBClearObjectStoreStorageKey :: Maybe T.Text,
     -- | Database name.
-    pIndexedDBClearObjectStoreDatabaseName :: String,
+    pIndexedDBClearObjectStoreDatabaseName :: T.Text,
     -- | Object store name.
-    pIndexedDBClearObjectStoreObjectStoreName :: String
+    pIndexedDBClearObjectStoreObjectStoreName :: T.Text
   }
   deriving (Eq, Show)
 pIndexedDBClearObjectStore
   -- | Database name.
-  :: String
+  :: T.Text
   -- | Object store name.
-  -> String
+  -> T.Text
   -> PIndexedDBClearObjectStore
 pIndexedDBClearObjectStore
   arg_pIndexedDBClearObjectStoreDatabaseName
@@ -314,16 +314,16 @@ data PIndexedDBDeleteDatabase = PIndexedDBDeleteDatabase
   {
     -- | At least and at most one of securityOrigin, storageKey must be specified.
     --   Security origin.
-    pIndexedDBDeleteDatabaseSecurityOrigin :: Maybe String,
+    pIndexedDBDeleteDatabaseSecurityOrigin :: Maybe T.Text,
     -- | Storage key.
-    pIndexedDBDeleteDatabaseStorageKey :: Maybe String,
+    pIndexedDBDeleteDatabaseStorageKey :: Maybe T.Text,
     -- | Database name.
-    pIndexedDBDeleteDatabaseDatabaseName :: String
+    pIndexedDBDeleteDatabaseDatabaseName :: T.Text
   }
   deriving (Eq, Show)
 pIndexedDBDeleteDatabase
   -- | Database name.
-  :: String
+  :: T.Text
   -> PIndexedDBDeleteDatabase
 pIndexedDBDeleteDatabase
   arg_pIndexedDBDeleteDatabaseDatabaseName
@@ -349,18 +349,18 @@ data PIndexedDBDeleteObjectStoreEntries = PIndexedDBDeleteObjectStoreEntries
   {
     -- | At least and at most one of securityOrigin, storageKey must be specified.
     --   Security origin.
-    pIndexedDBDeleteObjectStoreEntriesSecurityOrigin :: Maybe String,
+    pIndexedDBDeleteObjectStoreEntriesSecurityOrigin :: Maybe T.Text,
     -- | Storage key.
-    pIndexedDBDeleteObjectStoreEntriesStorageKey :: Maybe String,
-    pIndexedDBDeleteObjectStoreEntriesDatabaseName :: String,
-    pIndexedDBDeleteObjectStoreEntriesObjectStoreName :: String,
+    pIndexedDBDeleteObjectStoreEntriesStorageKey :: Maybe T.Text,
+    pIndexedDBDeleteObjectStoreEntriesDatabaseName :: T.Text,
+    pIndexedDBDeleteObjectStoreEntriesObjectStoreName :: T.Text,
     -- | Range of entry keys to delete
     pIndexedDBDeleteObjectStoreEntriesKeyRange :: IndexedDBKeyRange
   }
   deriving (Eq, Show)
 pIndexedDBDeleteObjectStoreEntries
-  :: String
-  -> String
+  :: T.Text
+  -> T.Text
   -- | Range of entry keys to delete
   -> IndexedDBKeyRange
   -> PIndexedDBDeleteObjectStoreEntries
@@ -426,15 +426,15 @@ data PIndexedDBRequestData = PIndexedDBRequestData
   {
     -- | At least and at most one of securityOrigin, storageKey must be specified.
     --   Security origin.
-    pIndexedDBRequestDataSecurityOrigin :: Maybe String,
+    pIndexedDBRequestDataSecurityOrigin :: Maybe T.Text,
     -- | Storage key.
-    pIndexedDBRequestDataStorageKey :: Maybe String,
+    pIndexedDBRequestDataStorageKey :: Maybe T.Text,
     -- | Database name.
-    pIndexedDBRequestDataDatabaseName :: String,
+    pIndexedDBRequestDataDatabaseName :: T.Text,
     -- | Object store name.
-    pIndexedDBRequestDataObjectStoreName :: String,
+    pIndexedDBRequestDataObjectStoreName :: T.Text,
     -- | Index name, empty string for object store data requests.
-    pIndexedDBRequestDataIndexName :: String,
+    pIndexedDBRequestDataIndexName :: T.Text,
     -- | Number of records to skip.
     pIndexedDBRequestDataSkipCount :: Int,
     -- | Number of records to fetch.
@@ -445,11 +445,11 @@ data PIndexedDBRequestData = PIndexedDBRequestData
   deriving (Eq, Show)
 pIndexedDBRequestData
   -- | Database name.
-  :: String
+  :: T.Text
   -- | Object store name.
-  -> String
+  -> T.Text
   -- | Index name, empty string for object store data requests.
-  -> String
+  -> T.Text
   -- | Number of records to skip.
   -> Int
   -- | Number of records to fetch.
@@ -504,20 +504,20 @@ data PIndexedDBGetMetadata = PIndexedDBGetMetadata
   {
     -- | At least and at most one of securityOrigin, storageKey must be specified.
     --   Security origin.
-    pIndexedDBGetMetadataSecurityOrigin :: Maybe String,
+    pIndexedDBGetMetadataSecurityOrigin :: Maybe T.Text,
     -- | Storage key.
-    pIndexedDBGetMetadataStorageKey :: Maybe String,
+    pIndexedDBGetMetadataStorageKey :: Maybe T.Text,
     -- | Database name.
-    pIndexedDBGetMetadataDatabaseName :: String,
+    pIndexedDBGetMetadataDatabaseName :: T.Text,
     -- | Object store name.
-    pIndexedDBGetMetadataObjectStoreName :: String
+    pIndexedDBGetMetadataObjectStoreName :: T.Text
   }
   deriving (Eq, Show)
 pIndexedDBGetMetadata
   -- | Database name.
-  :: String
+  :: T.Text
   -- | Object store name.
-  -> String
+  -> T.Text
   -> PIndexedDBGetMetadata
 pIndexedDBGetMetadata
   arg_pIndexedDBGetMetadataDatabaseName
@@ -559,16 +559,16 @@ data PIndexedDBRequestDatabase = PIndexedDBRequestDatabase
   {
     -- | At least and at most one of securityOrigin, storageKey must be specified.
     --   Security origin.
-    pIndexedDBRequestDatabaseSecurityOrigin :: Maybe String,
+    pIndexedDBRequestDatabaseSecurityOrigin :: Maybe T.Text,
     -- | Storage key.
-    pIndexedDBRequestDatabaseStorageKey :: Maybe String,
+    pIndexedDBRequestDatabaseStorageKey :: Maybe T.Text,
     -- | Database name.
-    pIndexedDBRequestDatabaseDatabaseName :: String
+    pIndexedDBRequestDatabaseDatabaseName :: T.Text
   }
   deriving (Eq, Show)
 pIndexedDBRequestDatabase
   -- | Database name.
-  :: String
+  :: T.Text
   -> PIndexedDBRequestDatabase
 pIndexedDBRequestDatabase
   arg_pIndexedDBRequestDatabaseDatabaseName
@@ -602,9 +602,9 @@ data PIndexedDBRequestDatabaseNames = PIndexedDBRequestDatabaseNames
   {
     -- | At least and at most one of securityOrigin, storageKey must be specified.
     --   Security origin.
-    pIndexedDBRequestDatabaseNamesSecurityOrigin :: Maybe String,
+    pIndexedDBRequestDatabaseNamesSecurityOrigin :: Maybe T.Text,
     -- | Storage key.
-    pIndexedDBRequestDatabaseNamesStorageKey :: Maybe String
+    pIndexedDBRequestDatabaseNamesStorageKey :: Maybe T.Text
   }
   deriving (Eq, Show)
 pIndexedDBRequestDatabaseNames
@@ -621,7 +621,7 @@ instance ToJSON PIndexedDBRequestDatabaseNames where
 data IndexedDBRequestDatabaseNames = IndexedDBRequestDatabaseNames
   {
     -- | Database names for origin.
-    indexedDBRequestDatabaseNamesDatabaseNames :: [String]
+    indexedDBRequestDatabaseNamesDatabaseNames :: [T.Text]
   }
   deriving (Eq, Show)
 instance FromJSON IndexedDBRequestDatabaseNames where

@@ -719,7 +719,7 @@ instance ToJSON POverlayGetHighlightObjectForTest where
 data OverlayGetHighlightObjectForTest = OverlayGetHighlightObjectForTest
   {
     -- | Highlight data for the node.
-    overlayGetHighlightObjectForTestHighlight :: [(String, String)]
+    overlayGetHighlightObjectForTestHighlight :: [(T.Text, T.Text)]
   }
   deriving (Eq, Show)
 instance FromJSON OverlayGetHighlightObjectForTest where
@@ -753,7 +753,7 @@ instance ToJSON POverlayGetGridHighlightObjectsForTest where
 data OverlayGetGridHighlightObjectsForTest = OverlayGetGridHighlightObjectsForTest
   {
     -- | Grid Highlight data for the node ids provided.
-    overlayGetGridHighlightObjectsForTestHighlights :: [(String, String)]
+    overlayGetGridHighlightObjectsForTestHighlights :: [(T.Text, T.Text)]
   }
   deriving (Eq, Show)
 instance FromJSON OverlayGetGridHighlightObjectsForTest where
@@ -787,7 +787,7 @@ instance ToJSON POverlayGetSourceOrderHighlightObjectForTest where
 data OverlayGetSourceOrderHighlightObjectForTest = OverlayGetSourceOrderHighlightObjectForTest
   {
     -- | Source order highlight data for the node id provided.
-    overlayGetSourceOrderHighlightObjectForTestHighlight :: [(String, String)]
+    overlayGetSourceOrderHighlightObjectForTestHighlight :: [(T.Text, T.Text)]
   }
   deriving (Eq, Show)
 instance FromJSON OverlayGetSourceOrderHighlightObjectForTest where
@@ -828,7 +828,7 @@ data POverlayHighlightNode = POverlayHighlightNode
     -- | JavaScript object id of the node to be highlighted.
     pOverlayHighlightNodeObjectId :: Maybe Runtime.RuntimeRemoteObjectId,
     -- | Selectors to highlight relevant nodes.
-    pOverlayHighlightNodeSelector :: Maybe String
+    pOverlayHighlightNodeSelector :: Maybe T.Text
   }
   deriving (Eq, Show)
 pOverlayHighlightNode
@@ -1047,7 +1047,7 @@ instance Command POverlaySetShowAdHighlights where
 data POverlaySetPausedInDebuggerMessage = POverlaySetPausedInDebuggerMessage
   {
     -- | The message to display, also triggers resume and step over controls.
-    pOverlaySetPausedInDebuggerMessageMessage :: Maybe String
+    pOverlaySetPausedInDebuggerMessageMessage :: Maybe T.Text
   }
   deriving (Eq, Show)
 pOverlaySetPausedInDebuggerMessage

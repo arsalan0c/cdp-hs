@@ -52,7 +52,7 @@ import CDP.Internal.Utils
 data PerformanceMetric = PerformanceMetric
   {
     -- | Metric name.
-    performanceMetricName :: String,
+    performanceMetricName :: T.Text,
     -- | Metric value.
     performanceMetricValue :: Double
   }
@@ -73,7 +73,7 @@ data PerformanceMetrics = PerformanceMetrics
     -- | Current values of the metrics.
     performanceMetricsMetrics :: [PerformanceMetric],
     -- | Timestamp title.
-    performanceMetricsTitle :: String
+    performanceMetricsTitle :: T.Text
   }
   deriving (Eq, Show)
 instance FromJSON PerformanceMetrics where

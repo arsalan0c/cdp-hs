@@ -13,10 +13,11 @@ module CDP
     , Endpoint
     , EndpointResponse
     , SomeEndpoint      (..)
-    , fromSomeEndpoint
     , BrowserVersion    (..)
     , TargetInfo        (..)
     , TargetId
+    , parseUri
+    , fromSomeEndpoint
     , endpoint
 
     , ClientApp

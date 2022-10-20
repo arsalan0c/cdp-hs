@@ -14,7 +14,7 @@ jobs:
       chrome:
         image: justinribeiro/chrome-headless
         ports:
-        - 9222:9222
+          - 9222:9222
     steps:
     - uses: actions/checkout@v3
       with:

@@ -14,12 +14,15 @@ jobs:
       chrome:
         image: justinribeiro/chrome-headless
         ports:
-          - 9222:9222
+         - 9222:9222
     steps:
     - uses: actions/checkout@v3
       with:
         submodules: true
     - uses: cachix/install-nix-action@v14.1
     - name: cdp build
-      run: nix-build --attr exe
+      run: |
+        docker exec chrome chrome --headless --remote-debugging-port=9222 http://wikipedia.com
+        sleep 5
+        nix-build --attr exe
 

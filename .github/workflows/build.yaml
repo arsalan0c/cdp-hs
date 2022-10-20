@@ -10,17 +10,16 @@ jobs:
       matrix:
         os: ["ubuntu-latest"]
     runs-on: ${{ matrix.os }}
+    services:
+      chrome:
+        image: justinribeiro/chrome-headless
+        ports:
+        - 9222:9222
     steps:
     - uses: actions/checkout@v3
       with:
         submodules: true
     - uses: cachix/install-nix-action@v14.1
-    - uses: browser-actions/setup-chrome@latest
-      with:
-        chrome-version: latest
     - name: cdp build
-      run: |
-        chromium --headless --remote-debugging-port=9222 http://wikipedia.com &
-        sleep 5
-        nix-build --attr exe
+      run: nix-build --attr exe
 

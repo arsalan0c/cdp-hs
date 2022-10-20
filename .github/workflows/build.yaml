@@ -13,6 +13,7 @@ jobs:
     services:
       chrome:
         image: justinribeiro/chrome-headless
+        options: --name chrome
         ports:
          - 9222:9222
     steps:

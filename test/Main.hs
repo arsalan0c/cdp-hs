@@ -6,13 +6,15 @@ import Test.Hspec
 import Control.Monad
 import Data.Default
 import Control.Concurrent
+import Data.Maybe
+import qualified Data.Text as T
 
 import qualified CDP as CDP
 
 connectToPage :: CDP.Config -> IO CDP.TargetInfo
 connectToPage cfg = do
     targetInfo <- CDP.endpoint cfg $ CDP.EPOpenNewTab "https://haskell.foundation"
-    CDP.endpoint cfg $ CDP.EPActivateTarget targetId
+    CDP.endpoint cfg $ CDP.EPActivateTarget $ CDP.tiId targetInfo
     pure targetInfo
 
 main :: IO ()
@@ -30,13 +32,15 @@ main = hspec $ do
                 , CDP.SomeEndpoint $ CDP.EPCloseTarget targetId
                 ]
 
-    (host,port,path) <- fmap CDP.parseUri $ runIO $ connectToPage def
-    let cfg = def{CDP.hostPort = (host,port), CDP.path = Just path}
+    targetInfo <- runIO $ connectToPage def
+    let (host,port,path) = fromMaybe (error "invalid uri") . CDP.parseUri . T.unpack . CDP.tiWebSocketDebuggerUrl $ targetInfo
+        cfg      = def{CDP.hostPort = (host,port), CDP.path = Just path}
+        targetId = CDP.tiId targetInfo
+
     describe "Command responses of the expected type are received" $ do
         it "sends commands: w/o params w/o results" $ do
             CDP.runClient cfg $ \handle -> do
                 CDP.sendCommandForSessionWait handle targetId CDP.PBrowserCrashGpuProcess
-        
         
         it "sends commands: w/o params w/ results" $ do
             void $ CDP.runClient cfg $ \handle -> do

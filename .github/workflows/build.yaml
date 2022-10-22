@@ -15,7 +15,7 @@ jobs:
     - name: cdp build
       shell: bash
       run: |
-        docker run -d --network ${{ job.container.network }} -it --security-opt seccomp=.github/workflows/chrome.json justinribeiro/chrome-headless
+        docker run -d --network '${{ job.container.network }}'' -it --security-opt seccomp=.github/workflows/chrome.json justinribeiro/chrome-headless
         docker ps | grep chrome
         curl 127.0.0.1:9222
         nix-build --attr exe

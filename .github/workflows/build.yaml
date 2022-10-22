@@ -14,7 +14,7 @@ jobs:
     - uses: cachix/install-nix-action@v14.1
     - name: cdp build
       run: |
-        docker run -d --network ${{ job.container.network }} -p 9222:9222 -it --security-opt seccomp=.github/workflows/chrome.json justinribeiro/chrome-headless
+        docker run -d --network host -p 9222:9222 -it --security-opt seccomp=.github/workflows/chrome.json justinribeiro/chrome-headless
         docker ps | grep chrome
         nix-build --attr exe
 

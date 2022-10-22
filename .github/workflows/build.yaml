@@ -20,5 +20,5 @@ jobs:
         sleep 1
         docker ps | grep chrome
         curl http://127.0.0.1:9222
-        nix-shell --run "hpack && cabal run cdp-test"
+        nix-shell --run "cabal run cdp-test"
 

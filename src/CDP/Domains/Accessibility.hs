@@ -246,7 +246,7 @@ data AccessibilityAXValue = AccessibilityAXValue
     -- | The type of this value.
     accessibilityAXValueType :: AccessibilityAXValueType,
     -- | The computed value of this property.
-    accessibilityAXValueValue :: Maybe Int,
+    accessibilityAXValueValue :: Maybe A.Value,
     -- | One or more related nodes, if applicable.
     accessibilityAXValueRelatedNodes :: Maybe [AccessibilityAXRelatedNode],
     -- | The sources which contributed to the computation of this property.

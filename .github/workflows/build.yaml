@@ -6,19 +6,19 @@ on:
       - ".github/**/*"
 jobs:
   build:
-    strategy:
-      matrix:
-        os: ["ubuntu-latest"]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
       with:
         submodules: true
     - uses: cachix/install-nix-action@v14.1
-    - uses: browser-actions/setup-chrome@latest
     - name: cdp build
+      shell: bash
       run: |
-        chromium --headless --remote-debugging-port=9222 http://wikipedia.com &
-        sleep 5
-        nix-build --attr exe
+        nix-shell --run "hpack && cabal build"
+        docker run -d --network host -it --security-opt seccomp=.github/workflows/chrome.json justinribeiro/chrome-headless
+        sleep 1
+        docker ps | grep chrome
+        curl http://127.0.0.1:9222
+        nix-shell --run "cabal run cdp-test"
 

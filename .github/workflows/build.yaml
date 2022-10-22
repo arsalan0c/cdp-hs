@@ -18,7 +18,6 @@ jobs:
         docker run -d --network host -it --security-opt seccomp=.github/workflows/chrome.json justinribeiro/chrome-headless
         sleep 1
         docker ps | grep chrome
-        curl 172.17.0.1:9222
         curl 127.0.0.1:9222
         nix-build --attr exe
 

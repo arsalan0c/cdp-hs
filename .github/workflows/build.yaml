@@ -6,10 +6,8 @@ on:
       - ".github/**/*"
 jobs:
   build:
-    strategy:
-      matrix:
-        os: ["ubuntu-latest"]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
+    container: ubuntu
     steps:
     - uses: actions/checkout@v3
       with:
@@ -18,6 +16,6 @@ jobs:
     - name: cdp build
       run: |
         docker run -d -p 9222:9222 -it --security-opt seccomp=.github/workflows/chrome.json justinribeiro/chrome-headless
-        docker ps
+        docker ps | grep chrome
         nix-build --attr exe
 

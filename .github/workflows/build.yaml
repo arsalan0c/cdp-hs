@@ -19,5 +19,6 @@ jobs:
         sleep 1
         docker ps | grep chrome
         curl http://127.0.0.1:9222
+        curl http://127.0.0.1:9222/json/new
         nix-build --attr exe
 

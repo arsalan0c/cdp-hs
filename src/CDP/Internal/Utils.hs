@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings, RecordWildCards, TupleSections, GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GADTs                  #-}
 {-# LANGUAGE ScopedTypeVariables    #-}
 {-# LANGUAGE TypeFamilies           #-}
@@ -9,7 +8,6 @@
 
 module CDP.Internal.Utils where
 
-import           Control.Applicative  ((<$>))
 import           Control.Monad
 import           Control.Monad.Loops
 import           Control.Monad.Trans  (liftIO)
@@ -53,8 +51,8 @@ data Subscriptions = Subscriptions
     }
  
 data Handle = Handle
-    { config            :: Config
-    , randomGen        :: MVar StdGen
+    { config           :: Config
+    , commandNextId    :: MVar CommandId
     , subscriptions    :: IORef.IORef Subscriptions
     , commandBuffer    :: IORef.IORef CommandResponseBuffer
     , conn             :: WS.Connection

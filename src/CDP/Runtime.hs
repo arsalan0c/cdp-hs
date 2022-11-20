@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings, RecordWildCards, TupleSections, GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GADTs                  #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ScopedTypeVariables    #-}
 {-# LANGUAGE TypeFamilies           #-}
 {-# LANGUAGE RankNTypes    #-}
@@ -34,7 +34,6 @@ import Control.Concurrent
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Map as Map
 import Data.Proxy
-import System.Random
 import Control.Applicative
 import Data.Default
 import Control.Exception
@@ -51,7 +50,7 @@ import CDP.Endpoints
 type ClientApp b  = Handle -> IO b
 runClient :: forall b. Config -> ClientApp b -> IO b
 runClient config app = do
-    randomGen      <- newMVar . mkStdGen $ 42
+    commandNextId  <- newMVar (CommandId 0)
     subscriptions  <- IORef.newIORef $ Subscriptions Map.empty 0
     commandBuffer  <- IORef.newIORef Map.empty
     responseBuffer <- newMVar []
@@ -180,10 +179,8 @@ readPromise (Promise mv f) = do
     x <- readMVar mv
     either throwIO pure $ f x
 
-randomCommandId :: Handle -> IO CommandId
-randomCommandId handle = modifyMVar (randomGen handle) $ \g -> do
-    let (id, g2) = uniformR (0 :: Int, 1000 :: Int) g
-    pure (g2, CommandId id)
+nextCommandId :: Handle -> IO CommandId
+nextCommandId handle = modifyMVar (commandNextId handle) (\x -> pure (CommandId . (+1) . unCommandId $ x, x))
 
 data CommandObj a = CommandObj
     { coSessionId :: Maybe SessionId
@@ -243,13 +240,13 @@ sendCommand_
     :: forall cmd. Command cmd
     => Handle -> Maybe SessionId -> cmd -> IO (Promise (CommandResponse cmd))
 sendCommand_ handle mbSessionId params = do
-    id <- randomCommandId handle
+    id <- nextCommandId handle
     let co = CommandObj mbSessionId id (commandName proxy) params
     mv <- newEmptyMVar
     IORef.atomicModifyIORef' (commandBuffer handle) $ \buffer ->
         (M.insert id mv buffer, ())
     WS.sendTextData (conn handle) . A.encode $ co
-    pure $ Promise mv $ \entry -> case entry of
+    pure $ Promise mv $ \case
         Left err -> Left $ ERRProtocol err
         Right v  -> case fromJSON proxy v of
             A.Error   err -> Left $ ERRParse err

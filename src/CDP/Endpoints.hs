@@ -37,6 +37,17 @@ data SomeEndpoint where
 fromSomeEndpoint :: (forall ep. Endpoint ep => ep -> r) -> SomeEndpoint -> r
 fromSomeEndpoint f (SomeEndpoint ep) = f ep
 
+-- | Sends a request with the given parameters to the corresponding endpoint
+endpoint :: Endpoint ep => Config -> ep -> IO (EndpointResponse ep)
+endpoint = getEndpoint . hostPort
+
+-- | Creates a session with a new tab
+connectToTab :: Config -> URL -> IO TargetInfo
+connectToTab cfg url = do
+        targetInfo <- endpoint cfg $ EPOpenNewTab url
+        endpoint cfg $ EPActivateTarget $ tiId targetInfo
+        pure targetInfo
+
 class Endpoint ep where
     type EndpointResponse ep :: *
     getEndpoint :: (String, Int) -> ep -> IO (EndpointResponse ep)

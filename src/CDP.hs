@@ -19,6 +19,7 @@ module CDP
     , parseUri
     , fromSomeEndpoint
     , endpoint
+    , connectToTab
 
     , ClientApp
     , Handle

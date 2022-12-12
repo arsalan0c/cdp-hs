@@ -5,7 +5,7 @@ description: See README at <https://github.com/arsalan0c/cdp-hs>
 author: Arsalan Cheema
 github: arsalan0c/cdp-hs
 category: Package.Category
-license: BSD-3-Clause
+license: MIT
 
 extra-doc-files:
   - README.md
@@ -16,7 +16,7 @@ library:
     - gen
 
 dependencies:
-  - base
+  - base >= 4.16 && <= 4.17
   - aeson
   - text
   - bytestring

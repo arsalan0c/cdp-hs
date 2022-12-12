@@ -6,14 +6,16 @@ A Haskell library for the [Chrome Devtools Protocol (CDP)](https://chromedevtool
 
 ## Quick start
 
+`cdp` contains the generated library.
+
 To get started:
 
-1. Run Chromium with debugging port enabled: `chromium --headless --remote-debugging-port=9222 http://wikipedia.com`
-2. Clone the repo with submodules `git clone --recurse-submodules https://github.com/arsalan0c/cdp-hs.git`
-3. Switch directories: `cd cdp-hs`
-4. Drop into nix environment: `nix-shell --pure`
-5. Generate cabal file: `hpack`
-6. Run the example program to print a page as pdf: `cabal run cdp-example-print-page`
+1. Clone the repo with submodules `git clone --recurse-submodules https://github.com/arsalan0c/cdp-hs.git`
+2. Switch directories to the CDP library: `cd cdp`
+3. Drop into nix environment: `nix-shell --pure`
+4. Generate cabal file: `hpack`
+5. Run Chromium with debugging port enabled: `chromium --headless --remote-debugging-port=9222 http://wikipedia.com`
+6. Run the example program to print the [browser's version info](https://chromedevtools.github.io/devtools-protocol/tot/Browser/#method-getVersion) : `cabal run cdp-exe`
 
 ## Example usage
 

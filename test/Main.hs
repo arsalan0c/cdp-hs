@@ -11,19 +11,13 @@ import qualified Data.Text as T
 
 import qualified CDP as CDP
 
-connectToPage :: CDP.Config -> IO CDP.TargetInfo
-connectToPage cfg = do
-    targetInfo <- CDP.endpoint cfg $ CDP.EPOpenNewTab "https://haskell.foundation"
-    CDP.endpoint cfg $ CDP.EPActivateTarget $ CDP.tiId targetInfo
-    pure targetInfo
-
 main :: IO ()
 main = hspec $ do
     
     describe "Endpoints responses of the expected type are received" $ do
         it "sends requests to all endpoints" $ do
             let cfg = def
-            targetId <- fmap CDP.tiId $ connectToPage cfg
+            targetId <- fmap CDP.tiId $ CDP.connectToTab cfg "https://haskell.foundation"
             void $ mapM (CDP.fromSomeEndpoint $ void . CDP.endpoint cfg)
                 [ CDP.SomeEndpoint CDP.EPBrowserVersion
                 , CDP.SomeEndpoint CDP.EPAllTargets
@@ -32,7 +26,7 @@ main = hspec $ do
                 , CDP.SomeEndpoint $ CDP.EPCloseTarget targetId
                 ]
 
-    targetInfo <- runIO $ connectToPage def
+    targetInfo <- runIO $ CDP.connectToTab def "https://haskell.foundation"
     let (host,port,path) = fromMaybe (error "invalid uri") . CDP.parseUri . T.unpack . CDP.tiWebSocketDebuggerUrl $ targetInfo
         cfg      = def{CDP.hostPort = (host,port), CDP.path = Just path}
         targetId = CDP.tiId targetInfo

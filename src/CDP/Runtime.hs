@@ -46,8 +46,11 @@ import qualified Network.HTTP.Simple  as Http
 import CDP.Internal.Utils
 import CDP.Endpoints
 
-
 type ClientApp b  = Handle -> IO b
+
+-- | Runs a client application. 
+-- By default, the connection is made to the browser. See the `path` field in `Config`.
+-- The connection is closed once the IO action completes
 runClient :: forall b. Config -> ClientApp b -> IO b
 runClient config app = do
     commandNextId  <- newMVar (CommandId 0)
@@ -259,7 +262,3 @@ data SomeCommand where
 
 fromSomeCommand :: (forall cmd. Command cmd => cmd -> r) -> SomeCommand -> r
 fromSomeCommand f (SomeCommand c) = f c
-
--- | Sends a request with the given parameters to the corresponding endpoint
-endpoint :: Endpoint ep => Config -> ep -> IO (EndpointResponse ep)
-endpoint = getEndpoint . hostPort

@@ -339,9 +339,13 @@ data PStorageClearDataForOrigin = PStorageClearDataForOrigin
   }
   deriving (Eq, Show)
 pStorageClearDataForOrigin
+  {-
   -- | Security origin.
+  -}
   :: T.Text
+  {-
   -- | Comma separated list of StorageType to clear.
+  -}
   -> T.Text
   -> PStorageClearDataForOrigin
 pStorageClearDataForOrigin
@@ -372,9 +376,13 @@ data PStorageClearDataForStorageKey = PStorageClearDataForStorageKey
   }
   deriving (Eq, Show)
 pStorageClearDataForStorageKey
+  {-
   -- | Storage key.
+  -}
   :: T.Text
+  {-
   -- | Comma separated list of StorageType to clear.
+  -}
   -> T.Text
   -> PStorageClearDataForStorageKey
 pStorageClearDataForStorageKey
@@ -436,7 +444,9 @@ data PStorageSetCookies = PStorageSetCookies
   }
   deriving (Eq, Show)
 pStorageSetCookies
+  {-
   -- | Cookies to be set.
+  -}
   :: [DOMPageNetworkEmulationSecurity.NetworkCookieParam]
   -> PStorageSetCookies
 pStorageSetCookies
@@ -487,7 +497,9 @@ data PStorageGetUsageAndQuota = PStorageGetUsageAndQuota
   }
   deriving (Eq, Show)
 pStorageGetUsageAndQuota
+  {-
   -- | Security origin.
+  -}
   :: T.Text
   -> PStorageGetUsageAndQuota
 pStorageGetUsageAndQuota
@@ -538,7 +550,9 @@ data PStorageOverrideQuotaForOrigin = PStorageOverrideQuotaForOrigin
   }
   deriving (Eq, Show)
 pStorageOverrideQuotaForOrigin
+  {-
   -- | Security origin.
+  -}
   :: T.Text
   -> PStorageOverrideQuotaForOrigin
 pStorageOverrideQuotaForOrigin
@@ -566,7 +580,9 @@ data PStorageTrackCacheStorageForOrigin = PStorageTrackCacheStorageForOrigin
   }
   deriving (Eq, Show)
 pStorageTrackCacheStorageForOrigin
+  {-
   -- | Security origin.
+  -}
   :: T.Text
   -> PStorageTrackCacheStorageForOrigin
 pStorageTrackCacheStorageForOrigin
@@ -592,7 +608,9 @@ data PStorageTrackIndexedDBForOrigin = PStorageTrackIndexedDBForOrigin
   }
   deriving (Eq, Show)
 pStorageTrackIndexedDBForOrigin
+  {-
   -- | Security origin.
+  -}
   :: T.Text
   -> PStorageTrackIndexedDBForOrigin
 pStorageTrackIndexedDBForOrigin
@@ -618,7 +636,9 @@ data PStorageTrackIndexedDBForStorageKey = PStorageTrackIndexedDBForStorageKey
   }
   deriving (Eq, Show)
 pStorageTrackIndexedDBForStorageKey
+  {-
   -- | Storage key.
+  -}
   :: T.Text
   -> PStorageTrackIndexedDBForStorageKey
 pStorageTrackIndexedDBForStorageKey
@@ -644,7 +664,9 @@ data PStorageUntrackCacheStorageForOrigin = PStorageUntrackCacheStorageForOrigin
   }
   deriving (Eq, Show)
 pStorageUntrackCacheStorageForOrigin
+  {-
   -- | Security origin.
+  -}
   :: T.Text
   -> PStorageUntrackCacheStorageForOrigin
 pStorageUntrackCacheStorageForOrigin
@@ -670,7 +692,9 @@ data PStorageUntrackIndexedDBForOrigin = PStorageUntrackIndexedDBForOrigin
   }
   deriving (Eq, Show)
 pStorageUntrackIndexedDBForOrigin
+  {-
   -- | Security origin.
+  -}
   :: T.Text
   -> PStorageUntrackIndexedDBForOrigin
 pStorageUntrackIndexedDBForOrigin
@@ -696,7 +720,9 @@ data PStorageUntrackIndexedDBForStorageKey = PStorageUntrackIndexedDBForStorageK
   }
   deriving (Eq, Show)
 pStorageUntrackIndexedDBForStorageKey
+  {-
   -- | Storage key.
+  -}
   :: T.Text
   -> PStorageUntrackIndexedDBForStorageKey
 pStorageUntrackIndexedDBForStorageKey

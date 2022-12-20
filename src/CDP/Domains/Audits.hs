@@ -1216,9 +1216,13 @@ data PAuditsGetEncodedResponse = PAuditsGetEncodedResponse
   }
   deriving (Eq, Show)
 pAuditsGetEncodedResponse
+  {-
   -- | Identifier of the network request to get content for.
+  -}
   :: DOMPageNetworkEmulationSecurity.NetworkRequestId
+  {-
   -- | The encoding to use.
+  -}
   -> PAuditsGetEncodedResponseEncoding
   -> PAuditsGetEncodedResponse
 pAuditsGetEncodedResponse

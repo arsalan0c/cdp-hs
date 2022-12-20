@@ -352,9 +352,13 @@ data PBrowserSetPermission = PBrowserSetPermission
   }
   deriving (Eq, Show)
 pBrowserSetPermission
+  {-
   -- | Descriptor of permission to override.
+  -}
   :: BrowserPermissionDescriptor
+  {-
   -- | Setting of the permission.
+  -}
   -> BrowserPermissionSetting
   -> PBrowserSetPermission
 pBrowserSetPermission
@@ -466,9 +470,11 @@ data PBrowserSetDownloadBehavior = PBrowserSetDownloadBehavior
   }
   deriving (Eq, Show)
 pBrowserSetDownloadBehavior
+  {-
   -- | Whether to allow all or deny all download requests, or use default Chrome behavior if
   --   available (otherwise deny). |allowAndName| allows download and names files according to
   --   their dowmload guids.
+  -}
   :: PBrowserSetDownloadBehaviorBehavior
   -> PBrowserSetDownloadBehavior
 pBrowserSetDownloadBehavior
@@ -502,7 +508,9 @@ data PBrowserCancelDownload = PBrowserCancelDownload
   }
   deriving (Eq, Show)
 pBrowserCancelDownload
+  {-
   -- | Global unique identifier of the download.
+  -}
   :: T.Text
   -> PBrowserCancelDownload
 pBrowserCancelDownload
@@ -678,7 +686,9 @@ data PBrowserGetHistogram = PBrowserGetHistogram
   }
   deriving (Eq, Show)
 pBrowserGetHistogram
+  {-
   -- | Requested histogram name.
+  -}
   :: T.Text
   -> PBrowserGetHistogram
 pBrowserGetHistogram
@@ -714,7 +724,9 @@ data PBrowserGetWindowBounds = PBrowserGetWindowBounds
   }
   deriving (Eq, Show)
 pBrowserGetWindowBounds
+  {-
   -- | Browser window id.
+  -}
   :: BrowserWindowID
   -> PBrowserGetWindowBounds
 pBrowserGetWindowBounds
@@ -787,10 +799,14 @@ data PBrowserSetWindowBounds = PBrowserSetWindowBounds
   }
   deriving (Eq, Show)
 pBrowserSetWindowBounds
+  {-
   -- | Browser window id.
+  -}
   :: BrowserWindowID
+  {-
   -- | New window bounds. The 'minimized', 'maximized' and 'fullscreen' states cannot be combined
   --   with 'left', 'top', 'width' or 'height'. Leaves unspecified fields unchanged.
+  -}
   -> BrowserBounds
   -> PBrowserSetWindowBounds
 pBrowserSetWindowBounds
@@ -1296,7 +1312,9 @@ data PTargetCreateTarget = PTargetCreateTarget
   }
   deriving (Eq, Show)
 pTargetCreateTarget
+  {-
   -- | The initial URL the page will be navigated to. An empty string indicates about:blank.
+  -}
   :: T.Text
   -> PTargetCreateTarget
 pTargetCreateTarget
@@ -1465,10 +1483,14 @@ data PTargetSetAutoAttach = PTargetSetAutoAttach
   }
   deriving (Eq, Show)
 pTargetSetAutoAttach
+  {-
   -- | Whether to auto-attach to related targets.
+  -}
   :: Bool
+  {-
   -- | Whether to pause new targets when attaching to them. Use `Runtime.runIfWaitingForDebugger`
   --   to run paused targets.
+  -}
   -> Bool
   -> PTargetSetAutoAttach
 pTargetSetAutoAttach
@@ -1510,8 +1532,10 @@ data PTargetAutoAttachRelated = PTargetAutoAttachRelated
   deriving (Eq, Show)
 pTargetAutoAttachRelated
   :: TargetTargetID
+  {-
   -- | Whether to pause new targets when attaching to them. Use `Runtime.runIfWaitingForDebugger`
   --   to run paused targets.
+  -}
   -> Bool
   -> PTargetAutoAttachRelated
 pTargetAutoAttachRelated
@@ -1546,7 +1570,9 @@ data PTargetSetDiscoverTargets = PTargetSetDiscoverTargets
   }
   deriving (Eq, Show)
 pTargetSetDiscoverTargets
+  {-
   -- | Whether to discover available targets.
+  -}
   :: Bool
   -> PTargetSetDiscoverTargets
 pTargetSetDiscoverTargets
@@ -1575,7 +1601,9 @@ data PTargetSetRemoteLocations = PTargetSetRemoteLocations
   }
   deriving (Eq, Show)
 pTargetSetRemoteLocations
+  {-
   -- | List of remote locations.
+  -}
   :: [TargetRemoteLocation]
   -> PTargetSetRemoteLocations
 pTargetSetRemoteLocations

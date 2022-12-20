@@ -184,7 +184,9 @@ data PCacheStorageDeleteCache = PCacheStorageDeleteCache
   }
   deriving (Eq, Show)
 pCacheStorageDeleteCache
+  {-
   -- | Id of cache for deletion.
+  -}
   :: CacheStorageCacheId
   -> PCacheStorageDeleteCache
 pCacheStorageDeleteCache
@@ -212,9 +214,13 @@ data PCacheStorageDeleteEntry = PCacheStorageDeleteEntry
   }
   deriving (Eq, Show)
 pCacheStorageDeleteEntry
+  {-
   -- | Id of cache where the entry will be deleted.
+  -}
   :: CacheStorageCacheId
+  {-
   -- | URL spec of the request.
+  -}
   -> T.Text
   -> PCacheStorageDeleteEntry
 pCacheStorageDeleteEntry
@@ -243,7 +249,9 @@ data PCacheStorageRequestCacheNames = PCacheStorageRequestCacheNames
   }
   deriving (Eq, Show)
 pCacheStorageRequestCacheNames
+  {-
   -- | Security origin.
+  -}
   :: T.Text
   -> PCacheStorageRequestCacheNames
 pCacheStorageRequestCacheNames
@@ -281,11 +289,17 @@ data PCacheStorageRequestCachedResponse = PCacheStorageRequestCachedResponse
   }
   deriving (Eq, Show)
 pCacheStorageRequestCachedResponse
+  {-
   -- | Id of cache that contains the entry.
+  -}
   :: CacheStorageCacheId
+  {-
   -- | URL spec of the request.
+  -}
   -> T.Text
+  {-
   -- | headers of the request.
+  -}
   -> [CacheStorageHeader]
   -> PCacheStorageRequestCachedResponse
 pCacheStorageRequestCachedResponse
@@ -331,7 +345,9 @@ data PCacheStorageRequestEntries = PCacheStorageRequestEntries
   }
   deriving (Eq, Show)
 pCacheStorageRequestEntries
+  {-
   -- | ID of cache to get entries from.
+  -}
   :: CacheStorageCacheId
   -> PCacheStorageRequestEntries
 pCacheStorageRequestEntries

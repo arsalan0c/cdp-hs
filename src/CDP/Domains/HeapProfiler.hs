@@ -199,7 +199,9 @@ data PHeapProfilerAddInspectedHeapObject = PHeapProfilerAddInspectedHeapObject
   }
   deriving (Eq, Show)
 pHeapProfilerAddInspectedHeapObject
+  {-
   -- | Heap snapshot object id to be accessible by means of $x command line API.
+  -}
   :: HeapProfilerHeapSnapshotObjectId
   -> PHeapProfilerAddInspectedHeapObject
 pHeapProfilerAddInspectedHeapObject
@@ -269,7 +271,9 @@ data PHeapProfilerGetHeapObjectId = PHeapProfilerGetHeapObjectId
   }
   deriving (Eq, Show)
 pHeapProfilerGetHeapObjectId
+  {-
   -- | Identifier of the object to get heap object id for.
+  -}
   :: Runtime.RuntimeRemoteObjectId
   -> PHeapProfilerGetHeapObjectId
 pHeapProfilerGetHeapObjectId

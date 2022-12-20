@@ -187,8 +187,12 @@ genRecordSmartConstructor ctx domainName recName props =
     [conName] ++
     (indent $ do
         (isFirstParam, (mbDesc, ty)) <- markFirst types
-        formatDescription mbDesc ++
-            [ (if isFirstParam then ":: " else "-> ") <> ty ]) ++
+        let d1 = formatDescription mbDesc
+            d2 
+                | length d1 == 0 = d1
+                | otherwise      = "{-" : d1 ++ ["-}"]
+        d2 ++
+            [(if isFirstParam then ":: " else "-> ") <> ty]) ++
     [conName] ++
     indent args ++
     indent ["= " <> recName] ++

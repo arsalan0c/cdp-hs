@@ -149,7 +149,9 @@ data PDOMDebuggerGetEventListeners = PDOMDebuggerGetEventListeners
   }
   deriving (Eq, Show)
 pDOMDebuggerGetEventListeners
+  {-
   -- | Identifier of the object to return listeners for.
+  -}
   :: Runtime.RuntimeRemoteObjectId
   -> PDOMDebuggerGetEventListeners
 pDOMDebuggerGetEventListeners
@@ -189,9 +191,13 @@ data PDOMDebuggerRemoveDOMBreakpoint = PDOMDebuggerRemoveDOMBreakpoint
   }
   deriving (Eq, Show)
 pDOMDebuggerRemoveDOMBreakpoint
+  {-
   -- | Identifier of the node to remove breakpoint from.
+  -}
   :: DOMPageNetworkEmulationSecurity.DOMNodeId
+  {-
   -- | Type of the breakpoint to remove.
+  -}
   -> DOMDebuggerDOMBreakpointType
   -> PDOMDebuggerRemoveDOMBreakpoint
 pDOMDebuggerRemoveDOMBreakpoint
@@ -222,7 +228,9 @@ data PDOMDebuggerRemoveEventListenerBreakpoint = PDOMDebuggerRemoveEventListener
   }
   deriving (Eq, Show)
 pDOMDebuggerRemoveEventListenerBreakpoint
+  {-
   -- | Event name.
+  -}
   :: T.Text
   -> PDOMDebuggerRemoveEventListenerBreakpoint
 pDOMDebuggerRemoveEventListenerBreakpoint
@@ -250,7 +258,9 @@ data PDOMDebuggerRemoveInstrumentationBreakpoint = PDOMDebuggerRemoveInstrumenta
   }
   deriving (Eq, Show)
 pDOMDebuggerRemoveInstrumentationBreakpoint
+  {-
   -- | Instrumentation name to stop on.
+  -}
   :: T.Text
   -> PDOMDebuggerRemoveInstrumentationBreakpoint
 pDOMDebuggerRemoveInstrumentationBreakpoint
@@ -276,7 +286,9 @@ data PDOMDebuggerRemoveXHRBreakpoint = PDOMDebuggerRemoveXHRBreakpoint
   }
   deriving (Eq, Show)
 pDOMDebuggerRemoveXHRBreakpoint
+  {-
   -- | Resource URL substring.
+  -}
   :: T.Text
   -> PDOMDebuggerRemoveXHRBreakpoint
 pDOMDebuggerRemoveXHRBreakpoint
@@ -302,7 +314,9 @@ data PDOMDebuggerSetBreakOnCSPViolation = PDOMDebuggerSetBreakOnCSPViolation
   }
   deriving (Eq, Show)
 pDOMDebuggerSetBreakOnCSPViolation
+  {-
   -- | CSP Violations to stop upon.
+  -}
   :: [DOMDebuggerCSPViolationType]
   -> PDOMDebuggerSetBreakOnCSPViolation
 pDOMDebuggerSetBreakOnCSPViolation
@@ -330,9 +344,13 @@ data PDOMDebuggerSetDOMBreakpoint = PDOMDebuggerSetDOMBreakpoint
   }
   deriving (Eq, Show)
 pDOMDebuggerSetDOMBreakpoint
+  {-
   -- | Identifier of the node to set breakpoint on.
+  -}
   :: DOMPageNetworkEmulationSecurity.DOMNodeId
+  {-
   -- | Type of the operation to stop upon.
+  -}
   -> DOMDebuggerDOMBreakpointType
   -> PDOMDebuggerSetDOMBreakpoint
 pDOMDebuggerSetDOMBreakpoint
@@ -364,7 +382,9 @@ data PDOMDebuggerSetEventListenerBreakpoint = PDOMDebuggerSetEventListenerBreakp
   }
   deriving (Eq, Show)
 pDOMDebuggerSetEventListenerBreakpoint
+  {-
   -- | DOM Event name to stop on (any DOM event will do).
+  -}
   :: T.Text
   -> PDOMDebuggerSetEventListenerBreakpoint
 pDOMDebuggerSetEventListenerBreakpoint
@@ -392,7 +412,9 @@ data PDOMDebuggerSetInstrumentationBreakpoint = PDOMDebuggerSetInstrumentationBr
   }
   deriving (Eq, Show)
 pDOMDebuggerSetInstrumentationBreakpoint
+  {-
   -- | Instrumentation name to stop on.
+  -}
   :: T.Text
   -> PDOMDebuggerSetInstrumentationBreakpoint
 pDOMDebuggerSetInstrumentationBreakpoint
@@ -418,7 +440,9 @@ data PDOMDebuggerSetXHRBreakpoint = PDOMDebuggerSetXHRBreakpoint
   }
   deriving (Eq, Show)
 pDOMDebuggerSetXHRBreakpoint
+  {-
   -- | Resource URL substring. All XHRs having this substring in the URL will get stopped upon.
+  -}
   :: T.Text
   -> PDOMDebuggerSetXHRBreakpoint
 pDOMDebuggerSetXHRBreakpoint

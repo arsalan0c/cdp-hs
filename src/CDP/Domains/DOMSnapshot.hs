@@ -645,7 +645,9 @@ data PDOMSnapshotCaptureSnapshot = PDOMSnapshotCaptureSnapshot
   }
   deriving (Eq, Show)
 pDOMSnapshotCaptureSnapshot
+  {-
   -- | Whitelist of computed styles to return.
+  -}
   :: [T.Text]
   -> PDOMSnapshotCaptureSnapshot
 pDOMSnapshotCaptureSnapshot

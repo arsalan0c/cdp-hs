@@ -333,7 +333,9 @@ data PProfilerSetSamplingInterval = PProfilerSetSamplingInterval
   }
   deriving (Eq, Show)
 pProfilerSetSamplingInterval
+  {-
   -- | New sampling interval in microseconds.
+  -}
   :: Int
   -> PProfilerSetSamplingInterval
 pProfilerSetSamplingInterval

@@ -282,9 +282,13 @@ data PIndexedDBClearObjectStore = PIndexedDBClearObjectStore
   }
   deriving (Eq, Show)
 pIndexedDBClearObjectStore
+  {-
   -- | Database name.
+  -}
   :: T.Text
+  {-
   -- | Object store name.
+  -}
   -> T.Text
   -> PIndexedDBClearObjectStore
 pIndexedDBClearObjectStore
@@ -322,7 +326,9 @@ data PIndexedDBDeleteDatabase = PIndexedDBDeleteDatabase
   }
   deriving (Eq, Show)
 pIndexedDBDeleteDatabase
+  {-
   -- | Database name.
+  -}
   :: T.Text
   -> PIndexedDBDeleteDatabase
 pIndexedDBDeleteDatabase
@@ -361,7 +367,9 @@ data PIndexedDBDeleteObjectStoreEntries = PIndexedDBDeleteObjectStoreEntries
 pIndexedDBDeleteObjectStoreEntries
   :: T.Text
   -> T.Text
+  {-
   -- | Range of entry keys to delete
+  -}
   -> IndexedDBKeyRange
   -> PIndexedDBDeleteObjectStoreEntries
 pIndexedDBDeleteObjectStoreEntries
@@ -444,15 +452,25 @@ data PIndexedDBRequestData = PIndexedDBRequestData
   }
   deriving (Eq, Show)
 pIndexedDBRequestData
+  {-
   -- | Database name.
+  -}
   :: T.Text
+  {-
   -- | Object store name.
+  -}
   -> T.Text
+  {-
   -- | Index name, empty string for object store data requests.
+  -}
   -> T.Text
+  {-
   -- | Number of records to skip.
+  -}
   -> Int
+  {-
   -- | Number of records to fetch.
+  -}
   -> Int
   -> PIndexedDBRequestData
 pIndexedDBRequestData
@@ -514,9 +532,13 @@ data PIndexedDBGetMetadata = PIndexedDBGetMetadata
   }
   deriving (Eq, Show)
 pIndexedDBGetMetadata
+  {-
   -- | Database name.
+  -}
   :: T.Text
+  {-
   -- | Object store name.
+  -}
   -> T.Text
   -> PIndexedDBGetMetadata
 pIndexedDBGetMetadata
@@ -567,7 +589,9 @@ data PIndexedDBRequestDatabase = PIndexedDBRequestDatabase
   }
   deriving (Eq, Show)
 pIndexedDBRequestDatabase
+  {-
   -- | Database name.
+  -}
   :: T.Text
   -> PIndexedDBRequestDatabase
 pIndexedDBRequestDatabase

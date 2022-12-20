@@ -38,14 +38,12 @@ import qualified CDP as CDP
 main :: IO ()
 main = do
     let cfg = def
-    -- connect to a new page
-    id <- CDP.tiId <$> CDP.connectToTab cfg "https://haskell.foundation" 
-    CDP.runClient cfg (printPDF id)
+    CDP.runClient cfg printPDF
 
-printPDF :: T.Text -> CDP.Handle -> IO ()
-printPDF targetId handle = do
+printPDF :: CDP.Handle -> IO ()
+printPDF handle = do
     -- send the Page.printToPDF command
-    r <- CDP.sendCommandForSessionWait handle targetId $ CDP.pPagePrintToPDF
+    r <- CDP.sendCommandWait handle $ CDP.pPagePrintToPDF
         { CDP.pPagePrintToPDFTransferMode = Just CDP.PPagePrintToPDFTransferModeReturnAsStream
         }
 

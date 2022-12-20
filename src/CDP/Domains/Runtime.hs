@@ -1013,7 +1013,9 @@ data PRuntimeAwaitPromise = PRuntimeAwaitPromise
   }
   deriving (Eq, Show)
 pRuntimeAwaitPromise
+  {-
   -- | Identifier of the promise.
+  -}
   :: RuntimeRemoteObjectId
   -> PRuntimeAwaitPromise
 pRuntimeAwaitPromise
@@ -1085,7 +1087,9 @@ data PRuntimeCallFunctionOn = PRuntimeCallFunctionOn
   }
   deriving (Eq, Show)
 pRuntimeCallFunctionOn
+  {-
   -- | Declaration of the function to call.
+  -}
   :: T.Text
   -> PRuntimeCallFunctionOn
 pRuntimeCallFunctionOn
@@ -1151,11 +1155,17 @@ data PRuntimeCompileScript = PRuntimeCompileScript
   }
   deriving (Eq, Show)
 pRuntimeCompileScript
+  {-
   -- | Expression to compile.
+  -}
   :: T.Text
+  {-
   -- | Source url to be set for the script.
+  -}
   -> T.Text
+  {-
   -- | Specifies whether the compiled script should be persisted.
+  -}
   -> Bool
   -> PRuntimeCompileScript
 pRuntimeCompileScript
@@ -1297,7 +1307,9 @@ data PRuntimeEvaluate = PRuntimeEvaluate
   }
   deriving (Eq, Show)
 pRuntimeEvaluate
+  {-
   -- | Expression to evaluate.
+  -}
   :: T.Text
   -> PRuntimeEvaluate
 pRuntimeEvaluate
@@ -1427,7 +1439,9 @@ data PRuntimeGetProperties = PRuntimeGetProperties
   }
   deriving (Eq, Show)
 pRuntimeGetProperties
+  {-
   -- | Identifier of the object to return properties for.
+  -}
   :: RuntimeRemoteObjectId
   -> PRuntimeGetProperties
 pRuntimeGetProperties
@@ -1509,7 +1523,9 @@ data PRuntimeQueryObjects = PRuntimeQueryObjects
   }
   deriving (Eq, Show)
 pRuntimeQueryObjects
+  {-
   -- | Identifier of the prototype to return objects for.
+  -}
   :: RuntimeRemoteObjectId
   -> PRuntimeQueryObjects
 pRuntimeQueryObjects
@@ -1545,7 +1561,9 @@ data PRuntimeReleaseObject = PRuntimeReleaseObject
   }
   deriving (Eq, Show)
 pRuntimeReleaseObject
+  {-
   -- | Identifier of the object to release.
+  -}
   :: RuntimeRemoteObjectId
   -> PRuntimeReleaseObject
 pRuntimeReleaseObject
@@ -1571,7 +1589,9 @@ data PRuntimeReleaseObjectGroup = PRuntimeReleaseObjectGroup
   }
   deriving (Eq, Show)
 pRuntimeReleaseObjectGroup
+  {-
   -- | Symbolic object group name.
+  -}
   :: T.Text
   -> PRuntimeReleaseObjectGroup
 pRuntimeReleaseObjectGroup
@@ -1630,7 +1650,9 @@ data PRuntimeRunScript = PRuntimeRunScript
   }
   deriving (Eq, Show)
 pRuntimeRunScript
+  {-
   -- | Id of the script to run.
+  -}
   :: RuntimeScriptId
   -> PRuntimeRunScript
 pRuntimeRunScript
@@ -1682,8 +1704,10 @@ data PRuntimeSetAsyncCallStackDepth = PRuntimeSetAsyncCallStackDepth
   }
   deriving (Eq, Show)
 pRuntimeSetAsyncCallStackDepth
+  {-
   -- | Maximum depth of async call stacks. Setting to `0` will effectively disable collecting async
   --   call stacks (default).
+  -}
   :: Int
   -> PRuntimeSetAsyncCallStackDepth
 pRuntimeSetAsyncCallStackDepth
@@ -1838,7 +1862,9 @@ data PRuntimeGetExceptionDetails = PRuntimeGetExceptionDetails
   }
   deriving (Eq, Show)
 pRuntimeGetExceptionDetails
+  {-
   -- | The error object for which to resolve the exception details.
+  -}
   :: RuntimeRemoteObjectId
   -> PRuntimeGetExceptionDetails
 pRuntimeGetExceptionDetails

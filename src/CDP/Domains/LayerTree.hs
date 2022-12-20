@@ -261,7 +261,9 @@ data PLayerTreeCompositingReasons = PLayerTreeCompositingReasons
   }
   deriving (Eq, Show)
 pLayerTreeCompositingReasons
+  {-
   -- | The id of the layer for which we want to get the reasons it was composited.
+  -}
   :: LayerTreeLayerId
   -> PLayerTreeCompositingReasons
 pLayerTreeCompositingReasons
@@ -327,7 +329,9 @@ data PLayerTreeLoadSnapshot = PLayerTreeLoadSnapshot
   }
   deriving (Eq, Show)
 pLayerTreeLoadSnapshot
+  {-
   -- | An array of tiles composing the snapshot.
+  -}
   :: [LayerTreePictureTile]
   -> PLayerTreeLoadSnapshot
 pLayerTreeLoadSnapshot
@@ -361,7 +365,9 @@ data PLayerTreeMakeSnapshot = PLayerTreeMakeSnapshot
   }
   deriving (Eq, Show)
 pLayerTreeMakeSnapshot
+  {-
   -- | The id of the layer.
+  -}
   :: LayerTreeLayerId
   -> PLayerTreeMakeSnapshot
 pLayerTreeMakeSnapshot
@@ -400,7 +406,9 @@ data PLayerTreeProfileSnapshot = PLayerTreeProfileSnapshot
   }
   deriving (Eq, Show)
 pLayerTreeProfileSnapshot
+  {-
   -- | The id of the layer snapshot.
+  -}
   :: LayerTreeSnapshotId
   -> PLayerTreeProfileSnapshot
 pLayerTreeProfileSnapshot
@@ -440,7 +448,9 @@ data PLayerTreeReleaseSnapshot = PLayerTreeReleaseSnapshot
   }
   deriving (Eq, Show)
 pLayerTreeReleaseSnapshot
+  {-
   -- | The id of the layer snapshot.
+  -}
   :: LayerTreeSnapshotId
   -> PLayerTreeReleaseSnapshot
 pLayerTreeReleaseSnapshot
@@ -472,7 +482,9 @@ data PLayerTreeReplaySnapshot = PLayerTreeReplaySnapshot
   }
   deriving (Eq, Show)
 pLayerTreeReplaySnapshot
+  {-
   -- | The id of the layer snapshot.
+  -}
   :: LayerTreeSnapshotId
   -> PLayerTreeReplaySnapshot
 pLayerTreeReplaySnapshot
@@ -512,7 +524,9 @@ data PLayerTreeSnapshotCommandLog = PLayerTreeSnapshotCommandLog
   }
   deriving (Eq, Show)
 pLayerTreeSnapshotCommandLog
+  {-
   -- | The id of the layer snapshot.
+  -}
   :: LayerTreeSnapshotId
   -> PLayerTreeSnapshotCommandLog
 pLayerTreeSnapshotCommandLog

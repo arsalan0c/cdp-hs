@@ -288,7 +288,9 @@ data PTracingRecordClockSyncMarker = PTracingRecordClockSyncMarker
   }
   deriving (Eq, Show)
 pTracingRecordClockSyncMarker
+  {-
   -- | The ID of this clock sync marker
+  -}
   :: T.Text
   -> PTracingRecordClockSyncMarker
 pTracingRecordClockSyncMarker

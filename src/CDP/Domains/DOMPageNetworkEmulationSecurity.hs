@@ -708,7 +708,9 @@ data PDOMCollectClassNamesFromSubtree = PDOMCollectClassNamesFromSubtree
   }
   deriving (Eq, Show)
 pDOMCollectClassNamesFromSubtree
+  {-
   -- | Id of the node to collect class names.
+  -}
   :: DOMNodeId
   -> PDOMCollectClassNamesFromSubtree
 pDOMCollectClassNamesFromSubtree
@@ -748,9 +750,13 @@ data PDOMCopyTo = PDOMCopyTo
   }
   deriving (Eq, Show)
 pDOMCopyTo
+  {-
   -- | Id of the node to copy.
+  -}
   :: DOMNodeId
+  {-
   -- | Id of the element to drop the copy into.
+  -}
   -> DOMNodeId
   -> PDOMCopyTo
 pDOMCopyTo
@@ -894,7 +900,9 @@ data PDOMDiscardSearchResults = PDOMDiscardSearchResults
   }
   deriving (Eq, Show)
 pDOMDiscardSearchResults
+  {-
   -- | Unique search session identifier.
+  -}
   :: T.Text
   -> PDOMDiscardSearchResults
 pDOMDiscardSearchResults
@@ -985,7 +993,9 @@ data PDOMGetAttributes = PDOMGetAttributes
   }
   deriving (Eq, Show)
 pDOMGetAttributes
+  {-
   -- | Id of the node to retrieve attibutes for.
+  -}
   :: DOMNodeId
   -> PDOMGetAttributes
 pDOMGetAttributes
@@ -1140,9 +1150,13 @@ data PDOMGetNodesForSubtreeByStyle = PDOMGetNodesForSubtreeByStyle
   }
   deriving (Eq, Show)
 pDOMGetNodesForSubtreeByStyle
+  {-
   -- | Node ID pointing to the root of a subtree.
+  -}
   :: DOMNodeId
+  {-
   -- | The style to filter nodes by (includes nodes if any of properties matches).
+  -}
   -> [DOMCSSComputedStyleProperty]
   -> PDOMGetNodesForSubtreeByStyle
 pDOMGetNodesForSubtreeByStyle
@@ -1188,9 +1202,13 @@ data PDOMGetNodeForLocation = PDOMGetNodeForLocation
   }
   deriving (Eq, Show)
 pDOMGetNodeForLocation
+  {-
   -- | X coordinate.
+  -}
   :: Int
+  {-
   -- | Y coordinate.
+  -}
   -> Int
   -> PDOMGetNodeForLocation
 pDOMGetNodeForLocation
@@ -1276,7 +1294,9 @@ data PDOMGetRelayoutBoundary = PDOMGetRelayoutBoundary
   }
   deriving (Eq, Show)
 pDOMGetRelayoutBoundary
+  {-
   -- | Id of the node.
+  -}
   :: DOMNodeId
   -> PDOMGetRelayoutBoundary
 pDOMGetRelayoutBoundary
@@ -1315,11 +1335,17 @@ data PDOMGetSearchResults = PDOMGetSearchResults
   }
   deriving (Eq, Show)
 pDOMGetSearchResults
+  {-
   -- | Unique search session identifier.
+  -}
   :: T.Text
+  {-
   -- | Start index of the search result to be returned.
+  -}
   -> Int
+  {-
   -- | End index of the search result to be returned.
+  -}
   -> Int
   -> PDOMGetSearchResults
 pDOMGetSearchResults
@@ -1428,9 +1454,13 @@ data PDOMMoveTo = PDOMMoveTo
   }
   deriving (Eq, Show)
 pDOMMoveTo
+  {-
   -- | Id of the node to move.
+  -}
   :: DOMNodeId
+  {-
   -- | Id of the element to drop the moved node into.
+  -}
   -> DOMNodeId
   -> PDOMMoveTo
 pDOMMoveTo
@@ -1472,7 +1502,9 @@ data PDOMPerformSearch = PDOMPerformSearch
   }
   deriving (Eq, Show)
 pDOMPerformSearch
+  {-
   -- | Plain text or query selector or XPath search query.
+  -}
   :: T.Text
   -> PDOMPerformSearch
 pDOMPerformSearch
@@ -1511,7 +1543,9 @@ data PDOMPushNodeByPathToFrontend = PDOMPushNodeByPathToFrontend
   }
   deriving (Eq, Show)
 pDOMPushNodeByPathToFrontend
+  {-
   -- | Path to node in the proprietary format.
+  -}
   :: T.Text
   -> PDOMPushNodeByPathToFrontend
 pDOMPushNodeByPathToFrontend
@@ -1545,7 +1579,9 @@ data PDOMPushNodesByBackendIdsToFrontend = PDOMPushNodesByBackendIdsToFrontend
   }
   deriving (Eq, Show)
 pDOMPushNodesByBackendIdsToFrontend
+  {-
   -- | The array of backend node ids.
+  -}
   :: [DOMBackendNodeId]
   -> PDOMPushNodesByBackendIdsToFrontend
 pDOMPushNodesByBackendIdsToFrontend
@@ -1582,9 +1618,13 @@ data PDOMQuerySelector = PDOMQuerySelector
   }
   deriving (Eq, Show)
 pDOMQuerySelector
+  {-
   -- | Id of the node to query upon.
+  -}
   :: DOMNodeId
+  {-
   -- | Selector string.
+  -}
   -> T.Text
   -> PDOMQuerySelector
 pDOMQuerySelector
@@ -1623,9 +1663,13 @@ data PDOMQuerySelectorAll = PDOMQuerySelectorAll
   }
   deriving (Eq, Show)
 pDOMQuerySelectorAll
+  {-
   -- | Id of the node to query upon.
+  -}
   :: DOMNodeId
+  {-
   -- | Selector string.
+  -}
   -> T.Text
   -> PDOMQuerySelectorAll
 pDOMQuerySelectorAll
@@ -1706,9 +1750,13 @@ data PDOMRemoveAttribute = PDOMRemoveAttribute
   }
   deriving (Eq, Show)
 pDOMRemoveAttribute
+  {-
   -- | Id of the element to remove attribute from.
+  -}
   :: DOMNodeId
+  {-
   -- | Name of the attribute to remove.
+  -}
   -> T.Text
   -> PDOMRemoveAttribute
 pDOMRemoveAttribute
@@ -1737,7 +1785,9 @@ data PDOMRemoveNode = PDOMRemoveNode
   }
   deriving (Eq, Show)
 pDOMRemoveNode
+  {-
   -- | Id of the node to remove.
+  -}
   :: DOMNodeId
   -> PDOMRemoveNode
 pDOMRemoveNode
@@ -1771,7 +1821,9 @@ data PDOMRequestChildNodes = PDOMRequestChildNodes
   }
   deriving (Eq, Show)
 pDOMRequestChildNodes
+  {-
   -- | Id of the node to get children for.
+  -}
   :: DOMNodeId
   -> PDOMRequestChildNodes
 pDOMRequestChildNodes
@@ -1803,7 +1855,9 @@ data PDOMRequestNode = PDOMRequestNode
   }
   deriving (Eq, Show)
 pDOMRequestNode
+  {-
   -- | JavaScript object id to convert into node.
+  -}
   :: Runtime.RuntimeRemoteObjectId
   -> PDOMRequestNode
 pDOMRequestNode
@@ -1884,11 +1938,17 @@ data PDOMSetAttributeValue = PDOMSetAttributeValue
   }
   deriving (Eq, Show)
 pDOMSetAttributeValue
+  {-
   -- | Id of the element to set attribute for.
+  -}
   :: DOMNodeId
+  {-
   -- | Attribute name.
+  -}
   -> T.Text
+  {-
   -- | Attribute value.
+  -}
   -> T.Text
   -> PDOMSetAttributeValue
 pDOMSetAttributeValue
@@ -1926,9 +1986,13 @@ data PDOMSetAttributesAsText = PDOMSetAttributesAsText
   }
   deriving (Eq, Show)
 pDOMSetAttributesAsText
+  {-
   -- | Id of the element to set attributes for.
+  -}
   :: DOMNodeId
+  {-
   -- | Text with a number of attributes. Will parse this text using HTML parser.
+  -}
   -> T.Text
   -> PDOMSetAttributesAsText
 pDOMSetAttributesAsText
@@ -1965,7 +2029,9 @@ data PDOMSetFileInputFiles = PDOMSetFileInputFiles
   }
   deriving (Eq, Show)
 pDOMSetFileInputFiles
+  {-
   -- | Array of file paths to set.
+  -}
   :: [T.Text]
   -> PDOMSetFileInputFiles
 pDOMSetFileInputFiles
@@ -1997,7 +2063,9 @@ data PDOMSetNodeStackTracesEnabled = PDOMSetNodeStackTracesEnabled
   }
   deriving (Eq, Show)
 pDOMSetNodeStackTracesEnabled
+  {-
   -- | Enable or disable.
+  -}
   :: Bool
   -> PDOMSetNodeStackTracesEnabled
 pDOMSetNodeStackTracesEnabled
@@ -2023,7 +2091,9 @@ data PDOMGetNodeStackTraces = PDOMGetNodeStackTraces
   }
   deriving (Eq, Show)
 pDOMGetNodeStackTraces
+  {-
   -- | Id of the node to get stack traces for.
+  -}
   :: DOMNodeId
   -> PDOMGetNodeStackTraces
 pDOMGetNodeStackTraces
@@ -2058,7 +2128,9 @@ data PDOMGetFileInfo = PDOMGetFileInfo
   }
   deriving (Eq, Show)
 pDOMGetFileInfo
+  {-
   -- | JavaScript object id of the node wrapper.
+  -}
   :: Runtime.RuntimeRemoteObjectId
   -> PDOMGetFileInfo
 pDOMGetFileInfo
@@ -2092,7 +2164,9 @@ data PDOMSetInspectedNode = PDOMSetInspectedNode
   }
   deriving (Eq, Show)
 pDOMSetInspectedNode
+  {-
   -- | DOM node id to be accessible by means of $x command line API.
+  -}
   :: DOMNodeId
   -> PDOMSetInspectedNode
 pDOMSetInspectedNode
@@ -2120,9 +2194,13 @@ data PDOMSetNodeName = PDOMSetNodeName
   }
   deriving (Eq, Show)
 pDOMSetNodeName
+  {-
   -- | Id of the node to set name for.
+  -}
   :: DOMNodeId
+  {-
   -- | New node's name.
+  -}
   -> T.Text
   -> PDOMSetNodeName
 pDOMSetNodeName
@@ -2161,9 +2239,13 @@ data PDOMSetNodeValue = PDOMSetNodeValue
   }
   deriving (Eq, Show)
 pDOMSetNodeValue
+  {-
   -- | Id of the node to set value for.
+  -}
   :: DOMNodeId
+  {-
   -- | New node's value.
+  -}
   -> T.Text
   -> PDOMSetNodeValue
 pDOMSetNodeValue
@@ -2194,9 +2276,13 @@ data PDOMSetOuterHTML = PDOMSetOuterHTML
   }
   deriving (Eq, Show)
 pDOMSetOuterHTML
+  {-
   -- | Id of the node to set markup for.
+  -}
   :: DOMNodeId
+  {-
   -- | Outer HTML markup to set.
+  -}
   -> T.Text
   -> PDOMSetOuterHTML
 pDOMSetOuterHTML
@@ -2314,7 +2400,9 @@ data PDOMGetQueryingDescendantsForContainer = PDOMGetQueryingDescendantsForConta
   }
   deriving (Eq, Show)
 pDOMGetQueryingDescendantsForContainer
+  {-
   -- | Id of the container node to find querying descendants from.
+  -}
   :: DOMNodeId
   -> PDOMGetQueryingDescendantsForContainer
 pDOMGetQueryingDescendantsForContainer
@@ -2610,7 +2698,9 @@ data PEmulationSetFocusEmulationEnabled = PEmulationSetFocusEmulationEnabled
   }
   deriving (Eq, Show)
 pEmulationSetFocusEmulationEnabled
+  {-
   -- | Whether to enable to disable focus emulation.
+  -}
   :: Bool
   -> PEmulationSetFocusEmulationEnabled
 pEmulationSetFocusEmulationEnabled
@@ -2660,7 +2750,9 @@ data PEmulationSetCPUThrottlingRate = PEmulationSetCPUThrottlingRate
   }
   deriving (Eq, Show)
 pEmulationSetCPUThrottlingRate
+  {-
   -- | Throttling rate as a slowdown factor (1 is no throttle, 2 is 2x slowdown, etc).
+  -}
   :: Double
   -> PEmulationSetCPUThrottlingRate
 pEmulationSetCPUThrottlingRate
@@ -2740,14 +2832,22 @@ data PEmulationSetDeviceMetricsOverride = PEmulationSetDeviceMetricsOverride
   }
   deriving (Eq, Show)
 pEmulationSetDeviceMetricsOverride
+  {-
   -- | Overriding width value in pixels (minimum 0, maximum 10000000). 0 disables the override.
+  -}
   :: Int
+  {-
   -- | Overriding height value in pixels (minimum 0, maximum 10000000). 0 disables the override.
+  -}
   -> Int
+  {-
   -- | Overriding device scale factor value. 0 disables the override.
+  -}
   -> Double
+  {-
   -- | Whether to emulate mobile device. This includes viewport meta tag, overlay scrollbars, text
   --   autosizing and more.
+  -}
   -> Bool
   -> PEmulationSetDeviceMetricsOverride
 pEmulationSetDeviceMetricsOverride
@@ -2799,7 +2899,9 @@ data PEmulationSetScrollbarsHidden = PEmulationSetScrollbarsHidden
   }
   deriving (Eq, Show)
 pEmulationSetScrollbarsHidden
+  {-
   -- | Whether scrollbars should be always hidden.
+  -}
   :: Bool
   -> PEmulationSetScrollbarsHidden
 pEmulationSetScrollbarsHidden
@@ -2824,7 +2926,9 @@ data PEmulationSetDocumentCookieDisabled = PEmulationSetDocumentCookieDisabled
   }
   deriving (Eq, Show)
 pEmulationSetDocumentCookieDisabled
+  {-
   -- | Whether document.coookie API should be disabled.
+  -}
   :: Bool
   -> PEmulationSetDocumentCookieDisabled
 pEmulationSetDocumentCookieDisabled
@@ -2862,7 +2966,9 @@ data PEmulationSetEmitTouchEventsForMouse = PEmulationSetEmitTouchEventsForMouse
   }
   deriving (Eq, Show)
 pEmulationSetEmitTouchEventsForMouse
+  {-
   -- | Whether touch emulation based on mouse input should be enabled.
+  -}
   :: Bool
   -> PEmulationSetEmitTouchEventsForMouse
 pEmulationSetEmitTouchEventsForMouse
@@ -2936,7 +3042,9 @@ data PEmulationSetEmulatedVisionDeficiency = PEmulationSetEmulatedVisionDeficien
   }
   deriving (Eq, Show)
 pEmulationSetEmulatedVisionDeficiency
+  {-
   -- | Vision deficiency to emulate.
+  -}
   :: PEmulationSetEmulatedVisionDeficiencyType
   -> PEmulationSetEmulatedVisionDeficiency
 pEmulationSetEmulatedVisionDeficiency
@@ -2996,9 +3104,13 @@ data PEmulationSetIdleOverride = PEmulationSetIdleOverride
   }
   deriving (Eq, Show)
 pEmulationSetIdleOverride
+  {-
   -- | Mock isUserActive
+  -}
   :: Bool
+  {-
   -- | Mock isScreenUnlocked
+  -}
   -> Bool
   -> PEmulationSetIdleOverride
 pEmulationSetIdleOverride
@@ -3043,7 +3155,9 @@ data PEmulationSetPageScaleFactor = PEmulationSetPageScaleFactor
   }
   deriving (Eq, Show)
 pEmulationSetPageScaleFactor
+  {-
   -- | Page scale factor.
+  -}
   :: Double
   -> PEmulationSetPageScaleFactor
 pEmulationSetPageScaleFactor
@@ -3069,7 +3183,9 @@ data PEmulationSetScriptExecutionDisabled = PEmulationSetScriptExecutionDisabled
   }
   deriving (Eq, Show)
 pEmulationSetScriptExecutionDisabled
+  {-
   -- | Whether script execution should be disabled in the page.
+  -}
   :: Bool
   -> PEmulationSetScriptExecutionDisabled
 pEmulationSetScriptExecutionDisabled
@@ -3097,7 +3213,9 @@ data PEmulationSetTouchEmulationEnabled = PEmulationSetTouchEmulationEnabled
   }
   deriving (Eq, Show)
 pEmulationSetTouchEmulationEnabled
+  {-
   -- | Whether the touch event emulation should be enabled.
+  -}
   :: Bool
   -> PEmulationSetTouchEmulationEnabled
 pEmulationSetTouchEmulationEnabled
@@ -3197,8 +3315,10 @@ data PEmulationSetTimezoneOverride = PEmulationSetTimezoneOverride
   }
   deriving (Eq, Show)
 pEmulationSetTimezoneOverride
+  {-
   -- | The timezone identifier. If empty, disables the override and
   --   restores default host system timezone.
+  -}
   :: T.Text
   -> PEmulationSetTimezoneOverride
 pEmulationSetTimezoneOverride
@@ -3223,7 +3343,9 @@ data PEmulationSetDisabledImageTypes = PEmulationSetDisabledImageTypes
   }
   deriving (Eq, Show)
 pEmulationSetDisabledImageTypes
+  {-
   -- | Image types to disable.
+  -}
   :: [EmulationDisabledImageType]
   -> PEmulationSetDisabledImageTypes
 pEmulationSetDisabledImageTypes
@@ -3248,7 +3370,9 @@ data PEmulationSetHardwareConcurrencyOverride = PEmulationSetHardwareConcurrency
   }
   deriving (Eq, Show)
 pEmulationSetHardwareConcurrencyOverride
+  {-
   -- | Hardware concurrency to report
+  -}
   :: Int
   -> PEmulationSetHardwareConcurrencyOverride
 pEmulationSetHardwareConcurrencyOverride
@@ -3280,7 +3404,9 @@ data PEmulationSetUserAgentOverride = PEmulationSetUserAgentOverride
   }
   deriving (Eq, Show)
 pEmulationSetUserAgentOverride
+  {-
   -- | User agent to use.
+  -}
   :: T.Text
   -> PEmulationSetUserAgentOverride
 pEmulationSetUserAgentOverride
@@ -3312,7 +3438,9 @@ data PEmulationSetAutomationOverride = PEmulationSetAutomationOverride
   }
   deriving (Eq, Show)
 pEmulationSetAutomationOverride
+  {-
   -- | Whether the override should be enabled.
+  -}
   :: Bool
   -> PEmulationSetAutomationOverride
 pEmulationSetAutomationOverride
@@ -5883,7 +6011,9 @@ data PNetworkSetAcceptedEncodings = PNetworkSetAcceptedEncodings
   }
   deriving (Eq, Show)
 pNetworkSetAcceptedEncodings
+  {-
   -- | List of accepted content encodings.
+  -}
   :: [NetworkContentEncoding]
   -> PNetworkSetAcceptedEncodings
 pNetworkSetAcceptedEncodings
@@ -5964,7 +6094,9 @@ data PNetworkDeleteCookies = PNetworkDeleteCookies
   }
   deriving (Eq, Show)
 pNetworkDeleteCookies
+  {-
   -- | Name of the cookies to remove.
+  -}
   :: T.Text
   -> PNetworkDeleteCookies
 pNetworkDeleteCookies
@@ -6020,13 +6152,21 @@ data PNetworkEmulateNetworkConditions = PNetworkEmulateNetworkConditions
   }
   deriving (Eq, Show)
 pNetworkEmulateNetworkConditions
+  {-
   -- | True to emulate internet disconnection.
+  -}
   :: Bool
+  {-
   -- | Minimum latency from request sent to response headers received (ms).
+  -}
   -> Double
+  {-
   -- | Maximal aggregated download throughput (bytes/sec). -1 disables download throttling.
+  -}
   -> Double
+  {-
   -- | Maximal aggregated upload throughput (bytes/sec).  -1 disables upload throttling.
+  -}
   -> Double
   -> PNetworkEmulateNetworkConditions
 pNetworkEmulateNetworkConditions
@@ -6119,7 +6259,9 @@ data PNetworkGetCertificate = PNetworkGetCertificate
   }
   deriving (Eq, Show)
 pNetworkGetCertificate
+  {-
   -- | Origin to get certificate for.
+  -}
   :: T.Text
   -> PNetworkGetCertificate
 pNetworkGetCertificate
@@ -6186,7 +6328,9 @@ data PNetworkGetResponseBody = PNetworkGetResponseBody
   }
   deriving (Eq, Show)
 pNetworkGetResponseBody
+  {-
   -- | Identifier of the network request to get content for.
+  -}
   :: NetworkRequestId
   -> PNetworkGetResponseBody
 pNetworkGetResponseBody
@@ -6223,7 +6367,9 @@ data PNetworkGetRequestPostData = PNetworkGetRequestPostData
   }
   deriving (Eq, Show)
 pNetworkGetRequestPostData
+  {-
   -- | Identifier of the network request to get content for.
+  -}
   :: NetworkRequestId
   -> PNetworkGetRequestPostData
 pNetworkGetRequestPostData
@@ -6257,7 +6403,9 @@ data PNetworkGetResponseBodyForInterception = PNetworkGetResponseBodyForIntercep
   }
   deriving (Eq, Show)
 pNetworkGetResponseBodyForInterception
+  {-
   -- | Identifier for the intercepted request to get body for.
+  -}
   :: NetworkInterceptionId
   -> PNetworkGetResponseBodyForInterception
 pNetworkGetResponseBodyForInterception
@@ -6330,7 +6478,9 @@ data PNetworkReplayXHR = PNetworkReplayXHR
   }
   deriving (Eq, Show)
 pNetworkReplayXHR
+  {-
   -- | Identifier of XHR to replay.
+  -}
   :: NetworkRequestId
   -> PNetworkReplayXHR
 pNetworkReplayXHR
@@ -6362,9 +6512,13 @@ data PNetworkSearchInResponseBody = PNetworkSearchInResponseBody
   }
   deriving (Eq, Show)
 pNetworkSearchInResponseBody
+  {-
   -- | Identifier of the network response to search.
+  -}
   :: NetworkRequestId
+  {-
   -- | String to search for.
+  -}
   -> T.Text
   -> PNetworkSearchInResponseBody
 pNetworkSearchInResponseBody
@@ -6405,7 +6559,9 @@ data PNetworkSetBlockedURLs = PNetworkSetBlockedURLs
   }
   deriving (Eq, Show)
 pNetworkSetBlockedURLs
+  {-
   -- | URL patterns to block. Wildcards ('*') are allowed.
+  -}
   :: [T.Text]
   -> PNetworkSetBlockedURLs
 pNetworkSetBlockedURLs
@@ -6431,7 +6587,9 @@ data PNetworkSetBypassServiceWorker = PNetworkSetBypassServiceWorker
   }
   deriving (Eq, Show)
 pNetworkSetBypassServiceWorker
+  {-
   -- | Bypass service worker and load from network.
+  -}
   :: Bool
   -> PNetworkSetBypassServiceWorker
 pNetworkSetBypassServiceWorker
@@ -6457,7 +6615,9 @@ data PNetworkSetCacheDisabled = PNetworkSetCacheDisabled
   }
   deriving (Eq, Show)
 pNetworkSetCacheDisabled
+  {-
   -- | Cache disabled state.
+  -}
   :: Bool
   -> PNetworkSetCacheDisabled
 pNetworkSetCacheDisabled
@@ -6514,9 +6674,13 @@ data PNetworkSetCookie = PNetworkSetCookie
   }
   deriving (Eq, Show)
 pNetworkSetCookie
+  {-
   -- | Cookie name.
+  -}
   :: T.Text
+  {-
   -- | Cookie value.
+  -}
   -> T.Text
   -> PNetworkSetCookie
 pNetworkSetCookie
@@ -6569,7 +6733,9 @@ data PNetworkSetCookies = PNetworkSetCookies
   }
   deriving (Eq, Show)
 pNetworkSetCookies
+  {-
   -- | Cookies to be set.
+  -}
   :: [NetworkCookieParam]
   -> PNetworkSetCookies
 pNetworkSetCookies
@@ -6595,7 +6761,9 @@ data PNetworkSetExtraHTTPHeaders = PNetworkSetExtraHTTPHeaders
   }
   deriving (Eq, Show)
 pNetworkSetExtraHTTPHeaders
+  {-
   -- | Map with extra HTTP headers.
+  -}
   :: NetworkHeaders
   -> PNetworkSetExtraHTTPHeaders
 pNetworkSetExtraHTTPHeaders
@@ -6621,7 +6789,9 @@ data PNetworkSetAttachDebugStack = PNetworkSetAttachDebugStack
   }
   deriving (Eq, Show)
 pNetworkSetAttachDebugStack
+  {-
   -- | Whether to attach a page script stack for debugging purpose.
+  -}
   :: Bool
   -> PNetworkSetAttachDebugStack
 pNetworkSetAttachDebugStack
@@ -6653,7 +6823,9 @@ data PNetworkSetUserAgentOverride = PNetworkSetUserAgentOverride
   }
   deriving (Eq, Show)
 pNetworkSetUserAgentOverride
+  {-
   -- | User agent to use.
+  -}
   :: T.Text
   -> PNetworkSetUserAgentOverride
 pNetworkSetUserAgentOverride
@@ -6716,7 +6888,9 @@ data PNetworkEnableReportingApi = PNetworkEnableReportingApi
   }
   deriving (Eq, Show)
 pNetworkEnableReportingApi
+  {-
   -- | Whether to enable or disable events for the Reporting API
+  -}
   :: Bool
   -> PNetworkEnableReportingApi
 pNetworkEnableReportingApi
@@ -6747,9 +6921,13 @@ data PNetworkLoadNetworkResource = PNetworkLoadNetworkResource
   }
   deriving (Eq, Show)
 pNetworkLoadNetworkResource
+  {-
   -- | URL of the resource to get content for.
+  -}
   :: T.Text
+  {-
   -- | Options for the request.
+  -}
   -> NetworkLoadNetworkResourceOptions
   -> PNetworkLoadNetworkResource
 pNetworkLoadNetworkResource
@@ -8878,7 +9056,9 @@ data PPageCreateIsolatedWorld = PPageCreateIsolatedWorld
   }
   deriving (Eq, Show)
 pPageCreateIsolatedWorld
+  {-
   -- | Id of the frame in which the isolated world should be created.
+  -}
   :: PageFrameId
   -> PPageCreateIsolatedWorld
 pPageCreateIsolatedWorld
@@ -9182,9 +9362,13 @@ data PPageGetResourceContent = PPageGetResourceContent
   }
   deriving (Eq, Show)
 pPageGetResourceContent
+  {-
   -- | Frame id to get resource for.
+  -}
   :: PageFrameId
+  {-
   -- | URL of the resource to get content for.
+  -}
   -> T.Text
   -> PPageGetResourceContent
 pPageGetResourceContent
@@ -9251,7 +9435,9 @@ data PPageHandleJavaScriptDialog = PPageHandleJavaScriptDialog
   }
   deriving (Eq, Show)
 pPageHandleJavaScriptDialog
+  {-
   -- | Whether to accept or dismiss the dialog.
+  -}
   :: Bool
   -> PPageHandleJavaScriptDialog
 pPageHandleJavaScriptDialog
@@ -9287,7 +9473,9 @@ data PPageNavigate = PPageNavigate
   }
   deriving (Eq, Show)
 pPageNavigate
+  {-
   -- | URL to navigate the page to.
+  -}
   :: T.Text
   -> PPageNavigate
 pPageNavigate
@@ -9336,7 +9524,9 @@ data PPageNavigateToHistoryEntry = PPageNavigateToHistoryEntry
   }
   deriving (Eq, Show)
 pPageNavigateToHistoryEntry
+  {-
   -- | Unique id of the entry to navigate to.
+  -}
   :: Int
   -> PPageNavigateToHistoryEntry
 pPageNavigateToHistoryEntry
@@ -9531,7 +9721,9 @@ data PPageScreencastFrameAck = PPageScreencastFrameAck
   }
   deriving (Eq, Show)
 pPageScreencastFrameAck
+  {-
   -- | Frame number.
+  -}
   :: Int
   -> PPageScreencastFrameAck
 pPageScreencastFrameAck
@@ -9565,11 +9757,17 @@ data PPageSearchInResource = PPageSearchInResource
   }
   deriving (Eq, Show)
 pPageSearchInResource
+  {-
   -- | Frame id for resource to search in.
+  -}
   :: PageFrameId
+  {-
   -- | URL of the resource to search in.
+  -}
   -> T.Text
+  {-
   -- | String to search for.
+  -}
   -> T.Text
   -> PPageSearchInResource
 pPageSearchInResource
@@ -9613,7 +9811,9 @@ data PPageSetAdBlockingEnabled = PPageSetAdBlockingEnabled
   }
   deriving (Eq, Show)
 pPageSetAdBlockingEnabled
+  {-
   -- | Whether to block ads.
+  -}
   :: Bool
   -> PPageSetAdBlockingEnabled
 pPageSetAdBlockingEnabled
@@ -9639,7 +9839,9 @@ data PPageSetBypassCSP = PPageSetBypassCSP
   }
   deriving (Eq, Show)
 pPageSetBypassCSP
+  {-
   -- | Whether to bypass page CSP.
+  -}
   :: Bool
   -> PPageSetBypassCSP
 pPageSetBypassCSP
@@ -9729,7 +9931,9 @@ data PPageSetFontFamilies = PPageSetFontFamilies
   }
   deriving (Eq, Show)
 pPageSetFontFamilies
+  {-
   -- | Specifies font families to set. If a font family is not specified, it won't be changed.
+  -}
   :: PageFontFamilies
   -> PPageSetFontFamilies
 pPageSetFontFamilies
@@ -9757,7 +9961,9 @@ data PPageSetFontSizes = PPageSetFontSizes
   }
   deriving (Eq, Show)
 pPageSetFontSizes
+  {-
   -- | Specifies font sizes to set. If a font size is not specified, it won't be changed.
+  -}
   :: PageFontSizes
   -> PPageSetFontSizes
 pPageSetFontSizes
@@ -9785,9 +9991,13 @@ data PPageSetDocumentContent = PPageSetDocumentContent
   }
   deriving (Eq, Show)
 pPageSetDocumentContent
+  {-
   -- | Frame id to set HTML for.
+  -}
   :: PageFrameId
+  {-
   -- | HTML content to set.
+  -}
   -> T.Text
   -> PPageSetDocumentContent
 pPageSetDocumentContent
@@ -9816,7 +10026,9 @@ data PPageSetLifecycleEventsEnabled = PPageSetLifecycleEventsEnabled
   }
   deriving (Eq, Show)
 pPageSetLifecycleEventsEnabled
+  {-
   -- | If true, starts emitting lifecycle events.
+  -}
   :: Bool
   -> PPageSetLifecycleEventsEnabled
 pPageSetLifecycleEventsEnabled
@@ -9953,7 +10165,9 @@ data PPageSetWebLifecycleState = PPageSetWebLifecycleState
   }
   deriving (Eq, Show)
 pPageSetWebLifecycleState
+  {-
   -- | Target lifecycle state
+  -}
   :: PPageSetWebLifecycleStateState
   -> PPageSetWebLifecycleState
 pPageSetWebLifecycleState
@@ -10027,7 +10241,9 @@ data PPageAddCompilationCache = PPageAddCompilationCache
   deriving (Eq, Show)
 pPageAddCompilationCache
   :: T.Text
+  {-
   -- | Base64-encoded data (Encoded as a base64 string when passed over JSON)
+  -}
   -> T.Text
   -> PPageAddCompilationCache
 pPageAddCompilationCache
@@ -10112,7 +10328,9 @@ data PPageGenerateTestReport = PPageGenerateTestReport
   }
   deriving (Eq, Show)
 pPageGenerateTestReport
+  {-
   -- | Message to be displayed in the report.
+  -}
   :: T.Text
   -> PPageGenerateTestReport
 pPageGenerateTestReport
@@ -10469,7 +10687,9 @@ data PSecuritySetIgnoreCertificateErrors = PSecuritySetIgnoreCertificateErrors
   }
   deriving (Eq, Show)
 pSecuritySetIgnoreCertificateErrors
+  {-
   -- | If true, all certificate errors will be ignored.
+  -}
   :: Bool
   -> PSecuritySetIgnoreCertificateErrors
 pSecuritySetIgnoreCertificateErrors

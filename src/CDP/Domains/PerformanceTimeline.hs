@@ -193,11 +193,13 @@ data PPerformanceTimelineEnable = PPerformanceTimelineEnable
   }
   deriving (Eq, Show)
 pPerformanceTimelineEnable
+  {-
   -- | The types of event to report, as specified in
   --   https://w3c.github.io/performance-timeline/#dom-performanceentry-entrytype
   --   The specified filter overrides any previous filters, passing empty
   --   filter disables recording.
   --   Note that not all types exposed to the web platform are currently supported.
+  -}
   :: [T.Text]
   -> PPerformanceTimelineEnable
 pPerformanceTimelineEnable

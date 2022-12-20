@@ -1015,11 +1015,17 @@ data PCSSAddRule = PCSSAddRule
   }
   deriving (Eq, Show)
 pCSSAddRule
+  {-
   -- | The css style sheet identifier where a new rule should be inserted.
+  -}
   :: CSSStyleSheetId
+  {-
   -- | The text of a new rule.
+  -}
   -> T.Text
+  {-
   -- | Text position of a new rule in the target style sheet.
+  -}
   -> CSSSourceRange
   -> PCSSAddRule
 pCSSAddRule
@@ -1091,7 +1097,9 @@ data PCSSCreateStyleSheet = PCSSCreateStyleSheet
   }
   deriving (Eq, Show)
 pCSSCreateStyleSheet
+  {-
   -- | Identifier of the frame where "via-inspector" stylesheet should be created.
+  -}
   :: DOMPageNetworkEmulationSecurity.PageFrameId
   -> PCSSCreateStyleSheet
 pCSSCreateStyleSheet
@@ -1161,9 +1169,13 @@ data PCSSForcePseudoState = PCSSForcePseudoState
   }
   deriving (Eq, Show)
 pCSSForcePseudoState
+  {-
   -- | The element id for which to force the pseudo state.
+  -}
   :: DOMPageNetworkEmulationSecurity.DOMNodeId
+  {-
   -- | Element pseudo classes to force when computing the element's style.
+  -}
   -> [T.Text]
   -> PCSSForcePseudoState
 pCSSForcePseudoState
@@ -1191,7 +1203,9 @@ data PCSSGetBackgroundColors = PCSSGetBackgroundColors
   }
   deriving (Eq, Show)
 pCSSGetBackgroundColors
+  {-
   -- | Id of the node to get background colors for.
+  -}
   :: DOMPageNetworkEmulationSecurity.DOMNodeId
   -> PCSSGetBackgroundColors
 pCSSGetBackgroundColors
@@ -1535,7 +1549,9 @@ data PCSSSetEffectivePropertyValueForNode = PCSSSetEffectivePropertyValueForNode
   }
   deriving (Eq, Show)
 pCSSSetEffectivePropertyValueForNode
+  {-
   -- | The element id for which to set property.
+  -}
   :: DOMPageNetworkEmulationSecurity.DOMNodeId
   -> T.Text
   -> T.Text
@@ -1957,7 +1973,9 @@ data PCSSSetLocalFontsEnabled = PCSSSetLocalFontsEnabled
   }
   deriving (Eq, Show)
 pCSSSetLocalFontsEnabled
+  {-
   -- | Whether rendering of local fonts is enabled.
+  -}
   :: Bool
   -> PCSSSetLocalFontsEnabled
 pCSSSetLocalFontsEnabled

@@ -288,7 +288,9 @@ data PAnimationGetCurrentTime = PAnimationGetCurrentTime
   }
   deriving (Eq, Show)
 pAnimationGetCurrentTime
+  {-
   -- | Id of animation.
+  -}
   :: T.Text
   -> PAnimationGetCurrentTime
 pAnimationGetCurrentTime
@@ -346,7 +348,9 @@ data PAnimationReleaseAnimations = PAnimationReleaseAnimations
   }
   deriving (Eq, Show)
 pAnimationReleaseAnimations
+  {-
   -- | List of animation ids to seek.
+  -}
   :: [T.Text]
   -> PAnimationReleaseAnimations
 pAnimationReleaseAnimations
@@ -372,7 +376,9 @@ data PAnimationResolveAnimation = PAnimationResolveAnimation
   }
   deriving (Eq, Show)
 pAnimationResolveAnimation
+  {-
   -- | Animation id.
+  -}
   :: T.Text
   -> PAnimationResolveAnimation
 pAnimationResolveAnimation
@@ -408,9 +414,13 @@ data PAnimationSeekAnimations = PAnimationSeekAnimations
   }
   deriving (Eq, Show)
 pAnimationSeekAnimations
+  {-
   -- | List of animation ids to seek.
+  -}
   :: [T.Text]
+  {-
   -- | Set the current time of each animation.
+  -}
   -> Double
   -> PAnimationSeekAnimations
 pAnimationSeekAnimations
@@ -441,9 +451,13 @@ data PAnimationSetPaused = PAnimationSetPaused
   }
   deriving (Eq, Show)
 pAnimationSetPaused
+  {-
   -- | Animations to set the pause state of.
+  -}
   :: [T.Text]
+  {-
   -- | Paused state to set to.
+  -}
   -> Bool
   -> PAnimationSetPaused
 pAnimationSetPaused
@@ -472,7 +486,9 @@ data PAnimationSetPlaybackRate = PAnimationSetPlaybackRate
   }
   deriving (Eq, Show)
 pAnimationSetPlaybackRate
+  {-
   -- | Playback rate for animations on page
+  -}
   :: Double
   -> PAnimationSetPlaybackRate
 pAnimationSetPlaybackRate
@@ -502,11 +518,17 @@ data PAnimationSetTiming = PAnimationSetTiming
   }
   deriving (Eq, Show)
 pAnimationSetTiming
+  {-
   -- | Animation id.
+  -}
   :: T.Text
+  {-
   -- | Duration of the animation.
+  -}
   -> Double
+  {-
   -- | Delay of the animation.
+  -}
   -> Double
   -> PAnimationSetTiming
 pAnimationSetTiming

@@ -74,7 +74,9 @@ data PTetheringBind = PTetheringBind
   }
   deriving (Eq, Show)
 pTetheringBind
+  {-
   -- | Port number to bind.
+  -}
   :: Int
   -> PTetheringBind
 pTetheringBind
@@ -100,7 +102,9 @@ data PTetheringUnbind = PTetheringUnbind
   }
   deriving (Eq, Show)
 pTetheringUnbind
+  {-
   -- | Port number to unbind.
+  -}
   :: Int
   -> PTetheringUnbind
 pTetheringUnbind

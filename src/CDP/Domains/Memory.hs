@@ -199,7 +199,9 @@ data PMemorySetPressureNotificationsSuppressed = PMemorySetPressureNotifications
   }
   deriving (Eq, Show)
 pMemorySetPressureNotificationsSuppressed
+  {-
   -- | If true, memory pressure notifications will be suppressed.
+  -}
   :: Bool
   -> PMemorySetPressureNotificationsSuppressed
 pMemorySetPressureNotificationsSuppressed
@@ -225,7 +227,9 @@ data PMemorySimulatePressureNotification = PMemorySimulatePressureNotification
   }
   deriving (Eq, Show)
 pMemorySimulatePressureNotification
+  {-
   -- | Memory pressure level of the notification.
+  -}
   :: MemoryPressureLevel
   -> PMemorySimulatePressureNotification
 pMemorySimulatePressureNotification

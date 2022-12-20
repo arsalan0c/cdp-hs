@@ -320,9 +320,13 @@ data PFetchFailRequest = PFetchFailRequest
   }
   deriving (Eq, Show)
 pFetchFailRequest
+  {-
   -- | An id the client received in requestPaused event.
+  -}
   :: FetchRequestId
+  {-
   -- | Causes the request to fail with the given reason.
+  -}
   -> DOMPageNetworkEmulationSecurity.NetworkErrorReason
   -> PFetchFailRequest
 pFetchFailRequest
@@ -367,9 +371,13 @@ data PFetchFulfillRequest = PFetchFulfillRequest
   }
   deriving (Eq, Show)
 pFetchFulfillRequest
+  {-
   -- | An id the client received in requestPaused event.
+  -}
   :: FetchRequestId
+  {-
   -- | An HTTP response code.
+  -}
   -> Int
   -> PFetchFulfillRequest
 pFetchFulfillRequest
@@ -418,7 +426,9 @@ data PFetchContinueRequest = PFetchContinueRequest
   }
   deriving (Eq, Show)
 pFetchContinueRequest
+  {-
   -- | An id the client received in requestPaused event.
+  -}
   :: FetchRequestId
   -> PFetchContinueRequest
 pFetchContinueRequest
@@ -456,9 +466,13 @@ data PFetchContinueWithAuth = PFetchContinueWithAuth
   }
   deriving (Eq, Show)
 pFetchContinueWithAuth
+  {-
   -- | An id the client received in authRequired event.
+  -}
   :: FetchRequestId
+  {-
   -- | Response to  with an authChallenge.
+  -}
   -> FetchAuthChallengeResponse
   -> PFetchContinueWithAuth
 pFetchContinueWithAuth
@@ -501,7 +515,9 @@ data PFetchContinueResponse = PFetchContinueResponse
   }
   deriving (Eq, Show)
 pFetchContinueResponse
+  {-
   -- | An id the client received in requestPaused event.
+  -}
   :: FetchRequestId
   -> PFetchContinueResponse
 pFetchContinueResponse
@@ -540,7 +556,9 @@ data PFetchGetResponseBody = PFetchGetResponseBody
   }
   deriving (Eq, Show)
 pFetchGetResponseBody
+  {-
   -- | Identifier for the intercepted request to get body for.
+  -}
   :: FetchRequestId
   -> PFetchGetResponseBody
 pFetchGetResponseBody

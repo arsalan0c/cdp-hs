@@ -240,12 +240,18 @@ data PInputDispatchDragEvent = PInputDispatchDragEvent
   }
   deriving (Eq, Show)
 pInputDispatchDragEvent
+  {-
   -- | Type of the drag event.
+  -}
   :: PInputDispatchDragEventType
+  {-
   -- | X coordinate of the event relative to the main frame's viewport in CSS pixels.
+  -}
   -> Double
+  {-
   -- | Y coordinate of the event relative to the main frame's viewport in CSS pixels. 0 refers to
   --   the top of the viewport and Y increases as it proceeds towards the bottom of the viewport.
+  -}
   -> Double
   -> InputDragData
   -> PInputDispatchDragEvent
@@ -333,7 +339,9 @@ data PInputDispatchKeyEvent = PInputDispatchKeyEvent
   }
   deriving (Eq, Show)
 pInputDispatchKeyEvent
+  {-
   -- | Type of the key event.
+  -}
   :: PInputDispatchKeyEventType
   -> PInputDispatchKeyEvent
 pInputDispatchKeyEvent
@@ -388,7 +396,9 @@ data PInputInsertText = PInputInsertText
   }
   deriving (Eq, Show)
 pInputInsertText
+  {-
   -- | The text to insert.
+  -}
   :: T.Text
   -> PInputInsertText
 pInputInsertText
@@ -424,11 +434,17 @@ data PInputImeSetComposition = PInputImeSetComposition
   }
   deriving (Eq, Show)
 pInputImeSetComposition
+  {-
   -- | The text to insert
+  -}
   :: T.Text
+  {-
   -- | selection start
+  -}
   -> Int
+  {-
   -- | selection end
+  -}
   -> Int
   -> PInputImeSetComposition
 pInputImeSetComposition
@@ -523,12 +539,18 @@ data PInputDispatchMouseEvent = PInputDispatchMouseEvent
   }
   deriving (Eq, Show)
 pInputDispatchMouseEvent
+  {-
   -- | Type of the mouse event.
+  -}
   :: PInputDispatchMouseEventType
+  {-
   -- | X coordinate of the event relative to the main frame's viewport in CSS pixels.
+  -}
   -> Double
+  {-
   -- | Y coordinate of the event relative to the main frame's viewport in CSS pixels. 0 refers to
   --   the top of the viewport and Y increases as it proceeds towards the bottom of the viewport.
+  -}
   -> Double
   -> PInputDispatchMouseEvent
 pInputDispatchMouseEvent
@@ -611,12 +633,16 @@ data PInputDispatchTouchEvent = PInputDispatchTouchEvent
   }
   deriving (Eq, Show)
 pInputDispatchTouchEvent
+  {-
   -- | Type of the touch event. TouchEnd and TouchCancel must not contain any touch points, while
   --   TouchStart and TouchMove must contains at least one.
+  -}
   :: PInputDispatchTouchEventType
+  {-
   -- | Active touch points on the touch device. One event per any changed point (compared to
   --   previous touch event in a sequence) is generated, emulating pressing/moving/releasing points
   --   one by one.
+  -}
   -> [InputTouchPoint]
   -> PInputDispatchTouchEvent
 pInputDispatchTouchEvent
@@ -681,13 +707,21 @@ data PInputEmulateTouchFromMouseEvent = PInputEmulateTouchFromMouseEvent
   }
   deriving (Eq, Show)
 pInputEmulateTouchFromMouseEvent
+  {-
   -- | Type of the mouse event.
+  -}
   :: PInputEmulateTouchFromMouseEventType
+  {-
   -- | X coordinate of the mouse pointer in DIP.
+  -}
   -> Int
+  {-
   -- | Y coordinate of the mouse pointer in DIP.
+  -}
   -> Int
+  {-
   -- | Mouse button. Only "none", "left", "right" are supported.
+  -}
   -> InputMouseButton
   -> PInputEmulateTouchFromMouseEvent
 pInputEmulateTouchFromMouseEvent
@@ -732,7 +766,9 @@ data PInputSetIgnoreInputEvents = PInputSetIgnoreInputEvents
   }
   deriving (Eq, Show)
 pInputSetIgnoreInputEvents
+  {-
   -- | Ignores input events processing when set to true.
+  -}
   :: Bool
   -> PInputSetIgnoreInputEvents
 pInputSetIgnoreInputEvents
@@ -792,11 +828,17 @@ data PInputSynthesizePinchGesture = PInputSynthesizePinchGesture
   }
   deriving (Eq, Show)
 pInputSynthesizePinchGesture
+  {-
   -- | X coordinate of the start of the gesture in CSS pixels.
+  -}
   :: Double
+  {-
   -- | Y coordinate of the start of the gesture in CSS pixels.
+  -}
   -> Double
+  {-
   -- | Relative scale factor after zooming (>1.0 zooms in, <1.0 zooms out).
+  -}
   -> Double
   -> PInputSynthesizePinchGesture
 pInputSynthesizePinchGesture
@@ -857,9 +899,13 @@ data PInputSynthesizeScrollGesture = PInputSynthesizeScrollGesture
   }
   deriving (Eq, Show)
 pInputSynthesizeScrollGesture
+  {-
   -- | X coordinate of the start of the gesture in CSS pixels.
+  -}
   :: Double
+  {-
   -- | Y coordinate of the start of the gesture in CSS pixels.
+  -}
   -> Double
   -> PInputSynthesizeScrollGesture
 pInputSynthesizeScrollGesture
@@ -917,9 +963,13 @@ data PInputSynthesizeTapGesture = PInputSynthesizeTapGesture
   }
   deriving (Eq, Show)
 pInputSynthesizeTapGesture
+  {-
   -- | X coordinate of the start of the gesture in CSS pixels.
+  -}
   :: Double
+  {-
   -- | Y coordinate of the start of the gesture in CSS pixels.
+  -}
   -> Double
   -> PInputSynthesizeTapGesture
 pInputSynthesizeTapGesture

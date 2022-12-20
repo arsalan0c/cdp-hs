@@ -275,7 +275,9 @@ data PLogStartViolationsReport = PLogStartViolationsReport
   }
   deriving (Eq, Show)
 pLogStartViolationsReport
+  {-
   -- | Configuration for violations.
+  -}
   :: [LogViolationSetting]
   -> PLogStartViolationsReport
 pLogStartViolationsReport

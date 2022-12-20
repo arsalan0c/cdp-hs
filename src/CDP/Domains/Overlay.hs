@@ -697,7 +697,9 @@ data POverlayGetHighlightObjectForTest = POverlayGetHighlightObjectForTest
   }
   deriving (Eq, Show)
 pOverlayGetHighlightObjectForTest
+  {-
   -- | Id of the node to get highlight object for.
+  -}
   :: DOMPageNetworkEmulationSecurity.DOMNodeId
   -> POverlayGetHighlightObjectForTest
 pOverlayGetHighlightObjectForTest
@@ -739,7 +741,9 @@ data POverlayGetGridHighlightObjectsForTest = POverlayGetGridHighlightObjectsFor
   }
   deriving (Eq, Show)
 pOverlayGetGridHighlightObjectsForTest
+  {-
   -- | Ids of the node to get highlight object for.
+  -}
   :: [DOMPageNetworkEmulationSecurity.DOMNodeId]
   -> POverlayGetGridHighlightObjectsForTest
 pOverlayGetGridHighlightObjectsForTest
@@ -773,7 +777,9 @@ data POverlayGetSourceOrderHighlightObjectForTest = POverlayGetSourceOrderHighli
   }
   deriving (Eq, Show)
 pOverlayGetSourceOrderHighlightObjectForTest
+  {-
   -- | Id of the node to highlight.
+  -}
   :: DOMPageNetworkEmulationSecurity.DOMNodeId
   -> POverlayGetSourceOrderHighlightObjectForTest
 pOverlayGetSourceOrderHighlightObjectForTest
@@ -832,7 +838,9 @@ data POverlayHighlightNode = POverlayHighlightNode
   }
   deriving (Eq, Show)
 pOverlayHighlightNode
+  {-
   -- | A descriptor for the highlight appearance.
+  -}
   :: OverlayHighlightConfig
   -> POverlayHighlightNode
 pOverlayHighlightNode
@@ -870,7 +878,9 @@ data POverlayHighlightQuad = POverlayHighlightQuad
   }
   deriving (Eq, Show)
 pOverlayHighlightQuad
+  {-
   -- | Quad to highlight
+  -}
   :: DOMPageNetworkEmulationSecurity.DOMQuad
   -> POverlayHighlightQuad
 pOverlayHighlightQuad
@@ -910,13 +920,21 @@ data POverlayHighlightRect = POverlayHighlightRect
   }
   deriving (Eq, Show)
 pOverlayHighlightRect
+  {-
   -- | X coordinate
+  -}
   :: Int
+  {-
   -- | Y coordinate
+  -}
   -> Int
+  {-
   -- | Rectangle width
+  -}
   -> Int
+  {-
   -- | Rectangle height
+  -}
   -> Int
   -> POverlayHighlightRect
 pOverlayHighlightRect
@@ -962,7 +980,9 @@ data POverlayHighlightSourceOrder = POverlayHighlightSourceOrder
   }
   deriving (Eq, Show)
 pOverlayHighlightSourceOrder
+  {-
   -- | A descriptor for the appearance of the overlay drawing.
+  -}
   :: OverlaySourceOrderConfig
   -> POverlayHighlightSourceOrder
 pOverlayHighlightSourceOrder
@@ -998,7 +1018,9 @@ data POverlaySetInspectMode = POverlaySetInspectMode
   }
   deriving (Eq, Show)
 pOverlaySetInspectMode
+  {-
   -- | Set an inspection mode.
+  -}
   :: OverlayInspectMode
   -> POverlaySetInspectMode
 pOverlaySetInspectMode
@@ -1026,7 +1048,9 @@ data POverlaySetShowAdHighlights = POverlaySetShowAdHighlights
   }
   deriving (Eq, Show)
 pOverlaySetShowAdHighlights
+  {-
   -- | True for showing ad highlights
+  -}
   :: Bool
   -> POverlaySetShowAdHighlights
 pOverlaySetShowAdHighlights
@@ -1074,7 +1098,9 @@ data POverlaySetShowDebugBorders = POverlaySetShowDebugBorders
   }
   deriving (Eq, Show)
 pOverlaySetShowDebugBorders
+  {-
   -- | True for showing debug borders
+  -}
   :: Bool
   -> POverlaySetShowDebugBorders
 pOverlaySetShowDebugBorders
@@ -1100,7 +1126,9 @@ data POverlaySetShowFPSCounter = POverlaySetShowFPSCounter
   }
   deriving (Eq, Show)
 pOverlaySetShowFPSCounter
+  {-
   -- | True for showing the FPS counter
+  -}
   :: Bool
   -> POverlaySetShowFPSCounter
 pOverlaySetShowFPSCounter
@@ -1126,7 +1154,9 @@ data POverlaySetShowGridOverlays = POverlaySetShowGridOverlays
   }
   deriving (Eq, Show)
 pOverlaySetShowGridOverlays
+  {-
   -- | An array of node identifiers and descriptors for the highlight appearance.
+  -}
   :: [OverlayGridNodeHighlightConfig]
   -> POverlaySetShowGridOverlays
 pOverlaySetShowGridOverlays
@@ -1151,7 +1181,9 @@ data POverlaySetShowFlexOverlays = POverlaySetShowFlexOverlays
   }
   deriving (Eq, Show)
 pOverlaySetShowFlexOverlays
+  {-
   -- | An array of node identifiers and descriptors for the highlight appearance.
+  -}
   :: [OverlayFlexNodeHighlightConfig]
   -> POverlaySetShowFlexOverlays
 pOverlaySetShowFlexOverlays
@@ -1176,7 +1208,9 @@ data POverlaySetShowScrollSnapOverlays = POverlaySetShowScrollSnapOverlays
   }
   deriving (Eq, Show)
 pOverlaySetShowScrollSnapOverlays
+  {-
   -- | An array of node identifiers and descriptors for the highlight appearance.
+  -}
   :: [OverlayScrollSnapHighlightConfig]
   -> POverlaySetShowScrollSnapOverlays
 pOverlaySetShowScrollSnapOverlays
@@ -1201,7 +1235,9 @@ data POverlaySetShowContainerQueryOverlays = POverlaySetShowContainerQueryOverla
   }
   deriving (Eq, Show)
 pOverlaySetShowContainerQueryOverlays
+  {-
   -- | An array of node identifiers and descriptors for the highlight appearance.
+  -}
   :: [OverlayContainerQueryHighlightConfig]
   -> POverlaySetShowContainerQueryOverlays
 pOverlaySetShowContainerQueryOverlays
@@ -1227,7 +1263,9 @@ data POverlaySetShowPaintRects = POverlaySetShowPaintRects
   }
   deriving (Eq, Show)
 pOverlaySetShowPaintRects
+  {-
   -- | True for showing paint rectangles
+  -}
   :: Bool
   -> POverlaySetShowPaintRects
 pOverlaySetShowPaintRects
@@ -1253,7 +1291,9 @@ data POverlaySetShowLayoutShiftRegions = POverlaySetShowLayoutShiftRegions
   }
   deriving (Eq, Show)
 pOverlaySetShowLayoutShiftRegions
+  {-
   -- | True for showing layout shift regions
+  -}
   :: Bool
   -> POverlaySetShowLayoutShiftRegions
 pOverlaySetShowLayoutShiftRegions
@@ -1279,7 +1319,9 @@ data POverlaySetShowScrollBottleneckRects = POverlaySetShowScrollBottleneckRects
   }
   deriving (Eq, Show)
 pOverlaySetShowScrollBottleneckRects
+  {-
   -- | True for showing scroll bottleneck rects
+  -}
   :: Bool
   -> POverlaySetShowScrollBottleneckRects
 pOverlaySetShowScrollBottleneckRects
@@ -1329,7 +1371,9 @@ data POverlaySetShowViewportSizeOnResize = POverlaySetShowViewportSizeOnResize
   }
   deriving (Eq, Show)
 pOverlaySetShowViewportSizeOnResize
+  {-
   -- | Whether to paint size or not.
+  -}
   :: Bool
   -> POverlaySetShowViewportSizeOnResize
 pOverlaySetShowViewportSizeOnResize
@@ -1378,7 +1422,9 @@ data POverlaySetShowIsolatedElements = POverlaySetShowIsolatedElements
   }
   deriving (Eq, Show)
 pOverlaySetShowIsolatedElements
+  {-
   -- | An array of node identifiers and descriptors for the highlight appearance.
+  -}
   :: [OverlayIsolatedElementHighlightConfig]
   -> POverlaySetShowIsolatedElements
 pOverlaySetShowIsolatedElements

@@ -61,7 +61,9 @@ data PEventBreakpointsSetInstrumentationBreakpoint = PEventBreakpointsSetInstrum
   }
   deriving (Eq, Show)
 pEventBreakpointsSetInstrumentationBreakpoint
+  {-
   -- | Instrumentation name to stop on.
+  -}
   :: T.Text
   -> PEventBreakpointsSetInstrumentationBreakpoint
 pEventBreakpointsSetInstrumentationBreakpoint
@@ -87,7 +89,9 @@ data PEventBreakpointsRemoveInstrumentationBreakpoint = PEventBreakpointsRemoveI
   }
   deriving (Eq, Show)
 pEventBreakpointsRemoveInstrumentationBreakpoint
+  {-
   -- | Instrumentation name to stop on.
+  -}
   :: T.Text
   -> PEventBreakpointsRemoveInstrumentationBreakpoint
 pEventBreakpointsRemoveInstrumentationBreakpoint

@@ -64,7 +64,9 @@ data PIOClose = PIOClose
   }
   deriving (Eq, Show)
 pIOClose
+  {-
   -- | Handle of the stream to close.
+  -}
   :: IOStreamHandle
   -> PIOClose
 pIOClose
@@ -95,7 +97,9 @@ data PIORead = PIORead
   }
   deriving (Eq, Show)
 pIORead
+  {-
   -- | Handle of the stream to read.
+  -}
   :: IOStreamHandle
   -> PIORead
 pIORead
@@ -139,7 +143,9 @@ data PIOResolveBlob = PIOResolveBlob
   }
   deriving (Eq, Show)
 pIOResolveBlob
+  {-
   -- | Object id of a Blob object wrapper.
+  -}
   :: Runtime.RuntimeRemoteObjectId
   -> PIOResolveBlob
 pIOResolveBlob

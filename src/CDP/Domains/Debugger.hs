@@ -588,7 +588,9 @@ data PDebuggerContinueToLocation = PDebuggerContinueToLocation
   }
   deriving (Eq, Show)
 pDebuggerContinueToLocation
+  {-
   -- | Location to continue to.
+  -}
   :: DebuggerLocation
   -> PDebuggerContinueToLocation
 pDebuggerContinueToLocation
@@ -684,9 +686,13 @@ data PDebuggerEvaluateOnCallFrame = PDebuggerEvaluateOnCallFrame
   }
   deriving (Eq, Show)
 pDebuggerEvaluateOnCallFrame
+  {-
   -- | Call frame identifier to evaluate on.
+  -}
   :: DebuggerCallFrameId
+  {-
   -- | Expression to evaluate.
+  -}
   -> T.Text
   -> PDebuggerEvaluateOnCallFrame
 pDebuggerEvaluateOnCallFrame
@@ -746,7 +752,9 @@ data PDebuggerGetPossibleBreakpoints = PDebuggerGetPossibleBreakpoints
   }
   deriving (Eq, Show)
 pDebuggerGetPossibleBreakpoints
+  {-
   -- | Start of range to search possible breakpoint locations in.
+  -}
   :: DebuggerLocation
   -> PDebuggerGetPossibleBreakpoints
 pDebuggerGetPossibleBreakpoints
@@ -784,7 +792,9 @@ data PDebuggerGetScriptSource = PDebuggerGetScriptSource
   }
   deriving (Eq, Show)
 pDebuggerGetScriptSource
+  {-
   -- | Id of the script to get source for.
+  -}
   :: Runtime.RuntimeScriptId
   -> PDebuggerGetScriptSource
 pDebuggerGetScriptSource
@@ -820,7 +830,9 @@ data PDebuggerDisassembleWasmModule = PDebuggerDisassembleWasmModule
   }
   deriving (Eq, Show)
 pDebuggerDisassembleWasmModule
+  {-
   -- | Id of the script to disassemble
+  -}
   :: Runtime.RuntimeScriptId
   -> PDebuggerDisassembleWasmModule
 pDebuggerDisassembleWasmModule
@@ -995,7 +1007,9 @@ data PDebuggerRestartFrame = PDebuggerRestartFrame
   }
   deriving (Eq, Show)
 pDebuggerRestartFrame
+  {-
   -- | Call frame identifier to evaluate on.
+  -}
   :: DebuggerCallFrameId
   -> PDebuggerRestartFrame
 pDebuggerRestartFrame
@@ -1056,9 +1070,13 @@ data PDebuggerSearchInContent = PDebuggerSearchInContent
   }
   deriving (Eq, Show)
 pDebuggerSearchInContent
+  {-
   -- | Id of the script to search in.
+  -}
   :: Runtime.RuntimeScriptId
+  {-
   -- | String to search for.
+  -}
   -> T.Text
   -> PDebuggerSearchInContent
 pDebuggerSearchInContent
@@ -1100,8 +1118,10 @@ data PDebuggerSetAsyncCallStackDepth = PDebuggerSetAsyncCallStackDepth
   }
   deriving (Eq, Show)
 pDebuggerSetAsyncCallStackDepth
+  {-
   -- | Maximum depth of async call stacks. Setting to `0` will effectively disable collecting async
   --   call stacks (default).
+  -}
   :: Int
   -> PDebuggerSetAsyncCallStackDepth
 pDebuggerSetAsyncCallStackDepth
@@ -1129,7 +1149,9 @@ data PDebuggerSetBlackboxPatterns = PDebuggerSetBlackboxPatterns
   }
   deriving (Eq, Show)
 pDebuggerSetBlackboxPatterns
+  {-
   -- | Array of regexps that will be used to check script url for blackbox state.
+  -}
   :: [T.Text]
   -> PDebuggerSetBlackboxPatterns
 pDebuggerSetBlackboxPatterns
@@ -1159,7 +1181,9 @@ data PDebuggerSetBlackboxedRanges = PDebuggerSetBlackboxedRanges
   }
   deriving (Eq, Show)
 pDebuggerSetBlackboxedRanges
+  {-
   -- | Id of the script.
+  -}
   :: Runtime.RuntimeScriptId
   -> [DebuggerScriptPosition]
   -> PDebuggerSetBlackboxedRanges
@@ -1192,7 +1216,9 @@ data PDebuggerSetBreakpoint = PDebuggerSetBreakpoint
   }
   deriving (Eq, Show)
 pDebuggerSetBreakpoint
+  {-
   -- | Location to set breakpoint in.
+  -}
   :: DebuggerLocation
   -> PDebuggerSetBreakpoint
 pDebuggerSetBreakpoint
@@ -1242,7 +1268,9 @@ data PDebuggerSetInstrumentationBreakpoint = PDebuggerSetInstrumentationBreakpoi
   }
   deriving (Eq, Show)
 pDebuggerSetInstrumentationBreakpoint
+  {-
   -- | Instrumentation name.
+  -}
   :: PDebuggerSetInstrumentationBreakpointInstrumentation
   -> PDebuggerSetInstrumentationBreakpoint
 pDebuggerSetInstrumentationBreakpoint
@@ -1291,7 +1319,9 @@ data PDebuggerSetBreakpointByUrl = PDebuggerSetBreakpointByUrl
   }
   deriving (Eq, Show)
 pDebuggerSetBreakpointByUrl
+  {-
   -- | Line number to set breakpoint at.
+  -}
   :: Int
   -> PDebuggerSetBreakpointByUrl
 pDebuggerSetBreakpointByUrl
@@ -1343,7 +1373,9 @@ data PDebuggerSetBreakpointOnFunctionCall = PDebuggerSetBreakpointOnFunctionCall
   }
   deriving (Eq, Show)
 pDebuggerSetBreakpointOnFunctionCall
+  {-
   -- | Function object id.
+  -}
   :: Runtime.RuntimeRemoteObjectId
   -> PDebuggerSetBreakpointOnFunctionCall
 pDebuggerSetBreakpointOnFunctionCall
@@ -1379,7 +1411,9 @@ data PDebuggerSetBreakpointsActive = PDebuggerSetBreakpointsActive
   }
   deriving (Eq, Show)
 pDebuggerSetBreakpointsActive
+  {-
   -- | New value for breakpoints active state.
+  -}
   :: Bool
   -> PDebuggerSetBreakpointsActive
 pDebuggerSetBreakpointsActive
@@ -1419,7 +1453,9 @@ data PDebuggerSetPauseOnExceptions = PDebuggerSetPauseOnExceptions
   }
   deriving (Eq, Show)
 pDebuggerSetPauseOnExceptions
+  {-
   -- | Pause on exceptions mode.
+  -}
   :: PDebuggerSetPauseOnExceptionsState
   -> PDebuggerSetPauseOnExceptions
 pDebuggerSetPauseOnExceptions
@@ -1445,7 +1481,9 @@ data PDebuggerSetReturnValue = PDebuggerSetReturnValue
   }
   deriving (Eq, Show)
 pDebuggerSetReturnValue
+  {-
   -- | New return value.
+  -}
   :: Runtime.RuntimeCallArgument
   -> PDebuggerSetReturnValue
 pDebuggerSetReturnValue
@@ -1485,9 +1523,13 @@ data PDebuggerSetScriptSource = PDebuggerSetScriptSource
   }
   deriving (Eq, Show)
 pDebuggerSetScriptSource
+  {-
   -- | Id of the script to edit.
+  -}
   :: Runtime.RuntimeScriptId
+  {-
   -- | New content of the script.
+  -}
   -> T.Text
   -> PDebuggerSetScriptSource
 pDebuggerSetScriptSource
@@ -1548,7 +1590,9 @@ data PDebuggerSetSkipAllPauses = PDebuggerSetSkipAllPauses
   }
   deriving (Eq, Show)
 pDebuggerSetSkipAllPauses
+  {-
   -- | New value for skip pauses state.
+  -}
   :: Bool
   -> PDebuggerSetSkipAllPauses
 pDebuggerSetSkipAllPauses
@@ -1582,14 +1626,22 @@ data PDebuggerSetVariableValue = PDebuggerSetVariableValue
   }
   deriving (Eq, Show)
 pDebuggerSetVariableValue
+  {-
   -- | 0-based number of scope as was listed in scope chain. Only 'local', 'closure' and 'catch'
   --   scope types are allowed. Other scopes could be manipulated manually.
+  -}
   :: Int
+  {-
   -- | Variable name.
+  -}
   -> T.Text
+  {-
   -- | New variable value.
+  -}
   -> Runtime.RuntimeCallArgument
+  {-
   -- | Id of callframe that holds variable.
+  -}
   -> DebuggerCallFrameId
   -> PDebuggerSetVariableValue
 pDebuggerSetVariableValue

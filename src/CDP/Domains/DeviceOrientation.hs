@@ -77,11 +77,17 @@ data PDeviceOrientationSetDeviceOrientationOverride = PDeviceOrientationSetDevic
   }
   deriving (Eq, Show)
 pDeviceOrientationSetDeviceOrientationOverride
+  {-
   -- | Mock alpha
+  -}
   :: Double
+  {-
   -- | Mock beta
+  -}
   -> Double
+  {-
   -- | Mock gamma
+  -}
   -> Double
   -> PDeviceOrientationSetDeviceOrientationOverride
 pDeviceOrientationSetDeviceOrientationOverride

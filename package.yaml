@@ -84,14 +84,7 @@ executables:
     main: sessions.hs
     dependencies:
       - cdp
-
-  cdp-example-har:
-    source-dirs: examples
-    main: export-har.hs
-    dependencies:
-      - cdp
-      - har
-
+      
 tests:
   cdp-test:
     source-dirs: test

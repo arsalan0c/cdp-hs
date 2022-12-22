@@ -1,5 +1,5 @@
 name: cdp
-version: 0.0.1.0
+version: 0.0.1.1
 synopsis: A library for the Chrome Devtools Protocol (CDP)
 description:
   "

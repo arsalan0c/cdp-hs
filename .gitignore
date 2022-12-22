@@ -5,7 +5,6 @@ result
 result-*
 
 # haskell
-*.cabal
 dist
 dist-newstyle
 cabal-dev

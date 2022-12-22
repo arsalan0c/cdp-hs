@@ -1,12 +1,17 @@
 name: cdp
 version: 0.0.1.1
-synopsis: A library for the Chrome Devtools Protocol (CDP)
+synopsis: A library for the Chrome Devtools Protocol
 description:
   "
+  A library for the Chrome Devtools Protocol.
+  
+
   Chrome Devtools Protocol: https://chromedevtools.github.io/devtools-protocol/
+  
 
   README: <https://github.com/arsalan0c/cdp-hs>
   
+
   Examples: <https://github.com/arsalan0c/cdp-hs/examples>
   "
 author: Arsalan Cheema

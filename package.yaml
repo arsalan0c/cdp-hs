@@ -1,11 +1,17 @@
 name: cdp
-version: 0.0.1.0
-synopsis: A library for the Chrome Devtools Protocol (CDP)
+version: 0.0.1.1
+synopsis: A library for the Chrome Devtools Protocol
 description:
   "
-  Chrome Devtools Protocol: https://chromedevtools.github.io/devtools-protocol/
+  A library for the Chrome Devtools Protocol (CDP).
+  It provides access to Chrome, enabling tasks such as printing a page or opening a tab.
 
+  
+  Chrome Devtools Protocol: <https://chromedevtools.github.io/devtools-protocol/>
+
+  
   README: <https://github.com/arsalan0c/cdp-hs>
+
   
   Examples: <https://github.com/arsalan0c/cdp-hs/examples>
   "
@@ -14,6 +20,8 @@ maintainer: Arsalan Cheema
 github: arsalan0c/cdp-hs
 category: Package.Category
 license: BSD-3-Clause
+verbatim:
+  cabal-version: 3.0
 
 extra-doc-files:
   - README.md
@@ -24,25 +32,23 @@ library:
     - gen
 
 dependencies:
-  - base  ==4.14.3.0
-  - aeson ==1.5.6.0
-  - text  ==1.2.4.1
-  - bytestring ==0.10.12.0
-  - containers ==0.6.5.1
-  - data-default ==0.7.1.1
-  - http-conduit ==2.3.8
-  - mtl ==2.2.2
-  - network-uri ==2.6.4.1
-  - extra ==1.7.9
-  - text ==1.2.4.1
-  - vector ==0.12.3.1
-  - websockets ==0.12.7.3
-  - random ==1.2.0
-  - monad-loops ==0.4.3
-  - data-default ==0.7.1.1
-  - process ==1.6.13.2
-  - filepath ==1.4.2.1
-  - directory ==1.3.6.0
+- aeson                             >= 1.5.6 && < 1.6
+- base                              >= 4.14.3 && < 4.15
+- bytestring                        >= 0.10.12 && < 0.11
+- containers                        >= 0.6.5 && < 0.7
+- text                              >= 1.2.4 && < 1.3
+- random                            >= 1.2.0 && < 1.3
+- mtl                               >= 2.2.2 && < 2.3
+- vector                            >= 0.12.3 && < 0.13
+- data-default                      >= 0.7.1 && < 0.8
+- directory                         >= 1.3.6 && < 1.4
+- filepath                          >= 1.4.2 && < 1.5
+- extra                             >= 1.7.9 && < 1.8
+- process                           >= 1.6.13 && < 1.7
+- http-conduit                      >= 2.3.8 && < 2.4
+- network-uri                       >= 2.6.4 && < 2.7
+- monad-loops                       >= 0.4.3 && < 0.5
+- websockets                        >= 0.12.7 && < 0.13
 
 executables:
   cdp-gen:
@@ -56,7 +62,7 @@ executables:
     main: print-page.hs
     dependencies:
       - cdp
-      - base64-bytestring
+      - base64-bytestring                 >= 1.1.0 && < 1.2
 
   cdp-example-subscribe:
     source-dirs: examples
@@ -75,9 +81,9 @@ executables:
     main: endpoints.hs
     dependencies:
       - cdp
-      - blaze-html
-      - blaze-markup
-      - utf8-string
+      - blaze-html                        >= 0.9.1 && < 0.10
+      - blaze-markup                      >= 0.8.2 && < 0.9
+      - utf8-string                       >= 1.0.2 && < 1.1
 
   cdp-example-sessions:
     source-dirs: examples

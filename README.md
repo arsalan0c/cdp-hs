@@ -64,6 +64,8 @@ whileTrue f act = do
         else pure [a]
 ```
 
+More examples can be found in `examples`.
+
 ## Generating the CDP library
 
 ```
@@ -75,13 +77,9 @@ cabal run cdp-gen
 [Project board](https://github.com/users/arsalan0c/projects/1)
 
 Commands and events for all non-deprecated domains are supported.
-The following session functionalities are supported:
-- creating a session: obtain a session id by using the `pTargetAttachToTarget` function to send a `Target.attachToTarget` command, passing `True` for the flatten argument
-- send a command for a particular session: use the `sendCommandForSession` function with a session id
-- subscribe to events for a particular session: 
-  1. register a handler with a session id 
-  2. send the command to enable events for the domain, with the same session id
 
+Sessions can also be created with a target (such as a tab), which can be used to restrict the scope of commands and events for the target.
+See `examples/sessions.hs` for example usage.
 ## Contributing
 
 PRs are welcome! If you would like to discuss changes or have any feedback, feel free to open an [issue](https://github.com/arsalan0c/cdp-hs/issues).

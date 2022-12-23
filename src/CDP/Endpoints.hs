@@ -133,7 +133,7 @@ instance FromJSON TargetInfo where
 
 browserAddress :: (String, Int) -> IO (String, Int, String)
 browserAddress hostPort = fromMaybe (throw . ERRParse $ "invalid URI when connecting to browser") . 
-    parseUri . T.unpack . bvWebSocketDebuggerUrl <$> getEndpoint hostPort EPBrowserVersion
+    parseUri . T.unpack . tiWebSocketDebuggerUrl . head <$> getEndpoint hostPort EPAllTargets
 
 getRequest :: (String, Int) -> [T.Text] -> Maybe T.Text -> Http.Request
 getRequest (host, port) path mbParam = Http.parseRequest_ . T.unpack $ r

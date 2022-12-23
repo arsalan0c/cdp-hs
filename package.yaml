@@ -90,7 +90,7 @@ executables:
     main: sessions.hs
     dependencies:
       - cdp
-      
+            
 tests:
   cdp-test:
     source-dirs: test

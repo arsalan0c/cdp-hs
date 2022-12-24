@@ -25,6 +25,7 @@ main = hspec $ do
                 ]
 
     targetInfo <- runIO $ CDP.connectToTab def "https://haskell.foundation"
+    runIO $ threadDelay 1
     let cfg      = def
     describe "Command responses of the expected type are received" $ do
         it "sends commands: w/o params w/o results" $ do

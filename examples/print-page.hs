@@ -13,9 +13,7 @@ import qualified Data.Text.Lazy.Encoding as TL
 import qualified CDP as CDP
 
 main :: IO ()
-main = do
-    let cfg = def
-    CDP.runClient cfg printPDF
+main = CDP.runClient def printPDF
 
 printPDF :: CDP.Handle -> IO ()
 printPDF handle = do

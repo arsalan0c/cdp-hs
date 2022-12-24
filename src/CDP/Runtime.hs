@@ -59,8 +59,11 @@ runClient config app = do
     responseBuffer <- newMVar []
 
     (host, port, path) <- do
-        let hp@(host,port) = hostPort config
-        maybe (browserAddress hp) (\path -> pure (host, port, path)) $ path config
+        let hp = hostPort config
+        if connectToBrowser config
+            then browserAddress hp
+            else pageAddress hp
+
     WS.runClient host port path $ \conn -> do
         let listen = forkIO $ do
                 listenThread <- myThreadId

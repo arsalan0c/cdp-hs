@@ -18,7 +18,7 @@ main = do
 -- Attaches to target, returning the session id
 attachTarget :: CDP.Handle -> IO T.Text
 attachTarget handle = do
-    -- get a target id
+    -- get a target id by sending the Target.getTargets command
     targetInfo <- head . CDP.targetGetTargetsTargetInfos <$> 
         (CDP.sendCommandWait handle $ CDP.PTargetGetTargets Nothing)
     let targetId = CDP.targetTargetInfoTargetId targetInfo

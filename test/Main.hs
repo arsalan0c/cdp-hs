@@ -6,8 +6,6 @@ import Test.Hspec
 import Control.Monad
 import Data.Default
 import Control.Concurrent
-import Data.Maybe
-import qualified Data.Text as T
 
 import qualified CDP as CDP
 
@@ -27,14 +25,14 @@ main = hspec $ do
                 ]
 
     targetInfo <- runIO $ CDP.connectToTab def "https://haskell.foundation"
-    let (host,port,path) = fromMaybe (error "invalid uri") . CDP.parseUri . T.unpack . CDP.tiWebSocketDebuggerUrl $ targetInfo
-        cfg      = def{CDP.hostPort = (host,port), CDP.path = Just path}
-        targetId = CDP.tiId targetInfo
-
+    runIO $ threadDelay 1
+    let cfg      = def
     describe "Command responses of the expected type are received" $ do
         it "sends commands: w/o params w/o results" $ do
             CDP.runClient cfg $ \handle -> do
-                CDP.sendCommandForSessionWait handle targetId CDP.PBrowserCrashGpuProcess
+                sessionId <- CDP.targetAttachToTargetSessionId <$> 
+                    (CDP.sendCommandWait handle $ CDP.PTargetAttachToTarget (CDP.tiId targetInfo) (Just True))
+                CDP.sendCommandForSessionWait handle sessionId CDP.PBrowserCrashGpuProcess
         
         it "sends commands: w/o params w/ results" $ do
             void $ CDP.runClient cfg $ \handle -> do

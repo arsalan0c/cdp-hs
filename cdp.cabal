@@ -8,11 +8,11 @@ name:           cdp
 version:        0.0.1.1
 synopsis:       A library for the Chrome Devtools Protocol
 description:     A library for the Chrome Devtools Protocol (CDP). It provides access to Chrome, enabling tasks such as printing a page or opening a tab.
-                
+                .
                 Chrome Devtools Protocol: <https://chromedevtools.github.io/devtools-protocol/>
-                
+                .
                 README: <https://github.com/arsalan0c/cdp-hs>
-                
+                .
                 Examples: <https://github.com/arsalan0c/cdp-hs/examples> 
 category:       Package.Category
 homepage:       https://github.com/arsalan0c/cdp-hs#readme

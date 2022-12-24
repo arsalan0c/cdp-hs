@@ -62,9 +62,9 @@ data Handle = Handle
 
 data Config = Config
     { hostPort           :: (String, Int)
-      -- | WebSocket path to connect to. 
-      --   If Nothing, the initial connection is made to the browser.
-    , path               :: Maybe String 
+      -- | Target of initial connection. 
+      --   If False, the initial connection is made to the page.
+    , connectToBrowser   :: Bool
     , doLogResponses     :: Bool
       -- | Number of microseconds to wait for a command response.
       --   Waits forever if Nothing.
@@ -73,10 +73,10 @@ data Config = Config
 instance Default Config where
     def = Config{..}
       where
-        hostPort       = ("http://127.0.0.1", 9222)
-        path           = def
-        doLogResponses = False
-        commandTimeout = def
+        hostPort         = ("http://127.0.0.1", 9222)
+        connectToBrowser = False
+        doLogResponses   = False
+        commandTimeout   = def
 
 class FromJSON a => Event a where
     eventName :: Proxy a -> String

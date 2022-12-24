@@ -29,9 +29,7 @@ import qualified Data.Text.Lazy.Encoding as TL
 import qualified CDP as CDP
 
 main :: IO ()
-main = do
-    let cfg = def
-    CDP.runClient cfg printPDF
+main = CDP.runClient def printPDF
 
 printPDF :: CDP.Handle -> IO ()
 printPDF handle = do
@@ -62,6 +60,7 @@ whileTrue f act = do
     if f a
         then pure . (a :) =<< whileTrue f act
         else pure [a]
+
 ```
 
 More examples can be found in `examples`.

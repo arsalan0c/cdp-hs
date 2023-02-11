@@ -88,8 +88,8 @@ library
       gen
   build-depends:
       aeson >=1.5.6 && <3
-    , base >=4.14.3 && <4.16
-    , bytestring >=0.10.12 && <0.11
+    , base >=4.14.3 && <4.17
+    , bytestring >=0.10.12 && <0.12
     , containers >=0.6.4 && <0.7
     , data-default >=0.7.1 && <0.8
     , directory >=1.3.6 && <1.4
@@ -116,10 +116,10 @@ executable cdp-example-endpoints
       examples
   build-depends:
       aeson >=1.5.6 && <3
-    , base >=4.14.3 && <4.16
+    , base >=4.14.3 && <4.17
     , blaze-html >=0.9.1 && <0.10
     , blaze-markup >=0.8.2 && <0.9
-    , bytestring >=0.10.12 && <0.11
+    , bytestring >=0.10.12 && <0.12
     , cdp
     , containers >=0.6.4 && <0.7
     , data-default >=0.7.1 && <0.8
@@ -148,8 +148,8 @@ executable cdp-example-open-twitter
       examples
   build-depends:
       aeson >=1.5.6 && <3
-    , base >=4.14.3 && <4.16
-    , bytestring >=0.10.12 && <0.11
+    , base >=4.14.3 && <4.17
+    , bytestring >=0.10.12 && <0.12
     , cdp
     , containers >=0.6.4 && <0.7
     , data-default >=0.7.1 && <0.8
@@ -177,9 +177,9 @@ executable cdp-example-print-page
       examples
   build-depends:
       aeson >=1.5.6 && <3
-    , base >=4.14.3 && <4.16
+    , base >=4.14.3 && <4.17
     , base64-bytestring >=1.1.0 && <1.3
-    , bytestring >=0.10.12 && <0.11
+    , bytestring >=0.10.12 && <0.12
     , cdp
     , containers >=0.6.4 && <0.7
     , data-default >=0.7.1 && <0.8
@@ -207,8 +207,8 @@ executable cdp-example-sessions
       examples
   build-depends:
       aeson >=1.5.6 && <3
-    , base >=4.14.3 && <4.16
-    , bytestring >=0.10.12 && <0.11
+    , base >=4.14.3 && <4.17
+    , bytestring >=0.10.12 && <0.12
     , cdp
     , containers >=0.6.4 && <0.7
     , data-default >=0.7.1 && <0.8
@@ -236,8 +236,8 @@ executable cdp-example-subscribe
       examples
   build-depends:
       aeson >=1.5.6 && <3
-    , base >=4.14.3 && <4.16
-    , bytestring >=0.10.12 && <0.11
+    , base >=4.14.3 && <4.17
+    , bytestring >=0.10.12 && <0.12
     , cdp
     , containers >=0.6.4 && <0.7
     , data-default >=0.7.1 && <0.8
@@ -271,8 +271,8 @@ executable cdp-gen
       Strict
   build-depends:
       aeson >=1.5.6 && <3
-    , base >=4.14.3 && <4.16
-    , bytestring >=0.10.12 && <0.11
+    , base >=4.14.3 && <4.17
+    , bytestring >=0.10.12 && <0.12
     , containers >=0.6.4 && <0.7
     , data-default >=0.7.1 && <0.8
     , directory >=1.3.6 && <1.4
@@ -301,8 +301,8 @@ test-suite cdp-test
   ghc-options: -Wall -threaded
   build-depends:
       aeson >=1.5.6 && <3
-    , base >=4.14.3 && <4.16
-    , bytestring >=0.10.12 && <0.11
+    , base >=4.14.3 && <4.17
+    , bytestring >=0.10.12 && <0.12
     , cdp
     , containers >=0.6.4 && <0.7
     , data-default >=0.7.1 && <0.8

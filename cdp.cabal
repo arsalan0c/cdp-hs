@@ -1,6 +1,6 @@
 cabal-version: 3.0
 
--- This file has been generated from package.yaml by hpack version 0.34.6.
+-- This file has been generated from package.yaml by hpack version 0.35.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -87,10 +87,10 @@ library
       src
       gen
   build-depends:
-      aeson >=1.5.6 && <1.6
-    , base >=4.14.3 && <4.15
+      aeson >=1.5.6 && <3
+    , base >=4.14.3 && <4.16
     , bytestring >=0.10.12 && <0.11
-    , containers >=0.6.5 && <0.7
+    , containers >=0.6.4 && <0.7
     , data-default >=0.7.1 && <0.8
     , directory >=1.3.6 && <1.4
     , extra >=1.7.9 && <1.8
@@ -115,13 +115,13 @@ executable cdp-example-endpoints
   hs-source-dirs:
       examples
   build-depends:
-      aeson >=1.5.6 && <1.6
-    , base >=4.14.3 && <4.15
+      aeson >=1.5.6 && <3
+    , base >=4.14.3 && <4.16
     , blaze-html >=0.9.1 && <0.10
     , blaze-markup >=0.8.2 && <0.9
     , bytestring >=0.10.12 && <0.11
     , cdp
-    , containers >=0.6.5 && <0.7
+    , containers >=0.6.4 && <0.7
     , data-default >=0.7.1 && <0.8
     , directory >=1.3.6 && <1.4
     , extra >=1.7.9 && <1.8
@@ -147,11 +147,11 @@ executable cdp-example-open-twitter
   hs-source-dirs:
       examples
   build-depends:
-      aeson >=1.5.6 && <1.6
-    , base >=4.14.3 && <4.15
+      aeson >=1.5.6 && <3
+    , base >=4.14.3 && <4.16
     , bytestring >=0.10.12 && <0.11
     , cdp
-    , containers >=0.6.5 && <0.7
+    , containers >=0.6.4 && <0.7
     , data-default >=0.7.1 && <0.8
     , directory >=1.3.6 && <1.4
     , extra >=1.7.9 && <1.8
@@ -176,12 +176,12 @@ executable cdp-example-print-page
   hs-source-dirs:
       examples
   build-depends:
-      aeson >=1.5.6 && <1.6
-    , base >=4.14.3 && <4.15
-    , base64-bytestring >=1.1.0 && <1.2
+      aeson >=1.5.6 && <3
+    , base >=4.14.3 && <4.16
+    , base64-bytestring >=1.1.0 && <1.3
     , bytestring >=0.10.12 && <0.11
     , cdp
-    , containers >=0.6.5 && <0.7
+    , containers >=0.6.4 && <0.7
     , data-default >=0.7.1 && <0.8
     , directory >=1.3.6 && <1.4
     , extra >=1.7.9 && <1.8
@@ -206,11 +206,11 @@ executable cdp-example-sessions
   hs-source-dirs:
       examples
   build-depends:
-      aeson >=1.5.6 && <1.6
-    , base >=4.14.3 && <4.15
+      aeson >=1.5.6 && <3
+    , base >=4.14.3 && <4.16
     , bytestring >=0.10.12 && <0.11
     , cdp
-    , containers >=0.6.5 && <0.7
+    , containers >=0.6.4 && <0.7
     , data-default >=0.7.1 && <0.8
     , directory >=1.3.6 && <1.4
     , extra >=1.7.9 && <1.8
@@ -235,11 +235,11 @@ executable cdp-example-subscribe
   hs-source-dirs:
       examples
   build-depends:
-      aeson >=1.5.6 && <1.6
-    , base >=4.14.3 && <4.15
+      aeson >=1.5.6 && <3
+    , base >=4.14.3 && <4.16
     , bytestring >=0.10.12 && <0.11
     , cdp
-    , containers >=0.6.5 && <0.7
+    , containers >=0.6.4 && <0.7
     , data-default >=0.7.1 && <0.8
     , directory >=1.3.6 && <1.4
     , extra >=1.7.9 && <1.8
@@ -270,10 +270,10 @@ executable cdp-gen
   default-extensions:
       Strict
   build-depends:
-      aeson >=1.5.6 && <1.6
-    , base >=4.14.3 && <4.15
+      aeson >=1.5.6 && <3
+    , base >=4.14.3 && <4.16
     , bytestring >=0.10.12 && <0.11
-    , containers >=0.6.5 && <0.7
+    , containers >=0.6.4 && <0.7
     , data-default >=0.7.1 && <0.8
     , directory >=1.3.6 && <1.4
     , extra >=1.7.9 && <1.8
@@ -300,11 +300,11 @@ test-suite cdp-test
       test
   ghc-options: -Wall -threaded
   build-depends:
-      aeson >=1.5.6 && <1.6
-    , base >=4.14.3 && <4.15
+      aeson >=1.5.6 && <3
+    , base >=4.14.3 && <4.16
     , bytestring >=0.10.12 && <0.11
     , cdp
-    , containers >=0.6.5 && <0.7
+    , containers >=0.6.4 && <0.7
     , data-default >=0.7.1 && <0.8
     , directory >=1.3.6 && <1.4
     , extra >=1.7.9 && <1.8

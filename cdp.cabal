@@ -1,11 +1,11 @@
 cabal-version: 3.0
 
--- This file has been generated from package.yaml by hpack version 0.35.1.
+-- This file has been generated from package.yaml by hpack version 0.35.2.
 --
 -- see: https://github.com/sol/hpack
 
 name:           cdp
-version:        0.0.2.0
+version:        0.0.3.0
 synopsis:       A library for the Chrome Devtools Protocol
 description:     A library for the Chrome Devtools Protocol (CDP). It provides access to Chrome, enabling tasks such as printing a page or opening a tab.
                 .
@@ -88,7 +88,7 @@ library
       gen
   build-depends:
       aeson >=1.5.6 && <3
-    , base >=4.14.3 && <4.17
+    , base >=4.16.4 && <4.19
     , bytestring >=0.10.12 && <0.12
     , containers >=0.6.4 && <0.7
     , data-default >=0.7.1 && <0.8
@@ -97,12 +97,12 @@ library
     , filepath >=1.4.2 && <1.5
     , http-conduit >=2.3.8 && <2.4
     , monad-loops >=0.4.3 && <0.5
-    , mtl >=2.2.2 && <2.3
+    , mtl >=2.3 && <3
     , network-uri >=2.6.4 && <2.7
     , process >=1.6.13 && <1.7
     , random >=1.2.0 && <1.3
-    , text >=1.2.4 && <1.3
-    , vector >=0.12.3 && <0.13
+    , text >=2.0.2 && <3
+    , vector >=0.13 && <1
     , websockets >=0.12.7 && <0.13
   default-language: Haskell2010
 
@@ -116,7 +116,7 @@ executable cdp-example-endpoints
       examples
   build-depends:
       aeson >=1.5.6 && <3
-    , base >=4.14.3 && <4.17
+    , base >=4.16.4 && <4.19
     , blaze-html >=0.9.1 && <0.10
     , blaze-markup >=0.8.2 && <0.9
     , bytestring >=0.10.12 && <0.12
@@ -128,13 +128,13 @@ executable cdp-example-endpoints
     , filepath >=1.4.2 && <1.5
     , http-conduit >=2.3.8 && <2.4
     , monad-loops >=0.4.3 && <0.5
-    , mtl >=2.2.2 && <2.3
+    , mtl >=2.3 && <3
     , network-uri >=2.6.4 && <2.7
     , process >=1.6.13 && <1.7
     , random >=1.2.0 && <1.3
-    , text >=1.2.4 && <1.3
+    , text >=2.0.2 && <3
     , utf8-string >=1.0.2 && <1.1
-    , vector >=0.12.3 && <0.13
+    , vector >=0.13 && <1
     , websockets >=0.12.7 && <0.13
   default-language: Haskell2010
 
@@ -148,7 +148,7 @@ executable cdp-example-open-twitter
       examples
   build-depends:
       aeson >=1.5.6 && <3
-    , base >=4.14.3 && <4.17
+    , base >=4.16.4 && <4.19
     , bytestring >=0.10.12 && <0.12
     , cdp
     , containers >=0.6.4 && <0.7
@@ -158,12 +158,12 @@ executable cdp-example-open-twitter
     , filepath >=1.4.2 && <1.5
     , http-conduit >=2.3.8 && <2.4
     , monad-loops >=0.4.3 && <0.5
-    , mtl >=2.2.2 && <2.3
+    , mtl >=2.3 && <3
     , network-uri >=2.6.4 && <2.7
     , process >=1.6.13 && <1.7
     , random >=1.2.0 && <1.3
-    , text >=1.2.4 && <1.3
-    , vector >=0.12.3 && <0.13
+    , text >=2.0.2 && <3
+    , vector >=0.13 && <1
     , websockets >=0.12.7 && <0.13
   default-language: Haskell2010
 
@@ -177,7 +177,7 @@ executable cdp-example-print-page
       examples
   build-depends:
       aeson >=1.5.6 && <3
-    , base >=4.14.3 && <4.17
+    , base >=4.16.4 && <4.19
     , base64-bytestring >=1.1.0 && <1.3
     , bytestring >=0.10.12 && <0.12
     , cdp
@@ -188,12 +188,12 @@ executable cdp-example-print-page
     , filepath >=1.4.2 && <1.5
     , http-conduit >=2.3.8 && <2.4
     , monad-loops >=0.4.3 && <0.5
-    , mtl >=2.2.2 && <2.3
+    , mtl >=2.3 && <3
     , network-uri >=2.6.4 && <2.7
     , process >=1.6.13 && <1.7
     , random >=1.2.0 && <1.3
-    , text >=1.2.4 && <1.3
-    , vector >=0.12.3 && <0.13
+    , text >=2.0.2 && <3
+    , vector >=0.13 && <1
     , websockets >=0.12.7 && <0.13
   default-language: Haskell2010
 
@@ -207,7 +207,7 @@ executable cdp-example-sessions
       examples
   build-depends:
       aeson >=1.5.6 && <3
-    , base >=4.14.3 && <4.17
+    , base >=4.16.4 && <4.19
     , bytestring >=0.10.12 && <0.12
     , cdp
     , containers >=0.6.4 && <0.7
@@ -217,12 +217,12 @@ executable cdp-example-sessions
     , filepath >=1.4.2 && <1.5
     , http-conduit >=2.3.8 && <2.4
     , monad-loops >=0.4.3 && <0.5
-    , mtl >=2.2.2 && <2.3
+    , mtl >=2.3 && <3
     , network-uri >=2.6.4 && <2.7
     , process >=1.6.13 && <1.7
     , random >=1.2.0 && <1.3
-    , text >=1.2.4 && <1.3
-    , vector >=0.12.3 && <0.13
+    , text >=2.0.2 && <3
+    , vector >=0.13 && <1
     , websockets >=0.12.7 && <0.13
   default-language: Haskell2010
 
@@ -236,7 +236,7 @@ executable cdp-example-subscribe
       examples
   build-depends:
       aeson >=1.5.6 && <3
-    , base >=4.14.3 && <4.17
+    , base >=4.16.4 && <4.19
     , bytestring >=0.10.12 && <0.12
     , cdp
     , containers >=0.6.4 && <0.7
@@ -246,12 +246,12 @@ executable cdp-example-subscribe
     , filepath >=1.4.2 && <1.5
     , http-conduit >=2.3.8 && <2.4
     , monad-loops >=0.4.3 && <0.5
-    , mtl >=2.2.2 && <2.3
+    , mtl >=2.3 && <3
     , network-uri >=2.6.4 && <2.7
     , process >=1.6.13 && <1.7
     , random >=1.2.0 && <1.3
-    , text >=1.2.4 && <1.3
-    , vector >=0.12.3 && <0.13
+    , text >=2.0.2 && <3
+    , vector >=0.13 && <1
     , websockets >=0.12.7 && <0.13
   default-language: Haskell2010
 
@@ -271,7 +271,7 @@ executable cdp-gen
       Strict
   build-depends:
       aeson >=1.5.6 && <3
-    , base >=4.14.3 && <4.17
+    , base >=4.16.4 && <4.19
     , bytestring >=0.10.12 && <0.12
     , containers >=0.6.4 && <0.7
     , data-default >=0.7.1 && <0.8
@@ -280,12 +280,12 @@ executable cdp-gen
     , filepath >=1.4.2 && <1.5
     , http-conduit >=2.3.8 && <2.4
     , monad-loops >=0.4.3 && <0.5
-    , mtl >=2.2.2 && <2.3
+    , mtl >=2.3 && <3
     , network-uri >=2.6.4 && <2.7
     , process >=1.6.13 && <1.7
     , random >=1.2.0 && <1.3
-    , text >=1.2.4 && <1.3
-    , vector >=0.12.3 && <0.13
+    , text >=2.0.2 && <3
+    , vector >=0.13 && <1
     , websockets >=0.12.7 && <0.13
   default-language: Haskell2010
 
@@ -301,7 +301,7 @@ test-suite cdp-test
   ghc-options: -Wall -threaded
   build-depends:
       aeson >=1.5.6 && <3
-    , base >=4.14.3 && <4.17
+    , base >=4.16.4 && <4.19
     , bytestring >=0.10.12 && <0.12
     , cdp
     , containers >=0.6.4 && <0.7
@@ -312,11 +312,11 @@ test-suite cdp-test
     , hspec
     , http-conduit >=2.3.8 && <2.4
     , monad-loops >=0.4.3 && <0.5
-    , mtl >=2.2.2 && <2.3
+    , mtl >=2.3 && <3
     , network-uri >=2.6.4 && <2.7
     , process >=1.6.13 && <1.7
     , random >=1.2.0 && <1.3
-    , text >=1.2.4 && <1.3
-    , vector >=0.12.3 && <0.13
+    , text >=2.0.2 && <3
+    , vector >=0.13 && <1
     , websockets >=0.12.7 && <0.13
   default-language: Haskell2010

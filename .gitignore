@@ -26,3 +26,4 @@ cabal.sandbox.config
 cabal.project.local
 .HTF/
 .ghc.environment.*
+gen/Main
